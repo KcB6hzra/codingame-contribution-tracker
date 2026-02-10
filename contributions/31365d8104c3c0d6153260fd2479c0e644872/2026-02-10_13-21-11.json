@@ -1,0 +1,302 @@
+{
+  "id": 31365,
+  "activeVersion": 38,
+  "score": 15,
+  "votableId": 25326507,
+  "codingamerId": 4341304,
+  "views": 387,
+  "commentableId": 25205696,
+  "title": "Hexagonal Maze - part2",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Remi.",
+  "publicHandle": "31365d8104c3c0d6153260fd2479c0e644872",
+  "codingamerHandle": "6337619f5905111901909c0bdfdb053c4031434",
+  "lastVersion": {
+    "version": 38,
+    "autocloseTime": 1665702974695,
+    "data": {
+      "title": "Hexagonal Maze - part2",
+      "topics": [
+        {
+          "id": 54,
+          "handle": "BFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en largeur",
+            "2": "BFS"
+          },
+          "pageTitle": "BFS: exercises and theory",
+          "puzzleCount": 21,
+          "parentTopicId": 41,
+          "contentDetailsId": 84
+        },
+        {
+          "id": 186,
+          "handle": "maze",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Maze",
+            "2": "Maze"
+          },
+          "puzzleCount": 9,
+          "parentTopicId": 93
+        },
+        {
+          "id": 68,
+          "handle": "pathfinding",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Recherche de chemins",
+            "2": "Pathfinding"
+          },
+          "pageTitle": "Pathfinding: exercises and theory",
+          "puzzleCount": 40,
+          "parentTopicId": 41,
+          "contentDetailsId": 69
+        },
+        {
+          "id": 56,
+          "handle": "backtracking",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Retour sur trace",
+            "2": "Backtracking"
+          },
+          "pageTitle": "Backtracking: exercises and theory",
+          "puzzleCount": 14,
+          "parentTopicId": 41,
+          "contentDetailsId": 80
+        }
+      ],
+      "solution": "#include <iostream>\n#include <vector>\nusing namespace std;\n\nstruct coord { int x, y; char keys; string s; };\n\nconst string dirs[6] = { \"L\", \"R\", \"UL\", \"UR\", \"DL\", \"DR\" };\nstring grid[40];\nvector<coord> v;\n\nbool block(char cell, char keys) { return cell=='#' || 'A'<=cell&&cell<='D'&&!(keys&1<<cell-'A');}\nbool contains(const coord& c) {\n    bool found = false;\n    for (int i=0; i<v.size() && !found; ++i)\n        found = (v[i].x<<16|v[i].y<<8|v[i].keys)==(c.x<<16|c.y<<8|c.keys);\n    return found;\n}\ncoord nextCell(const coord& c, const string& dir) {\n    coord ret = c;\n    if (dir == \"L\") {\n        if (!block(grid[ret.y][ret.x-1], c.keys)) {\n            ret.x--;\n            while ('_' == grid[ret.y][ret.x] && !block(grid[ret.y][ret.x-1], c.keys))\n                ret.x--;\n        }\n    }\n    else if (dir == \"R\") {\n        if (!block(grid[ret.y][ret.x+1], c.keys)) {\n            ret.x++;\n            while ('_' == grid[ret.y][ret.x] && !block(grid[ret.y][ret.x+1], c.keys))\n                ret.x++;\n        }\n    }\n    else if (dir == \"UL\") {\n        if (!block(grid[ret.y-1][ret.x-!(ret.y&1)], c.keys)) {\n            ret.x -= !(ret.y&1);\n            ret.y--;\n            while ('_' == grid[ret.y][ret.x] && !block(grid[ret.y-1][ret.x-!(ret.y&1)], c.keys))\n                ret.x -= !(ret.y&1), ret.y--;\n        }\n    }\n    else if (dir == \"UR\") {\n        if (!block(grid[ret.y-1][ret.x+(ret.y&1)], c.keys)) {\n            ret.x += ret.y&1;\n            ret.y--;\n            while ('_' == grid[ret.y][ret.x] && !block(grid[ret.y-1][ret.x+(ret.y&1)], c.keys))\n                ret.x += ret.y&1, ret.y--;\n        }\n    }\n    else if (dir == \"DL\") {\n        if (!block(grid[ret.y+1][ret.x-!(ret.y&1)], c.keys)) {\n            ret.x -= !(ret.y&1);\n            ret.y++;\n            while ('_' == grid[ret.y][ret.x] && !block(grid[ret.y+1][ret.x-!(ret.y&1)], c.keys))\n                ret.x -= !(ret.y&1), ret.y++;\n        }\n    }\n    else if (dir == \"DR\") {\n        if (!block(grid[ret.y+1][ret.x+(ret.y&1)], c.keys)) {\n            ret.x += ret.y&1;\n            ret.y++;\n            while ('_' == grid[ret.y][ret.x] && !block(grid[ret.y+1][ret.x+(ret.y&1)], c.keys))\n                ret.x += ret.y&1, ret.y++;\n        }\n    }\n    ret.s = ret.s + \" \" + dir;\n    return ret;\n}\nmain()\n{\n    // Read inputs\n    int w, h;\n    cin >> w >> h; cin.ignore();\n    coord S = {-1, -1, 0, \"\"};\n    for (int i=0; i<h; ++i) {\n        getline(cin, grid[i]);\n        // Find start position\n        if (S.x == -1)\n            for (int j=0; j<w && S.x==-1; ++j)\n                if (grid[i][j] == 'S')\n                    S = {j, i, 0, \"\"};\n    }\n    // BFS\n    int it = 0;\n    v.push_back(S);\n    string answer;\n    while (answer.empty()) {\n        coord cur = v[it++];\n        for (int i=0; i<6; ++i) {\n            coord next = nextCell(cur, dirs[i]);\n            char h = grid[next.y][next.x];\n            if ('a'<=h && h<='d') next.keys |= 1<<h-'a';\n            if ('E' == h) answer = next.s;\n            else if (!contains(next)) v.push_back(next);\n        }\n    }\n    // Print output\n    cout << answer.c_str()+1 << endl;\n}\n/*\n// FIND ALL SHORTEST PATHES\n\n#include <iostream>\n#include <vector>\nusing namespace std;\n\nstruct coord { int x, y, n; char keys; string s; };\n\nconst string dirs[6] = { \"L\", \"R\", \"UL\", \"UR\", \"DL\", \"DR\" };\nstring grid[40];\nvector<coord> v;\n\nbool block(char cell, char keys) { return cell=='#' || 'A'<=cell&&cell<='D'&&!(keys&1<<cell-'A');}\nbool contains(const coord& c) {\n    bool found = false;\n    for (int i=0; i<v.size() && !found; ++i)\n        found = (v[i].x<<16|v[i].y<<8|v[i].keys)==(c.x<<16|c.y<<8|c.keys) && v[i].n<c.n;\n    return found;\n}\ncoord nextCell(const coord& c, const string& dir) {\n    coord ret = c;\n    ret.n++;\n    if (dir == \"L\") {\n        if (!block(grid[ret.y][ret.x-1], c.keys)) {\n            ret.x--;\n            while ('_' == grid[ret.y][ret.x] && !block(grid[ret.y][ret.x-1], c.keys))\n                ret.x--;\n        }\n    }\n    else if (dir == \"R\") {\n        if (!block(grid[ret.y][ret.x+1], c.keys)) {\n            ret.x++;\n            while ('_' == grid[ret.y][ret.x] && !block(grid[ret.y][ret.x+1], c.keys))\n                ret.x++;\n        }\n    }\n    else if (dir == \"UL\") {\n        if (!block(grid[ret.y-1][ret.x-!(ret.y&1)], c.keys)) {\n            ret.x -= !(ret.y&1);\n            ret.y--;\n            while ('_' == grid[ret.y][ret.x] && !block(grid[ret.y-1][ret.x-!(ret.y&1)], c.keys))\n                ret.x -= !(ret.y&1), ret.y--;\n        }\n    }\n    else if (dir == \"UR\") {\n        if (!block(grid[ret.y-1][ret.x+(ret.y&1)], c.keys)) {\n            ret.x += ret.y&1;\n            ret.y--;\n            while ('_' == grid[ret.y][ret.x] && !block(grid[ret.y-1][ret.x+(ret.y&1)], c.keys))\n                ret.x += ret.y&1, ret.y--;\n        }\n    }\n    else if (dir == \"DL\") {\n        if (!block(grid[ret.y+1][ret.x-!(ret.y&1)], c.keys)) {\n            ret.x -= !(ret.y&1);\n            ret.y++;\n            while ('_' == grid[ret.y][ret.x] && !block(grid[ret.y+1][ret.x-!(ret.y&1)], c.keys))\n                ret.x -= !(ret.y&1), ret.y++;\n        }\n    }\n    else if (dir == \"DR\") {\n        if (!block(grid[ret.y+1][ret.x+(ret.y&1)], c.keys)) {\n            ret.x += ret.y&1;\n            ret.y++;\n            while ('_' == grid[ret.y][ret.x] && !block(grid[ret.y+1][ret.x+(ret.y&1)], c.keys))\n                ret.x += ret.y&1, ret.y++;\n        }\n    }\n    ret.s = ret.s + \" \" + dir;\n    return ret;\n}\nmain()\n{\n    // Read inputs\n    int w, h;\n    cin >> w >> h; cin.ignore();\n    coord S = {-1, -1, 0, 0, \"\"};\n    for (int i=0; i<h; ++i) {\n        getline(cin, grid[i]);\n        for (int j=0; j<w; ++j) cerr<<(i%2&&!j?\" \":\"\")<<grid[i][j]<<\" \"; cerr<<endl;\n        // Find start position\n        if (S.x == -1)\n            for (int j=0; j<w && S.x==-1; ++j)\n                if (grid[i][j] == 'S')\n                    S = {j, i, 0, 0, \"\"};\n    }\n    // BFS\n    int it = 0;\n    v.push_back(S);\n    vector<pair<string, int>> answers;\n    while (it < v.size() && (answers.empty()||v[it].n<answers[0].second)) {\n        coord cur = v[it++];\n        for (int i=0; i<6; ++i) {\n            coord next = nextCell(cur, dirs[i]);\n            char h = grid[next.y][next.x];\n            if ('a'<=h && h<='d') next.keys |= 1<<h-'a';\n            if ('E' == h) answers.push_back({next.s, next.n});\n            else if (!contains(next)) v.push_back(next);\n        }\n    }\n    // Print output\n    cerr<<answers.size()<<\" solutions :\"<<endl;\n    for (int i=0; i<answers.size(); ++i) cerr<<answers[i].first<<endl;\n    cerr<<endl;\n    cout << answers[0].first.c_str()+1 << endl;\n}\n*/\n",
+      "statement": "You are in a maze, made of hexagonal cells.\nThe following grid :\n`4 4\nABCD\nEFGH\nIJKL\nMNOP`\nhas to be understood like this :\n`A B C D  (line 0)\n E F G H (line 1)\nI J K L  (line 2)\n M N O P (line 3)`\nThis means each cell has 6 neighbours : for example, cell F is surrounded by B, C, E, G, J, K.\nEven lines are left-aligned, odd lines are right-aligned.\nYou don't have to deal with borders : the grid isn't periodic and there are only walls on the borders.\n\nThe grid contains following symbols :\n{{#}} : wall\n{{.}} : free space\n{{S}} : start\n{{E}} : end\n{{_}} : sliding floor\nUppercase letters {{A}}, {{B}}, {{C}}, {{D}} : Closed doors\nLowercase letters {{a}}, {{b}}, {{c}}, {{d}} : Keys which open doors\n\nWhat is a sliding floor ? when you walk on a sliding floor, you just walk straight in the same direction until you are on a non-sliding cell, or in front of an obstacle.\nYou take a key by walking on the cell (no more action). The key is like a free space (not sliding).\nClosed doors are like a wall if you didn't take the key, and like a free space (not sliding) if you took key. A key only opens the door with corresponding letter ({{a}} for {{A}} etc...). There may be several doors {{A}} for one key {{a}}, in this case the key open all the doors with corresponding letter.\n\nIn this puzzle, you have to output the directions used in order to go from the start to the end on the shortest path.\nThere are 6 directions, combining Left, Right, Up and Down. These 6 directions are: {{UL}}, {{UR}}, {{L}}, {{R}}, {{DL}}, {{DR}}.\n{{U}} and {{D}} aren't directions, because of the hexagonal grid.\n\nYou don't have to output several times the same direction when you are sliding (see the example).\nThere is always a solution.\nThere may be more than one path, but only one shortest path.\nThe \"shortest\" path is counted by the number of directions given, not by the number of cells. Sliding on 10 consecutive cells is shorter than walking on 3 free spaces.",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "10 4\n##########\n#S.___.###\n#######.E#\n##########",
+          "testOut": "R R DR R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Example",
+          "isTest": false,
+          "testIn": "10 4\n##########\n##E#####S#\n###.____.#\n##########",
+          "testOut": "DL L UL",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Need the key",
+          "isTest": true,
+          "testIn": "10 10\n##########\n#S.#######\n###.######\n###.######\n###..#####\n##.#.#####\n##a##A####\n##.##.####\n###..B..E#\n##########",
+          "testOut": "R DR DR DL DL DL UR UR R DR DR DR DR R R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Need the key",
+          "isTest": false,
+          "testIn": "10 10\n##########\n#S#...####\n##..##.###\n#####..###\n#####.#.##\n###.a#.###\n###B##A###\n##.##.####\n##E...####\n##########",
+          "testOut": "DR R UR R R DR DL DL DL UR UR R DR DL DL DL DL L L L",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Choose shortest",
+          "isTest": true,
+          "testIn": "10 10\n##########\n#S......##\n###.####.#\n###.####b#\n###..###.#\n##.#....##\n##a##A####\n##.##.####\n###..B..E#\n##########",
+          "testOut": "R DR DR DL DL DL UR UR R DR DR DR DR R R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Choose shortest",
+          "isTest": false,
+          "testIn": "10 10\n##########\n#.......##\n#.#.####.#\n#S#.####b#\n###..###.#\n##.#....##\n##a##A####\n##.##E####\n###..B####\n##########",
+          "testOut": "UL UR R DR DR DL DL DL UR UR R DR DR DR",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Shortest with sliding",
+          "isTest": true,
+          "testIn": "15 5\n###############\n##S.........E##\n##.##########.#\n##._________.##\n###############",
+          "testOut": "DL DR R UR UL",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Shortest with sliding",
+          "isTest": false,
+          "testIn": "15 5\n###############\n##E.........S##\n##.##########.#\n##._________.##\n###############",
+          "testOut": "DR DL L UL UR",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Sliding junction",
+          "isTest": true,
+          "testIn": "10 10\n##########\n#S.#######\n###.######\n###.######\n####_#####\n##..__..##\n##.##_##.#\n#.###...##\n##..E#####\n##########",
+          "testOut": "R DR DR DR R R UR UL L L L DL DL DR R R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Sliding junction",
+          "isTest": false,
+          "testIn": "10 10\n##########\n#S...#####\n#####.####\n####.#####\n####_#####\n#.__..E###\n#.#_######\n#..#######\n##########\n##########",
+          "testOut": "R R R DR DL DL L UL UR R R R",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Sliding until wall",
+          "isTest": true,
+          "testIn": "10 10\n##########\n#S########\n##.#######\n##_#######\n##__...###\n#_#_##_###\n#_##___###\n#.########\n##..___E##\n##########",
+          "testOut": "DR DR R UR UL L L L DL DR DR R R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Sliding until wall",
+          "isTest": false,
+          "testIn": "10 12\n##########\n#S._____##\n#######_##\n######_###\n######_###\n##_______#\n##.##_##.#\n#.##_##_##\n#_##_##_##\n#_#_##_###\n##__##E###\n##########",
+          "testOut": "R R DL L UL UR UR UR R DL DL",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Sliding or not sliding, that is the junction",
+          "isTest": true,
+          "testIn": "10 6\n##########\n###S######\n####_#####\n####_#####\n#EA____a##\n##########",
+          "testOut": "DR R L L",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Sliding or not sliding, that is the junction",
+          "isTest": false,
+          "testIn": "10 6\n##########\n#####S####\n#####_####\n####_#####\n#EA____a##\n##########",
+          "testOut": "DL R L L",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Crazy doors",
+          "isTest": true,
+          "testIn": "10 6\n##########\n###S######\n####_#####\n####_#####\n#EAA___a##\n#####B####",
+          "testOut": "DR R L L L",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Crazy doors",
+          "isTest": false,
+          "testIn": "10 6\n##########\n#####S####\n#####_####\n####_#####\n#EAA___a##\n###B######",
+          "testOut": "DL R L L L",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Visited or not ?",
+          "isTest": true,
+          "testIn": "8 8\n########\n#S##E###\n##_#_###\n##__####\n###___.#\n###_##.#\n####___#\n########",
+          "testOut": "DR R UR UL L UR",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Visited or not ?",
+          "isTest": false,
+          "testIn": "9 6\n#########\n#S_____##\n####__#_#\n###_#_#_#\n###E##..#\n#########",
+          "testOut": "R DR DL L UL DL",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Skating rink",
+          "isTest": true,
+          "testIn": "40 30\n########################################\n###_________________________________####\n###__________________________________###\n##_________________________E_________###\n##____________________________________##\n#_____________________________________##\n#______________________________________#\n#______________________________________#\n#_____S________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n##_____________________________________#\n##____________________________________##\n###___________________________________##\n###__________________________________###\n####_________________________________###\n########################################",
+          "testOut": "DR L UL R UR UL DL",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Skating rink",
+          "isTest": false,
+          "testIn": "40 30\n########################################\n###_________________________________####\n###__________________________________###\n##___________________________________###\n##____________________________________##\n#_____________________________________##\n#______________________________________#\n#______________________________________#\n#_____S________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n##_____________________________________#\n##____________________________________##\n###___________________________________##\n###_____E____________________________###\n####_________________________________###\n########################################",
+          "testOut": "DR R UL DL UL",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Skating rink with keys",
+          "isTest": true,
+          "testIn": "40 30\n########################################\n###_________________________________####\n#b____________________________________a#\n#____________________________________#_#\n##_____________________________________#\n#_____________________________________##\n#______________________________________#\n#______________________________________#\n#_____S________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#__________________AA__________________#\n#_________________AcA__________________#\n#__________________AA__________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n#______________________________________#\n##_____________________________________#\n##____________________________________##\n##C___________________________________D#\n#d#__________________________________#B#\n####_________________________________#E#\n########################################",
+          "testOut": "UL R L DR UR UL UL UR DR L DL DL UR R DR DL",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Skating rink with keys",
+          "isTest": false,
+          "testIn": "40 30\n########################################\n###________________________________#####\n###________________________________#####\n##________d_________________________Db##\n##_________________________________#####\n#__________________________________#####\n#__________________________________#####\n#__________________________________#####\n#_______S__________________________#####\n#__________________________________#####\n#__________________________________#####\n#_______________AA__________________BCa#\n#_______________AEA________________#####\n#_______________AA__________________Dc##\n#__________________________________#####\n#__________________________________#####\n#__________________________________#####\n#__________________________________#####\n#__________________________________#####\n#__________________________________#####\n#__________________________________#####\n#__________________________________#####\n#__________________________________#####\n#__________________________________#####\n##_________________________________#####\n##_________________________________#####\n###________________________________#####\n###________________________________#####\n####_______________________________#####\n########################################",
+          "testOut": "UR R R L L L DR UR DR R R L L DR UR R R R L L L DL",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Bonus test",
+          "isTest": true,
+          "testIn": "6 12\n######\n#S####\n##...#\n##.#a#\n###..#\n###.##\n###..#\n##.#b#\n##...#\n#.####\n##ABE#\n######",
+          "testOut": "DR R R DR DL DL DR DR DL L L DL DR R R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Bonus test",
+          "isTest": false,
+          "testIn": "6 12\n######\n#S####\n##...#\n##.#a#\n###..#\n###.##\n###..#\n##b#.#\n###..#\n####.#\n##EBA#\n######",
+          "testOut": "DR R R DR DL DL DL DL DR R DR DL L L",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "4 ≤ [[w]], [[h]] ≤ 40",
+      "coverBinaryId": 90174308641170,
+      "stubGenerator": "read w:int h:int\nloop h read row:string(41)\nwrite answer",
+      "inputDescription": "<<First line:>> two integers [[w]] and [[h]], width and height of the grid.\n\n<<[[h]] following lines:>> the grid.",
+      "solutionLanguage": "C++",
+      "outputDescription": "Space separated directions to follow, within {{UL}}, {{UR}}, {{L}}, {{R}}, {{DL}}, {{DR}}"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are in a maze, made of hexagonal cells.<br>The following grid :<br><pre style=\"font-family: monospace\">4 4<br>ABCD<br>EFGH<br>IJKL<br>MNOP</pre><br>has to be understood like this :<br><pre style=\"font-family: monospace\">A B C D  (line 0)<br> E F G H (line 1)<br>I J K L  (line 2)<br> M N O P (line 3)</pre><br>This means each cell has 6 neighbours : for example, cell F is surrounded by B, C, E, G, J, K.<br>Even lines are left-aligned, odd lines are right-aligned.<br>You don't have to deal with borders : the grid isn't periodic and there are only walls on the borders.<br><br>The grid contains following symbols :<br><const>#</const> : wall<br><const>.</const> : free space<br><const>S</const> : start<br><const>E</const> : end<br><const>_</const> : sliding floor<br>Uppercase letters <const>A</const>, <const>B</const>, <const>C</const>, <const>D</const> : Closed doors<br>Lowercase letters <const>a</const>, <const>b</const>, <const>c</const>, <const>d</const> : Keys which open doors<br><br>What is a sliding floor ? when you walk on a sliding floor, you just walk straight in the same direction until you are on a non-sliding cell, or in front of an obstacle.<br>You take a key by walking on the cell (no more action). The key is like a free space (not sliding).<br>Closed doors are like a wall if you didn't take the key, and like a free space (not sliding) if you took key. A key only opens the door with corresponding letter (<const>a</const> for <const>A</const> etc...). There may be several doors <const>A</const> for one key <const>a</const>, in this case the key open all the doors with corresponding letter.<br><br>In this puzzle, you have to output the directions used in order to go from the start to the end on the shortest path.<br>There are 6 directions, combining Left, Right, Up and Down. These 6 directions are: <const>UL</const>, <const>UR</const>, <const>L</const>, <const>R</const>, <const>DL</const>, <const>DR</const>.<br><const>U</const> and <const>D</const> aren't directions, because of the hexagonal grid.<br><br>You don't have to output several times the same direction when you are sliding (see the example).<br>There is always a solution.<br>There may be more than one path, but only one shortest path.<br>The &quot;shortest&quot; path is counted by the number of directions given, not by the number of cells. Sliding on 10 consecutive cells is shorter than walking on 3 free spaces.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>First line:</strong> two integers <var>w</var> and <var>h</var>, width and height of the grid.<br><br><strong><var>h</var> following lines:</strong> the grid.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Space separated directions to follow, within <const>UL</const>, <const>UR</const>, <const>L</const>, <const>R</const>, <const>DL</const>, <const>DR</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">4 &le; <var>w</var>, <var>h</var> &le; 40</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">10 4\n##########\n#S.___.###\n#######.E#\n##########</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">R R DR R</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 105413890966,
+  "avatar": 97662026388574,
+  "commentCount": 23,
+  "upVotes": 16,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 700518,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1665315778846,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,135 @@
+{
+  "id": 441,
+  "activeVersion": 10,
+  "score": 1,
+  "votableId": 3267495,
+  "codingamerId": 1103438,
+  "views": 143,
+  "commentableId": 3213612,
+  "title": "Hill Notation and Hill Order",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "btharper",
+  "publicHandle": "441101315c7e194132c520a1bbf011be72b",
+  "codingamerHandle": "5d881e966b225e70e65711553e65f8f18343011",
+  "lastVersion": {
+    "version": 10,
+    "data": {
+      "title": "Hill Notation and Hill Order",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Chemistry"
+          }
+        }
+      ],
+      "solution": "import re\n\ndef count_atoms(molecule):\n    counts = re.findall('([A-Z][a-z]?)(\\d*)', molecule)\n    total = {}\n    for atom, count in counts:\n        if atom not in total:\n            total[atom] = 0\n        if count == '':\n            total[atom] += 1\n        else:\n            total[atom] += int(count)\n    return total\n\ndef hill_paren(match):\n    \"\"\"\n    Given a match object containing two groups, the contents of a set of parenthesis\n    and the multiplier for those parenthesis, calculate the end result number of atoms\n    \"\"\"\n    mult = int(match.group(2))\n    atoms = count_atoms(match.group(1))\n    return ''.join([atom + str(mult * count) for atom, count in atoms.items()])\n\ndef to_hill_notation(compound):\n    \"\"\"\n    Convert a compound into Hill Notation\n    \"\"\"\n    while '(' in compound:\n        compound = re.sub('\\(((?:[A-Z][a-z]?\\d*)+)\\)(\\d+)', hill_paren, compound)\n        \n    counts = count_atoms(compound)\n    out = []\n    if 'C' in counts:\n        out += ['C', counts['C']]\n        del counts['C']\n        if 'H' in counts:\n            out += ['H', counts['H']]\n            del counts['H']\n    keys = sorted(counts.keys())\n    for key in keys:\n        out += [key, counts[key]]\n    return out\n\n\n# Init and read data\ncompounds = []\nnum_compounds = int(input())\n[compounds.append(input()) for i in range(num_compounds)]\n\nfor i in range(len(compounds)):\n    compounds[i] = to_hill_notation(compounds[i])\n# Sort and remove duplicates\ncompounds.sort()\ncompound_set = set()\nfor compound in compounds:\n    while 1 in compound:\n        compound.remove(1)\n    compound = ''.join([str(i) for i in compound])\n    if compound not in compound_set:\n        compound_set.add(compound)\n        # If we found a new compound, print it out\n        print(compound)",
+      "statement": "Given a number of chemical formulas, convert them all to Hill Notation and then sort them into Hill Order while eliminating duplicates.\n\nHill Notation is used to succinctly express chemical formulas in precisely one way.\nHill Order is a way to sort compounds that make them easy to index.\nFor more information — https://en.wikipedia.org/wiki/Hill_system\n\nHill Notation consists of condensing any parenthesis group, counting the total number of each element and reordering them according to the following rules:\n* If the compound contains Carbon (C), then it is always listed first, followed by Hydrogen (H) if present. All other elements are then sorted alphabetically and appended. For example, CH3CH2OH becomes C2H6O.\n* Else sort all elements (including Hydrogen) alphabetically.\n\nHill Order sorts elements in Hill Notation according to the following rules:\n* Compounds are sorted alphabetically by element. So Al2O3 comes before CH4.\n* If the elements are in the same order, the one with fewer of the element is sorted first. \n\nThe following compounds are in Hill Order:\nBrF5 → CCl → C2H6 → C3H8 → C60 → CaO → ClH",
+      "testCases": [
+        {
+          "title": "Simple Sort",
+          "isTest": true,
+          "testIn": "3\nH2O\nAl2O3\nCCl4",
+          "testOut": "Al2O3\nCCl4\nH2O",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Sort",
+          "isTest": false,
+          "testIn": "5\nCaO3Ti\nB2O3\nAl6Ca5O14\nCHNO\nH4Sn",
+          "testOut": "Al6Ca5O14\nB2O3\nCHNO\nCaO3Ti\nH4Sn",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Quantity Sort",
+          "isTest": true,
+          "testIn": "6\nC5H8O2\nCHNO\nCCl4\nC2H4\nCHCl3\nC8H5NO2",
+          "testOut": "CCl4\nCHCl3\nCHNO\nC2H4\nC5H8O2\nC8H5NO2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Quantity Sort",
+          "isTest": false,
+          "testIn": "10\nCHCl3\nC8H5NO2\nC2H5AlBr2\nCHNO\nC2H4\nC2H4BrCl\nC5H8O2\nCNaO3\nC2Ca\nCCl4",
+          "testOut": "CCl4\nCHCl3\nCHNO\nCNaO3\nC2Ca\nC2H4\nC2H4BrCl\nC2H5AlBr2\nC5H8O2\nC8H5NO2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Duplicates",
+          "isTest": true,
+          "testIn": "3\nH2O\nHOH\nOH2",
+          "testOut": "H2O",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Duplicates",
+          "isTest": false,
+          "testIn": "4\nHOOH\nH2O2\nOHHO\nOHOH",
+          "testOut": "H2O2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Bigger Sort",
+          "isTest": true,
+          "testIn": "10\nBrH\nCHCl3\nCHNO\nH2O4S\nH4Sn\nC2H4BrCl\nB2O3\nCCl4\nCaO3Ti\nAl6Ca5O14",
+          "testOut": "Al6Ca5O14\nB2O3\nBrH\nCCl4\nCHCl3\nCHNO\nC2H4BrCl\nCaO3Ti\nH2O4S\nH4Sn",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Bigger Sort",
+          "isTest": false,
+          "testIn": "18\nAl6Ca5O14\nB2O3\nB2Zr3\nBrH\nCCl4\nCHCl3\nCHNO\nCNaO3\nC2Ca\nC2H4\nC2H4BrCl\nC2H5AlBr2\nC5H8O2\nC8H5NO2\nC22H24FN3O2\nCaO3Ti\nH2O4S\nH4Sn",
+          "testOut": "Al6Ca5O14\nB2O3\nB2Zr3\nBrH\nCCl4\nCHCl3\nCHNO\nCNaO3\nC2Ca\nC2H4\nC2H4BrCl\nC2H5AlBr2\nC5H8O2\nC8H5NO2\nC22H24FN3O2\nCaO3Ti\nH2O4S\nH4Sn",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Parenthesis",
+          "isTest": true,
+          "testIn": "3\nH3C(CH2)8CH2NH2\nZn3(PO4)2\nH2C2O4",
+          "testOut": "C2H2O4\nC10H23N\nO8P2Zn3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Parenthesis",
+          "isTest": false,
+          "testIn": "5\nCu(NO3)2\nCr2(SO4)3\nK2Cr2O7\nAl2(SO4)3\nBa(NO3)2",
+          "testOut": "Al2O12S3\nBaN2O6\nCr2K2O7\nCr2O12S3\nCuN2O6",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ [[N]] ≤ 20",
+      "stubGenerator": "read numCompounds:int\nloop numCompounds read compound:string(128)\n\nwrite answer",
+      "inputDescription": "<<Line 1:>> An integer [[N]] representing the number of compounds to sort\n<<Next [[N]] lines:>> A chemical formula consisting of uppercase and lowercase letters, parentheses, and numbers.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Up to [[N]] lines:>> of compounds expressed in Hill Notation and sorted in Hill Order"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Given a number of chemical formulas, convert them all to Hill Notation and then sort them into Hill Order while eliminating duplicates.<br><br>Hill Notation is used to succinctly express chemical formulas in precisely one way.<br>Hill Order is a way to sort compounds that make them easy to index.<br>For more information&nbsp;&mdash; https://en.wikipedia.org/wiki/Hill_system<br><br>Hill Notation consists of condensing any parenthesis group, counting the total number of each element and reordering them according to the following rules:<br>* If the compound contains Carbon (C), then it is always listed first, followed by Hydrogen (H) if present. All other elements are then sorted alphabetically and appended. For example, CH3CH2OH becomes C2H6O.<br>* Else sort all elements (including Hydrogen) alphabetically.<br><br>Hill Order sorts elements in Hill Notation according to the following rules:<br>* Compounds are sorted alphabetically by element. So Al2O3 comes before CH4.<br>* If the elements are in the same order, the one with fewer of the element is sorted first. <br><br>The following compounds are in Hill Order:<br>BrF5 &rarr; CCl &rarr; C2H6 &rarr; C3H8 &rarr; C60 &rarr; CaO &rarr; ClH</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var> representing the number of compounds to sort<br><strong>Next <var>N</var> lines:</strong> A chemical formula consisting of uppercase and lowercase letters, parentheses, and numbers.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Up to <var>N</var> lines:</strong> of compounds expressed in Hill Notation and sorted in Hill Order</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 20</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\nH2O\nAl2O3\nCCl4</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Al2O3\nCCl4\nH2O</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 297991871396,
+  "avatar": 5678142876588,
+  "commentCount": 4,
+  "upVotes": 1,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1440,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

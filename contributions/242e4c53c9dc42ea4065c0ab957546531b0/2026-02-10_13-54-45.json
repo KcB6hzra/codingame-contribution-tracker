@@ -1,0 +1,142 @@
+{
+  "id": 242,
+  "activeVersion": 26,
+  "score": 5,
+  "votableId": 2055841,
+  "codingamerId": 552776,
+  "views": 333,
+  "commentableId": 2005334,
+  "title": "Spy the Spies",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "player_one",
+  "publicHandle": "242e4c53c9dc42ea4065c0ab957546531b0",
+  "codingamerHandle": "fefb3b0a360d9451bde5553900470e2d677255",
+  "lastVersion": {
+    "version": 26,
+    "data": {
+      "title": "Spy the Spies",
+      "topics": [
+        {
+          "id": 117,
+          "handle": "logic",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Logic",
+            "2": "Logic"
+          },
+          "puzzleCount": 30,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "using System;\r\nusing System.Linq;\r\nusing System.IO;\r\nusing System.Text;\r\nusing System.Collections;\r\nusing System.Collections.Generic;\r\n\r\n\r\nclass Solution\r\n{\r\n    static void Main(string[] args)\r\n    {\r\n        var spyNames = Console.ReadLine().Split(' ').ToList();\r\n        var suspects = new Dictionary<string, List<string>>();\r\n        var attributes = new HashSet<string>();\r\n\r\n        for (var i = 0; i < 15; i++)\r\n        {\r\n            var tokens = Console.ReadLine().Split(' ').ToList();\r\n            var myAttributes = tokens.Skip(2).ToList();\r\n            if (int.Parse(tokens[1]) != myAttributes.Count) throw new ArgumentException();\r\n            attributes.UnionWith(myAttributes);\r\n            suspects.Add(tokens[0], myAttributes);\r\n        }\r\n\r\n        var moves = new SolutionStep(spyNames, suspects, attributes.ToList()).CalculateMoves();\r\n        Console.WriteLine(string.Join(System.Environment.NewLine, moves));\r\n    }\r\n\r\n    private class SolutionStep\r\n    {\r\n        private readonly List<string> _spyNames;\r\n        private readonly Dictionary<string, List<string>> _suspects;\r\n        private readonly Dictionary<string, List<string>> _spies;\r\n        private readonly Dictionary<string, List<string>> _innocents;\r\n        private readonly List<string> _attributes;\r\n        private readonly List<string> _positiveAttributes;\r\n        private readonly List<string> _negativeAttributes;\r\n\r\n        public SolutionStep(List<string> spyNames, Dictionary<string, List<string>> suspects, List<string> attributes)\r\n        {\r\n            _spyNames = spyNames;\r\n            _suspects = suspects;\r\n            _attributes = attributes;\r\n\r\n            _spies = spyNames.ToDictionary(key => key, key => suspects[key]);\r\n            _innocents = suspects.Keys.Where(key => !spyNames.Contains(key))\r\n                            .ToDictionary(key => key, key => suspects[key]);\r\n\r\n            _positiveAttributes = new List<string>();\r\n            _negativeAttributes = new List<string>();\r\n            foreach (var attribute in attributes)\r\n            {\r\n                var enemyHas = _spies.Values.Any(_ => _.Contains(attribute));\r\n                var innocentHas = _innocents.Values.Any(_ => _.Contains(attribute));\r\n                if (enemyHas && !innocentHas)\r\n                {\r\n                    _positiveAttributes.Add(attribute);\r\n                }\r\n                else if (innocentHas && !enemyHas)\r\n                {\r\n                    _negativeAttributes.Add(attribute);\r\n                }\r\n            }\r\n        }\r\n\r\n        public IEnumerable<string> CalculateMoves()\r\n        {\r\n            if (_spyNames.Count() == _suspects.Count() || !_spyNames.Any()) return new List<string>();\r\n\r\n            var completePositive = _positiveAttributes.FirstOrDefault(\r\n                attribute => _spies.All(pair => pair.Value.Contains(attribute)));\r\n            if (completePositive != null) return new List<string> { completePositive };\r\n\r\n            var completeNegative = _negativeAttributes.FirstOrDefault(\r\n                attribute => _innocents.All(pair => pair.Value.Contains(attribute)));\r\n            if (completeNegative != null) return new List<string> { \"NOT \" + completeNegative };\r\n\r\n            List<string> bestStrategy = null;\r\n            foreach (var attribute in _positiveAttributes)\r\n            {\r\n                var attempt = TryPositive(attribute);\r\n                if (bestStrategy == null || attempt.Count() < bestStrategy.Count())\r\n                {\r\n                    bestStrategy = attempt;\r\n                }\r\n            }\r\n            foreach (var attribute in _negativeAttributes)\r\n            {\r\n                var attempt = TryNegative(attribute);\r\n                if (bestStrategy == null || attempt.Count() < bestStrategy.Count())\r\n                {\r\n                    bestStrategy = attempt;\r\n                }\r\n            }\r\n            return bestStrategy;\r\n        }\r\n\r\n        private List<string> TryPositive(string attribute)\r\n        {\r\n            var moves = new List<string> { attribute };\r\n            var newSpyNames = _spyNames.Where(name => !_suspects[name].Contains(attribute)).ToList();\r\n            var newSuspects = _suspects.Where(pair => !pair.Value.Contains(attribute))\r\n                           .ToDictionary(pair => pair.Key, pair => pair.Value);\r\n            var newAttributes = _attributes.Where(a => a != attribute).ToList();\r\n            var nextStep = new SolutionStep(newSpyNames, newSuspects, newAttributes);\r\n            moves.AddRange(nextStep.CalculateMoves());\r\n            return moves;\r\n        }\r\n\r\n        private List<string> TryNegative(string attribute)\r\n        {\r\n            var moves = new List<string> { \"NOT \" + attribute };\r\n            var newSuspects = _suspects.Where(pair => !pair.Value.Contains(attribute))\r\n                           .ToDictionary(pair => pair.Key, pair => pair.Value);\r\n            var newAttributes = _attributes.Where(a => a != attribute).ToList();\r\n            var nextStep = new SolutionStep(_spyNames, newSuspects, newAttributes);\r\n            moves.AddRange(nextStep.CalculateMoves());\r\n            return moves;\r\n        }\r\n    }\r\n}",
+      "statement": "Six ({{6}}) enemy spies have entered the country. It is your job to indicate the enemies from a list of fifteen ({{15}}) suspects, using known attributes (appearance, ethnicity, etc.). Each suspect may be associated with multiple attributes, and there are often overlaps.\n\nTry to find the shortest list of commands that will indicate the enemy spies, but will not indicate any of the innocent suspects. You can issue these commands: \n\n - an attribute that is common to one or more of the enemies, but not the innocent suspects\n - {{NOT}} an attribute to indicate something that is common to one or more of the innocent suspects, and not to the enemy spies\n\nNote that a command only gives information about spies who are associated with the given attribute, and doesn't imply any information about those not associated with the given attribute.\n\nEach command given will eliminate <<ALL matching>> suspects from the current (potentially reduced) list, either absolving them as innocent, or indicating them as spies. Commands build on each other, so any suspects eliminated by a command will not be considered for future commands. The ordering of commands is significant, and the test cases are crafted such that the <<shortest>> list of commands only has a single valid ordering.\n\n<<Example 1>>\n\nNed is an enemy spy\n\nTonya is french and has blue-eyes\nNed is english and has blue-eyes\nCindy is tall\n\nThere are several ways to indicate Ned as the spy in this group:\n\n<<NOT french>>   <-- absolves Tonya\n<<NOT tall>>   <-- absolves Cindy, leaving Ned\n\nOR\n\n<<NOT tall>>  <-- absolves Cindy\n<<NOT french>>  <-- absolves Tonya, leaving Ned\n\nOR\n\n<<english>>  <-- indicates Ned\n\nOR\n\n<<NOT french>>  <-- absolves Tonya\n<<english>>  <-- indicates Ned\n\nOR\n\n<<NOT tall>>  <-- absolves Cindy\n<<english>>  <-- indicates Ned\n\nOR\n\n<<NOT french>>  <-- absolves Tonya\n<<blue-eyes>>  <-- indicates Ned\n\nThe third option, <<english>>, is the shortest list, so it is the correct choice.\n\n<<Example 2>>\n\nJasmin, Sam, and Rose are enemy spies\n\nRick has 3 identifying attributes: brown-hair, glasses, and tall\nMarcia has 2 identifying attributes: thin and freckled\nJasmin has 4 identifying attributes: chinese, short, thin, and brown-hair\nMatt has 2 identifying attributes: german and freckled\nSam has 3 identifying attributes: thin, glasses, and muscular\nRose has 3 identifying attributes: german, tall, and thin\n\nThere is one attribute that all the spies have in common: thin. But if we say \"thin\" then that will indicate Marcia as well. We need to remove Marcia from the list first by saying \"NOT freckled\".\n\n<<NOT freckled>>   <-- This absolves Marcia and Matt\n<<thin>>  <-- This indicates Jasmin, Sam, and Rose as definitely spies\n\nThis is the shortest possible list of commands that will indicate the three spies.",
+      "testCases": [
+        {
+          "title": "All in common",
+          "isTest": true,
+          "testIn": "Fred Mark Kim Anita Dwayne Nick\nDaniel 1 chinese\nClem 1 german\nDwayne 1 french\nAnita 1 french\nSpruce 1 german\nFred 1 french\nAdan 1 chinese\nSven 1 irish\nNick 1 french\nTim 1 irish\nHarley 1 english\nMary 1 russian\nKim 1 french\nRashad 1 chinese\nMark 1 french",
+          "testOut": "french",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "All in common",
+          "isTest": false,
+          "testIn": "Dena Ira Finley Reta Bartholomew Neta\nGustave 1 japanese\nAshley 1 kurdish\nNeta 1 italian\nSid 1 greek\nEmeric 1 lebanese\nCalypso 1 serbian\nFinley 1 italian\nTeddy 1 japanese\nIra 1 italian\nBartholomew 1 italian\nReta 1 italian\nLura 1 kurdish\nDena 1 italian\nIlsa 1 japanese\nAmalia 1 greek",
+          "testOut": "italian",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Common differentiator",
+          "isTest": true,
+          "testIn": "Derick Ronaldo Tempest Rolf Jeanne Tabitha\nTabitha 1 scottish\nRolf 1 hebrew\nMohammad 1 arabic\nJacob 1 arabic\nDerick 1 hebrew\nMeta 1 arabic\nRonaldo 1 scottish\nMelville 1 arabic\nHermon 1 arabic\nTempest 1 swedish\nJeanne 1 persian\nKourtney 1 arabic\nDallas 1 arabic\nVena 1 arabic\nEros 1 arabic",
+          "testOut": "NOT arabic",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Common differentiator",
+          "isTest": false,
+          "testIn": "Chaz Jesse Adria Jared Booker Xanthe\nJesse 1 portuguese\nAdria 1 korean\nChaz 1 georgian\nJared 1 french\nKether 1 czech\nLeslie 1 czech\nAmadeus 1 czech\nBerta 1 czech\nHattie 1 czech\nShelly 1 czech\nKaylynn 1 czech\nArchie 1 czech\nBooker 1 korean\nImogene 1 czech\nXanthe 1 portuguese",
+          "testOut": "NOT czech",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Extra attributes",
+          "isTest": true,
+          "testIn": "Tabitha Mohammad Ronaldo Jeanne Vena Eros\nTabitha 2 tall thin\nRolf 2 blue-eyed glasses\nMohammad 2 thin green-eyed\nJacob 2 blue-eyed blond\nDerick 2 glasses red-haired\nMeta 2 chubby freckled\nRonaldo 2 tall thin\nMelville 2 blue-eyed chubby\nHermon 2 tattooed blond\nTempest 2 chubby freckled\nJeanne 2 thin tall\nKourtney 2 blond tattooed\nDallas 2 glasses freckled\nVena 2 green-eyed thin\nEros 2 thin brown-haired",
+          "testOut": "thin",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Extra attributes",
+          "isTest": false,
+          "testIn": "Jeanne Vena Kaylynn Ronaldo Tabitha Mohammad\nJeanne 2 blue-eyed glasses\nJared 2 blond tall\nDallas 2 short brown-haired\nVena 2 muscular blue-eyed\nKaylynn 2 blue-eyed thin\nJesse 2 stocky freckled\nDerick 2 short blond\nMeta 2 tattooed brown-haired\nRonaldo 2 glasses blue-eyed\nMelville 2 stocky tattooed\nTabitha 2 blue-eyed red-haired\nRolf 2 stocky short\nMohammad 2 blue-eyed muscular\nHermon 2 tall blond\nTempest 2 tattooed brown-haired",
+          "testOut": "blue-eyed",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Extra steps",
+          "isTest": true,
+          "testIn": "Albert Elenora Alton Alethea Campion Evangeline\nMadison 3 tall french brown-eyed\nAlbert 2 tall tattooed\nAlethea 3 tall french tattooed\nSalazar 2 tattooed green-eyed\nAline 3 czech thin black-haired\nCampion 2 tattooed tall\nEvangeline 1 tattooed\nBrian 3 thin tattooed green-eyed\nHollis 2 black-haired tall\nOberon 1 black-haired\nElenora 2 tattooed french\nTavian 3 french brown-eyed black-haired\nBracken 2 black-haired thin\nAlton 4 tattooed green-eyed italian black-haired\nNatalie 2 thin czech",
+          "testOut": "italian\nNOT green-eyed\ntattooed",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Extra steps",
+          "isTest": false,
+          "testIn": "Taggert Veva Alana Secundus Ellie Rudolf\nPleasant 3 glasses freckled tall\nTaggert 2 glasses english\nSecundus 3 glasses freckled english\nAlfred 2 english red-haired\nVeva 2 english freckled\nCaius 3 freckled tall brown-eyed\nJuliet 2 brown-eyed tattooed\nAlana 4 english red-haired pierced-nose brown-eyed\nTristan 2 tattooed turkish\nCornelious 3 turkish tattooed brown-eyed\nEllie 2 english glasses\nRudolf 1 english\nEthel 3 tattooed english red-haired\nRhett 2 brown-eyed glasses\nIdella 1 brown-eyed",
+          "testOut": "pierced-nose\nNOT red-haired\nenglish",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Very entangled",
+          "isTest": true,
+          "testIn": "Sophie Hans Velma Nick Rufus Barbie\nVlad 2 russian blond\nNorris 2 chubby red-haired\nSophie 2 short chubby\nRufus 2 french freckled\nDestiny 1 brown-haired\nMarcus 2 tall french\nRidley 1 blue-eyed\nHans 2 red-haired russian\nBarbie 1 gray-eyed\nNick 2 thai thin\nKathy 2 freckled thai\nTheresa 1 gray-haired\nXander 1 brown-eyed\nVelma 2 blond tall\nMandy 2 thin gray-eyed",
+          "testOut": "short\nNOT chubby\nred-haired\nNOT russian\nblond\nNOT tall\nfrench\nNOT freckled\nthai\nNOT thin\ngray-eyed",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Very entangled",
+          "isTest": false,
+          "testIn": "Nora Hans Velma Nick Dorcas Barbie\nSky 2 blond muscular\nNora 2 tattooed blond\nCandy 1 glasses\nSinbad 2 short freckled\nDorcas 2 freckled spanish\nPaul 1 gray-haired\nTommy 1 curly-haired\nHans 2 muscular tall\nBarbie 1 athletic\nVlad 2 tall green-eyed\nNick 2 brown-haired vietnamese\nKathy 2 spanish brown-haired\nXander 1 bearded\nVelma 2 green-eyed short\nMandy 2 vietnamese athletic",
+          "testOut": "tattooed\nNOT blond\nmuscular\nNOT tall\ngreen-eyed\nNOT short\nfreckled\nNOT spanish\nbrown-haired\nNOT vietnamese\nathletic",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "1 ≤ [[attributeCount]] ≤ 4\nThe test cases are designed so that the shortest list of commands only has a single valid ordering, so the solution is guaranteed to be unique.",
+      "coverBinaryId": 135728445742244,
+      "stubGenerator": "read enemy1:word(20) enemy2:word(20) enemy3:word(20) enemy4:word(20) enemy5:word(20) enemy6:word(20)\nloop 15 read suspect:string(100)\nwrite answer",
+      "inputDescription": "<<Line 1:>> A space-separated list of {{6}} [[enemyName]], indicating which of the suspects are enemy spies.\n<<Next {{15}} lines:>> A [[suspectName]], followed by a space, then an integer for [[attributeCount]], followed by a space-separated list of [[attribute]] for that suspect.",
+      "solutionLanguage": "C#",
+      "outputDescription": "The shortest possible list of commands, one line per command issued. Each command is either:\n\n- An [[attribute]] (indicating something common to some subset of the enemy spies)\n- The word {{NOT}} followed by a space and then an [[attribute]] (indicating something common only to innocent suspects)"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Six (<const>6</const>) enemy spies have entered the country. It is your job to indicate the enemies from a list of fifteen (<const>15</const>) suspects, using known attributes (appearance, ethnicity, etc.). Each suspect may be associated with multiple attributes, and there are often overlaps.<br><br>Try to find the shortest list of commands that will indicate the enemy spies, but will not indicate any of the innocent suspects. You can issue these commands: <br><br> - an attribute that is common to one or more of the enemies, but not the innocent suspects<br> - <const>NOT</const> an attribute to indicate something that is common to one or more of the innocent suspects, and not to the enemy spies<br><br>Note that a command only gives information about spies who are associated with the given attribute, and doesn't imply any information about those not associated with the given attribute.<br><br>Each command given will eliminate <strong>ALL matching</strong> suspects from the current (potentially reduced) list, either absolving them as innocent, or indicating them as spies. Commands build on each other, so any suspects eliminated by a command will not be considered for future commands. The ordering of commands is significant, and the test cases are crafted such that the <strong>shortest</strong> list of commands only has a single valid ordering.<br><br><strong>Example 1</strong><br><br>Ned is an enemy spy<br><br>Tonya is french and has blue-eyes<br>Ned is english and has blue-eyes<br>Cindy is tall<br><br>There are several ways to indicate Ned as the spy in this group:<br><br><strong>NOT french</strong>   &lt;-- absolves Tonya<br><strong>NOT tall</strong>   &lt;-- absolves Cindy, leaving Ned<br><br>OR<br><br><strong>NOT tall</strong>  &lt;-- absolves Cindy<br><strong>NOT french</strong>  &lt;-- absolves Tonya, leaving Ned<br><br>OR<br><br><strong>english</strong>  &lt;-- indicates Ned<br><br>OR<br><br><strong>NOT french</strong>  &lt;-- absolves Tonya<br><strong>english</strong>  &lt;-- indicates Ned<br><br>OR<br><br><strong>NOT tall</strong>  &lt;-- absolves Cindy<br><strong>english</strong>  &lt;-- indicates Ned<br><br>OR<br><br><strong>NOT french</strong>  &lt;-- absolves Tonya<br><strong>blue-eyes</strong>  &lt;-- indicates Ned<br><br>The third option, <strong>english</strong>, is the shortest list, so it is the correct choice.<br><br><strong>Example 2</strong><br><br>Jasmin, Sam, and Rose are enemy spies<br><br>Rick has 3 identifying attributes: brown-hair, glasses, and tall<br>Marcia has 2 identifying attributes: thin and freckled<br>Jasmin has 4 identifying attributes: chinese, short, thin, and brown-hair<br>Matt has 2 identifying attributes: german and freckled<br>Sam has 3 identifying attributes: thin, glasses, and muscular<br>Rose has 3 identifying attributes: german, tall, and thin<br><br>There is one attribute that all the spies have in common: thin. But if we say &quot;thin&quot; then that will indicate Marcia as well. We need to remove Marcia from the list first by saying &quot;NOT freckled&quot;.<br><br><strong>NOT freckled</strong>   &lt;-- This absolves Marcia and Matt<br><strong>thin</strong>  &lt;-- This indicates Jasmin, Sam, and Rose as definitely spies<br><br>This is the shortest possible list of commands that will indicate the three spies.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> A space-separated list of <const>6</const> <var>enemyName</var>, indicating which of the suspects are enemy spies.<br><strong>Next <const>15</const> lines:</strong> A <var>suspectName</var>, followed by a space, then an integer for <var>attributeCount</var>, followed by a space-separated list of <var>attribute</var> for that suspect.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The shortest possible list of commands, one line per command issued. Each command is either:<br><br>- An <var>attribute</var> (indicating something common to some subset of the enemy spies)<br>- The word <const>NOT</const> followed by a space and then an <var>attribute</var> (indicating something common only to innocent suspects)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>attributeCount</var> &le; 4<br>The test cases are designed so that the shortest list of commands only has a single valid ordering, so the solution is guaranteed to be unique.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">Fred Mark Kim Anita Dwayne Nick\nDaniel 1 chinese\nClem 1 german\nDwayne 1 french\nAnita 1 french\nSpruce 1 german\nFred 1 french\nAdan 1 chinese\nSven 1 irish\nNick 1 french\nTim 1 irish\nHarley 1 english\nMary 1 russian\nKim 1 french\nRashad 1 chinese\nMark 1 french</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">french</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 298441900253,
+  "avatar": 52487021619351,
+  "commentCount": 15,
+  "upVotes": 5,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1053,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

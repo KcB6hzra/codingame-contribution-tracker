@@ -1,0 +1,500 @@
+{
+  "id": 127296,
+  "activeVersion": 56,
+  "score": 6,
+  "votableId": 37386557,
+  "codingamerId": 5192217,
+  "views": 145,
+  "commentableId": 37225412,
+  "title": "Snakes and Ladders",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Harry.B.",
+  "publicHandle": "127296b3ec31e04b07148a3590fa8b89b0c492",
+  "codingamerHandle": "d926a93cb394ded661b204822965c5fa7122915",
+  "lastVersion": {
+    "version": 56,
+    "autocloseTime": 1753013427485,
+    "freezeTime": 1751026227485,
+    "data": {
+      "title": "Snakes and Ladders",
+      "topics": [
+        {
+          "id": 54,
+          "handle": "BFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en largeur",
+            "2": "BFS"
+          },
+          "pageTitle": "BFS: exercises and theory",
+          "puzzleCount": 35,
+          "parentTopicId": 41,
+          "contentDetailsId": 84
+        },
+        {
+          "id": 55,
+          "handle": "DFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en profondeur",
+            "2": "DFS"
+          },
+          "pageTitle": "DFS: exercises and theory",
+          "puzzleCount": 23,
+          "parentTopicId": 41,
+          "contentDetailsId": 79
+        },
+        {
+          "id": 68,
+          "handle": "pathfinding",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Recherche de chemins",
+            "2": "Pathfinding"
+          },
+          "pageTitle": "Pathfinding: exercises and theory",
+          "puzzleCount": 53,
+          "parentTopicId": 41,
+          "contentDetailsId": 69
+        }
+      ],
+      "solution": "from collections import deque\n\n# Form hashmap of snakes and ladders.\nsnakes = {}\nladders = {}\nwidth, height = [int(i) for i in input().split()]\nn = int(input())\nsnake_amount, ladder_amount = [int(i) for i in input().split()]\nfor i in range(snake_amount):\n    head, tail = [int(j) for j in input().split()]\n    snakes[head] = tail\nfor i in range(ladder_amount):\n    top, bottom = [int(j) for j in input().split()]\n    ladders[bottom] = top\n\n# Define starting tile and goal tile.\npos, goal= 1, height*width\n\n# Complete BFS to find the shortest number of dice throws to reach the final tile.\nqueue = deque([[pos,0]])\nvisited = set()\nmoves = -1\nwhile queue:\n    pos,moves = queue.popleft()\n    if pos == goal:\n        break\n\n    if pos in visited:\n        continue\n    visited.add(pos)\n\n    for i in range(1,n+1):\n        new_pos = pos+i\n        if new_pos > goal:\n            continue\n        if new_pos in snakes:\n            queue.append([snakes[new_pos],moves+1])\n        elif new_pos in ladders:\n            queue.append([ladders[new_pos],moves+1])\n        else:\n            queue.append([new_pos, moves+1])\n\n# Print shortest number of dice throws to reach the final tile.\nprint(moves)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\"\"\"\n#TESTING CODE\n# Error 1: Head before tail or top before bottom.\n# Error 2: Values outside the constraint.\n# Error 3: Tile contains a head and a bottom.\n# Error 4: Head and Tail / Top and Bottom on the same row.\n# Error 5: Not in order of head / top.\nfrom collections import deque\nimport sys\nimport time\n\ns = time.time()\n# For hashmap of snakes and ladders.\nsnakes = {}\nladders = {}\nwidth, height = [int(i) for i in input().split()]\nMIN_VALUE, MAX_VALUE = 1, height*width\nn = int(input())\nassert 1<=n<=20, \"n is wrong value!\"\nsnake_amount, ladder_amount = [int(i) for i in input().split()]\nprev = -1\nfor i in range(snake_amount):\n    head, tail = [int(j) for j in input().split()]\n    assert head>tail,f\"Error 1 line {i+3}\"\n    assert MIN_VALUE<=head<=MAX_VALUE and MIN_VALUE<=tail<=MAX_VALUE, f\"Error 2 line {i+3}\"\n    assert (head-1)//width != (tail-1)//width, f\"Error 4 line {i+3}\" \n    assert head > prev, f\"Error 5 line {i+3} {head,tail}\";prev = head\n    snakes[head] = tail\n    \nprev = -1\nfor i in range(ladder_amount):\n    top, bottom = [int(j) for j in input().split()]\n    bottom_in_snakes = bottom in snakes\n    assert top>bottom,f\"Error 1 line {i+3+snake_amount}\"\n    assert MIN_VALUE<=top<=MAX_VALUE and MIN_VALUE<=bottom<=MAX_VALUE, f\"Error 2 line {i+3+snake_amount}\"\n    assert bottom_in_snakes == False, f\"Error 3 line {i+3+snake_amount}: {top,bottom}\"\n    assert (top-1)//width != (bottom-1)//width, f\"Error 4 line {i+3+snake_amount} - {top,(top-1)//width} and {bottom,(bottom-1)//width}\"\n    assert top > prev, f\"Error 5 line {i+3}\";prev=top\n    ladders[bottom] = top\n\nwhile True:\n    try:\n        input()\n        assert 1<0, \"Not all inputs have been read in.\"\n    except EOFError:break\n\n# Define starting tile and goal tile.\npos, goal= 1, height*width\n\n# Complete BFS to find the shorted number of die throws to reach the final tile.\nqueue = deque([[pos,0,[],0,0]])\nvisited = set()\nmoves = -1\nwhile queue:\n    pos,moves,path, ss, ll = queue.popleft()\n    if pos == goal:\n        print(path, file = sys.stderr)\n        print(\"Ladders used:\",ll, file = sys.stderr)\n        print(\"Snakes used:\",ss, file = sys.stderr)\n        break\n\n    if pos in visited:\n        continue\n    visited.add(pos)\n\n    for i in range(1,n+1):\n        new_pos = pos+i\n        if new_pos > goal:\n            continue\n        if new_pos in snakes:\n            queue.append([snakes[new_pos],moves+1, path + [pos] + [new_pos], ss+1, ll])\n        elif new_pos in ladders:\n            queue.append([ladders[new_pos],moves+1, path + [pos] + [new_pos], ss, ll+1])\n        else:\n            queue.append([new_pos, moves+1, path + [pos], ss, ll])\n\n# Print shortest die throws to reach the final tile.\nprint(moves)\n\nprint(time.time() - s, file = sys.stderr)\n\"\"\"",
+      "statement": "Snakes and Ladders is a luck-based board game where players move from a starting tile to the final tile according to dice rolls. Given a Snakes and Ladders board, determine the <<MINIMUM>> number of dice rolls required to reach the final tile.\n\n<<Board and Movement>>\nThe board is a 2D grid with dimensions [[width]] × [[height]]. The player starts at the bottom-left tile (tile 1) and moves forward by traversing each row in a zigzag manner. First left to right, then right to left. Upon reaching the end of a row, the player moves up one row and continues, repeating this pattern until reaching the final tile. Tiles are numbered sequentially following these directions from 1 to [[width]]×[[height]].\nExample in a 3x3:\n`7 => 8 => 9\n^\n6 <= 5 <= 4\n          ^\n1 => 2 => 3`\nAn [[n]]-sided die is used by a player to determine the number of tiles the player moves. Each throw the player <<MUST>> move exactly the number of tiles indicated by the die, and <<MUST>> move forward following the movement rules outlined above.\n\n<<Snakes and Ladders>>\nSnakes and ladders are special tiles that can either hinder or aid in the journey to reach the final tile.\n• Snakes are slippery. If a player lands on a snake's [[head]], they <<MUST>> slide down to its [[tail]].\n• Ladders are climbable. If a player lands on the [[bottom]] of a ladder, they <<MUST>> climb up to its [[top]].\nSnakes and ladders <<take effect immediately>> after throwing a die and landing on their respective locations, but <<DO NOT>> chain together.",
+      "testCases": [
+        {
+          "title": "Small Board",
+          "isTest": true,
+          "testIn": "5 5\n6\n4 2\n6 3\n7 1\n21 16\n22 15\n8 5\n19 14",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Small Board",
+          "isTest": false,
+          "testIn": "5 5\n6\n4 2\n8 5\n16 2\n23 15\n24 17\n10 5\n20 14",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Standard Board",
+          "isTest": true,
+          "testIn": "10 10\n6\n6 3\n33 25\n39 15\n60 20\n71 50\n75 46\n96 87\n30 10\n57 43\n82 80",
+          "testOut": "12",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Standard Board",
+          "isTest": false,
+          "testIn": "10 10\n6\n5 3\n15 7\n23 20\n48 35\n63 57\n86 74\n25 19\n42 37\n78 64",
+          "testOut": "13",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Large Board",
+          "isTest": true,
+          "testIn": "20 20\n6\n11 6\n83 46\n104 88\n159 123\n186 146\n229 191\n276 88\n310 250\n324 285\n371 308\n382 171\n394 81\n84 42\n103 95\n210 171\n271 234\n317 275\n382 370",
+          "testOut": "39",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Large Board",
+          "isTest": false,
+          "testIn": "20 20\n6\n11 4\n67 26\n120 83\n158 116\n212 174\n259 208\n301 199\n328 115\n331 233\n354 275\n385 362\n386 206\n115 77\n197 140\n245 222\n320 277",
+          "testOut": "43",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Small Bland Board",
+          "isTest": true,
+          "testIn": "4 4\n6\n1 1\n14 2\n7 3",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Small Bland Board",
+          "isTest": false,
+          "testIn": "4 4\n6\n1 1\n13 4\n6 2",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Medium Bland Board",
+          "isTest": true,
+          "testIn": "11 11\n6\n2 1\n23 4\n100 54\n17 9",
+          "testOut": "20",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Medium Bland Board",
+          "isTest": false,
+          "testIn": "11 11\n6\n2 1\n33 8\n89 57\n22 10",
+          "testOut": "19",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Large Bland Board",
+          "isTest": true,
+          "testIn": "19 19\n6\n2 2\n111 54\n301 8\n32 18\n350 321",
+          "testOut": "54",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Large Bland Board",
+          "isTest": false,
+          "testIn": "19 19\n6\n2 2\n126 88\n333 222\n39 20\n350 331",
+          "testOut": "55",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Small Board and Small Dice",
+          "isTest": true,
+          "testIn": "6 6\n2\n6 3\n8 4\n18 7\n23 10\n29 19\n33 7\n35 12\n7 4\n16 12\n19 15",
+          "testOut": "15",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Small Board and Small Dice",
+          "isTest": false,
+          "testIn": "6 6\n2\n6 3\n9 4\n19 7\n24 10\n29 19\n33 5\n35 12\n8 4\n13 11\n32 30",
+          "testOut": "16",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Small Board and Large Dice",
+          "isTest": true,
+          "testIn": "6 6\n10\n6 2\n13 2\n22 11\n30 5\n32 4\n34 17\n35 15\n13 11\n26 23",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Small Board and Large Dice",
+          "isTest": false,
+          "testIn": "6 6\n9\n6 2\n13 2\n24 11\n30 5\n32 3\n34 17\n35 15\n13 10\n28 21",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Large Board and Small Die",
+          "isTest": true,
+          "testIn": "18 18\n2\n10 3\n34 7\n43 6\n56 45\n67 32\n132 89\n156 49\n178 78\n234 67\n267 36\n300 258\n38 36\n130 122\n218 212",
+          "testOut": "158",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Large Board and Small Die",
+          "isTest": false,
+          "testIn": "18 18\n2\n10 3\n34 7\n44 4\n60 45\n67 32\n142 89\n156 48\n180 75\n234 67\n268 36\n312 258\n45 36\n135 122\n224 212",
+          "testOut": "147",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Large Board and Large Die",
+          "isTest": true,
+          "testIn": "19 19\n14\n11 4\n37 4\n71 21\n104 65\n137 19\n147 82\n199 115\n233 204\n256 138\n277 252\n321 144\n349 17\n86 47\n160 110\n225 183\n305 297",
+          "testOut": "18",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Large Board and Large Die",
+          "isTest": false,
+          "testIn": "19 19\n16\n11 4\n37 3\n73 20\n104 65\n137 19\n147 82\n199 115\n235 204\n256 130\n275 252\n321 144\n344 17\n86 47\n149 110\n222 183\n305 296",
+          "testOut": "17",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Small Non-Standard Board",
+          "isTest": true,
+          "testIn": "5 7\n5\n6 2\n6 4\n13 9\n15 7\n22 17\n28 16\n32 24\n16 14\n24 19",
+          "testOut": "7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Small Non-Standard Board",
+          "isTest": false,
+          "testIn": "5 8\n4\n6 3\n7 4\n13 6\n15 7\n24 17\n29 16\n34 24\n16 14\n25 19\n38 33",
+          "testOut": "9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Medium Non-Standard Board",
+          "isTest": true,
+          "testIn": "12 9\n4\n10 5\n15 1\n28 15\n34 21\n38 3\n42 7\n52 23\n59 43\n83 32\n84 57\n87 64\n35 20\n75 56\n93 82\n102 90\n108 92",
+          "testOut": "16",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Medium Non-Standard Board",
+          "isTest": false,
+          "testIn": "13 9\n5\n10 5\n27 4\n35 16\n46 26\n47 1\n59 14\n68 30\n92 56\n102 45\n106 71\n116 10\n22 9\n79 62\n101 84\n103 83\n112 95",
+          "testOut": "15",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Large Non-Standard Board",
+          "isTest": true,
+          "testIn": "22 19\n5\n20 7\n53 30\n63 2\n69 32\n128 18\n134 28\n146 94\n153 72\n177 48\n190 136\n196 44\n200 45\n229 180\n233 196\n312 34\n322 42\n327 140\n341 77\n359 236\n400 189\n411 142\n32 18\n37 19\n65 33\n112 70\n239 203\n272 241\n287 257",
+          "testOut": "56",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Large Non-Standard Board",
+          "isTest": false,
+          "testIn": "23 18\n6\n8 6\n35 4\n142 40\n244 155\n249 188\n295 194\n341 299\n345 46\n361 257\n84 64\n159 120\n241 229\n290 264\n346 343\n371 348",
+          "testOut": "51",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Pocket Board",
+          "isTest": true,
+          "testIn": "3 2\n5\n1 1\n4 1\n5 2",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Pocket Board",
+          "isTest": false,
+          "testIn": "2 3\n5\n1 1\n4 1\n5 2",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No Ladders, Just Snakes",
+          "isTest": true,
+          "testIn": "3 18\n4\n9 0\n5 2\n7 4\n18 8\n24 20\n32 29\n37 30\n39 34\n52 32\n53 19",
+          "testOut": "14",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "No Ladders, Just Snakes",
+          "isTest": false,
+          "testIn": "5 19\n5\n10 0\n11 4\n13 6\n17 10\n18 12\n20 8\n63 26\n72 41\n74 20\n81 56\n91 17",
+          "testOut": "20",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No Snakes, Just Ladders",
+          "isTest": true,
+          "testIn": "25 25\n4\n0 13\n85 35\n96 67\n123 89\n201 166\n202 182\n367 334\n389 364\n420 373\n532 520\n543 494\n551 541\n560 515\n580 535",
+          "testOut": "95",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "No Snakes, Just Ladders",
+          "isTest": false,
+          "testIn": "25 24\n5\n0 11\n122 96\n156 133\n161 134\n183 143\n187 148\n203 188\n375 341\n417 390\n453 428\n566 548\n584 569",
+          "testOut": "83",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Empty Board",
+          "isTest": true,
+          "testIn": "15 17\n5\n0 0",
+          "testOut": "51",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Empty Board",
+          "isTest": false,
+          "testIn": "18 15\n6\n0 0",
+          "testOut": "45",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Empty Board 2",
+          "isTest": true,
+          "testIn": "1 49\n2\n0 0",
+          "testOut": "24",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Empty Board 2",
+          "isTest": false,
+          "testIn": "47 1\n2\n0 0",
+          "testOut": "23",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No Chaining Detector",
+          "isTest": true,
+          "testIn": "10 10\n5\n3 3\n27 9\n50 2\n82 11\n27 6\n50 29\n82 65",
+          "testOut": "9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "No Chaining Detector",
+          "isTest": false,
+          "testIn": "10 10\n4\n5 3\n37 11\n57 7\n82 11\n88 74\n98 87\n37 6\n57 29\n82 65",
+          "testOut": "14",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Helpful Ladder",
+          "isTest": true,
+          "testIn": "13 14\n9\n18 6\n28 4\n34 9\n62 10\n68 12\n74 53\n79 18\n96 26\n100 61\n112 49\n114 57\n115 64\n125 55\n128 42\n147 116\n149 79\n151 123\n166 13\n181 1\n27 25\n44 27\n135 119\n174 162\n181 1\n182 3",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Helpful Ladder",
+          "isTest": false,
+          "testIn": "15 15\n7\n17 9\n20 1\n27 4\n37 22\n42 13\n44 12\n107 54\n108 31\n118 86\n133 97\n145 127\n156 52\n178 108\n179 128\n186 88\n189 115\n190 38\n207 183\n38 21\n51 33\n65 23\n129 112\n174 159\n187 157\n218 180\n224 1\n225 2",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Many Snakes and Ladders",
+          "isTest": true,
+          "testIn": "17 17\n5\n27 14\n43 1\n50 14\n55 21\n67 35\n99 34\n100 76\n112 95\n117 79\n121 82\n131 89\n146 105\n151 58\n162 11\n167 103\n182 50\n187 69\n192 149\n202 142\n223 13\n225 32\n227 5\n232 19\n259 226\n260 171\n266 178\n267 200\n271 43\n21 15\n38 32\n55 49\n72 66\n106 101\n123 116\n141 134\n157 150\n174 168\n191 185\n208 201\n227 217\n243 236\n259 252",
+          "testOut": "45",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Many Snakes and Ladders",
+          "isTest": false,
+          "testIn": "18 17\n5\n29 13\n50 8\n56 4\n72 18\n82 12\n83 40\n96 49\n98 59\n118 27\n120 46\n121 71\n135 68\n140 11\n142 17\n146 103\n155 120\n174 119\n190 15\n195 126\n201 101\n206 22\n211 98\n212 141\n225 92\n226 145\n239 41\n241 60\n249 62\n254 3\n299 189\n21 15\n39 33\n57 51\n75 69\n93 87\n111 105\n129 123\n147 141\n165 159\n183 177\n201 194\n219 213\n237 231",
+          "testOut": "53",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Many Snakes and Ladders 2",
+          "isTest": true,
+          "testIn": "7 49\n3\n29 45\n10 1\n20 11\n29 3\n34 21\n36 5\n39 27\n50 29\n51 26\n58 17\n69 19\n85 60\n103 49\n115 82\n127 80\n144 119\n165 99\n197 9\n201 138\n207 23\n221 107\n229 57\n252 54\n276 207\n284 201\n287 187\n290 241\n307 223\n330 285\n340 208\n10 4\n17 11\n24 18\n31 25\n38 32\n45 38\n52 46\n59 53\n66 60\n73 67\n80 74\n87 81\n94 88\n101 95\n108 102\n115 109\n122 116\n129 123\n136 130\n143 137\n150 143\n157 151\n164 158\n171 164\n178 172\n185 179\n192 186\n199 193\n206 200\n213 208\n220 214\n227 222\n234 228\n241 235\n248 242\n255 249\n262 256\n269 263\n276 270\n283 277\n290 285\n297 292\n304 298\n311 305\n318 312",
+          "testOut": "57",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Many Snakes and Ladders 2",
+          "isTest": false,
+          "testIn": "6 49\n3\n29 23\n18 12\n23 1\n28 17\n44 3\n81 27\n90 6\n96 46\n98 10\n104 22\n106 15\n122 98\n135 95\n160 149\n163 143\n164 128\n184 48\n187 62\n193 20\n194 40\n197 110\n210 7\n235 45\n237 2\n244 205\n252 181\n274 148\n280 164\n285 105\n293 127\n9 3\n21 15\n33 27\n45 39\n57 51\n69 63\n81 75\n93 87\n105 99\n117 111\n129 123\n141 136\n153 147\n165 159\n177 171\n189 183\n201 195\n213 207\n225 219\n237 231\n249 243\n261 255\n273 267",
+          "testOut": "56",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Many Snakes and Ladders 3",
+          "isTest": true,
+          "testIn": "49 8\n4\n26 7\n69 10\n87 21\n108 15\n120 45\n131 69\n137 50\n151 3\n189 20\n190 4\n202 136\n203 25\n216 38\n220 35\n224 127\n226 158\n228 16\n234 28\n237 186\n247 33\n272 94\n273 107\n279 66\n341 11\n355 14\n380 44\n384 95\n52 46\n101 95\n150 144\n199 193\n248 242\n297 291\n346 340",
+          "testOut": "93",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Many Snakes and Ladders 3",
+          "isTest": false,
+          "testIn": "49 9\n4\n26 8\n65 3\n69 17\n98 27\n114 46\n122 1\n131 49\n176 4\n183 47\n200 67\n213 43\n214 150\n228 135\n247 99\n250 79\n262 62\n264 89\n278 90\n301 205\n306 180\n316 97\n322 113\n334 235\n357 144\n359 291\n422 166\n424 74\n52 46\n101 95\n150 144\n199 193\n248 242\n297 291\n346 340\n395 389",
+          "testOut": "102",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Useful Snake",
+          "isTest": true,
+          "testIn": "25 25\n12\n9 2\n188 26\n200 78\n233 45\n276 189\n291 50\n405 327\n431 299\n466 211\n593 39\n457 11\n624 222",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Useful Snake",
+          "isTest": false,
+          "testIn": "24 25\n9\n10 2\n95 33\n118 26\n282 97\n287 149\n379 104\n442 74\n444 152\n445 170\n485 46\n539 299\n411 4\n594 178",
+          "testOut": "7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Useful Snakes",
+          "isTest": true,
+          "testIn": "15 48\n4\n8 13\n34 28\n79 75\n127 110\n187 175\n250 229\n324 310\n428 411\n541 522\n33 2\n77 30\n119 76\n145 113\n184 149\n212 176\n246 223\n284 233\n312 286\n387 311\n424 392\n536 419\n656 535",
+          "testOut": "48",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Useful Snakes",
+          "isTest": false,
+          "testIn": "48 15\n3\n9 8\n97 46\n193 145\n202 84\n245 224\n432 382\n495 112\n621 575\n666 404\n705 644\n96 8\n191 47\n242 149\n337 230\n431 339\n527 385\n619 533\n671 577",
+          "testOut": "35",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ [[width]],[[height]] < 50\n2 ≤ [[n]] < 20\n0 ≤ [[snake_amount]],[[ladder_amount]] < 50\nA snake's [[head]] will never be on the same tile as a ladder's [[bottom]].",
+      "coverBinaryId": 145875107225654,
+      "stubGenerator": "read width:int height:int\nread n:int\nread snakeAmount:int ladderAmount:int\n\nloop snakeAmount read head:int tail:int\nloop ladderAmount read top:int bottom:int\n\nwrite answer",
+      "inputDescription": "<<Line 1: >> Space-separated integers representing the width and height of the board, in the form: [[width]] [[height]]\n<<Line 2: >> Integer [[n]] representing the number of sides on the die.\n<<Line 3: >> Space-separated integers representing the number of snakes and ladders, in the form: [[snake_amount]] [[ladder_amount]]\n<<Next [[snake_amount]] Lines: >> Space-separated integers representing the tile number of the head and tail of a snake, in the form:  [[head]] [[tail]]\n<<Next [[ladder_amount]] Lines: >> Space-separated integers representing the tile number of the top and bottom of a ladder, in the form: [[top]] [[bottom]]",
+      "solutionLanguage": "Python3",
+      "outputDescription": "Integer representing the minimum number of dice rolls required to reach the final tile."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Snakes and Ladders is a luck-based board game where players move from a starting tile to the final tile according to dice rolls. Given a Snakes and Ladders board, determine the <strong>MINIMUM</strong> number of dice rolls required to reach the final tile.<br><br><strong>Board and Movement</strong><br>The board is a 2D grid with dimensions <var>width</var> &times; <var>height</var>. The player starts at the bottom-left tile (tile 1) and moves forward by traversing each row in a zigzag manner. First left to right, then right to left. Upon reaching the end of a row, the player moves up one row and continues, repeating this pattern until reaching the final tile. Tiles are numbered sequentially following these directions from 1 to <var>width</var>&times;<var>height</var>.<br>Example in a 3x3:<br><pre style=\"font-family: monospace\">7 =&gt; 8 =&gt; 9<br>^<br>6 &lt;= 5 &lt;= 4<br>          ^<br>1 =&gt; 2 =&gt; 3</pre><br>An <var>n</var>-sided die is used by a player to determine the number of tiles the player moves. Each throw the player <strong>MUST</strong> move exactly the number of tiles indicated by the die, and <strong>MUST</strong> move forward following the movement rules outlined above.<br><br><strong>Snakes and Ladders</strong><br>Snakes and ladders are special tiles that can either hinder or aid in the journey to reach the final tile.<br>&bull; Snakes are slippery. If a player lands on a snake's <var>head</var>, they <strong>MUST</strong> slide down to its <var>tail</var>.<br>&bull; Ladders are climbable. If a player lands on the <var>bottom</var> of a ladder, they <strong>MUST</strong> climb up to its <var>top</var>.<br>Snakes and ladders <strong>take effect immediately</strong> after throwing a die and landing on their respective locations, but <strong>DO NOT</strong> chain together.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1: </strong> Space-separated integers representing the width and height of the board, in the form: <var>width</var> <var>height</var><br><strong>Line 2: </strong> Integer <var>n</var> representing the number of sides on the die.<br><strong>Line 3: </strong> Space-separated integers representing the number of snakes and ladders, in the form: <var>snake_amount</var> <var>ladder_amount</var><br><strong>Next <var>snake_amount</var> Lines: </strong> Space-separated integers representing the tile number of the head and tail of a snake, in the form:  <var>head</var> <var>tail</var><br><strong>Next <var>ladder_amount</var> Lines: </strong> Space-separated integers representing the tile number of the top and bottom of a ladder, in the form: <var>top</var> <var>bottom</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Integer representing the minimum number of dice rolls required to reach the final tile.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>width</var>,<var>height</var> &lt; 50<br>2 &le; <var>n</var> &lt; 20<br>0 &le; <var>snake_amount</var>,<var>ladder_amount</var> &lt; 50<br>A snake's <var>head</var> will never be on the same tile as a ladder's <var>bottom</var>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5 5\n6\n4 2\n6 3\n7 1\n21 16\n22 15\n8 5\n19 14</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">3</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 17949063942,
+  "avatar": 130769403588418,
+  "commentCount": 14,
+  "upVotes": 6,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1165498,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1752779310490,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

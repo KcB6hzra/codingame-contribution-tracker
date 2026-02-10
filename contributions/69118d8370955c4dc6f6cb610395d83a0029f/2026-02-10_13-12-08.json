@@ -1,0 +1,129 @@
+{
+  "id": 69118,
+  "activeVersion": 3,
+  "score": -3,
+  "votableId": 30728969,
+  "codingamerId": 5379407,
+  "views": 159,
+  "commentableId": 30591215,
+  "title": "A network calculator",
+  "status": "ACCEPTED",
+  "type": "CLASHOFCODE",
+  "nickname": "Eevee89",
+  "publicHandle": "69118d8370955c4dc6f6cb610395d83a0029f",
+  "codingamerHandle": "184bda730d772c9adc6d4c8f299001cb7049735",
+  "lastVersion": {
+    "version": 3,
+    "autocloseTime": 1695758016085,
+    "data": {
+      "title": "A network calculator",
+      "topics": [],
+      "fastest": true,
+      "reverse": false,
+      "shortest": false,
+      "solution": "def d2b(entier: int, bit: int) -> str:\n    \"\"\"Decimal -> binaire, sur (bit) bits\"\"\"\n    b = bin(entier)[2:]\n    if len(b) == bit:\n        return b\n    else:\n        return \"0\"*(bit-len(b)) + b\n\n\ndef findBroadcast(reseau: str, masque_bin: list) -> str:\n    \"\"\"Renvoie l'adresse de broadcast du réseau donné\"\"\"\n    res = [int(elt) for elt in reseau.split(\".\")]\n    bits = d2b(masque_bin[0], 8)+d2b(masque_bin[1], 8)+d2b(masque_bin[2], 8)+d2b(masque_bin[3], 8)\n    res_bin = d2b(res[0], 8)+d2b(res[1], 8)+d2b(res[2], 8)+d2b(res[3], 8)\n    broadcast = \"\"\n    for i in range(32):\n        if bits[i] == \"0\":\n            broadcast += \"1\"\n        else:\n            broadcast += res_bin[i]\n    return \".\".join(str(int(broadcast[i:i+8], 2)) for i in range(0, 32, 8))+\" /\"+str(bits.count(\"1\"))\n\n\ndef findMasque(bits: int) -> str:\n    \"\"\"Renvoie le masque correspondant\"\"\"\n    m = \"1\"*bits + \"0\"*(32-bits)\n    return \".\".join(str(int(m[i:i+8], 2)) for i in range(0, 32, 8))\n\n\nip = input().split()\nb = int(ip[1][1:])\nmasque = findMasque(b)\n\nip = ip[0]\nip_bin = [int(elt) for elt in ip.split(\".\")]\nmasque_bin = [int(elt) for elt in masque.split(\".\")]\nbits = d2b(masque_bin[0], 8)+d2b(masque_bin[1], 8)+d2b(masque_bin[2], 8)+d2b(masque_bin[3], 8)\nreseau = \"\"\nfor i in range(4):\n    if masque_bin[i] == \"11111111\":\n        reseau += str(int(ip_bin[i], 2))\n    elif masque_bin[i] == \"00000000\":\n        reseau += \"0\"\n    else:\n        reseau += str(ip_bin[i] & masque_bin[i])\n    reseau += \".\"\n\nreseau = reseau.rstrip(\".\")\n\nprint(reseau+\" /\"+str(bits.count(\"1\")))\nprint(findBroadcast(reseau, masque_bin))\nprint(2**bits.count(\"0\")-2)",
+      "statement": "<<Intro :>>\nAn IP address is formed by {{4}} binary bytes, written in decimal form. The bytes are separated by a dot. The  address is the network address concatenated with the machine address.\nTo calculate the network address, the IP address comes with a subnet mask. To get the network, we simply need to operate an {{AND}} between the IP and the mask, byte by byte. \nTo avoid the traffic overloading, we add the mask at the end of the IP, by indicating how many {{1}}-bits are in the mask, with an {{/}}.\nThe maximum number of hosts for the network is now <<2^(32-[[mask]])-2>>.\n{{-2}} because we need to substract the base address for the network (the first one in the network) and the broadcast address (the last one in the network)\n\n<<Task :>>\nGiven an IP address and its subnet mask, return the network address, the broadcast address and how many hosts the network can manage.\n\n<<Example :>>\nIP address: 192.168.0.55 /24\nMask => 24 bits at '1' => 3 full bytes and 1 empty => 255.255.255.0\nHosts => 2^(32-24) - 2 = 2^8 - 2 = 254\nLogical AND : 192 & 255 = 192 ; 168 & 255 = 168 ; 0 & 255 = 0 ; 55 & 0 = 0\n=> network : 192.168.0.0\n=> broadcast : 192.168.0.255\n\nInput : \n192.168.0.55 /24\n\nOutput : \n192.168.0.0 /24\n192.168.0.255 /24\n254",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "192.168.0.55 /24",
+          "testOut": "192.168.0.0 /24\n192.168.0.255 /24\n254",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "193.168.5.55 /24",
+          "testOut": "193.168.5.0 /24\n193.168.5.255 /24\n254",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Mask > 24",
+          "isTest": true,
+          "testIn": "192.168.0.129 /25",
+          "testOut": "192.168.0.128 /25\n192.168.0.255 /25\n126",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "180.162.0.130 /26",
+          "testOut": "180.162.0.128 /26\n180.162.0.191 /26\n62",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Mask < 24",
+          "isTest": true,
+          "testIn": "180.162.92.130 /18",
+          "testOut": "180.162.64.0 /18\n180.162.127.255 /18\n16382",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "172.0.0.255 /21",
+          "testOut": "172.0.0.0 /21\n172.0.7.255 /21\n2046",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Random",
+          "isTest": true,
+          "testIn": "255.191.7.8 /8",
+          "testOut": "255.0.0.0 /8\n255.255.255.255 /8\n16777214",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "192.168.0.7 /23",
+          "testOut": "192.168.0.0 /23\n192.168.1.255 /23\n510",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "constraints": "Inputs will always be : [[A]]{{.}}[[B]]{{.}}[[C]]{{.}}[[D]] {{/}}[[mask]]\n0 <= [[A]], [[B]], [[C]], [[D]] <= 255\n1 <= [[mask]] <= 30",
+      "stubGenerator": "read ip:string(24)\nwrite network\nbroadcast\nnumber of hosts",
+      "inputDescription": "A single string for the IP address",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1 :>> the network address\n<<Line 2 :>> the broadcast address\n<<Line 3 :>> the maximal number of hosts"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><strong>Intro :</strong><br>An IP address is formed by <const>4</const> binary bytes, written in decimal form. The bytes are separated by a dot. The  address is the network address concatenated with the machine address.<br>To calculate the network address, the IP address comes with a subnet mask. To get the network, we simply need to operate an <const>AND</const> between the IP and the mask, byte by byte. <br>To avoid the traffic overloading, we add the mask at the end of the IP, by indicating how many <const>1</const>-bits are in the mask, with an <const>/</const>.<br>The maximum number of hosts for the network is now <strong>2^(32-<var>mask</var>)-2</strong>.<br><const>-2</const> because we need to substract the base address for the network (the first one in the network) and the broadcast address (the last one in the network)<br><br><strong>Task :</strong><br>Given an IP address and its subnet mask, return the network address, the broadcast address and how many hosts the network can manage.<br><br><strong>Example :</strong><br>IP address: 192.168.0.55 /24<br>Mask =&gt; 24 bits at '1' =&gt; 3 full bytes and 1 empty =&gt; 255.255.255.0<br>Hosts =&gt; 2^(32-24) - 2 = 2^8 - 2 = 254<br>Logical AND : 192 &amp; 255 = 192 ; 168 &amp; 255 = 168 ; 0 &amp; 255 = 0 ; 55 &amp; 0 = 0<br>=&gt; network : 192.168.0.0<br>=&gt; broadcast : 192.168.0.255<br><br>Input : <br>192.168.0.55 /24<br><br>Output : <br>192.168.0.0 /24<br>192.168.0.255 /24<br>254</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">A single string for the IP address</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1 :</strong> the network address<br><strong>Line 2 :</strong> the broadcast address<br><strong>Line 3 :</strong> the maximal number of hosts</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Inputs will always be : <var>A</var><const>.</const><var>B</var><const>.</const><var>C</var><const>.</const><var>D</var> <const>/</const><var>mask</var><br>0 &lt;= <var>A</var>, <var>B</var>, <var>C</var>, <var>D</var> &lt;= 255<br>1 &lt;= <var>mask</var> &lt;= 30</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">192.168.0.55 /24</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">192.168.0.0 /24\n192.168.0.255 /24\n254</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 74973587123,
+  "avatar": 110515569441472,
+  "commentCount": 16,
+  "upVotes": 3,
+  "downVotes": 6,
+  "validateAction": {
+    "actionId": 862463,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "denyAction": {
+    "actionId": 862697,
+    "progress": 0.3333333333333333,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1695755540397,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

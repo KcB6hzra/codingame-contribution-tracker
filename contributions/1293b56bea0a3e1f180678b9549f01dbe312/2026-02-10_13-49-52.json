@@ -1,0 +1,191 @@
+{
+  "id": 1293,
+  "activeVersion": 17,
+  "score": 22,
+  "votableId": 7536661,
+  "codingamerId": 1569823,
+  "views": 1105,
+  "commentableId": 7474140,
+  "title": "Neighbor-Sum Grids",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Niako",
+  "publicHandle": "1293b56bea0a3e1f180678b9549f01dbe312",
+  "codingamerHandle": "eb89cbdf69d07106c84edf1d191caaf33289651",
+  "lastVersion": {
+    "version": 17,
+    "autocloseTime": 1540048632850,
+    "data": {
+      "title": "Neighbor-Sum Grids",
+      "topics": [
+        {
+          "id": 56,
+          "handle": "backtracking",
+          "labelMap": {
+            "1": "Retour sur trace",
+            "2": "Backtracking"
+          },
+          "pageTitle": "Backtracking: exercises and theory",
+          "puzzleCount": 5,
+          "parentTopicId": 41,
+          "contentDetailsId": 80
+        }
+      ],
+      "solution": "#!/usr/bin/env python3\n\nN = 5\nM = N*N\n\n# neighborhood masks precomp\nV = [0]*M\nfor i in range(N):\n    for j in range(N):\n        u = N*i+j\n        for vi in range(i-1,i+2):\n            for vj in range(j-1,j+2):\n                if (vi,vj)!=(i,j) and 0<=vi<N and 0<=vj<N:\n                    V[u] |= 1<<(N*vi+vj)\n\ndef elem(x):\n    i = 0\n    while x:\n        if x&1:\n            yield i\n        x >>= 1\n        i += 1\n\ndef grid(S):\n    G = [[0]*N for _ in range(N)]\n    for x in range(1,M+1):\n        i,j = divmod(S[x],N)\n        G[i][j] = x\n    return G\n\ndef backtrack(G, Avail, S, i=1):\n    if i>M:\n        return True\n    if G[i]!=None:\n        S[i] = G[i]\n        P = 1<<S[i]\n        if i<=2 or any(V[S[k]] & V[S[i-k]] & P for k in range(1,(i+1)//2)):\n            return backtrack(G,Avail,S,i+1)\n        return False\n    if i<=2:\n        P = Avail\n    else:\n        P = 0\n        for k in range(1,(i+1)//2):\n            P |= V[S[k]] & V[S[i-k]] & Avail\n    for p in elem(P):\n        S[i] = p\n        if backtrack(G,Avail^(1<<p),S,i+1):\n            return True\n    return False\n\ndef main():\n    G = [None]*(M+1)\n    Avail = (1<<M)-1\n    for i in range(N):\n        L = list(map(int,input().split()))\n        for j in range(N):\n            if L[j]>0:\n                G[L[j]] = N*i+j\n                Avail ^= 1<<(N*i+j)\n    S = [None]*(M+1)\n    assert(backtrack(G,Avail,S))\n    Sol = grid(S)\n    for L in Sol:\n        print(*L)\n\nif __name__=='__main__':\n    main()\n",
+      "statement": "A <<(2-)neighbor-sum grid>> is a 5×5 matrix containing each number from {{1}} to {{25}} <<exactly once>> and where each value that is at least {{3}} can be obtained as the <<sum of two distinct values among its direct neighbors>> (horizontally, vertically and diagonally, so that an inner cell has 8 neighbors, a border cell has 5 neighbors and a corner cell has 3 neighbors).\n\n<<Example:>> (21 = 4+17, 14 = 4+10, 10 = 4+6, 16 = 6+10, 22 = 6+16, etc for every value >2 of the grid)\n`21 14 10 16 22\n17  4  1  6 19\n12  3  5 11 13\n15  8  2  7 18\n23 24  9 20 25`\nIt can be proven that there are 56816 such grids (or 7102 up to the 8 symmetries of the square).\n\nIn this problem, you are given a <<partially completed grid>> (in which unknown values are indicated by a {{0}} in the input) and you are asked to <<complete it>>. It is guaranteed for each given testcase that there <<exists>> a <<unique>> solution.",
+      "testCases": [
+        {
+          "title": "10 missing",
+          "isTest": true,
+          "testIn": "21 14 10 0 0\n0 4 1 6 0\n0 3 5 11 13\n15 0 0 0 0\n23 24 0 20 25",
+          "testOut": "21 14 10 16 22\n17 4 1 6 19\n12 3 5 11 13\n15 8 2 7 18\n23 24 9 20 25",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "0 0 0 20 21\n0 6 5 4 0\n23 7 1 3 0\n0 9 8 2 0\n25 24 0 0 22",
+          "testOut": "19 11 15 20 21\n13 6 5 4 17\n23 7 1 3 14\n16 9 8 2 12\n25 24 18 10 22",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "13 missing",
+          "isTest": true,
+          "testIn": "19 15 11 0 23\n0 0 0 0 13\n0 0 1 0 22\n0 0 0 0 16\n14 12 21 0 25",
+          "testOut": "19 15 11 17 23\n18 4 5 6 13\n20 3 1 7 22\n2 10 8 9 16\n14 12 21 24 25",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "21 13 0 0 23\n10 0 0 0 0\n12 2 3 6 15\n0 0 4 0 0\n0 0 11 0 17",
+          "testOut": "21 13 22 14 23\n10 8 5 9 24\n12 2 3 6 15\n19 7 4 1 16\n25 18 11 20 17",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "16 missing",
+          "isTest": true,
+          "testIn": "23 22 8 0 18\n0 0 0 5 0\n0 0 12 0 0\n0 10 0 11 9\n0 0 0 0 0",
+          "testOut": "23 22 8 13 18\n19 1 3 5 25\n15 4 12 2 7\n14 10 6 11 9\n24 16 21 17 20",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "0 11 8 0 0\n0 0 3 0 0\n18 0 23 2 0\n0 0 0 0 0\n24 0 21 15 0",
+          "testOut": "20 11 8 25 17\n19 1 3 5 12\n18 4 23 2 7\n14 10 6 13 9\n24 16 21 15 22",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "19 missing",
+          "isTest": true,
+          "testIn": "0 12 0 0 0\n0 0 17 0 7\n0 4 3 0 18\n0 0 0 0 0\n0 0 0 0 0",
+          "testOut": "23 12 13 20 25\n11 1 17 5 7\n10 4 3 2 18\n19 9 6 8 16\n24 15 21 14 22",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "0 0 0 16 0\n10 0 0 0 0\n0 0 2 0 0\n21 0 0 0 24\n0 0 0 11 0",
+          "testOut": "25 15 13 16 23\n10 6 9 7 12\n22 4 2 5 20\n21 1 3 8 24\n18 17 14 11 19",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "22 missing",
+          "isTest": true,
+          "testIn": "0 0 0 0 0\n0 0 0 0 0\n0 0 17 0 0\n0 0 0 5 0\n0 0 0 13 0",
+          "testOut": "24 16 21 15 20\n14 10 6 11 9\n18 4 17 2 7\n19 1 3 5 12\n23 22 8 13 25",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "0 0 0 0 0\n9 0 0 0 0\n0 0 19 0 0\n0 0 0 0 0\n0 0 0 11 0",
+          "testOut": "25 15 21 20 24\n9 16 6 10 14\n7 2 19 4 18\n12 5 3 1 22\n17 13 8 11 23",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "22 missing",
+          "isTest": true,
+          "testIn": "0 0 8 13 0\n0 0 0 0 0\n0 0 15 0 0\n0 0 0 0 0\n0 0 0 0 0",
+          "testOut": "23 22 8 13 25\n19 1 3 5 12\n18 4 15 2 7\n14 10 6 11 9\n24 16 21 17 20",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "0 0 0 0 0\n0 0 0 0 0\n0 0 7 0 0\n19 0 0 0 5\n0 0 0 0 0",
+          "testOut": "22 14 20 16 25\n24 8 6 10 15\n17 2 7 4 11\n19 9 3 1 5\n21 12 13 18 23",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "23 missing",
+          "isTest": true,
+          "testIn": "0 0 0 0 0\n0 0 0 0 0\n0 0 18 0 0\n23 0 0 0 0\n0 0 0 0 0",
+          "testOut": "19 12 13 16 17\n7 5 3 1 20\n9 2 18 4 11\n23 8 6 10 15\n22 14 24 21 25",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "0 0 0 7 0\n0 0 0 0 0\n0 0 18 0 0\n0 0 0 0 0\n0 0 0 0 0",
+          "testOut": "22 23 9 7 19\n14 8 2 5 12\n24 6 18 3 13\n21 10 4 1 16\n25 15 11 20 17",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "23 missing",
+          "isTest": true,
+          "testIn": "21 0 1 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0",
+          "testOut": "21 11 1 13 18\n10 4 3 5 12\n20 6 2 7 19\n14 8 15 9 16\n22 23 17 24 25",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "18 0 1 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0",
+          "testOut": "18 13 1 11 21\n12 5 3 4 10\n19 7 2 6 20\n16 9 15 8 14\n25 24 17 23 22",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "hard",
+      "coverBinaryId": 49604303601431,
+      "stubGenerator": "loop 5 loopline 5 X:int\nloop 5 write solution",
+      "inputDescription": "<<5 lines>> of 5 space-separated numbers between {{0}} and {{25}}, {{0}} indicating an unknown value.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<5 lines>> of 5 space-separated numbers between {{1}} and {{25}} corresponding to the unique complete solution."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A <strong>(2-)neighbor-sum grid</strong> is a 5&times;5 matrix containing each number from <const>1</const> to <const>25</const> <strong>exactly once</strong> and where each value that is at least <const>3</const> can be obtained as the <strong>sum of two distinct values among its direct neighbors</strong> (horizontally, vertically and diagonally, so that an inner cell has 8 neighbors, a border cell has 5 neighbors and a corner cell has 3 neighbors).<br><br><strong>Example:</strong> (21 = 4+17, 14 = 4+10, 10 = 4+6, 16 = 6+10, 22 = 6+16, etc for every value &gt;2 of the grid)<br><pre style=\"font-family: monospace\">21 14 10 16 22<br>17  4  1  6 19<br>12  3  5 11 13<br>15  8  2  7 18<br>23 24  9 20 25</pre><br>It can be proven that there are 56816 such grids (or 7102 up to the 8 symmetries of the square).<br><br>In this problem, you are given a <strong>partially completed grid</strong> (in which unknown values are indicated by a <const>0</const> in the input) and you are asked to <strong>complete it</strong>. It is guaranteed for each given testcase that there <strong>exists</strong> a <strong>unique</strong> solution.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>5 lines</strong> of 5 space-separated numbers between <const>0</const> and <const>25</const>, <const>0</const> indicating an unknown value.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>5 lines</strong> of 5 space-separated numbers between <const>1</const> and <const>25</const> corresponding to the unique complete solution.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">21 14 10 0 0\n0 4 1 6 0\n0 3 5 11 13\n15 0 0 0 0\n23 24 0 20 25</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">21 14 10 16 22\n17 4 1 6 19\n12 3 5 11 13\n15 8 2 7 18\n23 24 9 20 25</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 231483677209,
+  "avatar": 11911528647474,
+  "commentCount": 9,
+  "upVotes": 23,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 268776,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

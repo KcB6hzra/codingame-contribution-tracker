@@ -1,0 +1,117 @@
+{
+  "id": 314,
+  "activeVersion": 6,
+  "score": 4,
+  "votableId": 2431414,
+  "codingamerId": 552776,
+  "views": 180,
+  "commentableId": 2379742,
+  "title": "CGFunge interpreter",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "player_one",
+  "publicHandle": "31464114a1dc9a4b104f3f479526877ec3f",
+  "codingamerHandle": "fefb3b0a360d9451bde5553900470e2d677255",
+  "lastVersion": {
+    "version": 6,
+    "data": {
+      "title": "CGFunge interpreter",
+      "solution": "using System;\nusing System.Linq;\nusing System.IO;\nusing System.Text;\nusing System.Collections;\nusing System.Collections.Generic;\n\nclass Solution {\n    static void Main(string[] args) {\n        int N = int.Parse(Console.ReadLine());\n        var program = Enumerable.Range(0, N)\n            .Select(line => Console.ReadLine()\n                .ToCharArray().ToList())\n            .ToList();\n            \n        var x = 0;\n        var y = 0;\n        var vx = 1;\n        var vy = 0;\n        \n        var inString = false;\n        var stack = new Stack<int>();\n        while (program[y][x] != 'E') {\n            int a;\n            int b;\n            var c = program[y][x];\n            if (c == '\"') {\n                inString = !inString;\n            } else if (inString) {\n                stack.Push(c);\n            } else if (c >= '0' && c <= '9') {\n                stack.Push(c-'0');\n            } else {\n                switch (c) {\n                    case '>':\n                        vx = 1;\n                        vy = 0;\n                        break;\n                    case '<':\n                        vx = -1;\n                        vy = 0;\n                        break;\n                    case '^':\n                        vx = 0;\n                        vy = -1;\n                        break;\n                    case 'v':\n                        vx = 0;\n                        vy = 1;\n                        break;\n                    case 'S':\n                        x += vx;\n                        y += vy;\n                        break;\n                    case 'E':\n                        return;\n                    case '+':\n                        a = stack.Pop();\n                        b = stack.Pop();\n                        stack.Push(a+b);\n                        break;\n                    case '-':\n                        a = stack.Pop();\n                        b = stack.Pop();\n                        stack.Push(b-a);\n                        break;\n                    case '*':\n                        a = stack.Pop();\n                        b = stack.Pop();\n                        stack.Push(a*b);\n                        break;\n                    case 'P':\n                        stack.Pop();\n                        break;\n                    case 'X':\n                        a = stack.Pop();\n                        b = stack.Pop();\n                        stack.Push(a);\n                        stack.Push(b);\n                        break;\n                    case 'D':\n                        stack.Push(stack.Peek());\n                        break;\n                    case '_':\n                        a = stack.Pop();\n                        vx = a == 0 ? 1 : -1;\n                        vy = 0;\n                        break;\n                    case '|':\n                        a = stack.Pop();\n                        vx = 0;\n                        vy = a == 0 ? 1 : -1;\n                        break;\n                    case 'I':\n                        Console.Write(stack.Pop());\n                        break;\n                    case 'C':\n                        a = stack.Pop();\n                        Console.Write(((char)a).ToString());\n                        break;\n                }\n            }\n            \n            x += vx;\n            y += vy;\n        }\n    }\n}",
+      "statement": "CGFunge is a 2-dimensional, positional programming language. This means that execution of a CGFunge program follows a designated pattern on a grid of ASCII characters.  Each command in the language is a single character. The most basic commands involve flow control:\n\n'{{>}}' - Continue to the right\n'{{<}}' - Continue to the left\n'{{^}}' - Continue up\n'{{v}}' - Continue down\n'{{S}}' - Skip the next character and continue with the subsequent character\n'{{E}}' - End the program immediately\n\nExecution always starts on the first character of the first line and proceeds to the right. Spaces are ignored. So, for example, the following are equivalent:\n\n`11+E`\n\n`vE<\n1 +\n>1^`\n\n`SE S+1<`\n\nThe execution of the program entirely revolves around a stack consisting only of integers in the range [{{0}} - {{255}}]. Any digit encountered ({{0}} - {{9}}) is pushed onto the stack. Arithmetic operators ('{{+}}', '{{-}}', '{{*}}') pop two operands from the stack and push the result onto the stack. For subtraction, the <<top element>> on the stack is subtracted <<from>> the <<second element>> on the stack. So, for example, the program \"52 - E\" would leave the value 3 on the stack.\n\nThe following commands perform other basic stack manipulation tasks:\n\n'{{P}}' - Pop the top value\n'{{X}}' - Switch the order of the top two stack values\n'{{D}}' - Push a duplicate of the top value onto the stack\n\nThe quotation mark character ('{{\"}}') toggles \"string mode\". When in string mode, the ASCII codes for all characters encountered are pushed onto the stack.\n\nThe following commands perform stack-based logical flow control:\n\n'{{_}}' - If the top value of the stack is {{0}}, continue to the right. Otherwise, go left.\n'{{|}}' - If the top value of the stack is {{0}}, continue down. Otherwise, go up.\n\nOutput is performed with the following commands:\n\n'{{I}}' - Pop the top integer from the stack and print it to <<stdout>>.\n'{{C}}' - Pop the top integer from the stack and interpret it as an ASCII code, printing the corresponding character to <<stdout>>.",
+      "testCases": [
+        {
+          "title": "Just math",
+          "isTest": true,
+          "testIn": "1\n2419+*+IE",
+          "testOut": "42",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "1\n82+4*2+2*IE",
+          "testOut": "84",
+          "isValidator": true
+        },
+        {
+          "title": "Simple text",
+          "isTest": true,
+          "testIn": "1\n\"txet elpmiS\"CCCCCCCCCCCE",
+          "testOut": "Simple text",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "1\n\"ysae si sihT\"CCCCCCCCCCCCE",
+          "testOut": "This is easy",
+          "isValidator": true
+        },
+        {
+          "title": "Go all ways",
+          "isTest": true,
+          "testIn": "8\nv > v\n  C \"\n vC GS<\n> \"GC\"^\n  C \"\n  G C\n C\" C\n >^ E",
+          "testOut": "CGCGCG",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "8\nv > v>CCE\n  C \"\n vC GS<\n> \"GC\"^\n  C \"C\n  G CG\n C\" C\"\n >^ >^",
+          "testOut": "CGCGCGCG",
+          "isValidator": true
+        },
+        {
+          "title": "Very hello world",
+          "isTest": true,
+          "testIn": "8\n>0111>>>>>>>>v\nv<<<<<<<<<<<<<\n>>>>>>\"olleH\"v\n^CC<<<CGFunge \n>\" ,\"^Rulz    \n|<<<<<<CCCCC<<\n>>>>\"!dlroW \"v\nE<<<<CCCCCCC<<",
+          "testOut": "Hello, Hello, Hello, Hello World!",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "8\n>011>>>>>>>>>v\nv<<<<<<<<<<<<<\n>>>>>>\"olleH\"v\n^CC<<<        \n>\" ,\"^        \n|<<<<<<CCCCC<<\n>>>>\"!ylloD \"v\nE<<<<CCCCCCC<<",
+          "testOut": "Hello, Hello, Hello Dolly!",
+          "isValidator": true
+        },
+        {
+          "title": "Sing me a song",
+          "isTest": true,
+          "testIn": "10\n39DD1+*+DI  >11091+   v>v\n v  \" on the wall\"    < D \n>>     \"reeb fo\"      v S\n0v<\" bottles \"        < C\nX>DSC_SvPD      _25*+Cv |\n       *v   IS        < P\n^IDX-1 <>  SC        0v X\nv   \"pass it around\"  < 1\n>    \" ,nwod eno ekat\" ^-\n Sing it!   ^+55D-1X_ESD<",
+          "testOut": "99 bottles of beer on the wall\n99 bottles of beer\ntake one down, pass it around\n98 bottles of beer on the wall\n98 bottles of beer\ntake one down, pass it around\n97 bottles of beer on the wall\n97 bottles of beer\ntake one down, pass it around",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "10\n49DD1+*+DI  >11091+   v>v\n v  \" on the wall\"    < D \n>>     \"reeb fo\"      v S\n0v<\" bottles \"        < C\nX>DSC_SvPD      _25*+Cv |\n       *v   IS        < P\n^IDX-1 <>  SC        0v X\nv   \"pass it around\"  < 1\n>    \" ,nwod eno ekat\" ^-\n            ^+55D-1X_ESD<",
+          "testOut": "99 bottles of beer on the wall\n99 bottles of beer\ntake one down, pass it around\n98 bottles of beer on the wall\n98 bottles of beer\ntake one down, pass it around\n97 bottles of beer on the wall\n97 bottles of beer\ntake one down, pass it around\n96 bottles of beer on the wall\n96 bottles of beer\ntake one down, pass it around",
+          "isValidator": true
+        }
+      ],
+      "constraints": "1 ≤ [[N]] ≤ 10",
+      "stubGenerator": "read N:int\nloop N read line:string(30)\nwrite answer",
+      "inputDescription": "<<Line 1:>> An integer [[N]] indicating the number of lines in the program\n<<Next [[N]] lines:>> One line per program input",
+      "solutionLanguage": "C#",
+      "outputDescription": "The output of the properly interpreted program"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h1><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h1>\n   <span class=\"question-statement\">CGFunge is a 2-dimensional, positional programming language. This means that execution of a CGFunge program follows a designated pattern on a grid of ASCII characters.  Each command in the language is a single character. The most basic commands involve flow control:<br><br>'<const>&gt;</const>' - Continue to the right<br>'<const>&lt;</const>' - Continue to the left<br>'<const>^</const>' - Continue up<br>'<const>v</const>' - Continue down<br>'<const>S</const>' - Skip the next character and continue with the subsequent character<br>'<const>E</const>' - End the program immediately<br><br>Execution always starts on the first character of the first line and proceeds to the right. Spaces are ignored. So, for example, the following are equivalent:<br><br><pre style=\"font-family: monospace\">11+E</pre><br><br><pre style=\"font-family: monospace\">vE&lt;<br>1 +<br>&gt;1^</pre><br><br><pre style=\"font-family: monospace\">SE S+1&lt;</pre><br><br>The execution of the program entirely revolves around a stack consisting only of integers in the range [<const>0</const> - <const>255</const>]. Any digit encountered (<const>0</const> - <const>9</const>) is pushed onto the stack. Arithmetic operators ('<const>+</const>', '<const>-</const>', '<const>*</const>') pop two operands from the stack and push the result onto the stack. For subtraction, the <strong>top element</strong> on the stack is subtracted <strong>from</strong> the <strong>second element</strong> on the stack. So, for example, the program &quot;52 - E&quot; would leave the value 3 on the stack.<br><br>The following commands perform other basic stack manipulation tasks:<br><br>'<const>P</const>' - Pop the top value<br>'<const>X</const>' - Switch the order of the top two stack values<br>'<const>D</const>' - Push a duplicate of the top value onto the stack<br><br>The quotation mark character ('<const>&quot;</const>') toggles &quot;string mode&quot;. When in string mode, the ASCII codes for all characters encountered are pushed onto the stack.<br><br>The following commands perform stack-based logical flow control:<br><br>'<const>_</const>' - If the top value of the stack is <const>0</const>, continue to the right. Otherwise, go left.<br>'<const>|</const>' - If the top value of the stack is <const>0</const>, continue down. Otherwise, go up.<br><br>Output is performed with the following commands:<br><br>'<const>I</const>' - Pop the top integer from the stack and print it to <strong>stdout</strong>.<br>'<const>C</const>' - Pop the top integer from the stack and interpret it as an ASCII code, printing the corresponding character to <strong>stdout</strong>.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var> indicating the number of lines in the program<br><strong>Next <var>N</var> lines:</strong> One line per program input</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The output of the properly interpreted program</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 10</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1\n2419+*+IE</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">42</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 305325481807,
+  "avatar": 52487021619351,
+  "commentCount": 13,
+  "upVotes": 4,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 638,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": false,
+  "draft": false,
+  "readyForModeration": true
+}

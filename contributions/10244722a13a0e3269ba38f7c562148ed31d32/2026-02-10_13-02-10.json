@@ -1,0 +1,245 @@
+{
+  "id": 102447,
+  "activeVersion": 35,
+  "score": 6,
+  "votableId": 34658674,
+  "codingamerId": 4337092,
+  "views": 196,
+  "commentableId": 34506608,
+  "title": "Shikaku Skill Builder",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Timinator",
+  "publicHandle": "10244722a13a0e3269ba38f7c562148ed31d32",
+  "codingamerHandle": "2df7157da821f39bbf6b36efae1568142907334",
+  "lastVersion": {
+    "version": 35,
+    "autocloseTime": 1740610377992,
+    "freezeTime": 1738623177992,
+    "data": {
+      "title": "Shikaku Skill Builder",
+      "topics": [
+        {
+          "id": 46,
+          "handle": "loops",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 107,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        },
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 60,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import numpy as np\nimport sys\n\n\ngrid_width, grid_height = map(int, input().split())\ngrid = np.array([[int(i) for i in input().split()] for _ in range(grid_height)])\n\nrectangles = dict()\n\nfor row in range(grid_height):\n    for col in range(grid_width):\n\n        if (num := grid[row][col]) == 0:\n            continue\n\n        rectangles[(row, col, num)] = []\n        for rec_width in range(1, num + 1):\n            rec_height, remainder = divmod(num, rec_width)\n\n            # Determine the possible row and col values of the upper left corner for a \n            # rectangle of this size.  These values are constrained by the row and col\n            # values of the cell in question which must be inside the rectangle.\n            if remainder == 0:\n                start_col = max(0, col - rec_width + 1)\n                start_row = max(0, row - rec_height + 1)\n                end_col   = min(col, grid_width - rec_width)\n                end_row   = min(row, grid_height - rec_height)\n\n                # Determine left, right, top and bottom values for the rectangle.\n                # To keep array indexing simple, right and bottom remain one more\n                # than the true rectangle coordinates.\n                for left_col in range(start_col, end_col + 1):\n                    for top_row in range(start_row, end_row + 1):\n                        right_col  = left_col + rec_width\n                        bottom_row = top_row + rec_height\n\n                        # If the sum of the rectangle cells is equal to the number on the cell in \n                        # question, this is a valid rectangle that may be added to the possible rectangles.\n                        if np.sum(grid[top_row:bottom_row, left_col:right_col]) == num:\n                            rectangles[(row, col, num)].append((top_row, left_col, rec_width, rec_height))\n\n\nfor location in sorted(rectangles.keys()):\n    if rectangles[location]:\n        print(*location)\n        print('\\n'.join([f'{r} {c} {w} {h}' for r, c, w, h in sorted(rectangles[location])]))\n\n\nprint('\\nCannot be covered:', file=sys.stderr, flush=True)\nfor location in sorted(rectangles.keys()):\n    if not rectangles[location]:\n        print(*location, file=sys.stderr, flush=True)",
+      "statement": "This puzzle is part of a multi-part Algorithm X tutorial and is meant to be done per the guidance in the following playground:\n\n{{https://www.algorithm-x.com}}\n\n<<Task:>>\n\nGiven a grid of numbers, find all rectangles that cover each positive number without covering other positive numbers. Each rectangle must have an area equal to the number it covers.",
+      "testCases": [
+        {
+          "title": "Single Shape",
+          "isTest": true,
+          "testIn": "3 2\n0 0 0\n0 4 0",
+          "testOut": "1 1 4\n0 0 2 2\n0 1 2 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3 2\n0 4 0\n0 0 0",
+          "testOut": "0 1 4\n0 0 2 2\n0 1 2 2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multi-Shape",
+          "isTest": true,
+          "testIn": "3 2\n0 0 0\n0 2 0",
+          "testOut": "1 1 2\n0 1 1 2\n1 0 2 1\n1 1 2 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "3 2\n0 2 0\n0 0 0",
+          "testOut": "0 1 2\n0 0 2 1\n0 1 1 2\n0 1 2 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two Numbers",
+          "isTest": true,
+          "testIn": "4 3\n0 0 0 0\n0 2 4 0\n0 0 0 0",
+          "testOut": "1 1 2\n0 1 1 2\n1 0 2 1\n1 1 1 2\n1 2 4\n0 2 2 2\n1 2 2 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "4 3\n0 0 0 0\n0 4 2 0\n0 0 0 0",
+          "testOut": "1 1 4\n0 0 2 2\n1 0 2 2\n1 2 2\n0 2 1 2\n1 2 1 2\n1 2 2 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Not All Can Be Covered",
+          "isTest": true,
+          "testIn": "5 5\n6 0 0 0 0\n0 2 0 4 0\n0 0 9 0 0\n0 0 0 0 0\n0 0 0 0 0",
+          "testOut": "1 1 2\n0 1 1 2\n1 0 2 1\n1 1 1 2\n1 1 2 1\n1 3 4\n0 2 2 2\n0 3 1 4\n0 3 2 2\n1 3 1 4\n1 3 2 2\n2 2 9\n2 0 3 3\n2 1 3 3\n2 2 3 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "5 5\n0 0 0 0 0\n0 0 0 0 0\n0 0 9 0 0\n0 4 0 2 0\n0 0 0 0 6",
+          "testOut": "2 2 9\n0 0 3 3\n0 1 3 3\n0 2 3 3\n3 1 4\n0 1 1 4\n1 1 1 4\n2 0 2 2\n3 0 2 2\n3 1 2 2\n3 3 2\n2 3 1 2\n3 2 2 1\n3 3 1 2\n3 3 2 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "One Number, Many Option",
+          "isTest": true,
+          "testIn": "15 15\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 12 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+          "testOut": "9 6 12\n0 6 1 12\n1 6 1 12\n2 6 1 12\n3 6 1 12\n4 5 2 6\n4 6 2 6\n5 5 2 6\n5 6 2 6\n6 4 3 4\n6 5 2 6\n6 5 3 4\n6 6 2 6\n6 6 3 4\n7 3 4 3\n7 4 3 4\n7 4 4 3\n7 5 2 6\n7 5 3 4\n7 5 4 3\n7 6 2 6\n7 6 3 4\n7 6 4 3\n8 1 6 2\n8 2 6 2\n8 3 4 3\n8 3 6 2\n8 4 3 4\n8 4 4 3\n8 4 6 2\n8 5 2 6\n8 5 3 4\n8 5 4 3\n8 5 6 2\n8 6 2 6\n8 6 3 4\n8 6 4 3\n8 6 6 2\n9 0 12 1\n9 1 6 2\n9 1 12 1\n9 2 6 2\n9 2 12 1\n9 3 4 3\n9 3 6 2\n9 3 12 1\n9 4 3 4\n9 4 4 3\n9 4 6 2\n9 5 2 6\n9 5 3 4\n9 5 4 3\n9 5 6 2\n9 6 2 6\n9 6 3 4\n9 6 4 3\n9 6 6 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "15 15\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 12 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+          "testOut": "7 5 12\n0 5 1 12\n1 5 1 12\n2 4 2 6\n2 5 1 12\n2 5 2 6\n3 4 2 6\n3 5 1 12\n3 5 2 6\n4 3 3 4\n4 4 2 6\n4 4 3 4\n4 5 2 6\n4 5 3 4\n5 2 4 3\n5 3 3 4\n5 3 4 3\n5 4 2 6\n5 4 3 4\n5 4 4 3\n5 5 2 6\n5 5 3 4\n5 5 4 3\n6 0 6 2\n6 1 6 2\n6 2 4 3\n6 2 6 2\n6 3 3 4\n6 3 4 3\n6 3 6 2\n6 4 2 6\n6 4 3 4\n6 4 4 3\n6 4 6 2\n6 5 2 6\n6 5 3 4\n6 5 4 3\n6 5 6 2\n7 0 6 2\n7 0 12 1\n7 1 6 2\n7 1 12 1\n7 2 4 3\n7 2 6 2\n7 2 12 1\n7 3 3 4\n7 3 4 3\n7 3 6 2\n7 3 12 1\n7 4 2 6\n7 4 3 4\n7 4 4 3\n7 4 6 2\n7 5 2 6\n7 5 3 4\n7 5 4 3\n7 5 6 2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Large Grid",
+          "isTest": true,
+          "testIn": "30 30\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 27 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+          "testOut": "16 5 27\n0 5 1 27\n1 5 1 27\n2 5 1 27\n3 5 1 27\n8 3 3 9\n8 4 3 9\n8 5 3 9\n9 3 3 9\n9 4 3 9\n9 5 3 9\n10 3 3 9\n10 4 3 9\n10 5 3 9\n11 3 3 9\n11 4 3 9\n11 5 3 9\n12 3 3 9\n12 4 3 9\n12 5 3 9\n13 3 3 9\n13 4 3 9\n13 5 3 9\n14 0 9 3\n14 1 9 3\n14 2 9 3\n14 3 3 9\n14 3 9 3\n14 4 3 9\n14 4 9 3\n14 5 3 9\n14 5 9 3\n15 0 9 3\n15 1 9 3\n15 2 9 3\n15 3 3 9\n15 3 9 3\n15 4 3 9\n15 4 9 3\n15 5 3 9\n15 5 9 3\n16 0 9 3\n16 0 27 1\n16 1 9 3\n16 1 27 1\n16 2 9 3\n16 2 27 1\n16 3 3 9\n16 3 9 3\n16 3 27 1\n16 4 3 9\n16 4 9 3\n16 5 3 9\n16 5 9 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "30 30\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 21 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+          "testOut": "17 10 21\n0 10 1 21\n1 10 1 21\n2 10 1 21\n3 10 1 21\n4 10 1 21\n5 10 1 21\n6 10 1 21\n7 10 1 21\n8 10 1 21\n9 10 1 21\n11 8 3 7\n11 9 3 7\n11 10 3 7\n12 8 3 7\n12 9 3 7\n12 10 3 7\n13 8 3 7\n13 9 3 7\n13 10 3 7\n14 8 3 7\n14 9 3 7\n14 10 3 7\n15 4 7 3\n15 5 7 3\n15 6 7 3\n15 7 7 3\n15 8 3 7\n15 8 7 3\n15 9 3 7\n15 9 7 3\n15 10 3 7\n15 10 7 3\n16 4 7 3\n16 5 7 3\n16 6 7 3\n16 7 7 3\n16 8 3 7\n16 8 7 3\n16 9 3 7\n16 9 7 3\n16 10 3 7\n16 10 7 3\n17 0 21 1\n17 1 21 1\n17 2 21 1\n17 3 21 1\n17 4 7 3\n17 4 21 1\n17 5 7 3\n17 5 21 1\n17 6 7 3\n17 6 21 1\n17 7 7 3\n17 7 21 1\n17 8 3 7\n17 8 7 3\n17 8 21 1\n17 9 3 7\n17 9 7 3\n17 9 21 1\n17 10 3 7\n17 10 7 3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Chaos - Wide",
+          "isTest": true,
+          "testIn": "8 4\n4 0 3 0 0 0 0 2\n0 8 0 0 0 12 0 2\n0 0 6 0 4 0 4 2\n2 0 0 5 0 0 0 2",
+          "testOut": "0 2 3\n0 1 3 1\n0 2 3 1\n0 7 2\n0 6 2 1\n1 7 2\n1 6 2 1\n2 4 4\n0 4 1 4\n1 3 2 2\n2 4 2 2\n2 6 4\n0 6 1 4\n2 5 2 2\n3 0 2\n2 0 1 2\n3 0 2 1\n3 3 5\n3 1 5 1\n3 2 5 1\n3 7 2\n3 6 2 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "9 4\n4 0 3 0 0 0 0 2 0\n0 8 0 0 0 8 0 2 0\n0 0 3 0 4 0 4 2 0\n2 0 0 5 0 0 0 2 0",
+          "testOut": "0 2 3\n0 1 3 1\n0 2 3 1\n0 7 2\n0 6 2 1\n0 7 2 1\n1 5 8\n0 3 4 2\n1 7 2\n1 6 2 1\n1 7 2 1\n2 2 3\n1 2 1 3\n2 0 3 1\n2 1 3 1\n2 4 4\n0 4 1 4\n1 3 2 2\n2 4 2 2\n2 6 4\n0 6 1 4\n2 5 2 2\n2 7 2\n2 7 2 1\n3 0 2\n2 0 1 2\n3 0 2 1\n3 3 5\n3 1 5 1\n3 2 5 1\n3 7 2\n3 6 2 1\n3 7 2 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Chaos - Tall",
+          "isTest": true,
+          "testIn": "4 8\n4 0 3 0\n0 8 0 0\n0 0 6 0\n2 0 0 5\n0 0 0 0\n6 0 0 2\n0 3 0 4\n2 2 2 2",
+          "testOut": "0 2 3\n0 1 3 1\n2 2 6\n1 2 1 6\n2 1 2 3\n3 0 2\n2 0 1 2\n3 0 1 2\n3 0 2 1\n3 3 5\n0 3 1 5\n5 0 6\n4 0 3 2\n5 3 2\n4 3 1 2\n5 2 2 1\n6 1 3\n4 1 1 3\n6 0 3 1\n7 0 2\n6 0 1 2\n7 2 2\n6 2 1 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "4 9\n4 0 3 0\n0 8 0 0\n0 0 3 0\n2 0 0 5\n0 0 0 0\n3 0 0 2\n0 3 0 4\n2 2 2 2\n0 0 0 0",
+          "testOut": "0 2 3\n0 1 3 1\n2 2 3\n1 2 1 3\n2 0 3 1\n2 1 3 1\n2 2 1 3\n3 0 2\n2 0 1 2\n3 0 1 2\n3 0 2 1\n3 3 5\n0 3 1 5\n5 0 3\n4 0 1 3\n5 0 3 1\n5 3 2\n4 3 1 2\n5 2 2 1\n6 1 3\n4 1 1 3\n6 0 3 1\n7 0 2\n6 0 1 2\n7 0 1 2\n7 1 2\n7 1 1 2\n7 2 2\n6 2 1 2\n7 2 1 2\n7 3 2\n7 3 1 2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "10 x 10 from Shikaku Solver",
+          "isTest": true,
+          "testIn": "10 10\n0 0 0 0 0 0 0 0 9 0\n0 0 0 0 0 0 9 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 20 0 0 8 0 0 0 6 0\n0 0 0 0 0 0 0 0 0 0\n0 0 0 6 0 0 6 0 0 0\n10 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 0 6 0 6 0 0 0 8 0\n0 0 0 0 0 0 6 0 0 0",
+          "testOut": "0 8 9\n0 0 9 1\n0 1 9 1\n0 7 3 3\n1 6 9\n0 4 3 3\n0 5 3 3\n1 0 9 1\n1 1 9 1\n1 5 3 3\n3 1 20\n0 0 4 5\n3 4 8\n0 3 2 4\n0 4 1 8\n0 4 2 4\n1 3 2 4\n1 4 2 4\n2 2 4 2\n2 3 4 2\n2 4 2 4\n2 4 4 2\n3 2 4 2\n3 3 4 2\n3 4 2 4\n3 4 4 2\n3 8 6\n1 7 2 3\n1 8 1 6\n1 8 2 3\n2 6 3 2\n2 7 2 3\n2 7 3 2\n2 8 1 6\n2 8 2 3\n3 6 3 2\n3 7 2 3\n3 7 3 2\n3 8 2 3\n5 3 6\n0 3 1 6\n1 3 1 6\n2 3 1 6\n3 2 2 3\n3 3 1 6\n4 1 3 2\n4 2 2 3\n4 2 3 2\n4 3 1 6\n4 3 2 3\n4 3 3 2\n5 0 6 1\n5 1 3 2\n5 2 2 3\n5 2 3 2\n5 3 2 3\n5 3 3 2\n5 6 6\n2 6 1 6\n3 5 2 3\n3 6 1 6\n3 6 2 3\n4 4 3 2\n4 5 2 3\n4 5 3 2\n4 6 2 3\n4 6 3 2\n5 4 3 2\n5 4 6 1\n5 5 2 3\n5 5 3 2\n5 6 2 3\n5 6 3 2\n6 0 10\n0 0 1 10\n4 0 2 5\n5 0 2 5\n6 0 5 2\n6 0 10 1\n8 2 6\n3 2 1 6\n4 2 1 6\n6 1 2 3\n6 2 2 3\n7 0 3 2\n7 1 2 3\n7 1 3 2\n7 2 2 3\n8 0 3 2\n8 1 3 2\n8 4 6\n4 4 1 6\n6 3 2 3\n6 4 2 3\n7 3 2 3\n7 3 3 2\n7 4 2 3\n7 4 3 2\n8 3 3 2\n8 8 8\n5 7 2 4\n5 8 2 4\n6 7 2 4\n6 8 2 4\n7 5 4 2\n7 6 4 2\n9 6 6\n7 5 2 3\n7 6 2 3\n8 5 3 2\n9 1 6 1\n9 2 6 1\n9 3 6 1\n9 4 6 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "10 10\n0 0 0 0 0 0 0 6 0 0\n0 6 0 0 6 0 6 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 6 0\n0 0 0 0 8 0 0 0 0 0\n0 12 0 8 0 0 0 0 0 0\n0 0 0 0 0 0 0 9 0 0\n0 0 12 0 0 0 0 0 0 0\n0 0 0 0 9 0 0 12 0 0\n0 0 0 0 0 0 0 0 0 0",
+          "testOut": "0 7 6\n0 2 6 1\n0 3 6 1\n0 4 6 1\n0 7 1 6\n0 7 2 3\n0 7 3 2\n1 1 6\n0 0 2 3\n0 0 3 2\n0 1 2 3\n0 1 3 2\n1 0 2 3\n1 0 3 2\n1 1 2 3\n1 1 3 2\n1 4 6\n0 2 3 2\n0 3 2 3\n0 3 3 2\n0 4 2 3\n1 2 3 2\n1 3 2 3\n1 3 3 2\n1 4 2 3\n1 6 6\n0 5 2 3\n0 6 1 6\n1 5 2 3\n1 5 3 2\n1 6 1 6\n1 6 2 3\n1 6 3 2\n3 8 6\n0 8 1 6\n1 7 2 3\n1 8 1 6\n1 8 2 3\n2 6 3 2\n2 7 2 3\n2 7 3 2\n2 8 1 6\n2 8 2 3\n3 3 6 1\n3 4 6 1\n3 6 3 2\n3 7 2 3\n3 7 3 2\n3 8 1 6\n3 8 2 3\n4 4 8\n2 4 2 4\n3 1 4 2\n3 2 4 2\n3 3 4 2\n3 4 2 4\n3 4 4 2\n4 0 8 1\n4 1 8 1\n4 2 8 1\n4 4 2 4\n4 4 4 2\n5 1 12\n2 0 2 6\n2 0 3 4\n3 0 2 6\n3 0 3 4\n4 0 2 6\n5 3 8\n0 3 1 8\n1 3 1 8\n2 2 2 4\n2 3 1 8\n3 2 2 4\n5 2 4 2\n5 2 8 1\n5 3 4 2\n6 7 9\n4 5 3 3\n4 6 3 3\n4 7 3 3\n5 5 3 3\n5 6 3 3\n5 7 3 3\n6 0 9 1\n6 1 9 1\n7 2 12\n6 0 3 4\n6 0 4 3\n6 0 6 2\n6 1 3 4\n6 1 6 2\n7 0 4 3\n8 4 9\n6 3 3 3\n6 4 3 3\n7 3 3 3\n7 4 3 3\n8 7 12\n7 5 4 3\n7 6 4 3",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "2 ≤ [[w]], [[h]] ≤ 30",
+      "coverBinaryId": 127842389225717,
+      "stubGenerator": "read w:int h:int\nloop h\nloopline w n:int\nwrite answer",
+      "inputDescription": "<<Line 1:>> The [[w]]idth and [[h]]eight of the grid, space separated.\n\n<<Next [[h]] lines:>> [[w]] space-separated integers. ({{0}}s indicate blank cells)",
+      "solutionLanguage": "Python3",
+      "outputDescription": "Navigating the grid from left to right and from top to bottom, for each positive number [[n]], if there is at least one rectangle of area [[n]] which covers [[n]] without covering other positive numbers (we’ll call each a <<good rectangle>>), output the following:\n\n<<Line 1:>> Three space separated integers: [[row]] [[col]] [[n]], where [[row]] and [[col]] are the location of [[n]] on the grid.\n\n<<Next 1 or more lines:>> Four space separated integers: [[r]] [[c]] [[width]] [[height]] for each <<good rectangle>>. [[r]] and [[c]] indicate the rectangle's top left corner. [[width]] and [[height]] indicate the rectangle's dimensions. These lines must be sorted by [[r]], then [[c]] and then [[width]].\n\nNote: For output purposes, rows and columns must be zero-indexed. The top-left corner of each grid is row 0, col 0."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">This puzzle is part of a multi-part Algorithm X tutorial and is meant to be done per the guidance in the following playground:<br><br><const>https://www.algorithm-x.com</const><br><br><strong>Task:</strong><br><br>Given a grid of numbers, find all rectangles that cover each positive number without covering other positive numbers. Each rectangle must have an area equal to the number it covers.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> The <var>w</var>idth and <var>h</var>eight of the grid, space separated.<br><br><strong>Next <var>h</var> lines:</strong> <var>w</var> space-separated integers. (<const>0</const>s indicate blank cells)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Navigating the grid from left to right and from top to bottom, for each positive number <var>n</var>, if there is at least one rectangle of area <var>n</var> which covers <var>n</var> without covering other positive numbers (we&rsquo;ll call each a <strong>good rectangle</strong>), output the following:<br><br><strong>Line 1:</strong> Three space separated integers: <var>row</var> <var>col</var> <var>n</var>, where <var>row</var> and <var>col</var> are the location of <var>n</var> on the grid.<br><br><strong>Next 1 or more lines:</strong> Four space separated integers: <var>r</var> <var>c</var> <var>width</var> <var>height</var> for each <strong>good rectangle</strong>. <var>r</var> and <var>c</var> indicate the rectangle's top left corner. <var>width</var> and <var>height</var> indicate the rectangle's dimensions. These lines must be sorted by <var>r</var>, then <var>c</var> and then <var>width</var>.<br><br>Note: For output purposes, rows and columns must be zero-indexed. The top-left corner of each grid is row 0, col 0.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &le; <var>w</var>, <var>h</var> &le; 30</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3 2\n0 0 0\n0 4 0</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1 1 4\n0 0 2 2\n0 1 2 2</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 31559702148,
+  "avatar": 87736728529732,
+  "commentCount": 4,
+  "upVotes": 7,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 1078071,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1738004737000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1738018377992,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1739168827344,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

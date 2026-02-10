@@ -1,0 +1,276 @@
+{
+  "id": 78160,
+  "activeVersion": 67,
+  "score": 15,
+  "votableId": 31804347,
+  "codingamerId": 4433844,
+  "views": 313,
+  "commentableId": 31662944,
+  "title": "Boggle with Friends",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Lisa-Has-Ideas",
+  "publicHandle": "781604a419e74b98e02db65d51cd19d298a82",
+  "codingamerHandle": "6057618d773e6e27a20abefa031c4e674483344",
+  "lastVersion": {
+    "version": 67,
+    "autocloseTime": 1704912707914,
+    "data": {
+      "title": "Boggle with Friends",
+      "topics": [
+        {
+          "id": 50,
+          "handle": "lists",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Listes",
+            "2": "Lists"
+          },
+          "pageTitle": "Lists: exercises and theory",
+          "puzzleCount": 13,
+          "parentTopicId": 40,
+          "contentDetailsId": 96
+        },
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 55,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "using System; using System.Linq;using System.IO;using System.Text;using System.Collections;using System.Collections.Generic;\n\nclass Solution\n{\n\t\n\tpublic static List<FriendClass> Friends = new List<FriendClass>();\n\t\n    public static char[,] Grid;\n    public static List<Point>Points = new List<Point>();\n    public static List<string> inputList = new List<string>();\n    public static Dictionary <char, List<Point>> dic = new Dictionary <char, List<Point>>();\n    public static Dictionary <string, Point> ThePointsDic = new Dictionary <string, Point>();\n    public static List<string> AllPatternsForSingleWord = new List<string>();\n\n\tpublic static int siz = 4;\n\tpublic static string bl = \" \";\n\t\n\tpublic static string[] FriendsRay = \"Joey Rachel Ross Monica Chandler Phoebe\".Split(' ');\n\tpublic static string[] FewFriendsRay;\n\tpublic static int HowManyFriends;\n\n    static void Main(string[] args)\n    {\t\n\t\t//https://www.litscape.com/word_tools/words_made_from.php\n\n        Grid = new char[4,4];\n        string members =\"\";\n        \n        for (int i = 0; i < 4; i++)\n        {\n            string gridLine = Console.ReadLine();\n            members += gridLine;\n        }\n\n        members = members.Replace(\" \",\"\");\n\n        PopulateGrid(members);\n        PopulatePointsAndDic();\n\n\t\tint N = int.Parse(Console.ReadLine());\n        for (int i = 0; i < N; i++)\n        {\n            string aPlayersNotePad = Console.ReadLine();\n            var splitEntireLine = aPlayersNotePad.Split(' ');\n            var name = splitEntireLine[0].Trim();\n            var wordList = new List<string>();\n            for (int ii = 2 ; ii < splitEntireLine.Length ; ii++)\n            {\n                wordList.Add(splitEntireLine[ii].Trim());\n            }\n\t\t\tvar tempFriendClassInstance = new FriendClass(name, wordList);\n\t\t\tFriends.Add(tempFriendClassInstance);\n\t\t}\n\n\t\t\n\t\tforeach (var F in Friends)\n\t\t{\n\t\t\tforeach (var W in F.ThisPlayersWords)\n\t\t\t{\n\t\t\t\t{\n\t\t\t\t\tbool WisUnique = true; // assume \n\t\t\t\t\tforeach (var f in Friends)\n\t\t\t\t\t{\n\t\t\t\t\t\tif (F.Name != f.Name)\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\tforeach (var w in f.ThisPlayersWords)\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\tif (W.ActualWord == w.ActualWord) WisUnique = false;\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t\tif (WisUnique)\n\t\t\t\t\t{\n\t\t\t\t\t\tW.IsUnique = true;\n\t\t\t\t\t}\n\t\t\t\t}\t\n\t\t\t}\n\t\t}\n\t\t\n\t\tforeach (var f in Friends)\n\t\t{\n\t\t\tf.CalcTotalValue();\n\t\t}\n\t\t\n\t\tvar winner = Friends.MaxBy(x => x.TotalValue);;\n\t\tConsole.WriteLine(winner.Name + \" is the winner!\\n\");\n\t\t\n\t\tConsole.WriteLine(\"===Each Player's Score===\");\n\t\tforeach (var f in Friends)\n\t\t{\n\t\t\tvar result = f.Name + \" \" + f.TotalValue;\t\n\t\t\tConsole.WriteLine(result);\t\n\t\t}\n\t\tConsole.WriteLine();\n\t\tConsole.WriteLine(\"===Each Scoring Player's Scoring Words===\");\n\t\tforeach (var f in Friends)\n\t\t{\n\t\t\tif (f.TotalValue > 0)\n\t\t\t{\n\t\t\t\tConsole.WriteLine(f.Name);\n\t\t\t\tforeach (var w in f.ThisPlayersWords)\n\t\t\t\t{\n\t\t\t\t\tw.PrintWordWithValue();\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\t\n\t// ============================================================================ END of Main\n\t\n\tpublic static bool IsThisWordValid(string word)\n\t{\n\t\tstring wordPattern = FindWordPattern(word);\n\t\tif (wordPattern.Contains(\"0\"))\n\t\t{\n\t\t\treturn false;\n\t\t}\n\t\tAllPatternsForSingleWord = GetAllPatternsForSingleWord(word,wordPattern);\n\t\t\t\n\t\tint lowestNumberOfFailedPairs = 99;//this works fine; dont sweat it\n\n\t\tforeach(var aSinglePattern in AllPatternsForSingleWord)\n\t\t{\n\t\t\tList<Point> sop =  CreateSeriesOfPoints(word, aSinglePattern);\n\t\t\tint numOfFailedPairsForThisPattern = WillReturnZeroIfValid(sop); // for this single pattern \n\t\t\tif (numOfFailedPairsForThisPattern < lowestNumberOfFailedPairs) lowestNumberOfFailedPairs = numOfFailedPairsForThisPattern;\n\t\t}\n\t\tif (lowestNumberOfFailedPairs == 0) return true;\n\t\treturn false;\n\t}\n\n\n    public static List<Point> CreateSeriesOfPoints(string word, string particularWordPattern)\n    {\n        int leng = word.Length;\n        List<Point> thesePoints = new List<Point>();\n        for (int pos = 0 ; pos < leng ; pos++ )\n        {\n            char ch = word[pos];\n            char charOption = particularWordPattern[pos];\n            int intOption = charOption - '0'; \n            int indexIntOption = intOption - 1;\n            Point pt = dic[ch][indexIntOption]; \n            thesePoints.Add(pt);\n        }\n        return thesePoints;\n    }\n\t\n\tpublic static int WillReturnZeroIfValid(List<Point> seriesOfPoints) \n    {\n        MakeAllPointsAvailableAgain();\n        int leng = seriesOfPoints.Count();\n\t\t\n\t\tint actualNumOfSuccessPairs = 0;\n\t\tint goalNumOfSuccessPairs = leng - 1;\n\t\t\n        int BI = leng - 1;\n        for (int whichPt = 0 ; whichPt < BI ; whichPt++ )\n        {\n            var PointA = seriesOfPoints[whichPt];            \n            var PointB = seriesOfPoints[whichPt + 1];\n            bool pairAreAdj = Point.Are2PointsAdjacent(PointA, PointB); // it also checks, and only returns true if PointB is available\n\n            if (pairAreAdj == true) \n\t\t\t{\n\t\t\t\tPointA.Available = false;\n            \tPointB.Available = false;\n\t\t\t\tactualNumOfSuccessPairs++;\n\t\t\t}\n        }\n\t\treturn goalNumOfSuccessPairs - actualNumOfSuccessPairs; // so if it's almost right, this will be 1 (very low)\n\t\t// like if it should be 6 but it's only 5 matches, this will return 1;\n    }\n\n\n    public static void MakeAllPointsAvailableAgain()\n    {\n        foreach (var pt in Points)\n        {\n            pt.Available = true;\n        }\n    }\n    \n    public static string FindWordPattern(string word) \n    /*  so like if work is flood \n       -- and there are 2 \"f\"\n                        1 \"l\"\n                        1 \"o\"\n                    and 3 \"d\"\n     -- it would be 21113.   Of course this won't work if there are 10+ of a single letter but...\n    ...that's okay because the boggle board cubes are such that that could never possibly happen.  \n    In other words fewer than 10 of the cubes have any specific letter on them. \n     \n    */\n    {\n        int leng = word.Length;\n        string wordPattern = \"\";\n        for (int pos = 0 ; pos < word.Length ; pos++)\n        {\n            char ch = word[pos];\n            if (dic.ContainsKey(ch))\n            {\n                List<Point> tempList = dic[ch];\n                wordPattern += tempList.Count;\n            }\n            else\n            {\n                wordPattern += '0';\n            }\n        }\n        return wordPattern;\n    }\n\n    public static void PopulatePointsAndDic()\n    {\n        for (int lin = 0 ; lin < 4; lin++)\n        {\n            for (int pos = 0 ; pos < 4 ; pos++)\n            {\n                char ch = Grid[lin,pos];\n                Point thisPt = new Point(lin,pos);\n                Points.Add(thisPt);\n                ThePointsDic.Add(lin+\"\"+pos,thisPt);\n\n                if (dic.ContainsKey(ch))\n                {\n                    dic[ch].Add(thisPt);\n                }\n                else\n                {\n                    List<Point> newList = new List<Point>();\n                    newList.Add(thisPt);\n                    dic.Add(ch,newList);\n                }\n            }\n        }\n    }\n\t\n    \t\n\tpublic static void PopulateGrid(string members)\n    {\n\t\n\t\tfor (int lin = 0 ; lin < 4; lin++)\n        {\n            for (int pos = 0 ; pos < 4 ; pos++)\n            {\n\t\t\t\tint indexInLettersShowing = lin*4 + pos;\n                Grid[lin,pos] =  members[indexInLettersShowing];\n            }\n        }\n    }\n\n    public static List<string> GetAllPatternsForSingleWord(string word, string wordPattern) /// so like for wordPattern 321, it would return 111 121 211 221 311 321\n    {\n        List<string> list = new List<string>();\n        int leng = word.Length;\n        int BI = leng - 1;\n        string strMaxx = wordPattern;\n        string strCurr = new String('1', leng);\n        list.Add(strCurr);\n\n        var maxx = strMaxx.ToCharArray();\n\n        while (strCurr != strMaxx)\n        {\n            var curr = strCurr.ToCharArray();\n            curr[BI] = AddOne(curr[BI]);\n            for (int pos = BI ; pos > 0 ; pos--)\n            {\n                if (curr[pos] > maxx[pos])\n                {\n                    curr[pos] = '1';\n                    curr[pos-1] = AddOne(curr[pos-1]);\n                }\n            }\n            strCurr = String.Join(\"\",curr);\n            list.Add(strCurr);\n        }\n        return list;\n    }\n\n    public static char AddOne(char ch)\n    {\n        int i = (int)ch;\n        i++;\n        return (char)i;\n    }\n    \n\n\t// ============================================================================ Point CLASS\n    public class Point\n    {\n        public int Lin;\n        public int Pos;\n        public bool Available = true;\n        public string Name;\n\n        public Point(int lin, int pos)\n        {\n            Lin = lin;\n            Pos = pos;\n            Name = Lin + \"\" + Pos;\n        }\n\n        public static bool Are2PointsAdjacent(Point p1, Point p2) // also checks if next one is available\n        {\n            int diffLin = Math.Abs(p1.Lin - p2.Lin);\n            int diffPos = Math.Abs(p1.Pos - p2.Pos);\n            bool bo1 = diffLin <= 1 && diffPos <= 1;\n\t\t\tbool bo2 = diffLin + diffPos != 0; // its different points.  Yes, must have this\n            bool bo3 = ThePointsDic[p2.Lin + \"\" + p2.Pos].Available == true;\n            bool bo4 = bo1 && bo2 & bo3;\n            if (bo4) return true;\n            return false;\n        }\n    }\n\t\n\tpublic class FriendClass \t// ============================================================================Friend CLASS\n\t{\n\t\tpublic string Name;\n\t\tpublic List<PlayedWordClass> ThisPlayersWords = new List<PlayedWordClass>();\n\t\tpublic int TotalValue = 0 ;\n\t\n\t\t\n\t\tpublic FriendClass(string n, List<string> wordList)\n\t\t{\n\t\t\tName = n;\n\t\t\tforeach (var w in wordList)\n\t\t\t{\n\t\t\t\tbool alreadyWroteIt = false;\n\t\t\t\tforeach (var aWord in ThisPlayersWords)\n\t\t\t\t{\n\t\t\t\t\tif (aWord.ActualWord == w) alreadyWroteIt = true;\n\t\t\t\t}\n\t\t\t\tif (alreadyWroteIt == false)\n\t\t\t\t{\n\t\t\t\t\tvar temp = new PlayedWordClass(w);\n\t\t\t\t\tThisPlayersWords.Add(temp);\n\t\t\t\t}\n\t\t\t\telse\n\t\t\t\t{\n\t\t\t\t\tvar temp = new PlayedWordClass(w,true); // \"true\" if is duplicate within list\n\t\t\t\t\tThisPlayersWords.Add(temp);\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\t\t\t\t\t\t\n\t\tpublic void CalcTotalValue()\n\t\t{\n\t\t\t\n\t\t\tforeach  (var w in ThisPlayersWords)\n\t\t\t{\n\t\t\t\tif (w.IsUnique && w.IsValidForThisBoggleBoard && w.IsDuplicateInList == false)\n\t\t\t\t{\n\t\t\t\t\tw.ActualValue = w.PotentialValue;\n\t\t\t\t}\n\t\t\t}\n\t\t\t\n\t\t\tTotalValue = 0;\n\t\t\tforeach  (var w in ThisPlayersWords)\n\t\t\t{\n\t\t\t\tTotalValue += w.ActualValue;\n\t\t\t}\n\t\t}\n\t}\n\t\n\t\n\tpublic class PlayedWordClass  \t// ============================================================================ PlayedWord CLASS\n\t{\n\t\tpublic string ActualWord;\n\t\tpublic bool IsValidForThisBoggleBoard = false; //until proven other wise\n\t\tpublic bool IsDuplicateInList = false;\n\t\tpublic bool IsUnique = false;\n\t\t\t\n\t\tpublic int PotentialValue = 0;\n\t\tpublic int ActualValue = 0;\n\t\t\n\t\n\t\tpublic PlayedWordClass(string strWord, bool isDup = false) // constructor\n\t\t{\n\t\t\tActualWord = strWord;\n\t\t\tif (isDup == true) \n\t\t\t{\n\t\t\t\tIsDuplicateInList = true;\n\t\t\t}\n\t\t\tif (IsThisWordValid(ActualWord))\n\t\t\t{\n\t\t\t\tIsValidForThisBoggleBoard = true;\n\t\t\t}\n\t\t\tCalcValue();\n\t\t}\n\t\t\n\t\tpublic void CalcValue()\n\t\t{\n\t\t\t/*\n\t\t\t3-letter words and 4-letter words are 1 point each.\n\t\t\t5-letter words are 2 points each.\n\t\t\t6-letter words are 3 points each.\n\t\t\t7-letter words are 5 points each.\n\t\t\t8-letter words and longer are 11 points each.\n\t\t\t*/\n\t\t\tint len = ActualWord.Length;\n\t\t\t\n\t\t\tswitch(len) \n\t\t\t{\n\t\t\t\tcase 3: PotentialValue = 1; break;\n\t\t\t  \tcase 4: PotentialValue = 1; break;\n\t\t\t\tcase 5: PotentialValue = 2; break;\n\t\t\t\tcase 6: PotentialValue = 3; break;\n\t\t\t\tcase 7: PotentialValue = 5; break;\n\t\t\t\tdefault: PotentialValue = 11; break;\n\t\t\t}\n\t\t}\n\t\t\n\t\tpublic void PrintWord()\n\t\t{\n            string s = String.Format(\"{0,15} {1,15} {2,15} {3,30} {4,15} {5,15}\", ActualWord , IsValidForThisBoggleBoard ,IsDuplicateInList , IsUnique , PotentialValue ,ActualValue);\n\t\t\tConsole.WriteLine(s);\n\t\t}\n\t\t\n\t\tpublic void PrintWordWithValue()\n\t\t{\n\t\t\tif (ActualValue > 0)\n\t\t\t{\n\t\t\t\tstring s = ActualValue + bl + ActualWord;\n\t\t\t\tConsole.WriteLine(s);\n\t\t\t}\n\t\t}\n\t}\n}\n\n",
+      "statement": "<<~ ~ ~ ~ ~ Background and Your Task ~ ~ ~ ~ ~>>\nBoggle was a word board game, popular in the 1990s.\nSurely the Friends (on the TV show \"Friends\") played it.\n\nDetermine who wins, and the details of the game.\n\n\n<<~ ~ ~ ~ ~ Rules and Scoring ~ ~ ~ ~ ~>>\n‣ A word must be over 2-letters long.\n‣ A word is only <<valid>> in the game if it can be spelled using letters adjacent to each other on board (diagonal is fine).\n‣ A letter on the board can be used only once per word.\n‣ A word doesn't count if more than one person writes it.\n‣ If a player writes down a word more than once, all the repeated instances are ignored.\n‣ [[winner]] is player with most points.\n‣ For simplicity, a game is only one round (i.e., only one shake of the board).\n‣ Full rules (if needed to clarify) are here: \nhttps://www.wikihow.com/Play-Boggle\nor\nhttps://www.youtube.com/watch?v=BJAdXnGAb7k\n\nScoring:\n3-letter words and 4-letter words are 1 point each.\n5-letter words are 2 points each.\n6-letter words are 3 points each.\n7-letter words are 5 points each.\n8-letter words and longer are 11 points each.\n\n\n<<~ ~ ~ ~ ~ Assume ~ ~ ~ ~ ~>>\nYou can assume all words on all notepads are real words, as checking that would be beyond the scope of this puzzle.\n\nDo NOT assume that all words are valid for the Boggle Board; this is something you will need to check.\n\n\n.\n\n\n.\n\n\n.\n\n\n.\n\n\n.\n\n\n<<~ ~ ~ ~ ~ Credit, etc ~ ~ ~ ~ ~>>\n‣ Background on Boggle: https://en.wikipedia.org/wiki/Boggle\n‣ If you enjoy and solve this, try this Hard puzzle: https://www.codingame.com/training/hard/boggle\n‣ Credit to: https://www.litscape.com/word_tools/words_made_from.php -- that website helped create this",
+      "testCases": [
+        {
+          "title": "Test 1: all words are valid, no dups",
+          "isTest": true,
+          "testIn": "B E M Y\nG I H S\nE R S H\nN L X W\n6\nChandler writes: LEG GEMS ISLE MISSY RIG\nRoss writes: RIB\nRachel writes: SIEGE SIM SHIRE HIM\nMonica writes: REGIME\nPhoebe writes: MISS SIR IRE SHE GRIM BEIGE\nJoey writes: GIRL",
+          "testOut": "Phoebe is the winner!\n\n===Each Player's Score===\nChandler 6\nRoss 1\nRachel 6\nMonica 3\nPhoebe 7\nJoey 1\n\n===Each Scoring Player's Scoring Words===\nChandler\n1 LEG\n1 GEMS\n1 ISLE\n2 MISSY\n1 RIG\nRoss\n1 RIB\nRachel\n2 SIEGE\n1 SIM\n2 SHIRE\n1 HIM\nMonica\n3 REGIME\nPhoebe\n1 MISS\n1 SIR\n1 IRE\n1 SHE\n1 GRIM\n2 BEIGE\nJoey\n1 GIRL",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "B E M Y\nG I H S\nE R S H\nN L X W\n6\nRachel writes: RIM\nChandler writes: HIS\nRoss writes: LEG GRIM\nMonica writes: SHY MISSY ISLE MISS SHE SIRE HIM GEMS\nJoey writes: SHIRE\nPhoebe writes: SIR IRE",
+          "testOut": "Monica is the winner!\n\n===Each Player's Score===\nRachel 1\nChandler 1\nRoss 2\nMonica 9\nJoey 2\nPhoebe 2\n\n===Each Scoring Player's Scoring Words===\nRachel\n1 RIM\nChandler\n1 HIS\nRoss\n1 LEG\n1 GRIM\nMonica\n1 SHY\n2 MISSY\n1 ISLE\n1 MISS\n1 SHE\n1 SIRE\n1 HIM\n1 GEMS\nJoey\n2 SHIRE\nPhoebe\n1 SIR\n1 IRE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2: some words are not valid for this boggle board",
+          "isTest": true,
+          "testIn": "L N E N\nI M T V\nN G O P\nF L B Q\n5\nRachel writes: LOT POLLING LOB\nChandler writes: POT GOLF LINE\nRoss writes: LOVE NIL MOVE TEN TOME MINT OVEN VIBE LOGIN TOM BOMB\nMonica writes: OPTION BLOG NINE\nJoey writes: TENT BINGO GEL NET",
+          "testOut": "Ross is the winner!\n\n===Each Player's Score===\nRachel 2\nChandler 3\nRoss 10\nMonica 2\nJoey 1\n\n===Each Scoring Player's Scoring Words===\nRachel\n1 LOT\n1 LOB\nChandler\n1 POT\n1 GOLF\n1 LINE\nRoss\n1 LOVE\n1 NIL\n1 MOVE\n1 TEN\n1 TOME\n1 MINT\n1 OVEN\n2 LOGIN\n1 TOM\nMonica\n1 BLOG\n1 NINE\nJoey\n1 NET",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "L N E N\nI M T V\nN G O P\nF L B Q\n5\nMonica writes: MIL MOP MINE LOB PIGMENT\nChandler writes: LOT LINEN BEN NOBLE\nRoss writes: VOTE TOP INN INTO\nPhoebe writes: VENT LOG VIE EVENING MOB LIME POT OMNI GLOVE\nRachel writes: MOVE",
+          "testOut": "Phoebe is the winner!\n\n===Each Player's Score===\nMonica 4\nChandler 3\nRoss 3\nPhoebe 8\nRachel 1\n\n===Each Scoring Player's Scoring Words===\nMonica\n1 MIL\n1 MOP\n1 MINE\n1 LOB\nChandler\n1 LOT\n2 LINEN\nRoss\n1 VOTE\n1 TOP\n1 INTO\nPhoebe\n1 VENT\n1 LOG\n1 MOB\n1 LIME\n1 POT\n1 OMNI\n2 GLOVE\nRachel\n1 MOVE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3: Multiple players have the same word",
+          "isTest": true,
+          "testIn": "G K O S\nT B Y C\nN T S U\nY H E I\n2\nPhoebe writes: THE HET CUES BYTES HES BYTE BOY SUE BOYS SET SHY THY SOY SHE USE\nRachel writes: THY BOYS SUE HES SHY BOY SOY CUES BYTES CUE",
+          "testOut": "Phoebe is the winner!\n\n===Each Player's Score===\nPhoebe 6\nRachel 1\n\n===Each Scoring Player's Scoring Words===\nPhoebe\n1 THE\n1 HET\n1 BYTE\n1 SET\n1 SHE\n1 USE\nRachel\n1 CUE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "G K O S\nT B Y C\nN T S U\nY H E I\n2\nJoey writes: BOY HES BYTES THY\nRachel writes: THE SUE HET THY BOYS CUE BOY BYTE CUES SHY USE SET SHE BYTES",
+          "testOut": "Rachel is the winner!\n\n===Each Player's Score===\nJoey 1\nRachel 11\n\n===Each Scoring Player's Scoring Words===\nJoey\n1 HES\nRachel\n1 THE\n1 SUE\n1 HET\n1 BOYS\n1 CUE\n1 BYTE\n1 CUES\n1 SHY\n1 USE\n1 SET\n1 SHE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4: Individual players repeat their own words",
+          "isTest": true,
+          "testIn": "A T T N\nI D E W\nS R T A\nI F A A\n5\nRachel writes: TEA IDS AWE IFS\nMonica writes: TRENT ART\nChandler writes: AID RED IDE SIT RATE RENT RED TAD IDEA TIDE ERA ARID AID IRIS\nJoey writes: FAR DREW WATERS WATERS DEN AREA AREA FATE TIRE TAR FARE DIRE SITE FIR FARE RAT IRE NEAT\nRoss writes: AFT",
+          "testOut": "Joey is the winner!\n\n===Each Player's Score===\nRachel 4\nMonica 3\nChandler 12\nJoey 17\nRoss 1\n\n===Each Scoring Player's Scoring Words===\nRachel\n1 TEA\n1 IDS\n1 AWE\n1 IFS\nMonica\n2 TRENT\n1 ART\nChandler\n1 AID\n1 RED\n1 IDE\n1 SIT\n1 RATE\n1 RENT\n1 TAD\n1 IDEA\n1 TIDE\n1 ERA\n1 ARID\n1 IRIS\nJoey\n1 FAR\n1 DREW\n3 WATERS\n1 DEN\n1 AREA\n1 FATE\n1 TIRE\n1 TAR\n1 FARE\n1 DIRE\n1 SITE\n1 FIR\n1 RAT\n1 IRE\n1 NEAT\nRoss\n1 AFT",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "A T T N\nI D E W\nS R T A\nI F A A\n4\nRoss writes: RAT RID RAT RIDE AIDS SIRE RID RITE RED AIRED NET DATE TEN ART\nPhoebe writes: TENT DRAFT AID SIDE SITE\nMonica writes: TAR DENT IDEA TAR FIRED ADS ARID ADS IDS TIRED AIR RENT NEW AWE FAR ARS RENT DIRT DEN AIDE WATERS DREW EDIT AFT FIRE DEN\nJoey writes: TEA TEA TEA",
+          "testOut": "Monica is the winner!\n\n===Each Player's Score===\nRoss 13\nPhoebe 6\nMonica 26\nJoey 1\n\n===Each Scoring Player's Scoring Words===\nRoss\n1 RAT\n1 RID\n1 RIDE\n1 AIDS\n1 SIRE\n1 RITE\n1 RED\n2 AIRED\n1 NET\n1 DATE\n1 TEN\n1 ART\nPhoebe\n1 TENT\n2 DRAFT\n1 AID\n1 SIDE\n1 SITE\nMonica\n1 TAR\n1 DENT\n1 IDEA\n2 FIRED\n1 ADS\n1 ARID\n1 IDS\n2 TIRED\n1 AIR\n1 RENT\n1 NEW\n1 AWE\n1 FAR\n1 ARS\n1 DIRT\n1 DEN\n1 AIDE\n3 WATERS\n1 DREW\n1 EDIT\n1 AFT\n1 FIRE\nJoey\n1 TEA",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5: All put together",
+          "isTest": true,
+          "testIn": "E E E N\nI P O A\nL T T W\nE O H N\n4\nChandler writes: PIPE\nMonica writes: THEN WAN HOLE TOTE ILL PILE NOW\nRachel writes: OPT TIE TOE\nJoey writes: WON NOW WHALE LIT ONE TWO WHO WEE",
+          "testOut": "Joey is the winner!\n\n===Each Player's Score===\nChandler 0\nMonica 4\nRachel 3\nJoey 5\n\n===Each Scoring Player's Scoring Words===\nMonica\n1 WAN\n1 HOLE\n1 TOTE\n1 PILE\nRachel\n1 OPT\n1 TIE\n1 TOE\nJoey\n1 WON\n1 LIT\n1 ONE\n1 TWO\n1 WHO",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "E E E N\nI P O A\nL T T W\nE O H N\n5\nJoey writes: LIP TIP LIT POT TOWN TAP TIP OIL NOPE TILE TOE TOE OPT HOTEL TIP TIE LET\nRachel writes: TOTE TIP TWO OWN POT WATT OPEN OATH WHO WAN TOP LIT PETIT\nPhoebe writes: PLOT TWO POT TATTOO OPEN TILL PAT NOPE\nChandler writes: PHOTON POT OPTIONAL LENT\nMonica writes: TAN TOP TOTE PIE OPT TOTE HOLE TWO ONE TOE TONE OWE LIE",
+          "testOut": "Joey is the winner!\n\n===Each Player's Score===\nJoey 7\nRachel 5\nPhoebe 1\nChandler 0\nMonica 6\n\n===Each Scoring Player's Scoring Words===\nJoey\n1 LIP\n1 TOWN\n1 TILE\n2 HOTEL\n1 TIE\n1 LET\nRachel\n1 OWN\n1 WATT\n1 OATH\n1 WHO\n1 WAN\nPhoebe\n1 PLOT\nMonica\n1 TAN\n1 PIE\n1 HOLE\n1 ONE\n1 TONE\n1 LIE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6: The one where it's funny",
+          "isTest": true,
+          "testIn": "S T A L\nO V D R\nU T E E\nT H E G\n5\nJoey writes: RAVE TEE GET VET HUT OUT TAD GET TAR TOUT TEE TAD ERA RAT TEE ARS UTTER HET TAR VETO TOT STARED HUT STARED ETHER VETO STAR VOTER THE THEE TAR TOTAL OVER TOTAL HOW YOU DOING TOTE DEER OVAL TREE TAR HERD VET ERA TOT TEE TEE VOTE RAT UTTER LAD GEE RED ERA ARE OTHER\nRachel writes: VOTE DEER THE DEER\nPhoebe writes: SMELLY CAT REED RED TELL HER RED OVER TOTAL REED ARE DEE REV REED OTHER ETHER\nChandler writes: REED ARE VAT REV OUT RAVE THERE DEER VOTE TOT BING STARED DEER LAD HER DEER TOTE ERA THERE HERE STARED STAR STOUT SOUTH OUTER VETO GEE THERE VOTED RED TOTAL STARE HER STOUT STOVE\nMonica writes: OVAL NEAT FREAK VOTED THERE DEER OVAL DARE TOTE VETO LAVA STOVE GET VOTE RAVE OTHER SOUTH ARE OVAL REV THERE TOTAL OVAL RAT TAD TOOTH",
+          "testOut": "Joey is the winner!\n\n===Each Player's Score===\nJoey 12\nRachel 0\nPhoebe 1\nChandler 8\nMonica 1\n\n===Each Scoring Player's Scoring Words===\nJoey\n1 TEE\n1 VET\n1 HUT\n1 TAR\n1 TOUT\n2 UTTER\n1 HET\n2 VOTER\n1 THEE\n1 HERD\nPhoebe\n1 DEE\nChandler\n1 VAT\n1 HERE\n2 STOUT\n2 OUTER\n2 STARE\nMonica\n1 DARE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "S T A L\nO V D R\nU T E E\nT H E G\n5\nRachel writes: GEE TODDLERS RAT TEE\nJoey writes: HERALD OUTER THERE OUTER REGGAE THEE GEE TOUT THEE ETHER REV TAD VETO VOTER TOTAL OTHER RED HERD VOTED VOTED ERA STOVE HUT TOTAL ARE BREAK\nPhoebe writes: STOUT RAT ETHER RAVE TEE TEE SOUTH UTTER TOTE REV TEE SOUTH GEE HERD STARED HERALD RAVE VOTE TEE HUT REV ARE TAR TAD GET SOUTH GET HET RATS GET VOTED OVAL RATS VOTER ERA TAR TOTAL OVER TOTE HER THE VETO ARE DEE REV OVAL\nMonica writes: SISTER SIBLING HERE VOTED TAR HET HERD RAT TAR HUT VOTED STREET TAD HET ARE THEE TAR THERE REV REV THEE VOTED STARED RAT OTHER REED VETO SEED HER GET ERA VETO TAR VOTER DARE VOTE TOT DEE STAR VAT\nRoss writes: TAD SEE GREAT BROTHER SIBLING TAR OUT GEE OUTER OVER HUT TAR STOVE ROVER STARED NOT BREAK",
+          "testOut": "Phoebe is the winner!\n\n===Each Player's Score===\nRachel 0\nJoey 2\nPhoebe 11\nMonica 6\nRoss 1\n\n===Each Scoring Player's Scoring Words===\nJoey\n1 TOUT\n1 RED\nPhoebe\n2 STOUT\n1 RAVE\n2 SOUTH\n2 UTTER\n1 TOTE\n1 RATS\n1 OVAL\n1 THE\nMonica\n1 HERE\n1 REED\n1 DARE\n1 TOT\n1 STAR\n1 VAT\nRoss\n1 OUT",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 7: Random",
+          "isTest": true,
+          "testIn": "R A N R\nT H C T\nB T E A\nE O T N\n4\nChandler writes: BETTER HEN EACH TORT TOE CANT TEA HEAT HAT TRACE TRACT TOT TAR ETA TAR TAN TOTE CHART TENT CAT CHART TOTE TEA ACE ART TRANCE TOT CANE CHART CAN CHAT CANT THEN NET TRACE BOTH HERE\nJoey writes: BOTH CHAT EACH CAT CENT CANE TEA CART ANTE TORCH HET RANT ACT TOE ACT HAT TOE CHAT BOTH CANE CART BOTH TEACH EACH NET ACE TEA BET THAT BETH ACT EACH RAT EAR CHEAT ETA TAN ACT CANE ANT TECH TENT EAT TEA ATE CAN THAT THETA\nRoss writes: HEAT HAT TOTE NEAT RANCH CAN THEN THEN THE BET ATE RAN THAT TOTE TENT EACH CENT TERRACE HAT CAR TEA BOTH CAT CENT CAR BETH ANT HEN HEAT CENT TECH ANT BOTH\nRachel writes: CANT ANT TRACT THAT THEN CHAR TRACE THAT HEAT RAT RAN HAT CAR THE THETA CHEAT CHART ETA ANCHOR",
+          "testOut": "Joey is the winner!\n\n===Each Player's Score===\nChandler 6\nJoey 8\nRoss 3\nRachel 1\n\n===Each Scoring Player's Scoring Words===\nChandler\n1 TOT\n1 TAR\n1 ART\n3 TRANCE\nJoey\n1 CART\n1 ANTE\n1 HET\n1 RANT\n1 ACT\n2 TEACH\n1 EAT\nRoss\n1 NEAT\n2 RANCH\nRachel\n1 CHAR",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "R A N R\nT H C T\nB T E A\nE O T N\n5\nRachel writes: THE THE TEACH BET CATER RACE TOTE BETH CHEAT REACT ART CANE BETH RAT TOT\nChandler writes: CART EAT\nPhoebe writes: NOT OCEAN THREE BETH RACE\nMonica writes: CHEAT CHEAT ART HEAT BOTH ARC NEAT TEA HEAT RACE BOTH TOTE CAT RAN THAT HEAT THETA CAR CANE BOTH CART TOTE RAT HET CHART ATE HEN CAR TRACE HEAT ANT TAN CHART HAT BOTH HEN CAR RAN BREATHE ANT ACE CHAR ETA NEAT NEAT RACE TEA TEN ANTE TENT\nJoey writes: RAT RANT CHAT TAROT THAN BEAT RANT BET RANT ANT TEACH RACE CHART",
+          "testOut": "Monica is the winner!\n\n===Each Player's Score===\nRachel 2\nChandler 1\nPhoebe 0\nMonica 23\nJoey 3\n\n===Each Scoring Player's Scoring Words===\nRachel\n1 THE\n1 TOT\nChandler\n1 EAT\nMonica\n1 HEAT\n1 BOTH\n1 NEAT\n1 TEA\n1 CAT\n1 RAN\n1 THAT\n2 THETA\n1 CAR\n1 HET\n1 ATE\n1 HEN\n2 TRACE\n1 TAN\n1 HAT\n1 ACE\n1 CHAR\n1 ETA\n1 TEN\n1 ANTE\n1 TENT\nJoey\n1 RANT\n1 CHAT\n1 THAN",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 8: Pivot, Break, RIP Matthew Perry",
+          "isTest": true,
+          "testIn": "B E A P\nI R K I\nN I L V\nG P T O\n3\nRoss writes: PIVOT PIVOT PIVOT ERA PILOT TIN KING TIP LIRA KIT PIKE LIAR BEARING PIG PLOT LIKING BEARING LOT KERN TIN AKIN BREAKING BRA PIN PING PIKE GIN PARKING RIG BREAKING RATING GIRL AKIN PARKING ING PIG ARE EARN ARK PIN PIG LIKE BEING NIP KIN VOLT BEARING PLOT BREAK\nChandler writes: RIP BRING RAP LAB VOLT LIT NIL ERA ROT RIP\nMonica writes: GIN PIN RIG PARKING TIRE RIB RIB LIT REAP PILOT BREAKING KERN TIN ARE LIRA LOT GIN REAP PILOT VIA VIKING RAP BEAR PINE KIN PING EAR KERN KERN KING BRA BREAKING PIG BEARING ERA BEAR BEARING KERN PLOT RAIL PIN LIKE EAR KIT PIKE VIA NIL BEARING KERN RIG PLOT",
+          "testOut": "Ross is the winner!\n\n===Each Player's Score===\nRoss 17\nChandler 3\nMonica 10\n\n===Each Scoring Player's Scoring Words===\nRoss\n2 PIVOT\n1 TIP\n1 LIAR\n3 LIKING\n1 AKIN\n1 GIRL\n1 ING\n1 EARN\n1 ARK\n2 BEING\n1 NIP\n2 BREAK\nChandler\n1 RIP\n2 BRING\nMonica\n1 TIRE\n1 RIB\n1 REAP\n1 VIA\n3 VIKING\n1 BEAR\n1 EAR\n1 RAIL",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "B E A P\nI R K I\nN I L V\nG P T O\n2\nMonica writes: BEARING BEING NIL PILOT BREAK PING RAIL NIB BRING RIG RAKE REAP RING RAP NIB BIN BROKEN BRING PILOT VOTING NIP PLOT ERA RIG PARKING REAP PING TIRE BREAK VOLT LIKING PLOT PIN LIT BRA PIVOT RIG VIA AKIN LIKING LIAR RIP\nJoey writes: RIG EARL VIKING NIB PINK TIN BRAKE VOLT LIKING BRING TIP LOT",
+          "testOut": "Monica is the winner!\n\n===Each Player's Score===\nMonica 40\nJoey 9\n\n===Each Scoring Player's Scoring Words===\nMonica\n5 BEARING\n2 BEING\n1 NIL\n2 PILOT\n2 BREAK\n1 PING\n1 RAIL\n1 RAKE\n1 REAP\n1 RING\n1 RAP\n1 BIN\n3 VOTING\n1 NIP\n1 PLOT\n1 ERA\n5 PARKING\n1 TIRE\n1 PIN\n1 LIT\n1 BRA\n2 PIVOT\n1 VIA\n1 AKIN\n1 LIAR\n1 RIP\nJoey\n1 EARL\n3 VIKING\n1 TIN\n2 BRAKE\n1 TIP\n1 LOT",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 9: Smelly Cat, Haircut",
+          "isTest": true,
+          "testIn": "T H A T\nU I C A\nC R Y L\nS M E L\n2\nPhoebe writes: SMELLY CAT SMELL CIRCA YACHT TIC ALLEY MERIT AIR SATIRE RELAY TIC\nRachel writes: HAIRCUT LAY CUR ALLY MERCY HAT HAIR LATCH CRY CRY SMELL EMS CHAIR MERCY HAIR TALE HAIR TALE CUT CURE HAT HAIRY ALE CHAIRS THAT CHAT HAT ACT ACRE RYE CHAIRS RELY EMS RELAY AYE LYRICS",
+          "testOut": "Rachel is the winner!\n\n===Each Player's Score===\nPhoebe 14\nRachel 37\n\n===Each Scoring Player's Scoring Words===\nPhoebe\n3 SMELLY\n1 CAT\n2 CIRCA\n2 YACHT\n1 TIC\n2 ALLEY\n2 MERIT\n1 AIR\nRachel\n5 HAIRCUT\n1 LAY\n1 CUR\n1 ALLY\n2 MERCY\n1 HAT\n1 HAIR\n2 LATCH\n1 CRY\n1 EMS\n2 CHAIR\n1 TALE\n1 CUT\n1 CURE\n2 HAIRY\n1 ALE\n3 CHAIRS\n1 THAT\n1 CHAT\n1 ACT\n1 ACRE\n1 RYE\n1 RELY\n1 AYE\n3 LYRICS",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "T H A T\nU I C A\nC R Y L\nS M E L\n3\nRoss writes: RELY ACT RICH HIT TALL TALL YELL CRY TALLY HIRE CURE RELY CIRCLE CUT CHAIR CHAIRS TALLY HUT EMS EMS TALL CAT LYRICS ALL LYRICS HEEL MERCY LAYER RELAY ALLY LYRICS CALLER ALL EMS LYRICS HIRE LAYERS CIRCA IRE CIRCLE HAIR LYRICS ALE CIRCLE CALLER LYRICS HIT CHAT\nMonica writes: RICH RICH YACHT ALLY RYE LAYER MERIT RELY RELY RELAY CUT CHI ALLY AIR MERCY LATCH IRE TALL TALE RELAY AYE YACHT TIRE SAY CHIC TALLY CUR MERCY RYE LAYERS HAIR RYE LAY TIRE TIC CUR HIRE ALLY CHAT CLAY ALLY LAYERS AYE CURE TALL AIR TIC RYE SMELL LAY\nRachel writes: CHAT TIRE SMELL ALLEY CHI MERIT CIRCLE ACT HUT IRE TIRE EMS MERCY HUT THAT RYE AYE CIRCA CIRCLE ACT ALE CHAT LYRICS RELY TALL LAYERS CAT CALL YELL RELAY CHAIR RICH LAYERS HIT CHAT THAT SMELL TALLY CURE CALL LAY",
+          "testOut": "Monica is the winner!\n\n===Each Player's Score===\nRoss 8\nMonica 10\nRachel 4\n\n===Each Scoring Player's Scoring Words===\nRoss\n1 CRY\n3 CHAIRS\n1 ALL\n3 CALLER\nMonica\n2 YACHT\n1 AIR\n2 LATCH\n1 TALE\n1 CHIC\n1 CUR\n1 TIC\n1 CLAY\nRachel\n2 ALLEY\n1 THAT\n1 CALL",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 10: Awkward and Too Tidy",
+          "isTest": true,
+          "testIn": "T A W A\nR I K W\nD D D D\nT O O Y\n4\nMonica writes: ART TOO TIDY DOT RADIATOR TIDY\nChandler writes: AWKWARD RAT RAT RAW DID\nRachel writes: WIT RADIATOR WAR WAIT DRAW WOO ART RID KAT RAW WIT ARID ODD RID KIT ODD TAD\nJoey writes: DID AIR DIRT RIOT WAR RAT ART DIRT DRAW DOT RAT KIT KIT DIRT",
+          "testOut": "Rachel is the winner!\n\n===Each Player's Score===\nMonica 2\nChandler 5\nRachel 6\nJoey 2\n\n===Each Scoring Player's Scoring Words===\nMonica\n1 TOO\n1 TIDY\nChandler\n5 AWKWARD\nRachel\n1 WIT\n1 WAIT\n1 RID\n1 KAT\n1 ARID\n1 ODD\nJoey\n1 AIR\n1 DIRT",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "T A W A\nR I K W\nD D D D\nT O O Y\n5\nMonica writes: TAR AWKWARD TIDY RID RAW WAIT TRIO\nChandler writes: DID TRIO KAT ARID AWAIT ARID TAR RAW DID TIDY\nPhoebe writes: DIRT WIT TAR DRAW KIT KIT DIRT AIR DIRT AWARD AWARD ARID DOT\nRachel writes: DIRT ARROW WAIT AID RAW RAT WAIT\nRoss writes: AWAIT AWAIT TAR WAIT ART WARD WAIT ARID KAT WAR AWKWARD RAT DRAW DIRT KAT",
+          "testOut": "Phoebe is the winner!\n\n===Each Player's Score===\nMonica 1\nChandler 1\nPhoebe 6\nRachel 1\nRoss 3\n\n===Each Scoring Player's Scoring Words===\nMonica\n1 RID\nChandler\n1 DID\nPhoebe\n1 WIT\n1 KIT\n1 AIR\n2 AWARD\n1 DOT\nRachel\n1 AID\nRoss\n1 ART\n1 WARD\n1 WAR",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 11: Intense",
+          "isTest": true,
+          "testIn": "E N D S\nI D I N\nR O C G\nF E M A\n3\nMonica writes: GAM MANCE GAME DOING IRE DOING NINE ACME DIG IDS DEN CODE COIN SIDE CIS CORE INS SIGN CING COD DING COINS CAM COINS COME SIC SIGMA CING SIGMA RIDING FRIEND SIGN SINCE RIDING ADDS DINE DIN ROD FRIEND DID DIODE DICE FRIENDS RIDING IRE DOE COD DEN ICE SIGN RODE DIODE MORE NICE ENDS\nJoey writes: SIGN DOME RODE CING DIRE ROE DING SIC COD ACE ACE DID ACIDS ACID ACME MORE RID DOE SINCE SIGMA SIGMA CAME FRIED COME DOE NICE MORE CORE\nRachel writes: ENDS ACIDS GAM CODE MORE DING COMA CODE RIDING GAME COD ODE CING INS ENDS DINING GIN COMA DID ACID INCREASED MORE DOING NINE MER CODE DING ACE ODE ORE INCOME DIRE CORD FROM GAME NICE FRIED ACE DIE ODD SINCE COMA GAME NICE CORE SIGMA DEN FRIENDS GAME ORE DEN DIRE ACIDS CORE IRE SINCE COD NINE IDE CING DOE DOING GAM COINS CING IDS DICE DIRE ENDS ENDING RODE ROD DIODE FROM COD FRIENDS DING DICE CING ICE NICE ORE INS DOME ICE CING COMA ODE INCOME IRE DIODE CORD ROD ROE CING DIRE ACME IDE SING ACE SINCE MORE ROE COIN COME DINE ODE MER ACE RID ODE COMA SINCE CAM ODDS CORD SIN DIODE ORE DID DIG SIC CODING ACID ENDS DIG ODDS CODING SINCE CIS SIC DICE IRE RODE FRIEND FRIED INS DIRE SIC DIN FROM NINE DOING MORE ODDS ACIDS CIS GIN DOME CIS FRIED SIGN FRIED END SIGMA MORE DIN ODE ROD ROD DOING COD CING FROM DID ENDS NINE RIDE IDS DOME DID DINE ICE ODD COD SIDE ICE CODING INS CING INS IDE ACID FRIED DIRE CORE DOME ODDS COME DIN COME DID ROD DOING END INS ENDING ODD DEN DOING CORD ROE INCOME SIDE CORE GIN DID ACE GAME CING CING NICE RID COMA SING CODING RODE ICE DIRE FRIENDS GAMER ORE ROD DIE ICE ODDS COIN ICE DID ICE IDS FRIENDS INS END ACID COME DING ODE DID ACME CAM CIS CAME DOME ENDING INCOME ACE NINE",
+          "testOut": "Rachel is the winner!\n\n===Each Player's Score===\nMonica 0\nJoey 0\nRachel 29\n\n===Each Scoring Player's Scoring Words===\nRachel\n1 COMA\n1 ODE\n3 DINING\n1 GIN\n1 MER\n1 ORE\n3 INCOME\n1 CORD\n1 FROM\n1 DIE\n1 ODD\n1 IDE\n3 ENDING\n1 SING\n1 ODDS\n1 SIN\n3 CODING\n1 END\n1 RIDE\n2 GAMER",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "E N D S\nI D I N\nR O C G\nF E M A\n2\nRachel writes: DEFENDERS ODE CORES FRIED DIRE ODDS SING DIG CORE ORE CAME RID CODING ICE ACIDS DOING NICE CIS DOME RIDING SING NICE CING ICE SIGMA DEN DIRE GIN DOE DIG DIE FRIENDS FRIEND DICE INCOME ACIDS ODD DING CAME FRIED DOE ACE CODING COIN COINS DOING RIDE RID CIS DICE COD DIN GIN DIODE ORE SIC CORD DID DOING ROD DOE CODE SINCE DIE CODE FRIEND RIDING FRIEND CORD DICE CORD FRIEND\nChandler writes: INS CAM MER ACID DOME SIGMA DARN SIN COME END ROD CING IRE GAM ENDING DING DOME RID MER FRIENDS GAMER CODING CODING INS DICE DINE SING MORE SINCE CING NICE SIGMA IDS FRIEND INCOME DIODE ACIDS INS SING GAM CODING SINCE FRIED DOE FRIED COIN ORE DINE DEN ACME ACID MER ENDS ICE DIG COD ENDS MER DIRE DOE GAMER ROD SIGN CING FRIENDS NICE ODE DOE CAM SIGMA ACE DIN CING IDS NICE ODE CORD ROE DING ENDS COD CAM IDE ODE MORE SIDE COME DINE GAM GIN FRIEND CAM MER DINING INCOME GIN FRIED ACIDS CING RODE GAME IDS CORD DINING COIN ICE FRIEND COME RID ODD ICE DINING DINE ACME MORE COIN DIODE INS INS GAMER ORE GIN FRIENDS COINS ICE FRIED SIDE GAM MAGIC DIODE REF DEN COD INCOME COD GAMER",
+          "testOut": "Chandler is the winner!\n\n===Each Player's Score===\nRachel 14\nChandler 31\n\n===Each Scoring Player's Scoring Words===\nRachel\n1 ODDS\n1 CORE\n1 CAME\n2 DOING\n1 CIS\n3 RIDING\n1 DIE\n1 RIDE\n1 SIC\n1 DID\n1 CODE\nChandler\n1 INS\n1 CAM\n1 MER\n1 ACID\n1 SIN\n1 COME\n1 END\n1 IRE\n1 GAM\n3 ENDING\n2 GAMER\n1 DINE\n1 MORE\n1 IDS\n1 ACME\n1 ENDS\n1 SIGN\n1 ROE\n1 IDE\n1 SIDE\n3 DINING\n1 RODE\n1 GAME\n2 MAGIC\n1 REF",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 12: Friendship is valuable",
+          "isTest": true,
+          "testIn": "F R I E\nH S D N\nI P L O\nN Y E V\n2\nPhoebe writes: SIP DOLPHIN ISLE SHINY RIDE DOVE NOD DISH SHRINE NODE PLY FRIENDS HIPS RIDE YEP LOVE SIDE SIR ENDS ONLY SHRINE DEN SHINY FRIENDS SIN PSI NOD NODE YIN DEN DISH NOD HIP LEONE RIDE NOVELS LEV ISLE SIR FRIEND DINE DIE SIP DIE LONE SHINY NOVELS DINE SIDE DISH FRIED HIP FRIENDS FRIENDSHIP SHRINE ONE PHI ISLE DEN NODE RIDE DON DON YIN ODE SHRINE END FRIENDSHIP DOLPHIN RIDE ENDS PLY RID DOVE IDLE DONE OLD YIN DOVE NODE SHRINE IDLE IDOL HIP NYLON FRIEND HIPS FRIED LONE PSI FRIENDSHIP SIN FRIENDS ISLE DIN PIN HIPS DIE DONE HIP IDLE DISH HIP SIN LOVE NOVELS RIDE NOVELS DOVE IDS LONE NOVELS PLY ONLY SPIN FRIENDS DIE PIN ODE ONE DIN FRIENDS PLY DOE PIN FRIENDLY NIP NOEL ONLY HIS SIDE OLD SIDE NOEL FRIED NOD FRIENDS END PSI OLD DEN FRIEND SHINY ONLY HIPS OLD YIN FRIENDSHIP NODE PIN DOE SHIN PHI SHINY NODE IDOL ODE FRIED ENDS ENDS SIN\nJoey writes: FRIENDS HIPS SHIP YEP DESERVE DOLPHIN NIP LONE NODE NOVELS END OLD PHI DIP PSI DIN DINE PSI DOLPHIN SPY IDLE DEN DON SIR DIE SIP HIPS FRIEND",
+          "testOut": "Phoebe is the winner!\n\n===Each Player's Score===\nPhoebe 59\nJoey 2\n\n===Each Scoring Player's Scoring Words===\nPhoebe\n1 ISLE\n2 SHINY\n1 RIDE\n1 DOVE\n1 NOD\n1 DISH\n3 SHRINE\n1 PLY\n1 LOVE\n1 SIDE\n1 ENDS\n1 ONLY\n1 SIN\n1 YIN\n1 HIP\n2 LEONE\n1 LEV\n2 FRIED\n11 FRIENDSHIP\n1 ONE\n1 ODE\n1 RID\n1 DONE\n1 IDOL\n2 NYLON\n1 PIN\n1 IDS\n1 SPIN\n1 DOE\n11 FRIENDLY\n1 NOEL\n1 HIS\n1 SHIN\nJoey\n1 SHIP\n1 SPY",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "F R I E\nH S D N\nI P L O\nN Y E V\n5\nRachel writes: ENDS NOVELS SHIN ONLY LEV SHINY DOVE SHINY PSI FRIENDS DIN DIE NIP LEV NOEL SHIP PHI NOD LOVE DIN ENDS NYLON SHRINE DISH HIPS OLD ONE DON HIPS SPIN SIN RID FRIED NOD FRIED DOLPHIN YEP DEN DISH HIP HIS NOEL SPY DOVE ENDS NOVEL IDLE FRIENDLY SIP SHINY OLD SIN DOVE ENDS PHI HIP DOVE HIPS SIP LEV ENDS SPIN DOLPHIN DOVE NYLON SIP HIP DIN DISH NOD PHI LEONE FRIED SHIN NOVEL IDOL ONE OLD END DEN LEONE HIP DOLPHIN NOD SPIN SPY FRIEND ODE SPIN END ONE HIS IDE LEONE DINE DONE IDE PHI DIN LEV FRIENDLY HIP END DIN END\nMonica writes: LOVE DOVE REDS PRESSED NONE NYLON\nRoss writes: LONE ONLY LEONE DOE NIP DISH NOD RID SIN IDOL PIN ONE DISH DOVE NIP YIN SPY DIN ONE SHIN IDE SPIN SHIP PSI LOVE END NOEL LEONE DON SIN HIPS LONE NOVELS SPIN SIDE PLY DINE SHRINE HIP SHINY HIPS FRIEND PLY NYLON DOLPHIN RIDE DIE LOVE YEP END PHI SIDE NIP LEONE NODE IDOL SIR LOVE PSI IDLE FRIENDS LEV DEN ONE SIP SIDE LOVE HIPS SHIN ONE SHIP FRIENDSHIP LEV FRIED ISLE HIPS FRIED HIPS PLY NOD LEONE IDS DEN SHRINE IDLE DON PIN HIS IDS YEP DIN NODE DISH FRIENDS\nPhoebe writes: LEONE DISH FRIEND IDOL DOE LEONE LONE LEONE ISLE LEV PHI ONE SHIN NOVEL SHIP SHIP SIN FRIENDSHIP DON RODS YIN OLD LEONE DON DONE DINE SHIN IDLE LONELY DOLPHIN ODE FRIENDS IDE LONE FRIENDS LEV SIP ONE ISLE NYLON LEV FRIEND SHIN HIP SHINY PLY DIE ONLY DIN IDOL PLY DEN IDLE RID HIP IDLE LEONE SIP ENDS SIP DINE PSI DEN NIP PHI SHIP SIP NOVEL SHINY NOD YIN DONE DOLPHIN DOLPHIN SPILL DINE\nChandler writes: YEP LIE SENSORY DOVE RIDE RID DOE NOD RIDE NOD",
+          "testOut": "Rachel is the winner!\n\n===Each Player's Score===\nRachel 11\nMonica 0\nRoss 5\nPhoebe 0\nChandler 0\n\n===Each Scoring Player's Scoring Words===\nRachel\n11 FRIENDLY\nRoss\n1 PIN\n1 SIDE\n1 NODE\n1 SIR\n1 IDS",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "‣ All words are truly real words, and are at least 3-letters long\n‣ There will always be a clear winner (no ties)\n‣ For simplicity, there are no \"Q\" or \"Qu\" on the Boggle Board\n‣ All players write at least one word\n‣ [[numOfFriends]] ≥ 2\n‣ All letters on the Boggle Board and the words in [[aFriendsNotePad]] are in uppercase\n‣ All [[Friend]]s' names consist of one word only and are all unique",
+      "coverBinaryId": 115609783987372,
+      "stubGenerator": "loop 4 read gridLine:string(7)\nread numOfFriendsPlaying:int\nloop numOfFriendsPlaying read aFriendsNotePad:string(2000)\nwrite winner and all the details",
+      "inputDescription": "<<Lines 1-4:>> The 4x4 Boggle Board with a space between letters for easy readability\n<<Line 5:>> [[numOfFriends]], an Integer, the number of Friends who are playing\n<<Next [[numOfFriends]] Lines:>> a string, collectively called [[aFriendsNotePad]], consisting of a [[Friend]]'s name {{writes:}} and all the words that Friend has written down (each separated by a space)",
+      "solutionLanguage": "C#",
+      "outputDescription": "<<Line 1:>> [[winner]] {{is the winner!}}\n<<Line 2:>> Blank line for readability\n<<Line 3:>> {{===Each Player's Score===}}\n<<Next  [[numOfFriends]] Lines:>> Each [[Friend]] (in order from input) and that [[Friend]]'s total score (separated by a space)\n<<Next  Line:>> Blank line for readability\n<<Next  Line:>> {{===Each Scoring Player's Scoring Words===}}\n<<Next  Many Lines:>>\nEach [[Friend]] (if they score any points) -- in same order as input\nUnderneath each Friend, each word they wrote that has value -- in same order as input -- preceded by that word's value (separated by a space)"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><strong>~ ~ ~ ~ ~ Background and Your Task ~ ~ ~ ~ ~</strong><br>Boggle was a word board game, popular in the 1990s.<br>Surely the Friends (on the TV show &quot;Friends&quot;) played it.<br><br>Determine who wins, and the details of the game.<br><br><br><strong>~ ~ ~ ~ ~ Rules and Scoring ~ ~ ~ ~ ~</strong><br>‣ A word must be over 2-letters long.<br>‣ A word is only <strong>valid</strong> in the game if it can be spelled using letters adjacent to each other on board (diagonal is fine).<br>‣ A letter on the board can be used only once per word.<br>‣ A word doesn't count if more than one person writes it.<br>‣ If a player writes down a word more than once, all the repeated instances are ignored.<br>‣ <var>winner</var> is player with most points.<br>‣ For simplicity, a game is only one round (i.e., only one shake of the board).<br>‣ Full rules (if needed to clarify) are here: <br>https://www.wikihow.com/Play-Boggle<br>or<br>https://www.youtube.com/watch?v=BJAdXnGAb7k<br><br>Scoring:<br>3-letter words and 4-letter words are 1 point each.<br>5-letter words are 2 points each.<br>6-letter words are 3 points each.<br>7-letter words are 5 points each.<br>8-letter words and longer are 11 points each.<br><br><br><strong>~ ~ ~ ~ ~ Assume ~ ~ ~ ~ ~</strong><br>You can assume all words on all notepads are real words, as checking that would be beyond the scope of this puzzle.<br><br>Do NOT assume that all words are valid for the Boggle Board; this is something you will need to check.<br><br><br>.<br><br><br>.<br><br><br>.<br><br><br>.<br><br><br>.<br><br><br><strong>~ ~ ~ ~ ~ Credit, etc ~ ~ ~ ~ ~</strong><br>‣ Background on Boggle: https://en.wikipedia.org/wiki/Boggle<br>‣ If you enjoy and solve this, try this Hard puzzle: https://www.codingame.com/training/hard/boggle<br>‣ Credit to: https://www.litscape.com/word_tools/words_made_from.php -- that website helped create this</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Lines 1-4:</strong> The 4x4 Boggle Board with a space between letters for easy readability<br><strong>Line 5:</strong> <var>numOfFriends</var>, an Integer, the number of Friends who are playing<br><strong>Next <var>numOfFriends</var> Lines:</strong> a string, collectively called <var>aFriendsNotePad</var>, consisting of a <var>Friend</var>'s name <const>writes:</const> and all the words that Friend has written down (each separated by a space)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> <var>winner</var> <const>is the winner!</const><br><strong>Line 2:</strong> Blank line for readability<br><strong>Line 3:</strong> <const>===Each Player's Score===</const><br><strong>Next  <var>numOfFriends</var> Lines:</strong> Each <var>Friend</var> (in order from input) and that <var>Friend</var>'s total score (separated by a space)<br><strong>Next  Line:</strong> Blank line for readability<br><strong>Next  Line:</strong> <const>===Each Scoring Player's Scoring Words===</const><br><strong>Next  Many Lines:</strong><br>Each <var>Friend</var> (if they score any points) -- in same order as input<br>Underneath each Friend, each word they wrote that has value -- in same order as input -- preceded by that word's value (separated by a space)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">‣ All words are truly real words, and are at least 3-letters long<br>‣ There will always be a clear winner (no ties)<br>‣ For simplicity, there are no &quot;Q&quot; or &quot;Qu&quot; on the Boggle Board<br>‣ All players write at least one word<br>‣ <var>numOfFriends</var> &ge; 2<br>‣ All letters on the Boggle Board and the words in <var>aFriendsNotePad</var> are in uppercase<br>‣ All <var>Friend</var>s' names consist of one word only and are all unique</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">B E M Y\nG I H S\nE R S H\nN L X W\n6\nChandler writes: LEG GEMS ISLE MISSY RIG\nRoss writes: RIB\nRachel writes: SIEGE SIM SHIRE HIM\nMonica writes: REGIME\nPhoebe writes: MISS SIR IRE SHE GRIM BEIGE\nJoey writes: GIRL</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Phoebe is the winner!\n\n===Each Player's Score===\nChandler 6\nRoss 1\nRachel 6\nMonica 3\nPhoebe 7\nJoey 1\n\n===Each Scoring Player's Scoring Words===\nChandler\n1 LEG\n1 GEMS\n1 ISLE\n2 MISSY\n1 RIG\nRoss\n1 RIB\nRachel\n2 SIEGE\n1 SIM\n2 SHIRE\n1 HIM\nMonica\n3 REGIME\nPhoebe\n1 MISS\n1 SIR\n1 IRE\n1 SHE\n1 GRIM\n2 BEIGE\nJoey\n1 GIRL</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 65890565546,
+  "avatar": 94714081045618,
+  "commentCount": 21,
+  "upVotes": 16,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 905361,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1704838450229,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,318 @@
+{
+  "id": 61758,
+  "activeVersion": 33,
+  "score": 15,
+  "votableId": 29952862,
+  "codingamerId": 5135323,
+  "views": 357,
+  "commentableId": 29817754,
+  "title": "Video Assistant Referee",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "__yel__p",
+  "publicHandle": "61758710894298bb6f967d53673968f1e7447",
+  "codingamerHandle": "0022efebc483d32d655f59e0cd0902ff3235315",
+  "lastVersion": {
+    "version": 33,
+    "autocloseTime": 1695175355619,
+    "data": {
+      "title": "Video Assistant Referee",
+      "topics": [
+        {
+          "id": 117,
+          "handle": "logic",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Logic",
+            "2": "Logic"
+          },
+          "puzzleCount": 24,
+          "parentTopicId": 93
+        },
+        {
+          "id": 112,
+          "handle": "string-manipulation",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "String manipulation",
+            "2": "String manipulation"
+          },
+          "puzzleCount": 54,
+          "parentTopicId": 93
+        },
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 65,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        }
+      ],
+      "solution": "width, height, mid = 51, 15, 25\npitch = [input() for _ in range(height)]\n\nagents = \"BOobAa\"\ndata = B,O,o,b,A,a = [[] for _ in agents]\nfor y in range(height):\n    for x in range(width):\n        agent_index = agents.find(pitch[y][x])\n        if agent_index > -1:\n            data[agent_index].append((y, x))\n\n*teammates, = map(lambda e:e[1], a+A if o else b+B)\n*active, = map(lambda e:e[1], A if o else B)\n*opponents, = map(lambda e:e[1], b+B if o else a+A)\nsecond_to_last = sorted(opponents)[1] if o else sorted(opponents)[-2]\ny_ball, x_ball = o[0] if o else O[0]\nthrow_in = y_ball in [0, height-1]\ndelimiters = [second_to_last, x_ball, mid]\noffside_line = min(delimiters) if o else max(delimiters)\n\nif o:\n    offside_positions = [morata for morata in teammates if morata < offside_line]\n    offside_offence = any(inzaghi < offside_line for inzaghi in active)\nelse:\n    offside_positions = [adebayor for adebayor in teammates if adebayor > offside_line]\n    offside_offence = any(lukaku > offside_line for lukaku in active)\n\nif offside_positions and not throw_in:\n    print(len(offside_positions), \"player(s) in an offside position.\")\n    print(\"VAR: OFFSIDE!\" if offside_offence else \"VAR: ONSIDE!\")\nelse:\n    print(\"No player in an offside position.\")\n    print(\"VAR: ONSIDE!\")",
+      "statement": "In <<football>> (Soccer), the <<offside>> rule is one of the most contentious and a frequent topic of heated debate among fans. The advent of <<Video Assistant Referee (VAR)>> technology is supposed to reduce the offside uncertainty.\n\nYou are tasked with implementing the VAR system for <<identifying offside situations>>, based on data supplied by both the video (screenshot at the moment the ball is played) and the human referees (players eventually considered as <<\"actively involved\">> once the ball is released).\n\n\n`<<Offside position>>`- A player is in an offside position if, at the moment the ball is released, they are <<nearer to the opponent's goal line than both the ball and the second last opponent>> (the last opponent is usually, but not necessarily, the goalkeeper).\n- There is no offside position if the play (the last ball release) is a <<throw-in>>.\n- The offside rule applies only to players in the <<opponent's half of the pitch>>. This makes sense since you can't be offside if you are positioned in your own camp. Only players who \"transgress\" the middle line and \"attack\" the other camp might fall in an offside trap :)\n\n\n`<<Offside offence>>`Being in an <<offside position is not an offence in itself>>, but a player so positioned when the ball is played by a teammate can be judged guilty of an offside offence if they are <<\"involved in active play\" (i.e. receive the ball, interfere with an opponent, ...)>>. In this case, the referee calls offside.\n\n\n`<<VAR data>>`The input provides information ([[screenshot]]) on how all the players of {{TEAM_A}} and {{TEAM_B}} are positioned in the pitch the moment the ball is played.\nThe [[screenshot]] is encoded using the characters {{#.aAbBoO}} as follows:\n{{#}} for boundary lines (goal lines, 18-yard box, touch lines, half-way line)\n{{.}} for unoccupied parts of the pitch\n{{a}} for players of the {{TEAM_A}}\n{{b}} for players of the {{TEAM_B}}\n{{A}} for <<\"active\">> players of the {{TEAM_A}} (as judged by a human referee), if any\n{{B}} for <<\"active\">> players of the {{TEAM_B}} (as judged by a human referee), if any\n{{o}} <<or>> {{O}} for the <<ball at the moment it is released>> by a player from {{TEAM_A}} or {{TEAM_B}} <<respectively>>.\n- If the ball is represented by lowercase {{o}}, then the attacking team is {{TEAM_A}} and the opponent team is {{TEAM_B}}. if the ball is uppercase {{O}}, then it is the other way around.\n- The size of the pitch (screenshot) is {{width=51 x height=15}}. The half-way line is therefore at X=51//2=25.\n- {{TEAM_A}} attacks from right to left. The {{TEAM_A}}'s half of the pitch is therefore <<25 <= X <= 50>> and its second-to-last is the player with the 2nd highest X coordinate.\n- {{TEAM_B}} attacks from left to right. The {{TEAM_B}}'s half of the pitch is therefore <<0 <= X <= 25>> and its second-to-last is the player with the 2nd lowest X coordinate.\n- If the ball is at the touch line, i.e. the <<first or the last row (Y = 0 or Y=14)>>, then it is a <<throw-in>>.\n\n\n`<<Requested output>>`You always need to print two lines:\n<<Line 1:>> {{No player in an offside position.}} or [[n]] {{player(s) in an offside position.}}, where [[n]] is the number of players offside.\n<<Line 2:>> {{VAR: OFFSIDE!}} if an offside position should be sanctioned (<<offside offence>>) or {{VAR: ONSIDE!}} otherwise.",
+      "testCases": [
+        {
+          "title": "#1: Lev Yashin, the goalkeeper",
+          "isTest": true,
+          "testIn": "###################################################\n#........................#........................#\n#.......................a#........................#\n#...............b.o......#........................#\n#######..................#..................#######\n#.....#......a...b.......b...........a......#.....#\n#.....#......b.......a..a#....b.............#.....#\n#..b..#........A.........#..................#.....#\n#.....#...........b....b.#..............a...#.....#\n#.....#....A.............#..................#.....#\n#######.......b..........#..................#######\n#.....................a..#.......b................#\n#........................#..........a.............#\n#........................#....b...................#\n###################################################",
+          "testOut": "1 player(s) in an offside position.\nVAR: OFFSIDE!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "#1: Iker Cassillas, the GK",
+          "isTest": false,
+          "testIn": "###################################################\n#........................#........................#\n#.......................a#........................#\n#...............b.o......#........................#\n#######..................#..................#######\n#.....a..........b.......b...........a......#.....#\n#.....#......b.......a..a#....b.............#.....#\n#..b..#........A.........#..................#.....#\n#.....#...........b....b.#..............a...#.....#\n#.....#....A.............#..................#.....#\n#######.......b..........#..................#######\n#.....................a..#.......b................#\n#........................#..........a.............#\n#........................#....b...................#\n###################################################",
+          "testOut": "2 player(s) in an offside position.\nVAR: OFFSIDE!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "#2: Cafu, the Right Back",
+          "isTest": true,
+          "testIn": "###################################################\n#........................#........................#\n#.......................a#........................#\n#...............b.o......#........................#\n#######..................#..................#######\n#.....#......a...b.......b...........a......#.....#\n#.....#......b.......a..a#....b.............#.....#\n#..b..#........A.........#..................#.....#\n#.....#...........b....b.#..............a...#.....#\n#.....#....a.............#..................#.....#\n#######.......b..........#..................#######\n#.....................a..#.......b................#\n#........................#..........a.............#\n#........................#....b...................#\n###################################################",
+          "testOut": "1 player(s) in an offside position.\nVAR: ONSIDE!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "#2: Philip Lahm, the RB",
+          "isTest": false,
+          "testIn": "###################################################\n#.................O......#........................#\n#.......................b#........................#\n#...............a........#........................#\n#######..................#....A.............#######\n#.....#......b...a.......a...........b......#.....#\n#.....#......a.......b..b#....a.............#.....#\n#..b..#..................#..................#.....#\n#.....#...........a....a.#..............b...#.....#\n#.....#..................#..................#.....#\n#######.......a..........#.......b..........#######\n#.....................b..#.......a................#\n#........................#..........b.............#\n#........................#....a...................#\n###################################################",
+          "testOut": "4 player(s) in an offside position.\nVAR: ONSIDE!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "#3: Marcelo / Roberto Carlos, the Left Back",
+          "isTest": true,
+          "testIn": "##################o################################\n#........................#........................#\n#.......................a#........................#\n#...............b........#........................#\n#######..................#..................#######\n#.....#......a...b.......b...........a......#.....#\n#.....#......b.......a..a#....b.............#.....#\n#..b..#........A.........#..................#.....#\n#.....#...........b....b.#..............a...#.....#\n#.....#....A.............#..................#.....#\n#######.......b..........#..................#######\n#.....................a..#.......b................#\n#........................#..........a.............#\n#........................#....b...................#\n###################################################",
+          "testOut": "No player in an offside position.\nVAR: ONSIDE!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "#3: Paulo Maldini, the LB",
+          "isTest": false,
+          "testIn": "###################################################\n#........................#........................#\n#.......................a#........................#\n#...............a........#........................#\n#######..................#..................#######\n#.....#......a...b.......b...........a......#.....#\n#.....#......b.......a..a#....b.............#.....#\n#..b..#........a.........#..................#.....#\n#.....#...........b....b.#..................#.....#\n#.....#....a.............#..............B...#.....#\n#######.......a..........#..................#######\n#.....................a..#.......a................#\n#........................#..........B.............#\n#........................#....b...................#\n#############################O#####################",
+          "testOut": "No player in an offside position.\nVAR: ONSIDE!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "#4: Sergio Ramos, the Center Back",
+          "isTest": true,
+          "testIn": "###################################################\n#........................#........................#\n#.......................a#........................#\n#...............a........#........................#\n#######..................#..................#######\n#.....#......a...b.......b...........a......#.....#\n#.....#......b.......a..a#....b.............#.....#\n#..b..#........a.........#..................#.....#\n#.....#...........b....b.#..................#.....#\n#.....#....a.............#..............B...#.....#\n#######.......a....O.....#..................#######\n#.....................a..#.......a................#\n#........................#..........B.............#\n#........................#....b...................#\n###################################################",
+          "testOut": "2 player(s) in an offside position.\nVAR: OFFSIDE!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "#4: Ronald Koeman, the CB",
+          "isTest": false,
+          "testIn": "###################################################\n#........................#........................#\n#.......................a#........................#\n#...............a........#........................#\n#######..................#..................#######\n#.....#......a...b.......b...........a......#.....#\n#.....#......b.......a..a#....b.............#.....#\n#..b..#........a.........#..................#.....#\n#.....#...........b....b.#..................#.....#\n#.....#....a.............#..............b...#.....#\n#######.......a....O.....#..................#######\n#.....................a..#.......a................#\n#........................#..........b.............#\n#........................#....B...................#\n###################################################",
+          "testOut": "2 player(s) in an offside position.\nVAR: ONSIDE!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "#5: Beckenbauer, der Kaiser, the Libéro",
+          "isTest": true,
+          "testIn": "###################################################\n#........................#........................#\n#.............a..........#........................#\n#..............a.........#........................#\n#######....b.............#..................#######\n#.....#....b.............#..................#.....#\nb...a.ba.................#..................#.....#\n#....abba................#..B...............#.....#\n#.....bb.................#..................#.....#\n#....baa..........a......#..................#.....#\n#####O#.a................#..................#######\n#..a.....................#........................#\n#........................#........................#\n#........................#........................#\n###################################################",
+          "testOut": "1 player(s) in an offside position.\nVAR: OFFSIDE!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "#5: Franco Baresi, the CB",
+          "isTest": false,
+          "testIn": "###################################################\n#........................#........................#\n#.............a..........#........................#\n#..............a.........#........................#\n#######....b.............#..................#######\n#.....#..................#.....b............#.....#\nb...a.ba.................#..................#.....#\n#....abba................#..a...............#.....#\n#.....bb.................#..................#.....#\n#....baa..........B......#..................#.....#\n#####O#.a................#..................#######\n#..a.....................#........................#\n#........................#........................#\n#........................#........................#\n###################################################",
+          "testOut": "1 player(s) in an offside position.\nVAR: ONSIDE!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "#6: Sergio Busquets, The Defensive Midfielder",
+          "isTest": true,
+          "testIn": "###################################################\n#........................#........................#\n#.............a..........#........................#\n#..............a.........#........................#\n#######....b.............#..................#######\n#.....#..................#.........b........#.....#\nb...a.ba.................#..................#.....#\n#....abba................#.....aB...........#.....#\n#.....bb.................#..................#.....#\n#....baa.................#........O.........#.....#\n#######.a................#..................#######\n#..a.....................#........................#\n#........................#........................#\n#........................#........................#\n###################################################",
+          "testOut": "1 player(s) in an offside position.\nVAR: ONSIDE!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "#6: Fernando Redondo, The DM",
+          "isTest": false,
+          "testIn": "###################################################\n#........................#........................#\n#.............a..........#........................#\n#..............a.........#........................#\n#######....b.............#..................#######\n#.....#..................#.........b........#.....#\nb...a.ba.................#..................#.....#\n#....abba................#.....aO...........#.....#\n#.....bb.................#..................#.....#\n#....baa.................#........B.........#.....#\n#######.a................#..................#######\n#..a.....................#........................#\n#........................#........................#\n#........................#........................#\n###################################################",
+          "testOut": "2 player(s) in an offside position.\nVAR: OFFSIDE!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "#7: CR7, Raul, Emilio Butragueño",
+          "isTest": true,
+          "testIn": "###################################################\n#........................#.......a.b..............#\n#.o...b......b.......b...#.a.........a.a..........#\n#.....ba...........b.....#........................#\n#######..................#...............a..#######\n#.....#..................#..............a...#.....#\n#.....#......b...........#..................#.a...#\n#.....#..................#..................#.....#\n#.....#..................#..................#.....#\n#.....#.......b..b.......#..........a....b..#.....#\n#######................a.#..................#######\n#........................#........b...............#\n#........................#........................#\n#........................#........................#\n###################################################",
+          "testOut": "No player in an offside position.\nVAR: ONSIDE!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "#7: The iconic wing jersey",
+          "isTest": false,
+          "testIn": "###################################################\n#........................#.......a.b..............#\n#.a...b......b.......b...#.a.........a.a..........#\n#.....bo...........b.....#........................#\n#######..................#...............a..#######\n#.....#..................#..............a...#.....#\n#.....#......b...........#..................#.a...#\n#.....#..................#..................#.....#\n#.....#..................#..................#.....#\n#.....#.......b..b.......#..........a....b..#.....#\n#######................a.#..................#######\n#........................#........b...............#\n#........................#........................#\n#........................#........................#\n###################################################",
+          "testOut": "1 player(s) in an offside position.\nVAR: ONSIDE!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "#8: Don Alfredo (Di Stéfano), Johan Cruyff, Zizou",
+          "isTest": true,
+          "testIn": "###################################################\n#........................#.......a.b..............#\n#.A...b......b.......b...#.a.........a.a..........#\n#.....bo...........b.....#........................#\n#######..................#...............a..#######\n#.....#..................#..............a...#.....#\n#.....#......b...........#..................#.a...#\n#.....#..................#..................#.....#\n#.....#..................#..................#.....#\n#.....#.......b..b.......#..........a....b..#.....#\n#######................a.#..................#######\n#........................#........b...............#\n#........................#........................#\n#........................#........................#\n###################################################",
+          "testOut": "1 player(s) in an offside position.\nVAR: OFFSIDE!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "#8: Platini, Iniesta, the Center Midfield",
+          "isTest": false,
+          "testIn": "###################################################\n#........................#.......a.b..............#\n#.a...b......b.......b...#.a.........a.a..........#\n#.....bA...........b.....#........................#\n#######..................#...............a..#######\n#.....#..................#..............a...#.....#\n#.....#......b...........#..................#.a...#\n#.....#..................#..................#.....#\n#.....#..................#..................#.....#\n#.....#.......b..b.......#..........a....b..#.....#\n#######................o.#..................#######\n#........................#........b...............#\n#........................#........................#\n#........................#........................#\n###################################################",
+          "testOut": "1 player(s) in an offside position.\nVAR: ONSIDE!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "#9: Karim Benzema",
+          "isTest": true,
+          "testIn": "###################################################\n#........................#........................#\n#.......................a#........................#\n#...............a........#........................#\n#######..................#..................#######\n#.....#......a...b.......b...........a......#.....#\n#.....#......b.......b..a#....b.............#.....#\n#..b..#........a.........#..................#.....#\n#.....#...........b....b.#..................#.....#\n#.....#....A.............#..............b...#.....#\n#######.......A..........#..................#######\n#.....................A..#........................#\n#........................A..........b.............#\n#........................#....b...................#\n#############################o#####################",
+          "testOut": "No player in an offside position.\nVAR: ONSIDE!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "#9: Ronaldo Nazario \"Il Fenômeno\"",
+          "isTest": false,
+          "testIn": "###################################################\n#........................#........................#\n#.......................a#........................#\n#...............a........#........................#\n#######..................#..................#######\n#.....#......A...b.......b...........a......#.....#\n#.....#......b.......b..a#....b.............#.....#\n#..b..#........a.........#..................#.....#\n#.....#...........b....b.#..................#.....#\n#.....#....A.............#..............b...#.....#\n#######.......A..........#..................#######\n#.....................A..#........................#\n#........................A..........b.............#\n#........................#....o...................#\n#############################b#####################",
+          "testOut": "1 player(s) in an offside position.\nVAR: OFFSIDE!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "#10: Pelé, Messi, Maradona, Modric",
+          "isTest": true,
+          "testIn": "###################################################\n#........................#....a...................#\n#........................#........................#\n#........................#........................#\n#######..................#.......b........b.#######\n#.....#.................b#...............a..#.....#\n#.....#..................#..........ab......#.....#\n#.....#..................#....b..........b..#.....#\n#.....#..................#..b.....a.........#..o..#\n#.....#...........a......#..................#.....#\n#######..................#.A....b...........#######\n#........................#...............b........#\n#.......................b#...A..........b.....a...#\n#.......................a#.......a................#\n###################################################",
+          "testOut": "1 player(s) in an offside position.\nVAR: ONSIDE!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "#10: The iconic football jersey, the Advanced Midfielder",
+          "isTest": false,
+          "testIn": "###################################################\n#........................#....a...................#\n#........................#........................#\n#........................#........................#\n#######..................#.......b........b.#######\n#.....#.................b#...............a..#.....#\n#.....#..................#..........ab......#.....#\n#.....#..................#....b..........b..#.....#\n#.....#..................#..b.....a.........#..o..#\n#.....#..................#..................#.....#\n#######..................#.A....b...........#######\n#........................#...............b.......a#\n#........................#...A..........b.....a...#\n#.......................a#.......A................#\n############################b######################",
+          "testOut": "1 player(s) in an offside position.\nVAR: ONSIDE!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "#11: Romario, Salah, Ribery, the Second Striker / Wing Forward",
+          "isTest": true,
+          "testIn": "###################################################\n#........................#....a...................#\n#........................#........................#\n#........................#........................#\n#######..................#.......b........b.#######\n#.....#.................b#...............a..#.....#\n#.....#..................#..........ab......#.....#\n#.....#..................#....b..........b..#.....#\n#.....#..................#..o.....b.........#..a..#\n#.....#..................#..................#.....#\n#######..................a......b...........#######\n#........................#...............b.......a#\n#........................#...A..........b.....a...#\n#.......................a#.......A................#\n##############################b####################",
+          "testOut": "1 player(s) in an offside position.\nVAR: ONSIDE!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "#11: Di Maria, Robben, Bale",
+          "isTest": false,
+          "testIn": "###################################################\n#........................#....a...................#\n#........................#........................#\n#........................#........................#\n#######..................#.......b........b.#######\n#.....#.................b#...............a..#.....#\n#.....#..................#..........ab......#.....#\n#.....#..................#....b..........b..#.....#\n#.....#..................#..o.....b.........#..a..#\n#.....#..................#..................#.....#\n#######..................A......b...........#######\n#........................#...............b.......a#\n#........................#...A..........b.....a...#\n#.......................A#.......A................#\n##############################b####################",
+          "testOut": "1 player(s) in an offside position.\nVAR: OFFSIDE!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "#12: The fans, the Ultras, aka the 12th man!",
+          "isTest": true,
+          "testIn": "###################################################\n#........................#....a...................#\n#........................#........................#\n#........................#........................#\n#######..................#.......b........b.#######\n#.....#.................b#...............a..#.....#\n#.....#......A...........#..........ab......#.....#\n#.....#..................#....b..........b..#.....#\n#.....#...........o......#..................#..a..#\n#.....#.b................#..................#.....#\n#######..................a......b...........#######\n#........................#...............b........#\n#........................#...a..........b.....a...#\n#.....................a..#.......a................#\n##############################b####################",
+          "testOut": "1 player(s) in an offside position.\nVAR: OFFSIDE!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "#12: Socios",
+          "isTest": false,
+          "testIn": "###################################################\n#........................#....a...................#\n#........................#........................#\n#........................#........................#\n#######..................#.......b........b.#######\n#.....#.................b#...............a..#.....#\n#.....#...........A......#..........ab......#.....#\n#.....#..................#....b..........b..#.....#\n#.....#...........o......#..................#..a..#\n#.....#.b................#..................#.....#\n#######..................a......b...........#######\n#........................#...............b........#\n#........................#...a..........b.....a...#\n#.............a..........#.......a................#\n##############################b####################",
+          "testOut": "1 player(s) in an offside position.\nVAR: ONSIDE!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "#13: Ted Lasso, the Coach, the Manager",
+          "isTest": true,
+          "testIn": "###################################################\n#........................#........................#\n#.............a..........#........................#\n#..........b.............#........................#\n#######....b.............#..................#######\n#.....#..................#..................#.....#\nb...aOba.................#..................#.....#\n#....abba................#..................#.....#\n#....bab.a...............#..................#.....#\n#....b.a............B....#..................#.....#\n######a.a................#..................#######\n#..a.....................#........................#\n#........................#........................#\n#........................#........................#\n###################################################",
+          "testOut": "No player in an offside position.\nVAR: ONSIDE!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "#13: The Coaching Staff, the Board, the CLUB",
+          "isTest": false,
+          "testIn": "###################################################\n#........................#........................#\n#.............a..........#........................#\n#..........b.............#........................#\n#######........b.........#..................#######\n#.....#..................#..................#.....#\nb...aOba.................#..................#.....#\n#....abba................#..................#.....#\n#....bab.a...............#..................#.....#\n#....b.a.................#..................#.....#\n######a.a................#..................#######\n#..a.....................#........................#\n#........................#........................#\n#......................B.#........................#\n###################################################",
+          "testOut": "No player in an offside position.\nVAR: ONSIDE!",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "coverBinaryId": 106849285530218,
+      "stubGenerator": "loop 15 read pitchRow:string(100)\nwrite Offside Positions\nwrite VAR Decision",
+      "inputDescription": "<<Lines 1 to 15>>: string of 51 characters among {{#.aAbBoO}} to represent a row of the VAR [[screenshot]]",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1>>: {{No player in an offside position.}} or [[n]]{{ player(s) in an offside position.}}, where [[n]] is the number of players offside.\n<<Line 2>>: {{VAR: OFFSIDE!}} if an offside position should be sanctioned (<<offside offence>>). Otherwise: {{VAR: ONSIDE!}}"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">In <strong>football</strong> (Soccer), the <strong>offside</strong> rule is one of the most contentious and a frequent topic of heated debate among fans. The advent of <strong>Video Assistant Referee (VAR)</strong> technology is supposed to reduce the offside uncertainty.<br><br>You are tasked with implementing the VAR system for <strong>identifying offside situations</strong>, based on data supplied by both the video (screenshot at the moment the ball is played) and the human referees (players eventually considered as <strong>&quot;actively involved&quot;</strong> once the ball is released).<br><br><br><pre style=\"font-family: monospace\"><strong>Offside position</strong></pre>- A player is in an offside position if, at the moment the ball is released, they are <strong>nearer to the opponent's goal line than both the ball and the second last opponent</strong> (the last opponent is usually, but not necessarily, the goalkeeper).<br>- There is no offside position if the play (the last ball release) is a <strong>throw-in</strong>.<br>- The offside rule applies only to players in the <strong>opponent's half of the pitch</strong>. This makes sense since you can't be offside if you are positioned in your own camp. Only players who &quot;transgress&quot; the middle line and &quot;attack&quot; the other camp might fall in an offside trap :)<br><br><br><pre style=\"font-family: monospace\"><strong>Offside offence</strong></pre>Being in an <strong>offside position is not an offence in itself</strong>, but a player so positioned when the ball is played by a teammate can be judged guilty of an offside offence if they are <strong>&quot;involved in active play&quot; (i.e. receive the ball, interfere with an opponent, ...)</strong>. In this case, the referee calls offside.<br><br><br><pre style=\"font-family: monospace\"><strong>VAR data</strong></pre>The input provides information (<var>screenshot</var>) on how all the players of <const>TEAM_A</const> and <const>TEAM_B</const> are positioned in the pitch the moment the ball is played.<br>The <var>screenshot</var> is encoded using the characters <const>#.aAbBoO</const> as follows:<br><const>#</const> for boundary lines (goal lines, 18-yard box, touch lines, half-way line)<br><const>.</const> for unoccupied parts of the pitch<br><const>a</const> for players of the <const>TEAM_A</const><br><const>b</const> for players of the <const>TEAM_B</const><br><const>A</const> for <strong>&quot;active&quot;</strong> players of the <const>TEAM_A</const> (as judged by a human referee), if any<br><const>B</const> for <strong>&quot;active&quot;</strong> players of the <const>TEAM_B</const> (as judged by a human referee), if any<br><const>o</const> <strong>or</strong> <const>O</const> for the <strong>ball at the moment it is released</strong> by a player from <const>TEAM_A</const> or <const>TEAM_B</const> <strong>respectively</strong>.<br>- If the ball is represented by lowercase <const>o</const>, then the attacking team is <const>TEAM_A</const> and the opponent team is <const>TEAM_B</const>. if the ball is uppercase <const>O</const>, then it is the other way around.<br>- The size of the pitch (screenshot) is <const>width=51 x height=15</const>. The half-way line is therefore at X=51//2=25.<br>- <const>TEAM_A</const> attacks from right to left. The <const>TEAM_A</const>'s half of the pitch is therefore <strong>25 &lt;= X &lt;= 50</strong> and its second-to-last is the player with the 2nd highest X coordinate.<br>- <const>TEAM_B</const> attacks from left to right. The <const>TEAM_B</const>'s half of the pitch is therefore <strong>0 &lt;= X &lt;= 25</strong> and its second-to-last is the player with the 2nd lowest X coordinate.<br>- If the ball is at the touch line, i.e. the <strong>first or the last row (Y = 0 or Y=14)</strong>, then it is a <strong>throw-in</strong>.<br><br><br><pre style=\"font-family: monospace\"><strong>Requested output</strong></pre>You always need to print two lines:<br><strong>Line 1:</strong> <const>No player in an offside position.</const> or <var>n</var> <const>player(s) in an offside position.</const>, where <var>n</var> is the number of players offside.<br><strong>Line 2:</strong> <const>VAR: OFFSIDE!</const> if an offside position should be sanctioned (<strong>offside offence</strong>) or <const>VAR: ONSIDE!</const> otherwise.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Lines 1 to 15</strong>: string of 51 characters among <const>#.aAbBoO</const> to represent a row of the VAR <var>screenshot</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1</strong>: <const>No player in an offside position.</const> or <var>n</var><const> player(s) in an offside position.</const>, where <var>n</var> is the number of players offside.<br><strong>Line 2</strong>: <const>VAR: OFFSIDE!</const> if an offside position should be sanctioned (<strong>offside offence</strong>). Otherwise: <const>VAR: ONSIDE!</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">###################################################\n#........................#........................#\n#.......................a#........................#\n#...............b.o......#........................#\n#######..................#..................#######\n#.....#......a...b.......b...........a......#.....#\n#.....#......b.......a..a#....b.............#.....#\n#..b..#........A.........#..................#.....#\n#.....#...........b....b.#..............a...#.....#\n#.....#....A.............#..................#.....#\n#######.......b..........#..................#######\n#.....................a..#.......b................#\n#........................#..........a.............#\n#........................#....b...................#\n###################################################</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1 player(s) in an offside position.\nVAR: OFFSIDE!</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 75780079157,
+  "avatar": 92869880984408,
+  "commentCount": 46,
+  "upVotes": 18,
+  "downVotes": 3,
+  "validateAction": {
+    "actionId": 846018,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1689703537001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1689711548152,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1694949058106,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,161 @@
+{
+  "id": 6224,
+  "activeVersion": 31,
+  "score": 15,
+  "votableId": 16998523,
+  "codingamerId": 3845610,
+  "views": 527,
+  "commentableId": 16907847,
+  "title": "Let's make a cheap ASCII 3D engine!",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "pardouin",
+  "publicHandle": "6224d52ad5295355fd7d7d48a5a5a8188a53",
+  "codingamerHandle": "f5e3b2911a0a16192867d634937546a60165483",
+  "lastVersion": {
+    "version": 31,
+    "autocloseTime": 1618222430273,
+    "data": {
+      "title": "Let's make a cheap ASCII 3D engine!",
+      "topics": [
+        {
+          "id": 191,
+          "handle": "3d",
+          "labelMap": {
+            "1": "3D",
+            "2": "3D"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        },
+        {
+          "labelMap": {
+            "2": "Ray Casting"
+          }
+        },
+        {
+          "id": 81,
+          "handle": "trigonometry",
+          "labelMap": {
+            "1": "Trigonométrie",
+            "2": "Trigonometry"
+          },
+          "pageTitle": "Trigonometry: exercises and theory",
+          "puzzleCount": 10,
+          "parentTopicId": 43,
+          "contentDetailsId": 74
+        },
+        {
+          "id": 128,
+          "handle": "ascii-art",
+          "labelMap": {
+            "1": "Ascii Art",
+            "2": "Ascii Art"
+          },
+          "puzzleCount": 6,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "from math import tan, cos, pi, ceil, floor\nX, Y, ANGLE = map(int, input().split())\nn = int(input())\nM = [input() for _ in range(n)]\nTAN = lambda a: tan(a/180*pi)\nCOS = lambda a: cos(a/180*pi)\n\ndef dist(X, Y, x, y):\n    return ((X-x)**2 + (Y-y)**2)**.5\n\ndef collision(X, Y, angle):\n    if angle <= -180:\n        angle += 360\n    elif angle > 180:\n        angle -= 360\n    MIN = float(\"inf\")\n    # h-walls\n    if angle != 0 and angle != 180:\n        IT = 1/TAN(angle)\n        b = angle < 0\n        y0 = floor(Y/100)*100 if b else ceil(Y/100)*100\n        x0 = X + (y0 - Y)*IT\n        while True:\n            i, j = y0//100 - 1*b, int(x0/100)\n            if not 0 <= i < n or not 0 <= j < n or M[i][j] != \".\":\n                break\n            y0 += 100*(-1)**b\n            x0 += 100*IT*(-1)**b\n        MIN = dist(X, Y, x0, y0)\n        horizontal = True\n    # v-walls\n    if angle != 90 and angle != -90:\n        T = TAN(angle)\n        b = angle > 90 or angle < -90\n        x0 = floor(X/100)*100 if b else ceil(X/100)*100\n        y0 = Y + (x0 - X)*T\n        while True:\n            i, j = int(y0/100), x0//100 - 1*b\n            if not 0 <= i < n or not 0 <= j < n or M[i][j] != \".\":\n                break\n            x0 += 100*(-1)**b\n            y0 += 100*T*(-1)**b\n        d = dist(X, Y, x0, y0)\n        if d < MIN:\n            MIN = d\n            horizontal = False\n    return MIN, horizontal\n\ndef draw():\n    Values = []\n    for angle in range(ANGLE -30, ANGLE + 31):\n        MIN, horizontal = collision(X, Y, angle)\n        h = round(1500/(MIN*COS(ANGLE - angle)))\n        pix = min(15, h*2 + 1)\n        fill = (15 - pix)//2\n        v = [\",\", \".\"][horizontal]\n        Values.append(fill*\" \" + pix*v + fill*\" \")\n    t = \"\\n\".join(\"\".join(row) for row in zip(*Values))\n    print(t)\n\ndraw()\n\"\"\"\nIf you made it this far, here is an exhibition of what you can do with this technique.\nThe following script is an infinite maze generator with 3D rendering and shader.\nYou can use arrows to explore the maze. When you find the exit it leads to... a new random maze.\nThe whole script takes 100 lines :\nfrom tkinter import Tk, Canvas\nfrom math import tan, cos, sin, atan, pi, ceil\nfrom random import sample, randint\ndef maze(wall):\n    G = [[wall]*n for _ in range(n)]\n    G[1][1] = G[1][2] = G[1][3] = \".\"\n    def DFS(i, j, t): # carve maze and get the best exit\n        nonlocal tmax, iexit, jexit\n        for I, J in sample([(i+2, j), (i-2, j), (i, j+2), (i, j-2)], 4):\n            if 0 <= I < n and 0 <= J < n and G[I][J] != \".\":\n                G[I][J] = G[(I+i) // 2][(J+j) // 2] = \".\"\n                if t > tmax and (I in (1, n-2) or J in (1, n-2)): tmax, iexit, jexit = t, I, J\n                DFS(I, J, t + 1)\n    iexit, jexit, tmax = None, None, 0\n    DFS(1, 3, 0)\n    G[1][0] = \"S\"\n    if iexit == 1: G[0][jexit] = \"E\"\n    elif iexit == n - 2: G[n-1][jexit] = \"E\"\n    elif jexit == 1: G[iexit][0] = \"E\"\n    else: G[iexit][n-1] = \"E\"\n    print(\"\\n\".join(\" \".join(row) for row in G), end=\"\\n\\n\")\n    return G\ndef collision(X, Y, angle):\n    if angle <= -180: angle += 360\n    elif angle > 180: angle -= 360\n    MIN = float(\"inf\")\n    if angle != 0 and angle != 180: # looking for h-walls\n        IT = 1/TAN(angle)\n        b = angle < 0\n        y0 = int(Y/100)*100 if b else ceil(Y/100)*100\n        x0 = X + (y0 - Y)*IT\n        while True:\n            i, j = y0//100 - 1*b, int(x0/100)\n            if not 0 <= i < n or not 0 <= j < n or M[i][j] != \".\": break\n            y0 += 100*(-1)**b\n            x0 += 100*IT*(-1)**b\n        MIN, horizontal = dist(X, Y, x0, y0), True\n        if 0 <= i < n and 0 <= j < n: color = M[i][j]\n    if angle != 90 and angle != -90: # looking for v-walls\n        T = TAN(angle)\n        b = angle > 90 or angle < -90\n        x0 = int(X/100)*100 if b else ceil(X/100)*100\n        y0 = Y + (x0 - X)*T\n        while True:\n            i, j = int(y0/100), x0//100 - 1*b\n            if not 0 <= i < n or not 0 <= j < n or M[i][j] != \".\": break\n            x0 += 100*(-1)**b\n            y0 += 100*T*(-1)**b\n        d = dist(X, Y, x0, y0)\n        if d < MIN:\n            MIN, horizontal = d, False\n            if 0 <= i < n and 0 <= j < n: color = M[i][j]\n    return MIN, horizontal, color\ndef shade(r, g, b, d):\n    coeff = (1.6-atan(d/25-6))/(3.2)\n    r, g, b = round(r*coeff), round(g*coeff), round(b*coeff)\n    return \"#\" + hex(r*65536 + g*256 + b)[2:].zfill(6)\ndef draw():\n    can.delete(\"all\")\n    for x, y in stars[ANGLE]: can.create_oval(x, y, x, y, fill=\"white\", outline=\"white\")\n    for p in range(1, 382):\n        can.create_line(-1, 379 + p, 1201, 379 + p, fill=shade(139, 69, 19, 40000/p))\n    for delta in range(-600, 601):\n        angle = ANGLE + delta/20\n        d, hori, color = collision(X, Y, angle if angle%45 else angle+.05)\n        h = 40000 / (d * COS(ANGLE-angle))\n        can.create_line(600+delta, 380-h, 600+delta, 380+h, width=1,\n                        fill=shade(*[light, dark][hori][color], d))\ndef hmove(s):\n    global ANGLE\n    ANGLE += s*45\n    if ANGLE <= -180 or ANGLE > 180: ANGLE -= s*360\n    draw()\ndef vmove(s, c):\n    global X, Y, ANGLE, M, LVL\n    if ANGLE % 90: return\n    x, y = X + s*100*COS(ANGLE), Y + s*100*SIN(ANGLE)\n    if M[int(y/100)][int(x/100)] == \".\": X, Y = x, y\n    elif M[int(y/100)][int(x/100)] == \"E\":\n        LVL += 1\n        M, X, Y, ANGLE = maze(c if LVL % 5 else \"$\"), 150, 150, 0\n    draw()\ndist = lambda X, Y, x, y: ((X-x)**2 + (Y-y)**2)**.5\nTAN, COS, SIN = lambda a: tan(a/180*pi), lambda a: cos(a/180*pi), lambda a: sin(a/180*pi)\nwin = Tk()\ncan = Canvas(win, width=1198, height=760, bg=shade(16, 16, 69, 1))\ncan.pack()\nstars = {angle: [] for angle in range(-135, 181, 45)}\nfor angle in list(stars):\n    for _ in range(200): stars[angle].append((randint(0, 1200), randint(0, 379)))\nn = 15 # you can change it for smaller/bigger mazes but it MUST BE ODD and > 3\nM, X, Y, ANGLE, LVL = maze(\"#\"), 150, 150, 0, 1\nlight = dict(zip(\"#S$@E\", [(229,229,229), (255,0,0), (255,215,0), (72,118,255), (0,238,0)]))\ndark = dict(zip(\"#S$@E\", [(179,179,179), (205,0,0), (205,173,0), (58,95,205), (0,205,0)]))  \nwin.bind(\"<Left>\", lambda e: hmove(-1))\nwin.bind(\"<Right>\", lambda e: hmove(1))\nwin.bind(\"<Up>\", lambda e: vmove(1, \"#\"))\nwin.bind(\"<Down>\", lambda e: vmove(-1, \"@\"))\ndraw()\nwin.mainloop()\n\"\"\"",
+      "statement": "You're given a map of a squared room, seen from above, split in [[N]] rows of [[N]] tiles of size 100 x 100.\nEach tile is either empty ({{\".\"}}) or filled ({{\"#\"}}).\nThe border tiles are always filled.\n\n<<Your task:>> create a frame of ASCII chars to render a 3D view of this room.\n\nYou're given the coordinates [[X]], [[Y]] and the angle [[A]] (in degrees) of the camera, which only rotates horizontally.\n(0, 0) indicated the top left corner of the room seen from above and the angle of the camera is given relatively to the x axis, with clockwise angles being positive.\n\nThe frame you want to create will have 15 rows of 61 chars. Each column of the frame is generated with a <<Ray Casting>> method.\nYou must send 61 rays, one for each degree from [[A]] - 30 to [[A]] + 30. Each ray will search for the closest wall and must determine:\n\n- the distance [[D]] between the camera and the point P where the ray hits the wall,\n- the type of the wall, parallel to the x axis (<<h-wall>>) or to the y axis (<<v-wall>>).\n\nThe corresponding column of the frame consists in a block of 2 * [[H]] + 1 identical chars (maxed out at 15) , centered vertically, surrounded by spaces. The char displayed is {{\".\"}} for a h-wall and {{\",\"}} for a v-wall.\n[[H]] is an integer that evaluates the height of the wall as you see it from the camera. The further the wall, the smaller [[H]] will be. More precisely, [[H]] is 1500 / [[D']] (rounded) where [[D']] denotes the distance, not between the camera and P but between <<the plane of the screen>> and P. Seen from above, the plane of the screen is the line that goes through the camera perpendicularly to the angle of the camera.\nA sub-task will be to understand how [[D']] can be calculated directly from [[D]].\n\nAn image to help visualizing the problem : https://i.imgur.com/M7YNW9P.png (Left part of the screen : top view, in blue, the angle of the camera, in red: rays that hit a v-wall, in green: rays that hit a h-wall. Right part of the screen: the ASCII rendition.)\n\n<<Note:>> if a ray hits a point with coordinates that are both multiples of 100, you must decide if you chose it to be a h-wall or a v-wall so it could lead to different renderings, but this case won't happen in the testcases and validators.\n<<Note 2:>> the rendering here will be awfull due to the limitations in the inputs, but it's much better with higher resolution and more rays. And of course you can use columns of colored pixels in place of chars for a way better result, an example here with 601 rays: https://i.imgur.com/oDjX0hG.png.\n<<Note 3:>> if you use [[D]] instead of [[D']], there will be a <<fisheye>> effect in your 3D rendition. If later on you want to create a 3D engine and keep this fisheye effect, just use [[D]], example here: https://i.imgur.com/II7kO7C.png. You can even accentuate it by reversing the process you use to turn [[D]] into [[D']], example here: https://i.imgur.com/BMcBeGK.png.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "150 550 0\n7\n#######\n#..#..#\n#..#.##\n#.....#\n#...###\n#.....#\n#######",
+          "testOut": "                                           ..................\n,,,,,,,,,,,,,,,,,,,.                     ....................\n,,,,,,,,,,,,,,,,,,,...                 ......................\n,,,,,,,,,,,,,,,,,,,.....             ........................\n,,,,,,,,,,,,,,,,,,,.....,,,,,,,,,,,,,........................\n,,,,,,,,,,,,,,,,,,,.....,,,,,,,,,,,,,........................\n,,,,,,,,,,,,,,,,,,,.....,,,,,,,,,,,,,........................\n,,,,,,,,,,,,,,,,,,,.....,,,,,,,,,,,,,........................\n,,,,,,,,,,,,,,,,,,,.....,,,,,,,,,,,,,........................\n,,,,,,,,,,,,,,,,,,,.....,,,,,,,,,,,,,........................\n,,,,,,,,,,,,,,,,,,,.....,,,,,,,,,,,,,........................\n,,,,,,,,,,,,,,,,,,,.....             ........................\n,,,,,,,,,,,,,,,,,,,...                 ......................\n,,,,,,,,,,,,,,,,,,,.                     ....................\n                                           ..................",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "130 570 0\n7\n#######\n#..#..#\n#..#.##\n#.....#\n#...###\n#.....#\n#######",
+          "testOut": "                                      .......................\n,,,,,,,,,,,,,,,,                     ........................\n,,,,,,,,,,,,,,,,...                 .........................\n,,,,,,,,,,,,,,,,.....              ..........................\n,,,,,,,,,,,,,,,,......,,,,,,,,,,,,...........................\n,,,,,,,,,,,,,,,,......,,,,,,,,,,,,...........................\n,,,,,,,,,,,,,,,,......,,,,,,,,,,,,...........................\n,,,,,,,,,,,,,,,,......,,,,,,,,,,,,...........................\n,,,,,,,,,,,,,,,,......,,,,,,,,,,,,...........................\n,,,,,,,,,,,,,,,,......,,,,,,,,,,,,...........................\n,,,,,,,,,,,,,,,,......,,,,,,,,,,,,...........................\n,,,,,,,,,,,,,,,,.....              ..........................\n,,,,,,,,,,,,,,,,...                 .........................\n,,,,,,,,,,,,,,,,                     ........................\n                                      .......................",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "1435 1255 -100\n20\n####################\n#......#.....#..#..#\n#......#.....#..#.##\n#......#...........#\n###..###.........###\n#..................#\n#..................#\n#......#...........#\n#......#.....#######\n#............#.....#\n#............#.###.#\n#............#.#####\n#............#.....#\n#............#####.#\n#..................#\n#............#.....#\n#............###...#\n#............#.....#\n#..................#\n####################",
+          "testOut": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,                       ,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,                      ,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,                     ,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,                     ,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,                      ,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,                       ,,,,,,",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "1435 1255 -90\n20\n####################\n#......#.....#..#..#\n#......#.....#..#.##\n#......#...........#\n###..###.........###\n#..................#\n#..................#\n#......#...........#\n#......#.....#######\n#............#.....#\n#............#.###.#\n#............#.#####\n#............#.....#\n#............#####.#\n#..................#\n#............#.....#\n#............###...#\n#............#.....#\n#..................#\n####################",
+          "testOut": ",,,,,,,,,,,,,,,,,,,,,,                        ,,,,,,,,,,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,                      ,,,,,,,,,,,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,                    ,,,,,,,,,,,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,,,,,,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,,,,,,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,,,,,,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,,,,,,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,,,,,,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,,,,,,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,,,,,,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,,,,,,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,....................,,,,,,,,,,,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,,,                    ,,,,,,,,,,,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,,                      ,,,,,,,,,,,,,,,,\n,,,,,,,,,,,,,,,,,,,,,,                        ,,,,,,,,,,,,,,,",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "1850 1750 180\n20\n####################\n#......#.....#..#..#\n#......#.....#..#.##\n#......#...........#\n###..###.........###\n#..................#\n#..................#\n#......#...........#\n#......#.....#######\n#............#.....#\n#............#.###.#\n#............#.#####\n#............#.....#\n#............#####.#\n#..................#\n#............#.....#\n#............###...#\n#............#.....#\n#..................#\n####################",
+          "testOut": "                                                             \n..                                       .,,,,,,,,,,,,,,,,,,,\n......                                 ...,,,,,,,,,,,,,,,,,,,\n...........                          .....,,,,,,,,,,,,,,,,,,,\n................        ,,,,,,,,,,,,,.....,,,,,,,,,,,,,,,,,,,\n......................  ,,,,,,,,,,,,,.....,,,,,,,,,,,,,,,,,,,\n........................,,,,,,,,,,,,,.....,,,,,,,,,,,,,,,,,,,\n........................,,,,,,,,,,,,,.....,,,,,,,,,,,,,,,,,,,\n........................,,,,,,,,,,,,,.....,,,,,,,,,,,,,,,,,,,\n......................  ,,,,,,,,,,,,,.....,,,,,,,,,,,,,,,,,,,\n................        ,,,,,,,,,,,,,.....,,,,,,,,,,,,,,,,,,,\n...........                          .....,,,,,,,,,,,,,,,,,,,\n......                                 ...,,,,,,,,,,,,,,,,,,,\n..                                       .,,,,,,,,,,,,,,,,,,,\n                                                             ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "1870 1750 180\n20\n####################\n#......#.....#..#..#\n#......#.....#..#.##\n#......#...........#\n###..###.........###\n#..................#\n#..................#\n#......#...........#\n#......#.....#######\n#............#.....#\n#............#.###.#\n#............#.#####\n#............#.....#\n#............#####.#\n#..................#\n#............#.....#\n#............###...#\n#............#.....#\n#..................#\n####################",
+          "testOut": "                                                             \n..                                       ,,,,,,,,,,,,,,,,,,, \n......                                 ..,,,,,,,,,,,,,,,,,,, \n...........                          ....,,,,,,,,,,,,,,,,,,, \n................        ,,,,,,,,,,,,,....,,,,,,,,,,,,,,,,,,, \n......................  ,,,,,,,,,,,,,....,,,,,,,,,,,,,,,,,,, \n........................,,,,,,,,,,,,,....,,,,,,,,,,,,,,,,,,,,\n........................,,,,,,,,,,,,,....,,,,,,,,,,,,,,,,,,,,\n........................,,,,,,,,,,,,,....,,,,,,,,,,,,,,,,,,,,\n......................  ,,,,,,,,,,,,,....,,,,,,,,,,,,,,,,,,, \n................        ,,,,,,,,,,,,,....,,,,,,,,,,,,,,,,,,, \n...........                          ....,,,,,,,,,,,,,,,,,,, \n......                                 ..,,,,,,,,,,,,,,,,,,, \n..                                       ,,,,,,,,,,,,,,,,,,, \n                                                             ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "1635 1440 175\n20\n####################\n#......#.....#..#..#\n#......#.....#..#.##\n#......#...........#\n###..###.........###\n#..................#\n#..................#\n#......#...........#\n#......#.....#######\n#............#.....#\n#............#.###.#\n#............#.#####\n#............#.....#\n#............#####.#\n#..................#\n#............#.....#\n#............###...#\n#............#.....#\n#..................#\n####################",
+          "testOut": "                                             ................\n.,,,,,,,,,,,,,,,,,,,,..                     .................\n.,,,,,,,,,,,,,,,,,,,,....                 ...................\n.,,,,,,,,,,,,,,,,,,,,....                 ...................\n.,,,,,,,,,,,,,,,,,,,,....                 ...................\n.,,,,,,,,,,,,,,,,,,,,....                 ...................\n.,,,,,,,,,,,,,,,,,,,,....,,,,,,,,,,,,,,,,,...................\n.,,,,,,,,,,,,,,,,,,,,....,,,,,,,,,,,,,,,,,...................\n.,,,,,,,,,,,,,,,,,,,,....,,,,,,,,,,,,,,,,,...................\n.,,,,,,,,,,,,,,,,,,,,....                 ...................\n.,,,,,,,,,,,,,,,,,,,,....                 ...................\n.,,,,,,,,,,,,,,,,,,,,....                 ...................\n.,,,,,,,,,,,,,,,,,,,,....                 ...................\n.,,,,,,,,,,,,,,,,,,,,..                     .................\n                                             ................",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "1575 1445 175\n20\n####################\n#......#.....#..#..#\n#......#.....#..#.##\n#......#...........#\n###..###.........###\n#..................#\n#..................#\n#......#...........#\n#......#.....#######\n#............#.....#\n#............#.###.#\n#............#.#####\n#............#.....#\n#............#####.#\n#..................#\n#............#.....#\n#............###...#\n#............#.....#\n#..................#\n####################",
+          "testOut": ",,,,,,,,,,,,,,,,,,....                        ...............\n,,,,,,,,,,,,,,,,,,......                     ................\n,,,,,,,,,,,,,,,,,,......                     ................\n,,,,,,,,,,,,,,,,,,......                     ................\n,,,,,,,,,,,,,,,,,,......                     ................\n,,,,,,,,,,,,,,,,,,......                     ................\n,,,,,,,,,,,,,,,,,,......,,,,,,,,,,,,,,,,,,,,,................\n,,,,,,,,,,,,,,,,,,......,,,,,,,,,,,,,,,,,,,,,................\n,,,,,,,,,,,,,,,,,,......,,,,,,,,,,,,,,,,,,,,,................\n,,,,,,,,,,,,,,,,,,......                     ................\n,,,,,,,,,,,,,,,,,,......                     ................\n,,,,,,,,,,,,,,,,,,......                     ................\n,,,,,,,,,,,,,,,,,,......                     ................\n,,,,,,,,,,,,,,,,,,......                     ................\n,,,,,,,,,,,,,,,,,,....                        ...............",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "7 ≤ [[N]] ≤ 20\n-180 < [[A]] ≤ 180\n[[X]] and [[Y]] always indicate a point within an empty tile.",
+      "coverBinaryId": 58836444269558,
+      "stubGenerator": "read X:int Y:int A:int\nread N:int\nloop N read ROW:string(N)\nwrite answer",
+      "inputDescription": "<<Line 1:>> 3 integers [[X]], [[Y]], [[A]] for the coordinates and angle of the camera.\n<<Line 2:>> An integers [[N]] for the number of rows in the map.\n<<Next [[N]] lines:>> A string of length [[N]] describing a row of the map.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "15 lines of length 61."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You're given a map of a squared room, seen from above, split in <var>N</var> rows of <var>N</var> tiles of size 100 x 100.<br>Each tile is either empty (<const>&quot;.&quot;</const>) or filled (<const>&quot;#&quot;</const>).<br>The border tiles are always filled.<br><br><strong>Your task:</strong> create a frame of ASCII chars to render a 3D view of this room.<br><br>You're given the coordinates <var>X</var>, <var>Y</var> and the angle <var>A</var> (in degrees) of the camera, which only rotates horizontally.<br>(0, 0) indicated the top left corner of the room seen from above and the angle of the camera is given relatively to the x axis, with clockwise angles being positive.<br><br>The frame you want to create will have 15 rows of 61 chars. Each column of the frame is generated with a <strong>Ray Casting</strong> method.<br>You must send 61 rays, one for each degree from <var>A</var> - 30 to <var>A</var> + 30. Each ray will search for the closest wall and must determine:<br><br>- the distance <var>D</var> between the camera and the point P where the ray hits the wall,<br>- the type of the wall, parallel to the x axis (<strong>h-wall</strong>) or to the y axis (<strong>v-wall</strong>).<br><br>The corresponding column of the frame consists in a block of 2 * <var>H</var> + 1 identical chars (maxed out at 15) , centered vertically, surrounded by spaces. The char displayed is <const>&quot;.&quot;</const> for a h-wall and <const>&quot;,&quot;</const> for a v-wall.<br><var>H</var> is an integer that evaluates the height of the wall as you see it from the camera. The further the wall, the smaller <var>H</var> will be. More precisely, <var>H</var> is 1500 / <var>D'</var> (rounded) where <var>D'</var> denotes the distance, not between the camera and P but between <strong>the plane of the screen</strong> and P. Seen from above, the plane of the screen is the line that goes through the camera perpendicularly to the angle of the camera.<br>A sub-task will be to understand how <var>D'</var> can be calculated directly from <var>D</var>.<br><br>An image to help visualizing the problem : https://i.imgur.com/M7YNW9P.png (Left part of the screen : top view, in blue, the angle of the camera, in red: rays that hit a v-wall, in green: rays that hit a h-wall. Right part of the screen: the ASCII rendition.)<br><br><strong>Note:</strong> if a ray hits a point with coordinates that are both multiples of 100, you must decide if you chose it to be a h-wall or a v-wall so it could lead to different renderings, but this case won't happen in the testcases and validators.<br><strong>Note 2:</strong> the rendering here will be awfull due to the limitations in the inputs, but it's much better with higher resolution and more rays. And of course you can use columns of colored pixels in place of chars for a way better result, an example here with 601 rays: https://i.imgur.com/oDjX0hG.png.<br><strong>Note 3:</strong> if you use <var>D</var> instead of <var>D'</var>, there will be a <strong>fisheye</strong> effect in your 3D rendition. If later on you want to create a 3D engine and keep this fisheye effect, just use <var>D</var>, example here: https://i.imgur.com/II7kO7C.png. You can even accentuate it by reversing the process you use to turn <var>D</var> into <var>D'</var>, example here: https://i.imgur.com/BMcBeGK.png.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> 3 integers <var>X</var>, <var>Y</var>, <var>A</var> for the coordinates and angle of the camera.<br><strong>Line 2:</strong> An integers <var>N</var> for the number of rows in the map.<br><strong>Next <var>N</var> lines:</strong> A string of length <var>N</var> describing a row of the map.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">15 lines of length 61.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">7 &le; <var>N</var> &le; 20<br>-180 &lt; <var>A</var> &le; 180<br><var>X</var> and <var>Y</var> always indicate a point within an empty tile.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">150 550 0\n7\n#######\n#..#..#\n#..#.##\n#.....#\n#...###\n#.....#\n#######</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">                                           ..................\n,,,,,,,,,,,,,,,,,,,.                     ....................\n,,,,,,,,,,,,,,,,,,,...                 ......................\n,,,,,,,,,,,,,,,,,,,.....             ........................\n,,,,,,,,,,,,,,,,,,,.....,,,,,,,,,,,,,........................\n,,,,,,,,,,,,,,,,,,,.....,,,,,,,,,,,,,........................\n,,,,,,,,,,,,,,,,,,,.....,,,,,,,,,,,,,........................\n,,,,,,,,,,,,,,,,,,,.....,,,,,,,,,,,,,........................\n,,,,,,,,,,,,,,,,,,,.....,,,,,,,,,,,,,........................\n,,,,,,,,,,,,,,,,,,,.....,,,,,,,,,,,,,........................\n,,,,,,,,,,,,,,,,,,,.....,,,,,,,,,,,,,........................\n,,,,,,,,,,,,,,,,,,,.....             ........................\n,,,,,,,,,,,,,,,,,,,...                 ......................\n,,,,,,,,,,,,,,,,,,,.                     ....................\n                                           ..................</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 154928593920,
+  "avatar": 60364063762936,
+  "commentCount": 7,
+  "upVotes": 18,
+  "downVotes": 3,
+  "validateAction": {
+    "actionId": 537894,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1615802061708,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

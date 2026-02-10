@@ -1,0 +1,267 @@
+{
+  "id": 141750,
+  "activeVersion": 7,
+  "score": 2,
+  "votableId": 39019531,
+  "codingamerId": 5377868,
+  "views": 186,
+  "commentableId": 38852470,
+  "title": "MiniCPU Instruction Decoder",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "YALOKGAR",
+  "publicHandle": "141750007ce3df340495b02b17582f4f9b6b66",
+  "codingamerHandle": "71ce77dc02b52055debde214148067dc8687735",
+  "lastVersion": {
+    "version": 7,
+    "autocloseTime": 1771688388833,
+    "freezeTime": 1769701188833,
+    "data": {
+      "title": "MiniCPU Instruction Decoder",
+      "topics": [
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 46,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "id": 86,
+          "handle": "simulation",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Simulation",
+            "2": "Simulation"
+          },
+          "pageTitle": "Simulation: exercises and theory",
+          "puzzleCount": 51,
+          "parentTopicId": 42,
+          "contentDetailsId": 72
+        },
+        {
+          "id": 87,
+          "handle": "state-machine",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Machine à états",
+            "2": "State machine"
+          },
+          "pageTitle": "State machine: exercises and theory",
+          "puzzleCount": 13,
+          "parentTopicId": 42,
+          "contentDetailsId": 94
+        }
+      ],
+      "solution": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nstatic int hex_nibble(int c) {\n    if (c >= '0' && c <= '9') return c - '0';\n    if (c >= 'a' && c <= 'f') return 10 + (c - 'a');\n    if (c >= 'A' && c <= 'F') return 10 + (c - 'A');\n    return -1;\n}\n\nstatic int parse_hex_byte(const char *s, int *consumed, unsigned char *out) {\n    int i = 0;\n    while (s[i] == ' ' || s[i] == '\\t' || s[i] == '\\r' || s[i] == '\\n') i++;\n    int hi = hex_nibble((unsigned char)s[i]);\n    if (hi < 0) return 0;\n    int lo = hex_nibble((unsigned char)s[i + 1]);\n    if (lo < 0) return 0;\n    *out = (unsigned char)((hi << 4) | lo);\n    *consumed = i + 2;\n    return 1;\n}\n\nint main(void) {\n    unsigned char reg[4] = {0, 0, 0, 0};\n    unsigned char prog[256];\n    char line[4096];\n    int len = 0;\n\n    if (!fgets(line, sizeof(line), stdin)) return 0;\n\n    const char *p = line;\n    while (*p && len < (int)sizeof(prog)) {\n        unsigned char b = 0;\n        int consumed = 0;\n        if (!parse_hex_byte(p, &consumed, &b)) break;\n        prog[len++] = b;\n        p += consumed;\n    }\n\n    int pc = 0;\n    while (pc < len) {\n        unsigned char op = prog[pc];\n        if (op == 0xFF) break;\n\n        switch (op) {\n            case 0x01: {\n                if (pc + 2 >= len) { pc = len; break; }\n                unsigned char x = (unsigned char)(prog[pc + 1] & 3u);\n                reg[x] = prog[pc + 2];\n                pc += 3;\n                break;\n            }\n            case 0x02: {\n                if (pc + 2 >= len) { pc = len; break; }\n                unsigned char x = (unsigned char)(prog[pc + 1] & 3u);\n                unsigned char y = (unsigned char)(prog[pc + 2] & 3u);\n                reg[x] = (unsigned char)(reg[x] + reg[y]);\n                pc += 3;\n                break;\n            }\n            case 0x03: {\n                if (pc + 2 >= len) { pc = len; break; }\n                unsigned char x = (unsigned char)(prog[pc + 1] & 3u);\n                unsigned char y = (unsigned char)(prog[pc + 2] & 3u);\n                reg[x] = (unsigned char)(reg[x] - reg[y]);\n                pc += 3;\n                break;\n            }\n            case 0x04: {\n                if (pc + 2 >= len) { pc = len; break; }\n                unsigned char x = (unsigned char)(prog[pc + 1] & 3u);\n                unsigned char y = (unsigned char)(prog[pc + 2] & 3u);\n                reg[x] = (unsigned char)(reg[x] * reg[y]);\n                pc += 3;\n                break;\n            }\n            case 0x05: {\n                if (pc + 1 >= len) { pc = len; break; }\n                unsigned char x = (unsigned char)(prog[pc + 1] & 3u);\n                reg[x] = (unsigned char)(reg[x] + 1u);\n                pc += 2;\n                break;\n            }\n            case 0x06: {\n                if (pc + 1 >= len) { pc = len; break; }\n                unsigned char x = (unsigned char)(prog[pc + 1] & 3u);\n                reg[x] = (unsigned char)(reg[x] - 1u);\n                pc += 2;\n                break;\n            }\n            default:\n                pc += 1;\n                break;\n        }\n    }\n\n    for (int i = 0; i < 4; i++) {\n        printf(\"%u\\n\", (unsigned)reg[i]);\n    }\n    return 0;\n}",
+      "statement": "A simple 8-bit CPU emulator must be debugged. The CPU has 4 registers (R0, R1, R2, R3) initialized to 0.\n\n<<Instructions are encoded as hexadecimal bytes:>>\n\n{{01}} [[X]] [[V]]: MOV - Load value [[V]] into register R[[X]]\n{{02}} [[X]] [[Y]]: ADD - Add register R[[Y]] to register R[[X]]\n{{03}} [[X]] [[Y]]: SUB - Subtract register R[[Y]] from register R[[X]]\n{{04}} [[X]] [[Y]]: MUL - Multiply register R[[X]] by register R[[Y]]\n{{05}} [[X]]: INC - Increment register R[[X]] by 1\n{{06}} [[X]]: DEC - Decrement register R[[X]] by 1\n{{FF}}: HLT - Halt execution\n\nWhere [[X]] and [[Y]] are register indices (0-3), and [[V]] is an immediate byte value.\n\nAll arithmetic wraps at 256 (8-bit unsigned). Overflow wraps to 0, underflow wraps to 255.\n\nThe first instruction is not guaranteed to be {{01}} (MOV). Programs may start with any instruction, including {{05}} (INC) or {{06}} (DEC).\n\nThe smallest valid program is just {{FF}} (HLT).\n\nExecute the program and output the final register values.",
+      "testCases": [
+        {
+          "title": "Boot Sequence",
+          "isTest": true,
+          "testIn": "01 00 0A 01 01 05 02 00 01 03 00 01 FF",
+          "testOut": "10\n5\n0\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Arithmetic Variant",
+          "isTest": false,
+          "testIn": "01 00 14 01 01 0A 02 00 01 03 00 01 FF",
+          "testOut": "20\n10\n0\n0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiply Core",
+          "isTest": true,
+          "testIn": "01 00 03 01 01 04 04 00 01 FF",
+          "testOut": "12\n4\n0\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Product Check",
+          "isTest": false,
+          "testIn": "01 02 05 01 03 06 04 02 03 FF",
+          "testOut": "0\n0\n30\n6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "INC and DEC",
+          "isTest": true,
+          "testIn": "01 02 05 05 02 05 02 06 02 FF",
+          "testOut": "0\n0\n6\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Counter Step",
+          "isTest": false,
+          "testIn": "01 03 0A 05 03 05 03 06 03 FF",
+          "testOut": "0\n0\n0\n11",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "INC Overflow",
+          "isTest": true,
+          "testIn": "01 00 FF 05 00 FF",
+          "testOut": "0\n0\n0\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Byte Wrap Up",
+          "isTest": false,
+          "testIn": "01 02 FF 05 02 05 02 FF",
+          "testOut": "0\n0\n1\n0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "DEC Underflow",
+          "isTest": true,
+          "testIn": "01 03 00 06 03 FF",
+          "testOut": "0\n0\n0\n255",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Byte Wrap Down",
+          "isTest": false,
+          "testIn": "01 02 02 06 02 06 02 06 02 FF",
+          "testOut": "0\n0\n255\n0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "ADD Overflow",
+          "isTest": true,
+          "testIn": "01 00 F0 01 01 20 02 00 01 FF",
+          "testOut": "16\n32\n0\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Sum Wrap",
+          "isTest": false,
+          "testIn": "01 00 B4 01 01 5A 02 00 01 FF",
+          "testOut": "14\n90\n0\n0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "SUB Underflow",
+          "isTest": true,
+          "testIn": "01 00 05 01 01 0A 03 00 01 FF",
+          "testOut": "251\n10\n0\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Negative Wrap",
+          "isTest": false,
+          "testIn": "01 00 00 01 01 01 03 00 01 03 00 01 FF",
+          "testOut": "254\n1\n0\n0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "MUL Overflow",
+          "isTest": true,
+          "testIn": "01 02 10 01 03 10 04 02 03 FF",
+          "testOut": "0\n0\n0\n16",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Product Wrap",
+          "isTest": false,
+          "testIn": "01 00 11 01 01 11 04 00 01 FF",
+          "testOut": "33\n17\n0\n0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Mixed Operations",
+          "isTest": true,
+          "testIn": "01 00 0A 01 01 05 01 02 FE 01 03 03 04 03 00 02 02 01 03 02 00 FF",
+          "testOut": "10\n5\n249\n30",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Complex Calculation",
+          "isTest": false,
+          "testIn": "01 00 14 01 01 08 01 02 03 01 03 E0 02 03 00 03 02 00 04 03 01 FF",
+          "testOut": "20\n8\n239\n160",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Immediate Halt",
+          "isTest": true,
+          "testIn": "FF",
+          "testOut": "0\n0\n0\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Start Without MOV",
+          "isTest": false,
+          "testIn": "06 00 FF",
+          "testOut": "255\n0\n0\n0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "MOV Overwrite",
+          "isTest": true,
+          "testIn": "01 00 05 05 00 01 00 07 FF",
+          "testOut": "7\n0\n0\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "MOV Overwrite Variant",
+          "isTest": false,
+          "testIn": "01 02 01 05 02 01 02 FF FF",
+          "testOut": "0\n0\n255\n0",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "Program length ≤ {{100}} bytes\nFor the opcodes {{02}}, {{03}} and {{04}}, [[X]] ≠ [[Y]]\nProgram always ends with HLT ({{FF}}) as an opcode. Byte value {{FF}} may also appear as an immediate value [[V]].",
+      "coverBinaryId": 156549088328670,
+      "stubGenerator": "read program:string(500)\nwrite answer\n\nSTATEMENT\nDecode and execute the MiniCPU bytecode program.\n\nINPUT\nprogram: Space-separated hex bytes representing CPU instructions\n\nOUTPUT\nPrint the final value of each register R0, R1, R2, R3, one value per line",
+      "inputDescription": "<<Line 1:>> A string of space-separated hexadecimal bytes [[program]]",
+      "solutionLanguage": "C",
+      "outputDescription": "<<4 lines:>> The decimal value of each register R0, R1, R2, R3, one value per line"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A simple 8-bit CPU emulator must be debugged. The CPU has 4 registers (R0, R1, R2, R3) initialized to 0.<br><br><strong>Instructions are encoded as hexadecimal bytes:</strong><br><br><const>01</const> <var>X</var> <var>V</var>: MOV - Load value <var>V</var> into register R<var>X</var><br><const>02</const> <var>X</var> <var>Y</var>: ADD - Add register R<var>Y</var> to register R<var>X</var><br><const>03</const> <var>X</var> <var>Y</var>: SUB - Subtract register R<var>Y</var> from register R<var>X</var><br><const>04</const> <var>X</var> <var>Y</var>: MUL - Multiply register R<var>X</var> by register R<var>Y</var><br><const>05</const> <var>X</var>: INC - Increment register R<var>X</var> by 1<br><const>06</const> <var>X</var>: DEC - Decrement register R<var>X</var> by 1<br><const>FF</const>: HLT - Halt execution<br><br>Where <var>X</var> and <var>Y</var> are register indices (0-3), and <var>V</var> is an immediate byte value.<br><br>All arithmetic wraps at 256 (8-bit unsigned). Overflow wraps to 0, underflow wraps to 255.<br><br>The first instruction is not guaranteed to be <const>01</const> (MOV). Programs may start with any instruction, including <const>05</const> (INC) or <const>06</const> (DEC).<br><br>The smallest valid program is just <const>FF</const> (HLT).<br><br>Execute the program and output the final register values.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> A string of space-separated hexadecimal bytes <var>program</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>4 lines:</strong> The decimal value of each register R0, R1, R2, R3, one value per line</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Program length &le; <const>100</const> bytes<br>For the opcodes <const>02</const>, <const>03</const> and <const>04</const>, <var>X</var> &ne; <var>Y</var><br>Program always ends with HLT (<const>FF</const>) as an opcode. Byte value <const>FF</const> may also appear as an immediate value <var>V</var>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">01 00 0A 01 01 05 02 00 01 03 00 01 FF</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">10\n5\n0\n0</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 157535060876255,
+  "commentCount": 19,
+  "upVotes": 3,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 1379211,
+    "progress": 0.3333333333333333,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

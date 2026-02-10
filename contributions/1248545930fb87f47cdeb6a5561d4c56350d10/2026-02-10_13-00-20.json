@@ -1,0 +1,125 @@
+{
+  "id": 124854,
+  "activeVersion": 6,
+  "score": 8,
+  "votableId": 37215336,
+  "codingamerId": 6418621,
+  "views": 102,
+  "commentableId": 37055064,
+  "title": "Football League Table Calculator",
+  "status": "ACCEPTED",
+  "type": "CLASHOFCODE",
+  "nickname": "hbousset",
+  "publicHandle": "1248545930fb87f47cdeb6a5561d4c56350d10",
+  "codingamerHandle": "bb6f2c396204e29cc0eca66395e941561268146",
+  "lastVersion": {
+    "version": 6,
+    "autocloseTime": 1750703021474,
+    "freezeTime": 1748715821474,
+    "data": {
+      "title": "Football League Table Calculator",
+      "topics": [],
+      "fastest": true,
+      "reverse": false,
+      "shortest": true,
+      "solution": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\ntypedef struct {\n    char name[21];\n    int points;\n    int goals_for;\n    int goals_against;\n    int goal_diff;\n} Team;\n\nint find_team(Team teams[], int count, char* name) {\n    for (int i = 0; i < count; i++) {\n        if (strcmp(teams[i].name, name) == 0) {\n            return i;\n        }\n    }\n    return -1;\n}\n\nint compare_teams(const void* a, const void* b) {\n    Team* team_a = (Team*)a;\n    Team* team_b = (Team*)b;\n    \n    // Sort by points (descending)\n    if (team_a->points != team_b->points) {\n        return team_b->points - team_a->points;\n    }\n    \n    // Sort by goal difference (descending)\n    if (team_a->goal_diff != team_b->goal_diff) {\n        return team_b->goal_diff - team_a->goal_diff;\n    }\n    \n    // Sort by name (ascending)\n    return strcmp(team_a->name, team_b->name);\n}\n\nint main() {\n    int n;\n    scanf(\"%d\", &n);\n    \n    Team teams[40]; // Max 20 matches = max 40 teams\n    int team_count = 0;\n    \n    for (int i = 0; i < n; i++) {\n        char team_a[21], team_b[21];\n        int score_a, score_b;\n        scanf(\"%s %s %d %d\", team_a, team_b, &score_a, &score_b);\n        \n        // Find or create team A\n        int idx_a = find_team(teams, team_count, team_a);\n        if (idx_a == -1) {\n            idx_a = team_count++;\n            strcpy(teams[idx_a].name, team_a);\n            teams[idx_a].points = 0;\n            teams[idx_a].goals_for = 0;\n            teams[idx_a].goals_against = 0;\n        }\n        \n        // Find or create team B\n        int idx_b = find_team(teams, team_count, team_b);\n        if (idx_b == -1) {\n            idx_b = team_count++;\n            strcpy(teams[idx_b].name, team_b);\n            teams[idx_b].points = 0;\n            teams[idx_b].goals_for = 0;\n            teams[idx_b].goals_against = 0;\n        }\n        \n        // Update goals\n        teams[idx_a].goals_for += score_a;\n        teams[idx_a].goals_against += score_b;\n        teams[idx_b].goals_for += score_b;\n        teams[idx_b].goals_against += score_a;\n        \n        // Update points\n        if (score_a > score_b) {\n            teams[idx_a].points += 3;\n        } else if (score_a < score_b) {\n            teams[idx_b].points += 3;\n        } else {\n            teams[idx_a].points += 1;\n            teams[idx_b].points += 1;\n        }\n    }\n    \n    // Calculate goal differences\n    for (int i = 0; i < team_count; i++) {\n        teams[i].goal_diff = teams[i].goals_for - teams[i].goals_against;\n    }\n    \n    // Sort teams\n    qsort(teams, team_count, sizeof(Team), compare_teams);\n    \n    // Output results\n    for (int i = 0; i < team_count; i++) {\n        printf(\"%s %d %d\\n\", teams[i].name, teams[i].points, teams[i].goal_diff);\n    }\n    \n    return 0;\n}",
+      "statement": "You are given the results of football matches in a league. Calculate the final league table sorted by points (descending), then by goal difference (descending), then alphabetically by team name.\nIn football:\n\nWin = 3 points\nDraw = 1 point\nLoss = 0 points\nGoal difference = Goals scored - Goals conceded",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "4\nArsenal Chelsea 2 1\nLiverpool ManCity 1 1\nArsenal Liverpool 3 0\nChelsea ManCity 0 2",
+          "testOut": "Arsenal 6 4\nManCity 4 2\nLiverpool 1 -3\nChelsea 0 -3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3\nBarcelona Real 1 2\nAtletico Barcelona 0 1\nReal Atletico 3 1",
+          "testOut": "Real 6 3\nBarcelona 3 0\nAtletico 0 -3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "2\nTeamA TeamB 1 1\nTeamC TeamD 2 0",
+          "testOut": "TeamC 3 2\nTeamA 1 0\nTeamB 1 0\nTeamD 0 -2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "2\nAlpha Beta 0 0\nGamma Delta 1 3",
+          "testOut": "Delta 3 2\nAlpha 1 0\nBeta 1 0\nGamma 0 -2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "6\nHome Away 1 1\nHome Visitor 2 0\nAway Visitor 0 2\nHome Guest 0 1\nAway Guest 2 1\nVisitor Guest 1 1",
+          "testOut": "Home 4 1\nGuest 4 0\nVisitor 4 0\nAway 4 -1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "6\nRed Away 1 1\nRed Blue 2 0\nAway Blue 0 2\nRed Yellow 0 1\nAway Yellow 2 1\nBlue Yellow 1 1",
+          "testOut": "Red 4 1\nBlue 4 0\nYellow 4 0\nAway 4 -1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "1\nLions Tigers 4 2",
+          "testOut": "Lions 3 2\nTigers 0 -2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "1\nEagles Hawks 0 3",
+          "testOut": "Hawks 3 3\nEagles 0 -3",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "constraints": "1 ≤ [[n]] ≤ 10\nTeam names contain only letters (no spaces)\n0 ≤ ScoreA, ScoreB ≤ 10",
+      "stubGenerator": "read n:int\nloop n read teamA:word(20) teamB:word(20) scoreA:int scoreB:int\nwrite answer",
+      "inputDescription": "<<Line 1>> : An integer [[n]] (number of matches)\n<<Next [[n]] lines>> : Each match result in format TeamA TeamB ScoreA ScoreB",
+      "solutionLanguage": "C",
+      "outputDescription": "For each team, output: TeamName Points GoalDifference\nTeams should be sorted by:\n\nPoints (descending)\nGoal difference (descending)\nTeam name (alphabetically)"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are given the results of football matches in a league. Calculate the final league table sorted by points (descending), then by goal difference (descending), then alphabetically by team name.<br>In football:<br><br>Win = 3 points<br>Draw = 1 point<br>Loss = 0 points<br>Goal difference = Goals scored - Goals conceded</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong> : An integer <var>n</var> (number of matches)<br><strong>Next <var>n</var> lines</strong> : Each match result in format TeamA TeamB ScoreA ScoreB</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">For each team, output: TeamName Points GoalDifference<br>Teams should be sorted by:<br><br>Points (descending)<br>Goal difference (descending)<br>Team name (alphabetically)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>n</var> &le; 10<br>Team names contain only letters (no spaces)<br>0 &le; ScoreA, ScoreB &le; 10</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4\nArsenal Chelsea 2 1\nLiverpool ManCity 1 1\nArsenal Liverpool 3 0\nChelsea ManCity 0 2</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Arsenal 6 4\nManCity 4 2\nLiverpool 1 -3\nChelsea 0 -3</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 22010082138,
+  "avatar": 144036384744846,
+  "commentCount": 13,
+  "upVotes": 8,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1146905,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1748718337001,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

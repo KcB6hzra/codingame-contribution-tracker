@@ -1,0 +1,244 @@
+{
+  "id": 46875,
+  "activeVersion": 13,
+  "score": 5,
+  "votableId": 28213758,
+  "codingamerId": 3893564,
+  "views": 176,
+  "commentableId": 28085148,
+  "title": "Team Building",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Andriamanitra",
+  "publicHandle": "46875a682905567e20e792efdc1fbfdd8ec6e",
+  "codingamerHandle": "8931375f2caabaa3c46fc9401a856edf4653983",
+  "lastVersion": {
+    "version": 13,
+    "autocloseTime": 1679915569948,
+    "data": {
+      "title": "Team Building",
+      "topics": [
+        {
+          "id": 46,
+          "handle": "loops",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 89,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        },
+        {
+          "id": 182,
+          "handle": "combinatorics",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Combinatoire",
+            "2": "Combinatorics"
+          },
+          "puzzleCount": 9,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import heapq\nfrom collections.abc import Iterator\n\nTeam = tuple[str, tuple[str, ...]]\n\ndef ordered_teams(players: list[str], k: int) -> Iterator[Team]:\n    m = len(players)\n    q = [(\"\", tuple(), 0)]\n    while q:\n        name, squad, i = heapq.heappop(q)\n        if len(name) == k:\n            yield name, squad\n        else:\n            players_needed = k - len(name)\n            for j in range(i, m - players_needed + 1):\n                heapq.heappush(\n                    q,\n                    (f\"{name}{players[j][0]}\", (*squad, players[j]), j + 1),\n                )\n\ndef ordered_teamings(players: list[str], num_teams: int, team_size: int) -> Iterator[str]:\n    expected_size = num_teams * team_size\n    teams = list(ordered_teams(players, team_size))\n    m = len(teams)\n    q = [(\"\", tuple(), 0)]\n    while q:\n        teaming_str, teaming, i = heapq.heappop(q)\n        if len(teaming) == num_teams:\n            teamed_players = set(p for _, squad in teaming for p in squad)\n            if len(teamed_players) == expected_size:\n                yield teaming_str.removesuffix(\",\")\n        else:\n            teams_needed = num_teams - len(teaming)\n            for j in range(i, m - teams_needed + 1):\n                heapq.heappush(\n                    q,\n                    (f\"{teaming_str}{teams[j][0]},\", (*teaming, teams[j]), j + 1)\n                )\n\nn = int(input())\nk = int(input())\nm = int(input())\nplayers = sorted(input() for _ in range(m))\n\nfor teaming in ordered_teamings(players, n, k):\n    print(teaming)\n",
+      "statement": "Given a list of names of available players, print all possible ways to construct [[N]] different teams of [[K]] different players each (a player can only belong to one team at a time).\n\nThe output should contain one possible way to form the teams per line, represented by team names separated by commas. The names of the teams on each line should be in alphabetical order. A team name is constructed by taking the first letter of each player's name (in alphabetical order). For example, a team of \"Zidane\", \"Maradona\" and \"Ronaldo\" would be called \"MRZ\", and a team of \"Anna\" and \"Alfred\" would be called \"AA\". Print the results in alphabetical order.\n\nNote that some players may be left without a team!",
+      "testCases": [
+        {
+          "title": "4 players, N=2, K=2",
+          "isTest": true,
+          "testIn": "2\n2\n4\nAlice\nBob\nChris\nDiana",
+          "testOut": "AB,CD\nAC,BD\nAD,BC",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4 players, N=2, K=2",
+          "isTest": false,
+          "testIn": "2\n2\n4\nAlice\nBob\nDylan\nErica",
+          "testOut": "AB,DE\nAD,BE\nAE,BD",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5 players, N=2, K=2",
+          "isTest": true,
+          "testIn": "2\n2\n5\nEric\nAlice\nBob\nChris\nDiana",
+          "testOut": "AB,CD\nAB,CE\nAB,DE\nAC,BD\nAC,BE\nAC,DE\nAD,BC\nAD,BE\nAD,CE\nAE,BC\nAE,BD\nAE,CD\nBC,DE\nBD,CE\nBE,CD",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5 players, N=2, K=2",
+          "isTest": false,
+          "testIn": "2\n2\n5\nFernando\nAlice\nBob\nChris\nDiana",
+          "testOut": "AB,CD\nAB,CF\nAB,DF\nAC,BD\nAC,BF\nAC,DF\nAD,BC\nAD,BF\nAD,CF\nAF,BC\nAF,BD\nAF,CD\nBC,DF\nBD,CF\nBF,CD",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6 players, N=3, K=2",
+          "isTest": true,
+          "testIn": "3\n2\n6\nAlice\nBob\nChris\nDiana\nEleanor\nFelix",
+          "testOut": "AB,CD,EF\nAB,CE,DF\nAB,CF,DE\nAC,BD,EF\nAC,BE,DF\nAC,BF,DE\nAD,BC,EF\nAD,BE,CF\nAD,BF,CE\nAE,BC,DF\nAE,BD,CF\nAE,BF,CD\nAF,BC,DE\nAF,BD,CE\nAF,BE,CD",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "6 players, N=3, K=2",
+          "isTest": false,
+          "testIn": "3\n2\n6\nRafael\nAlice\nBob\nChris\nDiana\nEleanor",
+          "testOut": "AB,CD,ER\nAB,CE,DR\nAB,CR,DE\nAC,BD,ER\nAC,BE,DR\nAC,BR,DE\nAD,BC,ER\nAD,BE,CR\nAD,BR,CE\nAE,BC,DR\nAE,BD,CR\nAE,BR,CD\nAR,BC,DE\nAR,BD,CE\nAR,BE,CD",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3 players, N=2, K=1, shared team name",
+          "isTest": true,
+          "testIn": "2\n1\n3\nAlice\nAndrew\nAlfred",
+          "testOut": "A,A\nA,A\nA,A",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3 players, N=2, K=1, shared team name",
+          "isTest": false,
+          "testIn": "2\n1\n3\nAlice\nAndrew\nBob",
+          "testOut": "A,A\nA,B\nA,B",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "7 players, N=2, K=3",
+          "isTest": true,
+          "testIn": "2\n3\n7\nGretzky\nKurri\nMcDavid\nDraisaitl\nNuge\nCoffey\nRussell",
+          "testOut": "CDG,KMN\nCDG,KMR\nCDG,KNR\nCDG,MNR\nCDK,GMN\nCDK,GMR\nCDK,GNR\nCDK,MNR\nCDM,GKN\nCDM,GKR\nCDM,GNR\nCDM,KNR\nCDN,GKM\nCDN,GKR\nCDN,GMR\nCDN,KMR\nCDR,GKM\nCDR,GKN\nCDR,GMN\nCDR,KMN\nCGK,DMN\nCGK,DMR\nCGK,DNR\nCGK,MNR\nCGM,DKN\nCGM,DKR\nCGM,DNR\nCGM,KNR\nCGN,DKM\nCGN,DKR\nCGN,DMR\nCGN,KMR\nCGR,DKM\nCGR,DKN\nCGR,DMN\nCGR,KMN\nCKM,DGN\nCKM,DGR\nCKM,DNR\nCKM,GNR\nCKN,DGM\nCKN,DGR\nCKN,DMR\nCKN,GMR\nCKR,DGM\nCKR,DGN\nCKR,DMN\nCKR,GMN\nCMN,DGK\nCMN,DGR\nCMN,DKR\nCMN,GKR\nCMR,DGK\nCMR,DGN\nCMR,DKN\nCMR,GKN\nCNR,DGK\nCNR,DGM\nCNR,DKM\nCNR,GKM\nDGK,MNR\nDGM,KNR\nDGN,KMR\nDGR,KMN\nDKM,GNR\nDKN,GMR\nDKR,GMN\nDMN,GKR\nDMR,GKN\nDNR,GKM",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "7 players, N=2, K=3",
+          "isTest": false,
+          "testIn": "2\n3\n7\nYamamoto\nMcLeod\nBouchard\nNurse\nHolloway\nDesharnais\nSkinner",
+          "testOut": "BDH,MNS\nBDH,MNY\nBDH,MSY\nBDH,NSY\nBDM,HNS\nBDM,HNY\nBDM,HSY\nBDM,NSY\nBDN,HMS\nBDN,HMY\nBDN,HSY\nBDN,MSY\nBDS,HMN\nBDS,HMY\nBDS,HNY\nBDS,MNY\nBDY,HMN\nBDY,HMS\nBDY,HNS\nBDY,MNS\nBHM,DNS\nBHM,DNY\nBHM,DSY\nBHM,NSY\nBHN,DMS\nBHN,DMY\nBHN,DSY\nBHN,MSY\nBHS,DMN\nBHS,DMY\nBHS,DNY\nBHS,MNY\nBHY,DMN\nBHY,DMS\nBHY,DNS\nBHY,MNS\nBMN,DHS\nBMN,DHY\nBMN,DSY\nBMN,HSY\nBMS,DHN\nBMS,DHY\nBMS,DNY\nBMS,HNY\nBMY,DHN\nBMY,DHS\nBMY,DNS\nBMY,HNS\nBNS,DHM\nBNS,DHY\nBNS,DMY\nBNS,HMY\nBNY,DHM\nBNY,DHS\nBNY,DMS\nBNY,HMS\nBSY,DHM\nBSY,DHN\nBSY,DMN\nBSY,HMN\nDHM,NSY\nDHN,MSY\nDHS,MNY\nDHY,MNS\nDMN,HSY\nDMS,HNY\nDMY,HNS\nDNS,HMY\nDNY,HMS\nDSY,HMN",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "10 players, N=1, K=8, shared team name",
+          "isTest": true,
+          "testIn": "1\n8\n10\nAlice\nAndrew\nBetty\nCole\nDee\nEefje\nFrank\nGerald\nHannah\nIvan",
+          "testOut": "AABCDEFG\nAABCDEFH\nAABCDEFI\nAABCDEGH\nAABCDEGI\nAABCDEHI\nAABCDFGH\nAABCDFGI\nAABCDFHI\nAABCDGHI\nAABCEFGH\nAABCEFGI\nAABCEFHI\nAABCEGHI\nAABCFGHI\nAABDEFGH\nAABDEFGI\nAABDEFHI\nAABDEGHI\nAABDFGHI\nAABEFGHI\nAACDEFGH\nAACDEFGI\nAACDEFHI\nAACDEGHI\nAACDFGHI\nAACEFGHI\nAADEFGHI\nABCDEFGH\nABCDEFGH\nABCDEFGI\nABCDEFGI\nABCDEFHI\nABCDEFHI\nABCDEGHI\nABCDEGHI\nABCDFGHI\nABCDFGHI\nABCEFGHI\nABCEFGHI\nABDEFGHI\nABDEFGHI\nACDEFGHI\nACDEFGHI\nBCDEFGHI",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "10 players, N=1, K=8, shared team name",
+          "isTest": false,
+          "testIn": "1\n8\n10\nAlice\nBob\nBill\nChristine\nDom\nEtta\nFrida\nGeorge\nHank\nIngrid",
+          "testOut": "ABBCDEFG\nABBCDEFH\nABBCDEFI\nABBCDEGH\nABBCDEGI\nABBCDEHI\nABBCDFGH\nABBCDFGI\nABBCDFHI\nABBCDGHI\nABBCEFGH\nABBCEFGI\nABBCEFHI\nABBCEGHI\nABBCFGHI\nABBDEFGH\nABBDEFGI\nABBDEFHI\nABBDEGHI\nABBDFGHI\nABBEFGHI\nABCDEFGH\nABCDEFGH\nABCDEFGI\nABCDEFGI\nABCDEFHI\nABCDEFHI\nABCDEGHI\nABCDEGHI\nABCDFGHI\nABCDFGHI\nABCEFGHI\nABCEFGHI\nABDEFGHI\nABDEFGHI\nACDEFGHI\nBBCDEFGH\nBBCDEFGI\nBBCDEFHI\nBBCDEGHI\nBBCDFGHI\nBBCEFGHI\nBBDEFGHI\nBCDEFGHI\nBCDEFGHI",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "BABADUM",
+          "isTest": true,
+          "testIn": "2\n3\n7\nBarb\nAlex\nBeatrice\nArnold\nDave\nUri\nMichelle",
+          "testOut": "AAB,BDM\nAAB,BDM\nAAB,BDU\nAAB,BDU\nAAB,BMU\nAAB,BMU\nAAB,DMU\nAAB,DMU\nAAD,BBM\nAAD,BBU\nAAD,BMU\nAAD,BMU\nAAM,BBD\nAAM,BBU\nAAM,BDU\nAAM,BDU\nAAU,BBD\nAAU,BBM\nAAU,BDM\nAAU,BDM\nABB,ADM\nABB,ADM\nABB,ADU\nABB,ADU\nABB,AMU\nABB,AMU\nABB,DMU\nABB,DMU\nABD,ABM\nABD,ABM\nABD,ABM\nABD,ABM\nABD,ABU\nABD,ABU\nABD,ABU\nABD,ABU\nABD,AMU\nABD,AMU\nABD,AMU\nABD,AMU\nABD,BMU\nABD,BMU\nABD,BMU\nABD,BMU\nABM,ABU\nABM,ABU\nABM,ABU\nABM,ABU\nABM,ADU\nABM,ADU\nABM,ADU\nABM,ADU\nABM,BDU\nABM,BDU\nABM,BDU\nABM,BDU\nABU,ADM\nABU,ADM\nABU,ADM\nABU,ADM\nABU,BDM\nABU,BDM\nABU,BDM\nABU,BDM\nADM,BBU\nADM,BBU\nADU,BBM\nADU,BBM\nAMU,BBD\nAMU,BBD",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "BABADUM",
+          "isTest": false,
+          "testIn": "2\n3\n7\nBa\nAa\nBb\nAb\nM\nD\nU",
+          "testOut": "AAB,BDM\nAAB,BDM\nAAB,BDU\nAAB,BDU\nAAB,BMU\nAAB,BMU\nAAB,DMU\nAAB,DMU\nAAD,BBM\nAAD,BBU\nAAD,BMU\nAAD,BMU\nAAM,BBD\nAAM,BBU\nAAM,BDU\nAAM,BDU\nAAU,BBD\nAAU,BBM\nAAU,BDM\nAAU,BDM\nABB,ADM\nABB,ADM\nABB,ADU\nABB,ADU\nABB,AMU\nABB,AMU\nABB,DMU\nABB,DMU\nABD,ABM\nABD,ABM\nABD,ABM\nABD,ABM\nABD,ABU\nABD,ABU\nABD,ABU\nABD,ABU\nABD,AMU\nABD,AMU\nABD,AMU\nABD,AMU\nABD,BMU\nABD,BMU\nABD,BMU\nABD,BMU\nABM,ABU\nABM,ABU\nABM,ABU\nABM,ABU\nABM,ADU\nABM,ADU\nABM,ADU\nABM,ADU\nABM,BDU\nABM,BDU\nABM,BDU\nABM,BDU\nABU,ADM\nABU,ADM\nABU,ADM\nABU,ADM\nABU,BDM\nABU,BDM\nABU,BDM\nABU,BDM\nADM,BBU\nADM,BBU\nADU,BBM\nADU,BBM\nAMU,BBD\nAMU,BBD",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Lonely",
+          "isTest": true,
+          "testIn": "1\n1\n1\nAkon",
+          "testOut": "A",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Lonely",
+          "isTest": false,
+          "testIn": "1\n1\n1\nPolice",
+          "testOut": "P",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Many teams of 1",
+          "isTest": true,
+          "testIn": "15\n1\n16\nAnn\nBea\nCam\nDee\nEva\nFez\nGob\nHans\nIan\nJay\nJeb\nKay\nLee\nMoe\nNea\nOlaf",
+          "testOut": "A,B,C,D,E,F,G,H,I,J,J,K,L,M,N\nA,B,C,D,E,F,G,H,I,J,J,K,L,M,O\nA,B,C,D,E,F,G,H,I,J,J,K,L,N,O\nA,B,C,D,E,F,G,H,I,J,J,K,M,N,O\nA,B,C,D,E,F,G,H,I,J,J,L,M,N,O\nA,B,C,D,E,F,G,H,I,J,K,L,M,N,O\nA,B,C,D,E,F,G,H,I,J,K,L,M,N,O\nA,B,C,D,E,F,G,H,J,J,K,L,M,N,O\nA,B,C,D,E,F,G,I,J,J,K,L,M,N,O\nA,B,C,D,E,F,H,I,J,J,K,L,M,N,O\nA,B,C,D,E,G,H,I,J,J,K,L,M,N,O\nA,B,C,D,F,G,H,I,J,J,K,L,M,N,O\nA,B,C,E,F,G,H,I,J,J,K,L,M,N,O\nA,B,D,E,F,G,H,I,J,J,K,L,M,N,O\nA,C,D,E,F,G,H,I,J,J,K,L,M,N,O\nB,C,D,E,F,G,H,I,J,J,K,L,M,N,O",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Many teams of 1",
+          "isTest": false,
+          "testIn": "10\n1\n11\nAnn\nBea\nCam\nDee\nEva\nFez\nGob\nHans\nIan\nJay\nKay",
+          "testOut": "A,B,C,D,E,F,G,H,I,J\nA,B,C,D,E,F,G,H,I,K\nA,B,C,D,E,F,G,H,J,K\nA,B,C,D,E,F,G,I,J,K\nA,B,C,D,E,F,H,I,J,K\nA,B,C,D,E,G,H,I,J,K\nA,B,C,D,F,G,H,I,J,K\nA,B,C,E,F,G,H,I,J,K\nA,B,D,E,F,G,H,I,J,K\nA,C,D,E,F,G,H,I,J,K\nB,C,D,E,F,G,H,I,J,K",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "HMMMMM",
+          "isTest": true,
+          "testIn": "2\n2\n6\nHarriet\nMike\nMindy\nMatthias\nMiles\nMariah",
+          "testOut": "HM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nHM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "MMMMMM",
+          "isTest": false,
+          "testIn": "2\n2\n6\nMike\nMindy\nMatthias\nMallory\nMiles\nMariah",
+          "testOut": "MM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM\nMM,MM",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 <= [[N]] <= 16\n1 <= [[K]] <= 8\n[[N]] * [[K]] <= [[M]]\n[[M]] < 20\n1 <= [[O]] <= 100",
+      "coverBinaryId": 133562040951541,
+      "stubGenerator": "read n:int\nread k:int\nread m:int\nloop m read name:string(68)\n\nwrite teams\n",
+      "inputDescription": "<<Line 1:>> Number of teams [[N]]\n<<Line 2:>> Number of players per team [[K]]\n<<Line 3:>> Number of players available [[M]]\n<<Next [[M]] lines>> Names of the available players",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[O]] (number of possible teamings) lines:>> Names of the teams separated by comma"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Given a list of names of available players, print all possible ways to construct <var>N</var> different teams of <var>K</var> different players each (a player can only belong to one team at a time).<br><br>The output should contain one possible way to form the teams per line, represented by team names separated by commas. The names of the teams on each line should be in alphabetical order. A team name is constructed by taking the first letter of each player's name (in alphabetical order). For example, a team of &quot;Zidane&quot;, &quot;Maradona&quot; and &quot;Ronaldo&quot; would be called &quot;MRZ&quot;, and a team of &quot;Anna&quot; and &quot;Alfred&quot; would be called &quot;AA&quot;. Print the results in alphabetical order.<br><br>Note that some players may be left without a team!</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Number of teams <var>N</var><br><strong>Line 2:</strong> Number of players per team <var>K</var><br><strong>Line 3:</strong> Number of players available <var>M</var><br><strong>Next <var>M</var> lines</strong> Names of the available players</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>O</var> (number of possible teamings) lines:</strong> Names of the teams separated by comma</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt;= <var>N</var> &lt;= 16<br>1 &lt;= <var>K</var> &lt;= 8<br><var>N</var> * <var>K</var> &lt;= <var>M</var><br><var>M</var> &lt; 20<br>1 &lt;= <var>O</var> &lt;= 100</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\n2\n4\nAlice\nBob\nChris\nDiana</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">AB,CD\nAC,BD\nAD,BC</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 93107281030,
+  "avatar": 46641547586781,
+  "commentCount": 9,
+  "upVotes": 5,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 765487,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1677622170026,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

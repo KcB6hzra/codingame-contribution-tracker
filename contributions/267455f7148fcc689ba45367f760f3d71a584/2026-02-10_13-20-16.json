@@ -1,0 +1,161 @@
+{
+  "id": 26745,
+  "activeVersion": 43,
+  "score": 7,
+  "votableId": 24812767,
+  "codingamerId": 4216789,
+  "views": 357,
+  "commentableId": 24693860,
+  "title": "Suguru Solver",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Saur2000",
+  "publicHandle": "267455f7148fcc689ba45367f760f3d71a584",
+  "codingamerHandle": "62bc28921f6a079fc385c6d3ac38a6659876124",
+  "lastVersion": {
+    "version": 43,
+    "autocloseTime": 1668824653941,
+    "data": {
+      "title": "Suguru Solver",
+      "topics": [
+        {
+          "id": 56,
+          "handle": "backtracking",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Retour sur trace",
+            "2": "Backtracking"
+          },
+          "pageTitle": "Backtracking: exercises and theory",
+          "puzzleCount": 15,
+          "parentTopicId": 41,
+          "contentDetailsId": 80
+        },
+        {
+          "id": 71,
+          "handle": "recursion",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Récursion",
+            "2": "Recursion"
+          },
+          "pageTitle": "Recursion: exercises and theory",
+          "puzzleCount": 26,
+          "parentTopicId": 41,
+          "contentDetailsId": 77
+        },
+        {
+          "id": 117,
+          "handle": "logic",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Logic",
+            "2": "Logic"
+          },
+          "puzzleCount": 18,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "use strict;\nuse warnings;\n#use diagnostics;\nuse 5.32.1;\n\nuse List::MoreUtils qw(each_arrayref);\nuse Storable qw(dclone);\n\nselect(STDOUT); $| = 1; # DO NOT REMOVE\n\nmy %hv_dirs = (\n    'N'  => { 'col' =>  0, 'row' => -1 },\n    'W'  => { 'col' => -1, 'row' =>  0 },\n    'E'  => { 'col' =>  1, 'row' =>  0 },\n    'S'  => { 'col' =>  0, 'row' =>  1 },\n);\n\nmy %dirs = (\n    %hv_dirs,\n    'NW' => { 'col' => -1, 'row' => -1 },\n    'NE' => { 'col' =>  1, 'row' => -1 },\n    'SW' => { 'col' => -1, 'row' =>  1 },\n    'SE' => { 'col' =>  1, 'row' =>  1 },\n);\n\nmy %ext_dirs = (\n    'NNWW' => { 'col' => -2, 'row' => -2 },\n    'NNW'  => { 'col' => -1, 'row' => -2 },\n    'NN'   => { 'col' =>  0, 'row' => -2 },\n    'NNE'  => { 'col' =>  1, 'row' => -2 },\n    'NNEE' => { 'col' =>  2, 'row' => -2 },\n    'NWW'  => { 'col' => -2, 'row' => -1 },\n    'NEE'  => { 'col' =>  2, 'row' => -1 },\n    'WW'   => { 'col' => -2, 'row' =>  0 },\n    'EE'   => { 'col' =>  2, 'row' =>  0 },\n    'SWW'  => { 'col' => -2, 'row' =>  1 },\n    'SEE'  => { 'col' =>  2, 'row' =>  1 },\n    'SSWW' => { 'col' => -2, 'row' =>  2 },\n    'SSW'  => { 'col' => -1, 'row' =>  2 },\n    'SS'   => { 'col' =>  0, 'row' =>  2 },\n    'SSE'  => { 'col' =>  1, 'row' =>  2 },\n    'SSEE' => { 'col' =>  2, 'row' =>  2 },\n);\n\nmy @neighbors1;\nmy @neighbors2;\nmy @neighbors3;\n\nmy @combinations2;\nmy @combinations3;\n\nmy @cages;\nmy $solutions = 0;\nmy %solutions;\nmy $sum_board;\n\nmy $board = { 'grid' => [] };\n\n($board->{'width'}, $board->{'height'}) = split(/\\s+/, <>);\nfor my $row (0 .. $board->{'height'} - 1) {\n    my @cells = split(/\\s+/, <>);\n    my $col = 0;\n    for my $cell (@cells) {\n        my($color, $value) = $cell =~ /([A-Z])([\\d.])/;\n        $value = undef if ($value eq '.');\n        push(@{$board->{'grid'}}, { 'id' => $row * $board->{'width'} + $col, 'col' => $col++, 'row' => $row, 'color' => $color, 'value' => $value });\n    }\n}\n\n&setup_neighbors($board);\n\n# Enumerate all the cages.\n&find_cages($board);\n\n# Make sure the initial board is valid.\ndie(\"Invalid board setup!\\n\") unless (&reduce_board($board));\n\n&print_board($board, 1);\n\nmy $solution = &solve_board($board);\n&print_sum_board() if ($solutions > 1);\n&print_board($solution) if ($solution);\n\nsub solve_board\n{\n    my($board, $path) = @_;\n    $path ||= '';\n\n    my $done = 1;\n    my $solution;\n    DONE: for my $row (0 .. $board->{'height'} - 1) {\n        for my $col (0 .. $board->{'width'} - 1) {\n            my $cell = &get_cell($board, $col, $row);\n            next if ($cell->{'value'});\n            $done = 0;\n\n            for my $value (sort(keys(%{$cell->{'options'}}))) {\n                my $nboard = dclone($board);\n                my $ncell = &get_cell($nboard, $col, $row);\n                $ncell->{'value'} = $value;\n                next unless (&reduce_board($nboard));\n                my $res = &solve_board($nboard, \"$path $col,$row:$value\");\n                $solution = $res if ($res);\n            }\n\n            last DONE;\n        }\n    }\n\n    return $solution unless ($done);\n\n    &add_solution($board);\n\n    return $board;\n}\n\nsub reduce_board\n{\n    my($board) = @_;\n\n    my $reduced = 1;\n    while ($reduced) {\n        $reduced = 0;\n        for my $row (0 .. $board->{'height'} - 1) {\n            for my $col (0 .. $board->{'width'} - 1) {\n                my $res = &reduce_options($board, $col, $row);\n                return unless (defined($res));\n                $reduced |= $res;\n            }\n        }\n\n        my $res = &reduce_options2($board);\n        return unless (defined($res));\n        $reduced |= $res;\n\n        $res = &reduce_cages($board);\n        return unless (defined($res));\n        $reduced |= $res;\n    }\n\n    return 1;\n}\n\nsub reduce_options\n{\n    my($board, $col, $row) = @_;\n\n    my $cell = &get_cell($board, $col, $row);\n    return 0 unless ($cell);\n\n    my $cage = $cell->{'cage'};\n    my $size = @{$cages[$cage]};\n\n    my $options = $cell->{'options'} // { map { $_ => 1 } (1 .. $size) };\n    my $org_options = keys(%$options);\n\n    # Remove all values matching neighbors\n    for my $nid (@{$neighbors2[$cell->{'id'}]}) {\n        my $neighbor = &get_cell($board, $nid);\n        next unless ($neighbor);\n        delete($options->{$neighbor->{'value'}}) if ($neighbor->{'value'});\n    }\n\n    # Remove all values matching cage members\n    foreach my $cid (@{$cages[$cage]}) {\n        next if ($cell->{'id'} == $cid);\n        my $neighbor = &get_cell($board, $cid);\n        delete($options->{$neighbor->{'value'}}) if ($neighbor->{'value'});\n    }\n\n    # There are no valid values for this cell\n    return unless (%$options);\n    \n    if ($cell->{'value'}) {\n        # The cell's value is no longer valid\n        return unless (exists($options->{$cell->{'value'}}));\n\n        $options = { $cell->{'value'} => 1 };\n    }\n\n    $cell->{'options'} = $options;\n    $cell->{'value'} = (keys(%$options))[0] if (keys(%$options) == 1);\n\n    return keys(%$options) != $org_options || 0;\n}\n\nsub reduce_options2 \n{\n    my($board) = @_;\n\n    my $reduced = 0;\n    for my $cell (@{$board->{'grid'}}) {\n        my $values = join('', sort(keys(%{$cell->{'options'}})));\n        next unless (length($values) == 2);\n\n        my $res = &delete_inbetween($board, \\@combinations2, $cell->{'id'}, undef, $values);\n        return unless (defined($res));\n        $reduced |= $res;\n\n        $res = &delete_inbetween($board, \\@combinations3, $cell->{'id'}, $cell->{'cage'}, $values);\n        return unless (defined($res));\n        $reduced |= $res;\n    }\n\n    return $reduced;\n}\n\nsub delete_inbetween\n{\n    my($board, $combinations, $id, $cage, $values) = @_;\n\n    my $reduced = 0;\n    for my $nid (keys(%{$combinations->[$id]})) {\n        my $neighbor = &get_cell($board, $nid);\n        next if (defined($cage) && $cage != $neighbor->{'cage'});\n        my $neighbor_values = join('', sort(keys(%{$neighbor->{'options'}})));\n        next unless ($values eq $neighbor_values);\n\n        for my $did (@{$combinations->[$id]{$nid}}) {\n            my $foo = &get_cell($board, $did);\n            for my $value (keys(%{$neighbor->{'options'}})) {\n                if (exists($foo->{'options'}{$value})) {\n                    return if (defined($foo->{'value'}) && $foo->{'value'} == $value);\n                    delete($foo->{'options'}{$value});\n                    return unless (keys(%{$foo->{'options'}}));\n                    $reduced = 1;\n                }\n            }\n        }\n    }\n\n    return $reduced;\n}\n\nsub reduce_cages\n{\n    my($board) = @_;\n\n    my $reduced = 0;\n    foreach my $ids (@cages) {\n        my %values;        \n        foreach my $id (@$ids) {\n            my $cell = &get_cell($board, $id);\n            my @values = keys(%{$cell->{'options'}});\n            foreach my $value (@values) {\n                push(@{$values{$value}}, $id);\n            }\n        }\n\n        # Handle values that can only be in one cell of a cage.\n        foreach my $value (keys(%values)) {\n            next unless (@{$values{$value}} == 1);\n\n            my $cell = &get_cell($board, @{$values{$value}}[0]);\n            if (!$cell->{'value'}) {\n                $cell->{'value'} = $value;\n                $reduced = 1;\n            }\n            if (keys(%{$cell->{'options'}}) > 1) {\n                $cell->{'options'} = { $value => 1 };\n                $reduced = 1;\n            }\n        }\n\n        # Handle a pair of values that can only be in two cells of a cage.\n        my @twos = grep { @{$values{$_}} == 2 } keys(%values);\n        foreach my $value1 (@twos) {\n            foreach my $value2 (@twos) {\n                next unless ($value2 > $value1);\n                next unless (join('-', sort(@{$values{$value1}})) eq join('-', sort(@{$values{$value2}})));\n                for my $id (@{$values{$value1}}) {\n                    my $cell = &get_cell($board, $id);\n                    foreach my $value (keys(%{$cell->{'options'}})) {\n                        next if ($value == $value1 || $value == $value2);\n                        delete($cell->{'options'}{$value});\n                        $reduced = 1;\n                    }\n                }\n            }\n        }\n\n        # Handle a pair of cells that can only take the same pair of values.\n        foreach my $id (@$ids) {\n            my $cell = &get_cell($board, $id);\n            my @values1 = sort(keys(%{$cell->{'options'}}));\n            next unless (@values1 == 2);\n\n            foreach my $nid (@$ids) {\n                next unless ($nid > $id);\n\n                my $neighbor = &get_cell($board, $nid);\n                my @values2 = sort(keys(%{$neighbor->{'options'}}));\n                next unless (join('-', @values1) eq join('-', @values2));\n\n                foreach my $did (@$ids) {\n                    next if ($did == $id || $did == $nid);\n\n                    my $cell = &get_cell($board, $did);\n                    foreach my $value (@values1) {\n                        return if ($cell->{'value'} && $cell->{'value'} == $value);\n                        if (exists($cell->{'options'}{$value})) {\n                            delete($cell->{'options'}{$value});\n                            $reduced = 1;\n                        }\n                    }\n                }\n            }\n        }\n    }\n\n    return $reduced;\n}\n\nsub find_cages\n{\n    my($board) = @_;\n    my $cage = 0;\n\n    for my $row (0 .. $board->{'height'} - 1) {\n        for my $col (0 .. $board->{'width'} - 1) {\n            $cage++ if (&find_cage($board, $col, $row, $cage));\n        }\n    }\n}\n\nsub find_cage\n{\n    my($board, $col, $row, $cage, $color) = @_;\n\n    my $cell = &get_cell($board, $col, $row);\n    return unless ($cell);\n    return if (exists($cell->{'cage'}));\n\n    if (!$color) {\n        $color = $cell->{'color'};\n    } elsif ($color ne $cell->{'color'}) {\n        return;\n    }\n\n    $cell->{'cage'} = $cage;\n    push(@{$cages[$cage]}, $cell->{'id'});\n\n    for my $nid (@{$neighbors1[$cell->{'id'}]}) {\n        &find_cage($board, $nid, undef, $cage, $color);\n    }\n\n    return 1;\n}\n\nsub setup_neighbors\n{\n    my($board) = @_;\n\n    for my $row (0 .. $board->{'height'} - 1) {\n        for my $col (0 .. $board->{'width'} - 1) {\n            my $ea = each_arrayref([\\@neighbors1, \\@neighbors2, \\@neighbors3], [\\%hv_dirs, \\%dirs, \\%ext_dirs]);\n            while (my($neighbors, $dirs) = $ea->()) {\n                my @neighbors;\n                for my $dir (values(%$dirs)) {\n                    my $cell = &get_cell($board, $col + $dir->{'col'}, $row + $dir->{'row'});\n                    push(@neighbors, $cell->{'id'}) if ($cell);\n                }\n                push(@$neighbors, [@neighbors]);\n            }\n        }\n    }\n\n    for my $cell (@{$board->{'grid'}}) {\n        for my $nid (@{$neighbors2[$cell->{'id'}]}) {\n            my $neighbor = &get_cell($board, $nid);\n            my @ids = &intersection(@{$neighbors2[$cell->{'id'}]}, @{$neighbors2[$neighbor->{'id'}]});\n            $combinations2[$cell->{'id'}]{$neighbor->{'id'}} = \\@ids; \n        }\n    }\n\n    for my $cell (@{$board->{'grid'}}) {\n        for my $nid (@{$neighbors3[$cell->{'id'}]}) {\n            my $neighbor = &get_cell($board, $nid);\n            my @ids = &intersection(@{$neighbors2[$cell->{'id'}]}, @{$neighbors2[$neighbor->{'id'}]});\n            $combinations3[$cell->{'id'}]{$neighbor->{'id'}} = \\@ids; \n        }\n    }\n}\n\nsub add_solution\n{\n    my($board) = @_;\n\n    if (!$sum_board) {\n        $sum_board = dclone($board);\n    } else {\n        for my $row (0 .. $board->{'height'} - 1) {\n            for my $col (0 .. $board->{'width'} - 1) {\n                my $sum_cell = &get_cell($sum_board, $col, $row);\n                my $cell = &get_cell($board, $col, $row);\n                $sum_cell->{'options'}{$cell->{'value'}} = 1;\n                $sum_cell->{'value'} = undef;\n            }\n        }\n    }\n}\n\nsub print_sum_board\n{\n    &reduce_board($sum_board);\n    print STDERR \"Sum of all solutions:\\n\";\n    &print_board($sum_board, 1);\n}\n\nsub print_board\n{\n    my($board, $debug) = @_;\n\n    my $str = &board2str($board, $debug);\n    if ($debug) {\n        print STDERR $str;\n    } else {\n        print($str);\n    }\n}\n\nsub board2str\n{\n    my($board, $debug) = @_;\n\n    my $str = '';\n    for my $row (0 .. $board->{'height'} - 1) {\n        for my $col (0 .. $board->{'width'} - 1) {\n            my $cell = &get_cell($board, $col, $row);\n\n            $str .= $cell->{'value'} || 0;\n            if ($debug) {\n                my $size = @{$cages[$cell->{'cage'}]};\n                $str .= \" $cell->{'color'}\\[\" . join('', map { $cell->{'options'}{$_} ? $_ : ($_ <= $size ? ' ' : '.') } 1 .. 6) . '], ';\n            }\n        }\n        $str .= \"\\n\";\n    }\n\n    return $str;\n}\n\nsub get_cell\n{\n    my($board, $col, $row) = @_;\n    my $id;\n\n    if (defined($row)) {\n        return if ($col < 0 || $col >= $board->{'width'} || $row < 0 || $row >= $board->{'height'});\n        $id = $row * $board->{'width'} + $col;\n    } else {\n        $id = $col;\n        return if ($id < 0 || $id >= $board->{'width'} * $board->{'height'});\n    }\n\n    return $board->{'grid'}[$id];\n}\n\nsub intersection\n{\n    my %union;\n    my %intersection;\n\n    foreach my $val (@_) { \n        $union{$val}++ && $intersection{$val}++;\n    }\n\n    return keys(%intersection);\n}\n",
+      "statement": "Suguru (also known as Tectonics) is a puzzle game similar to Sudoku. The puzzle is made up of different zones, called cages. Each cage is 1 to 6 cells and contains the digits from 1 to the size of the cage. I.e., a 2-cell cage contains the digits 1 and 2, and a 5-cell cage contains the digits 1 to 5. Adjacent cells, even diagonally, may never contain the same digit.\n\nTo help visualize what a Suguru puzzle looks like, here is the puzzle from the first test case with added walls around the cages (with and without the cage identifiers):\n`\n+--+--+--+--+  +--+--+--+--+\n|G  G4 G1 G |  |    4  1   |\n+--+  +--+--+  +--+  +--+--+\n|R |G |B  B |  |  |  |     |\n+--+--+--+  +  +--+--+--+  +\n|G |R  R4|B |  |  |    4|  |\n+  +  +  +  +  +  +  +  +  +\n|G |R  R2|B |  |  |    2|  |\n+  +--+  +  +  +  +--+  +  +\n|G3 G |R |B |  | 3   |  |  |\n+--+--+--+--+  +--+--+--+--+\n`",
+      "testCases": [
+        {
+          "title": "4x5",
+          "isTest": true,
+          "testIn": "4 5\nG. G4 G1 G.\nR. G. B. B.\nG. R. R4 B.\nG. R. R2 B.\nG3 G. R. B.",
+          "testOut": "2413\n1525\n2341\n1523\n3414",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4x5 Validator",
+          "isTest": false,
+          "testIn": "4 5\nR2 G. G. B.\nR. G. G. B.\nR. R4 G. R.\nG. G. R3 R.\nG1 G. G. R.",
+          "testOut": "2142\n3531\n1424\n3531\n1242",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "8x8",
+          "isTest": true,
+          "testIn": "8 8\nG. G. G. M. M5 R. R. G.\nR. R. R. R. M. M. G. G.\nG. M. R. C. C4 M. G. R.\nG. M. M. C. C. B. B. R.\nG. M. M. C. B. B. R. R.\nR. B. G. G. B. G. G4 G.\nR. B. B. G. R. R. G. G.\nR. B. B. G. G. R. R. B.",
+          "testOut": "21345121\n34212343\n21534121\n34212354\n15354123\n32412341\n15354152\n24123231",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "8x8 Validator",
+          "isTest": false,
+          "testIn": "8 8\nB4 B. R. R. R. B. B. G.\nB. B. R. R2 G. B. B2 G3\nG3 B. C. G. G. B. G. G.\nG. G. C. C. G. R. G. B.\nG. C. C. R. R. R. B. B.\nR. R. G. G. B. R. C. B.\nG. R. G. G. G5 C. C4 C.\nG. R. R. B. B. B. C. R.",
+          "testOut": "43135341\n12424123\n35313545\n14242121\n25153434\n14321212\n25145345\n13232121",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "15x10",
+          "isTest": true,
+          "testIn": "15 10\nR. B5 B. B4 B. R. R4 R. B. B5 B. R1 R4 R. B.\nR4 R. B1 B. R. R6 G. R. B. G4 R. R. G. R6 B1\nR. R6 R. G5 G. G. G2 B. B. G3 G. G. G. B. B4\nB. B1 B. G. B. B. B. R1 R. R6 C1 C. C. B5 B.\nB5 B. R. R. R. B. R. R. G. R. C. C6 R. R1 R.\nB. R. R. C. R. B6 B. G. G. G. C. R. R. G. R.\nG2 G. C. C1 C. C. R. R3 G. B. B. G. G. G. G4\nC. G4 G. C. B3 B. B4 R. R6 R. B. R. R. R. G.\nC2 C. C. B. B. R. B. G. R. G. R. R. B. R. B.\nC. C6 R3 R5 R. R. R. G5 G. G. G. B6 B2 B4 B.",
+          "testOut": "156423423561452\n431316151423261\n562543242356134\n213621515613456\n542143232426214\n636356451353536\n215142134212614\n343635426534325\n251212634215163\n463564151646245",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "15x10 Validator",
+          "isTest": false,
+          "testIn": "15 10\nB. B2 G. G. G. R. G. G. G. R. R. B. B. B. R.\nG. B4 B. G. G. R. C. G1 G. R. R. R. B. R2 R.\nG1 G. B. R. R. C. C. C. B. B. G4 G3 B. C. R4\nG. G3 B. R. R4 R. C. R. R. G. G. G1 C. C2 R.\nR. R. C. B. B. G. G6 R. R. R. G. M. M. C. R6\nR2 R. C. C. C. C. G. G. C. R3 M. M. M5 C. B.\nR. G. G. B. B. G. G. C. C. C. B. G6 G. B. B3\nR. G4 G. G. B. B. B. G. G4 G. B2 B. G. G. B1\nB2 B. C. R. R5 R. R. G. G. G5 B. B3 G4 G. B.\nB. C. C1 C. C. R. R. B. B. B. R. R. R. R. R5",
+          "testOut": "121232325242313\n543451414351525\n125123252143434\n436345146521521\n515123652164346\n242341414321515\n351525232146323\n642313414325151\n235452626513424\n141231313242135",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "20x20",
+          "isTest": true,
+          "testIn": "20 20\nR. R6 R. B6 B. R. B. B6 B. R. R. B. B5 R6 R. R1 G. G. G. B.\nR3 B. B. B2 R. R. R. B. B. B. G6 B. B. R2 R. R. B. G. G. B2\nR5 G. B. G. R. G. G3 R. R. G. G. B3 B. G. G. G. B. B5 R. B5\nR. G. G5 G. R. G. G. R. B. G. B. R. R. R. G. G. B. B. R. B.\nB. B. G. R. B. B. G. B4 B. G. B4 B. R. R. Y. R4 R. B6 R. B.\nB5 R. R3 R1 R. Y. G. B. B. G. B. B6 Y. Y. Y. Y. R. R. Y. B4\nB. B. G. R. Y. Y. Y. G1 B. R. B. R. B. B5 B. R. R. G. Y. Y.\nR. B. G4 G. Y2 Y. R. G3 G. R. R. R5 G. B. B. G3 G. G. G. Y.\nR. R. G. G. R. R. R. G. B6 B. R. G4 G. G1 B6 R. G. B. B. G.\nR. B3 G. B. B5 R. G. G5 B. B. B2 G. R. G. R. R. R2 R. G. G.\nB. B. R. B. B1 Y. Y. R. R. G. B. R6 R. R. B. Y. Y. R. G3 G.\nB. B5 R. B. G. R. Y. R. G. G4 R. R. B. B. B3 B. Y4 Y. Y. Y.\nG. B. R6 B. G5 R. Y. Y3 G. Y. Y. Y. B. R. G. G. G. G. R1 R4\nG. G. R. R3 G. G. R. Y. G. G. Y. G. R. R4 R. Y. G5 G. R3 R.\nG. G. B. R. G. G. R4 B. B. B6 G. G5 R. R2 Y. Y. Y. B1 R. R.\nR. B5 B. B. B. B. R. R6 B. B. G2 G. G. B. Y. Y1 B. B. B5 G.\nR. G. G. G. G. R. R. G. G. B3 R1 B. B6 B. B. R. B. B6 Y. G.\nR. B. G6 G. R. G2 G. G. G6 R. R. B. G. R. R3 R4 R. Y. Y. G.\nB1 B. B. R. R4 R. R3 B. B. R4 R. G. G. G. R. G. G. Y5 Y. R.\nB. B. G. G. G. G. R. B. B3 R. G5 G1 B. B. B. G. G4 G. Y. R.",
+          "testOut": "26465136121456412531\n31323242456212353142\n56416131314365142535\n12535452525243231426\n36462164134315142613\n52314523252624353524\n41653141631415216131\n32412653426523432454\n41534312631461616121\n23265265452325352454\n16431413131641413632\n25126252645352364256\n14645163131216123614\n25232352524634545435\n43454141461512623162\n15132626252343514251\n34251313131561263642\n25636245652425341213\n13214531243634253562\n46432124365121314231",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "20x20 Validator",
+          "isTest": false,
+          "testIn": "20 20\nR. R. R. B. B4 R. B. B. B4 R. R2 B. B5 R4 R. R. G5 G. G2 B.\nR4 B. B. B5 R. R5 R. B6 B. B5 G. B1 B. R. R. R6 B. G. G. B6\nR5 G. B1 G. R. G. G. R. R. G. G. B. B. G. G5 G. B. B6 R. B.\nR. G4 G. G. R. G. G2 R3 B. G. B. R5 R2 R. G. G3 B. B. R. B.\nB6 B. G. R6 B. B. G5 B. B1 G. B6 B. R. R1 Y. R. R2 B. R. B5\nB. R. R4 R. R. Y3 G. B. B. G. B. B4 Y. Y. Y. Y1 R. R1 Y. B.\nB. B3 G. R. Y2 Y. Y. G. B5 R. B. R. B3 B. B. R. R. G. Y2 Y.\nR1 B. G. G3 Y. Y1 R. G6 G. R. R6 R. G. B6 B. G. G4 G. G5 Y.\nR. R. G6 G. R. R. R. G. B. B4 R. G. G4 G. B2 R. G. B. B. G4\nR. B. G. B. B. R1 G. G. B6 B. B. G6 R. G5 R1 R. R3 R6 G. G.\nB. B4 R. B. B4 Y. Y2 R. R. G. B. R. R. R. B. Y. Y. R. G. G.\nB1 B. R. B3 G. R. Y5 R. G. G. R. R3 B. B5 B. B1 Y. Y. Y. Y.\nG. B. R. B1 G. R2 Y. Y6 G. Y. Y. Y. B. R6 G. G4 G. G. R. R4\nG4 G1 R3 R. G3 G. R5 Y. G. G. Y3 G. R2 R1 R. Y. G5 G. R3 R.\nG. G. B. R1 G6 G. R. B4 B. B5 G. G. R. R. Y. Y3 Y. B. R5 R6\nR. B. B5 B. B. B. R3 R. B6 B. G. G. G. B1 Y. Y4 B. B2 B. G.\nR2 G. G. G6 G. R4 R. G. G. B. R. B6 B. B. B. R. B5 B. Y. G.\nR. B3 G2 G. R1 G. G5 G. G. R. R. B. G. R5 R. R. R. Y6 Y. G.\nB. B6 B. R6 R. R. R. B4 B. R6 R3 G4 G. G. R. G. G. Y. Y4 R.\nB2 B4 G. G. G3 G. R2 B. B3 R. G2 G. B. B2 B. G5 G. G2 Y. R.",
+          "testOut": "26164121412354515121\n43252536356123263436\n56136141212461542612\n34254323653524231434\n65162154146131542525\n12435363235424313143\n43512451542131565621\n12436136236526414353\n43624525142143252124\n25156143653625143631\n34624321242514625252\n12535153516325316431\n36414246242146243124\n41323151363621565631\n52416264254143231456\n36523131632351546232\n24165424214624315151\n13231651352515263623\n56165434263436414141\n24243121312512353232",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "4 ≤ [[w]],[[h]] ≤ 20\n1 ≤ cage size ≤ 6\nAll tests have a unique solution",
+      "coverBinaryId": 87961001506190,
+      "stubGenerator": "read w:int h:int\nloop h read line:string(59)\nwrite answer",
+      "inputDescription": "<<Line 1:>> The [[w]]idth and [[h]]eight separated by a space\n<<Next [[h]] lines:>> [[w]] space separated cells, where each cell is an upper case letter indicating the cage followed by a digit or a dot (indicating an empty cell)\n\nThe upper case letters used as cage indicators can be used for multiple cages as long as the cages do not touch each other horizontally or vertically.",
+      "solutionLanguage": "Perl",
+      "outputDescription": "<<[[h]] lines:>> [[w]] digits corresponding to the solution for each cell of the line"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Suguru (also known as Tectonics) is a puzzle game similar to Sudoku. The puzzle is made up of different zones, called cages. Each cage is 1 to 6 cells and contains the digits from 1 to the size of the cage. I.e., a 2-cell cage contains the digits 1 and 2, and a 5-cell cage contains the digits 1 to 5. Adjacent cells, even diagonally, may never contain the same digit.<br><br>To help visualize what a Suguru puzzle looks like, here is the puzzle from the first test case with added walls around the cages (with and without the cage identifiers):<br><pre style=\"font-family: monospace\"><br>+--+--+--+--+  +--+--+--+--+<br>|G  G4 G1 G |  |    4  1   |<br>+--+  +--+--+  +--+  +--+--+<br>|R |G |B  B |  |  |  |     |<br>+--+--+--+  +  +--+--+--+  +<br>|G |R  R4|B |  |  |    4|  |<br>+  +  +  +  +  +  +  +  +  +<br>|G |R  R2|B |  |  |    2|  |<br>+  +--+  +  +  +  +--+  +  +<br>|G3 G |R |B |  | 3   |  |  |<br>+--+--+--+--+  +--+--+--+--+<br></pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> The <var>w</var>idth and <var>h</var>eight separated by a space<br><strong>Next <var>h</var> lines:</strong> <var>w</var> space separated cells, where each cell is an upper case letter indicating the cage followed by a digit or a dot (indicating an empty cell)<br><br>The upper case letters used as cage indicators can be used for multiple cages as long as the cages do not touch each other horizontally or vertically.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>h</var> lines:</strong> <var>w</var> digits corresponding to the solution for each cell of the line</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">4 &le; <var>w</var>,<var>h</var> &le; 20<br>1 &le; cage size &le; 6<br>All tests have a unique solution</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4 5\nG. G4 G1 G.\nR. G. B. B.\nG. R. R4 B.\nG. R. R2 B.\nG3 G. R. B.</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">2413\n1525\n2341\n1523\n3414</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 102313167752,
+  "avatar": 59987602214161,
+  "commentCount": 17,
+  "upVotes": 8,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 724057,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1668416447740,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

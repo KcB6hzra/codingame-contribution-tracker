@@ -1,0 +1,167 @@
+{
+  "id": 82746,
+  "activeVersion": 59,
+  "score": 14,
+  "votableId": 32511417,
+  "codingamerId": 4433844,
+  "views": 345,
+  "commentableId": 32368154,
+  "title": "How high up does the beer go?",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Lisa-Has-Ideas",
+  "publicHandle": "827466cd78c1920b0f6976b3104c010ed9f2b",
+  "codingamerHandle": "6057618d773e6e27a20abefa031c4e674483344",
+  "lastVersion": {
+    "version": 59,
+    "autocloseTime": 1710184219853,
+    "data": {
+      "title": "How high up does the beer go?",
+      "topics": [
+        {
+          "id": 95,
+          "handle": "geometry",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Geometry",
+            "2": "Geometry"
+          },
+          "puzzleCount": 22,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "using System;\n\npublic class Program\n{\n\tconst double third = 1.0/3.0;\n\tconst double thirdPi = third * Math.PI;\n\tpublic static void Main()\n\t{\n        string[] inputs = Console.ReadLine().Split(' ');\n        float bottomRadius = float.Parse(inputs[0]);\n        float topRadius = float.Parse(inputs[1]);\n        float glassHeight = float.Parse(inputs[2]);\n        float beerVol = float.Parse(inputs[3]);\n\n        double waterLineHeight = GuessWaterLine(bottomRadius, topRadius, glassHeight,beerVol);  \n        waterLineHeight = Math.Round(waterLineHeight,1);\n        string result= string.Format(\"{0:0.0}\", waterLineHeight); \t\n        Console.WriteLine(result);\n\t}\n\t\n\t\n\tpublic static double GuessWaterLine(double rBot, double rTop, double glassHi, double actualVol)\n\t{\n\t\tdouble guessHi = glassHi; // first guess\n\t\tdouble mostHi = glassHi;\n\t\tdouble leastHi = 0;\n\t\tdouble errorAllowed = .00000001 ;\n\t\t\n\t\tdouble calcError = 99;\n\t\tdouble rMid = -1;\n\t\t\n\t\tdouble rTop_OnlyRightSection = rTop - rBot;\n\t\tint counter = 0;\n        bool keepGuessing = true;\n\t\tdo // guess until you get it right\n\t\t{\n            //see far below for how I came up with this following 2 lines\n\t\t\tdouble rMid_OnlyRightSection = (rTop_OnlyRightSection/glassHi) * guessHi; // proven/demonstrated below\n\t\t\trMid = rBot + rMid_OnlyRightSection;\n\t\t\tdouble tempRs = rBot * rBot        + rBot * rMid +         rMid * rMid;\n\t\t\tdouble guessVol = thirdPi * guessHi * tempRs;\n            //above line is based on: V = (1/3) * π * h * (r² + r * R + R²)\t\t\n\n\t\t\tcalcError = Math.Abs(guessVol - actualVol);\n\t\t\tcounter++;\n            keepGuessing = calcError >  errorAllowed;\n\t\t\tif (keepGuessing)\n\t\t\t{\n\t\t\t\tif (guessVol > actualVol) mostHi = guessHi;\t\n\t\t\t\tif (guessVol < actualVol) leastHi = guessHi;\t\n\t\t\t\tguessHi = (mostHi + leastHi)/2.0;\n\t\t\t}\n\t\t} while ( keepGuessing && counter < 1000) ;\n        guessHi = Math.Round(guessHi,1);\n\t\treturn guessHi;\n\t}\n}\n/*\nAll this is How I figured out equation on line 37-39\nand it's what makes this a classic puzzle instead of a clash\n                                ________\nrTop = radius top of glass      \\      /\nrMid = radius at top of beer     \\~~~~/\nrBot = radius bottom of glass     \\__/\n\nrTop_OnlyRightSection -- calcualted as rTop - rBot ... aka line13\nrMid_OnlyRightSection -- calculated as rMid - rBot ... aka line45\nglassHi ... aka line12\nguessHi ... aka line42 (the height that we're guessing the beer is, this time)\n\n\nSo we see this as two triangles, of different-sizes but same-shape: 312 and 542\n            1_______3 \n \\          |      /\n  \\        4|~~~~~/5\n   \\        |    /\n    \\       |   /\n     \\      |  / \n      \\     | /  \n       \\___2|/\n\nSince same shape, we know that:\nline13 is to line12\nas\nline45 is to line42\n\nMathmatically:\nline13/line12 = line45/line42\n\nsolve for the unknown one:\nline45 = line42 * (line13/line12)\n\nWe can say it this way in the context of this puzzle:\n\n    double rMid_OnlyRightSection = guessHi * (rTop_OnlyRightSection/glassHi);\n    rMid = rBot + rMid_OnlyRightSection;\n\n\n*/\n",
+      "statement": "`<<===== Summary and your task =====>>`You will be given 3 measurements (in centimeters) of a drinking-glass, sitting on a bar:\n• its [[bottomRadius]]\n• its [[topRadius]] = the radius of the lip (this is always larger than [[bottomRadius]])\n• its height, [[glassHeight]]\n\nAnd you will be given a volume of beer [[beerVol]] in cubic-centimeters (also known as milliliters) that's been poured into the drinking-glass.\n\nHow high up ([[beerHeight]]) in the drinking-glass does the beer go ?\n\n\n`<<===== Geometry background: frustum =====>>`The above-described drinking-glass (upside down) in geometry is called a frustum.\n\nWikipedia describes it thus:\n\"A cone with a region including its apex cut off by a plane is called a truncated cone; if the truncation plane is parallel to the cone's base, it is called a frustum.\"\n\nThe volume of conical frustum is:\nV = (1/3) * π * h * (r² + r * R + R²)\n...where r and R are the radiuses and h is the height.\nBut remember the radius of the top of the drinking-glass <<isn't>> the radius of the top of the beer.\n\nTo better understand frustum geometry, you can experiment with:\nhttps://www.omnicalculator.com/math/truncated-cone-volume\nhttps://rechneronline.de/pi/truncated-cone.php\n\n\n`<<===== Oh, tricky =====>>`Tips: \nYour first instinct might be to try an Analytic solution, by simply plugging numbers into a formula.\nBut there are 4 elements, and you'd need to know 3 of them; but you only know 2 ☹️\n\nThese elements are:\n• volume of the beer [[beerVol]]\n• bottom radius of the drinking-glass [[bottomRadius]]\n• height of the beer (unknown)\n• radius of the drinking-glass at the spot where the top of the beer is (unknown)\n\nSo Analytic solution might be a bit tricky.\nPerhaps try an Iterative method instead.\n\n\n\n\n\n\n`<<===== Notes, sources =====>>`• Beer foam doesn't matter.  Think of it as water instead if you prefer\n• https://en.wikipedia.org/wiki/Cone#\n• https://en.wikipedia.org/wiki/Iterative_method",
+      "testCases": [
+        {
+          "title": "Test 1 - basic pint glass",
+          "isTest": true,
+          "testIn": "2.5 4 15 473",
+          "testOut": "14.3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3.15 3.5 14 470",
+          "testOut": "13.6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2 - a tall skinny drink",
+          "isTest": true,
+          "testIn": "2 2.1 17 200",
+          "testOut": "15.2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "2.2 2.3 16 220",
+          "testOut": "13.9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3 - that glass has a wide lip!",
+          "isTest": true,
+          "testIn": "2.1 10.5 6 550",
+          "testOut": "5.0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "2.4 9.3 8 540",
+          "testOut": "6.2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4 - Chug a lug, Donna",
+          "isTest": true,
+          "testIn": "3 3.25 24 700",
+          "testOut": "22.9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "4 4.25 18 800",
+          "testOut": "15.1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5 - I'm going to go lay down now",
+          "isTest": true,
+          "testIn": "7 9.25 18.5 3300",
+          "testOut": "16.4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "9 9.25 13.1 3400",
+          "testOut": "13.0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6 - I'll just have a sip",
+          "isTest": true,
+          "testIn": "1 3 4 25",
+          "testOut": "2.7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "1.5 1.6 1.5 10",
+          "testOut": "1.3",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "0 < [[beerHeight]] < [[glassHeight]] < 50\n0 < [[bottomRadius]] < [[topRadius]] < 50\n0 < [[beerVol]] < 5000",
+      "coverBinaryId": 118011463478089,
+      "stubGenerator": "read bottomRadius:float topRadius:float glassHeight:float beerVol:float\nwrite height of beer",
+      "inputDescription": "<<Line 1:>> 4 floats separated by a space: [[bottomRadius]] [[topRadius]] [[glassHeight]] [[beerVol]]",
+      "solutionLanguage": "C#",
+      "outputDescription": "<<Line 1:>> A float, [[beerHeight]] rounded and displayed to the nearest tenth\nHeight is measured perpendicular to the bar"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><pre style=\"font-family: monospace\"><strong>===== Summary and your task =====</strong></pre>You will be given 3 measurements (in centimeters) of a drinking-glass, sitting on a bar:<br>&bull; its <var>bottomRadius</var><br>&bull; its <var>topRadius</var> = the radius of the lip (this is always larger than <var>bottomRadius</var>)<br>&bull; its height, <var>glassHeight</var><br><br>And you will be given a volume of beer <var>beerVol</var> in cubic-centimeters (also known as milliliters) that's been poured into the drinking-glass.<br><br>How high up (<var>beerHeight</var>) in the drinking-glass does the beer go ?<br><br><br><pre style=\"font-family: monospace\"><strong>===== Geometry background: frustum =====</strong></pre>The above-described drinking-glass (upside down) in geometry is called a frustum.<br><br>Wikipedia describes it thus:<br>&quot;A cone with a region including its apex cut off by a plane is called a truncated cone; if the truncation plane is parallel to the cone's base, it is called a frustum.&quot;<br><br>The volume of conical frustum is:<br>V = (1/3) * &pi; * h * (r&sup2; + r * R + R&sup2;)<br>...where r and R are the radiuses and h is the height.<br>But remember the radius of the top of the drinking-glass <strong>isn't</strong> the radius of the top of the beer.<br><br>To better understand frustum geometry, you can experiment with:<br>https://www.omnicalculator.com/math/truncated-cone-volume<br>https://rechneronline.de/pi/truncated-cone.php<br><br><br><pre style=\"font-family: monospace\"><strong>===== Oh, tricky =====</strong></pre>Tips: <br>Your first instinct might be to try an Analytic solution, by simply plugging numbers into a formula.<br>But there are 4 elements, and you'd need to know 3 of them; but you only know 2 ☹️<br><br>These elements are:<br>&bull; volume of the beer <var>beerVol</var><br>&bull; bottom radius of the drinking-glass <var>bottomRadius</var><br>&bull; height of the beer (unknown)<br>&bull; radius of the drinking-glass at the spot where the top of the beer is (unknown)<br><br>So Analytic solution might be a bit tricky.<br>Perhaps try an Iterative method instead.<br><br><br><br><br><br><br><pre style=\"font-family: monospace\"><strong>===== Notes, sources =====</strong></pre>&bull; Beer foam doesn't matter.  Think of it as water instead if you prefer<br>&bull; https://en.wikipedia.org/wiki/Cone#<br>&bull; https://en.wikipedia.org/wiki/Iterative_method</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> 4 floats separated by a space: <var>bottomRadius</var> <var>topRadius</var> <var>glassHeight</var> <var>beerVol</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> A float, <var>beerHeight</var> rounded and displayed to the nearest tenth<br>Height is measured perpendicular to the bar</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt; <var>beerHeight</var> &lt; <var>glassHeight</var> &lt; 50<br>0 &lt; <var>bottomRadius</var> &lt; <var>topRadius</var> &lt; 50<br>0 &lt; <var>beerVol</var> &lt; 5000</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2.5 4 15 473</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">14.3</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 60626817496,
+  "avatar": 94714081045618,
+  "commentCount": 23,
+  "upVotes": 16,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 921930,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1710102133710,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

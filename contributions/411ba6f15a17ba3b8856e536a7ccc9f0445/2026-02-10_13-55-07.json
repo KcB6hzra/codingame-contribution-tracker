@@ -1,0 +1,161 @@
+{
+  "id": 411,
+  "activeVersion": 9,
+  "score": 11,
+  "votableId": 3118035,
+  "codingamerId": 1390797,
+  "views": 377,
+  "commentableId": 3064742,
+  "title": "Einstein's riddle solver",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "OroshiX",
+  "publicHandle": "411ba6f15a17ba3b8856e536a7ccc9f0445",
+  "codingamerHandle": "045d3b89723c9acafb728c9fd1d8cb297970931",
+  "lastVersion": {
+    "version": 9,
+    "data": {
+      "title": "Einstein's riddle solver",
+      "topics": [],
+      "solution": "import java.util.*;\n/**\n * Einstein's Riddle\n * <p>\n * Created by OroshiX on 24/07/16.\n */\nclass Solution {\n    private static int change = 0;\n\n    public static void main(String args[]) {\n        Scanner in = new Scanner(System.in);\n        int nbCharacteristics = in.nextInt();\n        int nbPeople = in.nextInt();\n        List<List<String>> gridCharacteristics = new ArrayList<>();\n        for (int i = 0; i < nbCharacteristics; i++) {\n            gridCharacteristics.add(new ArrayList<String>());\n            for (int j = 0; j < nbPeople; j++) {\n                String characteristic = in.next();\n                gridCharacteristics.get(i).add(characteristic);\n            }\n            in.nextLine();\n        }\n        int nbLinks = in.nextInt();\n        Cell[][] gridSol = initGridSolution(nbCharacteristics,nbPeople,gridCharacteristics);\n        \n        if (in.hasNext()) {\n            in.nextLine();\n        }\n        List<Link> originalLinks = new ArrayList<>();\n        for (int i = 0; i < nbLinks; i++) {\n            String link = in.nextLine();\n            String[] l = link.split(\" \");\n            originalLinks.add(new Link(l[0],l[2],l[1].equals(\"&\")));\n        }\n\n\n        line : for (int i = 0; i < nbCharacteristics; i++) {\n            List<Link> links = new ArrayList<>(originalLinks);\n            clearGridSolution(nbCharacteristics, nbPeople,gridSol);\n            fillFirstLine(i,gridSol);\n            while (!checkFinished(gridSol) || change == 0) {\n                // solve\n                change = 0;\n                solve(links, gridSol);\n                finishLine(gridSol);\n                if (checkFinished(gridSol)) break line;\n                if (change == 0) continue line;\n            }\n        }\n        sortByFirstLine(gridSol);\n        System.out.println(toGridString(gridSol));\n    }\n\n    private static void sortByFirstLine(Cell[][] grid) {\n        int i,j;\n        for (j = 0; j < grid[0].length - 1;j++) {\n            /* Find the min elem in the unsorted */\n            // Assume the min is the first elem\n            int iMin = j;\n            // Test against elem after j to find the smallest\n            for (i = j+1; i < grid[0].length; i++) {\n                // if less, new min\n                if (grid[0][i].getOnlyPossible().compareTo(grid[0][iMin].getOnlyPossible()) < 0) {\n                    iMin = i;\n                }\n            }\n            if (iMin != j) {\n                // SWAP ALL COLUMN of grid[..][j] and grid[..][iMin]\n                for (int k = 0; k < grid.length; k++) {\n                    Cell tmp = grid[k][j];\n                    grid[k][j] = grid[k][iMin];\n                    grid[k][iMin] = tmp;\n                }\n            }\n        }\n    }\n\n    private static void fillFirstLine(int i, Cell[][] grid) {\n        for (int j = 0; j < grid[i].length; j++) {\n            grid[i][j].setOnlyPossible(Cell.characteristics.get(i).get(j));\n        }\n    }\n    private static void solve(List<Link> links, Cell[][] grid) {\n        for (ListIterator iterator = links.listIterator(); iterator.hasNext();) {\n            Link l = (Link)iterator.next();\n            if (solve(l,grid)) {\n                iterator.remove();\n                change++;\n            }\n        }\n    }\n    private static boolean solve(Link link, Cell[][] grid) {\n        // Return link can be removed\n        if (link.and) return solveAnd(link,grid);\n        else return solveNot(link,grid);\n    }\n\n    /**\n     * @param link the link to use\n     * @param grid the grid to solve\n     * @return true if the link is used and can be removed, else false\n     */\n    private static boolean solveAnd(Link link, Cell[][] grid) {\n        int i1 = findLine(link.charOne);\n        int i2 = findLine(link.charTwo);\n        int j = hasOnlyGetIndexColumn(link.charOne, grid, i1);\n        if (j != -1) {\n            grid[i2][j].setOnlyPossible(link.charTwo);\n            return true;\n        }\n        j = hasOnlyGetIndexColumn(link.charTwo,grid, i2);\n        if (j != -1) {\n            grid[i1][j].setOnlyPossible(link.charOne);\n            return true;\n        }\n        // Several green cells in each line\n        return solveSeveralAnd(link,grid, i1, i2);\n    }\n\n    /**\n     * Several green cells in each line\n     * @param link the link to solve\n     * @param grid the grid to change\n     * @param i1 the line of the first part of the link\n     * @param i2 the line of the second part of the link\n     * @return true if it has solved completely the clue, else false\n     */\n    private static boolean solveSeveralAnd(Link link, Cell[][] grid, int i1, int i2) {\n        // solve when several cells for AND\n        for (int j = 0; j < grid[i1].length; j++) {\n            if (xor(grid[i1][j].hasPossible(link.charOne),grid[i2][j].hasPossible(link.charTwo))) {\n                // should remove the link for the other (and to do so on both is safe, so do both\n                grid[i1][j].setImpossible(link.charOne);\n                grid[i2][j].setImpossible(link.charTwo);\n            }\n        }\n        return false;\n    }\n\n    private static boolean xor(boolean b1, boolean b2) {\n        return (b1||b2) && !(b1 && b2);\n    }\n\n    /**\n     * @param link the link to use\n     * @param grid the grid to solve\n     * @return true if the link is used and can be removed, else false\n     */\n    private static boolean solveNot(Link link, Cell[][] grid) {\n        int i1 = findLine(link.charOne);\n        int i2 = findLine(link.charTwo);\n\n        int j = hasOnlyGetIndexColumn(link.charOne,grid, i1);\n        if (j != -1) {\n            grid[i2][j].setImpossible(link.charTwo);\n            return true;\n        }\n        j = hasOnlyGetIndexColumn(link.charTwo,grid, i2);\n        if (j != -1) {\n            grid[i1][j].setImpossible(link.charOne);\n            return true;\n        }\n        return false;\n    }\n\n    /**\n     *\n     * @param characteristic the characteristic to check\n     * @param grid the grid to solve\n     * @return the column of the only cell that has characteristic or -1 if not the case\n     */\n    private static int hasOnlyGetIndexColumn(String characteristic, Cell[][] grid, int iLine) {\n        for (int j = 0; j < grid[iLine].length ;j++) {\n            Cell c = grid[iLine][j];\n            if (c.hasOnlyOnePossible() && c.getOnlyPossible().equals(characteristic)) {\n                return j;\n            }\n        }\n        return -1;\n    }\n\n    private static int findLine(String characteristic) {\n        for (int i = 0 ; i < Cell.characteristics.size(); i++) {\n            if (Cell.characteristics.get(i).contains(characteristic)) return i;\n        }\n        throw new RuntimeException(\"Should not happen (findLine(\"+characteristic+\") doesn't have result\"); // TODO change when ok\n    }\n    private static Cell[][] initGridSolution(int nbCharacteristics, int nbPeople, List<List<String>> characteristics) {\n        Cell.setCharacteristics(characteristics);\n        Cell[][] res = new Cell[nbCharacteristics][nbPeople];\n        for (int i = 0; i < nbCharacteristics; i++) {\n            for (int j = 0; j < nbPeople; j++) {\n                res[i][j] = new Cell(i);\n            }\n        }\n        return res;\n    }\n    private static void clearGridSolution(int nbCharacteristics, int nbPeople, Cell[][] grid) {\n        for (int i = 0; i < nbCharacteristics; i++) {\n            for (int j = 0; j < nbPeople; j++) {\n                grid[i][j] = new Cell(i);\n            }\n        }\n    }\n\n    private static String toGridString( Cell[][] grid) {\n        StringBuilder sb = new StringBuilder();\n        for (int i = 0; i < grid.length; i++) {\n            for (int j = 0; j < grid[i].length; j++) {\n                sb.append(grid[i][j]);\n                if (j < grid[i].length-1) {\n                    sb.append(\" \");\n                }\n            }\n            if (i < grid.length - 1) sb.append(\"\\n\");\n        }\n        return sb.toString();\n    }\n    private static boolean checkFinished(Cell[][] gridSol) {\n        for (Cell[] characLine : gridSol) {\n            for (Cell c : characLine) {\n                if (c.possibles.size() > 1) return false;\n            }\n        }\n        return true;\n    }\n\n    private static void finishLine(Cell[][] grid) {\n        Iterator<List<String>> iteratorLink = Cell.characteristics.iterator();\n        for (Cell[] row : grid) {\n            // If we have only one possible in a cell, then remove this value in the whole line\n            for (int i = 0; i < row.length; i++) {\n                if (row[i].hasOnlyOnePossible()) {\n                    String value = row[i].getOnlyPossible();\n                    removeValueExceptFor(row, value, i);\n                }\n            }\n            // If a cell is the only one to have a certain possible value, then set it to the only one\n            List<String> characLine = iteratorLink.next();\n            for (String characteristic : characLine) {\n                // We have a characteristic, we need to check if a cell is the only one to be able to have it\n                List<Integer> cellsWhoHaveItPossible = new ArrayList<>();\n                for (int j = 0; j < row.length; j++) {\n                    if (row[j].hasPossible(characteristic)) cellsWhoHaveItPossible.add(j);\n                }\n                if (cellsWhoHaveItPossible.size() == 1) {\n                    row[cellsWhoHaveItPossible.get(0)].setOnlyPossible(characteristic);\n                }\n            }\n\n        }\n    }\n\n    private static void removeValueExceptFor(Cell[] row, String value, int i) {\n        for (int j = 0; j < row.length; j++) {\n            if (i != j) {\n                row[j].setImpossible(value);\n            }\n        }\n    }\n    private static class Cell {\n        static List<List<String>> characteristics;\n        List<String> possibles = new ArrayList<>();\n        Cell(int i){\n            possibles = new ArrayList<>(characteristics.get(i));\n        }\n        static void setCharacteristics(List<List<String>> characs) {\n            characteristics = characs;\n        }\n        boolean hasOnlyOnePossible() {\n            return possibles.size() == 1;\n        }\n        String getOnlyPossible() {\n            assert hasOnlyOnePossible();\n            return possibles.get(0);\n        }\n        boolean hasPossible(String charac) {\n            return possibles.contains(charac);\n        }\n        void setImpossible(String c) {\n            if (!possibles.contains(c)) {\n                return;\n            }\n            for (ListIterator<String> iterator = possibles.listIterator();iterator.hasNext();) {\n                String current = iterator.next();\n                if (current.equals(c)) {\n                    change++;\n                    iterator.remove(); // equal, so remove\n                    break; // Only one can be equal, so break\n                }\n            }\n        }\n        void setOnlyPossible(String c) {\n            for (ListIterator<String> iterator = possibles.listIterator(); iterator.hasNext();) {\n                String current = iterator.next();\n                if (!current.equals(c)) {\n                    change++;\n                    iterator.remove(); // different, so remove and continue\n                }\n            }\n        }\n        public String toString() {\n            if (hasOnlyOnePossible()) return possibles.get(0);\n            return possibles.toString();\n        }\n\n    }\n\n    private static class Link {\n        String charOne, charTwo;\n        boolean and;\n        Link(String charOne, String charTwo, boolean and) {\n            this.charOne = charOne;\n            this.charTwo = charTwo;\n            this.and = and;\n        }\n        public String toString() {\n            return charOne + (and?\" & \":\" ! \")+charTwo;\n        }\n    }\n}",
+      "statement": "You must output the result of an Einstein's riddle.\n\nAn Einstein's riddle  is a logical puzzle where [[nbPeople]] people  are assumed to all have different names, different characteristics...\nIt means if Georges eats Salad, then none of the others can eat Salad. And also, if Georges eats Salad, then he cannot eat anything other than Salad.\n\nEach line of input contains a list of characteristics that are all in the same category. For example, in the first test case, the first category is the individual's first name, the second is their means of transportation, the third is the type of plant they like, and finally the pet they own. \n\nEach category of characteristic has [[nbPeople]] different possibilities. For example, the second line lists various means of transportation, and it has 4 possibilities ({{Autobus}}, {{Car}}, {{Bicycle}} or {{Roller}}) so that each person has one, and only one, associated means of transportation.\n\nYou are given a number of relational links that can be either in the format:\n\n{{Georges & Salad}} which means {{Georges}} eats {{Salad}}\n\nor {{Georges ! Salad}} which means {{Georges}} doesn't eat {{Salad}}.\n\nThe relational links can be on any two characteristics, and permit the riddle to be solved using logic. The relational links are guaranteed to be sufficient to solve the riddle, and are always non-contradictory. For example, we can't have {{Georges & Salad}} and {{Georges ! Salad}}.\n\nThe goal is to solve the riddle and print it as a grid, separated by space and newline, with each person in their own column and each characteristic category on its own line.\n\nThe characteristics in the first line will be ordered alphabetically, and each subsequent line will have the characteristics of that category ordered such that they match up correctly with the characteristics in the first line of output. In this way, each column of the output corresponds to the same person, with each person associated with one characteristic from each category.",
+      "testCases": [
+        {
+          "title": "4 *4 simple",
+          "isTest": true,
+          "testIn": "4 4\nAmelia Bob Charles Daniel\nAutobus Car Bicycle Roller\nHerb Bush Tree Flower\nTurtle Ant Rhinoceros Elephant\n15\nCharles & Bicycle\nFlower & Bob\nElephant ! Daniel\nElephant & Autobus\nRhinoceros & Bicycle\nAmelia & Turtle\nTree & Turtle\nHerb ! Car\nBush ! Daniel\nElephant & Bob\nTree & Car\nRoller & Ant\nFlower ! Daniel\nTree ! Elephant\nTree ! Bob",
+          "testOut": "Amelia Bob Charles Daniel\nCar Autobus Bicycle Roller\nTree Flower Bush Herb\nTurtle Elephant Rhinoceros Ant",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "4 * 4 simple",
+          "isTest": false,
+          "testIn": "4 4\nAmelia Bob Charles Daniel\nAutocar Car Bicycle Roller\nHerb Bush Tree Flower\nTurtle Ant Pokemon Elephant\n15\nCharles & Bicycle\nFlower & Bob\nElephant ! Daniel\nElephant & Autocar\nPokemon & Bicycle\nAmelia & Turtle\nTree & Turtle\nHerb ! Car\nBush ! Daniel\nElephant & Bob\nTree & Car\nRoller & Ant\nFlower ! Daniel\nTree ! Elephant\nTree ! Bob",
+          "testOut": "Amelia Bob Charles Daniel\nCar Autocar Bicycle Roller\nTree Flower Bush Herb\nTurtle Elephant Pokemon Ant",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "4 * 5 medium",
+          "isTest": true,
+          "testIn": "4 5\nWindsurfing Climbing Badminton Ping-pong Ice-skating\nSarah Charlie Paul Ryan Frederic\nPoliceman Painter Pilot Dentist Engineer\nGuitar Violin Trumpet Tambourine Xylophone\n23\nPainter ! Tambourine\nPoliceman ! Violin\nFrederic ! Ping-pong\nPilot ! Climbing\nWindsurfing ! Tambourine\nClimbing ! Tambourine\nPaul & Dentist\nCharlie & Trumpet\nDentist & Tambourine\nEngineer ! Violin\nSarah & Badminton\nViolin ! Windsurfing\nClimbing ! Guitar\nPainter ! Violin\nPoliceman ! Guitar\nBadminton ! Guitar\nPoliceman ! Xylophone\nFrederic & Violin\nPainter ! Windsurfing\nRyan & Guitar\nFrederic & Ice-skating\nWindsurfing ! Xylophone\nCharlie ! Tambourine",
+          "testOut": "Badminton Climbing Ice-skating Ping-pong Windsurfing\nSarah Charlie Frederic Paul Ryan\nPainter Policeman Pilot Dentist Engineer\nXylophone Trumpet Violin Tambourine Guitar",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "4 * 5 medium",
+          "isTest": false,
+          "testIn": "4 5\nSarah Charlie Paul Ryan Frederic\nMushroom Pasta Pineapple Steak Tomato\nPoliceman Painter Pilot Dentist Engineer\nGuitar Violin Trumpet Tambourine Xylophone\n23\nPainter ! Tambourine\nPoliceman ! Violin\nFrederic ! Steak\nPilot ! Pasta\nMushroom ! Tambourine\nPasta ! Tambourine\nPaul & Dentist\nCharlie & Trumpet\nDentist & Tambourine\nEngineer ! Violin\nSarah & Pineapple\nViolin ! Mushroom\nPasta ! Guitar\nPainter ! Violin\nPoliceman ! Guitar\nPineapple ! Guitar\nPoliceman ! Xylophone\nFrederic & Violin\nPainter & Mushroom\nRyan & Guitar\nFrederic & Tomato\nMushroom ! Xylophone\nCharlie ! Tambourine",
+          "testOut": "Charlie Frederic Paul Ryan Sarah\nPasta Tomato Steak Mushroom Pineapple\nPoliceman Pilot Dentist Painter Engineer\nTrumpet Violin Tambourine Guitar Xylophone",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "7 * 6 Hard",
+          "isTest": true,
+          "testIn": "7 6\nElephant Cat Dog Rabbit Rat Lion\nSun Rain Thunderstorm Cloud Eclipse Snow\nIce-skating Climbing Badminton Windsurfing Ping-pong Paragliding\nCowboy Detective Helmet Santa Wizard Cap\n25 1 2 10 20 50\nTambourine Xylophone Flute Saxophone Keyboard Harp\nPoliceman Painter Pilot Dentist Engineer Doctor\n37\nPilot & Snow\nElephant ! Ping-pong\nSaxophone & Rat\nDentist & Cat\nTambourine & Cloud\nPainter & Sun\n2 & Ice-skating\n50 & Ping-pong\nEngineer ! Badminton\nPilot ! Windsurfing\nPilot ! Paragliding\n10 & Detective\n50 & Helmet\nEngineer ! Cowboy\nKeyboard ! 25\nDoctor ! Keyboard\nPoliceman ! Flute\nEngineer & Harp\nPing-pong ! Dog\nRain & Badminton\nClimbing & Wizard\nXylophone & Ping-pong\nPainter ! Paragliding\n1 ! Cowboy\nPainter ! Santa\nDoctor ! Flute\nCloud ! Elephant\nEclipse ! Flute\nDentist & Ice-skating\nDoctor & Detective\nPainter ! Flute\nParagliding ! 25\nEngineer ! 1\nPoliceman & Climbing\nHarp & Lion\nFlute & Thunderstorm\nClimbing ! Rain",
+          "testOut": "Cat Dog Elephant Lion Rabbit Rat\nThunderstorm Cloud Sun Eclipse Snow Rain\nIce-skating Climbing Windsurfing Paragliding Ping-pong Badminton\nCowboy Wizard Cap Santa Helmet Detective\n2 25 1 20 50 10\nFlute Tambourine Keyboard Harp Xylophone Saxophone\nDentist Policeman Painter Engineer Pilot Doctor",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "7 * 6 Hard",
+          "isTest": false,
+          "testIn": "7 6\nDuck Fox Wolf Rabbit Rat Lion\nSun Rain Thunderstorm Cloud Eclipse Snow\nIce-skating Climbing Badminton Windsurfing Ping-pong Paragliding\nCowboy Detective Helmet Santa Wizard Cap\n25 1 2 10 20 50\nTambourine Xylophone Flute Saxophone Keyboard Harp\nPoliceman Painter Pilot Dentist Engineer Doctor\n37\nPilot & Snow\nDuck ! Ping-pong\nSaxophone & Rat\nDentist & Fox\nTambourine & Cloud\nPainter & Sun\n2 & Ice-skating\n50 & Ping-pong\nEngineer ! Badminton\nPilot ! Windsurfing\nPilot ! Paragliding\n10 & Detective\n50 & Helmet\nEngineer ! Cowboy\nKeyboard ! 25\nDoctor ! Keyboard\nPoliceman ! Flute\nEngineer & Harp\nPing-pong ! Wolf\nRain & Badminton\nClimbing & Wizard\nXylophone & Ping-pong\nPainter ! Paragliding\n1 ! Cowboy\nPainter ! Santa\nDoctor ! Flute\nCloud ! Duck\nEclipse ! Flute\nDentist & Ice-skating\nDoctor & Detective\nPainter ! Flute\nParagliding ! 25\nEngineer ! 1\nPoliceman & Climbing\nHarp & Lion\nFlute & Thunderstorm\nClimbing ! Rain",
+          "testOut": "Duck Fox Lion Rabbit Rat Wolf\nSun Thunderstorm Eclipse Snow Rain Cloud\nWindsurfing Ice-skating Paragliding Ping-pong Badminton Climbing\nCap Cowboy Santa Helmet Detective Wizard\n1 2 20 50 10 25\nKeyboard Flute Harp Xylophone Saxophone Tambourine\nPainter Dentist Engineer Pilot Doctor Policeman",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "5 * 5 Medium",
+          "isTest": true,
+          "testIn": "5 5\nSaxophone Keyboard Harp Guitar Violin\n1 5 10 25 100\nCheese Cherry Corn Mushroom Pasta\nThunderstorm Cloud Eclipse Snow Night\nCricket Boxing Bowling Football Volleyball\n22\n100 ! Violin\nThunderstorm & Keyboard\nSaxophone & Cricket\nSnow & 10\n5 ! Pasta\nSnow ! Mushroom\nBowling ! Cherry\nCheese ! Bowling\nCherry & Night\nSnow & Harp\nBowling ! Guitar\nFootball & 1\nThunderstorm & Corn\nEclipse & 1\nNight & 25\nBowling ! Thunderstorm\nPasta ! Snow\nBoxing ! Harp\nNight & Saxophone\nSaxophone & 25\nCricket ! 100\nEclipse ! 100",
+          "testOut": "Guitar Harp Keyboard Saxophone Violin\n1 10 100 25 5\nPasta Cheese Corn Cherry Mushroom\nEclipse Snow Thunderstorm Night Cloud\nFootball Volleyball Boxing Cricket Bowling",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "5 * 5 Medium",
+          "isTest": false,
+          "testIn": "5 5\nClarinet Keyboard Harp Guitar Bass\n1 5 10 25 100\nCheese Cherry Corn Mushroom Pasta\nThunderstorm Cloud Eclipse Snow Night\nCricket Boxing Bowling Football Volleyball\n22\n100 ! Bass\nThunderstorm & Keyboard\nClarinet & Cricket\nSnow & 10\n5 ! Pasta\nSnow ! Mushroom\nBowling ! Cherry\nCheese ! Bowling\nCherry & Night\nSnow & Harp\nBowling ! Guitar\nFootball & 1\nThunderstorm & Corn\nEclipse & 1\nNight & 25\nBowling ! Thunderstorm\nPasta ! Snow\nBoxing ! Harp\nNight & Clarinet\nClarinet & 25\nCricket ! 100\nEclipse ! 100",
+          "testOut": "Bass Clarinet Guitar Harp Keyboard\n5 25 1 10 100\nMushroom Cherry Pasta Cheese Corn\nCloud Night Eclipse Snow Thunderstorm\nBowling Cricket Football Volleyball Boxing",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "2 * 2 Trivial",
+          "isTest": true,
+          "testIn": "2 2\nSea Ocean\nGerman French\n1\nSea ! French",
+          "testOut": "Ocean Sea\nFrench German",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "2 * 2 Trivial",
+          "isTest": false,
+          "testIn": "2 2\nAtlantic Pacific\nR A\n1\nR & Pacific",
+          "testOut": "Atlantic Pacific\nA R",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "2 * 1 Simple",
+          "isTest": true,
+          "testIn": "2 1\nF\nPoetry\n0",
+          "testOut": "F\nPoetry",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "2 * 1 Simple",
+          "isTest": false,
+          "testIn": "2 1\nH\nPurple\n0",
+          "testOut": "H\nPurple",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "1 * 2 Simple",
+          "isTest": true,
+          "testIn": "1 2\nH G\n0",
+          "testOut": "G H",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "1 * 2 Simple",
+          "isTest": false,
+          "testIn": "1 2\nRock Opera\n0",
+          "testOut": "Opera Rock",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "1 ≤ [[nbCharacteristics]], [[nbPeople]] < 10",
+      "stubGenerator": "read nbCharacteristics:int nbPeople:int\nloop nbCharacteristics \n    loopline nbPeople characteristic:word(500)\nread nbLinks:int\nloop nbLinks read link:string(256)\nwrite Amelia Bob Charles Daniel\\nCar Autobus Bicycle Roller\\nTree Flower Bush Herb\\nTurtle Elephant Rhinoceros Ant",
+      "inputDescription": "<<Line 1:>> Two space separated integers [[nbCharacteristics]] and [[nbPeople]] for the number of  characteristics and the number of people\n\n<<Next [[nbCharacteristics]] lines:>> The list of all characteristics in each characteristic category (one category per line), space separated\n\n<<Next line:>> [[N]] the number of relational links\n\n<<Next [[N]] lines:>> One relational link per line, with each link formatted as either {{Georges & Salad}} or {{Georges ! Salad}}",
+      "solutionLanguage": "Java",
+      "outputDescription": "<<Line 1 to line [[nbCharacteristics]]:>> The grid of characteristics representing the solution to the riddle, line by line\n\nThe order of the characteristic categories (the lines) is as given in the input, and the order of the people (the columns) is such that the first characteristic (which may or may not be first name) is presented in alphabetical order."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You must output the result of an Einstein's riddle.<br><br>An Einstein's riddle  is a logical puzzle where <var>nbPeople</var> people  are assumed to all have different names, different characteristics...<br>It means if Georges eats Salad, then none of the others can eat Salad. And also, if Georges eats Salad, then he cannot eat anything other than Salad.<br><br>Each line of input contains a list of characteristics that are all in the same category. For example, in the first test case, the first category is the individual's first name, the second is their means of transportation, the third is the type of plant they like, and finally the pet they own. <br><br>Each category of characteristic has <var>nbPeople</var> different possibilities. For example, the second line lists various means of transportation, and it has 4 possibilities (<const>Autobus</const>, <const>Car</const>, <const>Bicycle</const> or <const>Roller</const>) so that each person has one, and only one, associated means of transportation.<br><br>You are given a number of relational links that can be either in the format:<br><br><const>Georges &amp; Salad</const> which means <const>Georges</const> eats <const>Salad</const><br><br>or <const>Georges ! Salad</const> which means <const>Georges</const> doesn't eat <const>Salad</const>.<br><br>The relational links can be on any two characteristics, and permit the riddle to be solved using logic. The relational links are guaranteed to be sufficient to solve the riddle, and are always non-contradictory. For example, we can't have <const>Georges &amp; Salad</const> and <const>Georges ! Salad</const>.<br><br>The goal is to solve the riddle and print it as a grid, separated by space and newline, with each person in their own column and each characteristic category on its own line.<br><br>The characteristics in the first line will be ordered alphabetically, and each subsequent line will have the characteristics of that category ordered such that they match up correctly with the characteristics in the first line of output. In this way, each column of the output corresponds to the same person, with each person associated with one characteristic from each category.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Two space separated integers <var>nbCharacteristics</var> and <var>nbPeople</var> for the number of  characteristics and the number of people<br><br><strong>Next <var>nbCharacteristics</var> lines:</strong> The list of all characteristics in each characteristic category (one category per line), space separated<br><br><strong>Next line:</strong> <var>N</var> the number of relational links<br><br><strong>Next <var>N</var> lines:</strong> One relational link per line, with each link formatted as either <const>Georges &amp; Salad</const> or <const>Georges ! Salad</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1 to line <var>nbCharacteristics</var>:</strong> The grid of characteristics representing the solution to the riddle, line by line<br><br>The order of the characteristic categories (the lines) is as given in the input, and the order of the people (the columns) is such that the first characteristic (which may or may not be first name) is presented in alphabetical order.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>nbCharacteristics</var>, <var>nbPeople</var> &lt; 10</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4 4\nAmelia Bob Charles Daniel\nAutobus Car Bicycle Roller\nHerb Bush Tree Flower\nTurtle Ant Rhinoceros Elephant\n15\nCharles &amp; Bicycle\nFlower &amp; Bob\nElephant ! Daniel\nElephant &amp; Autobus\nRhinoceros &amp; Bicycle\nAmelia &amp; Turtle\nTree &amp; Turtle\nHerb ! Car\nBush ! Daniel\nElephant &amp; Bob\nTree &amp; Car\nRoller &amp; Ant\nFlower ! Daniel\nTree ! Elephant\nTree ! Bob</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Amelia Bob Charles Daniel\nCar Autobus Bicycle Roller\nTree Flower Bush Herb\nTurtle Elephant Rhinoceros Ant</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 300092619057,
+  "avatar": 4809598551845,
+  "commentCount": 25,
+  "upVotes": 11,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1099,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

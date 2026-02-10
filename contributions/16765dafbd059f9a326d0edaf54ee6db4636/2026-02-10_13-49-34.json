@@ -1,0 +1,160 @@
+{
+  "id": 1676,
+  "activeVersion": 18,
+  "score": 20,
+  "votableId": 9053614,
+  "codingamerId": 155774,
+  "views": 506,
+  "commentableId": 8988293,
+  "title": "Straddling Checkerboard Cryptography",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "dwarfie",
+  "publicHandle": "16765dafbd059f9a326d0edaf54ee6db4636",
+  "codingamerHandle": "2ad5cc4919ed368f16de4aecd570e21e477551",
+  "lastVersion": {
+    "version": 18,
+    "autocloseTime": 1542060128594,
+    "data": {
+      "title": "Straddling Checkerboard Cryptography",
+      "topics": [
+        {
+          "id": 74,
+          "handle": "cryptology",
+          "labelMap": {
+            "1": "Cryptologie",
+            "2": "Cryptography"
+          },
+          "pageTitle": "Cryptography: exercises and theory",
+          "puzzleCount": 2,
+          "parentTopicId": 43,
+          "contentDetailsId": 105
+        }
+      ],
+      "solution": "<?php\nfunction build_strandling($key1, $key2, $ps, $pp) {\n\t$k = str_split($key1);\n\t$k1 = $k2 = -1;\n\t$letters = \"ABCDEFGHIJKLMNOPQRSTUVWXYZ\";\n\tforeach(str_split($key2) as $i => $v) {\n\t\t$t[$k[$i]] = $v;\n\t\t$letters = str_replace($v,\"\", $letters);\n\t}\n\t$letters = str_split($letters);\n\tksort($t);\n\tforeach($t as $i => $v)\n\t\tif($v == \" \") {\n\t\t\tif($k1 < 0) \t$k1 = $i;\n\t\t\telse \t\t$k2 = $i;\n\t\t}\n\t\n\t\n\tfor($i = 0; $i < 20; $i ++) \t$t[$i < 10 ? $k1.$k[$i] : $k2.$k[$i-10]] = ($i == $ps ? \"/\" : ($i == $pp ? \".\" : array_shift($letters)));\n\treturn $t;\n}\n\nfunction convert($msg,$hash,$keyn,$encode = true) {\n    $m = strtoupper($msg);\n    $msg = \"\";\n    for($i = 0; $i < strlen($m); $i ++)\n        if(is_numeric($m[$i])) {\n            if($encode)\n                $msg .= '/';\n            $msg .= $m[$i];\n        } else if($m[$i] == \"/\") {\n            if(!$encode)\n                $msg .= $m[$i];\n        } else if(ctype_alpha($m[$i]) || $m[$i] == \".\") \n            $msg .= $m[$i];\n\t$t1 = $t2 = $r = \"\";\n\tfor($i = 0; $i < strlen($msg); $i++)\n\t    if(is_numeric($msg[$i]))\n\t        $t1 .= $msg[$i];\n        else\n\t        $t1 .= array_search($msg[$i],$hash);\n\tfor($i = 0; $i < strlen($t1); $i++)\t\n\t\tif($encode)\t$t2 .= ($t1[$i] + $keyn[$i%strlen($keyn)])%10;\n\t\telse\t\t$t2 .= (10 + $t1[$i] - $keyn[$i%strlen($keyn)])%10;\n\n\tfor($i = 0; $i < strlen($t2); $i++)\n\t\tif($hash[$t2[$i]] == \" \") {\n\t\t    $tmp = $hash[$t2[$i].$t2[$i+1]];\n\t\t    if(!$encode && $tmp == \"/\") {\n\t\t        $r .= $t2[$i+2];\n\t\t        $i += 2;\n\t\t    } else {\n\t\t        $r .= $tmp;\n    \t\t\t$i++;\n\t\t    }\n\t\t} else $r .= $hash[$t2[$i]];\n\treturn $r;\n}\n\nfscanf(STDIN, \"%d\",$action);\n$header = stream_get_line(STDIN, 10 + 1, \"\\n\");\n$passphrase = stream_get_line(STDIN, 10 + 1, \"\\n\");\nfscanf(STDIN, \"%d %d\",$posslash,$posdot);\n$key = stream_get_line(STDIN, 10 + 1, \"\\n\");\n$message = stream_get_line(STDIN, 1000 + 1, \"\\n\");\n\n$h = build_strandling($header,$passphrase,$posslash,$posdot);\n$c = convert($message,$h,$key,$action == 1);\necho $c,\"\\n\";\n",
+      "statement": "A straddling checkerboard is a device for converting an alphabetic plaintext into digits. Our checkerboard will look like this :\n`\n  \t0  1  2  3  4  5  6  7  8  9\n(0) \tE  T     A  O  N     R  I  S\n 2 \tB  C  D  F  G  H  J  K  L  M\n 6 \tP  Q  /  U  V  W  X  Y  Z  . \n`\n<<Filling the checkerboard>>\n\nThe first line is filled using a passphrase that contains 2 spaces. We remove letters already used from alphabet to fill the second and the third lines with \"/\" and \".\" inserted in.\n\nEach board cell has a value, whose tens digits is given by the row it's on, and whose units digits is given by the column. First row is always 0; the empty cells in the first row give the values for the second and third lines (2 and 6 here).\n\n<<Using the checkerboard>>\n\nWhen encrypting, unsupported characters need to be removed from input message\nThe valid characters are letters, digits and the period '.'\nThe digits have to be prefixed by the character \"/\".\n\nIt is now easy to use the grid to encrypt a word :\n- Column value is the units digit\n- Row value is the tenths digit\n\nBy example :\nI am 1 brut => IAM<</1>>BRUT => 8 3 29 <<62 1>> 20 7 63 1 => 8329621207631\nThe digit is represented by \"/\" and its value\n \nDecrypting is easy too :\n8 => I\n3 => A\n2 => empty so we take 20 and add next value = 29 => M\n6 => 62 => \"/\" so we take next value => 1\n...\n\n<<Let's make it harder to crack>>\n\nTo complicate the cracking of the code, let's take a key number : 0432 and use it to modify by addition and modulo 10 the code :\n`\n  8 3 2 9 6 2 1 2 0 7 6 3 1\n+ 0 4 3 2 0 4 3 2 0 4 3 2 0\n-------------------------------\n  8 7 5 1 6 6 4 4 0 1 9 5 1\n`\n\nTo construct the number to add , concatenate the key number as many times as necessary. If it is too long, remove the excess numbers at the end (if the code is 059731, the number will be 043204)\n\n<<Last step>>\n\nThe last thing to do is using the checkerboard to convert to characters (letters, slash or period, no digits) :\n8751664401951 => IRNTXOOETSNT\n\n<<What do we need>>\n\nSo in fact, all you need to encrypt/decrypt is :\n- a header number containing the 10 digits (0 to 9), for the checkerboard header\n- a passphrase with 8 letters and 2 spaces\n- the positions of \"/\" and \".\"\n- the key number for add/modulo\n- the message",
+      "testCases": [
+        {
+          "title": "Simple encrypt",
+          "isTest": true,
+          "testIn": "1\n0123456789\nET AON RIS\n12 19\n0432\nIAMABRUT",
+          "testOut": "IRNTAUSYO",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "1\n0123456789\nET AON RIS\n12 19\n0452\nATTACKATDAWN",
+          "testOut": "ANWHRSANROAEER",
+          "isValidator": true
+        },
+        {
+          "title": "Unsupported  characters",
+          "isTest": true,
+          "testIn": "1\n0123456789\nET AON RIS\n19 12\n0452\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore",
+          "testOut": "DSSEVEVOIAVOLREOTOETRRTENRAOSODN.TEISAYEVATHARLNOIJTEYOLNEYOOSIROTORTVSSISRAIYEJTNNNTNTUNGSSE",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "1\n0123456789\nET AON RIS\n19 12\n0452\nTo take a trivial example, which of us ever undertakes laborious physical exercise, except to obtain",
+          "testOut": "TIWCNNTTAIOLOIOTIAVIEUJSRRIXONIRNYOJINSYEOGFA.MUNGSSIITNSENONECIXNDNIVGTGBETOTOTCNS.OWIS",
+          "isValidator": true
+        },
+        {
+          "title": "And the numbers ???",
+          "isTest": true,
+          "testIn": "1\n0123456789\nONE IS ART\n11 7\n7473\n13102018",
+          "testOut": "HRTRAGRORFSTTRIGRORN",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "1\n0123456789\nONE IS ART\n14 3\n159\n3141592653589793238462643383279502",
+          "testOut": "ATEATOATJTOATIATRATNATSATIATEATIATAATRATXTRATEATNATEATAATJTSATNATSATJTEATEATAATEATNATXTRATIATTATN",
+          "isValidator": true
+        },
+        {
+          "title": "Let's decrypt",
+          "isTest": true,
+          "testIn": "0\n0123456789\nANE SI ORT\n3 14\n6849\nTETNSLAEAAE.SRSFONTAETOORFITTTHETNRREGTOIXN.TTSDAAENNMLAASIOTRE.ENRTEAAEC.AEMIFDEANENTER",
+          "testOut": "FIERIINQUAMTRIARINULLOPACTOPOTESTUTNONDICASQUIDNONPROBESEIUSAQUODISSENTIAS.QUID",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "0\n0123456789\nANE SIROT \n3 14\n1234\nASEONNCSEWAERRRROREATREATFNLEAIAISWALRSTIIIOAIHSNEREOEAEWAEOAGANHRNSESNIERSSTOEA",
+          "testOut": "QUAMOBREMDISSENTIENTIUMINTERSEREPREHENSIONESNONSUNTVITUPERANDAEMALEDICT",
+          "isValidator": true
+        },
+        {
+          "title": "Scramble header encrypt",
+          "isTest": true,
+          "testIn": "1\n2486139705\nETRON A SI\n6 4\n9438\nEt oui , c'est une dedicace speciale",
+          "testOut": "NRAISAOENTZSIINQOOTXLRIROEIN/EINO",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "1\n6497132850\nETRON A SI\n18 10\n2123\nJBM l'a tellement voulu ce test",
+          "testOut": "SLRSNSPS.OTORSNPERMI/Z/O/YE",
+          "isValidator": true
+        },
+        {
+          "title": "Scramble header decrypt",
+          "isTest": true,
+          "testIn": "0\n0369258147\nTRIS A NEO\n12 9\n139\nJSONDNNRIIENNSRZNSYARSRTXOARANEORENONRAR/AUESRTYOISRNNNETNRAR/AUESRRFONOTONSROESIWIORNSNZNNQAESROEOCCRI",
+          "testOut": "NATIPAUCORUMSIMONIDESADLEVITATEGLORIOSAMNONVIETUROGLORIOSAMENIMENIMLAPSORUMTAMQUAMPERFEC",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "0\n3216549870\nTRIO AS NE\n1 10\n6969\nKIASARESEATRYPDNUIRHIEAASNIIRPEESBZJNASEAEEAOTAIATOTITNREASTTRAAWANNRNTISNVGAESISNRNQNWVESTROVTEINSS",
+          "testOut": "SUBDITIVOSISDEMOBSECUTUROSCAESARISSIBIPALAMVEAGITABANTUREXITIALISQUAELITISEMERGENTESVARIET",
+          "isValidator": true
+        },
+        {
+          "title": "All decrypt",
+          "isTest": true,
+          "testIn": "0\n0246897531\nAND WE TRY\n17 6\n666\nTYRWRTNTRYNRYNRYNN/WRWRCITATNQNJYT",
+          "testOut": "ETOUI666LENOMBREDELABETE",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "0\n9081726354\nAND WE TRY\n9 6\n421\nWTDMTTNWYGNYEGITTNYNNTWETUWEGIDENNWRDWNCADNDIDYWRIQWETARHTIYTXSTEARHTIYTXL",
+          "testOut": "THEDEADMANSHANDISAPOKERHANDPOPULARLYA2PAIROFBLACK1ANDBLACK8",
+          "isValidator": true
+        }
+      ],
+      "difficulty": "medium",
+      "stubGenerator": "read action:int\nread header:string(10)\nread passphrase:string(10)\nread posslash:int posdot:int\nread key:string(10)\nread message:string(1000)\nwrite answer",
+      "inputDescription": "<<Line 1>> [[action]] to do : 1 to encrypt, 0 to decrypt\n<<Line 2>>  [[header]] numbers\n<<Line 3>> [[passphrase]]\n<<Line 4>> [[posslash]] and [[posdot]] : positions in remaining letters list where we insert \"/\" and \".\" (indexed at 0)\n<<Line 5>> [[key]] number\n<<Line 6>> [[message]]",
+      "solutionLanguage": "PHP",
+      "outputDescription": "message after encrypting or decrypting"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A straddling checkerboard is a device for converting an alphabetic plaintext into digits. Our checkerboard will look like this :<br><pre style=\"font-family: monospace\"><br>  \t0  1  2  3  4  5  6  7  8  9<br>(0) \tE  T     A  O  N     R  I  S<br> 2 \tB  C  D  F  G  H  J  K  L  M<br> 6 \tP  Q  /  U  V  W  X  Y  Z  . <br></pre><br><strong>Filling the checkerboard</strong><br><br>The first line is filled using a passphrase that contains 2 spaces. We remove letters already used from alphabet to fill the second and the third lines with &quot;/&quot; and &quot;.&quot; inserted in.<br><br>Each board cell has a value, whose tens digits is given by the row it's on, and whose units digits is given by the column. First row is always 0; the empty cells in the first row give the values for the second and third lines (2 and 6 here).<br><br><strong>Using the checkerboard</strong><br><br>When encrypting, unsupported characters need to be removed from input message<br>The valid characters are letters, digits and the period '.'<br>The digits have to be prefixed by the character &quot;/&quot;.<br><br>It is now easy to use the grid to encrypt a word :<br>- Column value is the units digit<br>- Row value is the tenths digit<br><br>By example :<br>I am 1 brut =&gt; IAM<strong>/1</strong>BRUT =&gt; 8 3 29 <strong>62 1</strong> 20 7 63 1 =&gt; 8329621207631<br>The digit is represented by &quot;/&quot; and its value<br> <br>Decrypting is easy too :<br>8 =&gt; I<br>3 =&gt; A<br>2 =&gt; empty so we take 20 and add next value = 29 =&gt; M<br>6 =&gt; 62 =&gt; &quot;/&quot; so we take next value =&gt; 1<br>...<br><br><strong>Let's make it harder to crack</strong><br><br>To complicate the cracking of the code, let's take a key number : 0432 and use it to modify by addition and modulo 10 the code :<br><pre style=\"font-family: monospace\"><br>  8 3 2 9 6 2 1 2 0 7 6 3 1<br>+ 0 4 3 2 0 4 3 2 0 4 3 2 0<br>-------------------------------<br>  8 7 5 1 6 6 4 4 0 1 9 5 1<br></pre><br><br>To construct the number to add , concatenate the key number as many times as necessary. If it is too long, remove the excess numbers at the end (if the code is 059731, the number will be 043204)<br><br><strong>Last step</strong><br><br>The last thing to do is using the checkerboard to convert to characters (letters, slash or period, no digits) :<br>8751664401951 =&gt; IRNTXOOETSNT<br><br><strong>What do we need</strong><br><br>So in fact, all you need to encrypt/decrypt is :<br>- a header number containing the 10 digits (0 to 9), for the checkerboard header<br>- a passphrase with 8 letters and 2 spaces<br>- the positions of &quot;/&quot; and &quot;.&quot;<br>- the key number for add/modulo<br>- the message</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong> <var>action</var> to do : 1 to encrypt, 0 to decrypt<br><strong>Line 2</strong>  <var>header</var> numbers<br><strong>Line 3</strong> <var>passphrase</var><br><strong>Line 4</strong> <var>posslash</var> and <var>posdot</var> : positions in remaining letters list where we insert &quot;/&quot; and &quot;.&quot; (indexed at 0)<br><strong>Line 5</strong> <var>key</var> number<br><strong>Line 6</strong> <var>message</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">message after encrypting or decrypting</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1\n0123456789\nET AON RIS\n12 19\n0432\nIAMABRUT</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">IRNTAUSYO</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 230514496801,
+  "avatar": 17785582865119,
+  "commentCount": 23,
+  "upVotes": 20,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 274126,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

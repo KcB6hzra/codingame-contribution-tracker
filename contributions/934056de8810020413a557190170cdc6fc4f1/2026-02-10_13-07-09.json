@@ -1,0 +1,245 @@
+{
+  "id": 93405,
+  "activeVersion": 10,
+  "score": 3,
+  "votableId": 33688029,
+  "codingamerId": 491254,
+  "views": 195,
+  "commentableId": 33539783,
+  "title": "Escape the madness",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Cakeisalie5",
+  "publicHandle": "934056de8810020413a557190170cdc6fc4f1",
+  "codingamerHandle": "26bc712b959a94dd2cd3c4b55b10484f452194",
+  "lastVersion": {
+    "version": 10,
+    "autocloseTime": 1718028016677,
+    "freezeTime": 1716040816677,
+    "data": {
+      "title": "Escape the madness",
+      "topics": [
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 38,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "id": 98,
+          "handle": "regular-expressions",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Regular expressions",
+            "2": "Regular expressions"
+          },
+          "puzzleCount": 6,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import re\n\nline = input()\n\n# Step 1. Replace trigraphs.\nTRIGRAPHS = {'=': '#', '/': '\\\\', \"'\": '^', '(': '[', ')': ']', '!': '|', '-': '~'}\n\nline = re.sub(\n    r'\\?\\?([' + re.escape(''.join(TRIGRAPHS)) + '])', \n    lambda m: TRIGRAPHS[m.group(1)],\n    line,\n)\n\n# Step 2. Replace escape sequences.\nline = re.sub(\n    r'\\\\(?:x([0-9a-fA-F]{2})|u([0-9a-fA-F]{4})|U([0-9a-fA-F]{8})|(.))',\n    lambda m: m.group(4) if m.group(4) else chr(int(m.group(1) or m.group(2) or m.group(3), 16)),\n    line\n)\n\n# Step 3. Replace HTML entities.\nNAMED_ENTITIES = {'amp': '&', 'lt': '<', 'gt': '>', 'bsol': '\\\\'}\n\nline = re.sub(\n    r'&(?:#([0-9]+)|(' + '|'.join(map(re.escape, NAMED_ENTITIES)) + '));',\n    lambda m: chr(int(m.group(1))) if m.group(1) else NAMED_ENTITIES[m.group(2)],\n    line,\n)\n\n# We've arrived, well done!\nprint(line)",
+      "statement": "You are prerendering an HTML string from C99 code. You have already done the extraction part, what is left to do is to <<simulate the escape sequences of every step until you obtain the final document>>.\n\nThe steps to do so are the following:\n\n<<Step 1.>> Process C-style trigraphs, i.e. three-character sequences starting with {{??}}, using the following table:\n\n* {{??=}}: {{#}}\n* {{??/}}: {{\\}}\n* {{??'}}: {{^}}\n* {{??(}}: {{[}}\n* {{??)}}: {{]}}\n* {{??!}}: {{|}}\n* {{??-}}: {{~}}\n\n<<Step 2.>> Process escape sequences starting with {{\\}}. The possible formats for such escape sequences are the following:\n\n* {{\\xhh}}: Produce a character represented using its Unicode code point on two hexadecimal characters (e.g. {{\\x68}} produces {{h}}).\n* {{\\uhhhh}}: Produce a character represented using its Unicode code point on four hexadecimal digits (e.g. {{\\u0068}} produces {{h}}).\n* {{\\Uhhhhhhhh}}: Produce a character represented using its Unicode code point on eight hexadecimal digits (e.g. {{\\U00000068}} produces {{h}}).\n* {{\\C}}: Produce a literal character (e.g. {{\\\\\\\"\\a}} produces {{\\\"a}}).\n\n<<Note:>> Hexadecimal characters can be provided uppercase or lowercase, and all codes, even using \\U, will be contained within the ASCII range, i.e. between 1 and 127 included.\n\n<<Step 3.>> Process some HTML entities, using the following formats:\n\n* {{&entity_name;}}: Produce the entity for which the name is {{entity_name}}.\n* {{&#nn;}}, {{&#nnn;}}, etc: Produce the entity using its Unicode code point on a variable number of decimal digits (e.g. {{&#43;}} for {{+}}).\n\n<<Only>> the following entity names should be supported:\n\n* {{&amp;}}: Produce {{&}}.\n* {{&lt;}}: Produce {{<}}.\n* {{&gt;}}: Produce {{>}}.\n* {{&bsol;}}: Produce {{\\}}.\n\nIf an entity name is not found, the HTML entity code should be rendered literally, e.g. {{&unknownsequence;}} should be returned as is.\n\n<<Note:>> All codes represented using {{&#nn;}}, will be contained within the ASCII range, i.e. between 1 and 127 included.",
+      "testCases": [
+        {
+          "title": "Only C-style trigraphs",
+          "isTest": true,
+          "testIn": "Some very old keyboards lack necessary characters to program in C, such as ??=, ??', ??(??), ??! and ??-.",
+          "testOut": "Some very old keyboards lack necessary characters to program in C, such as #, ^, [], | and ~.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Only C-style trigraphs",
+          "isTest": false,
+          "testIn": "main() { printf(\"%d ????=\", ??-42 ??' 128); }",
+          "testOut": "main() { printf(\"%d ??#\", ~42 ^ 128); }",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "C-style trigraphs with unsupported characters",
+          "isTest": true,
+          "testIn": "While ??< ({) and ??> (}) exist in standard trigraphs, they are not included in our list! Also, ????! should be the same as ??|.",
+          "testOut": "While ??< ({) and ??> (}) exist in standard trigraphs, they are not included in our list! Also, ??| should be the same as ??|.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C-style trigraphs with unsupported characters",
+          "isTest": false,
+          "testIn": "Some sequences other than ??< and ??> include ??k, ??` or ??\".",
+          "testOut": "Some sequences other than ??< and ??> include ??k, ??` or ??\".",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Only backslash escape sequences",
+          "isTest": true,
+          "testIn": "\\U00000048e\\U0000006C\\U0000006c\\x6F \\x77o\\rl\\u0064!",
+          "testOut": "Hello world!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Only backslash escape sequences",
+          "isTest": false,
+          "testIn": "\\x4f\\u0068 \\U0000006e\\U0000006F\\u0021",
+          "testOut": "Oh no!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Combined trigraphs and backslash escape sequences",
+          "isTest": true,
+          "testIn": "??/u0054rigraphs are ??(??/x66un??)! ??/??/o/",
+          "testOut": "Trigraphs are [fun]! \\o/",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Combined trigraphs and backslash escape sequences",
+          "isTest": false,
+          "testIn": "This is ??/u004DADNESS! /o??/\\",
+          "testOut": "This is MADNESS! /o\\",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No double backslash escape sequence evaluation",
+          "isTest": true,
+          "testIn": "You can output ??(\\u004D??) by doing \\\\u004d or \\x5cu004D.",
+          "testOut": "You can output [M] by doing \\u004d or \\u004D.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "No double backslash escape sequence evaluation",
+          "isTest": false,
+          "testIn": "More M\\??/u004DNESS!",
+          "testOut": "More M\\u004DNESS!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Only HTML entities",
+          "isTest": true,
+          "testIn": "I mean, someone has just &#100;ecide&#100; that 0 &lt; 1, we could have chosen &otherwise;.",
+          "testOut": "I mean, someone has just decided that 0 < 1, we could have chosen &otherwise;.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Only HTML entities",
+          "isTest": false,
+          "testIn": "&amp;/&#38;, &lt;/&#60;, &gt;/&#62;, &bsol;/&#92; are symbols that can be represented as HTML entities.",
+          "testOut": "&/&, </<, >/>, \\/\\ are symbols that can be represented as HTML entities.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Only known HTML entities",
+          "isTest": true,
+          "testIn": "Both \"&excl;\" and \" &excl; \" shouldn't render here, as it's not in our list! However, \"&#33;\" or \"&#122;\" should work.",
+          "testOut": "Both \"&excl;\" and \" &excl; \" shouldn't render here, as it's not in our list! However, \"!\" or \"z\" should work.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Only known HTML entities",
+          "isTest": false,
+          "testIn": "Others such as &dollar; (&#36;), &percnt; (&#37;) or even &t; (&#116;) shouldn't work either.",
+          "testOut": "Others such as &dollar; ($), &percnt; (%) or even &t; (t) shouldn't work either.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No double evaluation of HTML entities",
+          "isTest": true,
+          "testIn": "You can find sequences such as &amp;amp;gt; on some badly programmed websites.",
+          "testOut": "You can find sequences such as &amp;gt; on some badly programmed websites.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "No double evaluation of HTML entities",
+          "isTest": false,
+          "testIn": "Or some escaped actual HTML code such as &amp;lt;script&amp;gt;, or even madness such as &amp;amp;lt;script&amp;amp;gt;!!!",
+          "testOut": "Or some escaped actual HTML code such as &lt;script&gt;, or even madness such as &amp;lt;script&amp;gt;!!!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "HTML entities must be rendered after backslash escape sequences",
+          "isTest": true,
+          "testIn": "\"&bsol;u0068\" is \"\\u0026bsol;\".",
+          "testOut": "\"\\u0068\" is \"\\\".",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "HTML entities must be rendered after backslash escape sequences",
+          "isTest": false,
+          "testIn": "However, \"&bsol;x62\" is not equivalent to \"\\x26\\U00000062sol;\"!",
+          "testOut": "However, \"\\x62\" is not equivalent to \"\\\"!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "All together now!",
+          "isTest": true,
+          "testIn": "Prerendering HTML strings from C code is complete madness\\x21 You can find trigraphs such as ?\\?!, backslash escape sequences such as ??/\\u\\U00000030042, HTML entities such as &amp;bsol;, and even mixed stuff such as ??\\/??/u00750026amp;, but the end result can be as simple as \"??/U0000005E&\\x62sol;\\u0023\".",
+          "testOut": "Prerendering HTML strings from C code is complete madness! You can find trigraphs such as ??!, backslash escape sequences such as \\u0042, HTML entities such as &bsol;, and even mixed stuff such as ??/u0026amp;, but the end result can be as simple as \"^\\#\".",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "All together now!",
+          "isTest": false,
+          "testIn": "All examples are typed by hand. Imagine the effort behind having to create \"??=??/U00000026\\x61mp\\u003b\"!",
+          "testOut": "All examples are typed by hand. Imagine the effort behind having to create \"#&\"!",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "0 < length([[text]]) < 500",
+      "coverBinaryId": 123454383722984,
+      "stubGenerator": "read text:string(500)\nwrite answer",
+      "inputDescription": "<<First line:>> [[text]] to process.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<First line:>> Processed text."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are prerendering an HTML string from C99 code. You have already done the extraction part, what is left to do is to <strong>simulate the escape sequences of every step until you obtain the final document</strong>.<br><br>The steps to do so are the following:<br><br><strong>Step 1.</strong> Process C-style trigraphs, i.e. three-character sequences starting with <const>??</const>, using the following table:<br><br>* <const>??=</const>: <const>#</const><br>* <const>??/</const>: <const>\\</const><br>* <const>??'</const>: <const>^</const><br>* <const>??(</const>: <const>[</const><br>* <const>??)</const>: <const>]</const><br>* <const>??!</const>: <const>|</const><br>* <const>??-</const>: <const>~</const><br><br><strong>Step 2.</strong> Process escape sequences starting with <const>\\</const>. The possible formats for such escape sequences are the following:<br><br>* <const>\\xhh</const>: Produce a character represented using its Unicode code point on two hexadecimal characters (e.g. <const>\\x68</const> produces <const>h</const>).<br>* <const>\\uhhhh</const>: Produce a character represented using its Unicode code point on four hexadecimal digits (e.g. <const>\\u0068</const> produces <const>h</const>).<br>* <const>\\Uhhhhhhhh</const>: Produce a character represented using its Unicode code point on eight hexadecimal digits (e.g. <const>\\U00000068</const>&nbsp;produces <const>h</const>).<br>* <const>\\C</const>: Produce a literal character (e.g. <const>\\\\\\&quot;\\a</const>&nbsp;produces <const>\\&quot;a</const>).<br><br><strong>Note:</strong> Hexadecimal characters can be provided uppercase or lowercase, and all codes, even using \\U, will be contained within the ASCII range, i.e. between 1 and 127 included.<br><br><strong>Step 3.</strong> Process some HTML entities, using the following formats:<br><br>* <const>&amp;entity_name;</const>: Produce the entity for which the name is <const>entity_name</const>.<br>* <const>&amp;#nn;</const>, <const>&amp;#nnn;</const>, etc: Produce the entity using its Unicode code point on a variable number of decimal digits (e.g. <const>&amp;#43;</const> for <const>+</const>).<br><br><strong>Only</strong> the following entity names should be supported:<br><br>* <const>&amp;amp;</const>: Produce <const>&amp;</const>.<br>* <const>&amp;lt;</const>: Produce <const>&lt;</const>.<br>* <const>&amp;gt;</const>: Produce <const>&gt;</const>.<br>* <const>&amp;bsol;</const>: Produce <const>\\</const>.<br><br>If an entity name is not found, the HTML entity code should be rendered literally, e.g. <const>&amp;unknownsequence;</const> should be returned as is.<br><br><strong>Note:</strong> All codes represented using <const>&amp;#nn;</const>, will be contained within the ASCII range, i.e. between 1 and 127 included.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>First line:</strong> <var>text</var>&nbsp;to process.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>First line:</strong> Processed text.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt; length(<var>text</var>) &lt; 500</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">Some very old keyboards lack necessary characters to program in C, such as ??=, ??', ??(??), ??! and ??-.</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Some very old keyboards lack necessary characters to program in C, such as #, ^, [], | and ~.</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 52985231007,
+  "avatar": 93798463743273,
+  "commentCount": 18,
+  "upVotes": 4,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 954707,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1717743596712,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,225 @@
+{
+  "id": 320,
+  "activeVersion": 14,
+  "score": 6,
+  "votableId": 2442459,
+  "codingamerId": 159880,
+  "views": 348,
+  "commentableId": 2390728,
+  "title": "Flood the World",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Aries",
+  "publicHandle": "32087cc5e62f6aa408397c7ee304a2b0c8c",
+  "codingamerHandle": "65f47e2d1bda2e961cd3e1dc7f04d13c088951",
+  "lastVersion": {
+    "version": 14,
+    "data": {
+      "title": "Flood the World",
+      "topics": [],
+      "solution": "{-# LANGUAGE FlexibleInstances #-}\n\nimport Control.Applicative ((<$>)) -- Also from prelude since haskell-platform-7.10.2.\nimport Control.Arrow (first, (&&&))\nimport Control.Monad\nimport Data.List (intercalate, nub, maximumBy)\nimport Data.Maybe\nimport Data.Ord\nimport Data.Tuple (swap)\nimport System.IO\n\n----------------------------------------------------------------------------------------------------\n\nimport qualified Debug.Trace as Trace\n\ntrace :: Show a => String -> a -> a\ntrace t a = Trace.trace (t ++ \" = \" ++ show a) a\n_trace _ = id\n\ntraceList :: Show a => String -> [a] -> [a]\ntraceList t as = Trace.trace (t ++ \" = [\\n\\t\" ++ intercalate \"\\n\\t\" (map show as) ++ \"\\n]\") as\n_traceList _ = id\n\n-- In Data.Function >= 4.8.0.0 (haskell-platform-2014.2.0.0 provides base-4.7.0.1).\ninfixl 1 &\nx & y = y x\n\n----------------------------------------------------------------------------------------------------\n-- Solution for \"Flood the Water\".\n----------------------------------------------------------------------------------------------------\n\ntype XCoord = Float\n\ntype YCoord = Float\n\ntype Point = (XCoord, YCoord)\n\ngetX = fst\ngetY = snd\n\nreadPoint s = (read x, read y) where [x, y] = words s\n\ntype Segment = (Point, Point)\n\ntype Trapeze = (Segment, Segment)\n\n{- A relief’s topology is made of chasms or flat grounds. A chasm is a hole shaped as a funnel and\nslooping down to a certain height. Below this height, there are one or more flat ground elements\nseparated by chasms. Note that peak summits (separating two chasms) are translated as flat ground\nwith a zero length. There is always a flat ground separating two chasms and it does matter when the\nportal happens to be located right there. Lasty, even if a flat ground could be constructed with any\nsegment, it is intended to be flat. Last but not least, the bottom content of a chasm is expected to\nbe ordered from left to right.\n-}\ndata Topology = Chasm Trapeze [Topology] | FlatGround Segment deriving (Show)\n\ntype Volume = Float\n\nmain :: IO ()\nmain = do\n    n <- readLn\n    relief <- replicateM n (readPoint <$> getLine)\n    xPortal <- readLn\n    m <- readLn\n    let readTown s = (read x, name) where [x, name] = words s\n    namedTowns <- replicateM m (readTown <$> getLine)\n\n    -- hPutStrLn stderr (reliefToSvg relief xPortal namedTowns)\n\n    let\n        topology = safelyExtractTopology relief\n        xTowns = map fst namedTowns\n        getLastFloodedTown = snd . maximumBy (comparing fst) . snd\n        findTown = flip lookup namedTowns\n        lastTown = topology\n            & _trace \"topology\"\n            & fill xTowns xPortal\n            & _trace \"result\"\n            & getLastFloodedTown\n            & findTown\n            & fromMaybe (error \"No towns around!\")\n\n    putStrLn lastTown\n    hFlush stdout\n\n----------------------------------------------------------------------------------------------------\n\nsafelyExtractTopology :: [Point] -> Topology\nsafelyExtractTopology relief = extractTopology yTop safeRelief\n    where\n        ys = map getY relief\n        yTop = maximum ys + 1\n\n        xs = map getX relief\n        xMin = minimum xs - 1\n        xMax = maximum xs + 1\n\n        -- We add 2 another points to the relief in order to have both sides closed. This way, all\n        -- our strates will have closed sides which eases our work and can still be identified later\n        -- based on their x coordinate to let water flow through them. (Note: this precaution is no\n        -- more necessary, but it doesn’t hurt to keep it around.)\n        safeRelief = [(xMin, yTop)] ++ relief ++ [(xMax, yTop)]\n\nextractTopology :: YCoord -> [Point] -> Topology\nextractTopology yTop relief = Chasm (top, bottom) children\n    where\n        xs = map getX relief\n        ys = map getY relief\n\n        xMinTop = minimum xs\n        xMaxTop = maximum xs\n\n        yBottom = maximum (filter (yTop >) ys)\n\n        [p0, p1] = take 2 relief\n        [pN, pM] = take 2 (reverse relief)\n\n        xMinBottom = xLerp yBottom (p0, p1)\n        xMaxBottom = xLerp yBottom (pN, pM)\n\n        top = ((xMinTop, yTop), (xMaxTop, yTop))\n        bottom = ((xMinBottom, yBottom), (xMaxBottom, yBottom))\n\n        bottomRelief =\n            nub [(xMinBottom, yBottom)] ++\n            tail (init relief) ++\n            nub [(xMaxBottom, yBottom)]\n        segments = segmentStrate yBottom bottomRelief\n\n        children = flip mapMaybe segments $\n            \\s -> case s of\n                Right ps -> Just $ FlatGround (head ps, last ps)\n                Left ps -> if length ps > 2\n                    then Just (extractTopology yBottom ps)\n                    else Nothing\n\nxLerp :: YCoord -> Segment -> XCoord\nxLerp y (p1, p2) = yLerp y (swap p1, swap p2)\n\nyLerp :: XCoord -> Segment -> YCoord\nyLerp x ((x1, y1), (x2, y2)) =\n    if dx == 0\n        then y1\n        else y1 + dy * (xClamped x - x1) / dx\n    where\n        (dx, dy) = (x2 - x1, y2 - y1)\n        xClamped = max (min x1 x2) . min (max x1 x2)\n\n-- Left = Chasm / Right = Ground\nsegmentStrate :: YCoord -> [Point] -> [Either [Point] [Point]]\nsegmentStrate yMax [] = []\nsegmentStrate yMax (p0 : relief) = case segmentStrate yMax relief of\n    [] -> [(if getY p0 >= yMax then Right else Left) [p0]]\n    (s : ss) ->\n        if getY p0 >= yMax\n            then case s of\n                Right ps -> Right (p0 : ps) : ss\n                Left ps -> Right [p0] : Left (p0 : ps) : ss\n            else case s of\n                Left ps -> Left (p0 : ps) : ss\n                Right ps -> Left [p0, head ps] : Right ps : ss\n\n----------------------------------------------------------------------------------------------------\n\ncalculateVolume :: Trapeze -> YCoord -> Volume\ncalculateVolume (((x1, y1), (x2, y2)), ((x3, y3), (x4, y4))) y = (t' + b) * h' / 2\n    where\n        t = x2 - x1\n        b = x4 - x3\n        h = y1 - y3\n        h' = y - y3\n        t' = b + (t - b) * h' / h\n\nfindPoint :: Trapeze -> XCoord -> Maybe Point\nfindPoint ((topLeft, topRight), (bottomLeft, bottomRight)) x =\n    nub [topLeft, bottomLeft, bottomRight, topRight]\n    & \\r -> zip r (tail r)\n    & filter (\\(p1, p2) -> getX p1 <= x && x <= getX p2)\n    & map (yLerp x)\n    & filter (getY topLeft >)\n    & listToMaybe\n    & fmap ((,) x)\n\n{- Calculate the volume of the topology with the amount of water required to flood each contained\ntowns. Remember that towns are slightly above the ground, so a flooded town is always strictly\ninside the topology. That’s why filling a flat ground always return a empty list of flooded towns.\nRegarding the volume returned for each town, it is actually the volume of water which is needed to\nflood from the portal in order to reach the town, not the topology’s volume beneath the town. The\ntwo values are frequently the same, but it’s not always the case.\n-}\nfill :: [XCoord] -> XCoord -> Topology -> (Volume, [(Volume, XCoord)])\nfill _ _ (FlatGround _) = (0, [])\nfill xTowns xPortal (Chasm cavity bottom) = result\n    where\n        volume = calculateVolume cavity (getY . fst . fst $ cavity)\n\n        xPortal' =\n            let (((x1, _), (x2, _)), _) = cavity\n            in  if x1 <= xPortal && xPortal <= x2\n                then xPortal\n                else error \"Portal outside the topology!\"\n\n        -- Recurse into the bottom of the chasm before filling its trapeze.\n        (bottomVolume, bottomFloodedTowns) = fillAll xTowns xPortal bottom\n\n        xRemainingTowns = filter (`notElem` map snd bottomFloodedTowns) xTowns\n\n        floodedTowns = xRemainingTowns\n            & mapMaybe (findPoint cavity)\n            & map (\\(x, y) -> (calculateVolume cavity y + bottomVolume, x))\n\n        result = (volume + bottomVolume, floodedTowns ++ bottomFloodedTowns)\n\n----------------------------------------------------------------------------------------------------\n\nfillAll :: [XCoord] -> XCoord -> [Topology] -> (Volume, [(Volume, XCoord)])\nfillAll _ _ [] = (0, [])\nfillAll xTowns xPortal topologies = result\n    where\n        -- Center:  element which contains the portal.\n        -- Right:   elements to the right, ordered as usual (the head is the nearest to the portal).\n        -- Left:    elements to the left, in reverse order (such as the head is also the nearest to\n        --          the portal).\n        (left, center, right) = splitBottom [] topologies\n\n        -- Remember that the bottom is expected to be ordered from left to right.\n        splitBottom left (t:ts) = if null ts || atTheRight t xPortal\n            then (reverse left, t, ts)\n            else splitBottom (t:left) ts\n\n        -- Comparison operator choice matters here. When the portal is at the boundary between a\n        -- chasm and a flat ground (there is always a flat ground - usually of zero length - between\n        -- two chasms), the portal always ends on the flat ground. It’s important to have the water\n        -- flow equaly on left and right, instead of filling the left chasm.\n        atTheRight t x = case t of\n            Chasm ((_, b), _) _ -> x < getX b\n            FlatGround (_, b)   -> x <= getX b\n\n        -- We flood the center.\n        (centerVolume, centerFloodedTowns) = fill xTowns xPortal center\n        -- Then the left and right sides.\n        (sideVolume, sideFloodedTowns) = merge\n            (fillAll xTowns xPortal left)\n            (fillAll xTowns xPortal right)\n\n        -- Merging has one subtlety: once one of the side is filled, the water flows back to the\n        -- other side. Since we are not calculating the chasms’ volumes but the water volume\n        -- required to flood them, we need to double this volume as long as one side has not\n        -- overflow because, until then, each side only receive 1/2 of the total flow. That being\n        -- said, it doesn’t matter because, on a 2D relief with a single portal, there is no way to\n        -- design a test case exploiting this subtlety.\n        merge (v1, st1) (v2, st2) = (v1 + v2, st) where\n            vMin = min v1 v2\n            correct v = if v > vMin then v + vMin else v * 2\n            st = map (first correct) (st1 ++ st2)\n\n        result = (\n            centerVolume + sideVolume,\n            centerFloodedTowns ++ map (first (+ centerVolume)) sideFloodedTowns)\n\n----------------------------------------------------------------------------------------------------\n-- SVG outputing\n----------------------------------------------------------------------------------------------------\n\ntype Vector = (XCoord, YCoord)\n\nreliefToSvg :: [(XCoord, YCoord)] -> XCoord -> [(XCoord, String)] -> String\nreliefToSvg relief xPortal namedTowns = showSvg doc where\n    dual1 f l = (f (map getX l), f (map getY l))\n    dual2 f = (f . getX) &&& (f . getY)\n    scale s = dual2 (* s)\n    for = flip map\n\n    r = 50\n    (portal : towns) = for ((xPortal, \"Portal\") : namedTowns) $\n        \\(x, name) -> (scale r (x, yOf relief x), name)\n    relief' = map (scale r) relief\n    -- ((xMin, yMin), (xMax, yMax)) = (dual1 minimum relief', dual1 maximum relief')\n    ((xMin, yMin), (xMax, yMax)) = ((0, 0), dual1 maximum relief')\n    grid =\n        for [xMin,xMin+r..xMax] (\\x -> line (x, yMin) (x, yMax) []) ++\n        for [yMin,yMin+r..yMax] (\\y -> line (xMin, y) (xMax, y) [])\n    relief'' = (xMax, yMin) : (xMin, yMin) : relief'\n    createPortal ((x, y), _) = polygon [(x-8, y), (x, y+8), (x+8,y), (x, y-8)] \"navy\" []\n    createTown (p, name) = group p (1, -1) [circle (0, 0) 5 \"crimson\" [], text name []]\n    doc = svg (xMax, yMax) [ group\n        (0, yMax)\n        (1, -1)\n        (polygon relief'' \"mediumseagreen\" [] : grid ++ (createPortal portal : map createTown towns)) ]\n\nextractLeft x = takeWhile $ (< x) . getX\nextractLeftInclusive x = takeWhile $ (<= x) . getX\n\nextractRight x = dropWhile $ (<= x) . getX\nextractRightInclusive x = dropWhile $ (< x) . getX\n\nyOf :: [Point] -> XCoord -> YCoord\nyOf relief x = yLerp x (p1, p2) where\n    headNotNull message = fromMaybe (error message) . listToMaybe\n    p1 = extractLeftInclusive x relief\n        & reverse\n        & headNotNull (show x ++ \" outside [\" ++ intercalate \", \" (map show relief) ++ \"]\")\n    p2 = extractRightInclusive x relief\n        & headNotNull (show x ++ \" outside [\" ++ intercalate \", \" (map show relief) ++ \"]\")\n\n----------------------------------------------------------------------------------------------------\n\ndata Tree a = Node a [Tree a]\n\nleaf a = Node a []\n\ndata XmlNode = Element String [(String, String)] (Maybe String)\n\nnewElement name attributes = Element name attributes Nothing\nnewElementWithContent name attributes content = Element name attributes (Just content)\n\ninstance Show (Tree XmlNode) where\n    show = showXml 0\n\nshowSvg :: Tree XmlNode -> String\nshowSvg svg =\n    \"<?xml version=\\\"1.0\\\"?>\\n\" ++\n    \"<!DOCTYPE svg PUBLIC \" ++\n    show \"-//W3C//DTD SVG 1.1//EN\" ++ \" \" ++\n    show \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\" ++ \">\\n\" ++\n    showXml 0 svg\n\nshowXml :: Int -> Tree XmlNode -> String\nshowXml depth (Node (Element name attributes content) children) = xml\n    where\n        tab = replicate depth '\\t'\n        begin = tab ++ \"<\" ++ unwords (name : map showAttribute attributes)\n        xml = if null children && isNothing content\n            then    begin ++ \"/>\\n\"\n            else    begin ++ \">\" ++\n                    fromMaybe \"\" content ++\n                    innerXml ++\n                    \"</\" ++ name ++ \">\\n\"\n        innerXml = if null children\n            then    \"\"\n            else    \"\\n\" ++ concatMap (showXml (depth + 1)) children ++ tab\n        showAttribute (name, value) = name ++ \"=\\\"\" ++ value ++ \"\\\"\"\n\ntype OpenElement = [Tree XmlNode] -> Tree XmlNode\n\nsvg :: Vector -> OpenElement\nsvg (w, h) content = Node (newElement \"svg\" [\n    (\"xmlns\", \"http://www.w3.org/2000/svg\"),\n    (\"version\", \"1.1\"),\n    (\"width\", show w), (\"height\", show h),\n    (\"viewBox\", \"0 0 \" ++ show w ++ \" \" ++ show h)])\n    $\n    Node (newElement \"defs\" []) [\n        Node (newElement \"marker\"\n            [ (\"id\", \"markerCircle\")\n            , (\"markerWidth\", \"8\")\n            , (\"markerHeight\", \"8\")\n            , (\"refX\", \"5\")\n            , (\"refY\", \"5\")])\n            [leaf (newElement \"circle\"\n                [ (\"cx\", \"5\")\n                , (\"cy\", \"5\")\n                , (\"r\", \"3\")\n                , (\"fill\", \"black\")\n                , (\"stroke\", \"none\")])\n        ],\n        Node (newElement \"marker\"\n            [ (\"id\", \"markerArrow\")\n            , (\"markerWidth\", \"13\")\n            , (\"markerHeight\", \"13\")\n            , (\"refX\", \"2\")\n            , (\"refY\", \"6\")\n            , (\"orient\", \"auto\")]) [\n            leaf (newElement \"path\"\n                [ (\"d\", \"M2,2 L2,11 L10,6 L2,2\")\n                , (\"fill\", \"black\")])\n        ]\n    ] : content\n\ncircle :: Point -> Float -> String -> OpenElement\ncircle (x, y) radius color = Node (newElement \"circle\"\n    [ (\"cx\", show x), (\"cy\", show y)\n    , (\"r\", show radius)\n    , (\"fill\", color), (\"stroke\", \"black\"), (\"stroke-width\", \"1.5\"), (\"fill-opacity\", \"1.0\")\n    ])\n\nline :: Point -> Point -> OpenElement\nline (x1, y1) (x2, y2) = Node (newElement \"line\"\n    [ (\"x1\" , show x1), (\"y1\" , show y1)\n    , (\"x2\" , show x2), (\"y2\" , show y2)\n    , (\"fill\", \"lime\"), (\"stroke\", \"black\"), (\"stroke-width\", \"1.5\"), (\"fill-opacity\", \"0.1\")\n    ])\n\npolygon :: [Point] -> String -> OpenElement\npolygon points color = Node (newElement \"polygon\"\n    [ (\"points\" , unwords (map (\\(x, y) -> show x ++ \",\" ++ show y) points))\n    , (\"fill\", color), (\"stroke\", \"darkslategray\"), (\"stroke-width\", \"1.5\"), (\"fill-opacity\", \"1.0\")\n    ])\n\ngroup :: Vector -> Vector -> OpenElement\ngroup (dx, dy) (sx, sy) = Node (newElement \"g\"\n    [ ( \"transform\"\n      , \"translate(\" ++ show dx ++ \",\" ++ show dy ++ \") scale(\" ++ show sx ++ \",\" ++ show sy ++ \")\")\n    ])\n\ntext :: String -> OpenElement\ntext content = Node (newElementWithContent \"text\"\n    [ (\"y\", \"30\")\n    , (\"text-anchor\", \"middle\"), (\"fill\", \"crimson\")\n    , (\"font-family\", \"sans-serif\"), (\"font-size\", \"20px\")\n    ] content)\n",
+      "statement": "What was bound to happen has happened, Cthulhu or some other Great Elder has finally heard our prayers and opened a portal for our specie to welcome it. As a result, a continuous stream of water from the abyss is now flooding our world.\n\nWith the help of a simple map of the surroundings and your brilliant, if not sane any more, mind, your goal is to find the last town around to be submerged, in the (vain) hope that the portal could be closed before it is too late...\n\n<<Some more details:>>\n\n- The portal is pouring water continuously from where it is located.\n- Water behaves as one expect a liquid with no surface tension at all to behave.\n- If the portal is located on a flat surface, the water flows equally from it on the left and on the right.\n- A town is flooded when water start raising in it, being simply traversed doesn't count.\n\nThe Dwarf Fortress quality grade diagram below illustrates how things work. Since the portal @ is located on a flat surface, water has flowed on both sides in an equal manner. As such, the volume of water on the left is the same as on the right (6x \"~\"). The right part being filled, the water will then flow fully on the left (until reaching town B level). Obviously, the town A will be flooded before the water could reach the town B. However, if the water kept flowing, town B wouldn't be submerged until the valley on its right would be completely filled (just imagine that towns are actually floating slightly above the ground).\n\n`\n+--+                                          +---+\n    \\                               B        /\n     +---+                        +---+     /\n          \\A             @       /  ^  \\   /\n           \\          +----+~~~~/   |   \\ /\n           ^\\        /   ^  \\~~/    |    +\n           | \\~~~~~~/    |   ++     |\n           |  +----+     |          |\n           |             |          |\n           |             |          |\n        xTownA        xPortal    xTownB\n`\n\nDon't be fooled by the cheap ASCII diagram above. In this puzzle, the volume of a \"pit\" is its exact geometric value, not the discrete amount of \"~\" blocks you can put inside.",
+      "testCases": [
+        {
+          "title": "Test 1 - Small Peak",
+          "isTest": true,
+          "testIn": "7\n0 0\n1 5\n3 1\n4 4\n5 2\n9 8\n11 4\n5\n2\n2 Arkham\n7 Dunwich",
+          "testOut": "Dunwich",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1 - Small Peak",
+          "isTest": false,
+          "testIn": "8\n0 7\n1 3\n3 5\n4 2\n5 6\n6 6\n9 0\n10 7\n5\n2\n2 Alpha\n7 Beta",
+          "testOut": "Beta",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2 - Great Peak",
+          "isTest": true,
+          "testIn": "7\n0 0\n1 5\n3 1\n4 6\n5 2\n9 8\n11 4\n5\n2\n2 Arkham\n7 Dunwich",
+          "testOut": "Arkham",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2 - Great Peak",
+          "isTest": false,
+          "testIn": "7\n0 7\n1 3\n3 7\n4 4\n5 6\n9 0\n10 7\n5\n2\n2 Alpha\n7 Beta",
+          "testOut": "Alpha",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3 - Runoff",
+          "isTest": true,
+          "testIn": "9\n0 0\n2 4\n4 0\n6 3\n8 3\n9 0\n11 6\n14 7\n15 4\n12\n2\n3 Arkham\n7 Dunwich",
+          "testOut": "Dunwich",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3 - Runoff",
+          "isTest": false,
+          "testIn": "10\n0 5\n2 3\n4 4\n6 2\n7 4\n8 2\n9 5\n11 1\n14 0\n15 6\n12\n2\n3 Alpha\n7 Beta",
+          "testOut": "Beta",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4 - Reservoir",
+          "isTest": true,
+          "testIn": "10\n0 0\n2 2\n4 0\n6 3\n7 2\n8 3\n9 0\n11 6\n14 7\n15 4\n12\n2\n3 Arkham\n7 Dunwich",
+          "testOut": "Arkham",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4 - Reservoir",
+          "isTest": false,
+          "testIn": "9\n0 5\n2 1\n4 5\n6 2\n8 2\n9 5\n11 1\n14 0\n16 6\n12\n2\n3 Alpha\n7 Beta",
+          "testOut": "Alpha",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5 - Overflow",
+          "isTest": true,
+          "testIn": "7\n0 0\n1 5\n3 1\n4 5\n5 2\n9 8\n11 4\n5\n2\n2 Arkham\n7 Dunwich",
+          "testOut": "Dunwich",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5 - Overflow",
+          "isTest": false,
+          "testIn": "5\n0 5\n1 0\n3 4\n7 0\n9 3\n3\n2\n2 Alpha\n6 Beta",
+          "testOut": "Alpha",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6 - Overflow Race",
+          "isTest": true,
+          "testIn": "7\n0 9\n4 1\n6 6\n7 2\n11 8\n15 0\n18 6\n6\n5\n1 Arkham\n2 Dunwich\n9 Kingsport\n13 Innsmouth\n16 Providence",
+          "testOut": "Innsmouth",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6 - Overflow Race",
+          "isTest": false,
+          "testIn": "9\n0 10\n1 0\n5 8\n7 3\n8 7\n12 1\n16 8\n19 3\n20 10\n7\n5\n2 Alpha\n3 Beta\n10 Gamma\n14 Delta\n17 Epsilon",
+          "testOut": "Beta",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 7 - Another Overflow Race",
+          "isTest": true,
+          "testIn": "8\n0 6\n2 0\n4 6\n5 5\n7 5\n8 6\n10 2\n12 6\n6\n2\n3 Arkham\n9 Dunwich",
+          "testOut": "Arkham",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7 - Another Overflow Race",
+          "isTest": false,
+          "testIn": "7\n0 8\n3 5\n4 6\n5 3\n6 6\n10 0\n11 8\n6\n2\n3 Alpha\n8 Beta",
+          "testOut": "Beta",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 8 - On Edge",
+          "isTest": true,
+          "testIn": "5\n0 3\n2 0\n6 4\n8 0\n9 5\n6\n2\n3 Arkham\n7 Dunwich",
+          "testOut": "Dunwich",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8 - On Edge",
+          "isTest": false,
+          "testIn": "5\n0 4\n3 0\n6 4\n8 0\n9 5\n6\n2\n3 Alpha\n7 Beta",
+          "testOut": "Beta",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 9 - Next One Over",
+          "isTest": true,
+          "testIn": "7\n0 8\n1 0\n5 6\n6 3\n7 6\n8 5\n11 8\n5\n2\n3 Arkham\n8 Dunwich",
+          "testOut": "Arkham",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9 - Next One Over",
+          "isTest": false,
+          "testIn": "7\n0 8\n1 0\n5 6\n6 3\n7 6\n9 5\n11 7\n5\n2\n3 Alpha\n8 Beta",
+          "testOut": "Alpha",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 10 - Pure Abyss",
+          "isTest": true,
+          "testIn": "5\n0 4\n3 0\n6 4\n8 0\n9 5\n2\n2\n3 Arkham\n7 Dunwich",
+          "testOut": "Dunwich",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10 - Pure Abyss",
+          "isTest": false,
+          "testIn": "5\n0 4\n3 0\n6 4\n8 0\n9 5\n4\n2\n3 Alpha\n7 Beta",
+          "testOut": "Beta",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 11 - Real World",
+          "isTest": true,
+          "testIn": "19\n1 10\n2 10\n3 7\n5 6\n6 4\n8 3\n10 9\n11 1\n13 6\n15 6\n18 7\n19 8\n20 5\n22 5\n24 9\n26 8\n27 6\n28 7\n29 10\n17\n5\n4 Montpellier\n6 Arkham\n12 Dunwich\n25 Kingsport\n21 Paris",
+          "testOut": "Montpellier",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11 - Real World",
+          "isTest": false,
+          "testIn": "15\n0 0\n4 12\n7 3\n10 6\n11 8\n13 8\n14 6\n15 5\n17 5\n18 6\n19 1\n21 4\n25 6\n29 2\n31 8\n12\n3\n6 Arkham\n16 Dunwich\n24 Kingsport",
+          "testOut": "Kingsport",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "- Both coordinates X and Y are ranging from 0 to 100.\n- A town name is a simple word without spaces.\n- The relief is not too complicated (for any X, there is only one Y) ; in any case, the public test cases are representative.\n- The relief is always designed in a way that all towns are doomed to be submerged before water starts overflowing the map itself. (Not a happy ending, but it makes for a easier puzzle!)\n - The portal is never at the same location as a town.",
+      "stubGenerator": "read surfacePointCount:int\nloop surfacePointCount read x:int y:int\nread xPortal:int\nread townCount:int\nloop townCount read xTown:int townName:word(20)\nwrite lastFloodedTownName",
+      "inputDescription": "- <<One line:>> The [[surfacePointCount]] of points the relief is made up.\n- <<The [[surfacePointCount]] lines:>> a pair of integers (X, Y) giving the location of a point. By connecting all the points in a sequential manner you will get the relief of the surrounding country (just as in the Mars set of missions).\n- <<One line:>> An integer [[xPortal]] for the X coordinate of the water portal on the relief.\n- <<One line:>> An integer [[townCount]] for the number of towns around.\n- <<The [[townCount]] next lines:>> An integer [[xTown]] for the X coordinate of a town on the relief, followed by its name. The portal and the towns are all located on the ground.",
+      "solutionLanguage": "Haskell",
+      "outputDescription": "- <<One line:>> The name of the last town to be flooded."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">What was bound to happen has happened, Cthulhu or some other Great Elder has finally heard our prayers and opened a portal for our specie to welcome it. As a result, a continuous stream of water from the abyss is now flooding our world.<br><br>With the help of a simple map of the surroundings and your brilliant, if not sane any more, mind, your goal is to find the last town around to be submerged, in the (vain) hope that the portal could be closed before it is too late...<br><br><strong>Some more details:</strong><br><br>- The portal is pouring water continuously from where it is located.<br>- Water behaves as one expect a liquid with no surface tension at all to behave.<br>- If the portal is located on a flat surface, the water flows equally from it on the left and on the right.<br>- A town is flooded when water start raising in it, being simply traversed doesn't count.<br><br>The Dwarf Fortress quality grade diagram below illustrates how things work. Since the portal @ is located on a flat surface, water has flowed on both sides in an equal manner. As such, the volume of water on the left is the same as on the right (6x &quot;~&quot;). The right part being filled, the water will then flow fully on the left (until reaching town B level). Obviously, the town A will be flooded before the water could reach the town B. However, if the water kept flowing, town B wouldn't be submerged until the valley on its right would be completely filled (just imagine that towns are actually floating slightly above the ground).<br><br><pre style=\"font-family: monospace\"><br>+--+                                          +---+<br>    \\                               B        /<br>     +---+                        +---+     /<br>          \\A             @       /  ^  \\   /<br>           \\          +----+~~~~/   |   \\ /<br>           ^\\        /   ^  \\~~/    |    +<br>           | \\~~~~~~/    |   ++     |<br>           |  +----+     |          |<br>           |             |          |<br>           |             |          |<br>        xTownA        xPortal    xTownB<br></pre><br><br>Don't be fooled by the cheap ASCII diagram above. In this puzzle, the volume of a &quot;pit&quot; is its exact geometric value, not the discrete amount of &quot;~&quot; blocks you can put inside.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">- <strong>One line:</strong> The <var>surfacePointCount</var> of points the relief is made up.<br>- <strong>The <var>surfacePointCount</var> lines:</strong> a pair of integers (X, Y) giving the location of a point. By connecting all the points in a sequential manner you will get the relief of the surrounding country (just as in the Mars set of missions).<br>- <strong>One line:</strong> An integer <var>xPortal</var> for the X coordinate of the water portal on the relief.<br>- <strong>One line:</strong> An integer <var>townCount</var> for the number of towns around.<br>- <strong>The <var>townCount</var> next lines:</strong> An integer <var>xTown</var> for the X coordinate of a town on the relief, followed by its name. The portal and the towns are all located on the ground.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">- <strong>One line:</strong> The name of the last town to be flooded.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">- Both coordinates X and Y are ranging from 0 to 100.<br>- A town name is a simple word without spaces.<br>- The relief is not too complicated (for any X, there is only one Y) ; in any case, the public test cases are representative.<br>- The relief is always designed in a way that all towns are doomed to be submerged before water starts overflowing the map itself. (Not a happy ending, but it makes for a easier puzzle!)<br> - The portal is never at the same location as a town.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">7\n0 0\n1 5\n3 1\n4 4\n5 2\n9 8\n11 4\n5\n2\n2 Arkham\n7 Dunwich</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Dunwich</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 305409667230,
+  "avatar": 4800558763747,
+  "commentCount": 18,
+  "upVotes": 8,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 627,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

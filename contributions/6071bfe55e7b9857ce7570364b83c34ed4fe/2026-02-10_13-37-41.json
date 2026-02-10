@@ -1,0 +1,248 @@
+{
+  "id": 6071,
+  "activeVersion": 10,
+  "score": 7,
+  "votableId": 16637459,
+  "codingamerId": 1407583,
+  "views": 725,
+  "commentableId": 16548335,
+  "title": "Divisibility of Fibonacci numbers sum",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "OPi",
+  "publicHandle": "6071bfe55e7b9857ce7570364b83c34ed4fe",
+  "codingamerHandle": "3b9f76c06bfe94afb9608048e12411ab3857041",
+  "lastVersion": {
+    "version": 10,
+    "autocloseTime": 1615409022962,
+    "data": {
+      "title": "Divisibility of Fibonacci numbers sum",
+      "topics": [
+        {
+          "id": 71,
+          "handle": "recursion",
+          "labelMap": {
+            "1": "Récursion",
+            "2": "Recursion"
+          },
+          "pageTitle": "Recursion: exercises and theory",
+          "puzzleCount": 13,
+          "parentTopicId": 41,
+          "contentDetailsId": 77
+        },
+        {
+          "id": 46,
+          "handle": "loops",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 33,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        },
+        {
+          "id": 129,
+          "handle": "arithmetic",
+          "labelMap": {
+            "1": "Arithmetic",
+            "2": "Arithmetic"
+          },
+          "puzzleCount": 9,
+          "parentTopicId": 93
+        },
+        {
+          "id": 105,
+          "handle": "modular-calculus",
+          "labelMap": {
+            "1": "Modular calculus",
+            "2": "Modular calculus"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\n\n\"\"\"\nDetermine if some range of consecutive Fibonacci numbers are divisible.\n\nRead nb from standard input,\nthen for each a b d from standard input\n     determine if F_a + F_{a+1} + F_{a+2} + ... + F_b is divisible by d.\n\n:license: GPLv3 --- Copyright (C) 2020, 2021 Olivier Pirson\n:author: Olivier Pirson --- http://www.opimedia.be/\n:version: January 9, 2021\n\"\"\"\n\nimport sys\n\nfrom typing import Dict, Tuple\n\n\nMEMO: Dict[Tuple[int, int], Tuple[int, int]] = dict()\n\n\ndef fibonacci_pair(n: int, modulo: int) -> Tuple[int, int]:\n    \"\"\"\n    Return the pair (F_{n-1} % modulo, F_n % modulo).\n\n    :param n: int >= 0\n    :param modulo: (int >= 1)\n\n    :return: (int >= 0, int >= 0)\n    \"\"\"\n    assert n >= 0\n    assert modulo >= 1\n\n    if n <= 1:\n        f_n_1 = abs(n - 1)\n        f_n = n\n    else:\n        q = n // 2\n        f_q_1, f_q = fibonacci_pair(q, modulo)\n\n        if n % 2 == 0:\n            # n = 2q\n            # q = n/2\n            # F_{n-1} = F_q^2 - F_{q-1}^2\n            # F_n = F_q (2 F_{q-1} + F_q)\n            f_n_1 = (f_q**2 % modulo) + (f_q_1**2 % modulo)\n            f_n = f_q * ((f_q_1 * 2 % modulo + f_q) % modulo)\n        else:\n            # n = 2q + 1\n            # q = (n - 1)/2\n            # F_{n-1} = F_q (2 F_{q-1} + F_q)\n            # F_n = F_{q+1}^2 - F_q^2 = (F_q + F_{q-1})^2 - F_q^2\n            f_n_1 = f_q * ((f_q_1 * 2 % modulo + f_q) % modulo)\n            f_n = (((f_q + f_q_1) % modulo)**2 % modulo) + (f_q**2 % modulo)\n\n    return f_n_1 % modulo, f_n % modulo\n\n\ndef fibonacci_pair_iteration(n: int, modulo: int) -> Tuple[int, int]:\n    \"\"\"\n    Return the pair (F_{n-1} % modulo, F_n % modulo).\n\n    Same that fibonacci_pair() but in less efficient way.\n\n    :param n: int >= 0\n    :param modulo: int >= 1\n\n    :return: (int >= 0, int >= 0)\n    \"\"\"\n    assert n >= 0\n    assert modulo >= 1\n\n    f_n_1 = 1\n    f_n = 0\n    while n:\n        n -= 1\n        f_n_1, f_n = f_n % modulo, (f_n + f_n_1) % modulo\n\n    return f_n_1, f_n\n\n\ndef fibonacci_pair_iteration_memo(n: int, modulo: int) -> Tuple[int, int]:\n    \"\"\"\n    Return the pair (F_{n-1} % modulo, F_n % modulo).\n\n    Memoization of fibonacci_pair_iteration().\n\n    :param n: int >= 0\n    :param modulo: int >= 1\n\n    :return: (int >= 0, int >= 0)\n    \"\"\"\n    assert n >= 0\n    assert modulo >= 1\n\n    key = (n, modulo)\n    result = MEMO.get(key)\n\n    if result is None:\n        result = fibonacci_pair_iteration(n, modulo)\n        MEMO[key] = result\n\n    return result\n\n\ndef fibonacci_sum(a: int, b: int, modulo: int) -> int:\n    \"\"\"\n    Returns (F_a + F_{a+1} + F_{a+2} + ... F_b) modulo modulo.\n\n    :param a: int >= 0\n    :param b: int >= a\n    :param modulo: int >= 1\n\n    :return: int >= 0\n    \"\"\"\n    assert 0 <= a <= b\n    assert modulo >= 1\n\n    f_sum = (fibonacci_pair(b + 2, modulo)[1] -\n             fibonacci_pair(a + 1, modulo)[1])\n\n    return f_sum % modulo\n\n\ndef main() -> None:\n    \"\"\"\n    Read inputs, solve, and print result.\n    \"\"\"\n    nb = int(input())\n\n    assert 1 <= nb <= 30\n\n    for _ in range(nb):\n        # Read inputs\n        a, b, d = map(int, input().split())\n\n        assert 0 <= a <= b <= 1000000000\n        assert b - a <= 10000000\n        assert 1 <= d <= 1000000000\n\n        # Compute F_{a-1} and F_a\n        f_n_1, f_n = fibonacci_pair(a, d)\n\n        # To check that \"naive\" solution is not good enough\n        # f_n_1, f_n = fibonacci_pair_iteration(a, d)\n        # f_n_1, f_n = fibonacci_pair_iteration_memo(a, d)\n\n        # Compute sum (F_a + F_{a+1} + F_{a+2} + ... + F_b) modulo d\n        sum_mod = f_n\n        for _ in range(a + 1, b + 1):\n            f_n_1, f_n = f_n, (f_n + f_n_1) % d\n            sum_mod = (sum_mod + f_n) % d\n\n        assert sum_mod == fibonacci_sum(a, b, d), (sum_mod,\n                                                   fibonacci_sum(a, b, d))\n\n        # Print result\n        print('F_{} + ... + F_{} is {}divisible by {}'\n              .format(a, b,\n                      ('' if sum_mod == 0\n                       else 'NOT '),\n                      d))\n        sys.stdout.flush()\n\n    assert sys.stdin.readline() == ''\n\n\nif __name__ == '__main__':\n    main()\n",
+      "statement": "<<Sum of consecutive big Fibonacci numbers is divisible or not?>>\n\nLet [[a]], [[b]] and [[d]] non negative integers.\n<<Determine if [[d]] divides F_[[a]] + F_{[[a]]+1} + F_{[[a]]+2} + … + F_[[b]].>>\n\nThe difficulty is that we ask that for <<some very big indices [[a]]>>.\n\nRemember that the well-known Fibonacci numbers is a sequence of numbers starting with 0 and 1, and after that each number is the sum of the two previous ones.\n\nF_0 = {{0}}\nF_1 = {{1}}\nF_{n+2} = F_{n+1} + F_n\n\nSo the first Fibonacci numbers are:\n0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233…\n\n<<Example:>>\n[[a]] = 10\n[[b]] = 12\nF_10 + F_11 + F_12 = 55 + 89 + 144 = 288 = 32 * 9 = 2^5 * 3^2\n\nThis sum is divisible by [[d]] = 2, 4, 8, 16 and 32, but NOT by 64.\nThis sum is divisible by [[d]] = 3 and 9, but NOT by 27.\nThis sum is NOT divisible by [[d]] = 5.\nThis sum is divisible by [[d]] = 6.\n…\n\nExample of input:\n`2\n10 12 3\n10 12 5`\nAnd the expected output:\n`F_10 + ... + F_12 is divisible by 3\nF_10 + ... + F_12 is NOT divisible by 5`\n(When [[a]] = [[b]] write in the same way the beginning \"F_[[a]] + ... + F_[[b]]\"\neven if there is only one term.)\n\n<<Hints:>>\nImplementations of Fibonacci numbers computation is an usual example about recursivity and algorithmic complexity. The obvious way to implement it with recursion is a classical example of complexity explosion. There is several way to fix that, and the most obvious is the simple iteration that compute the result in a linear number of steps (if we consider that operations on numbers are in constant time, which is not really the case). The key point to solve this challenge is to find a mathematical way to be better than that and to implement it.\nTo help you can read the \"Matrix form\" section in \"Fibonacci number\" article on Wikipedia:\nhttps://en.wikipedia.org/wiki/Fibonacci_number#Matrix_form\n\nMaybe this list of the first 300 Fibonacci numbers and their factorization can help you:\nhttp://www.maths.surrey.ac.uk/hosted-sites/R.Knott/Fibonacci/fibtable.html#100\nBut if you need these big numbers, you are probably on a wrong way. ;-)\n\nEnjoy!\n\n(If you are interested by the mathematical aspect, there exist a lot of nice properties about this sequence:\nhttps://oeis.org/A000045 )\n\n(The illustration image is a part of one page of the Liber Abaci:\nhttps://commons.wikimedia.org/wiki/File:Liber_abbaci_magliab_f124r.jpg )",
+      "testCases": [
+        {
+          "title": "First example",
+          "isTest": true,
+          "testIn": "13\n10 12 2\n10 12 32\n10 12 64\n10 12 3\n10 12 9\n10 12 27\n10 12 5\n10 12 7\n10 12 11\n10 12 287\n10 12 288\n10 12 289\n10 12 1000",
+          "testOut": "F_10 + ... + F_12 is divisible by 2\nF_10 + ... + F_12 is divisible by 32\nF_10 + ... + F_12 is NOT divisible by 64\nF_10 + ... + F_12 is divisible by 3\nF_10 + ... + F_12 is divisible by 9\nF_10 + ... + F_12 is NOT divisible by 27\nF_10 + ... + F_12 is NOT divisible by 5\nF_10 + ... + F_12 is NOT divisible by 7\nF_10 + ... + F_12 is NOT divisible by 11\nF_10 + ... + F_12 is NOT divisible by 287\nF_10 + ... + F_12 is divisible by 288\nF_10 + ... + F_12 is NOT divisible by 289\nF_10 + ... + F_12 is NOT divisible by 1000",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Example",
+          "isTest": false,
+          "testIn": "12\n16 18 2\n16 18 16\n16 18 32\n16 18 3\n16 18 5\n16 18 17\n16 18 19\n16 18 23\n16 18 1000\n16 18 5167\n16 18 5168\n16 18 5169",
+          "testOut": "F_16 + ... + F_18 is divisible by 2\nF_16 + ... + F_18 is divisible by 16\nF_16 + ... + F_18 is NOT divisible by 32\nF_16 + ... + F_18 is NOT divisible by 3\nF_16 + ... + F_18 is NOT divisible by 5\nF_16 + ... + F_18 is divisible by 17\nF_16 + ... + F_18 is divisible by 19\nF_16 + ... + F_18 is NOT divisible by 23\nF_16 + ... + F_18 is NOT divisible by 1000\nF_16 + ... + F_18 is NOT divisible by 5167\nF_16 + ... + F_18 is divisible by 5168\nF_16 + ... + F_18 is NOT divisible by 5169",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Other example",
+          "isTest": true,
+          "testIn": "24\n0 10 1\n0 10 1000\n0 10 2\n0 10 3\n0 10 5\n0 10 7\n0 10 11\n0 10 13\n0 10 17\n0 10 142\n0 10 143\n0 10 144\n5 16 1\n5 16 16\n5 16 32\n5 16 3\n5 16 5\n5 16 7\n5 16 23\n5 16 529\n5 16 49\n5 16 2575\n5 16 2576\n5 16 2577",
+          "testOut": "F_0 + ... + F_10 is divisible by 1\nF_0 + ... + F_10 is NOT divisible by 1000\nF_0 + ... + F_10 is NOT divisible by 2\nF_0 + ... + F_10 is NOT divisible by 3\nF_0 + ... + F_10 is NOT divisible by 5\nF_0 + ... + F_10 is NOT divisible by 7\nF_0 + ... + F_10 is divisible by 11\nF_0 + ... + F_10 is divisible by 13\nF_0 + ... + F_10 is NOT divisible by 17\nF_0 + ... + F_10 is NOT divisible by 142\nF_0 + ... + F_10 is divisible by 143\nF_0 + ... + F_10 is NOT divisible by 144\nF_5 + ... + F_16 is divisible by 1\nF_5 + ... + F_16 is divisible by 16\nF_5 + ... + F_16 is NOT divisible by 32\nF_5 + ... + F_16 is NOT divisible by 3\nF_5 + ... + F_16 is NOT divisible by 5\nF_5 + ... + F_16 is divisible by 7\nF_5 + ... + F_16 is divisible by 23\nF_5 + ... + F_16 is NOT divisible by 529\nF_5 + ... + F_16 is NOT divisible by 49\nF_5 + ... + F_16 is NOT divisible by 2575\nF_5 + ... + F_16 is divisible by 2576\nF_5 + ... + F_16 is NOT divisible by 2577",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Other example",
+          "isTest": false,
+          "testIn": "25\n4 19 1\n4 19 3\n4 19 9\n4 19 5\n4 19 7\n4 19 49\n4 19 11\n4 19 521\n4 19 271441\n4 19 10940\n4 19 10941\n4 19 10942\n0 12 1\n0 12 1000\n0 12 8\n0 12 16\n0 12 3\n0 12 5\n0 12 7\n0 12 46\n0 12 47\n0 12 48\n0 12 375\n0 12 376\n0 12 377",
+          "testOut": "F_4 + ... + F_19 is divisible by 1\nF_4 + ... + F_19 is divisible by 3\nF_4 + ... + F_19 is NOT divisible by 9\nF_4 + ... + F_19 is NOT divisible by 5\nF_4 + ... + F_19 is divisible by 7\nF_4 + ... + F_19 is NOT divisible by 49\nF_4 + ... + F_19 is NOT divisible by 11\nF_4 + ... + F_19 is divisible by 521\nF_4 + ... + F_19 is NOT divisible by 271441\nF_4 + ... + F_19 is NOT divisible by 10940\nF_4 + ... + F_19 is divisible by 10941\nF_4 + ... + F_19 is NOT divisible by 10942\nF_0 + ... + F_12 is divisible by 1\nF_0 + ... + F_12 is NOT divisible by 1000\nF_0 + ... + F_12 is divisible by 8\nF_0 + ... + F_12 is NOT divisible by 16\nF_0 + ... + F_12 is NOT divisible by 3\nF_0 + ... + F_12 is NOT divisible by 5\nF_0 + ... + F_12 is NOT divisible by 7\nF_0 + ... + F_12 is NOT divisible by 46\nF_0 + ... + F_12 is divisible by 47\nF_0 + ... + F_12 is NOT divisible by 48\nF_0 + ... + F_12 is NOT divisible by 375\nF_0 + ... + F_12 is divisible by 376\nF_0 + ... + F_12 is NOT divisible by 377",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Big numbers",
+          "isTest": true,
+          "testIn": "25\n32 85 43\n20 100 4\n32 85 45\n20 100 3\n32 85 2521\n20 100 5\n20 100 25\n32 85 128\n20 100 11\n32 85 25\n20 100 121\n20 100 41\n32 85 31\n20 100 4577887\n32 85 64\n32 85 9\n32 85 27\n20 100 1174951\n32 85 5\n20 100 2\n32 85 7\n32 85 13\n32 85 61\n32 85 17\n32 85 19",
+          "testOut": "F_32 + ... + F_85 is NOT divisible by 43\nF_20 + ... + F_100 is NOT divisible by 4\nF_32 + ... + F_85 is divisible by 45\nF_20 + ... + F_100 is divisible by 3\nF_32 + ... + F_85 is divisible by 2521\nF_20 + ... + F_100 is divisible by 5\nF_20 + ... + F_100 is NOT divisible by 25\nF_32 + ... + F_85 is NOT divisible by 128\nF_20 + ... + F_100 is divisible by 11\nF_32 + ... + F_85 is NOT divisible by 25\nF_20 + ... + F_100 is NOT divisible by 121\nF_20 + ... + F_100 is divisible by 41\nF_32 + ... + F_85 is divisible by 31\nF_20 + ... + F_100 is divisible by 4577887\nF_32 + ... + F_85 is divisible by 64\nF_32 + ... + F_85 is divisible by 9\nF_32 + ... + F_85 is NOT divisible by 27\nF_20 + ... + F_100 is divisible by 1174951\nF_32 + ... + F_85 is divisible by 5\nF_20 + ... + F_100 is divisible by 2\nF_32 + ... + F_85 is NOT divisible by 7\nF_32 + ... + F_85 is NOT divisible by 13\nF_32 + ... + F_85 is divisible by 61\nF_32 + ... + F_85 is NOT divisible by 17\nF_32 + ... + F_85 is divisible by 19",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Big numbers",
+          "isTest": false,
+          "testIn": "24\n23 106 169\n23 106 16\n21 105 419\n23 106 32\n21 105 379\n23 106 7\n21 105 351\n23 106 11\n23 106 13\n23 106 29\n23 106 841\n21 105 13\n23 106 43\n23 106 177241\n23 106 5\n21 105 2\n23 106 9\n21 105 4\n21 105 27\n21 105 81\n21 105 11\n23 106 27\n21 105 421\n21 105 10891",
+          "testOut": "F_23 + ... + F_106 is NOT divisible by 169\nF_23 + ... + F_106 is divisible by 16\nF_21 + ... + F_105 is NOT divisible by 419\nF_23 + ... + F_106 is NOT divisible by 32\nF_21 + ... + F_105 is divisible by 379\nF_23 + ... + F_106 is NOT divisible by 7\nF_21 + ... + F_105 is divisible by 351\nF_23 + ... + F_106 is NOT divisible by 11\nF_23 + ... + F_106 is divisible by 13\nF_23 + ... + F_106 is divisible by 29\nF_23 + ... + F_106 is NOT divisible by 841\nF_21 + ... + F_105 is divisible by 13\nF_23 + ... + F_106 is divisible by 43\nF_23 + ... + F_106 is NOT divisible by 177241\nF_23 + ... + F_106 is NOT divisible by 5\nF_21 + ... + F_105 is divisible by 2\nF_23 + ... + F_106 is divisible by 9\nF_21 + ... + F_105 is NOT divisible by 4\nF_21 + ... + F_105 is divisible by 27\nF_21 + ... + F_105 is NOT divisible by 81\nF_21 + ... + F_105 is NOT divisible by 11\nF_23 + ... + F_106 is NOT divisible by 27\nF_21 + ... + F_105 is divisible by 421\nF_21 + ... + F_105 is divisible by 10891",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Even big numbers",
+          "isTest": true,
+          "testIn": "23\n123 234 343\n123 234 2401\n123 234 26013\n123 234 3\n123 234 78039\n123 234 5\n110 301 1024\n123 234 103680\n123 234 103682\n123 234 20641\n110 301 512\n123 234 103681\n110 301 1097\n110 301 3167\n211 398 43759\n353 616 6561\n211 398 43763\n353 616 122464\n353 616 5021024\n211 398 81\n353 616 19683\n432 433 106998173\n321 321 6",
+          "testOut": "F_123 + ... + F_234 is divisible by 343\nF_123 + ... + F_234 is NOT divisible by 2401\nF_123 + ... + F_234 is divisible by 26013\nF_123 + ... + F_234 is divisible by 3\nF_123 + ... + F_234 is NOT divisible by 78039\nF_123 + ... + F_234 is NOT divisible by 5\nF_110 + ... + F_301 is NOT divisible by 1024\nF_123 + ... + F_234 is NOT divisible by 103680\nF_123 + ... + F_234 is NOT divisible by 103682\nF_123 + ... + F_234 is divisible by 20641\nF_110 + ... + F_301 is divisible by 512\nF_123 + ... + F_234 is divisible by 103681\nF_110 + ... + F_301 is NOT divisible by 1097\nF_110 + ... + F_301 is divisible by 3167\nF_211 + ... + F_398 is NOT divisible by 43759\nF_353 + ... + F_616 is divisible by 6561\nF_211 + ... + F_398 is divisible by 43763\nF_353 + ... + F_616 is divisible by 122464\nF_353 + ... + F_616 is NOT divisible by 5021024\nF_211 + ... + F_398 is NOT divisible by 81\nF_353 + ... + F_616 is NOT divisible by 19683\nF_432 + ... + F_433 is divisible by 106998173\nF_321 + ... + F_321 is NOT divisible by 6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Even big numbers",
+          "isTest": false,
+          "testIn": "23\n121 240 32\n121 240 2522\n121 240 5\n121 240 121\n121 240 2521\n121 240 31\n121 240 25\n121 240 11\n121 240 6355441\n102 305 8\n121 240 81\n102 305 16\n121 240 61\n121 240 281\n345 602 17108701\n102 305 9168377\n345 602 500\n121 240 2520\n345 602 17165711\n102 305 27505131\n345 602 100\n450 451 12854199\n354 354 24",
+          "testOut": "F_121 + ... + F_240 is NOT divisible by 32\nF_121 + ... + F_240 is NOT divisible by 2522\nF_121 + ... + F_240 is divisible by 5\nF_121 + ... + F_240 is NOT divisible by 121\nF_121 + ... + F_240 is divisible by 2521\nF_121 + ... + F_240 is divisible by 31\nF_121 + ... + F_240 is NOT divisible by 25\nF_121 + ... + F_240 is divisible by 11\nF_121 + ... + F_240 is NOT divisible by 6355441\nF_102 + ... + F_305 is divisible by 8\nF_121 + ... + F_240 is NOT divisible by 81\nF_102 + ... + F_305 is NOT divisible by 16\nF_121 + ... + F_240 is divisible by 61\nF_121 + ... + F_240 is divisible by 281\nF_345 + ... + F_602 is divisible by 17108701\nF_102 + ... + F_305 is divisible by 9168377\nF_345 + ... + F_602 is NOT divisible by 500\nF_121 + ... + F_240 is NOT divisible by 2520\nF_345 + ... + F_602 is NOT divisible by 17165711\nF_102 + ... + F_305 is NOT divisible by 27505131\nF_345 + ... + F_602 is divisible by 100\nF_450 + ... + F_451 is divisible by 12854199\nF_354 + ... + F_354 is NOT divisible by 24",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Larger indices",
+          "isTest": true,
+          "testIn": "16\n1234 2345 4\n3897 3910 54988205\n1781 2444 9\n1234 2345 6\n1234 2345 36\n3560 4013 15\n1781 2444 2529\n1234 2345 3\n2123 4489 12810074\n1234 2345 9\n1234 2345 8\n2123 4489 25620148\n1234 2345 5\n1234 2345 7\n1234 2345 15\n1781 2444 18",
+          "testOut": "F_1234 + ... + F_2345 is divisible by 4\nF_3897 + ... + F_3910 is divisible by 54988205\nF_1781 + ... + F_2444 is divisible by 9\nF_1234 + ... + F_2345 is divisible by 6\nF_1234 + ... + F_2345 is NOT divisible by 36\nF_3560 + ... + F_4013 is NOT divisible by 15\nF_1781 + ... + F_2444 is divisible by 2529\nF_1234 + ... + F_2345 is divisible by 3\nF_2123 + ... + F_4489 is divisible by 12810074\nF_1234 + ... + F_2345 is NOT divisible by 9\nF_1234 + ... + F_2345 is NOT divisible by 8\nF_2123 + ... + F_4489 is NOT divisible by 25620148\nF_1234 + ... + F_2345 is NOT divisible by 5\nF_1234 + ... + F_2345 is NOT divisible by 7\nF_1234 + ... + F_2345 is NOT divisible by 15\nF_1781 + ... + F_2444 is NOT divisible by 18",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Larger indices",
+          "isTest": false,
+          "testIn": "14\n1230 2343 32\n1111 2222 68379666\n2156 4860 15\n3048 4482 12\n1230 2343 1789\n1230 2343 27\n3604 6705 6158652\n1230 2343 5\n1230 2343 108\n1111 2222 205138998\n1230 2343 36\n1230 2343 9\n1230 2343 15\n1230 2343 16",
+          "testOut": "F_1230 + ... + F_2343 is NOT divisible by 32\nF_1111 + ... + F_2222 is divisible by 68379666\nF_2156 + ... + F_4860 is NOT divisible by 15\nF_3048 + ... + F_4482 is NOT divisible by 12\nF_1230 + ... + F_2343 is divisible by 1789\nF_1230 + ... + F_2343 is NOT divisible by 27\nF_3604 + ... + F_6705 is divisible by 6158652\nF_1230 + ... + F_2343 is NOT divisible by 5\nF_1230 + ... + F_2343 is NOT divisible by 108\nF_1111 + ... + F_2222 is NOT divisible by 205138998\nF_1230 + ... + F_2343 is divisible by 36\nF_1230 + ... + F_2343 is divisible by 9\nF_1230 + ... + F_2343 is NOT divisible by 15\nF_1230 + ... + F_2343 is divisible by 16",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Even larger indices",
+          "isTest": true,
+          "testIn": "13\n12345 23456 2\n12345 23456 27\n12378 64506 2659000\n40045 70000 4023361\n12345 23456 7\n28090 34708 282609\n21568 554433 1488436\n12345 23456 81\n12345 23456 5\n34890 40566 243296\n12345 23456 16\n12345 23456 32\n12345 23456 3",
+          "testOut": "F_12345 + ... + F_23456 is divisible by 2\nF_12345 + ... + F_23456 is divisible by 27\nF_12378 + ... + F_64506 is NOT divisible by 2659000\nF_40045 + ... + F_70000 is divisible by 4023361\nF_12345 + ... + F_23456 is NOT divisible by 7\nF_28090 + ... + F_34708 is divisible by 282609\nF_21568 + ... + F_554433 is divisible by 1488436\nF_12345 + ... + F_23456 is NOT divisible by 81\nF_12345 + ... + F_23456 is NOT divisible by 5\nF_34890 + ... + F_40566 is NOT divisible by 243296\nF_12345 + ... + F_23456 is divisible by 16\nF_12345 + ... + F_23456 is NOT divisible by 32\nF_12345 + ... + F_23456 is divisible by 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Even larger indices",
+          "isTest": false,
+          "testIn": "19\n10347 60451 29\n10347 60451 58\n12347 23458 2\n12347 23458 32\n12347 23458 64\n12347 23458 3\n12347 23458 9\n12347 23458 27\n12347 23458 5\n12347 23458 7\n12347 23458 2207\n12347 23458 2777\n12347 23458 3167\n20570 54895 72774368\n20570 54895 145548736\n34891 41254 218921379\n34891 41254 656764137\n39800 60456 861\n39800 60456 4305",
+          "testOut": "F_10347 + ... + F_60451 is divisible by 29\nF_10347 + ... + F_60451 is NOT divisible by 58\nF_12347 + ... + F_23458 is divisible by 2\nF_12347 + ... + F_23458 is divisible by 32\nF_12347 + ... + F_23458 is NOT divisible by 64\nF_12347 + ... + F_23458 is divisible by 3\nF_12347 + ... + F_23458 is divisible by 9\nF_12347 + ... + F_23458 is NOT divisible by 27\nF_12347 + ... + F_23458 is NOT divisible by 5\nF_12347 + ... + F_23458 is NOT divisible by 7\nF_12347 + ... + F_23458 is divisible by 2207\nF_12347 + ... + F_23458 is divisible by 2777\nF_12347 + ... + F_23458 is divisible by 3167\nF_20570 + ... + F_54895 is divisible by 72774368\nF_20570 + ... + F_54895 is NOT divisible by 145548736\nF_34891 + ... + F_41254 is divisible by 218921379\nF_34891 + ... + F_41254 is NOT divisible by 656764137\nF_39800 + ... + F_60456 is divisible by 861\nF_39800 + ... + F_60456 is NOT divisible by 4305",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Become really big",
+          "isTest": true,
+          "testIn": "20\n654321 987654 4\n489 1005 258282\n654321 987654 3\n2468 897089 74400513\n654321 987654 55592635\n654321 987654 17\n489 1005 774846\n654321 987654 5\n48903 4680607 1399681\n654321 987654 289\n780613 980156 30\n654321 987654 54289\n48903 4680607 9797767\n654321 987654 53\n2468 897089 87927879\n654321 987654 2809\n654321 987654 11881\n780613 980156 6\n654321 987654 7647985\n654321 987654 29717",
+          "testOut": "F_654321 + ... + F_987654 is NOT divisible by 4\nF_489 + ... + F_1005 is divisible by 258282\nF_654321 + ... + F_987654 is NOT divisible by 3\nF_2468 + ... + F_897089 is divisible by 74400513\nF_654321 + ... + F_987654 is NOT divisible by 55592635\nF_654321 + ... + F_987654 is divisible by 17\nF_489 + ... + F_1005 is NOT divisible by 774846\nF_654321 + ... + F_987654 is NOT divisible by 5\nF_48903 + ... + F_4680607 is divisible by 1399681\nF_654321 + ... + F_987654 is NOT divisible by 289\nF_780613 + ... + F_980156 is NOT divisible by 30\nF_654321 + ... + F_987654 is NOT divisible by 54289\nF_48903 + ... + F_4680607 is NOT divisible by 9797767\nF_654321 + ... + F_987654 is divisible by 53\nF_2468 + ... + F_897089 is NOT divisible by 87927879\nF_654321 + ... + F_987654 is NOT divisible by 2809\nF_654321 + ... + F_987654 is NOT divisible by 11881\nF_780613 + ... + F_980156 is divisible by 6\nF_654321 + ... + F_987654 is NOT divisible by 7647985\nF_654321 + ... + F_987654 is divisible by 29717",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Become really big",
+          "isTest": false,
+          "testIn": "20\n815 2064 37105079\n815 2064 43851457\n3189 789015 5242\n3189 789015 15726\n654317 987658 8\n654317 987658 16\n654317 987658 5\n654317 987658 17\n654317 987658 289\n654317 987658 53\n654317 987658 2809\n654317 987658 109\n654317 987658 11881\n654317 987658 233\n654317 987658 196925089\n654317 987658 29717\n654317 987658 883100089\n654317 987658 37039\n777666 905436 29186772\n777666 905436 145933860",
+          "testOut": "F_815 + ... + F_2064 is divisible by 37105079\nF_815 + ... + F_2064 is NOT divisible by 43851457\nF_3189 + ... + F_789015 is divisible by 5242\nF_3189 + ... + F_789015 is NOT divisible by 15726\nF_654317 + ... + F_987658 is divisible by 8\nF_654317 + ... + F_987658 is NOT divisible by 16\nF_654317 + ... + F_987658 is NOT divisible by 5\nF_654317 + ... + F_987658 is divisible by 17\nF_654317 + ... + F_987658 is NOT divisible by 289\nF_654317 + ... + F_987658 is divisible by 53\nF_654317 + ... + F_987658 is NOT divisible by 2809\nF_654317 + ... + F_987658 is divisible by 109\nF_654317 + ... + F_987658 is NOT divisible by 11881\nF_654317 + ... + F_987658 is divisible by 233\nF_654317 + ... + F_987658 is NOT divisible by 196925089\nF_654317 + ... + F_987658 is divisible by 29717\nF_654317 + ... + F_987658 is NOT divisible by 883100089\nF_654317 + ... + F_987658 is divisible by 37039\nF_777666 + ... + F_905436 is divisible by 29186772\nF_777666 + ... + F_905436 is NOT divisible by 145933860",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Really huge",
+          "isTest": true,
+          "testIn": "13\n987000000 987654321 6493915\n123456789 123567900 8690943\n523489014 528904156 121639\n987000000 987654321 48533\n987000000 987654321 3\n987000000 987654321 2\n523489014 528904156 364917\n987000000 987654321 17\n987000000 987654321 289\n123456789 123567900 10373061\n987000000 987654321 9349\n987000000 987654321 34439\n987000000 987654321 4021",
+          "testOut": "F_987000000 + ... + F_987654321 is NOT divisible by 6493915\nF_123456789 + ... + F_123567900 is NOT divisible by 8690943\nF_523489014 + ... + F_528904156 is divisible by 121639\nF_987000000 + ... + F_987654321 is divisible by 48533\nF_987000000 + ... + F_987654321 is NOT divisible by 3\nF_987000000 + ... + F_987654321 is divisible by 2\nF_523489014 + ... + F_528904156 is NOT divisible by 364917\nF_987000000 + ... + F_987654321 is divisible by 17\nF_987000000 + ... + F_987654321 is NOT divisible by 289\nF_123456789 + ... + F_123567900 is divisible by 10373061\nF_987000000 + ... + F_987654321 is divisible by 9349\nF_987000000 + ... + F_987654321 is divisible by 34439\nF_987000000 + ... + F_987654321 is divisible by 4021",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Really huge",
+          "isTest": false,
+          "testIn": "13\n513489014 518904153 407935\n513489014 518904153 482105\n987123456 987654441 2\n987123456 987654441 3\n987123456 987654441 5\n987123456 987654441 11\n987123456 987654441 121\n987123456 987654441 31\n987123456 987654441 151\n987123456 987654441 3001\n987123456 987654441 12301\n987123456 987654441 18451\n987123456 987654441 987654441",
+          "testOut": "F_513489014 + ... + F_518904153 is divisible by 407935\nF_513489014 + ... + F_518904153 is NOT divisible by 482105\nF_987123456 + ... + F_987654441 is divisible by 2\nF_987123456 + ... + F_987654441 is NOT divisible by 3\nF_987123456 + ... + F_987654441 is divisible by 5\nF_987123456 + ... + F_987654441 is divisible by 11\nF_987123456 + ... + F_987654441 is NOT divisible by 121\nF_987123456 + ... + F_987654441 is divisible by 31\nF_987123456 + ... + F_987654441 is divisible by 151\nF_987123456 + ... + F_987654441 is divisible by 3001\nF_987123456 + ... + F_987654441 is divisible by 12301\nF_987123456 + ... + F_987654441 is divisible by 18451\nF_987123456 + ... + F_987654441 is NOT divisible by 987654441",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Other really huge",
+          "isTest": true,
+          "testIn": "18\n999000000 1000000000 15625\n1000000000 1000000000 5\n42 4894511 452240819\n979000000 979002345 28883462\n1000000000 1000000000 1953125\n1000000000 1000000000 41\n979000000 979002345 43325193\n1000000000 1000000000 1681\n999000000 1000000000 78125\n1000000000 1000000000 3\n999000000 1000000000 7\n42 4894511 421051797\n999000000 1000000000 11\n1000000000 1000000000 9765625\n1000000000 1000000000 1\n999000000 1000000000 1681\n1000000000 1000000000 7\n1000000000 1000000000 11",
+          "testOut": "F_999000000 + ... + F_1000000000 is divisible by 15625\nF_1000000000 + ... + F_1000000000 is divisible by 5\nF_42 + ... + F_4894511 is divisible by 452240819\nF_979000000 + ... + F_979002345 is divisible by 28883462\nF_1000000000 + ... + F_1000000000 is divisible by 1953125\nF_1000000000 + ... + F_1000000000 is divisible by 41\nF_979000000 + ... + F_979002345 is NOT divisible by 43325193\nF_1000000000 + ... + F_1000000000 is NOT divisible by 1681\nF_999000000 + ... + F_1000000000 is NOT divisible by 78125\nF_1000000000 + ... + F_1000000000 is divisible by 3\nF_999000000 + ... + F_1000000000 is divisible by 7\nF_42 + ... + F_4894511 is NOT divisible by 421051797\nF_999000000 + ... + F_1000000000 is divisible by 11\nF_1000000000 + ... + F_1000000000 is NOT divisible by 9765625\nF_1000000000 + ... + F_1000000000 is divisible by 1\nF_999000000 + ... + F_1000000000 is NOT divisible by 1681\nF_1000000000 + ... + F_1000000000 is divisible by 7\nF_1000000000 + ... + F_1000000000 is divisible by 11",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Other really huge",
+          "isTest": false,
+          "testIn": "18\n666 1234561 15513751\n666 1234561 18334433\n978000000 978002345 10094978\n978000000 978002345 35332423\n998000000 1000000000 15625\n998000000 1000000000 78125\n998000000 1000000000 7\n998000000 1000000000 11\n998000000 1000000000 13\n998000000 1000000000 41\n998000000 1000000000 1681\n1000000000 1000000000 1\n1000000000 1000000000 3\n1000000000 1000000000 5\n1000000000 1000000000 1953125\n1000000000 1000000000 9765625\n1000000000 1000000000 7\n1000000000 1000000000 11",
+          "testOut": "F_666 + ... + F_1234561 is divisible by 15513751\nF_666 + ... + F_1234561 is NOT divisible by 18334433\nF_978000000 + ... + F_978002345 is divisible by 10094978\nF_978000000 + ... + F_978002345 is NOT divisible by 35332423\nF_998000000 + ... + F_1000000000 is divisible by 15625\nF_998000000 + ... + F_1000000000 is NOT divisible by 78125\nF_998000000 + ... + F_1000000000 is divisible by 7\nF_998000000 + ... + F_1000000000 is divisible by 11\nF_998000000 + ... + F_1000000000 is divisible by 13\nF_998000000 + ... + F_1000000000 is divisible by 41\nF_998000000 + ... + F_1000000000 is NOT divisible by 1681\nF_1000000000 + ... + F_1000000000 is divisible by 1\nF_1000000000 + ... + F_1000000000 is divisible by 3\nF_1000000000 + ... + F_1000000000 is divisible by 5\nF_1000000000 + ... + F_1000000000 is divisible by 1953125\nF_1000000000 + ... + F_1000000000 is NOT divisible by 9765625\nF_1000000000 + ... + F_1000000000 is divisible by 7\nF_1000000000 + ... + F_1000000000 is divisible by 11",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "{{1}} ≤ [[nb]] ≤ {{30}}\n{{0}} ≤ [[a]] ≤ [[b]] ≤ {{1,000,000,000}}\n[[b]] - [[a]] ≤ {{10,000,000}}\n{{1}} ≤ [[d]] ≤ {{1,000,000,000}}",
+      "coverBinaryId": 57345580405085,
+      "stubGenerator": "read nb:int\nloop nb read a:int b:int d:int\nwrite answer",
+      "inputDescription": "<<Line 1:>> An non negative integer [[nb]] for the number of tests.\n\n<<Next [[nb]] lines:>> Three space separated non negative integers [[a]], [[b]] and [[d]] for the first index, for the last index, and for the divisor.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[nb]] lines:>> `\"F_[[a]] + ... + F_[[b]] is divisible by [[d]]\"` or `\"F_[[a]] + ... + F_[[b]] is NOT divisible by [[d]]\"`"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><strong>Sum of consecutive big Fibonacci numbers is divisible or not?</strong><br><br>Let <var>a</var>, <var>b</var> and <var>d</var> non negative integers.<br><strong>Determine if <var>d</var> divides F_<var>a</var> + F_{<var>a</var>+1} + F_{<var>a</var>+2} + &hellip; + F_<var>b</var>.</strong><br><br>The difficulty is that we ask that for <strong>some very big indices <var>a</var></strong>.<br><br>Remember that the well-known Fibonacci numbers is a sequence of numbers starting with 0 and 1, and after that each number is the sum of the two previous ones.<br><br>F_0 = <const>0</const><br>F_1 = <const>1</const><br>F_{n+2} = F_{n+1} + F_n<br><br>So the first Fibonacci numbers are:<br>0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233&hellip;<br><br><strong>Example:</strong><br><var>a</var> = 10<br><var>b</var> = 12<br>F_10 + F_11 + F_12 = 55 + 89 + 144 = 288 = 32 * 9 = 2^5 * 3^2<br><br>This sum is divisible by <var>d</var> = 2, 4, 8, 16 and 32, but NOT by 64.<br>This sum is divisible by <var>d</var> = 3 and 9, but NOT by 27.<br>This sum is NOT divisible by <var>d</var> = 5.<br>This sum is divisible by <var>d</var> = 6.<br>&hellip;<br><br>Example of input:<br><pre style=\"font-family: monospace\">2<br>10 12 3<br>10 12 5</pre><br>And the expected output:<br><pre style=\"font-family: monospace\">F_10 + ... + F_12 is divisible by 3<br>F_10 + ... + F_12 is NOT divisible by 5</pre><br>(When <var>a</var> = <var>b</var> write in the same way the beginning &quot;F_<var>a</var> + ... + F_<var>b</var>&quot;<br>even if there is only one term.)<br><br><strong>Hints:</strong><br>Implementations of Fibonacci numbers computation is an usual example about recursivity and algorithmic complexity. The obvious way to implement it with recursion is a classical example of complexity explosion. There is several way to fix that, and the most obvious is the simple iteration that compute the result in a linear number of steps (if we consider that operations on numbers are in constant time, which is not really the case). The key point to solve this challenge is to find a mathematical way to be better than that and to implement it.<br>To help you can read the &quot;Matrix form&quot; section in &quot;Fibonacci number&quot; article on Wikipedia:<br>https://en.wikipedia.org/wiki/Fibonacci_number#Matrix_form<br><br>Maybe this list of the first 300 Fibonacci numbers and their factorization can help you:<br>http://www.maths.surrey.ac.uk/hosted-sites/R.Knott/Fibonacci/fibtable.html#100<br>But if you need these big numbers, you are probably on a wrong way. ;-)<br><br>Enjoy!<br><br>(If you are interested by the mathematical aspect, there exist a lot of nice properties about this sequence:<br>https://oeis.org/A000045 )<br><br>(The illustration image is a part of one page of the Liber Abaci:<br>https://commons.wikimedia.org/wiki/File:Liber_abbaci_magliab_f124r.jpg )</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An non negative integer <var>nb</var> for the number of tests.<br><br><strong>Next <var>nb</var> lines:</strong> Three space separated non negative integers <var>a</var>, <var>b</var> and <var>d</var> for the first index, for the last index, and for the divisor.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>nb</var> lines:</strong> <pre style=\"font-family: monospace\">&quot;F_<var>a</var> + ... + F_<var>b</var> is divisible by <var>d</var>&quot;</pre> or <pre style=\"font-family: monospace\">&quot;F_<var>a</var> + ... + F_<var>b</var> is NOT divisible by <var>d</var>&quot;</pre></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><const>1</const> &le; <var>nb</var> &le; <const>30</const><br><const>0</const> &le; <var>a</var> &le; <var>b</var> &le; <const>1,000,000,000</const><br><var>b</var> - <var>a</var> &le; <const>10,000,000</const><br><const>1</const> &le; <var>d</var> &le; <const>1,000,000,000</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">13\n10 12 2\n10 12 32\n10 12 64\n10 12 3\n10 12 9\n10 12 27\n10 12 5\n10 12 7\n10 12 11\n10 12 287\n10 12 288\n10 12 289\n10 12 1000</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">F_10 + ... + F_12 is divisible by 2\nF_10 + ... + F_12 is divisible by 32\nF_10 + ... + F_12 is NOT divisible by 64\nF_10 + ... + F_12 is divisible by 3\nF_10 + ... + F_12 is divisible by 9\nF_10 + ... + F_12 is NOT divisible by 27\nF_10 + ... + F_12 is NOT divisible by 5\nF_10 + ... + F_12 is NOT divisible by 7\nF_10 + ... + F_12 is NOT divisible by 11\nF_10 + ... + F_12 is NOT divisible by 287\nF_10 + ... + F_12 is divisible by 288\nF_10 + ... + F_12 is NOT divisible by 289\nF_10 + ... + F_12 is NOT divisible by 1000</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 155356297496,
+  "avatar": 4287227197454,
+  "commentCount": 26,
+  "upVotes": 12,
+  "downVotes": 5,
+  "validateAction": {
+    "actionId": 537720,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1615374362255,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

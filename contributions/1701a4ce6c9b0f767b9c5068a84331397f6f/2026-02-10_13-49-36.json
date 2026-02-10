@@ -1,0 +1,157 @@
+{
+  "id": 1701,
+  "activeVersion": 25,
+  "score": 4,
+  "votableId": 9094842,
+  "codingamerId": 158495,
+  "views": 227,
+  "commentableId": 9029334,
+  "title": "Rooks Movements",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Cr3aHal0",
+  "publicHandle": "1701a4ce6c9b0f767b9c5068a84331397f6f",
+  "codingamerHandle": "f638ca9f46726d07f9ac1c0a0bd21edb594851",
+  "lastVersion": {
+    "version": 25,
+    "autocloseTime": 1542542306336,
+    "data": {
+      "title": "Rooks Movements",
+      "topics": [
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 38,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        },
+        {
+          "id": 46,
+          "handle": "loops",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 38,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        },
+        {
+          "id": 137,
+          "handle": "chess",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Échecs",
+            "2": "Chess"
+          },
+          "puzzleCount": 7,
+          "parentTopicId": 107
+        },
+        {
+          "labelMap": {
+            "2": "Classic board games"
+          }
+        }
+      ],
+      "solution": "// This is absolutely not code golf \n// from chess-convention to <x,y> convention\n\nlet absX = 'hgfedcba';\nlet absY = '87654321';\n\nlet getX = (x) => absX.indexOf(x);\nlet getY = (y) => absY.indexOf(y);\n\nlet getCol = (x) => absX[x];\nlet getRow = (y) => absY[y];\n\n//\nlet isValid = (x, y) => x >= 0 && x < 8 && y >= 0 && y < 8;\n\n// Consts\n\nlet COLOR = {\n    WHITE: 0,\n    BLACK: 1\n};\n\n// Components\n\n/**\n * A piece onto the board\n */\nclass Piece {\n    /**\n     * Constructor\n     * @param type piece type (useless)\n     * @param color piece color (either COLOR.WHITE, COLOR.BLACK)\n     * @param x x position onto the board\n     * @param y y position onto the board\n     */\n    constructor(type, color, x, y) {\n        this.type = type;\n        this.color = color;\n        this.x = x;\n        this.y = y;\n    }\n}\n\n/**\n * Simple grid class\n */\nclass Grid {\n\n    /**\n     * Initialize an empty grid\n     */\n    constructor () {\n        this.matrix = new Array(8);\n        for (let i = 0; i < 8; i++) {\n            this.matrix[i] = new Array(8).fill(null);\n        }\n    }\n\n    /**\n     * Add a given piece to a place it belongs\n     * @param piece Piece instance\n     */\n    add (piece) {\n        if (isValid(piece.x, piece.y)) {\n            this.matrix[piece.y][piece.x] = piece;\n        }\n    }\n\n    /**\n     * Retrieve the content of a given cell\n     * @param x x position within the grid\n     * @param y y position within the grid\n     * @returns Piece|null\n     */\n    get (x, y) {\n        if (isValid(x, y)) {\n            return this.matrix[y][x];\n        }\n    }\n}\n\n/**\n * Game class\n */\nclass Game {\n\n    /**\n     * Constructor\n     */\n    constructor() {\n        this.grid = new Grid();\n        this.pieces = [];\n    }\n\n    /**\n     * Add a set of pieces to the chessboard\n     * @param pieces a set of pieces\n     */\n    addPieces(pieces) {\n        if (!Array.isArray(pieces)) {\n            pieces = [ pieces ];\n        }\n        pieces.forEach(piece => {\n            this.grid.add(piece);\n            this.pieces.push(piece);\n        });\n    }\n\n    /**\n     * Define which rook will be played\n     * @param rook\n     */\n    setRook(rook) {\n        this.rook = rook;\n    }\n\n    /**\n     * Look for available legit chess moves\n     * @returns {Array} a set of available moves\n     */\n    run () {\n\n        //Room for improvement...\n        if (!this.rook) {\n            //this.rook = this.pieces.filter(piece => piece.color == COLOR.WHITE && piece.type == 'T');\n            //if (!this.rook) {\n                throw new Error(\"Rook has not been defined and could not have been determinate\");\n            //}\n        }\n\n        let theRook = this.rook;\n        let theGrid = this.grid;\n        var moves = [];\n\n        //Top\n        for (let yIdx = theRook.y -1; yIdx >= 0; yIdx--) {\n            let cell = theGrid.get(theRook.x, yIdx);\n            if (!cell) {\n                moves.push('R'+ getCol(theRook.x) + getRow(theRook.y) +'-'+ getCol(theRook.x) + getRow(yIdx));\n            } else {\n                if (cell.color == COLOR.BLACK) {\n                    moves.push('R'+ getCol(theRook.x) + getRow(theRook.y) +'x'+ getCol(theRook.x) + getRow(yIdx));\n                }\n                break;\n            }\n        }\n\n        //Right\n        for (let xIdx = theRook.x+1; xIdx < 8; xIdx++) {\n            let cell = theGrid.get(xIdx, theRook.y);\n            if (!cell) {\n                moves.push('R'+ getCol(theRook.x) + getRow(theRook.y) +'-'+ getCol(xIdx) + getRow(theRook.y));\n            } else {\n                if (cell.color == COLOR.BLACK) {\n                    moves.push('R'+ getCol(theRook.x) + getRow(theRook.y) +'x'+ getCol(xIdx) + getRow(theRook.y));\n                }\n                break;\n            }\n        }\n\n        //Bottom\n        for (let yIdx = theRook.y+1; yIdx < 8; yIdx++) {\n            let cell = theGrid.get(theRook.x, yIdx);\n            if (!cell) {\n                moves.push('R'+ getCol(theRook.x) + getRow(theRook.y) +'-'+ getCol(theRook.x) + getRow(yIdx));\n            } else {\n                if (cell.color == COLOR.BLACK) {\n                    moves.push('R'+ getCol(theRook.x) + getRow(theRook.y) +'x'+ getCol(theRook.x) + getRow(yIdx));\n                }\n                break;\n            }\n        }\n\n        //Left\n        for (let xIdx = theRook.x-1; xIdx >= 0; xIdx--) {\n            let cell = theGrid.get(xIdx, theRook.y);\n            if (!cell) {\n                moves.push('R'+ getCol(theRook.x) + getRow(theRook.y) +'-'+ getCol(xIdx) + getRow(theRook.y));\n            } else {\n                if (cell.color == COLOR.BLACK) {\n                    moves.push('R'+ getCol(theRook.x) + getRow(theRook.y) +'x'+ getCol(xIdx) + getRow(theRook.y));\n                }\n                break;\n            }\n        }\n\n        return moves;\n    }\n}\n\nlet rookPos = readline().split('');\nlet theRook = new Piece('T', COLOR.WHITE, getX(rookPos[0]), getY(rookPos[1]));\n\nlet piecesNb = +readline();\nlet pieces = [];\n\nfor (let i = 0; i < piecesNb; i++) {\n    var aPiece = readline().split(' ');\n    var aPos = aPiece[1];\n    pieces.push(new Piece('X', +aPiece[0], getX(aPos[0]), getY(aPos[1])));\n}\n\n// initialize the game board\nlet game = new Game();\ngame.addPieces(pieces.concat(theRook));\ngame.setRook(theRook);\n\n//Do run game\nlet moves = game.run();\n\nmoves.sort();\nmoves.forEach(m => print(m));",
+      "statement": "In chess, the board is split in 8 rows and 8 columns. Considering the view of the game to be from the white side, the utmost top left cell is called <<a8>> and the utmost top rightcell is called <<h8>>. Decreasing from top to bottom of the chessboard, the utmost down left cell is then called <<a1>> and the utmost down right cell is called <<h1>>. \n\nA rook is a piece than can move as many cells as it want to vertically or horizontally. A rook can't go past an ally unit but can replace an opponent one.\n\nEach position must be a valid chessboard-position notation (Algebraic notation) such that it is identified by a {{column}} identifier from <<a>> to <<h>> and a {{row}} identifier from <<1>> to <<8>>.\n\nGiven a white rook and a set of chess pieces that can be yours (white) or not (black), print all available movements for the rook in the current configuration.",
+      "testCases": [
+        {
+          "title": "MOVING FREELY",
+          "isTest": true,
+          "testIn": "d5\n2\n0 c1\n1 e8",
+          "testOut": "Rd5-a5\nRd5-b5\nRd5-c5\nRd5-d1\nRd5-d2\nRd5-d3\nRd5-d4\nRd5-d6\nRd5-d7\nRd5-d8\nRd5-e5\nRd5-f5\nRd5-g5\nRd5-h5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "ANYBODY IN THERE",
+          "isTest": false,
+          "testIn": "f7\n3\n1 e6\n1 g8\n1 g6",
+          "testOut": "Rf7-a7\nRf7-b7\nRf7-c7\nRf7-d7\nRf7-e7\nRf7-f1\nRf7-f2\nRf7-f3\nRf7-f4\nRf7-f5\nRf7-f6\nRf7-f8\nRf7-g7\nRf7-h7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "CLOSE TO THE EDGE",
+          "isTest": true,
+          "testIn": "a8\n5\n0 e8\n1 d7\n0 c6\n1 b5\n0 a4",
+          "testOut": "Ra8-a5\nRa8-a6\nRa8-a7\nRa8-b8\nRa8-c8\nRa8-d8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "CLOSE TO THE EDGE 2",
+          "isTest": false,
+          "testIn": "h1\n5\n1 d1\n0 e4\n1 f3\n0 g5\n1 h2",
+          "testOut": "Rh1-e1\nRh1-f1\nRh1-g1\nRh1xd1\nRh1xh2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "ONLY ALLIES",
+          "isTest": true,
+          "testIn": "d5\n2\n0 g5\n0 d2",
+          "testOut": "Rd5-a5\nRd5-b5\nRd5-c5\nRd5-d3\nRd5-d4\nRd5-d6\nRd5-d7\nRd5-d8\nRd5-e5\nRd5-f5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "ONLY ALLIES 2",
+          "isTest": false,
+          "testIn": "e2\n3\n0 e1\n0 d2\n0 e3",
+          "testOut": "Re2-f2\nRe2-g2\nRe2-h2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "FOR FRODOOO",
+          "isTest": true,
+          "testIn": "d5\n3\n0 g5\n0 d2\n1 d7",
+          "testOut": "Rd5-a5\nRd5-b5\nRd5-c5\nRd5-d3\nRd5-d4\nRd5-d6\nRd5-e5\nRd5-f5\nRd5xd7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "FOR FRODOOO 2",
+          "isTest": false,
+          "testIn": "g2\n4\n1 e2\n1 g4\n1 g1\n1 h2",
+          "testOut": "Rg2-f2\nRg2-g3\nRg2xe2\nRg2xg1\nRg2xg4\nRg2xh2",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "The grid is always an {{8}}*{{8}} matrix",
+      "stubGenerator": "read rookPosition:word(2)\nread nbPieces:int\nloop nbPieces read colour:int onePiece:word(4)\n\nwrite ANSWER",
+      "inputDescription": "<<First line : >> the position of the white rook\n<<Second line : >> the amount [[P]] of pieces to be placed on the board\n<<Next [[P]] lines : >> [[P]] space-separated lines containing attributes for each piece : [[color]] [[position]]\n\n[[color]] is either {{0}} (WHITE) or {{1}} (BLACK)\n[[position]] is the chessboard-notation of the position of the given piece",
+      "solutionLanguage": "Javascript",
+      "outputDescription": "A list of space-separated [[combination]] where [[combination]] has the following shape :\n\nR[[from_position]][[action]][[to_position]] with [[from_position]] being the actual position of the white rook and [[to_position]] being a possible destination for the white rook, both in the chessboard-position format. [[action]] should be {{x}} if the movement involves taking an opponent pieces, {{-}} otherwise.\n\nFor instance, if the white rook is in <<d5>> and can move to <<d6>>, then the output must be <<Rd5-d6>>.\nIf the white rook is in <<e4>> and can capture an opponent piece in <<e3>>, then the output must be <<Re4xe3>>\n\nMoves must be sorted in <<ascending lexicographical ASCII order>>"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">In chess, the board is split in 8 rows and 8 columns. Considering the view of the game to be from the white side, the utmost top left cell is called <strong>a8</strong> and the utmost top rightcell is called <strong>h8</strong>. Decreasing from top to bottom of the chessboard, the utmost down left cell is then called <strong>a1</strong> and the utmost down right cell is called <strong>h1</strong>. <br><br>A rook is a piece than can move as many cells as it want to vertically or horizontally. A rook can't go past an ally unit but can replace an opponent one.<br><br>Each position must be a valid chessboard-position notation (Algebraic notation) such that it is identified by a <const>column</const> identifier from <strong>a</strong> to <strong>h</strong> and a <const>row</const> identifier from <strong>1</strong> to <strong>8</strong>.<br><br>Given a white rook and a set of chess pieces that can be yours (white) or not (black), print all available movements for the rook in the current configuration.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>First line : </strong> the position of the white rook<br><strong>Second line : </strong> the amount <var>P</var> of pieces to be placed on the board<br><strong>Next <var>P</var> lines : </strong> <var>P</var> space-separated lines containing attributes for each piece : <var>color</var> <var>position</var><br><br><var>color</var> is either <const>0</const> (WHITE) or <const>1</const> (BLACK)<br><var>position</var> is the chessboard-notation of the position of the given piece</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">A list of space-separated <var>combination</var> where <var>combination</var> has the following shape :<br><br>R<var>from_position</var><var>action</var><var>to_position</var> with <var>from_position</var> being the actual position of the white rook and <var>to_position</var> being a possible destination for the white rook, both in the chessboard-position format. <var>action</var> should be <const>x</const> if the movement involves taking an opponent pieces, <const>-</const> otherwise.<br><br>For instance, if the white rook is in <strong>d5</strong> and can move to <strong>d6</strong>, then the output must be <strong>Rd5-d6</strong>.<br>If the white rook is in <strong>e4</strong> and can capture an opponent piece in <strong>e3</strong>, then the output must be <strong>Re4xe3</strong><br><br>Moves must be sorted in <strong>ascending lexicographical ASCII order</strong></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">The grid is always an <const>8</const>*<const>8</const> matrix</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">d5\n2\n0 c1\n1 e8</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Rd5-a5\nRd5-b5\nRd5-c5\nRd5-d1\nRd5-d2\nRd5-d3\nRd5-d4\nRd5-d6\nRd5-d7\nRd5-d8\nRd5-e5\nRd5-f5\nRd5-g5\nRd5-h5</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 230578037733,
+  "avatar": 11235124705354,
+  "commentCount": 10,
+  "upVotes": 5,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 274732,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

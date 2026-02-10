@@ -1,0 +1,335 @@
+{
+  "id": 26614,
+  "activeVersion": 45,
+  "score": 7,
+  "votableId": 24790675,
+  "codingamerId": 878974,
+  "views": 298,
+  "commentableId": 24671841,
+  "title": "Running Up That Hill",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "nicola",
+  "publicHandle": "26614af4d3401540b127d7fcd8a230804eb2c",
+  "codingamerHandle": "21bf42f790de293c3aef398f18cd2627479878",
+  "lastVersion": {
+    "version": 45,
+    "autocloseTime": 1661959959274,
+    "data": {
+      "title": "Running Up That Hill",
+      "topics": [
+        {
+          "id": 74,
+          "handle": "cryptology",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Cryptologie",
+            "2": "Cryptography"
+          },
+          "pageTitle": "Cryptography: exercises and theory",
+          "puzzleCount": 15,
+          "parentTopicId": 43,
+          "contentDetailsId": 105
+        },
+        {
+          "id": 94,
+          "handle": "mathematics",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Mathematics",
+            "2": "Mathematics"
+          },
+          "puzzleCount": 41,
+          "parentTopicId": 93
+        },
+        {
+          "id": 105,
+          "handle": "modular-calculus",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Modular calculus",
+            "2": "Modular calculus"
+          },
+          "puzzleCount": 8,
+          "parentTopicId": 93
+        },
+        {
+          "labelMap": {
+            "2": "Linear algebra"
+          }
+        },
+        {
+          "id": 129,
+          "handle": "arithmetic",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Arithmetic",
+            "2": "Arithmetic"
+          },
+          "puzzleCount": 25,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "cipher_1 = input()\nclear_1 = input()\ncipher_2 = input()\nclear_3 = input()\n\nalphanum=\"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:\"\nnumalpha={c:alphanum.index(c) for c in alphanum}\ndiv=[i for i in range(2,len(cipher_1)) if len(cipher_1)%i==0]\n\n# Les éléments inversibles\ninv45={i for i in range(45) if i%3 and i%5}\n# Les inverses des éléments inversibles\ninv45b=[[None,pow(i,23,45)][i in inv45] for i in range(45)]\n\ndef combinations(liste,l):\n  n=len(liste)\n  for i in range(2**n):\n    b=list(map(int,bin(i)[2:].rjust(n,\"0\")))\n    if sum(b)==l:\n      yield [liste[j] for j in range(n) if b[j]]\n\ndef prodmat(M,V):\n    \"\"\"Calcule le produit d’une matrice et d’un vecteur colonne.\"\"\"\n    return [sum(l[i]*V[i] for i in range(len(V)))%45 for l in M]\n\ndef chiffre(H,m):\n    \"\"\"Chiffre le vecteur m en utilisant la matrice de Hill H.\n    S’utilise aussi pour déchiffrer en utilisant l’inverse de H.\"\"\"\n    if len(m)%len(H):\n        raise ValueError(\"La longueur de la clé doit diviser la longueur du message.\")\n    if det(H)!=1:\n        raise ValueError(\"Le déterminant de la clé doit être égal à 1, il est %d.\"%det(H))\n    h=len(H)\n    c=\"\"\n    for i in range(len(m)//h):\n        V=[numalpha[c] for c in m[h*i:h*(i+1)]]\n        c+=\"\".join(alphanum[c] for c in prodmat(H,V))\n    return c\n\ndef det(M):\n    \"\"\"Calcule le déterminant d’une matrice récursivement en développant selon la première colonne.\n    Noter qu’une matrice de Hill a un déterminant égal à 1 en principe.\"\"\"\n    if any(len(M)!=len(l) for l in M):\n        raise ValueError(\"La matrice n’est pas carrée\")\n    if len(M)==1:\n        return M[0][0]\n    s=0\n    for i,l in enumerate(M):\n        if M[i][0]:\n            N=[l[1:] for j,l in enumerate(M) if j!=i]\n            s+=(-1)**i*M[i][0]*det(N)\n    return s%45\n\ndef pgcd(a,b):\n    \"\"\"Calcule le PGCD de deux nombres.\"\"\"\n    a,b=abs(a),abs(b)\n    a,b=max(a,b),min(a,b)\n    while a:\n        b,a=a,b%a\n    return b\n\ndef gcd(l):\n    \"\"\"Calcule le PGCD de plusieurs nombres récursivement.\"\"\"\n    if len(l)==1:\n        return l[0]\n    return pgcd(l[0],gcd(l[1:]))\n\ndef gauss(mat):\n    \"\"\"Algorithme du pivot de Gauß pour créer une matrice triangulaire supérieure.\n    La technique est récursive.\n    L’algorithme est légèrement adapté pour notre cas modulaire.\"\"\"\n    m=list(mat)\n    for i in range(len(m)):\n        if m[i][0]<0:\n            for j in range(len(m[0])):\n                m[i][j]*=-1\n        g=gcd(m[i])\n        if g>1:\n            for j in range(len(m[0])):\n                m[i][j]//=g\n    if len(mat)==1:\n        return mat\n    while True:\n        c=[l[0] for l in m]\n        pivot=c.index(min(set(c)-{0}))\n        m[pivot],m[0]=m[0],m[pivot]\n        if c.count(0)==len(m)-1:\n            break\n        for i in range(1,len(m)):\n            if m[i][0]:\n                for j in range(len(m[0])):\n                    m[i][j]-=m[0][j]\n                    m[i][j]%=45\n    m1=gauss([l[1:] for l in m[1:]])\n    return [m[0]]+[[0]+l for l in m1]\n\ndef diagonale(mat):\n    \"\"\"Fin de l’algorithme du pivot de Gauß, on se débrouille pour que la diagonale soit unitaire.\"\"\"\n    m=list(mat)\n    for i in range(len(m)):\n        b=inv45b[m[i][i]]\n        for j in range(i,len(m[0])):\n            m[i][j]*=b\n            m[i][j]%=45\n    for i in range(len(m)-1,0,-1):\n        for j in range(i-1,-1,-1):\n            for k in range(len(m),len(m[0])):\n                m[j][k]-=m[j][i]*m[i][k]\n                m[j][k]%=45\n            m[j][i]=0\n    return [l[len(m):] for l in m]\n\ndef plus1(mat):\n    \"\"\"En vue de l’inversion de matrice, on concatène la matrice unité à droite.\"\"\"\n    n=len(mat)\n    return [l+[0]*i+[1]+[0]*(n-i-1) for i,l in enumerate(mat)]\n\ndef invmat(mat):\n    \"\"\"Calcul de la matrice modulaire inverse.\"\"\"\n    return diagonale(gauss(plus1(mat)))\n\ndef système(mat,v):\n    \"\"\"Résout le système de matrice m et de vecteur v.\"\"\"\n    return [e[0] for e in diagonale(gauss([l+[v[i]] for i,l in enumerate(mat)]))]\n\nfor l in div:\n    \"\"\"On cherche les l-uplets qui rendent la recherche de la matrice de Hill inversible.\"\"\"\n    mat=[[0]*l**2 for _ in range(l**2)]\n    c=[]\n    for c in combinations(range(len(clear_1)//l),l):\n        for i in range(l):\n            for j in range(l):\n                mat[i*l+j][j*l:j*l+l]=[numalpha[C] for C in clear_1[c[i]*l:c[i]*l+l]]\n        if pgcd(det([L[:l] for L in mat[::l]]),45)==1:\n            break\n    v=[numalpha[c] for c in \"\".join(cipher_1[i*l:i*l+l] for i in c)[:l**2]]\n    H=[]\n    m=système(mat,v)\n    for i in range(l):\n        H.append(m[i*l:i*l+l])\n    \"\"\"Si la matrice de Hill est correcte, les deux premiers messages sont inverses l’un de l’autre.\"\"\"\n    if det(H)==1 and chiffre(H,clear_1)==cipher_1:\n        Hi=invmat(H)\n        print(chiffre(Hi,cipher_2))\n        print(chiffre(H,clear_3))\n        break",
+      "statement": "You are Catherine, you know that Alice and Bob are chatting secretly and you want to be the woman in the middle; ie you want to intercept Alice and Bob’s messages, to read them and to send them messages that you cipher in place of theirs. If Alice sent Bob a message, Bob will never receive Alice’s message but yours instead.\nYou are lucky: you caught a ciphered text and its clear version and you know that they are using the Hill cipher method.\nYou have to find the Hill matrix in order to decipher a text from Alice or Bob and to cipher the text you want to send instead.\n\nThe texts are using the 45 symbols of the alphanumeric encoding of the QR codes:\n{{0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:}} (yes, it’s a space between the Z and the $)\n\n<<How to>>:\nThe Hill cipher uses matrix multiplication (here, with a modulus of 45).\nFor example, you have to cipher [[CODINGAME.]] with A, a 2×2 matrix.\n[[CODINGAME.]] is [[12 24 13 18 23 16 10 22 14 42]] (because {{C}}’s index is 12).\n\nIf A is:\n`⎡6 5⎤\n⎣7 6⎦`\nThe first pair of ciphered symbols will be:\n[[6×12+5×24 mod 45 = 192 mod 45 = 12]] that is {{C}} and [[7×12+6×24 mod 45 = 228 mod 45 = 3]] that is {{3}}.\nThus, {{CO}} is ciphered {{C3}}, the product A×T mod 45 where T is the column matrix whose elements are 12 and 24.\nFinally, the ciphered text is {{C3XJ%WZMOZ}}.\n\nIf the matrix’s size is 3, you will cipher 3 characters at a time.\n\nFor this puzzle, you have to find the cipher matrix (and its size) and how to decipher.",
+      "testCases": [
+        {
+          "title": "Example: 2×2",
+          "isTest": true,
+          "testIn": "C3XJ%WZMOZ\nCODINGAME.\n6-85OXC \nHELLO WORLD.",
+          "testOut": "BONJOUR.\n$N639O.8.0IS",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Example: 2×2",
+          "isTest": false,
+          "testIn": "LX2Z:$3%D$\nCODINGAME.\nGMBJF*X0\nHELLO WORLD.",
+          "testOut": "BONJOUR.\n6/9F*3VS* 8Q",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "2×2",
+          "isTest": true,
+          "testIn": ".%PX%YL 06LLVV\nHOUNDS OF LOVE\n/*-F:N. CK*XQ.42*ZQ.+S\nCONSTELLATION OF THE HEART",
+          "testOut": "IN SEARCH OF PETER PAN\nC38EJH63PJ303H*X1L$NV*:N$3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "2×2",
+          "isTest": false,
+          "testIn": "04QI48O9RLOOEE\nHOUNDS OF LOVE\n:37XJ+LR*VOUVFHJ37VF-8\nCONSTELLATION OF THE HEART",
+          "testOut": "IN SEARCH OF PETER PAN\nFOJD2436%:69UGOUE*KYKCJ+5*",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Another 2×2",
+          "isTest": true,
+          "testIn": "-O8N-SFO6 0O0E\nHOUNDS OF LOVE\n-NJSOA*C8 *FGP/T-RGPXN\nCONSTELLATION OF THE HEART",
+          "testOut": "IN SEARCH OF PETER PAN\n O6S/E.L*T.OE *FKTVE8HOABT",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Another 2×2",
+          "isTest": false,
+          "testIn": "%O7NUSCOO .OHE\nHOUNDS OF LOVE\n+N8S4AFCQ 9FBPUTWRBPWN\nCONSTELLATION OF THE HEART",
+          "testOut": "IN SEARCH OF PETER PAN\nXO+SFE0LQT*OW 9F7T3EJH4A/T",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3×3",
+          "isTest": true,
+          "testIn": "79X*P C5NVQ7G.8RCJ\nTHE SAXOPHONE SONG\n79XF+HUA:..7LXN\nTHE BIG SKY -METEOROGICAL MIX-",
+          "testOut": "THE KICK INSIDE\n79X.VQH1BM0MS/QGQQIT5I%ZXZK9A+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3×3",
+          "isTest": false,
+          "testIn": "ARX8MSOB4 8FU9K$ P\nTHE SAXOPHONE SONG\nARXA43AS $C7:IQ\nTHE BIG SKY -METEOROGICAL MIX-",
+          "testOut": "THE KICK INSIDE\nARXSVC31C:OP8YFG-1.Q$IHVL5DI+T",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Another 3×3",
+          "isTest": true,
+          "testIn": "DDS*$NRRD9-N7QAUPA\nSUSPENDED IN GAFFA\n1VE9-NPXNKBK1BS\nTHE DREAMING",
+          "testOut": "THE INFANT KISS\n1VE4+ROWM-*G",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Another 3×3",
+          "isTest": false,
+          "testIn": "/2SB N:1DI+NK6A05A\nSUSPENDED IN GAFFA\nC3EI+N5WN%GKZ0S\nTHE DREAMING",
+          "testOut": "THE INFANT KISS\nC3ENVR4XM+7G",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3×3 permutation",
+          "isTest": true,
+          "testIn": "NDADR AMEOF SH EPE\nAND DREAM OF SHEEP\nLOCDBUSTUNGI\nRUBBERBAND GIRL",
+          "testOut": "CLOUDBUSTING\nUBRERBANB GDRLI",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3×3 permutation",
+          "isTest": false,
+          "testIn": "DANR DMEAF OH SPEE\nAND DREAM OF SHEEP\nOCLBUDTUSGIN\nRUBBERBAND GIRL",
+          "testOut": "CLOUDBUSTING\nBRURBENBAGD LIR",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4×4",
+          "isTest": true,
+          "testIn": "L3*TP/9+8TPJ7.SZ801G\nNIGHT OF THE SWALLOW\n/IFATS3IF9$L5ECY\nALL THE LOVE",
+          "testOut": "THE WEDDING LIST\nW-.W/IFA:N*M",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4×4",
+          "isTest": false,
+          "testIn": "$1:+11*1W:J4ALXN07JF\nNIGHT OF THE SWALLOW\nLQ.-3-G:NZNDI -3\nALL THE LOVE",
+          "testOut": "THE WEDDING LIST\nHQ.2LQ.-F3Z.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Another 4×4",
+          "isTest": true,
+          "testIn": "REE*-R L DE-CTAXVIN*\nDEEPER UNDERSTANDING\n-H KF BP9INE0OV0\nREACHING OUT",
+          "testOut": "OH TO BE IN LOVE\n-EAMZIN*FOUE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Another 4×4",
+          "isTest": false,
+          "testIn": "DR*PE-LUN -RSCXNDV*G\nDEEPER UNDERSTANDING\nO-KTOFPE 9E L00E\nREACHING OUT",
+          "testOut": "OH TO BE IN LOVE\nR-MCHZ*G FET",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5×5",
+          "isTest": true,
+          "testIn": "9TQHLI+%S/TWECOMNESVX%EWVN+.FK\nTHE BIG SKY -METEOROGICAL MIX-\nJSTUJA1KJWULF.0/Y9WV\nRUBBERBAND GIRL",
+          "testOut": "ALL WE EVER LOOK FOR\n+XP3**PL*:FZVSF",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5×5",
+          "isTest": false,
+          "testIn": "TQHL9+%S/IWECOTNESVM%EWVX+.FKN\nTHE BIG SKY -METEOROGICAL MIX-\nSTUJJ1KJWALF.0UY9WV/\nRUBBERBAND GIRL",
+          "testOut": "ALL WE EVER LOOK FOR\nXP3*+PL*:*ZVSFF",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Another 5×5",
+          "isTest": true,
+          "testIn": "CJ52B9JJ3K*RI EMK66OA4MVL966T-\nTHE BIG SKY -METEOROGICAL MIX-\nN:BN XC:P 2X6I PZ.H-\nTOP OF THE CITY",
+          "testOut": "BLOW AWAY -FOR BILL-\nW*GFOKM1VE$U2IY",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Another 5×5",
+          "isTest": false,
+          "testIn": "+SP2B% B3K35A E8%36O$*XVLWIET-\nTHE BIG SKY -METEOROGICAL MIX-\n2CFN 1N1P W6FI 7EHH-\nTOP OF THE CITY",
+          "testOut": "BLOW AWAY -FOR BILL-\n834FOT5/VEP17IY",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5×5 permutation",
+          "isTest": true,
+          "testIn": " ETBHS IKGM-YE ROTOEACGLIXI -M\nTHE BIG SKY -METEOROGICAL MIX-\nWTBEEA E N NMAAA N DAMWNO\nTHE MORNING FOG",
+          "testOut": "BETWEEN A MAN AND A WOMAN\n ETMHINONROFGG ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5×5 permutation",
+          "isTest": false,
+          "testIn": "ETBH  IKGS-YE MOTOERCGLIAI -MX\nTHE BIG SKY -METEOROGICAL MIX-\nTBEEW E NANMAA  N DAMWNOA\nTHE MORNING FOG",
+          "testOut": "BETWEEN A MAN AND A WOMAN\nETMH NONRIFGG O",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6×6",
+          "isTest": true,
+          "testIn": "JWE6S37WCX97ZL$VM*LJ$PUI%.BST38E5U 6+9Y.%/7E F:R\nWALK STRAIGHT DOWN THE MIDDLE + WAKING THE WITCH\n/YIMAUVLP6U2PII.WN\nTHE BIG SKY -METEOROGICAL MIX-",
+          "testOut": "SUSPENDED IN GAFFA\nRKZEL7W2/N78K K /7D/%H-0Z.WO/C",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "6×6",
+          "isTest": false,
+          "testIn": "JE6WS37CXW97Z$VLM*L$PJUI%BS.T385UE 6+Y.9%/7 FE:R\nWALK STRAIGHT DOWN THE MIDDLE + WAKING THE WITCH\n/IMYAUVP6LU2PI.IWN\nTHE BIG SKY -METEOROGICAL MIX-",
+          "testOut": "SUSPENDED IN GAFFA\nRZEKL7W/N278KK  /7D%H/-0ZWO./C",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Another 6×6",
+          "isTest": true,
+          "testIn": "KT 1MZ*:GZTS:.8Q XTDCV RNI09S9JY5N 5W4-IPG\nTHE MAN WITH THE CHILD IN HIS EYES + EGYPT\n9GRUHR:$L8UG\nTHE SAXOPHONE SONG",
+          "testOut": "REACHING OUT\nQT.1SZ$G4+OMK46+NT",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Another 6×6",
+          "isTest": false,
+          "testIn": "7T8JNZ%:.:GSH.J/9X+DF59RMIBIH9 YMC95549+KG\nTHE MAN WITH THE CHILD IN HIS EYES + EGYPT\n0G76SR/$*5FG\nTHE SAXOPHONE SONG",
+          "testOut": "REACHING OUT\nDTEJHZGG:6LM$4+$MT",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Mind the repetition",
+          "isTest": true,
+          "testIn": "1UWQ1UWQR*MW2N+*6.9Y+:YC:6-G\nWOW WOW DEEPER UNDERSTANDING\n2.+ *MO1..68C2C8$ UJR*09ZY.E\nWUTHERING HEIGHTS + NIGHT OF THE SWALLOW",
+          "testOut": "THE BIG SKY + HOUNDS OF LOVE\nT-X697%G/+$6ZLRW8C4+YFV82:GF4I/VUE/.ATPD",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Mind the repetition",
+          "isTest": false,
+          "testIn": "U1QWU1QW*RWMN2*+.6Y9:+CY6:G-\nWOW WOW DEEPER UNDERSTANDING\n.2 +M*1O..862C8C $JU*R90YZE.\nWUTHERING HEIGHTS + NIGHT OF THE SWALLOW",
+          "testOut": "THE BIG SKY + HOUNDS OF LOVE\n-T6X79G%+/6$LZWRC8+4FY8V:2FGI4V/EU./TADP",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "You can assume that the size of the cipher matrix divides the length of all the messages (but it’s not 1).\n\nJust to help you:\n* The clear texts of a test and validator pair will be the same but the Hill matrix won’t be the same.\n* Test 1/validator 1 and test 2/validator 2’s Hill matrices are the same.\n* Test 2/validator 2 and test 3/validator 3’s clear texts are the same.\n* There are no trailing spaces in the clear texts but there might be some in the ciphered texts (as in the example).",
+      "coverBinaryId": 89171667895843,
+      "stubGenerator": "read cipher:string(50)\nread clear:string(50)\nread clearMe:string(50)\nread cipherMe:string(50)\nwrite cleared\nwrite ciphered",
+      "inputDescription": "<<Line 1>>: The ciphered text\n<<Line 2>>: The clear text\n<<Line 3>>: The ciphered text you have to decipher\n<<Line 4>>: The clear text you have to cipher",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1>>: Line 3 deciphered \n<<Line 2>>: Line 4 ciphered"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are Catherine, you know that Alice and Bob are chatting secretly and you want to be the woman in the middle; ie you want to intercept Alice and Bob&rsquo;s messages, to read them and to send them messages that you cipher in place of theirs. If Alice sent Bob a message, Bob will never receive Alice&rsquo;s message but yours instead.<br>You are lucky: you caught a ciphered text and its clear version and you know that they are using the Hill cipher method.<br>You have to find the Hill matrix in order to decipher a text from Alice or Bob and to cipher the text you want to send instead.<br><br>The texts are using the 45 symbols of the alphanumeric encoding of the QR codes:<br><const>0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:</const> (yes, it&rsquo;s a space between the Z and the $)<br><br><strong>How to</strong>:<br>The Hill cipher uses matrix multiplication (here, with a modulus of 45).<br>For example, you have to cipher <var>CODINGAME.</var> with A, a 2&times;2 matrix.<br><var>CODINGAME.</var> is <var>12 24 13 18 23 16 10 22 14 42</var> (because <const>C</const>&rsquo;s index is 12).<br><br>If A is:<br><pre style=\"font-family: monospace\">⎡6 5⎤<br>⎣7 6⎦</pre><br>The first pair of ciphered symbols will be:<br><var>6&times;12+5&times;24 mod 45 = 192 mod 45 = 12</var> that is <const>C</const> and <var>7&times;12+6&times;24 mod 45 = 228 mod 45 = 3</var> that is <const>3</const>.<br>Thus, <const>CO</const> is ciphered <const>C3</const>, the product A&times;T mod 45 where T is the column matrix whose elements are 12 and 24.<br>Finally, the ciphered text is <const>C3XJ%WZMOZ</const>.<br><br>If the matrix&rsquo;s size is 3, you will cipher 3 characters at a time.<br><br>For this puzzle, you have to find the cipher matrix (and its size) and how to decipher.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: The ciphered text<br><strong>Line 2</strong>: The clear text<br><strong>Line 3</strong>: The ciphered text you have to decipher<br><strong>Line 4</strong>: The clear text you have to cipher</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1</strong>: Line 3 deciphered <br><strong>Line 2</strong>: Line 4 ciphered</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">You can assume that the size of the cipher matrix divides the length of all the messages (but it&rsquo;s not 1).<br><br>Just to help you:<br>* The clear texts of a test and validator pair will be the same but the Hill matrix won&rsquo;t be the same.<br>* Test 1/validator 1 and test 2/validator 2&rsquo;s Hill matrices are the same.<br>* Test 2/validator 2 and test 3/validator 3&rsquo;s clear texts are the same.<br>* There are no trailing spaces in the clear texts but there might be some in the ciphered texts (as in the example).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">C3XJ%WZMOZ\nCODINGAME.\n6-85OXC \nHELLO WORLD.</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">BONJOUR.\n$N639O.8.0IS</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 109075101376,
+  "avatar": 26090852120005,
+  "commentCount": 15,
+  "upVotes": 8,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 693137,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1661654643044,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

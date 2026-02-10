@@ -1,0 +1,203 @@
+{
+  "id": 18990,
+  "activeVersion": 29,
+  "score": 3,
+  "votableId": 23909093,
+  "codingamerId": 3074238,
+  "views": 180,
+  "commentableId": 23793514,
+  "title": "Metric Units",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Grarzyna",
+  "publicHandle": "189907654be7b975f7702b56c0ac74998218c",
+  "codingamerHandle": "1e09cef1ba0241009076f39ee351ecdf8324703",
+  "lastVersion": {
+    "version": 29,
+    "autocloseTime": 1656405682316,
+    "data": {
+      "title": "Metric Units",
+      "topics": [],
+      "solution": "using System;\nusing System.Collections.Generic;\nusing System.Text.RegularExpressions;\n\nclass Solution\n{\n    static void Main(string[] args)\n    {\n        var input = Console.ReadLine();\n        var chunks = input.Split('+', StringSplitOptions.RemoveEmptyEntries);\n\n        var parameter0 = Parameter.Parse(chunks[0]);\n        var parameter1 = Parameter.Parse(chunks[1]);\n\n        var result = parameter0 + parameter1;\n\n        Console.WriteLine(result.ToString());\n    }\n}\n\npublic class Parameter\n{\n    public double Value { get; private set; }\n\n    public Unit Unit { get; private set; }\n\n    public Parameter(double value, Unit unit)\n    {\n        Value = value;\n        Unit = unit;\n    }\n\n    public static Parameter Parse(string input)\n    {\n        string pattern = @$\"(?<value>\\d+(.\\d+)?)(?<unit>{Units.RegularExpression})\";\n        Match match = Regex.Match(input, pattern, RegexOptions.IgnoreCase);\n        string matchedValue = match.Groups[\"value\"].Value;\n        string matchedUnit = match.Groups[\"unit\"].Value;\n\n        double value = double.Parse(matchedValue);\n        Unit unit = UnitFactory.Create(matchedUnit);\n\n        return new Parameter(value, unit);\n    }\n\n    public void ConvertTo(Unit unit)\n    {\n        var exponent = Unit.Exponent - unit.Exponent;\n        var factor = Math.Pow(10, exponent);\n\n        Value *= factor;\n        Unit = unit;\n    }\n\n    public static Parameter operator +(Parameter p1, Parameter p2)\n    {\n        Unit unit = Unit.Min(p1.Unit, p2.Unit);\n        p1.ConvertTo(unit);\n        p2.ConvertTo(unit);\n\n        var resultValue = Math.Round(p1.Value + p2.Value, 5);\n        return new Parameter(resultValue, unit);\n    }\n\n    public override string ToString()\n    {\n        return $\"{Value}{Unit}\";\n    }\n}\n\npublic class UnitFactory\n{\n    private static readonly Dictionary<string, Func<Unit>> UnitCreators = new Dictionary<string, Func<Unit>>()\n    {\n        { Units.Kilometer, () => new Unit(3, Units.Kilometer) },\n        { Units.Meter, () => new Unit(0, Units.Meter) },\n        { Units.Decimeter, () => new Unit(-1, Units.Decimeter) },\n        { Units.Centimeter, () => new Unit(-2, Units.Centimeter) },\n        { Units.Millimeter, () => new Unit(-3, Units.Millimeter) },\n        { Units.Micrometer, () => new Unit(-6, Units.Micrometer) }\n    };\n\n    public static Unit Create(string input)\n    {\n        return UnitCreators[input]();\n    }\n}\n\npublic class Units\n{\n    public const string Kilometer = \"km\";\n    public const string Meter = \"m\";\n    public const string Decimeter = \"dm\";\n    public const string Centimeter = \"cm\";\n    public const string Millimeter = \"mm\";\n    public const string Micrometer = \"um\";\n\n    public static readonly string RegularExpression = \n        $\"{Millimeter}|{Meter}|{Centimeter}|{Kilometer}|{Decimeter}|{Micrometer}\";\n}\n\npublic class Unit\n{\n    public int Exponent { get; }\n    public string Name { get; }\n\n    public Unit(int exponent, string name)\n    {\n        Exponent = exponent;\n        Name = name;\n    }\n\n    public override string ToString()\n    {\n        return Name;\n    }\n\n    public static bool operator >(Unit u1, Unit u2)\n    {\n        return u1.Exponent > u2.Exponent;\n    }\n\n    public static bool operator <(Unit u1, Unit u2)\n    {\n        return u1.Exponent < u2.Exponent;\n    }\n\n    public static Unit Min(Unit u1, Unit u2)\n    {\n        return u1 < u2 ? u1 : u2;\n    }\n}\n",
+      "statement": "The goal of this exercise is to add two lengths with given metric units.\nTo calculate it properly you first need to convert them to the same unit. \nPresent the result using the smaller unit.\n\nFor instance:\n<<4cm + 2dm>>\nmust convert 2dm to 20cm:\n<<4cm + 20cm>>\nit then results to:\n<<24cm>>\n\nIf you like to challenge yourself a little more...\nTry to limit the number of <<ifs>> and <<switches>> as much as possible in your code.",
+      "testCases": [
+        {
+          "title": "Simple expression",
+          "isTest": true,
+          "testIn": "1m + 1cm",
+          "testOut": "101cm",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "2m + 3cm",
+          "testOut": "203cm",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Same units",
+          "isTest": true,
+          "testIn": "459m + 132m",
+          "testOut": "591m",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "449m + 134m",
+          "testOut": "583m",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Kilometers to decimeters",
+          "isTest": true,
+          "testIn": "1km + 14dm",
+          "testOut": "10014dm",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "2km + 12dm",
+          "testOut": "20012dm",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Kilometers to millimeters",
+          "isTest": true,
+          "testIn": "0.02km + 450mm",
+          "testOut": "20450mm",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "0.01km + 250mm",
+          "testOut": "10250mm",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Meters to centimeters",
+          "isTest": true,
+          "testIn": "2.55m + 35cm",
+          "testOut": "290cm",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "1.55m + 15cm",
+          "testOut": "170cm",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Meters to millimeters",
+          "isTest": true,
+          "testIn": "0.22532m + 90mm",
+          "testOut": "315.32mm",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "0.22531m + 91mm",
+          "testOut": "316.31mm",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Centimeters to millimeters",
+          "isTest": true,
+          "testIn": "0.00098cm + 10mm",
+          "testOut": "10.0098mm",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "0.00093cm + 10mm",
+          "testOut": "10.0093mm",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Decimeters to micrometers",
+          "isTest": true,
+          "testIn": "0.01dm + 3210um",
+          "testOut": "4210um",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "0.01dm + 3250um",
+          "testOut": "4250um",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Millimeters to micrometers",
+          "isTest": true,
+          "testIn": "16.0408mm + 11um",
+          "testOut": "16051.8um",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "14.0908mm + 13um",
+          "testOut": "14103.8um",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "[[value]] is a real number:\n0 <= [[value]] <= 1000 \nwith precision <= {{0.00001}}\n\n[[unit]] can be one of the following:\n - um (micrometer)\n - mm (millimeter) where 1mm = 1000um\n - cm (centimeter) where 1cm = 10mm\n - dm (decimeter) where 1dm = 10cm\n - m (meter) where 1m = 10dm\n - km (kilometer) where 1km = 1000m",
+      "coverBinaryId": 136531322495842,
+      "stubGenerator": "read expression:string(50)\n\nwrite 1cm\n\nINPUT\nexpression: the expression to calculate",
+      "inputDescription": "<<Line 1:>> the expression to calculate [[value]][[unit]]{{ + }}[[value]][[unit]]",
+      "solutionLanguage": "C#",
+      "outputDescription": "[[value]][[unit]]\n\n[[value]] should be a sum of two given values after units conversion to the smaller one.\n\n[[unit]] should be the smaller unit of the two parameters."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">The goal of this exercise is to add two lengths with given metric units.<br>To calculate it properly you first need to convert them to the same unit. <br>Present the result using the smaller unit.<br><br>For instance:<br><strong>4cm + 2dm</strong><br>must convert 2dm to 20cm:<br><strong>4cm + 20cm</strong><br>it then results to:<br><strong>24cm</strong><br><br>If you like to challenge yourself a little more...<br>Try to limit the number of <strong>ifs</strong> and <strong>switches</strong> as much as possible in your code.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> the expression to calculate <var>value</var><var>unit</var><const> + </const><var>value</var><var>unit</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><var>value</var><var>unit</var><br><br><var>value</var> should be a sum of two given values after units conversion to the smaller one.<br><br><var>unit</var> should be the smaller unit of the two parameters.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><var>value</var> is a real number:<br>0 &lt;= <var>value</var> &lt;= 1000 <br>with precision &lt;= <const>0.00001</const><br><br><var>unit</var> can be one of the following:<br> - um (micrometer)<br> - mm (millimeter) where 1mm = 1000um<br> - cm (centimeter) where 1cm = 10mm<br> - dm (decimeter) where 1dm = 10cm<br> - m (meter) where 1m = 10dm<br> - km (kilometer) where 1km = 1000m</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1m + 1cm</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">101cm</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 116500383364,
+  "avatar": 76218624776940,
+  "commentCount": 10,
+  "upVotes": 5,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 668312,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1654229528936,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

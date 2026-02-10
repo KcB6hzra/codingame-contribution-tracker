@@ -1,0 +1,137 @@
+{
+  "id": 5639,
+  "activeVersion": 5,
+  "score": 1,
+  "votableId": 15544687,
+  "codingamerId": 3820787,
+  "views": 225,
+  "commentableId": 15459832,
+  "title": "Hangmangled",
+  "status": "ACCEPTED",
+  "type": "CLASHOFCODE",
+  "publicHandle": "56398b72bece0109a9228849cc8060005939",
+  "codingamerHandle": "611250b5b95a033caa2c75aad97192957870283",
+  "lastVersion": {
+    "version": 5,
+    "autocloseTime": 1606701338790,
+    "data": {
+      "title": "Hangmangled",
+      "topics": [],
+      "fastest": true,
+      "reverse": false,
+      "shortest": false,
+      "solution": "# https://en.wikipedia.org/wiki/Whitespace_(programming_language)\n\neval DATA.read\nWhitespace.new(<<PROGRAM).tap(&:parse).interpret\n   \t \t\t \t \n\n    \n \n     \n\t\t    \t\n\t  \t \n \n\t  \t\n\n \n  \n\n   \t\n \n \t\n\t \t\t\t \n    \t \t \n\t  \t\n\t  \t  \n\n \t \t \n \n \n\t  \t\n \n \t\t\t   \t\n\t   \t\t    \t\n \n \t\t\t   \t\n\t   \t\t     \n\n \n \t\n\n   \t \n \n    \t      \n\t  \t    \n \n\t\t  \t\n\t\t \t\t\n \n \t  \t\n\t\n\n   \t\t\n \n    \t\t    \t\n\t \t    \t     \n\t  \n\t  \t\n\t\n\n   \t  \n \n\n   \t \n\n \t \t \t\n   \t\t\n\n \t \t \t\n   \t \n\t   \t\t\t \n\t   \t \n\t   \t\t\t \n  \t  \t \n\t  \t\n\t\t \t \t \n   \t \t \n   \t\t   \t \n   \t\t \t\t\t\t\n   \t    \t \n\t\n  \t\n  \t\n  \t\n   \n\t\t  \t\t\n \t   \t \t \n\t\n  \n\n\n\n   \t \t\n   \t\t \t\t\n\n   \t\t \n    \n \n \t\n\t \t\t\t\t\t\t \t  \t \n\t\t\t\t    \t  \t \n \n\t\t\t  \t  \t\n\t\t\t   \t\n\t\t\t\t  \t\n\t  \t  \t\n\n   \t\t\t\n   \t\n\t  \t \n \n\t  \t   \n\n \n \t\t \n\n   \t   \n \n\n\n\t\n\n   \t  \t\n \n    \t\t \t\t\n \n\t\t  \t   \t\n\t    \t  \t \n    \n\t\t  \t  \t \n   \t \n\t    \n\t\t\t \n \n \t\t\t\n\n   \t \t \n   \t \t \n   \t\t  \t \t\n   \t\t   \t\t\n   \t\t \t  \t\n   \t\t \t\t  \n   \t     \t\n\t\n  \t\n  \t\n  \t\n  \t\n  \t\n  \t  \t\t\n \t   \t \t \n\t\n  \n\n\nPROGRAM\n__END__\nclass Whitespace\n  Ops = {\n    \"  \"       => :push,  \" \\t \"   => :copy, \" \\t\\n\"   => :slide, \"\\n  \"    => :label,\n    \"\\n \\t\"    => :call,  \"\\n \\n\"  => :jump, \"\\n\\t \"   => :jz,    \"\\n\\t\\t\"  => :jn,\n    \" \\n\\n\"    => :pop,   \" \\n \"   => :dup,  \" \\n\\t\"   => :swap,  \"\\t   \"   => :add,\n    \"\\t  \\t\"   => :sub,   \"\\t  \\n\" => :mul,  \"\\t \\t \"  => :div,   \"\\t \\t\\t\" => :mod,\n    \"\\t\\t \"    => :store, \"\\t\\t\\t\" => :load, \"\\n\\t\\n\"  => :ret,   \"\\t\\n\\t \" => :ichr,\n    \"\\t\\n\\t\\t\" => :inum,  \"\\t\\n  \" => :ochr, \"\\t\\n \\t\" => :onum,  \"\\n\\n\\n\"  => :exit\n  }\n\n  def initialize src\n    @src = src.delete \"^ \\t\\n\"\n  end\n\n  def parse\n    @insns = []\n    buf = ''\n    while c = @src.slice!(0)\n      if insn = Ops[buf << c]\n        arg = parse_number if Ops.keys.index(buf) < 8\n        @insns << [insn, arg].compact\n        buf.clear\n        arg = nil\n      end\n    end\n\n    self\n  end\n\n  def parse_number\n    bin = @src.slice! 0, @src.index(?\\n) + 1\n    bin[0] = '-' if bin[0] == ?\\t\n    bin.tr(\" \\t\", \"01\").to_i 2\n  end\n\n  def interpret\n    jumps = {}\n    @insns.each_with_index do |(op, arg), i|\n      jumps[arg] = i if op == :label\n    end\n\n    ip, stack, heap, calls = -1, [], {}, []\n    while insn = @insns[ip += 1]\n      op, arg = insn\n      case op\n      when :push  ; stack << arg\n      when :copy  ; stack << stack[-1 - arg]\n      when :slide ; stack[-arg - 1, arg] = []\n      when :call  ; calls << ip; ip = jumps[arg]\n      when :jump  ; ip = jumps[arg]\n      when :jz    ; ip = jumps[arg] if stack.pop == 0\n      when :jn    ; ip = jumps[arg] if stack.pop < 0\n      when :pop   ; stack.pop\n      when :dup   ; stack << stack[-1]\n      when :swap  ; stack[-1], stack[-2] = stack[-2], stack[-1]\n      when :add   ; stack << stack.pop(2).reduce(:+)\n      when :sub   ; stack << stack.pop(2).reduce(:-)\n      when :mul   ; stack << stack.pop(2).reduce(:*)\n      when :div   ; stack << stack.pop(2).reduce(:/)\n      when :mod   ; stack << stack.pop(2).reduce(:%)\n      when :store ; k, v = stack.pop(2); heap[k] = v\n      when :load  ; stack << heap[stack.pop].to_i\n      when :ret   ; ip = calls.pop\n      when :ichr  ; heap[stack.pop] = (STDIN.getc || -1).ord\n      when :inum  ; heap[stack.pop] = STDIN.gets.to_i\n      when :ochr  ; STDOUT << stack.pop.chr\n      when :onum  ; STDOUT << stack.pop\n      when :exit  ; break\n      end\n    end\n  end\nend",
+      "statement": "Alice and Bob are playing a game of Hangman wherein they each have a go at guessing the letters of a word or phrase until they've revealed the entire thing. Unfortunately, they forgot to keep score during the round and now the rest of the alphabet has been concatenated onto the end of their strings of guesses. They're very competitive and need to know who won (and by how much).\n\nGiven the word or phrase they were trying to guess along with their respective guesses (plus all the unguessed letters), determine which player revealed all the letters using the fewest attempts.\n\n<<Notes:>> Alice always goes first, but thankfully Bob has selective amnesia and doesn't remember the solution when he gets the same puzzle that Alice just solved. Some of the phrases contain non-alphabetical characters; these did not need to be guessed by the players as they were revealed at the start of the game.",
+      "testCases": [
+        {
+          "title": "CodinGame",
+          "isTest": true,
+          "testIn": "CodinGame\nETAOINSHRDLUMGCBFJKPQVWXYZ\nETAOINSHRDLUGPMZCBFJKQVWXY",
+          "testOut": "Alice\n2",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "CodinGame (validator)",
+          "isTest": false,
+          "testIn": "CodinGame\nETAOINSHRDLUGPMZCBFJKQVWXY\nETAOINSHRDLUMGCBFJKPQVWXYZ",
+          "testOut": "Bob\n2",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "All sorts of characters",
+          "isTest": true,
+          "testIn": "42: the meaning of life, the universe, and everything.\nRSTLNEJAGFUXHKMDVIYOBCPQWZ\nRSTLNEIGHAFMVDYOUBCJKPQWXZ",
+          "testOut": "Bob\n3",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "All sorts of characters (validator)",
+          "isTest": false,
+          "testIn": "42: the meaning of life, the universe, and everything.\nRSTLNEIGHAFMVDYOUBCJKPQWXZ\nRSTLNEJAGFUXHKMDVIYOBCPQWZ",
+          "testOut": "Alice\n3",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "A short game",
+          "isTest": true,
+          "testIn": "senselessness\nENSBLACDFGHIJKMOPQRTUVWXYZ\nEVAUWNSLBCDFGHIJKMOPQRTXYZ",
+          "testOut": "Alice\n3",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "A long word",
+          "isTest": false,
+          "testIn": "Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch\nQBKFWRGZOCSJYADNIHEVTLPMUX\nNAWORYLDPGBEHICFSTJKMQUVXZ",
+          "testOut": "Bob\n5",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "A dash of cheap profundity",
+          "isTest": true,
+          "testIn": "Life is War is Death is Peace\nFASETHIRWPLCDBGJKMNOQUVXYZ\nECWLNSPYHRGFJIDTABKMOQUVXZ",
+          "testOut": "Alice\n4",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Anagrams are people too.",
+          "isTest": false,
+          "testIn": "Twelve plus one = eleven plus two.\nTSLWOVQGNUEPABCDFHIJKMRXYZ\nLETOVNSPUDWABCFGHIJKMQRXYZ",
+          "testOut": "Bob\n1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "The hardest one",
+          "isTest": true,
+          "testIn": "jazz\nJDPSKEUVBMRIYAXLTFOHGNWCZQ\nRBUITPWMVCGAHSKDFLYQEOZXNJ",
+          "testOut": "Alice\n1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "The other hardest one",
+          "isTest": false,
+          "testIn": "hajj\nALICEXSOGWNMBUQDRKYHPTVZJF\nDISNEYCZLJKMVAGRTOXUFWHBPQ",
+          "testOut": "Bob\n2",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "constraints": "1 ≤ [[N]] ≤ 60, where [[N]] is the length of the word or phrase",
+      "stubGenerator": "read phrase:string(61)\nread alice:string(27)\nread bob:string(27)\n\nwrite winner\ndifferential",
+      "inputDescription": "<<Line 1:>> the word or phrase to be guessed\n<<Line 2:>> Alice's guesses\n<<Line 3:>> Bob's guesses",
+      "solutionLanguage": "Ruby",
+      "outputDescription": "<<Line 1:>> {{Alice}} or {{Bob}}, whoever revealed all the letters in the word or phrase the most efficiently\n<<Line 2:>> the score differential (that is, by how much the winner won)"
+    },
+    "draft": false,
+    "readyForModeration": true
+  },
+  "validatedFor": 166151648135,
+  "commentCount": 6,
+  "upVotes": 3,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 501935,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1604579217161,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,179 @@
+{
+  "id": 400,
+  "activeVersion": 27,
+  "score": 14,
+  "votableId": 3062550,
+  "codingamerId": 878974,
+  "views": 743,
+  "commentableId": 3009506,
+  "title": "Three little piggies",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "nicola",
+  "publicHandle": "40052d250759146f22f5ec1aee18570798a",
+  "codingamerHandle": "21bf42f790de293c3aef398f18cd2627479878",
+  "lastVersion": {
+    "version": 27,
+    "autocloseTime": 1646315107000,
+    "data": {
+      "title": "Three little piggies",
+      "topics": [
+        {
+          "id": 56,
+          "handle": "backtracking",
+          "labelMap": {
+            "1": "Retour sur trace",
+            "2": "Backtracking"
+          },
+          "pageTitle": "Backtracking: exercises and theory",
+          "puzzleCount": 5,
+          "parentTopicId": 41,
+          "contentDetailsId": 80
+        },
+        {
+          "id": 59,
+          "handle": "brute-force",
+          "labelMap": {
+            "1": "Force brute",
+            "2": "Brute-force"
+          },
+          "pageTitle": "Brute-force: exercises and theory",
+          "puzzleCount": 2,
+          "parentTopicId": 41,
+          "contentDetailsId": 90
+        }
+      ],
+      "solution": "from itertools import product,permutations\n\nchamp=[]\ncochons=set()\nforêt={(0,0),(0,3),(3,0)}\n\nlight=\"Day\"\nfor i in range(4):\n    champ.append(list(input()))\n    if \"P\" in champ[-1]:\n        for j in range(4):\n            if champ[i][j]==\"P\":\n                cochons.add((i,j))\n    if \"W\" in champ[-1]:\n        light=\"Night\"\n        loup=(i,champ[-1].index(\"W\"))\n\ntuiles=((\"s\",((0,-1),(1,0)),((-1,0),(0,-1)),((0,1),(1,0)),((-1,0),(0,1))),#,\"sH\\n.s\",\".s\\nsH\",\"Hs\\ns.\",\"s.\\nHs\"),\n         (\"S\",((0,-1),(0,1)),((-1,0),(1,0)),((0,-1),(0,1)),((-1,0),(1,0))),#\"SHS\",\"S\\nH\\nS\",\"SHS\",\"S\\nH\\nS\"),\n         (\"B\",((1,0),(0,1),(0,2)),((-2,0),(-1,0),(0,1)),((-1,0),(0,-2),(0,-1)),((0,1),(1,0),(2,0)))#\"HBB\\nB..\",\"B.\\nB.\\nHB\",\"..B\\nBBH\",\"BH\\n.B\\nBH\")\n        )\n\ndef ok(e):\n    if forêt&set(e[0]):\n        return False\n    if light==\"Night\" and not cochons.issubset(set(e[0])):\n        return False\n    if light==\"Day\" and cochons&set(e[0]):\n        return False\n    terrains=[]\n    for i in range(3):\n        m=e[0][i]\n        if light==\"Night\" and loup in m:\n            return False\n        h=tuiles[i][1+e[1][i]]\n        h=tuple((h[j][0]+m[0],h[j][1]+m[1]) for j in range(len(h)))\n        for t in h:\n            for n in t:\n                if not 0<=n<=3:\n                    return False\n            if t in forêt or t in cochons:\n                return False\n        if light==\"Night\" and loup in h:\n            return False\n        terrains.append((m,)+h)\n    if set(terrains[0])&set(terrains[1]) or set(terrains[1])&set(terrains[2]) or set(terrains[2])&set(terrains[0]):\n        return False\n    return terrains\n\npos=list(permutations(product(range(4),repeat=2),3))\ndirs=list(product(range(4),repeat=3))\n\nfor e in product(pos,dirs):\n    terrain=ok(e)\n    if terrain:\n        break\n\nfor i in range(3):\n    m=terrain[i][0]\n    champ[m[0]][m[1]]=\"H\"\n    for t in terrain[i][1:]:\n        champ[t[0]][t[1]]=tuiles[i][0]\nfor i in range(4):\n    print(\"\".join(champ[i]))",
+      "statement": "The three little pigs have to build their houses on the field of grass but they fear the big bad wolf. Help them place their 3 homes on their land so that they can be protected. Sometimes, there are only two pigs but you still must place the three houses.\nTheir land is a 4×4 grid which has X’s for grass and dots (periods) for trees. The pigs, which always stay on the same spot of grass and are too lazy to move, show up as P’s. The big bad wolf, who will only show up at night, is a W (during the day he’s sleeping in his lair).\nFor example:\n\nDay:\n`.XX.\n{{P}}XXX\nXX{{P}}X\n.XXX`\n\nNight:\n`.{{W}}X.\nXXXX\nX{{PP}}X\n.X{{P}}X`\n\nThe straw house’s tile is an L with the house in the corner:\n\n`Hs\ns`\n\nThe sticks house’s tile is a bar with the house in the middle:\n\n`SHS`\n\nThe brick house’s tile is a longer L:\n\n`HBB\nB`\n\nYou can rotate but not mirror the tiles: the longer L can become a 7, never a Γ.\nThe tiles can’t cover a tree or the wolf.\n\nThere are two kinds of inputs: one for day and one for night (only at night a wolf can be seen).\nIf it is day: place the houses so that the pigs can be seen. No tile much cover a pig.\nIf it is night: place the houses so that each pig is covered by an H. A house might not cover a pig, if there are only two pigs.\n\nEach puzzle has a single solution.",
+      "testCases": [
+        {
+          "title": "Day 1: Three pigs",
+          "isTest": true,
+          "testIn": ".PP.\nXXXX\nXXXX\n.XPX",
+          "testOut": ".PP.\nHBBS\nBHsH\n.sPS",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Day 1: Three pigs",
+          "isTest": false,
+          "testIn": ".XP.\nXXPX\nPXXX\n.XXX",
+          "testOut": ".sP.\nsHPB\nPBBH\n.SHS",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Night 1: Three pigs",
+          "isTest": true,
+          "testIn": ".WX.\nXXXX\nXPPX\n.XPX",
+          "testOut": ".WB.\nXsBX\nsHHB\n.SHS",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Night 1: Three pigs",
+          "isTest": false,
+          "testIn": ".XP.\nXXXX\nXXWP\n.PXX",
+          "testOut": ".sH.\nXBsS\nXBWH\n.HBS",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Day 2: Two pigs",
+          "isTest": true,
+          "testIn": ".XX.\nXXXP\nXXXX\n.PXX",
+          "testOut": ".XB.\nBBHP\nSHSs\n.PsH",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Day 2: Two pigs",
+          "isTest": false,
+          "testIn": ".XP.\nXXXX\nXXXP\n.XXX",
+          "testOut": ".sP.\nsHBX\nBBHP\n.SHS",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Night 2: Two pigs",
+          "isTest": true,
+          "testIn": ".XX.\nPXPW\nXXXX\n.XXX",
+          "testOut": ".XS.\nHsHW\nsXSB\n.BBH",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Night 2: Two pigs",
+          "isTest": false,
+          "testIn": ".XX.\nXXPX\nXXPX\n.WXX",
+          "testOut": ".XB.\nBBHS\nXsHH\n.WsS",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "coverBinaryId": 56255566570126,
+      "stubGenerator": "loop 4 read line:word(4)\nloop 4 write line",
+      "inputDescription": "<<4 lines:>> The field",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The field filled with the three tiles.\nShow the pigs if it’s the day, hide them if not.\nSome areas of the field may remain Xs, day or night."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">The three little pigs have to build their houses on the field of grass but they fear the big bad wolf. Help them place their 3 homes on their land so that they can be protected. Sometimes, there are only two pigs but you still must place the three houses.<br>Their land is a 4&times;4 grid which has X&rsquo;s for grass and dots (periods) for trees. The pigs, which always stay on the same spot of grass and are too lazy to move, show up as P&rsquo;s. The big bad wolf, who will only show up at night, is a W (during the day he&rsquo;s sleeping in his lair).<br>For example:<br><br>Day:<br><pre style=\"font-family: monospace\">.XX.<br><const>P</const>XXX<br>XX<const>P</const>X<br>.XXX</pre><br><br>Night:<br><pre style=\"font-family: monospace\">.<const>W</const>X.<br>XXXX<br>X<const>PP</const>X<br>.X<const>P</const>X</pre><br><br>The straw house&rsquo;s tile is an L with the house in the corner:<br><br><pre style=\"font-family: monospace\">Hs<br>s</pre><br><br>The sticks house&rsquo;s tile is a bar with the house in the middle:<br><br><pre style=\"font-family: monospace\">SHS</pre><br><br>The brick house&rsquo;s tile is a longer L:<br><br><pre style=\"font-family: monospace\">HBB<br>B</pre><br><br>You can rotate but not mirror the tiles: the longer L can become a 7, never a &Gamma;.<br>The tiles can&rsquo;t cover a tree or the wolf.<br><br>There are two kinds of inputs: one for day and one for night (only at night a wolf can be seen).<br>If it is day: place the houses so that the pigs can be seen. No tile much cover a pig.<br>If it is night: place the houses so that each pig is covered by an H. A house might not cover a pig, if there are only two pigs.<br><br>Each puzzle has a single solution.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>4 lines:</strong> The field</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The field filled with the three tiles.<br>Show the pigs if it&rsquo;s the day, hide them if not.<br>Some areas of the field may remain Xs, day or night.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">.PP.\nXXXX\nXXXX\n.XPX</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">.PP.\nHBBS\nBHsH\n.sPS</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 124519357895,
+  "avatar": 26090852120005,
+  "commentCount": 41,
+  "upVotes": 24,
+  "downVotes": 10,
+  "validateAction": {
+    "actionId": 632368,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1571242995996,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1608655277065,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1611248737009,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1643723107000,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1646210732964,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

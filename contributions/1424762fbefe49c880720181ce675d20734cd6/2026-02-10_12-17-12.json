@@ -1,0 +1,311 @@
+{
+  "id": 142476,
+  "activeVersion": 3,
+  "score": 0,
+  "votableId": 39103880,
+  "codingamerId": 3232421,
+  "views": 37,
+  "commentableId": 38936438,
+  "title": "0xC0FFEE Request Validator",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "User123",
+  "publicHandle": "1424762fbefe49c880720181ce675d20734cd6",
+  "codingamerHandle": "c3b956997f0e142fcaa109d71c0ecd431242323",
+  "lastVersion": {
+    "version": 3,
+    "autocloseTime": 1772903925256,
+    "freezeTime": 1770916725256,
+    "data": {
+      "title": "0xC0FFEE Request Validator",
+      "topics": [
+        {
+          "id": 114,
+          "handle": "check-digit",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Check-digit",
+            "2": "Check-digit"
+          },
+          "puzzleCount": 4,
+          "parentTopicId": 93
+        },
+        {
+          "id": 61,
+          "handle": "encoding",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Encodage",
+            "2": "Encoding"
+          },
+          "pageTitle": "Encoding: exercises and theory",
+          "puzzleCount": 16,
+          "parentTopicId": 41,
+          "contentDetailsId": 86
+        }
+      ],
+      "solution": "i=input;p=print\nd=int(i());f=i()\nif d<13 or f[:8]!=\"DECAFBAD\"or int(f[8:11],16)+12-d or sum(int(x,16)for x in f)%16:p(\"403 Forbidden\");exit()\nC={}\nfor c in f[11:-1]:C[c]=C.get(c,0)+1\nfor c in C:p(C[c],c)",
+      "statement": "<<Background>>\nCrystal runs a specialty coffee station in a tech company where employees can send their order to the station via an internal API endpoint. Recently, she has been seeing more suspicious requests to the machines that do not seem to originate from the internal API endpoint. She suspects non-employees have hacked into the internal request system, and has tasked you to investigate.\n\n<<Task>>\nAn [[order]] is a hexadecimal number with [[orderSize]] digits, where each digit corresponds to a drink ID [[drinkId]] in the coffee station. The internal API endpoint wraps the [[order]] into a data frame [[frame]], another hexadecimal number, with the following format:\n\n• First {{8}} digits - frame header, a fixed hexadecimal value {{DECAFBAD}} (0xDECAFBAD).\n• Next {{3}} digits - frame size, a hexadecimal value equal to [[orderSize]]₁₀ (e.g. if [[orderSize]] = 10, frame size = 0x00A).\n• Next [[orderSize]] digits - the actual [[order]].\n• Last {{1}} digit - checksum, derived such that the sum of <<all>> hexadecimal digit values in [[frame]] (including those in the header, size, and checksum) is divisible by {{16}}.\n\nA data frame is valid (coming from the internal API endpoint) only if it fulfils all formatting and criteria listed above. <<Fulfil orders of valid data frames and reject invalid ones.>> Time to determine which coffees to brew and which coffees to block!\n\n<<Example>>\n[[frame]] = 0xDECAFBAD00744C23A5F\nHeader = 0xDECAFBAD (valid)\nSize = 0x007; [[orderSize]] = 7\nData [[order]] = 0x44C23A5 (7 drinks total, valid)\nChecksum = 0xF (0xD + 0xE + 0xC + ... + 0xA + 0x5 + 0xF is divisible by 16, valid)\n=> Coffee request is valid, fulfil the order.\n(note: the 0x- prefixes here are for easier understanding and not part of the actual input)",
+      "testCases": [
+        {
+          "title": "Order Up!",
+          "isTest": true,
+          "testIn": "19\nDECAFBAD00744C23A5F",
+          "testOut": "2 4\n1 C\n1 2\n1 3\n1 A\n1 5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "21\nDECAFBAD009C5201B40C6",
+          "testOut": "2 C\n1 5\n1 2\n2 0\n1 1\n1 B\n1 4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Corrupted",
+          "isTest": true,
+          "testIn": "7\n3CFB4D1",
+          "testOut": "403 Forbidden",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "1\nD",
+          "testOut": "403 Forbidden",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "One Cup",
+          "isTest": true,
+          "testIn": "13\nDECAFBAD001D0",
+          "testOut": "1 D",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "13\nDECAFBAD001EF",
+          "testOut": "1 E",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Checksum Error",
+          "isTest": true,
+          "testIn": "40\nDECAFBAD01C7C928CDDEF01129DDABCEDFE26472",
+          "testOut": "403 Forbidden",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "25\nDECAFBAD00D5829CCDB100EFC",
+          "testOut": "403 Forbidden",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Department Fix",
+          "isTest": true,
+          "testIn": "71\nDECAFBAD03BA501CBB273FCCC62D373BCF20955CBE768A7BB32D92B9467CC8E4AE15267",
+          "testOut": "3 A\n4 5\n2 0\n2 1\n8 C\n7 B\n6 2\n5 7\n4 3\n2 F\n4 6\n2 D\n3 9\n3 E\n2 8\n2 4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "60\nDECAFBAD030ABB9D3B47312232DA7792099E10491B1D060A637EFC3B0F10",
+          "testOut": "3 A\n5 B\n5 9\n3 D\n5 3\n2 4\n4 7\n5 1\n4 2\n5 0\n2 E\n2 6\n2 F\n1 C",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Mismatched Order",
+          "isTest": true,
+          "testIn": "99\nDECAFBADCA084C752FA96DEC6F9AB67DEE48DA9775EF6035BCDAC2C306EEC96D14E4D01311023CEB1D73F77C43D549A5264",
+          "testOut": "403 Forbidden",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "105\nDECAFBADF0C17B63B9817040EDA54D8995B5BFB6FD0C806BC0627E4976D52162D19892042921FA77DEE1DA6F05743BE900BE24A4D",
+          "testOut": "403 Forbidden",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Misplaced Order",
+          "isTest": true,
+          "testIn": "87\nDECAFBAD0516555D5FE21427D4304CBFE78C4F63F06466F5CB76223299AF915463EB6083896D9F6B7A3DA11",
+          "testOut": "403 Forbidden",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "86\nDECAFBAD0550FF892648C1D3ECA3DDB1E47A3873E733243230430A1E2793251CEEACD44DE64887F5BD2372",
+          "testOut": "403 Forbidden",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Order Zero",
+          "isTest": true,
+          "testIn": "162\nDECAFBAD09600000000000000000000000044444444444444444444EEEEEEEEEEEEEEFFFFFFFFFFFFFFCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC777777777777AAAAAAAAAAAAAAAAAAAAAA444441",
+          "testOut": "24 0\n25 4\n14 E\n14 F\n39 C\n12 7\n22 A",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "171\nDECAFBAD09F0000000044444666666666662222222222777777777771111111111111111111111111111BBBBBBBBBBBBBBBBBB7777777777777777777777EEEEEEEEE55555555555555555553333333333333333330",
+          "testOut": "8 0\n5 4\n11 6\n10 2\n33 7\n28 1\n18 B\n9 E\n19 5\n18 3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Standardised Order",
+          "isTest": true,
+          "testIn": "412\nDECAFBAD19022222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222224",
+          "testOut": "400 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "392\nDECAFBAD17CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA2",
+          "testOut": "380 A",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Decaffeinated Coffee",
+          "isTest": true,
+          "testIn": "558\nDECAF900D221D15606D51B932FF5BD3F040DC7AEE99D1701111F171E62369EE49E17FA1820BAC77D5560F45BA3647438917C913220EA2B9A72BEAF66F8FD77B2F1B3D26C7BE4BF179B977498B2CAC3E1FEA545E101BC0E90E54DB501D0160C4E27B4A348A0BD66F32269F6ABD2A84D2B946C2AA584D72609628D1D7386B8D2EB5004FB3214335E64139B4F026AF185C138C1BF1C6F1D31BAD24BCD8F67D430F2DBAB49F9D5CF646AAFA7A0B134BC6634E286C7B3B08284E4406C523025810A2CE42AD868CA4126224A74B617F2E71FD0888323480296AFE99C8A420326927CAC53BA41A327274602DA79C29C3FB23AAD98DF91A1A23F8961F129C78F1FCD108D134F88EA3216D433DA2956000C0DB6AD7ECE1284A9107D",
+          "testOut": "403 Forbidden",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "533\nDECAF900D208EF6D188E5483DF34AA3402A95010556D61C686EFA63172830C28CC78EA62156E57003DD1D0E05DA84CD8CF8587DCDB4B455DE09E1EE22AA0EEBD713A5D5BE3321F947FEA8E53F6C7EE68E33FD38C3D34639FF7C4051BF48EEC4B46F298040A8FDEB14F0280DD851A0683AFFF21E201287F5C8FE810C1CEEB79C4BC19FA8507F4670CB9EDE3E4196FA57B9A7FBB369DBCD9B44396F7B4F496CD7180500F48636FDB04A8944BBE7FFB6945E2C88687A1F72DA1BB67C5C4C3146F452702E04B9006691169177CA4AB8B7731BBE104C27680547F7E1DF2AAB430F44EDE03F770676F7BC837F49022AD9F96DF673780C847C991AC21896FB7F0BF96B2D3711C923B91726B47B07",
+          "testOut": "403 Forbidden",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Invalid Header",
+          "isTest": true,
+          "testIn": "611\n0D2F1A99257FEE9DE46F3A91E0825D8BD9335A5D703A3FD418A61B62584786724682A71D5772F73F14140D69C24D807C9ED68B7C1FFCFD6A57EBE7236C5DF4525B58862B2088909B54D983C3529C05DA173E6B9B4C06C3C7F720039EBA21B1F666F8CACFF382C9CC218209BE5519910C0BAB124D39AD2E88D89F8024E4336452FFC33A792F976D07B3592D95DB0084A86CF956AAC9F8AA457B4683F19835AE464091D9B564CF46BF533489E73D0220999B152258B7ACC68493FFA65A5423D33D0E5D7F3D1A9ECF556F767328C2B7AB3C94F2D5431C54EBE8477C667C3BF0973701ABFE31BD63314B4ACD8CABE8AEE7909064819D8649B9E0222B1780A05BF26A8E74370D44EE8DB94E82F8B438B5707F421FB2C4F2B2F7D6124D51077E8B43F585F26AE7254F856F82D80E8BC8E344E9F94",
+          "testOut": "403 Forbidden",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "602\n430EA251AF90607589E32E4852858D6998041524997C631B41C9C86CC92AFDF6621A606034FFC45C4254B1723A7C0229F386913FB6AD97A48D4D320533E2320F0DD83ECA716BC16C810A46D76CFEA07357EC23CE896CF82C11DC0141271C5F9FD74AD173EEFB90A27A31B0E0CD0D06A65A5396620E05AD653091B6517F91AF7B633260738990C540C4FE9785BEF567B691726DFEA8D2BB1D849703DB78000B537C46FD357558092E10EE34D3E9ED4E11F3660168C6FA2478DA19419FB150DF986C219F347C1CD698CBA4891529856C7A548313580611DA3B5191EF19A9607CFDAAB46C8254400BB4FF4F5A2307CB565C3262C7862F01B96FBBD5026A817647D7A23E11650F040E4A1F3279C6C87E054DD77DA00619D1E991168CD43BC35B9B267EAEA985032DE6E0EE1C7D9B1C",
+          "testOut": "403 Forbidden",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Infinite Stock",
+          "isTest": true,
+          "testIn": "836\nDECAFBAD338CB6CCC4B6F56CDF7281CAF0CE9211FC525A8B72A786A5C02751D114E7EFE51BD0C90D1F32BB768455195B42DC1B612C34CB05E2F9531F726B7D10F21146DC955A53810A280B37BA19C67BAC14CB457F71BCCC338C7D425AA3BDB1F7A4E2D7284745BA484FAF022AF4A0C03454E066A23B8A041CC8F2E9400C86387915728E5486D34BCB7429DB120A8B19DC38FB7FB396337E4E98CEE2E34065D0B1893FC2F960F4FBDD20457EE7B153AF0CFE1844EE51D9F5E289F06BA4AA6001BA58717D1F8FDB8547E9620B84723ADA2FA18030B32A8F851B5B9309B1FE33D613CFEC733DF02136F55C1F19AC70CE4D5621163DFD462209509EEE89FAF8D02159DC2256FB267F4B059DC968D43AE7917E800129E017A213E89E710C4FB91D3595B874838AABEB268D869FE2DADB83CF8CC2B3FC9A795C94E4C4BA77CD7879884730A3BF6B295A6E00ECCE1419D4D1E36F2373D83945C11F92B5DA14A94192BF2A053BDDF5D6E69783035B19C3950026D46B0F3722533B0D287C4B92DDB9BA29F9CC15E08FCD13DF586714806184441319206C919723F2EE1763254F5089881F42BA",
+          "testOut": "54 C\n57 B\n40 6\n54 4\n55 F\n51 5\n47 D\n48 7\n59 2\n53 8\n64 1\n42 A\n51 0\n43 E\n53 9\n53 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "820\nDECAFBAD3287457E255A7A2B312501D8C6E69BF17A324A9ADB15352514EF6DF8885B66C4F9C311ADBA20BEFEC94D896090E825960569585234C9E405B87C10D12139FFD6669145829A65212197F7C024408E5E93D49D000F5CFE2198E8B9DBA28DD431FB53ADE6713D24EA846E30EB47C6322110F1C1975E68ABA91BD192EE9E1A68D2BB7ACB5DE3595A18A4EF421B17031A379409D384E3DE1A77D0A258650E4EE235DE7B933824AB67959B809AD2A1EFE16A8389DC47A097424BDB11F4400C6B8B78891880C4E49CBDCD2A15C1C9C778A8CFA775ADA2AC2E4FEBE257B4D7CAFB5285459870BC324BD186903528704297E0F4D69F9F63D02E8D85E1999813074BDAB002F2C10218D3DBDD83CBEDAB4A56959DB904C871B28D8D222249E39924D81B89B70638DC715EE879FB5DFD8664A774AEF0B589EAEA29B8F2726DEA9556AB13BD3AFF013DD118563A563894EBD8536852559AB259E9EF4EB583E99BDF8EA16EF3A7FB7DB5E84ACC6382F2A9D6025783720F67F4D3A94FB9484A0D5A1100EF083B15828DB8DFDFD7B2FC00CBACF3B4B541FCE9780B5A5A3F",
+          "testOut": "44 7\n50 4\n56 5\n54 E\n55 2\n54 A\n58 B\n43 3\n52 1\n45 0\n59 D\n64 8\n33 C\n37 6\n62 9\n42 F",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Padded Frame",
+          "isTest": true,
+          "testIn": "915\n0000000DECAFBAD380474BD5339636A32FE6EEB370F97980165EA6C5F4C6F1ADA8ED5884EF8058E5D66DF138ACA7BB3CF80C06BBC0FF67367E0B192300C5696C381218CCFA4BDA6F9E0EA6B0CD09520B7093FB523A886DD46D30566CBBF138E89E6D0441F0EAC4CB2CA4959A9AAF92DD5410ACE8EAEE4C32F143F6DBFC2C2402EE66795425EF3B1084A3BB317A826E3381CC552DF5C867B4B9E9A54C6AEF2116B9F4DA99A8F433235FB2819955A9593E8C8B90DBB8689CE601CBE7774F561942BB330AC863AD833B532F5F6EBB9C5C31C6DF7B8066F2E170D66B78B8D07D7787520A42ABE34741DD82C2F92792F790E3BD0B2C79D3D5C50722EE85C58AC4C332DF9253C9DA5D131EDD347207FE1EA655A7B31E23DFA20EEDCEDD30274F31F5394B863317BA7665415595A1006F783B0078A11CD2F016AFE19D1959A4D891F56B804144B1CB02106BACD91D76F78F280C7E2299867A9E70C7DBF952778DE826D71FA3E3AFBCC0317B7E1740948C865FB6BECC45ADB1EBCBC2119246ECF9E9E357415E8250879E4C776592360FCF8837F9C37B501DAC6CC5FF1F39BB8E409FCCE9F3E582957EE329D1C334924F6FCADE8A9B6C051985A0B020C54983CFFE00C01EEF36E08DF8ECA8175BC",
+          "testOut": "403 Forbidden",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "889\n000000DECAFBAD3676036A34B7EB4005D7A883942A38C28D6466D6B98E800E9FA6B21B357EF6547345D7432FFEE280B5447B4CCAC117DAE59AB356A2CB4951DF34171C76FDA8AD701B16BF0D5E3D79EC6C35775FA42D08B00FFF31C4F46F8C922CE51909D8A64C068A0A17CD69415F0D8BDB2F3BA43CC55A52275256898B3EE787EFF1BCABB3CE178970A00720ED9A926567C93D42814DDA97C1CE066A405C5A1D79944DE7C3EB61B95F08891BC49AAA0DE50DF36C8592D19CF2951E3903E8A3935764701EDE571A7040E1EBB3DD2B4C7C78204913686C2CA8EC520E8C2D427EAAD2AB9405539D14164341BF3AB0E6FC3BAE4ADBD8E19804BAD67BE8CFE8AB9003262E78F15E012F5665879E67B2FE669631F623C778CCE143CF25AB53AB421EB6ABB62A7483A71A588D16BC9E5BB8E19B15DB6C5C70871FEDAB00F753E49570345FA6621E0E31F744245D86C807E6C86001E7B5CD51C4CF10AE911A79540B03F70D1BC5055782EE1BDE6731581881543C14C0D5E7338270BB9ABCBEC3BDF990B1DA7CF2CAB378E5F76483F8D415C1EB92068FE617F903A09C344717139E01D5942C402E08B94EB4A43248911438A28697EB67EF12CE411CB0181FB2C",
+          "testOut": "403 Forbidden",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "0xC0FFEE",
+          "isTest": true,
+          "testIn": "996\nDECAFBAD3D8C0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEE",
+          "testOut": "164 C\n164 0\n328 F\n328 E",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 14",
+          "isTest": false,
+          "testIn": "996\nDECAFBAD3D8EEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CEEFF0CE",
+          "testOut": "328 E\n328 F\n164 0\n164 C",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Missing Checksum",
+          "isTest": true,
+          "testIn": "995\nDECAFBAD3D8170F0E8354BB2C992E9CE24D1D10B68AF44EC1FADE73A3A0EB9E4F382C0B7A17105C398B9CB7EE8ADBFB63C5962FBF1AD7CCBA47CAB9203C335C908C7B58F4A186F09DCD2935ACFC2038CE769DF54B631777DAD605469C5B995F074B7E216E3435D056E2F74BAEBF7EEE6588A64114D2C511478DBDAE088DE22696697D155551E6A3822330BFB0C758757A3FC9001CB6910BC45754D55C35BE0A96B97CC2591F4BF849C83A426B142D9F78B752C19C4392912969C9080E00353236BF2C56D69002CF77F1455BCE34C820A0C9325DAD2A7950AD89F96F8748721B00AD05AE8CDC68EADB57A009EBE30C2CC59BECB91AC7708DE0C1B1981C95CCD5E66CA8001013C143ED3A88D3DE1B703347B47E91C13DA436937CD5B1C94E4E335E6719343A9FF0C9637E1EE82CD9C3B58DA932B5B256A7A65940681591BBDC0984D7DA30B4BD59F8F92B372FCCF9644F2BC20E84B390881BA893942D337A689A94CE5F329F76248443C3931B7A9C9DF223F670FB6C47F151730C21F50FDF180DCD36D777013B9C7ABA6C4D8D2B812528940BB577F683C4AAA6EB45A3CECF1D5B8A7F529D45EAD115DB3D6D2B18052EC6033655569F002221D8BBF07C2A86BD97E0984D46951E4CFA026CB2480311EB78CD3032991A2392FA01B1BB82F9800656C5C6ACA09FBED4C83B93D016FE181F2C47D4",
+          "testOut": "403 Forbidden",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 15",
+          "isTest": false,
+          "testIn": "995\nDECAFBAD3D8A4F9F0C7B377BACBCBB1B0727DB9E8F4A758C01365F44C60B15EFC2C0BC4ABE98BA60D4B65F4D903F400B206610E9599BBE30B80E16A088A62BE2AA68B5A5A1E2AEB96E95E7192DFC499F6372D82C81223AE6492E0D615E75FA031FE6E048F538EE0CE3D6EB36455C601D3E3FC1E756D5BE4EB6BEE1AE4DF5E69538E49773133EAA32994F0E39F55C294D49BF51E45EB13B6400D02D094FE545D59AF633765B8AA169B64ABC779BD11A453DA6DF8355BAF8E16A9472D26A5B8681147EFDE218F6914EEEF9CA4A74EDB2DF4A06E108365E36E66D127D568753EA8BF06B22C9BA28ED6F3E283009FF21CF3D1063A77E714AE6CC50BD90B7E203866F7B2F1C9D82D85D61ADB1EAF79FCAC0E735D90016D0AEDF41302B31F1C41F6C93F4E2172BB3AB42BCA363DCE266E8190D47FFD3B4C68C6F8A3089182237EF6B185E55F12955C7B466582CDBBDD28C7BAC90EDA19CE4BEDF84E81635602CB3CC000903A891546B46CE856963C6FF599478C79BE66FDCED3B48CFDAEFF3BECFA0DD29CC45B416B7F3DA97F51595E8FE3286B1C814ED7CA221ED94178F6E4A9097A623A932E89CC61DBE5B18A674A782F5E27A61A89FB5F26A0DEC15BE1978CE7F58595BE05E4F7ED8AE25A17599522C44E2EA57B150A51FF02DF767FEBA7ADB5741F7CE4D182527C43199F73B0A8ED647FF552",
+          "testOut": "403 Forbidden",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "1 ≤ [[frameLength]] < 1000\nFor valid data frames, [[orderSize]] > 0\nHexadecimal characters {{A}}-{{F}} will only be used in its uppercase form (i.e., no a-f characters)\n[[order]] and [[frame]] are valid hexadecimal numbers (but may contain leading zeros)",
+      "coverBinaryId": 157687329293199,
+      "stubGenerator": "read frameLength:int\nread frame:word(frameLength)\nwrite 0xC0FFEE",
+      "inputDescription": "<<Line 1>>: A single integer [[frameLength]]; the total length of a received data frame [[frame]].\n<<Line 2>>: [[frameLength]] hexadecimal characters ({{0}}-{{9}}, {{A}}-{{F}}); the value of [[frame]], without the 0x- prefix.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "If the data frame [[frame]] is invalid, output a single line: {{403 Forbidden}}\n\nElse, for each unique [[drinkId]] that appears in [[order]]:\n• Count the number of drinks ordered ([[count]]) for that drink ID.\n• Output \"[[count]] [[drinkId]]\" on a separate line.\nOrder the sequence of outputs in order of appearance of each [[drinkId]] in [[order]]."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><strong>Background</strong><br>Crystal runs a specialty coffee station in a tech company where employees can send their order to the station via an internal API endpoint. Recently, she has been seeing more suspicious requests to the machines that do not seem to originate from the internal API endpoint. She suspects non-employees have hacked into the internal request system, and has tasked you to investigate.<br><br><strong>Task</strong><br>An <var>order</var> is a hexadecimal number with <var>orderSize</var> digits, where each digit corresponds to a drink ID <var>drinkId</var> in the coffee station. The internal API endpoint wraps the <var>order</var> into a data frame <var>frame</var>, another hexadecimal number, with the following format:<br><br>&bull; First <const>8</const> digits - frame header, a fixed hexadecimal value <const>DECAFBAD</const> (0xDECAFBAD).<br>&bull; Next <const>3</const> digits - frame size, a hexadecimal value equal to <var>orderSize</var>₁₀ (e.g. if <var>orderSize</var> = 10, frame size = 0x00A).<br>&bull; Next <var>orderSize</var> digits - the actual <var>order</var>.<br>&bull; Last <const>1</const> digit - checksum, derived such that the sum of <strong>all</strong> hexadecimal digit values in <var>frame</var> (including those in the header, size, and checksum) is divisible by <const>16</const>.<br><br>A data frame is valid (coming from the internal API endpoint) only if it fulfils all formatting and criteria listed above. <strong>Fulfil orders of valid data frames and reject invalid ones.</strong> Time to determine which coffees to brew and which coffees to block!<br><br><strong>Example</strong><br><var>frame</var> = 0xDECAFBAD00744C23A5F<br>Header = 0xDECAFBAD (valid)<br>Size = 0x007; <var>orderSize</var> = 7<br>Data <var>order</var> = 0x44C23A5 (7 drinks total, valid)<br>Checksum = 0xF (0xD + 0xE + 0xC + ... + 0xA + 0x5 + 0xF is divisible by 16, valid)<br>=&gt; Coffee request is valid, fulfil the order.<br>(note: the 0x- prefixes here are for easier understanding and not part of the actual input)</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: A single integer <var>frameLength</var>; the total length of a received data frame <var>frame</var>.<br><strong>Line 2</strong>: <var>frameLength</var> hexadecimal characters (<const>0</const>-<const>9</const>, <const>A</const>-<const>F</const>); the value of <var>frame</var>, without the 0x- prefix.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">If the data frame <var>frame</var> is invalid, output a single line: <const>403 Forbidden</const><br><br>Else, for each unique <var>drinkId</var> that appears in <var>order</var>:<br>&bull; Count the number of drinks ordered (<var>count</var>) for that drink ID.<br>&bull; Output &quot;<var>count</var> <var>drinkId</var>&quot; on a separate line.<br>Order the sequence of outputs in order of appearance of each <var>drinkId</var> in <var>order</var>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>frameLength</var> &lt; 1000<br>For valid data frames, <var>orderSize</var> &gt; 0<br>Hexadecimal characters <const>A</const>-<const>F</const> will only be used in its uppercase form (i.e., no a-f characters)<br><var>order</var> and <var>frame</var> are valid hexadecimal numbers (but may contain leading zeros)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">19\nDECAFBAD00744C23A5F</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">2 4\n1 C\n1 2\n1 3\n1 A\n1 5</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 143871801993425,
+  "commentCount": 3,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

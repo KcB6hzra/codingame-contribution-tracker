@@ -1,0 +1,210 @@
+{
+  "id": 44862,
+  "activeVersion": 31,
+  "score": 4,
+  "votableId": 27547001,
+  "codingamerId": 5271799,
+  "views": 171,
+  "commentableId": 27419427,
+  "title": "ASCII Art with Logo Language",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Eulero314",
+  "publicHandle": "448622d46725b4192d09931aaa2a615084c7d",
+  "codingamerHandle": "7ed5fd396d11683394bd215ec8f0faf49971725",
+  "lastVersion": {
+    "version": 31,
+    "autocloseTime": 1677750749319,
+    "data": {
+      "title": "ASCII Art with Logo Language",
+      "topics": [
+        {
+          "id": 128,
+          "handle": "ascii-art",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Ascii Art",
+            "2": "Ascii Art"
+          },
+          "puzzleCount": 31,
+          "parentTopicId": 93
+        },
+        {
+          "id": 235,
+          "handle": "interpreter",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "interpreter",
+            "2": "Interpreters"
+          },
+          "puzzleCount": 7,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "from collections import namedtuple\nimport sys\n\nclass ASCII_Logo:\n\n    screen:dict\n    d={0:(1,0),90:(0,1),180:(-1,0),270:(0,-1)}\n\n    def __init__(self):\n        self.t=namedtuple('turtle',['pos','a','penDown','s'])\n        self.t.pos = (0, 0)\n        self.t.a = 90\n        self.t.penDown = True\n        self.t.s = '#'\n        self.clear()\n\n    def clear(self,ch=' '):\n        self.screen={}\n        self.fill=ch\n        c=1e38\n        self.mix=c\n        self.miy=c\n        self.max=-c\n        self.may=-c\n\n    def draw(self):\n        if self.t.penDown:\n            self.screen[self.t.pos]=self.t.s\n            self.mix = min(self.mix, self.t.pos[0])\n            self.max = max(self.max,self.t.pos[0])\n            self.miy = min(self.miy, self.t.pos[1])\n            self.may = max(self.may,self.t.pos[1])\n\n    def move(self):\n        self.draw()\n        self.t.a=self.t.a%360\n        x,y=self.t.pos\n        dx,dy=self.d[self.t.a]\n        self.t.pos=(x+dx,y+dy)\n\n    def drawscreen(self):\n        lx=1+self.max-self.mix\n        ly=1+self.may-self.miy\n        s=[[self.fill]*lx for y in range(ly)]\n        for k,v in self.screen.items():\n            x,y=k\n            s[self.may-y][x+self.mix]=v\n        s=[''.join(x) for x in s]\n        # trim all extra trailing spaces\n        s=list(map(lambda x:x.rstrip(),s))\n        return '\\n'.join(s)\n\n    def run(self,pgm:list):\n        tmp=[]\n        for i in pgm:\n            tmp +=i.split(';')\n        pgm=tmp\n        for i in pgm:\n            print(i,file=sys.stderr)\n            p = i.split()\n            if i.strip()=='':\n                continue\n            it=p[0].upper()\n            print(self.t.pos,self.t.a,p,end='',file=sys.stderr)\n            if it =='CS':\n                self.clear(p[1][0])\n            elif it=='FD':\n                for j in range(int(p[1])):\n                    self.move()\n            elif it=='RT':\n                self.t.a -= int(p[1])\n            elif it=='LT':\n                self.t.a += int(p[1])\n            elif it=='PU':\n                self.t.penDown=False\n            elif it=='PD':\n                self.t.penDown=True\n            elif it=='SETPC':\n                self.t.s=p[1][0]\n            print(self.t.pos, self.t.a,file=sys.stderr)\n        return self.drawscreen()\n\nif __name__ == '__main__':\n    n=int(input())\n    pgm = []\n    for i in range(n):\n        line = input()\n        pgm.append(line)\n    s=ASCII_Logo()\n    print(s.run(pgm))",
+      "statement": "Your job is to implement a simple Logo interpreter that draws ASCII Art with a Turtle.\nIn this challenge you will implement only a limited subset of Logo instructions, and the Turtle will move only in horizontal or vertical lines.\nYou should implement the following statements (case insensitive):\n{{CS}} [[character]]: CLEARSCREEN. Clears the screen with the specified symbol (only printable ASCII excluding space).\n{{FD}} [[times]]: FORWARD. Moves Turtle forward for number of times specified (only positive integer).\n{{RT}} [[angle]]: RIGHT. Turns Turtle right for number of degrees specified (only positive multiples of 90).\n{{LT}} [[angle]]: LEFT. Turns turtle left for number of degrees specified (only positive multiples of 90).\n{{PU}}: PENUP. Sets the turtle to move without drawing.\n{{PD}}: PENDOWN. Turtle leaves a symbol when moving.\n{{SETPC}} [[character]]: Sets the symbol (only printable ASCII excluding space) that the Turtle will use. For example: `SETPC *`\nMultiple instructions on the same line are separated with semicolon {{;}}. For example: `PD;FD 10`\nTurtle starts heading <<North>>, with the <<pen down>> and the <<initial symbol>> set to {{#}}.\nThe Turtle leaves a symbol in the starting position each time it moves with pen down, but not in the final position.\nFor example: `RT 90;PD;FD 1;PU;FD 1;PD;FD 1`\nOutput: {{# #}}\nAll leading spaces should be removed only to the extent that the overall image is not affected. All unnecessary spaces at the end of the lines should be removed. For example:\n`FD 2;RT 90;FD 3`\nOutput (there are no spaces in row 1 and row 2 after #): \n{{###}}\n{{#}}\n{{#}}\nReference:\nhttps://en.wikipedia.org/wiki/MSWLogo",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "1\nRT 90;setpc #;PD;FD 1;PU;FD 1;PD;FD 1",
+          "testOut": "# #",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "1\nRT 90;setpc *;PD;FD 1;PU;FD 1;PD;FD 1",
+          "testOut": "* *",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "9\nCS .\nSETPC *\nFD 5\nRT 90\nFD 5\nRT 90\nFD 5\nRT 90\nFD 5",
+          "testOut": "******\n*....*\n*....*\n*....*\n*....*\n******",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "9\nCS .\nSETPC *\nFD 8\nRT 90\nFD 8\nRT 90\nFD 8\nRT 90\nFD 8",
+          "testOut": "*********\n*.......*\n*.......*\n*.......*\n*.......*\n*.......*\n*.......*\n*.......*\n*********",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "13\nRT 90\nFD 5\nrt 180;fd 5;lt 90;fd 1;lt 90\nFD 5\nrt 180;fd 5;lt 90;fd 1;lt 90\nFD 5\nrt 180;fd 5;lt 90;fd 1;lt 90\nFD 5\nrt 180;fd 5;lt 90;fd 1;lt 90\nFD 5\nrt 180;fd 5;lt 90;fd 1;lt 90\nFD 5\nrt 180;fd 5;lt 90;fd 1;lt 90",
+          "testOut": "######\n######\n######\n######\n######\n######",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "19\nRT 90\nFD 8\nrt 180;fd 8;lt 90;fd 1;lt 90\nFD 8\nrt 180;fd 8;lt 90;fd 1;lt 90\nFD 8\nrt 180;fd 8;lt 90;fd 1;lt 90\nFD 8\nrt 180;fd 8;lt 90;fd 1;lt 90\nFD 8\nrt 180;fd 8;lt 90;fd 1;lt 90\nFD 8\nrt 180;fd 8;lt 90;fd 1;lt 90\nFD 8\nrt 180;fd 8;lt 90;fd 1;lt 90\nFD 8\nrt 180;fd 8;lt 90;fd 1;lt 90\nFD 8\nrt 180;fd 8;lt 90;fd 1;lt 90",
+          "testOut": "#########\n#########\n#########\n#########\n#########\n#########\n#########\n#########\n#########",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "51\nsetpc *;rt 90\nfd 2\nlt 90\nfd 2\nrt 90\nfd 2\nrt 90\nfd 2\nlt 90\nfd 2\nlt 90\nfd 2\nlt 90\nfd 2\nrt 90\nfd 2\nrt 90\nfd 2\nlt 90\nfd 2\nrt 90\nfd 2\nlt 90\nfd 2\nrt 90\nfd 2\nrt 90\nfd 2\nlt 90\nfd 2\nrt 90\nfd 2\nlt 90\nfd 2\nrt 90\nfd 2\nrt 90\nfd 2\nlt 90\nfd 2\nlt 90\nfd 2\nlt 90\nfd 2\nrt 90\nfd 2\nrt 90\nfd 2\nlt 90\nfd 2\nfd 1",
+          "testOut": "        ***\n        * *\n      *** ***\n      *     *\n    ***     ***\n    *         *\n  *****     *****\n  * * *     * * *\n*** ***     *** ***",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "51\nsetpc +;rt 90\nfd 2\nlt 90\nfd 2\nrt 90\nfd 2\nrt 90\nfd 2\nlt 90\nfd 2\nlt 90\nfd 2\nlt 90\nfd 2\nrt 90\nfd 2\nrt 90\nfd 2\nlt 90\nfd 2\nrt 90\nfd 2\nlt 90\nfd 2\nrt 90\nfd 2\nrt 90\nfd 2\nlt 90\nfd 2\nrt 90\nfd 2\nlt 90\nfd 2\nrt 90\nfd 2\nrt 90\nfd 2\nlt 90\nfd 2\nlt 90\nfd 2\nlt 90\nfd 2\nrt 90\nfd 2\nrt 90\nfd 2\nlt 90\nfd 2\nfd 1",
+          "testOut": "        +++\n        + +\n      +++ +++\n      +     +\n    +++     +++\n    +         +\n  +++++     +++++\n  + + +     + + +\n+++ +++     +++ +++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "31\nsetpc *;rt 90\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;rt 180;fd 10;lt 90;fd 1;lt 90\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npu;rt 180;fd 10;lt 90;fd 1;lt 90\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;rt 180;fd 10;lt 90;fd 1;lt 90\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npu;rt 180;fd 10;lt 90;fd 1;lt 90\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;rt 180;fd 10;lt 90;fd 1;lt 90",
+          "testOut": " * * * * *\n* * * * *\n * * * * *\n* * * * *\n * * * * *",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "73\nsetpc *;rt 90\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;rt 180;fd 16;lt 90;fd 1;lt 90\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npu;rt 180;fd 16;lt 90;fd 1;lt 90\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;rt 180;fd 16;lt 90;fd 1;lt 90\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npu;rt 180;fd 16;lt 90;fd 1;lt 90\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;rt 180;fd 16;lt 90;fd 1;lt 90\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npu;rt 180;fd 16;lt 90;fd 1;lt 90\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;fd 1;pd;fd 1\npu;rt 180;fd 16;lt 90;fd 1;lt 90\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npd;fd 1;pu;fd 1\npu;rt 180;fd 16;lt 90;fd 1;lt 90",
+          "testOut": " * * * * * * * *\n* * * * * * * *\n * * * * * * * *\n* * * * * * * *\n * * * * * * * *\n* * * * * * * *\n * * * * * * * *\n* * * * * * * *",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "18\nrt 90\nsetpc H;fd 1\nsetpc e;fd 1\nsetpc l;fd 1\nsetpc l;fd 1\nsetpc o;fd 1\npu;fd 1;pd\nsetpc T;fd 1\nsetpc e;fd 1\nsetpc s;fd 1\nsetpc t;fd 1\npu;fd 1;pd\nsetpc W;fd 1\nsetpc o;fd 1\nsetpc r;fd 1\nsetpc l;fd 1\nsetpc d;fd 1\nsetpc !;fd 1",
+          "testOut": "Hello Test World!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "23\nrt 90\nsetpc H;fd 1\nsetpc e;fd 1\nsetpc l;fd 1\nsetpc l;fd 1\nsetpc o;fd 1\npu;fd 1;pd\nsetpc V;fd 1\nsetpc a;fd 1\nsetpc l;fd 1\nsetpc i;fd 1\nsetpc d;fd 1\nsetpc a;fd 1\nsetpc t;fd 1\nsetpc o;fd 1\nsetpc r;fd 1\npu;fd 1;pd\nsetpc W;fd 1\nsetpc o;fd 1\nsetpc r;fd 1\nsetpc l;fd 1\nsetpc d;fd 1\nsetpc !;fd 1",
+          "testOut": "Hello Validator World!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 7",
+          "isTest": true,
+          "testIn": "1\nRT 90;FD 2;RT 180;FD 1;LT 90;FD 2;PU;FD 1;SETPC *;PD;FD 1;LT 90;FD 1;RT 180;FD 3",
+          "testOut": "###\n #\n\n *\n***",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "1\nRT 90;FD 2;RT 180;FD 1;LT 90;FD 2;PU;FD 1;SETPC +;PD;FD 1;LT 90;FD 1;RT 180;FD 3",
+          "testOut": "###\n #\n\n +\n+++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 8",
+          "isTest": true,
+          "testIn": "23\nSetPC #;CS .\nLt 90;Fd 1\nLt 90;Fd 2\nLt 90;Fd 3\nLt 90;Fd 4\nLt 90;Fd 5\nLt 90;Fd 6\nLt 90;Fd 7\nLt 90;Fd 8\nLt 90;Fd 9\nLt 90;Fd 10\nLt 90;Fd 11\nLt 90;Fd 12\nLt 90;Fd 13\nLt 90;Fd 14\nLt 90;Fd 15\nLt 90;Fd 16\nLt 90;Fd 17\nLt 90;Fd 18\nLt 90;Fd 19\nLt 90;Fd 20\nLt 90;Fd 21\nfd 1",
+          "testOut": "######################\n.....................#\n..##################.#\n..#................#.#\n..#.##############.#.#\n..#.#............#.#.#\n..#.#.##########.#.#.#\n..#.#.#........#.#.#.#\n..#.#.#.######.#.#.#.#\n..#.#.#.#....#.#.#.#.#\n..#.#.#.#.##.#.#.#.#.#\n..#.#.#.#.#..#.#.#.#.#\n..#.#.#.#.####.#.#.#.#\n..#.#.#.#......#.#.#.#\n..#.#.#.########.#.#.#\n..#.#.#..........#.#.#\n..#.#.############.#.#\n..#.#..............#.#\n..#.################.#\n..#..................#\n..####################",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "23\nSetPC +;CS .\nLt 90;Fd 1\nLt 90;Fd 2\nLt 90;Fd 3\nLt 90;Fd 4\nLt 90;Fd 5\nLt 90;Fd 6\nLt 90;Fd 7\nLt 90;Fd 8\nLt 90;Fd 9\nLt 90;Fd 10\nLt 90;Fd 11\nLt 90;Fd 12\nLt 90;Fd 13\nLt 90;Fd 14\nLt 90;Fd 15\nLt 90;Fd 16\nLt 90;Fd 17\nLt 90;Fd 18\nLt 90;Fd 19\nLt 90;Fd 20\nLt 90;Fd 21\nfd 1",
+          "testOut": "++++++++++++++++++++++\n.....................+\n..++++++++++++++++++.+\n..+................+.+\n..+.++++++++++++++.+.+\n..+.+............+.+.+\n..+.+.++++++++++.+.+.+\n..+.+.+........+.+.+.+\n..+.+.+.++++++.+.+.+.+\n..+.+.+.+....+.+.+.+.+\n..+.+.+.+.++.+.+.+.+.+\n..+.+.+.+.+..+.+.+.+.+\n..+.+.+.+.++++.+.+.+.+\n..+.+.+.+......+.+.+.+\n..+.+.+.++++++++.+.+.+\n..+.+.+..........+.+.+\n..+.+.++++++++++++.+.+\n..+.+..............+.+\n..+.++++++++++++++++.+\n..+..................+\n..++++++++++++++++++++",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ [[N]] ≤ 100\n[[angle]]: a positive integer multiple of 90.",
+      "coverBinaryId": 97916169821939,
+      "stubGenerator": "read n:int\nloop n read line:string(1024)\n\nwrite ASCII Art Image",
+      "inputDescription": "<<Line 1:>> An integer [[N]], indicating the program's number of lines.\n<<Next [[N]] lines:>> lines of text with Logo instructions.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The ASCII Art generated."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Your job is to implement a simple Logo interpreter that draws ASCII Art with a Turtle.<br>In this challenge you will implement only a limited subset of Logo instructions, and the Turtle will move only in horizontal or vertical lines.<br>You should implement the following statements (case insensitive):<br><const>CS</const> <var>character</var>: CLEARSCREEN. Clears the screen with the specified symbol (only printable ASCII excluding space).<br><const>FD</const> <var>times</var>: FORWARD. Moves Turtle forward for number of times specified (only positive integer).<br><const>RT</const> <var>angle</var>: RIGHT. Turns Turtle right for number of degrees specified (only positive multiples of 90).<br><const>LT</const> <var>angle</var>: LEFT. Turns turtle left for number of degrees specified (only positive multiples of 90).<br><const>PU</const>: PENUP. Sets the turtle to move without drawing.<br><const>PD</const>: PENDOWN. Turtle leaves a symbol when moving.<br><const>SETPC</const> <var>character</var>: Sets the symbol (only printable ASCII excluding space) that the Turtle will use. For example: <pre style=\"font-family: monospace\">SETPC *</pre><br>Multiple instructions on the same line are separated with semicolon <const>;</const>. For example: <pre style=\"font-family: monospace\">PD;FD 10</pre><br>Turtle starts heading <strong>North</strong>, with the <strong>pen down</strong> and the <strong>initial symbol</strong> set to <const>#</const>.<br>The Turtle leaves a symbol in the starting position each time it moves with pen down, but not in the final position.<br>For example: <pre style=\"font-family: monospace\">RT 90;PD;FD 1;PU;FD 1;PD;FD 1</pre><br>Output: <const># #</const><br>All leading spaces should be removed only to the extent that the overall image is not affected. All unnecessary spaces at the end of the lines should be removed. For example:<br><pre style=\"font-family: monospace\">FD 2;RT 90;FD 3</pre><br>Output (there are no spaces in row 1 and row 2 after #): <br><const>###</const><br><const>#</const><br><const>#</const><br>Reference:<br>https://en.wikipedia.org/wiki/MSWLogo</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var>, indicating the program's number of lines.<br><strong>Next <var>N</var> lines:</strong> lines of text with Logo instructions.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The ASCII Art generated.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 100<br><var>angle</var>: a positive integer multiple of 90.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1\nRT 90;setpc #;PD;FD 1;PU;FD 1;PD;FD 1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\"># #</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 95227936615,
+  "avatar": 96314909854613,
+  "commentCount": 21,
+  "upVotes": 4,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 755881,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1675501560270,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

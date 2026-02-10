@@ -1,0 +1,241 @@
+{
+  "id": 107166,
+  "activeVersion": 60,
+  "score": 1,
+  "votableId": 35107312,
+  "codingamerId": 5554448,
+  "views": 231,
+  "commentableId": 34953760,
+  "title": "Optimized coloring",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "flopy78",
+  "publicHandle": "1071660db20f950d5df97b1a167ac2994122c8",
+  "codingamerHandle": "78597a36a97776323b29c41b0e314f1c8444555",
+  "lastVersion": {
+    "version": 60,
+    "autocloseTime": 1730830593351,
+    "freezeTime": 1728843393351,
+    "data": {
+      "title": "Optimized coloring",
+      "topics": [
+        {
+          "id": 62,
+          "handle": "flood-fill",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Remplissage par diffusion",
+            "2": "Flood fill"
+          },
+          "pageTitle": "Flood fill: exercises and theory",
+          "puzzleCount": 19,
+          "parentTopicId": 41,
+          "contentDetailsId": 81
+        },
+        {
+          "id": 56,
+          "handle": "backtracking",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Retour sur trace",
+            "2": "Backtracking"
+          },
+          "pageTitle": "Backtracking: exercises and theory",
+          "puzzleCount": 24,
+          "parentTopicId": 41,
+          "contentDetailsId": 80
+        },
+        {
+          "id": 71,
+          "handle": "recursion",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Récursion",
+            "2": "Recursion"
+          },
+          "pageTitle": "Recursion: exercises and theory",
+          "puzzleCount": 44,
+          "parentTopicId": 41,
+          "contentDetailsId": 77
+        },
+        {
+          "id": 48,
+          "handle": "graphs",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Graphes",
+            "2": "Graphs"
+          },
+          "pageTitle": "Graphs: exercises and theory",
+          "puzzleCount": 37,
+          "parentTopicId": 40,
+          "contentDetailsId": 75
+        }
+      ],
+      "solution": "class Section:\n    def __init__(self,i,cases,neighbours):\n        self.index = i\n        self.cases = cases\n        self.neighbours = neighbours\n        self.color = None\n\n    def __repr__(self):\n        return f\"section {self.index} -> {self.neighbours} \"\n    \ndef find_section(map,w,h,x,y):\n    opened_set = [(x,y)]\n    closed_set = []\n\n    directions = [(1,0),(-1,0),(0,1),(0,-1)]\n\n    while opened_set:\n        new_set = []\n\n        for x,y in opened_set:\n            for dx,dy in directions:\n                nx,ny = x+dx,y+dy\n                if (0 <= nx < w) and (0 <= ny < h):\n                    if map[ny][nx] == \" \" and not (nx,ny) in closed_set:\n                        new_set.append((nx,ny))\n\n\n                    closed_set.append((nx,ny))\n\n            closed_set.append((nx,ny))\n        opened_set = new_set\n    return closed_set\n\ndef analyseSections(sheet):\n\n    sections = []\n    explored = []\n\n    for y in range(h):\n        for x in range(w):\n            if sheet[y][x] == \" \" and not (x,y) in explored:\n                section_cases = find_section(sheet,w,h,x,y)\n                explored.extend(section_cases)\n                sections.append(Section(len(sections),section_cases,[]))\n    for section in sections:\n        for case in section.cases:\n            for other_section in sections:\n                if not other_section.index in section.neighbours:\n                    if other_section.index != section.index and case in other_section.cases:\n                        section.neighbours.append(other_section.index)\n                        other_section.neighbours.append(section.index)\n    return sections\n    \ndef is_valid(color,idx,sections):\n    for section in sections:\n        if idx in section.neighbours:\n            if color == section.color:\n                return False\n    return True\n\n\ndef get_possible_colors(colors,i,sections):\n    return [color for color in colors if is_valid(color,i,sections)]\n\n\ndef fill_sections(sections):\n    colors = [0]\n    min_n_colors = None\n    def fill_sections_rec(i):\n        nonlocal min_n_colors\n        if i == len(sections):\n            if min_n_colors is None or min_n_colors > len(colors):\n                min_n_colors = len(colors)\n\n            return True\n        for color in get_possible_colors(colors,i,sections):\n            sections[i].color = color\n            if fill_sections_rec(i+1):\n                #sections[i].color = None\n                return True\n            sections[i].color = None\n\n        \n        colors.append(len(colors))\n        sections[i].color = colors[-1]\n        fill_sections_rec(i+1)\n        sections[i].color = None\n        colors.remove(colors[-1])\n        return False\n\n    fill_sections_rec(0)\n\n    return min_n_colors\n\n\nw = int(input())\nh = int(input())\n\nsheet = []\n\nfor i in range(h):\n    sheet.append(input())\n\nsections = analyseSections(sheet)\n\nprint(fill_sections(sections))",
+      "statement": "Having an empty sheet of paper divided into some zones, try to fill these zones with <<as few colors as possible>>, respecting the following rule : <<two adjacent zones must be filled with two different colors>>.\n\nA zone is made of \"space\" characters. \n\nFor exemple :\n```\n/\\\n\\/\n```\nis not a zone, while \n```\n+-+\n|1|\n\\-/\n```\nis one (1 space, denoted with the \"1\" symbol).\n\nEach ASCII character fills a \"cell\" of the sheet of paper : the shape of the characters have no importance, it's just aestethic.\n\nTwo zones are considered <<adjacent>> if there is at least one pair of spaces, one from each zone, such that they are separated either horizontally or vertically by a single non-space character.\n\nBelow are two examples of adjacent zones:\n```\n+---+\n|   |         +---+\n|   +---+     |   |\n|   |   |     +-+-+-+\n+---+   |       |   |\n    |   |       +---+\n    +---+\n```\nBelow are two examples of zones which are <<not>> adjacent:\n```\n+---+         +---+\n|   +---+     |   |\n+---|   |     +---+---+\n    +---+         |   |\n                  +---+\n```\nYou have to find the minimum number of colors necessary to fill all the zones.",
+      "testCases": [
+        {
+          "title": "Really easy : 1 zone",
+          "isTest": true,
+          "testIn": "11\n6\n+---------+\n|         |\n|         |\n|         |\n|         |\n+---------+",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Really easy : 1 zone",
+          "isTest": false,
+          "testIn": "17\n6\n+---------------+\n|               |\n|               |\n|               |\n|               |\n+---------------+",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Easy",
+          "isTest": true,
+          "testIn": "19\n8\n+-----------+-----+\n|           |     |\n|           |-----|\n|           |     |\n+-------+---+-----+\n|       |         |\n|       |         |\n+-------+---------+",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Easy",
+          "isTest": false,
+          "testIn": "19\n7\n+-----------------+\n|           |     |\n|           |     |\n+-----------------+\n|                 |\n|                 |\n+-----------------+",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Easy : Nested Zone",
+          "isTest": true,
+          "testIn": "12\n10\n+----------+\n|          |\n|   +--+   |\n|   |  |   |\n|   +--+   |\n|          |\n|   +--+   |\n|   |  |   |\n|   +--+   |\n+----------+",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Easy : Nested Zone",
+          "isTest": false,
+          "testIn": "11\n7\n+---------+\n|         |\n|   +-+   |\n|   | |   |\n|   +-+   |\n|         |\n+---------+",
+          "testOut": "2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Geometry !",
+          "isTest": true,
+          "testIn": "23\n12\n+---------------------+\n|    +                |\n|   / \\               |\n|  /   \\              |\n| +-----+             |\n|              +-+    |\n|   +-+        | |    |\n|  /   \\       | +---+|\n| |     |      |     ||\n|  \\   /       +-----+|\n|   +-+               |\n+---------------------+",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Geometry !",
+          "isTest": false,
+          "testIn": "12\n12\n+----------+\n|    +     |\n|   / \\    |\n|  /   \\   |\n| +-----+  |\n|          |\n|   +-+    |\n|  /   \\   |\n| |     |  |\n|  \\   /   |\n|   +-+    |\n+----------+",
+          "testOut": "2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Grid",
+          "isTest": true,
+          "testIn": "41\n17\n+----+----+----+----+----+----+----+----+\n|    |    |    |    |    |    |    |    |\n+----+----+----+----+----+----+----+----+\n|    |    |    |    |    |    |    |    |\n+----+----+----+----+----+----+----+----+\n|    |    |    |    |    |    |    |    |\n+----+----+----+----+----+----+----+----+\n|    |    |    |         |    |    |    |\n+----+----+----+         +----+----+----+\n|    |    |    |         |    |    |    |\n+----+----+----+----+----+----+----+----+\n|    |    |    |    |    |    |    |    |\n+----+----+----+----+----+----+----+----+\n|    |    |    |    |    |    |    |    |\n+----+----+----+----+----+----+----+----+\n|    |    |    |    |    |    |    |    |\n+----+----+----+----+----+----+----+----+",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Grid",
+          "isTest": false,
+          "testIn": "41\n17\n+----+----+----+----+----+----+----+----+\n|    |    |    |    |    |    |    |    |\n+----+----+----+----+----+----+----+----+\n|    |    |    |    |    |    |    |    |\n+----+----+----+----+----+----+----+----+\n|    |    |    |    |    |    |    |    |\n+----+----+----+----+----+----+----+----+\n|    |    |    |    |    |    |    |    |\n+----+----+----+----+----+----+----+----+\n|    |    |    |    |    |    |    |    |\n+----+----+----+----+----+----+----+----+\n|    |    |    |    |    |    |    |    |\n+----+----+----+----+----+----+----+----+\n|    |    |    |    |    |    |    |    |\n+----+----+----+----+----+----+----+----+\n|    |    |    |    |    |    |    |    |\n+----+----+----+----+----+----+----+----+",
+          "testOut": "2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Tricky",
+          "isTest": true,
+          "testIn": "33\n10\n+--+----------+----------+------+\n|  |          |          |      |\n|  +----+     |          +      |\n|       |     |------+          |\n+-------+     |      |          |\n|       +-----+      |----------+\n|             |      |          |\n|             +------+          |\n|                    |          |\n+--------------------+-----+----+",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Tricky",
+          "isTest": false,
+          "testIn": "33\n10\n+--+----------+----------+------+\n|  |          |          |      |\n|  +----+     |          +      |\n|       |     +------+          |\n+-------+            |          |\n|       +-----+      |----------+\n|             |      |          |\n|             +------+          |\n|                    |          |\n+--------------------+-----+----+",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Draws !",
+          "isTest": true,
+          "testIn": "51\n11\n+-------------------------------------------------+\n|                                                 |\n|         ----------------------                  |\n|        /        |       |     \\                 |\n| -------\\        |       |      \\                |\n|/        ----------------+--------------------+  |\n||          -----         +      -----         |  |\n|\\         / ___ \\              / ___ \\        /  |\n| ----------/   \\----------------/   \\--------/   |\n|           \\___/                \\___/            |\n+-------------------------------------------------+",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Draws!",
+          "isTest": false,
+          "testIn": "43\n12\n+-----------------------------------------+\n|                      -------\\           |\n|                     /     +  \\          |\n|     _               |        /----      |\n|    | \\              |-------/           |\n|    |  \\             /      /-----       |\n|    |   --------------------/            |\n|     \\      /    /         /             |\n|      \\    /    /         /              |\n|       \\   -----         /               |\n|        -----------------                |\n+-----------------------------------------+",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "More Colors",
+          "isTest": true,
+          "testIn": "12\n10\n+-----+----+\n|  |  |    |\n|  |  +-+  |\n|  |  | |  |\n|  |  +-+--+\n|  |  |    |\n+-----+    |\n|  |  |    |\n|  |  |    |\n+-----+----+",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "More Colors",
+          "isTest": false,
+          "testIn": "7\n9\n+-----+\n|  |  |\n| +-+ |\n| | | |\n| +-+ |\n| | | |\n| +-+ |\n|  |  |\n+-----+",
+          "testOut": "4",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "[[w]] < {{100}}\n[[h]] <  {{20}}\n\nYou can find the following symbols in the input : {{-}}, {{|}}, {{+}}, {{/}}, {{\\}} and {{_}}",
+      "coverBinaryId": 130499026280584,
+      "stubGenerator": "read w:int\nread h:int\nloop h read line:string(100)\nwrite answer",
+      "inputDescription": "<<Line 1:>> an integer [[w]] representing the width of the sheet of paper\n<<Line 2:>> an integer [[h]] representing the height of the sheet of paper\n<<[[h]] following lines :>> a string representing one line of the sheet of paper",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> an integer representing the minimum number of colors necessary to fill the sheet of paper"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Having an empty sheet of paper divided into some zones, try to fill these zones with <strong>as few colors as possible</strong>, respecting the following rule : <strong>two adjacent zones must be filled with two different colors</strong>.<br><br>A zone is made of &quot;space&quot; characters. <br><br>For exemple :<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>/\\<br>\\/<br></pre><pre style=\"font-family: monospace\"></pre><br>is not a zone, while <br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>+-+<br>|1|<br>\\-/<br></pre><pre style=\"font-family: monospace\"></pre><br>is one (1 space, denoted with the &quot;1&quot; symbol).<br><br>Each ASCII character fills a &quot;cell&quot; of the sheet of paper : the shape of the characters have no importance, it's just aestethic.<br><br>Two zones are considered <strong>adjacent</strong> if there is at least one pair of spaces, one from each zone, such that they are separated either horizontally or vertically by a single non-space character.<br><br>Below are two examples of adjacent zones:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>+---+<br>|   |         +---+<br>|   +---+     |   |<br>|   |   |     +-+-+-+<br>+---+   |       |   |<br>    |   |       +---+<br>    +---+<br></pre><pre style=\"font-family: monospace\"></pre><br>Below are two examples of zones which are <strong>not</strong> adjacent:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>+---+         +---+<br>|   +---+     |   |<br>+---|   |     +---+---+<br>    +---+         |   |<br>                  +---+<br></pre><pre style=\"font-family: monospace\"></pre><br>You have to find the minimum number of colors necessary to fill all the zones.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> an integer <var>w</var> representing the width of the sheet of paper<br><strong>Line 2:</strong> an integer <var>h</var> representing the height of the sheet of paper<br><strong><var>h</var> following lines :</strong> a string representing one line of the sheet of paper</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> an integer representing the minimum number of colors necessary to fill the sheet of paper</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><var>w</var> &lt; <const>100</const><br><var>h</var> &lt;  <const>20</const><br><br>You can find the following symbols in the input : <const>-</const>, <const>|</const>, <const>+</const>, <const>/</const>, <const>\\</const> and <const>_</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">11\n6\n+---------+\n|         |\n|         |\n|         |\n|         |\n+---------+</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 40355959512,
+  "avatar": 113237700854929,
+  "commentCount": 36,
+  "upVotes": 2,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 1014416,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1730372666597,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

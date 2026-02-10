@@ -1,0 +1,125 @@
+{
+  "id": 358,
+  "activeVersion": 8,
+  "score": 7,
+  "votableId": 2839003,
+  "codingamerId": 1244576,
+  "views": 216,
+  "commentableId": 2786466,
+  "title": "Drawing Polygons",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "PauloVilela",
+  "publicHandle": "35800cfacbebfefa10e6e94e75967c45e9f",
+  "codingamerHandle": "177d798c83585df12f0dea0e2fc3e5d76754421",
+  "lastVersion": {
+    "version": 8,
+    "data": {
+      "title": "Drawing Polygons",
+      "topics": [
+        {
+          "id": 95,
+          "handle": "geometry",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Geometry",
+            "2": "Geometry"
+          },
+          "puzzleCount": 30,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import java.awt.Point;\nimport java.awt.geom.Point2D;\nimport java.util.*;\nimport java.io.*;\nimport java.math.*;\n\nclass Solution {\n\n    static int N;\n    static List<Point> pontos = new ArrayList<>();\n    static List<Vetor> vetores = new ArrayList<>();\n\n    public static void main(String args[]) {\n        Scanner in = new Scanner(System.in);\n        N = in.nextInt();\n\n        for (int i = 0; i < N; i++) {\n            int x = in.nextInt();\n            int y = in.nextInt();\n            Point p = new Point(x, y);\n            pontos.add(p);\n            if (i > 0) {\n                vetores.add(new Vetor(pontos.get(i - 1), p));\n                if (i == N - 1) {\n                    Vetor v = new Vetor(p, pontos.get(0));\n                    v.normalizar();\n                    vetores.add(v);\n                }\n            }\n        }\n        boolean b = definirSentido();\n        System.out.println(b ? \"CLOCKWISE\" : \"COUNTERCLOCKWISE\");\n    }\n\n    static private boolean definirSentido() {\n        double angulosDireita = 0;\n        double angulosEsquerda = 0;\n        for (int i = 1; i < N; i++) {\n            Vetor v1 = vetores.get(i);\n            Vetor v2 = vetores.get(i - 1);\n            double angulo = v1.getAngulo(v2);\n            double pv = Math.toDegrees(v1.produtoVetorial(v2));\n            if (pv < 0) {\n                angulosEsquerda += angulo;\n            } else {\n                angulosDireita += angulo;\n            }\n        }\n        return angulosDireita > angulosEsquerda;\n    }\n\n    private static class Vetor {\n\n        private double i;\n        private double j;\n\n        public Vetor(double i, double j) {\n            this.i = i;\n            this.j = j;\n        }\n\n        public Vetor(Point2D p1, Point2D p2) {\n            this.i = p2.getX() - p1.getX();\n            this.j = p2.getY() - p1.getY();\n        }\n\n        public void normalizar() {\n            double modulo = getModulo();\n            this.i = i / modulo;\n            this.j = j / modulo;\n        }\n\n        public double getModulo() {\n            return Math.sqrt(Math.pow(i, 2) + Math.pow(j, 2));\n        }\n\n        public double produtoEscalar(Vetor v) {\n            return (this.i * v.i) + (this.j * v.j);\n        }\n\n        public double produtoVetorial(Vetor v) {\n            return (this.i * v.j) - (this.j * v.i);\n        }\n\n        public double getAngulo(Vetor v) {\n            return Math.acos(this.produtoEscalar(v) / (this.getModulo() * v.getModulo()));\n        }\n\n    }\n}\n",
+      "statement": "You have to print the direction ({{CLOCKWISE}} or {{COUNTERCLOCKWISE}}) used to construct a polygon defined by a specified sequence of points.\n\nConsider that the points represent the vertices of an arbitrary polygon, and you can draw the polygon if you take the points pairwise, in the order they are given. So, every two consecutive points form an edge, and the last edge is formed by the last and the first points.\n\n<<Example 1>>\n\nP(1)  =>  x=6, y=5\nP(2)  =>  x=11, y=5\nP(3)  =>  x=11, y=2\nP(4)  =>  x=3, y=2\n`\n│ · · · · · · · · · · · · ·\n│ · · · · · 1 · · · · 2 · ·\n│ · · · · · · · · · · · · ·\n│ · · · · · · · · · · · · ·\n│ · · 4 · · · · · · · 3 · ·\n│ · · · · · · · · · · · · ·\n┼───────────────────────────\n`\nThe polygon is in the {{CLOCKWISE}} direction.\n\n<<Example 2>>\n\nP(1)  =>  x=6, y=5\nP(2)  =>  x=11, y=5\nP(3)  =>  x=11, y=2\nP(4)  =>  x=16, y=7\n`\n│ · · · · · · · · · · · · · · · · · ·\n│ · · · · · · · · · · · · · · · 4 · ·\n│ · · · · · · · · · · · · · · · · · ·\n│ · · · · · 1 · · · · 2 · · · · · · ·\n│ · · · · · · · · · · · · · · · · · ·\n│ · · · · · · · · · · · · · · · · · ·\n│ · · · · · · · · · · 3 · · · · · · ·\n│ · · · · · · · · · · · · · · · · · ·\n┼─────────────────────────────────────\n`\nThe polygon is in the {{COUNTERCLOCKWISE}} direction.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "4\n6 5\n11 5\n11 2\n3 2",
+          "testOut": "CLOCKWISE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "4\n5 5\n11 6\n11 2\n1 1",
+          "testOut": "CLOCKWISE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "4\n6 5\n11 5\n11 2\n16 7",
+          "testOut": "COUNTERCLOCKWISE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "4\n5 5\n11 6\n11 2\n17 8",
+          "testOut": "COUNTERCLOCKWISE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "10\n2 10\n4 9\n5 7\n5 6\n4 4\n3 3\n6 4\n7 7\n6 8\n4 10",
+          "testOut": "COUNTERCLOCKWISE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "9\n1 8\n3 7\n4 5\n4 4\n3 2\n2 1\n5 2\n6 5\n5 7",
+          "testOut": "COUNTERCLOCKWISE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "11\n12 9\n11 8\n12 7\n12 6\n11 6\n11 5\n12 4\n13 4\n10 3\n10 7\n10 9",
+          "testOut": "CLOCKWISE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "12\n6 9\n7 8\n6 7\n6 6\n7 6\n7 5\n5 4\n6 4\n7 4\n8 4\n9 4\n8 10",
+          "testOut": "COUNTERCLOCKWISE",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "- [[N]] ranges from {{4}} to {{20}}\n- [[X]] and [[Y]] range from {{0}} to {{20}}",
+      "stubGenerator": "read N:int\nloop N read x:int y:int\nwrite CLOCKWISE",
+      "inputDescription": "<<Line 1:>> an integer [[N]] indicating the number of points in the polygon\n<<Next [[N]] lines:>> a pair of space-separated integers [[X]] [[Y]] giving the location of a point",
+      "solutionLanguage": "Java",
+      "outputDescription": "<<One line:>> {{CLOCKWISE}} or {{COUNTERCLOCKWISE}}"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You have to print the direction (<const>CLOCKWISE</const> or <const>COUNTERCLOCKWISE</const>) used to construct a polygon defined by a specified sequence of points.<br><br>Consider that the points represent the vertices of an arbitrary polygon, and you can draw the polygon if you take the points pairwise, in the order they are given. So, every two consecutive points form an edge, and the last edge is formed by the last and the first points.<br><br><strong>Example 1</strong><br><br>P(1)  =&gt;  x=6, y=5<br>P(2)  =&gt;  x=11, y=5<br>P(3)  =&gt;  x=11, y=2<br>P(4)  =&gt;  x=3, y=2<br><pre style=\"font-family: monospace\"><br>│ &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot;<br>│ &middot; &middot; &middot; &middot; &middot; 1 &middot; &middot; &middot; &middot; 2 &middot; &middot;<br>│ &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot;<br>│ &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot;<br>│ &middot; &middot; 4 &middot; &middot; &middot; &middot; &middot; &middot; &middot; 3 &middot; &middot;<br>│ &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot;<br>┼───────────────────────────<br></pre><br>The polygon is in the <const>CLOCKWISE</const> direction.<br><br><strong>Example 2</strong><br><br>P(1)  =&gt;  x=6, y=5<br>P(2)  =&gt;  x=11, y=5<br>P(3)  =&gt;  x=11, y=2<br>P(4)  =&gt;  x=16, y=7<br><pre style=\"font-family: monospace\"><br>│ &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot;<br>│ &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; 4 &middot; &middot;<br>│ &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot;<br>│ &middot; &middot; &middot; &middot; &middot; 1 &middot; &middot; &middot; &middot; 2 &middot; &middot; &middot; &middot; &middot; &middot; &middot;<br>│ &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot;<br>│ &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot;<br>│ &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; 3 &middot; &middot; &middot; &middot; &middot; &middot; &middot;<br>│ &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot; &middot;<br>┼─────────────────────────────────────<br></pre><br>The polygon is in the <const>COUNTERCLOCKWISE</const> direction.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> an integer&nbsp;<var>N</var>&nbsp;indicating the number of points in the polygon<br><strong>Next&nbsp;<var>N</var>&nbsp;lines:</strong> a pair of space-separated integers <var>X</var> <var>Y</var> giving the location of a point</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>One line:</strong> <const>CLOCKWISE</const> or <const>COUNTERCLOCKWISE</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">- <var>N</var> ranges from <const>4</const> to <const>20</const><br>- <var>X</var> and <var>Y</var> range from <const>0</const> to <const>20</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4\n6 5\n11 5\n11 2\n3 2</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">CLOCKWISE</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 298053695443,
+  "avatar": 3336021611151,
+  "commentCount": 9,
+  "upVotes": 7,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 819,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

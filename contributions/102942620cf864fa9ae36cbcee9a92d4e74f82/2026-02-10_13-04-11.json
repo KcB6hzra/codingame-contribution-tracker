@@ -1,0 +1,247 @@
+{
+  "id": 102942,
+  "activeVersion": 53,
+  "score": 13,
+  "votableId": 34691066,
+  "codingamerId": 6030251,
+  "views": 202,
+  "commentableId": 34538916,
+  "title": "Game of Life Simulation",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "AntonGpt",
+  "publicHandle": "102942620cf864fa9ae36cbcee9a92d4e74f82",
+  "codingamerHandle": "511331e74364c51cc33fe510dceebada1520306",
+  "lastVersion": {
+    "version": 53,
+    "autocloseTime": 1728585143985,
+    "freezeTime": 1726597943985,
+    "data": {
+      "title": "Game of Life Simulation",
+      "topics": [
+        {
+          "id": 128,
+          "handle": "ascii-art",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Ascii Art",
+            "2": "Ascii Art"
+          },
+          "puzzleCount": 48,
+          "parentTopicId": 93
+        },
+        {
+          "labelMap": {
+            "2": "Cellular Automaton"
+          }
+        },
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 60,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "def counter(x, y):\n    global m, width, height\n\n    counted = 0\n\n    if x == 0 and x == width - 1:\n        situations_x = [0]\n    elif x == 0:\n        situations_x = [0, 1]\n    elif x == width - 1:\n        situations_x = [-1, 0]\n    else:\n        situations_x = [-1, 0, 1]\n\n    if y == 0 and y == height - 1:\n        situations_y = [0]\n    elif y == 0:\n        situations_y = [0, 1]\n    elif y == height - 1:\n        situations_y = [-1, 0]\n    else:\n        situations_y = [-1, 0, 1]\n\n    for xi in situations_x:\n        for yi in situations_y:\n            if m[y + yi][x + xi] == \"#\" and not (xi == yi and xi == 0):\n                counted += 1\n    return counted\n\n\nwidth, height = [int(i) for i in input().split()]\nold_steps = []\nm = []\nfor i in range(height):\n    line = input()\n    m.append([i for i in line])\n\ndead_step = [[\" \"]*width for i in range(height)]\n\nwhile m != dead_step and m not in old_steps:\n    old_steps.append(m.copy())\n    alive = []\n    dead = []\n\n    for y in range(height):\n        for x in range(width):\n            if counter(x, y) == 3:\n                alive.append([x, y])\n            elif counter(x, y) < 2 or counter(x, y) > 3:\n                dead.append([x, y])\n\n    n = [[\" \"]*width for i in range(height)]\n\n    for y in range(height):\n        for x in range(width):\n            if [x, y] in alive:\n                n[y][x] = \"#\"\n            elif [x, y] in dead:\n                n[y][x] = \" \"\n            else:\n                n[y][x] = m[y][x]\n\n    m = n\n\nif m == dead_step:\n    print(\"Death\")\nelif old_steps[-1] == m:\n    print(\"Still\")\nelif m in old_steps:\n    period = 0\n    for i, x in enumerate(reversed(old_steps)):\n        if x == m:\n            period = i\n    print(\"Oscillator \" + str(period+1))",
+      "statement": "Game of life is a cellular automaton with easy rules.\nThe action field is a matrix with width [[W]] and height [[H]].\nCells can be alive \"{{#}}\" or dead \"{{ }}\".\nCells can have neighbours in 8 cells around it:\n```=============\n| 1 | 2 | 3 |\n=============\n| 4 |   | 5 |\n=============\n| 6 | 7 | 8 |\n=============``` \nCells on the sides or at the corners have fewer neighbours.\n\nIf a dead cell has 3 neighbours it becomes alive.\nIf a living cell has fewer than 2 or more than 3 neighbours, it becomes dead.\nIf a live cell has 2 neighbours, it does not change.\n\n\nFor example:\nConfiguration:\n``` 1234\n1 #\n2  #\n3###\n4``` \nCells 2;4, 1;2 become alive because they have 3 neighbours (2;4 has 1;3, 2;3, 3;3. 1;2 has 2;1, 1;3, 2;3.)\nCells 2;1, 1;3 become dead (2;1 has only 3;2. 1;3 has only 2;3.)\n\nStep 1:\n``` 1234\n1  \n2# #\n3 ##\n4 #``` \nCells 3;4, 1;3 become alive because they have 3 neighbours (3;4 has 2;3, 3;3, 2;4. 1;3 has 1;2, 2;3, 2;4.)\nCells 1;2, 2;3 become dead (1;2 has only 2;3. 2;3 has too many: 1;2, 2;4, 3;2, 3;3)\n\nStep 2:\n``` 1234\n1  \n2  #\n3# #\n4 ##``` \nCells 4;3, 2;2 become alive because they have 3 neighbours.\nCells 1;3, 3;2 become dead because they have 1 neighbour.\n\nStep 3:\n``` 1234\n1  \n2 #  \n3  ##\n4 ##```\nCells 3;2, 4;4 become alive because they have 3 neighbours.\nCells 2;2, 3;3 become dead because they have 1 neighbour or more than 3.\n\nStep 4:\n``` 1234\n1  \n2  #  \n3   #\n4 ###```\n\nWe come to the initial configuration, but it has shifted right and down. In the next steps, it will move further.\nBut what happens when it reaches the corner?\n\n\nCell 2;3 becomes alive because it has 3 neighbours.\nCells 3;2, 2;4 become dead because they have 1.\n\n\nStep 5:\n``` 1234\n1\n2\n3 # #\n4  ##```\nCell 3;2 becomes dead because it has 1.\n\nStep 6:\n``` 1234\n1\n2\n3   #\n4  ##```\nCell 3;3 becomes alive because it has 3 neighbours.\n\nStep 7:\n``` 1234\n1\n2\n3  ##\n4  ##```\n\nThis configuration will be still.\n\nGame of life has 3 ends:\n1. {{Still}}.\nConfiguration after some actions becomes stationary.\n2. {{Oscillator}}.\nConfiguration will repeat itself in some moves.\n3. {{Death}}.\nNo living cell remains.\n\nOutput the result of the inputed configuration:\n1. {{Still}}.\n2. {{Oscillator}} [[period]] (how many moves needed to repeat the configuration).\n3. {{Death}}.\n\nSource: https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "4 4\n #  \n  # \n### \n    ",
+          "testOut": "Still",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Loaf",
+          "isTest": false,
+          "testIn": "4 4\n ## \n#  #\n # #\n  # ",
+          "testOut": "Still",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Blinker (Oscillator)",
+          "isTest": true,
+          "testIn": "3 3\n # \n # \n # ",
+          "testOut": "Oscillator 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Toad",
+          "isTest": false,
+          "testIn": "4 4\n  # \n#  #\n#  #\n #  ",
+          "testOut": "Oscillator 2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Block",
+          "isTest": true,
+          "testIn": "4 4\n    \n ## \n ## \n    ",
+          "testOut": "Still",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Bee-hive",
+          "isTest": false,
+          "testIn": "4 3\n ## \n#  #\n ## ",
+          "testOut": "Still",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "To still",
+          "isTest": true,
+          "testIn": "4 4\n    \n# # \n ## \n    ",
+          "testOut": "Still",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "To tub",
+          "isTest": false,
+          "testIn": "8 8\n        \n   ###  \n #    # \n #    # \n #    # \n        \n   ###  \n        ",
+          "testOut": "Still",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Single cell",
+          "isTest": true,
+          "testIn": "3 3\n   \n # \n   ",
+          "testOut": "Death",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Diehard",
+          "isTest": false,
+          "testIn": "40 40\n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                      #                 \n                ##                      \n                 #   ###                \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        \n                                        ",
+          "testOut": "Death",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two gliders",
+          "isTest": true,
+          "testIn": "9 16\n         \n         \n         \n         \n    #    \n     #   \n   ###   \n         \n         \n   ###   \n     #   \n    #    \n         \n         \n         \n         ",
+          "testOut": "Oscillator 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Four gliders",
+          "isTest": false,
+          "testIn": "9 9\n #    #  \n  #   # #\n###   ## \n         \n         \n         \n ##   ###\n# #   #  \n  #    # ",
+          "testOut": "Death",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Pulsar",
+          "isTest": true,
+          "testIn": "15 15\n    #     #    \n    #     #    \n    ##   ##    \n               \n###  ## ##  ###\n  # # # # # #  \n    ##   ##    \n               \n    ##   ##    \n  # # # # # #  \n###  ## ##  ###\n               \n    ##   ##    \n    #     #    \n    #     #    ",
+          "testOut": "Oscillator 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Penta-decathlon",
+          "isTest": false,
+          "testIn": "7 16\n       \n       \n       \n       \n  ###  \n  # #  \n  ###  \n  ###  \n  ###  \n  ###  \n  # #  \n  ###  \n       \n       \n       \n       ",
+          "testOut": "Oscillator 15",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Glider gun",
+          "isTest": true,
+          "testIn": "38 20\n                                      \n                         #            \n                       # #            \n             ##      ##            ## \n            #   #    ##            ## \n ##        #     #   ##               \n ##        #   # ##    # #            \n           #     #       #            \n            #   #                     \n             ##                       \n                                      \n                                      \n                                      \n                                      \n                                      \n                                      \n                                      \n                                      \n                                      \n                                      ",
+          "testOut": "Oscillator 60",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Glider gun",
+          "isTest": false,
+          "testIn": "35 22\n                                   \n ##     ##                         \n ##     ##                         \n                                   \n     ##                            \n     ##                            \n                                   \n                                   \n                                   \n                                   \n                       ## ##       \n                      #     #      \n                      #      #  ## \n                      ###   #   ## \n                           #       \n                                   \n                                   \n                                   \n                     ##            \n                     #             \n                      ###          \n                        #          ",
+          "testOut": "Still",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Random",
+          "isTest": true,
+          "testIn": "40 40\n   # #  #                 #             \n          #       #  #                  \n   #  #   # #      #             #      \n                               #       #\n                           #        ##  \n                      #                 \n      ## #    ##    #               #   \n        #  # #               ##        #\n        #        # #           #       #\n     ##     ##              #  #        \n                                        \n#    ##           #                     \n                                        \n                    #                   \n#    #     #                  #         \n      #          #    #   #          #  \n     #                  #      #        \n        #          #      #     #      #\n         #                              \n                      #              #  \n#                      ## ##    #      #\n                                        \n    #                #     #            \n    #     #           #                 \n #         #          #      #       #  \n               #  #     #      #     #  \n     #      #    #       #              \n               #             #      #   \n#     #    #           # #  #       #   \n#     #           #                     \n          ##               #            \n    #                                   \n  #                    #                \n                               #        \n  #        ##        #        #         \n   #  #  #          #      #          # \n        #             #  #       # #    \n                    #        #          \n    #   # #  #   # #        #         # \n                 #     #          #     ",
+          "testOut": "Still",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Random",
+          "isTest": false,
+          "testIn": "35 35\n          ##         ##           #\n   #    #           # #            \n #       #    #    ##       #      \n    #  #             #         #   \n  #   # #         # # #      ##  # \n  #     #             ####   #     \n                       ##   #  ##  \n       # # #                     # \n#  #  #        #              # #  \n     #               ##    #   #   \n # ## #                   #        \n ##   #        ##    #   ##        \n      #                 # ## #  #  \n #      #    ## #    #             \n   #  #    ##            #       ##\n    #  #        #            #     \n     #          #              #   \n  #       # #            #     #   \n   #      #   # #       # #    #   \n      ## #              #          \n #        #            #      #    \n#     #   #   #    # #   # #       \n   #      #  #    #         # #    \n     ##   #         #        #     \n     #          #      #     ##    \n    #         ##     #         #   \n       #            # #            \n  # ##   #   # ##     #      #     \n                       #    #      \n  #           #      #             \n        ## #  #         #          \n   #     #        #      #         \n    #    #       #    #            \n     ## #                 #  #    #\n ##   # #        #    #      # #   ",
+          "testOut": "Oscillator 2",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ [[W]] ≤ 40\n1 ≤ [[H]] ≤ 40",
+      "coverBinaryId": 127740605235056,
+      "stubGenerator": "read W:int H:int\nloop H read ROW:string(W)\nwrite result",
+      "inputDescription": "<<Line 1:>> Two space separated integers [[W]] and [[H]] for width and height.\n<<Next [[H]] lines:>> Line with length [[W]] for configuration.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> result of configuration: {{Still}}, {{Oscillator}} [[period]] or {{Death}}."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Game of life is a cellular automaton with easy rules.<br>The action field is a matrix with width <var>W</var> and height <var>H</var>.<br>Cells can be alive &quot;<const>#</const>&quot; or dead &quot;<const> </const>&quot;.<br>Cells can have neighbours in 8 cells around it:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">=============<br>| 1 | 2 | 3 |<br>=============<br>| 4 |   | 5 |<br>=============<br>| 6 | 7 | 8 |<br>=============</pre><pre style=\"font-family: monospace\"></pre> <br>Cells on the sides or at the corners have fewer neighbours.<br><br>If a dead cell has 3 neighbours it becomes alive.<br>If a living cell has fewer than 2 or more than 3 neighbours, it becomes dead.<br>If a live cell has 2 neighbours, it does not change.<br><br><br>For example:<br>Configuration:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"> 1234<br>1 #<br>2  #<br>3###<br>4</pre><pre style=\"font-family: monospace\"></pre> <br>Cells 2;4, 1;2 become alive because they have 3 neighbours (2;4 has 1;3, 2;3, 3;3. 1;2 has 2;1, 1;3, 2;3.)<br>Cells 2;1, 1;3 become dead (2;1 has only 3;2. 1;3 has only 2;3.)<br><br>Step 1:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"> 1234<br>1  <br>2# #<br>3 ##<br>4 #</pre><pre style=\"font-family: monospace\"></pre> <br>Cells 3;4, 1;3 become alive because they have 3 neighbours (3;4 has 2;3, 3;3, 2;4. 1;3 has 1;2, 2;3, 2;4.)<br>Cells 1;2, 2;3 become dead (1;2 has only 2;3. 2;3 has too many: 1;2, 2;4, 3;2, 3;3)<br><br>Step 2:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"> 1234<br>1  <br>2  #<br>3# #<br>4 ##</pre><pre style=\"font-family: monospace\"></pre> <br>Cells 4;3, 2;2 become alive because they have 3 neighbours.<br>Cells 1;3, 3;2 become dead because they have 1 neighbour.<br><br>Step 3:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"> 1234<br>1  <br>2 #  <br>3  ##<br>4 ##</pre><pre style=\"font-family: monospace\"></pre><br>Cells 3;2, 4;4 become alive because they have 3 neighbours.<br>Cells 2;2, 3;3 become dead because they have 1 neighbour or more than 3.<br><br>Step 4:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"> 1234<br>1  <br>2  #  <br>3   #<br>4 ###</pre><pre style=\"font-family: monospace\"></pre><br><br>We come to the initial configuration, but it has shifted right and down. In the next steps, it will move further.<br>But what happens when it reaches the corner?<br><br><br>Cell 2;3 becomes alive because it has 3 neighbours.<br>Cells 3;2, 2;4 become dead because they have 1.<br><br><br>Step 5:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"> 1234<br>1<br>2<br>3 # #<br>4  ##</pre><pre style=\"font-family: monospace\"></pre><br>Cell 3;2 becomes dead because it has 1.<br><br>Step 6:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"> 1234<br>1<br>2<br>3   #<br>4  ##</pre><pre style=\"font-family: monospace\"></pre><br>Cell 3;3 becomes alive because it has 3 neighbours.<br><br>Step 7:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"> 1234<br>1<br>2<br>3  ##<br>4  ##</pre><pre style=\"font-family: monospace\"></pre><br><br>This configuration will be still.<br><br>Game of life has 3 ends:<br>1. <const>Still</const>.<br>Configuration after some actions becomes stationary.<br>2. <const>Oscillator</const>.<br>Configuration will repeat itself in some moves.<br>3. <const>Death</const>.<br>No living cell remains.<br><br>Output the result of the inputed configuration:<br>1. <const>Still</const>.<br>2. <const>Oscillator</const> <var>period</var> (how many moves needed to repeat the configuration).<br>3. <const>Death</const>.<br><br>Source: https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Two space separated integers <var>W</var> and <var>H</var> for width and height.<br><strong>Next <var>H</var> lines:</strong> Line with length <var>W</var> for configuration.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> result of configuration: <const>Still</const>, <const>Oscillator</const> <var>period</var> or <const>Death</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>W</var> &le; 40<br>1 &le; <var>H</var> &le; 40</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4 4\n #  \n  # \n### \n    </pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Still</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 42687915874,
+  "commentCount": 14,
+  "upVotes": 14,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 998355,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1725991537001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1725993143985,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1728040734446,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

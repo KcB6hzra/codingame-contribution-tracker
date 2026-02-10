@@ -1,0 +1,217 @@
+{
+  "id": 1399,
+  "activeVersion": 59,
+  "score": 11,
+  "votableId": 8040199,
+  "codingamerId": 2064637,
+  "views": 1099,
+  "commentableId": 7977081,
+  "title": "Remainder Fantasy",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "java_coffee_cup",
+  "publicHandle": "1399db998e8d613b756d475ab8a91d955fa1",
+  "codingamerHandle": "f4c116cad137a7eee91b727ff6fe53597364602",
+  "lastVersion": {
+    "version": 59,
+    "autocloseTime": 1537661428968,
+    "data": {
+      "title": "Remainder Fantasy",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Remainder Theorem"
+          }
+        },
+        {
+          "id": 129,
+          "handle": "arithmetic",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Arithmetic",
+            "2": "Arithmetic"
+          },
+          "puzzleCount": 20,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import java.util.*;\n\npublic class Solution {\n\tpublic static void main(String[] args) {\n\t\tScanner in = new Scanner(System.in);\n\t\tint n = in.nextInt();\n\n\t\tConditionsSet cs = new ConditionsSet();\n\n\t\tif (in.hasNextLine()) {\n\t\t\tin.nextLine();\n\t\t}\n\t\tfor (int i = 0; i < n; i++) {\n\t\t\tlong m = in.nextLong();\n\t\t\tlong r = in.nextLong();\n\n\t\t\tcs.list.add(new Condition(m, r));\n\t\t}\n\t\tin.close();\n\n\t\tcs.resolveNonCoPrime();\n\n\t\tlong x = crt(cs.list);\n\t\tSystem.out.println(x);\n\t}\n\n\tprivate static long crt(List<Condition> list) {\n\t\tint n = list.size();\n\t\tlong M = 1;\n\t\tfor (Condition c : list) {\n\t\t\tM *= c.m;\n\t\t}\n\n\t\tlong[] mm = new long[n];\n\t\tlong[] mt = new long[n];\n\n\t\tfor (int i = 0; i < n; i++) {\n\t\t\tmm[i] = M / list.get(i).m;\n\t\t}\n\t\tfor (int i = 0; i < n; i++) {\n\t\t\tCondition c = list.get(i);\n\t\t\tlong mmm = mm[i];\n\t\t\twhile (mmm % c.m != c.r) {\n\t\t\t\tmmm += mm[i];\n\t\t\t}\n\t\t\tmt[i] = mmm;\n\t\t}\n\n\t\tlong max = Long.MIN_VALUE;\n\t\tfor (Condition c : list) {\n\t\t\tif (c.m > max) {\n\t\t\t\tmax = c.m;\n\t\t\t}\n\t\t}\n\n\t\tlong sum = 0;\n\t\tfor (int i = 0; i < n; i++) {\n\t\t\tsum += mt[i];\n\t\t}\n\n\t\tlong k = sum / M;\n\t\tlong x = sum - M * k;\n\t\tif (x < max) {\n\t\t\tx = sum - M * (k - 1);\n\t\t}\n\t\treturn x;\n\t}\n}\n\nclass ConditionsSet {\n\tList<Condition> list = new ArrayList<>();\n\n\tpublic void resolveNonCoPrime() {\n\t\tList<Condition> extra = new ArrayList<>();\n\t\tfor (Condition c : list) {\n\t\t\textra.addAll(c.factorize());\n\t\t}\n\n\t\tlist = cleanList(extra);\n\t}\n\n\tpublic List<Condition> cleanList(List<Condition> eList) {\n\n\t\tCollections.sort(eList, new Comparator<Condition>() {\n\t\t\t@Override\n\t\t\tpublic int compare(Condition c0, Condition c1) {\n\t\t\t\tint result = Long.compare(c0.m, c1.m);\n\t\t\t\tif (result == 0) {\n\t\t\t\t\treturn Integer.compare(c0.p, c1.p);\n\t\t\t\t} else {\n\t\t\t\t\treturn result;\n\t\t\t\t}\n\t\t\t}\n\t\t});\n\n\t\t// unique list of m\n\t\tSet<Long> mSet = new HashSet<>();\n\t\tfor (Condition c : eList) {\n\t\t\tif (c.m > 1) {\n\t\t\t\tmSet.add(c.m);\n\t\t\t}\n\t\t}\n\n\t\tList<Condition> cleanedList = new ArrayList<>();\n\t\tfor (Long m : mSet) {\n\t\t\tList<Condition> conList = new ArrayList<>();\n\t\t\tfor (Condition c : eList) {\n\t\t\t\tif (c.m == m) {\n\t\t\t\t\tconList.add(c);\n\t\t\t\t}\n\t\t\t}\n\t\t\tif (conList.size() > 1) {\n\t\t\t\t// find the one with max power\n\t\t\t\tint maxP = Integer.MIN_VALUE;\n\t\t\t\tCondition maxpCon = null;\n\t\t\t\tfor (Condition c1 : conList) {\n\t\t\t\t\tif (c1.p > maxP) {\n\t\t\t\t\t\tmaxP = c1.p;\n\t\t\t\t\t\tmaxpCon = c1;\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\tcleanedList.add(maxpCon);\n\t\t\t} else {\n\t\t\t\tcleanedList.add(conList.get(0));\n\t\t\t}\n\t\t} // for set\n\n\t\tfor (Condition e : cleanedList) {\n\t\t\tif (e.p > 1) {\n\t\t\t\te.m = (long) Math.pow(e.m, e.p);\n\t\t\t\te.p = 1;\n\t\t\t}\n\t\t\tif (e.r > e.m) {\n\t\t\t\te.r %= e.m;\n\t\t\t}\n\t\t}\n\n\t\treturn cleanedList;\n\t}\n\n\tpublic static long gcd(long a, long b) {\n\t\tif (b == 0) {\n\t\t\treturn a;\n\t\t}\n\t\treturn gcd(b, a % b);\n\t}\n\n}\n\nclass Condition {\n\tlong m, r;\n\tint p = 1;\n\n\tpublic Condition(long m, long r) {\n\t\tthis.m = m;\n\t\tthis.r = r;\n\t}\n\n\tpublic Condition(long m, long r, int p) {\n\t\tthis.m = m;\n\t\tthis.r = r;\n\t\tthis.p = p;\n\t}\n\n\tList<Condition> factorize() {\n\t\tList<Condition> cList = new ArrayList<>();\n\t\tList<Long> pList = toPrimes(this.m);\n\t\tMap<Long, Integer> map = new HashMap<>();\n\t\tfor (Long p : pList) {\n\t\t\tif (map.get(p) == null) {\n\t\t\t\tmap.put(p, 1);\n\t\t\t} else {\n\t\t\t\tmap.put(p, map.get(p) + 1);\n\t\t\t}\n\t\t}\n\t\tfor (Map.Entry<Long, Integer> entry : map.entrySet()) {\n\t\t\tlong p = entry.getKey();\n\t\t\tcList.add(new Condition(p, r, entry.getValue()));\n\t\t}\n\n\t\treturn cList;\n\t}\n\n\tprivate static List<Long> toPrimes(long num) {\n\t\tList<Long> list = new ArrayList<>();\n\t\tint n;\n\t\tfor (long i = 2; i <= num; i++) {\n\t\t\tn = 0;\n\t\t\twhile (num % i == 0) {\n\t\t\t\tnum /= i;\n\t\t\t\tn++;\n\t\t\t}\n\t\t\tif (n != 0) {\n\t\t\t\tfor (int j = n; j > 0; j--) {\n\t\t\t\t\tlist.add(i);\n\t\t\t\t}\n\t\t\t}\n\t\t} // for\n\n\t\treturn list;\n\t}\n\n\t@Override\n\tpublic int hashCode() {\n\t\tfinal int prime = 31;\n\t\tint result = 1;\n\t\tresult = prime * result + (int) (m ^ (m >>> 32));\n\t\tresult = prime * result + (int) (r ^ (r >>> 32));\n\t\treturn result;\n\t}\n\n\t@Override\n\tpublic boolean equals(Object obj) {\n\t\tif (this == obj)\n\t\t\treturn true;\n\t\tif (obj == null)\n\t\t\treturn false;\n\t\tif (getClass() != obj.getClass())\n\t\t\treturn false;\n\t\tCondition other = (Condition) obj;\n\t\tif (m != other.m)\n\t\t\treturn false;\n\t\tif (r != other.r)\n\t\t\treturn false;\n\t\treturn true;\n\t}\n\n}\n\n",
+      "statement": "This was a puzzle invented and solved by Chinese during the 3rd to 5th centuries AD, with innovative solution steps recorded in Mathematical treaties of that era. Translated the text into modern terminologies:\n\n<<Let x be an integer. Divide x by 3, remains 2; divide x by 5, remains 3; divide x by 7, remains 2. Find the minimum value of x.>>\n\nYou are going to solve similar puzzles with the aid of state-of-the-art technologies and know-how. Take the challenge?\n\n\nBeware, the moduli you are given may not be pairwise coprime. Moreover, your answer must always be as small as possible while being <<greater than or equal to>> every modulo in input. For instance, if you are asked for an integer x such that:\n- it remains 3 when dividing x by 8\n- it remains 11 when dividing x by 15\n- it remains 1 when dividing x by 10,\nthen the answer is 131. In this example, 11 is not a valid answer since it is less than 15 (the modulo in the second constraint).",
+      "testCases": [
+        {
+          "title": "Simple",
+          "isTest": true,
+          "testIn": "3\n3 2\n5 3\n7 2",
+          "testOut": "23",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3\n3 2\n5 4\n7 3",
+          "testOut": "59",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Warm Up",
+          "isTest": true,
+          "testIn": "4\n5 1\n7 2\n9 3\n11 4",
+          "testOut": "1731",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "4\n7 5\n8 6\n9 7\n13 8",
+          "testOut": "502",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Harder",
+          "isTest": true,
+          "testIn": "4\n11 10\n17 11\n149 17\n23 15",
+          "testOut": "353594",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "4\n47 17\n271 181\n17 15\n223 222",
+          "testOut": "9217704",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Get serious",
+          "isTest": true,
+          "testIn": "5\n2 0\n47 7\n271 22\n17 3\n1619 913",
+          "testOut": "199022964",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "4\n191 3\n239 14\n241 39\n353 4",
+          "testOut": "1687906922",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Brute-force not work",
+          "isTest": true,
+          "testIn": "6\n3 2\n17 8\n29 18\n59 30\n61 60\n349 15",
+          "testOut": "1699580108",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "6\n7 2\n17 7\n31 6\n47 5\n61 3\n197 193",
+          "testOut": "1171050736",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Many Conditions",
+          "isTest": true,
+          "testIn": "9\n2 1\n5 3\n7 2\n11 1\n13 3\n17 1\n19 4\n23 1\n29 1",
+          "testOut": "1780880663",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "9\n2 1\n5 2\n7 1\n11 3\n13 1\n17 4\n19 1\n23 2\n29 17",
+          "testOut": "1207575097",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A Few Big Conditions",
+          "isTest": true,
+          "testIn": "3\n9 1\n9721 653\n104677 11555",
+          "testOut": "2097947989",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "3\n11 9\n9719 311\n91367 515",
+          "testOut": "1266347135",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Tricky Small",
+          "isTest": true,
+          "testIn": "3\n6 1\n16 1\n5 1",
+          "testOut": "241",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "5\n2 1\n3 1\n4 1\n5 1\n6 1",
+          "testOut": "61",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Nasty Big",
+          "isTest": true,
+          "testIn": "3\n1473 1031\n1234 1141\n1827 50",
+          "testOut": "1024360583",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "3\n5454 1717\n1199 1141\n999 799",
+          "testOut": "88983727",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ [[N]] ≤ 10\n0 ≤ [[r]]\n0 < [[x]] < 2 ^32",
+      "coverBinaryId": 31323986977374,
+      "stubGenerator": "read N:int\nloop N read m:int r:int\nwrite remainder\n",
+      "inputDescription": "<<Line 1:>> An integer [[N]] for the number of given conditions.\n<<Next [[N]] lines:>> Two space separated integers [[m]] and [[r]] for the divisor and remainder of a condition where \n[[x]] mod [[m]] = [[r]]",
+      "solutionLanguage": "Java",
+      "outputDescription": "<<Line 1 :>> The minimum value of [[x]] fulfilling all the given conditions, <<and>> at the same time [[x]] >= all of the given [[m]]."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">This was a puzzle invented and solved by Chinese during the 3rd to 5th centuries AD, with innovative solution steps recorded in Mathematical treaties of that era. Translated the text into modern terminologies:<br><br><strong>Let x be an integer. Divide x by 3, remains 2; divide x by 5, remains 3; divide x by 7, remains 2. Find the minimum value of x.</strong><br><br>You are going to solve similar puzzles with the aid of state-of-the-art technologies and know-how. Take the challenge?<br><br><br>Beware, the moduli you are given may not be pairwise coprime. Moreover, your answer must always be as small as possible while being <strong>greater than or equal to</strong> every modulo in input. For instance, if you are asked for an integer x such that:<br>- it remains 3 when dividing x by 8<br>- it remains 11 when dividing x by 15<br>- it remains 1 when dividing x by 10,<br>then the answer is 131. In this example, 11 is not a valid answer since it is less than 15 (the modulo in the second constraint).</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var> for the number of given conditions.<br><strong>Next <var>N</var> lines:</strong> Two space separated integers <var>m</var> and <var>r</var> for the divisor and remainder of a condition where <br><var>x</var> mod <var>m</var> = <var>r</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1 :</strong> The minimum value of <var>x</var> fulfilling all the given conditions, <strong>and</strong> at the same time <var>x</var> &gt;= all of the given <var>m</var>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 10<br>0 &le; <var>r</var><br>0 &lt; <var>x</var> &lt; 2 ^32</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\n3 2\n5 3\n7 2</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">23</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 233120241525,
+  "avatar": 13281799951852,
+  "commentCount": 25,
+  "upVotes": 11,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 256869,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "denyAction": {
+    "actionId": 264210,
+    "progress": 0,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,202 @@
+{
+  "id": 5272,
+  "activeVersion": 16,
+  "score": 6,
+  "votableId": 14597051,
+  "codingamerId": 1527403,
+  "views": 278,
+  "commentableId": 14517141,
+  "title": "Dungeons and Maps",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Di_Masta",
+  "publicHandle": "527225780c2a70a76cf367e534788e9798f1",
+  "codingamerHandle": "9c85c6ec7a1c680811128c2ac32a30623047251",
+  "lastVersion": {
+    "version": 16,
+    "autocloseTime": 1599218904860,
+    "data": {
+      "title": "Dungeons and Maps",
+      "topics": [
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 11,
+          "parentTopicId": 93
+        },
+        {
+          "id": 68,
+          "handle": "pathfinding",
+          "labelMap": {
+            "1": "Recherche de chemins",
+            "2": "Pathfinding"
+          },
+          "pageTitle": "Pathfinding: exercises and theory",
+          "puzzleCount": 23,
+          "parentTopicId": 41,
+          "contentDetailsId": 69
+        },
+        {
+          "id": 46,
+          "handle": "loops",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 26,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        },
+        {
+          "id": 73,
+          "handle": "strings",
+          "labelMap": {
+            "1": "Chaînes de caractères",
+            "2": "Strings"
+          },
+          "pageTitle": "Strings: exercises and theory",
+          "puzzleCount": 17,
+          "parentTopicId": 41,
+          "contentDetailsId": 73
+        }
+      ],
+      "solution": "#include <iostream>\n#include <string>\n#include <map>\n#include <climits>\n\nusing namespace std;\n\nstatic const map<char, int> ROW_DIR_CHANGE = {\n    { '^', -1 },\n    { 'v',  1 },\n    { '<',  0 },\n    { '>',  0 }\n};\n\nstatic const map<char, int> COL_DIR_CHANGE = {\n    { '^',  0 },\n    { 'v',  0 },\n    { '<', -1 },\n    { '>',  1 }\n};\n\nint main() {\n    int W;\n    int H;\n    cin >> W >> H; cin.ignore();\n    int startRow;\n    int startCol;\n    cin >> startRow >> startCol; cin.ignore();\n    int N;\n    cin >> N; cin.ignore();\n\n    int shortestPath = INT_MAX;\n    int shortestPathIdx = -1;\n    for (int mapIdx = 0; mapIdx < N; ++mapIdx) {\n        char dungeon[20][20];\n        for (int rowIdx = 0; rowIdx < H; ++rowIdx) {\n            string mapRow;\n            getline(cin, mapRow);\n            for (int colIdx = 0; colIdx < W; ++colIdx) {\n                dungeon[rowIdx][colIdx] = mapRow[colIdx];\n            }\n        }\n\n        int nextRowIdx = startRow;\n        int nextColIdx = startCol;\n        int pathLength = 0;\n\n        while(pathLength >= 0) {\n            ++pathLength;\n            char& currentCell = dungeon[nextRowIdx][nextColIdx];\n            if ('T' == currentCell) {\n                break;\n            }       \n            \n            nextRowIdx += ROW_DIR_CHANGE.at(currentCell);\n            nextColIdx += COL_DIR_CHANGE.at(currentCell);\n\n            if (nextRowIdx < 0 || nextRowIdx >= H || nextColIdx < 0 || nextColIdx >= W ||\n                '.' == dungeon[nextRowIdx][nextColIdx] || '#' == dungeon[nextRowIdx][nextColIdx]\n            ) {\n                pathLength = -1;\n            }\n\n            currentCell = '.'; // Prevent infinite paths\n        }\n\n        if (pathLength >= 0 && pathLength < shortestPath) {\n            shortestPath = pathLength;\n            shortestPathIdx = mapIdx;\n        }\n    }\n\n    if (-1 != shortestPathIdx) {\n        cout << shortestPathIdx << endl;\n    }\n    else {\n        cout << \"TRAP\" << endl;\n    }\n}\n",
+      "statement": "Your adventure path led you to an inn in a small, forgotten town somewhere to the North of Golem Hills.\nAfter gulping the last drop from the 9th mug of elf wine a shady old man materializes out of nowhere, in-front of you.\nYou start to doubt the wine.\n<<The old man (throwing a pack of old maps on the table):>> Do you want to earn some good coins?\n<<You (without looking at him):>> I've enough for food and wine!\n<<The old man:>> What about a whole inn...!\n<<You:>> Hm...\n<<The old man:>> Yeees and you'll get the glory of being the first one to get to this treasure!\n<<You (looking at the bunch of maps):>> But they look the same!?\n<<The old man:>> Or do they, you must choose wisely.\n<<The voice of the old man (from nowhere):>> Ah right, one more thing, beware of the Dragons!\nYou grab your staff and sword, swallow one more whole mug of wine:\n<<Well, it's glory time!>>\n\nYou are given [[N]] maps for a dungeon. Each map may contain a path to a treasure {{T}}, from starting position [ [[startRow]]; [[startCol]] ]. Determine the [[index]] of the map which holds the shortest path from the starting position to {{T}}, but be careful a map may lead you to a {{TRAP}}.\n\nA path is marked on the map with {{^}}, {{v}}, {{<}}, {{>}} symbols, each corresponding to <<UP, DOWN, LEFT, RIGHT>> directions respectively, i.e. each symbol shows you the next cell to move on.\n\nA valid path must start from [ [[startRow]]; [[startCol]] ] and end on {{T}}.\n\nThe path length is the count of direction symbols plus {{1}}, for the {{T}} cell.\n\nExample:\n[[W]] = 4 [[H]] = 4\n[[startRow]] = 1 [[startCol]] = 1\n[[N]] = 3 \n\nMaps:\n`{{0}}\n.>>v\n.^#v\n..#v\n...T\n\n{{1}}\n....\n.v#.\n.v#.\n.>>T\n\n{{2}}\n....\nv<#.\nv.#.\n..>T`\n\nIn the above example map {{2}} does not contain a valid path from [{{1}}; {{1}}] to {{T}}, map {{0}} contains a valid path with length {{7}} (the count of the direction symbols + {{T}}) and map {{1}} contains a valid path with length {{5}}, so the answer is {{1}}.",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "4 4\n1 1\n3\n.>>v\n.^#v\n..#v\n...T\n....\n.v#.\n.v#.\n.>>T\n....\nv<#.\nv.#.\n..>T",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Example",
+          "isTest": false,
+          "testIn": "4 4\n1 1\n3\n.>>v\n.^.v\n..#v\n...T\n....\n.v..\n.v#.\n.>>T\n....\nv<..\nv.#.\n..>T",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Trap",
+          "isTest": true,
+          "testIn": "6 7\n0 0\n1\n>.....\n......\n......\n......\n......\n......\n.....T",
+          "testOut": "TRAP",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Trap",
+          "isTest": false,
+          "testIn": "6 7\n1 1\n1\n......\n.>....\n......\n......\n......\n......\n.....T",
+          "testOut": "TRAP",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "2 maps",
+          "isTest": true,
+          "testIn": "6 7\n2 2\n2\n......\n......\n..>>T.\n......\n......\n......\n......\n.>>>>v\n.^...v\n.^<.T<\n......\n......\n......\n......",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "2 maps",
+          "isTest": false,
+          "testIn": "6 7\n2 2\n2\n.>>>>v\n.^...v\n.^<.T<\n......\n......\n......\n......\n......\n......\n..>>T.\n......\n......\n......\n......",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Many maps",
+          "isTest": true,
+          "testIn": "11 11\n5 1\n5\n...........\n...........\n.#########.\n.>>>>>>>>>v\n.^..###...v\n.^..###..T<\n....###....\n...........\n.#########.\n...........\n...........\n>>>>>>>>>>v\n^.........v\n^#########v\n^.........v\n^...###...v\n^<..###..T<\n....###....\n...........\n.#########.\n...........\n...........\n...........\n...........\n.#########.\n.>>>>>>>>v.\n.^..###..v.\n.^..###..T.\n....###....\n...........\n.#########.\n...........\n...........\n...........\n...........\n.#########.\n.>>>>>>>...\n.^..###....\n.^..###..T.\n....###..^.\n...>>>>>>^.\n.#########.\n...........\n...........\n...........\n...........\n.#########.\n>>>>>>>>>v.\n^...###..v.\n^<..###..T.\n....###....\n...........\n.#########.\n...........\n...........",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Many maps",
+          "isTest": false,
+          "testIn": "11 11\n5 1\n5\n...........\n...........\n.#########.\n.>>>>>>>>>v\n.^..###...v\n.^..###..T<\n....###....\n...........\n.#########.\n...........\n...........\n>>>>>>>>>>v\n^.........v\n^#########v\n^.........v\n^...###...v\n^<..###..T<\n....###....\n...........\n.#########.\n...........\n...........\n...........\n...........\n.#########.\n.>>>>>>>...\n.^..###....\n.^..###..T.\n....###..^.\n...>>>>>>^.\n.#########.\n...........\n...........\n...........\n...........\n.#########.\n>>>>>>>>>v.\n^...###..v.\n^<..###..T.\n....###....\n...........\n.#########.\n...........\n...........\n...........\n...........\n.#########.\n.>>>>>>>>v.\n.^..###..v.\n.^..###..T.\n....###....\n...........\n.#########.\n...........\n...........",
+          "testOut": "4",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Di",
+          "isTest": true,
+          "testIn": "19 12\n2 4\n2\n###################\n#.................#\n#..>>>v......>T...#\n#..^..>v.....^<...#\n#..^...>v.........#\n#..^....v....>v...#\n#..^....v....^v...#\n#..^...v<....^v...#\n#..^..v<.....^v...#\n#..^<<<......^<...#\n#.................#\n###################\n###################\n#.................#\n#...>>>v......>T..#\n#...^..>v.....^<..#\n#...^...>v........#\n#...^....v....>v..#\n#...^....v....^v..#\n#...^...v<....^v..#\n#...^..v<.....^v..#\n#...^<<<......^<..#\n#.................#\n###################",
+          "testOut": "TRAP",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Di",
+          "isTest": false,
+          "testIn": "19 12\n2 4\n2\n###################\n#.................#\n#...>>>v......>T..#\n#...^..>v.....^<..#\n#...^...>v........#\n#...^....v....>v..#\n#...^....v....^v..#\n#...^...v<....^v..#\n#...^..v<.....^v..#\n#...^<<<......^<..#\n#.................#\n###################\n###################\n#.................#\n#..>>>v......>T...#\n#..^..>v.....^<...#\n#..^...>v.........#\n#..^....v....>v...#\n#..^....v....^v...#\n#..^...v<....^v...#\n#..^..v<.....^v...#\n#..^<<<......^<...#\n#.................#\n###################",
+          "testOut": "TRAP",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Epic quest",
+          "isTest": true,
+          "testIn": "19 19\n0 9\n6\n#########v#########\n##...............##\n#........#........#\n#....##..#..##....#\n#....##..#..##....#\n...####..#..####...\n...####..#..####...\n#........#........#\n#.#............#..#\n#.#..###.#.###.#..#\n#.#............#..#\n#.......###.......#\n.......#####.......\n..#...#######...#..\n#..#...#####...#..#\n##..#...###...#..##\n###..#...#...#..###\n####.....T.....####\n###################\n#########v#########\n##.......>>v.....##\n#........#.v......#\n#....##..#.v##....#\n#....##..#.v##....#\n...####..#v<####...\n...####..#>v####...\n#........#.>>>>>>v#\n#.#............#.v#\n#.#..###.#.###.#.v#\n#.#............#.v#\n#.......###......v#\n.......#####..v<<<.\n..#...#######v<.#..\n#..#...#####v<.#..#\n##..#...###v<.#..##\n###..#...#v<.#..###\n####.....T<....####\n###################\n#########v#########\n##......v>>>>>>>v##\n#.......v#......>v#\n#....##.v#..##...v#\n#....##.v#..##...v#\n...####.v#..####.>>\n...####.v#..####...\n#...v<<<v#........#\n#.#.>^..v......#..#\n#.#..###v#.###.#..#\n#.#....v<......#..#\n#.....v<###.......#\n.....v<#####.......\n..#..v#######...#..\n#..#.>v#####...#..#\n##..#.>v###...#..##\n###..#.>v#...#..###\n####....>T.....####\n###################\n#########v#########\n##......v<>>>>>>v##\n#.......v#......>v#\n#....##.v#..##...v#\n#....##.v#..##...v#\n...####.v#..####.>>\n...####.v#..####...\n#...v<<<v#........#\n#.#.>^..v......#..#\n#.#..###v#.###.#..#\n#.#....v<......#..#\n#.....v<###.......#\n.....v<#####.......\n..#..v#######...#..\n#..#.>v#####...#..#\n##..#.>v###...#..##\n###..#.>v#...#..###\n####....>T.....####\n###################\n#########v#########\n##.......>>>>>>>v##\n#........#......>v#\n#....##..#..##...v#\n#....##..#..##...v#\n...####..#..####.>v\n...####..#..####.v<\n#........#.......v#\n#.#............#.v#\n#.#..###v#.###.#.v#\n#.#............#.v#\n#.......###......v#\n.......#####.....>v\n..#...#######...#v<\n#..#...#####...#v<#\n##..#...###...#v<##\n###..#...#...#v<###\n####.....T<<<<<####\n###################\n#########v#########\n##.......>>>>>>>v##\n#........#......>v#\n#....##..#..##...v#\n#....##..#..##...v#\n...####..#..####.>v\n...####..#..####.v<\n#........#.......v#\n#.#............#.v#\n#.#..###v#.###.#.v#\n#.#....v<<<<...#.v#\n#.....v<###^<....v#\n.....v<#####^<...>v\n..#..v#######^..#v<\n#..#.>v#####>^.#v<#\n##..#.>v###>^.#v<##\n###..#.>v#>^.#v<###\n####....>T^<<<<####\n###################",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Epic quest",
+          "isTest": false,
+          "testIn": "19 19\n0 9\n6\n#########v#########\n##...............##\n#........#........#\n#....##..#..##....#\n#....##..#..##....#\n...####..#..####...\n...####..#..####...\n#........#........#\n#.#............#..#\n#.#..###.#.###.#..#\n#.#............#..#\n#.......###.......#\n.......#####.......\n..#...#######...#..\n#..#...#####...#..#\n##..#...###...#..##\n###..#...#...#..###\n####......T....####\n###################\n#########v#########\n##.......>>v.....##\n#........#.v......#\n#....##..#.v##....#\n#....##..#.v##....#\n...####..#v<####...\n...####..#>v####...\n#........#.>>>>>>v#\n#.#............#.v#\n#.#..###.#.###.#.v#\n#.#............#.v#\n#.......###......v#\n.......#####..v<<<.\n..#...#######v<.#..\n#..#...#####v<.#..#\n##..#...###v<.#..##\n###..#...#v<.#..###\n####.....T<....####\n###################\n#########v#########\n##......v>>>>>>>v##\n#.......v#......>v#\n#....##.v#..##...v#\n#....##.v#..##...v#\n...####.v#..####.>>\n...####.v#..####...\n#...v<<<v#........#\n#.#.>^..v......#..#\n#.#..###v#.###.#..#\n#.#....v<......#..#\n#.....v<###.......#\n.....v<#####.......\n..#..v#######...#..\n#..#.>v#####...#..#\n##..#.>v###...#..##\n###..#.>v#...#..###\n####....>T.....####\n###################\n#########v#########\n##.......>>>>>>>v##\n#........#......>v#\n#....##..#..##...v#\n#....##..#..##...v#\n...####..#..####.>v\n...####..#..####.v<\n#........#.......v#\n#.#............#.v#\n#.#..###v#.###.#.v#\n#.#............#.v#\n#.......###......v#\n.......#####.....>v\n..#...#######...#v<\n#..#...#####...#v<#\n##..#...###...#v<##\n###..#...#...#v<###\n####.....T<<<<<####\n###################\n#########v#########\n##.......>>>>>>>v##\n#........#......>v#\n#....##..#..##...v#\n#....##..#..##...v#\n...####..#..####.>v\n...####..#..####.v<\n#........#.......v#\n#.#............#.v#\n#.#..###v#.###.#.v#\n#.#....v<<<<...#.v#\n#.....v<###^<....v#\n.....v<#####^<...>v\n..#..v#######^..#v<\n#..#.>v#####>^.#v<#\n##..#.>v###>^.#v<##\n###..#.>v#>^.#v<###\n####....>T^<<<<####\n###################\n#########v#########\n##......v<>>>>>>v##\n#.......v#......>v#\n#....##.v#..##...v#\n#....##.v#..##...v#\n...####.v#..####.>>\n...####.v#..####...\n#...v<<<v#........#\n#.#.>^..v......#..#\n#.#..###v#.###.#..#\n#.#....v<......#..#\n#.....v<###.......#\n.....v<#####.......\n..#..v#######...#..\n#..#.>v#####...#..#\n##..#.>v###...#..##\n###..#.>v#...#..###\n####....>T.....####\n###################",
+          "testOut": "5",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "There is always a {{T}} on the maps.\nIf there are maps with valid path from [ [[startRow]]; [[startCol]] ] to {{T}} only <<one>> map holds the shortest path.\nThe given maps are representing the same dungeon, but the position for {{T}} may differ.\n0 < [[N]] < 10\n2 < [[W]], [[H]] < 20",
+      "coverBinaryId": 137568548718633,
+      "stubGenerator": "read w:int h:int\nread startRow:int startCol:int\nread n:int\nloop n loop h read mapRow:string(w)\nwrite mapIndex",
+      "inputDescription": "<<Line 1:>> Width [[W]] and height [[H]] of the maps\n<<Line 2:>> [[startRow]] and [[startCol]] for the starting position on the map\n<<Line 3:>> An integer [[N]] for the number of maps to check\n<<[[N]] * [[H]] Lines:>> Each [[H]] consecutive lines are representing a single map. Each line contains [[W]] characters representing a row of a map.\n\nCharacters can be:\n`{{.}} - Empty square\n{{#}} - Wall\n{{^}} - Move UP\n{{v}} - Move DOWN\n{{<}} - Move LEFT\n{{>}} - Move RIGHT\n{{T}} - The treasure square`",
+      "solutionLanguage": "C++",
+      "outputDescription": "[[index]] of the map with the shortest path. If there isn't a map with valid path from [ [[startRow]]; [[startCol]] ] to {{T}} output {{TRAP}}."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Your adventure path led you to an inn in a small, forgotten town somewhere to the North of Golem Hills.<br>After gulping the last drop from the 9th mug of elf wine a shady old man materializes out of nowhere, in-front of you.<br>You start to doubt the wine.<br><strong>The old man (throwing a pack of old maps on the table):</strong> Do you want to earn some good coins?<br><strong>You (without looking at him):</strong> I've enough for food and wine!<br><strong>The old man:</strong> What about a whole inn...!<br><strong>You:</strong> Hm...<br><strong>The old man:</strong> Yeees and you'll get the glory of being the first one to get to this treasure!<br><strong>You (looking at the bunch of maps):</strong> But they look the same!?<br><strong>The old man:</strong> Or do they, you must choose wisely.<br><strong>The voice of the old man (from nowhere):</strong> Ah right, one more thing, beware of the Dragons!<br>You grab your staff and sword, swallow one more whole mug of wine:<br><strong>Well, it's glory time!</strong><br><br>You are given <var>N</var> maps for a dungeon. Each map may contain a path to a treasure <const>T</const>, from starting position [ <var>startRow</var>; <var>startCol</var> ]. Determine the <var>index</var> of the map which holds the shortest path from the starting position to <const>T</const>, but be careful a map may lead you to a <const>TRAP</const>.<br><br>A path is marked on the map with <const>^</const>, <const>v</const>, <const>&lt;</const>, <const>&gt;</const> symbols, each corresponding to <strong>UP, DOWN, LEFT, RIGHT</strong> directions respectively, i.e. each symbol shows you the next cell to move on.<br><br>A valid path must start from [ <var>startRow</var>; <var>startCol</var> ] and end on <const>T</const>.<br><br>The path length is the count of direction symbols plus <const>1</const>, for the <const>T</const> cell.<br><br>Example:<br><var>W</var> = 4 <var>H</var> = 4<br><var>startRow</var> = 1 <var>startCol</var> = 1<br><var>N</var> = 3 <br><br>Maps:<br><pre style=\"font-family: monospace\"><const>0</const><br>.&gt;&gt;v<br>.^#v<br>..#v<br>...T<br><br><const>1</const><br>....<br>.v#.<br>.v#.<br>.&gt;&gt;T<br><br><const>2</const><br>....<br>v&lt;#.<br>v.#.<br>..&gt;T</pre><br><br>In the above example map <const>2</const> does not contain a valid path from [<const>1</const>; <const>1</const>] to <const>T</const>, map <const>0</const> contains a valid path with length <const>7</const> (the count of the direction symbols + <const>T</const>) and map <const>1</const> contains a valid path with length <const>5</const>, so the answer is <const>1</const>.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Width <var>W</var> and height <var>H</var> of the maps<br><strong>Line 2:</strong> <var>startRow</var> and <var>startCol</var> for the starting position on the map<br><strong>Line 3:</strong> An integer <var>N</var> for the number of maps to check<br><strong><var>N</var> * <var>H</var> Lines:</strong> Each <var>H</var> consecutive lines are representing a single map. Each line contains <var>W</var> characters representing a row of a map.<br><br>Characters can be:<br><pre style=\"font-family: monospace\"><const>.</const> - Empty square<br><const>#</const> - Wall<br><const>^</const> - Move UP<br><const>v</const> - Move DOWN<br><const>&lt;</const> - Move LEFT<br><const>&gt;</const> - Move RIGHT<br><const>T</const> - The treasure square</pre></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><var>index</var> of the map with the shortest path. If there isn't a map with valid path from [ <var>startRow</var>; <var>startCol</var> ] to <const>T</const> output <const>TRAP</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">There is always a <const>T</const> on the maps.<br>If there are maps with valid path from [ <var>startRow</var>; <var>startCol</var> ] to <const>T</const> only <strong>one</strong> map holds the shortest path.<br>The given maps are representing the same dungeon, but the position for <const>T</const> may differ.<br>0 &lt; <var>N</var> &lt; 10<br>2 &lt; <var>W</var>, <var>H</var> &lt; 20</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4 4\n1 1\n3\n.&gt;&gt;v\n.^#v\n..#v\n...T\n....\n.v#.\n.v#.\n.&gt;&gt;T\n....\nv&lt;#.\nv.#.\n..&gt;T</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 172822203397,
+  "avatar": 5689020242575,
+  "commentCount": 16,
+  "upVotes": 6,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 484254,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1597908778692,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

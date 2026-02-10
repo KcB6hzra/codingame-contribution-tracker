@@ -1,0 +1,247 @@
+{
+  "id": 8013,
+  "activeVersion": 54,
+  "score": 105,
+  "votableId": 21696360,
+  "codingamerId": 4512488,
+  "views": 2023,
+  "commentableId": 21587729,
+  "title": "Secret Message Decoding",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "csKingBabar",
+  "publicHandle": "801337f80b185e85400b1b2e5c637541073c",
+  "codingamerHandle": "719c150a68cd487ae6c24bf5e2ed563a8842154",
+  "lastVersion": {
+    "version": 54,
+    "autocloseTime": 1729689695993,
+    "data": {
+      "title": "Secret Message Decoding",
+      "topics": [
+        {
+          "id": 96,
+          "handle": "algebra",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Algebra",
+            "2": "Algebra"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "#include <iostream>\n#include <sstream>\n\nusing namespace std;\n\nint main(){\n    int header_size;\n    cin >> header_size; cin.ignore();\n    int message_size;\n    cin >> message_size; cin.ignore();\n    string row[header_size];\n    for (int i = 0; i < header_size; i++){\n        getline(cin, row[i]);\n    }\n\n    int message_matrix[header_size][header_size+message_size];\n    for (int i = 0; i < header_size; i++){\n        stringstream ssin(row[i]);\n        for(int j = 0; ssin.good() && j < header_size+message_size;j++){\n            char nextchar;\n            ssin >> nextchar;\n            message_matrix[i][j] = (int)nextchar;\n        }\n    }  \n   \n    int galois_field = 127;\n    int decoded_message[header_size][message_size];\n     // Create upper triangular matrix. Input header matrix has no zeros.\n    for(int i = 0; i < header_size - 1; i++) {\n      for(int j = i + 1; j < header_size; j++) {\n        // Find multiplicative inverse of the diagonal element\n        int multiplicative_inverse = 0;\n        for (int inv = 0; inv < galois_field; inv++) {\n          if ((inv * message_matrix[i][i]) % galois_field == (message_matrix[j][i]) % galois_field)\n            multiplicative_inverse = inv;\n        }\n        // Creating leading zeros.\n        for (int k = 0; k < header_size + message_size; k++) {\n          message_matrix[j][k] = message_matrix[j][k] - multiplicative_inverse * message_matrix[i][k];\n          while (message_matrix[j][k] < 0) message_matrix[j][k] += galois_field;\n        }\n      }\n    }\n\n    // Decode message vectors (create identity matrix on the header part)\n    for (int i = header_size -1; i >= 0; i--) {\n        for(int k = 0; k <message_size;k++){\n            decoded_message[i][k] = message_matrix[i][header_size+k];\n            \n            for (int j = i + 1; j < header_size; j++) {\n                decoded_message[i][k] = decoded_message[i][k] - message_matrix[i][j] * decoded_message[j][k];\n                while (decoded_message[i][k] < 0) decoded_message[i][k] += galois_field;\n            }\n            // Find multiplicative inverse of the diagonal element\n            int multiplicative_inverse = 0;\n            for (int inv = 0; inv < galois_field; inv++) {\n                if ((inv * message_matrix[i][i]) % galois_field == (decoded_message[i][k]) % galois_field)\n                multiplicative_inverse = inv;\n            }\n            decoded_message[i][k] = multiplicative_inverse;\n        }\n    }\n\n    // Show results\n    for (int i = 0; i < header_size; i++)\n        for (int j = 0; j < message_size; j++)\n            cout << char(decoded_message[i][j]);\n    cout << endl;\n}",
+      "statement": "An agent undercover sends encoded secret message parts to the headquarters through public communication channels such as e-mail, text message and social media. Our task at the headquarters is to decode and assemble the original message. \n\n<<Encoding process:>> \nThe agent wants to send the message ‘Hello!’. As only two channels are available at this time, e.g., e-mail and Twitter, she divides it into [[hs]] = 2 equal length parts, each containing [[ms]] = 3 original characters ('Hel' and 'lo!') given by their ASCII representation, i.e., 72 101 108 and 108 111 33, respectively. Furthermore, an identity matrix called <<encoding header>> with size [[hs]] is attached in front of the <<original message parts>>:\n<<Original Part 1>>: [1 0] [72 101 108]\n<<Original Part 2>>: [0 1] [108 111 33]\n\nNext, the agent linearly combines the message parts using modulo arithmetic over Galois Field GF(127), i.e., modulo addition and multiplication over finite field with characteristic of 127. The <<j>>th number in the <<encoding header>> represents how many times the <<j>>th original message part was added, while the <<i>>th <<encoded character>> of the message is the sum of the ASCII values of the <<i>>th characters in the original message parts modulo 127. For example, the 2nd encoded character 69 in <<Part 2>> below is the product of the encoding header [113  74] and the 2nd characters of the original message parts [101 111], i.e., (113*101 + 74*111) mod 127 = <<69>>:\n<<Encoded Part 1>>: [122 122] [116 83 57]\n<<Encoded Part 2>>: [113  74] [126 <<69>> 41]\n\nFinally, the corresponding characters in <<Part 1>> and <<Part 2>> are sent in e-mail: <<zztS9>> and tweeted in a post: <<qJ~E)>>, respectively.\n\n<<Decoding example:>> \nAfter at the headquarters the two messages <<zztS9>> and <<qJ~E)>> were detected, the operators calculate [[hs]] = 2 and [[ms]] = 5 - 2 = 3, which gives the following ASCII representation: \n<<Encoded Part 1>>: [122 122] [116 83 57] \n<<Encoded Part 2>>: [113 74] [126 69 41]\n\nFollowing the reverse process of encoding, the operators use finite field arithmetics to calculate the multiplicative inverse of elements to obtain the identity matrix on the [[hs]]x[[hs]] <<encoding header>> part, while the same operations are performed on the <<encoded characters>> as well:\n<<Decoded Part 1>>: [1 0] [72 101 108]\n<<Decoded Part 2>>: [0 1] [108 111 33]\n\nAs a result, appending the decoded ASCII characters 72 101 108 and 108 111 33  reveals the original secret message ‘Hello!’.",
+      "testCases": [
+        {
+          "title": "Hi",
+          "isTest": true,
+          "testIn": "2\n1\ncg$\nl?(",
+          "testOut": "Hi",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Hi",
+          "isTest": false,
+          "testIn": "2\n1\nsk[\nQ\"Q",
+          "testOut": "Ho",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Hello!",
+          "isTest": true,
+          "testIn": "2\n3\nE[@4)\nWbTk9",
+          "testOut": "Hello!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Hello!",
+          "isTest": false,
+          "testIn": "2\n3\nY2|=>\nk4pEd",
+          "testOut": "Hello?",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Short message",
+          "isTest": true,
+          "testIn": "3\n9\nG\\@Uph/kXEc*\n214-d2|Rz;CN\n2]poK[ceT\"BT",
+          "testOut": "This message is top secret!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Short message",
+          "isTest": false,
+          "testIn": "3\n9\n)Wlvupw9t5(h\nh7-,7<h`:-SZ\nL=rh}Il9e<%(",
+          "testOut": "this message is TOP_secret?",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Special characters",
+          "isTest": true,
+          "testIn": "5\n15\n_T81\"#(?'C>*blS2+h]G\n\"z/t+>*qqB^XOiNj;p+*\neX-*]W2b@5AVhnwB~Jkk\nz{''jvb!q:2@_\\Pe*UGS\nOcHuHrw+v0F(w9r35`xs",
+          "testOut": "Grays Sports Almanac 2048~Capybaras - Koalas 24 : 27~Wombats - Tapirs 6 : 9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Special characters",
+          "isTest": false,
+          "testIn": "5\n15\nq*`2oyQ6(/hiz5C(U`82\n\\a)reS9!uts[qq#/ac*E\nwD%kC9Hk`3S1\"UE^E@~\"\navmL4Q~1r150WNr!CNvD\nli=\"2F/-$QBLt|olrfa=",
+          "testOut": "Grays Sports Almanac 2048~Capybaras - Koalas 24 : 27~Wombats - Tapirs 6 : 9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Long text",
+          "isTest": true,
+          "testIn": "10\n40\nea!g*8?O\\2^NfRL@]VGjfS?k=:xX;L/@t5(Yn&j<8f=!mvb7vL\n)KTPCuk|cX\\EM6CtG*<niE`p4uPXA'dwOlf#]V`_&vD5*<8U{0\nBAtGzojV2pzWrQ\"rZqT%Lr{)HYfYJ[2MY!0v1J_2UD$ghsHN3W\nKnP.l<I0%)S_\\w\"e;'_plh[N<kR3L'rDtygVkCY8/d+u*OH&4B\n8)\\T_:r}xJD7AP:ol-*w5MqRSBm#31x'0:$CGl\"j5vaE@PY^$I\nJ;9eL9\\dvCN'e]z,zh\"#h:5;7,xr^%cEWIjK&|1Q)[g[/9aoDq\nny?w@G;wn5:eyTY2ozKT:T4.ohRZLq{cPK\"fm%NTQ}f-n;np)I\nj2DDQEYn!K44uJ},,!gf,VoYYU<'(VrVsDiU+=YY)1/rRUw!cb\nf6?8vVksJqO0\">C`\"E$V=o#r4,?gbi#w/PiPQ}Zm6)?Xh}nwc7\n*Emf/6b6;v,j,E.OY?@>(\\C~MK:BtMLdb7]|qrs/3N8xKTugsy",
+          "testOut": "Why is life filled with so many detours?   Paths will appeal to network scientists and to anyone interested in popular science. By helping readers to step away from the \"networked\" view of many recent popular scientific books and start to think of longer paths instead of individual links, it sheds light on these problems from a genuinely new perspective.   The path is the goal. The essence behind ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Long text",
+          "isTest": false,
+          "testIn": "10\n40\n<+G8MEFbpb}v1i>:}r=qf6te]b1XD;V.7lJ&ENbN\"TtLSUH\"[!\nA\\J3ggyhLeLL7BY>&(t(<UZl-&W9Mn3\\a}tJ&[`J>8nWWufq<g\nd9N-KsO1:j4\"mt?=8%7\\(}7bpW8`s)q-{IH#Db%H6n>\\B#n2)<\n(cPD`YDtVt}uB7+I`mm=YML(N`U+?v.2F{mtC.N#')yLG6Uqf:\n1QJWE=prAk`T_*D892-iu-/.)V;*w'{0|{HJH_(IM]0=\\85GZ2\ng(epOk*=2>f&3:1S[kett9:t8W1R>f_&I=\"&x9^ZR5))<2@.%t\nXCMh941Efi`r#(>eMAf\\Z~llzprbv7Ow@gR|_Lfv.20~~!e/)X\nt5:neYkw<6PO,XhJLe$y)usa2Supq08Gw}_Hk1fzlsnZ'>=zYN\n_7&G^t0gKq+7r(}[az1m\"6aL3h#b{]'vfvARqA2od=o\"&hw*<A\n{9rHo'HD7b1Vs`]SXlfQjEFr=jCt**H0s=hfEkYvml@nm(E'uE",
+          "testOut": "Paths will appeal to network scientists and to anyone interested in popular science. By helping readers to step away from the \"networked\" view of many recent popular scientific books and start to think of longer paths instead of individual links, it sheds light on these problems from a genuinely new perspective.   The path is the goal. The essence behind this short sentence is known to many people",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "1 ≤ [[hs]] ≤ 10\n1 ≤ [[ms]] ≤ 40\nThe input strings contain printable ASCII characters (from the range of 33 to 126).",
+      "coverBinaryId": 116908386991172,
+      "stubGenerator": "read hs:int\nread ms:int\nloop hs read ROW:string(1024)\nwrite answer",
+      "inputDescription": "<<Line 1:>> An integer [[hs]] for the size of the <<encoding header>>.\n<<Line 2:>> An integer [[ms]] for the number of the <<encoded characters>> in each encoded message part.\n<<Next [[hs]] lines:>> A string containing [[hs]] + [[ms]] characters.",
+      "solutionLanguage": "C++",
+      "outputDescription": "A single line containing the decoded string."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">An agent undercover sends encoded secret message parts to the headquarters through public communication channels such as e-mail, text message and social media. Our task at the headquarters is to decode and assemble the original message. <br><br><strong>Encoding process:</strong> <br>The agent wants to send the message &lsquo;Hello!&rsquo;. As only two channels are available at this time, e.g., e-mail and Twitter, she divides it into <var>hs</var> = 2 equal length parts, each containing <var>ms</var> = 3 original characters ('Hel' and 'lo!') given by their ASCII representation, i.e., 72 101 108 and 108 111 33, respectively. Furthermore, an identity matrix called <strong>encoding header</strong> with size <var>hs</var> is attached in front of the <strong>original message parts</strong>:<br><strong>Original Part 1</strong>: [1 0] [72 101 108]<br><strong>Original Part 2</strong>: [0 1] [108 111 33]<br><br>Next, the agent linearly combines the message parts using modulo arithmetic over Galois Field GF(127), i.e., modulo addition and multiplication over finite field with characteristic of 127. The <strong>j</strong>th number in the <strong>encoding header</strong> represents how many times the <strong>j</strong>th original message part was added, while the <strong>i</strong>th <strong>encoded character</strong> of the message is the sum of the ASCII values of the <strong>i</strong>th characters in the original message parts modulo 127. For example, the 2nd encoded character 69 in <strong>Part 2</strong> below is the product of the encoding header [113  74] and the 2nd characters of the original message parts [101 111], i.e., (113*101 + 74*111) mod 127 = <strong>69</strong>:<br><strong>Encoded Part 1</strong>: [122 122] [116 83 57]<br><strong>Encoded Part 2</strong>: [113  74] [126 <strong>69</strong> 41]<br><br>Finally, the corresponding characters in <strong>Part 1</strong> and <strong>Part 2</strong> are sent in e-mail: <strong>zztS9</strong> and tweeted in a post: <strong>qJ~E)</strong>, respectively.<br><br><strong>Decoding example:</strong> <br>After at the headquarters the two messages <strong>zztS9</strong> and <strong>qJ~E)</strong> were detected, the operators calculate <var>hs</var> = 2 and <var>ms</var> = 5 - 2 = 3, which gives the following ASCII representation: <br><strong>Encoded Part 1</strong>: [122 122] [116 83 57] <br><strong>Encoded Part 2</strong>: [113 74] [126 69 41]<br><br>Following the reverse process of encoding, the operators use finite field arithmetics to calculate the multiplicative inverse of elements to obtain the identity matrix on the <var>hs</var>x<var>hs</var> <strong>encoding header</strong> part, while the same operations are performed on the <strong>encoded characters</strong> as well:<br><strong>Decoded Part 1</strong>: [1 0] [72 101 108]<br><strong>Decoded Part 2</strong>: [0 1] [108 111 33]<br><br>As a result, appending the decoded ASCII characters 72 101 108 and 108 111 33  reveals the original secret message &lsquo;Hello!&rsquo;.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>hs</var> for the size of the <strong>encoding header</strong>.<br><strong>Line 2:</strong> An integer <var>ms</var> for the number of the <strong>encoded characters</strong> in each encoded message part.<br><strong>Next <var>hs</var> lines:</strong> A string containing <var>hs</var> + <var>ms</var> characters.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">A single line containing the decoded string.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>hs</var> &le; 10<br>1 &le; <var>ms</var> &le; 40<br>The input strings contain printable ASCII characters (from the range of 33 to 126).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\n1\ncg$\nl?(</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Hi</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 41072083440,
+  "avatar": 109484386376132,
+  "commentCount": 80,
+  "upVotes": 118,
+  "downVotes": 13,
+  "validateAction": {
+    "actionId": 1022568,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1645790737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1647976217818,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1650571537000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1650620691922,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1653213937001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1653299936657,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1655892337000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1701092508241,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1706119537002,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1706195031973,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1709143537000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1727097695993,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1729656551793,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

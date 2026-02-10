@@ -1,0 +1,438 @@
+{
+  "id": 52848,
+  "activeVersion": 88,
+  "score": 33,
+  "votableId": 28886513,
+  "codingamerId": 4337092,
+  "views": 783,
+  "commentableId": 28755099,
+  "title": "String Balls II",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Timinator",
+  "publicHandle": "52848a45aba16af22e396b4adb39970a4b84b",
+  "codingamerHandle": "2df7157da821f39bbf6b36efae1568142907334",
+  "lastVersion": {
+    "version": 88,
+    "autocloseTime": 1702692845548,
+    "data": {
+      "title": "String Balls II",
+      "topics": [
+        {
+          "id": 66,
+          "handle": "optimization",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Optimisation",
+            "2": "Optimization"
+          },
+          "pageTitle": "Optimization: exercises and theory",
+          "puzzleCount": 16,
+          "parentTopicId": 41,
+          "contentDetailsId": 87
+        },
+        {
+          "id": 60,
+          "handle": "dynamic-programming",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Programmation dynamique",
+            "2": "Dynamic programming"
+          },
+          "pageTitle": "Dynamic programming: exercises and theory",
+          "puzzleCount": 27,
+          "parentTopicId": 41,
+          "contentDetailsId": 85
+        }
+      ],
+      "solution": "#include <stdlib.h>\n#include <stdio.h>\n#include <string.h>\n#include <stdbool.h>\n#include <time.h>\n\n#define M 1000000007;\n\nint main()\n{\n    clock_t start, end;\n    double cpu_time_used;\n\n    start = clock();\n\n    int radius;\n    scanf(\"%d\", &radius); fgetc(stdin);\n    char center[5001];\n    scanf(\"%[^\\n]\", center);\n\n    int center_length = strlen(center);\n    int max_radius = 0;\n\n    long max_points = 1;\n\n    for (int i = 0; i < center_length; i++)\n    {\n        char letter = center[i];\n\n        int dist_to_a = letter - 'a';\n        int dist_to_z = 'z' - letter;\n\n        if (dist_to_a > dist_to_z)\n        {\n            max_radius += dist_to_a;\n        }\n        else\n        {\n            max_radius += dist_to_z;\n        }\n\n        max_points = (max_points * 26) % M\n    }\n\n    long answer = 0;\n\n\n    // Dynamic Programming\n\n    // An array of length radius + 1 keeps track of the number of ways to make a point of\n    // length 0, 1, 2, 3 ... radius - 2, radius - 1, radius. The letters of the center\n    // are looked at one by one. For each letter, there are 26 options: either keep the \n    // letter the same or change it to one of the other 25 letters. Making that change\n    // adds some distance to all points that have already been determined.\n\n    if (radius < max_radius / 2)\n    {\n        fprintf(stderr, \"\\nCounting the points in the sphere:\\n\");\n\n        int dp_length = 1;\n        long dp[radius + 1];\n        long next_dp[radius + 1];\n\n        dp[0] = 1;\n        for (int j = 1, n = radius + 1; j < n; j++)\n        {\n            dp[j] = 0;\n            next_dp[j] = 0;\n        }\n\n        for (int i = 0; i < center_length; i++)\n        {\n            int idx = center[i] - 'a';\n\n            for (int j = 0; j < dp_length; j++)\n                next_dp[j] = 0;\n\n            for (int j = -idx, n = 26 - idx; j < n; j++)\n            {\n                int length = j;\n                if (length < 0)\n                    length *= -1;\n\n                int stop_dist = dp_length;\n                if (stop_dist > radius + 1 - length)\n                    stop_dist = radius + 1 - length;\n\n                for (int dist = 0; dist < stop_dist; dist++)\n                    next_dp[dist + length] = (next_dp[dist + length] + dp[dist]) % M;\n            }\n\n            if (idx > 25 - idx)\n                dp_length += idx;\n            else\n                dp_length += 25 - idx;\n\n            if (dp_length > radius + 1)\n                dp_length = radius + 1;\n\n            for (int k = 0; k < dp_length; k++)\n                dp[k] = next_dp[k];\n\n        }\n\n        for (int k = 0; k < dp_length; k++)\n            answer = (answer + dp[k]) % M;\n\n    }\n\n    // If the radius is more than 1/2 the max radius, count the points outside the sphere\n    // and subtract that total from the max number of points based on the maximum radius.\n\n    // To count the points outside the sphere requires a bit of a perspective shift. For\n    // each letter in the center, there is a maximum distance a change to that letter could\n    // create. It is either the distance to 'a' or the distance to 'z'. Rather than looking at \n    // how much distance is created by a change to each letter in the center, we will calculate\n    // how much distance is NOT created by each possible change to each letter.\n\n    // The distance NOT created is distance 'lost' from the maximum radius which was determined\n    // earlier. Counting the points outside the sphere is a matter of finding all points that\n    // lose a total distance less than or equal to the differece between the maximum possible \n    // radius and the actual radius.\n\n    else if (radius < max_radius)\n    {\n        fprintf(stderr, \"\\nCounting the points outside the sphere:\\n\");\n\n        int dp_length = 1;\n        long dp[max_radius - radius];\n        long next_dp[max_radius - radius];\n\n        dp[0] = 1;\n        for (int j = 1, n = max_radius - radius; j < n; j++)\n        {\n            dp[j] = 0;\n            next_dp[j] = 0;\n        }\n\n        for (int i = 0; i < center_length; i++)\n        {\n            int idx = center[i] - 'a';\n            int max_distance = idx;\n\n            if (25 - idx > max_distance)\n            {\n                max_distance = 25 - idx;\n            }\n\n            for (int j = 0; j < dp_length; j++)\n                next_dp[j] = 0;\n\n            for (int j = -idx, n = 26 - idx; j < n; j++)\n            {\n                int distance_lost = max_distance - abs(j);\n\n                for (int dist = 0; dist < dp_length; dist++)\n                {\n                    if (dist + distance_lost < max_radius - radius)\n                    {\n                        next_dp[dist + distance_lost] = (next_dp[dist + distance_lost] + dp[dist]) % M;\n                    }\n                }\n            }\n\n            dp_length += max_distance;\n\n            if (dp_length > max_radius - radius)\n                dp_length = max_radius - radius;\n\n            for (int k = 0; k < dp_length; k++)\n                dp[k] = next_dp[k];\n\n        }\n\n        for (int k = 0; k < dp_length; k++)\n            answer = (answer + dp[k]) % M;\n\n        answer = (max_points - answer) % M; \n\n        // Becuase of all the MOD operations, the answer could end up negative. In\n        // that case, the answer needs be adjusted up by M.\n        if (answer < 0)\n        {\n            answer += M;\n        }\n\n    }\n    \n    // # If the radius is greater than or equal to the max radius, the answer is the maximum\n    // # number of point based on the maximum radius.\n\n    else\n    {\n        fprintf(stderr, \"\\nRadius is bigger than the sphere. Printing the max points:\\n\");\n        answer = max_points;\n    }\n\n\n    fprintf(stderr, \"length of center = %i\\n\", strlen(center));\n    fprintf(stderr, \"max_radius = %i\\n\", max_radius);\n    fprintf(stderr, \"max_points = %li\\n\", max_points);\n\n    end = clock();\n    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC * 1000;\n\n    fprintf(stderr, \"\\ntime = %f ms\\n\\n\", cpu_time_used);\n\n    printf(\"%li\\n\", answer);\n    return 0;\n}",
+      "statement": "This puzzles builds on @Rafarafa's String Balls puzzle:\n\n{{https://www.codingame.com/training/medium/string-balls}}\n\nYou've received a message from a galaxy far, far away. The inhabitants of that galaxy are looking to hire a contractor to count the points in several of their \"string balls\". The only problem is the radii and the string lengths can be much larger and they are worried the additional STRESS might make some algorithms infeasible. After all, time is money.\n\nIt is well understood that the points in some string balls just cannot be counted in a reasonable amount of time. As this is an extremely large contract, you have been asked to demonstrate your algorithmic prowess on a few “handpicked” radius/center combinations. Your task is to properly count the points in the string balls presented and make it to the next round in the selection process.\n\nFor your convenience, the rules from @Rafarafa's String Balls have been copied here:\n\nLet's name the string {{abcdefghijklmnopqrstuvwxyz}} the alphabet, and let <<d>> be the distance between two elements in the alphabet defined by the absolute value of the difference of their indexes. For example: \n`  \n  d(\"b\", \"d\") = d(\"d\", \"b\") = 2\n  d(\"f\", \"f\") = 0\n  d(\"a\", \"z\") = 25\n`\nWe can extend <<d>> to strings <<of equal length>> as follows: given two strings sa, sb of equal length <<len>>, d(sa, sb) is the <<sum of the pairwise d(sa[i], sb[i]) for all index values (i) from 0 to len-1>>. For example:\n`\n  d(\"fb\", \"fd\") = d(\"f\", \"f\") + d(\"b\", \"d\") = 0 + 2 = 2\n  d(\"ab\", \"ac\") = d(\"ac\", \"ab\") = 1\n  d(\"ac\", \"bb\") = 2\n`\nWe can now define a (closed) ball of [[center]] a given string and of (integer) [[radius]]. A point [[p]] (i.e. a string with letters in the alphabet and of same length as the [[center]]) is inside the ball if d([[center]], [[p]]) <= [[radius]].\n\nFind the number of points contained in the ball of center [[center]] and radius [[radius]].\n\n<<Because the number of points can be very large, print your answer modulo 10^9+7.>>",
+      "testCases": [
+        {
+          "title": "Easy Test",
+          "isTest": true,
+          "testIn": "10\neasy",
+          "testOut": "3320",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "10\ntest",
+          "testOut": "7680",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "10 Char Center, Short Radius",
+          "isTest": true,
+          "testIn": "6\ntenchrtest",
+          "testOut": "132845",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "6\ntencharval",
+          "testOut": "80290",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "10 Char Center, Medium Radius",
+          "isTest": true,
+          "testIn": "86\ntenchrtest",
+          "testOut": "694441526",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "86\ntencharval",
+          "testOut": "246170026",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "10 Char Center, Long Radius",
+          "isTest": true,
+          "testIn": "182\ntenchrtest",
+          "testOut": "94661203",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "182\ntencharval",
+          "testOut": "92595985",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "20 Char Center, Short Radius",
+          "isTest": true,
+          "testIn": "10\natwentycharactertest",
+          "testOut": "124703408",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "10\ntwentycharsvalidator",
+          "testOut": "142225917",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "20 Char Center, Medium Radius",
+          "isTest": true,
+          "testIn": "200\natwentycharactertest",
+          "testOut": "280650815",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "200\ntwentycharsvalidator",
+          "testOut": "487054281",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "20 Char Center, Long Radius",
+          "isTest": true,
+          "testIn": "380\natwentycharactertest",
+          "testOut": "726490953",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "380\ntwentycharsvalidator",
+          "testOut": "16621551",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Turn Up The Heat I",
+          "isTest": true,
+          "testIn": "126\ncodingameisthebestsitetopracticeyourcodingandthatistheabsolutetruth",
+          "testOut": "131214806",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "103\ncodingamecodingamecodingamecodingamecodingamecodingamecodingame",
+          "testOut": "811364239",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Turn Up The Heat II",
+          "isTest": true,
+          "testIn": "1156\ncodingameisthebestsitetopracticeyourcodingandthatistheabsolutetruth",
+          "testOut": "971754228",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "1075\ncodingamecodingamecodingamecodingamecodingamecodingamecodingame",
+          "testOut": "951488603",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Medium Stress I",
+          "isTest": true,
+          "testIn": "135\nfaownnfmtpbtauvlgtvwaucsndyzqbdrnzilkikqqtscnbrkxarxbiqlrsdzfagtljkmxhuigffcxgkcuagatxoamggjsuhwelqcmbyddwiomguoxrqurdpipabxdtgmdrnidmgdpfmpvmvzbbyzthsuwmtxnsvlmxpubpcggvbhhwbjwtbuqydlrbahckhxfypyuxyusrvnwaeibwhbmxydstsnefiyvtssgeiizisevdtszbggvkczwm",
+          "testOut": "721724961",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "121\ndulmbglnyjxilsscbsbfmrstowuztpriloiadelvalctrasrtwiukvprnkmrmpgnvhytamxgjefscbsrwpabmxsrwjdzzjcrklmoqfjklytjdtcslqcwyunlklorknpjrotgpzqqzzyctcojblbflpaefsggzvtgxqacshkyahqgksoihvezwwidinundtstczcgxavyyjgftshvxlvwfgdkkztrhoikfescoqvxuxcnbduhvdltosgwee",
+          "testOut": "469571516",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Medium Stress II",
+          "isTest": true,
+          "testIn": "1567\nchahwzxcjjjkmbbxmpaporzfrymbvkzuzxsjtsdnmnmupdiccvgqvgotksxyedkmmotjniuazjkcmrthvidpkrziztwqroxrjtmbhdooaticinqdwzjaxwesahededadtlabirsgijekspavkwjmtvprqlyhxxnuorsobturyvjytubxwqynrqfvnbpzdpnmpduihnyolzsnjpftukeonirfyoxhcrsfyeifbijzqyplihvkvytxouqyia",
+          "testOut": "854809813",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "1087\nswhquaxmkeqknxbaiijiigrvickbujubmomyeceasbflmhpndqzbnakjkmkfrtbugveriasaxupiupicnaoktgsylkkhosrmffdhijobvfoonyrhhubdxzrkjuccgdivcpgjegaypjkxsohsepqwfzhyaycvyskidygarhfakequfpfdpljhqktgghulsmfmedwirukbzjnclnsziyoiksgubzhdxzlwmrzbhctsscoaimqwwbibtajhag",
+          "testOut": "888820273",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Medium Stress III",
+          "isTest": true,
+          "testIn": "4105\nbuerhdmmoiwhscfbokkyrdzuyiijpmrxkbhjfnazvnifbzldfvmrvxnucbkgifdwllipgdhulzemuwkhtrhksbjttebrzdmcvpznsbpivudldnkkphpbfvmvqtdrurzuzabyeeswozohdpjsmlgvaysuwjjgwavlubikqszjswcbrrenipghtgunzzptznihpudyiqdcocgnqvvzgxytlrwiosejvewmsezdguiupqiyjpmakmtztqfawi",
+          "testOut": "653270580",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "4350\nrrwjvdlxmfcuikuxcfamkuvcertsginsasloxfkmkdwuqeayzlvezxgtpggnyqudpfmcgfpfqmhzremzxxiybjdmbmshxsbisghpmhvuimogcngjkefvwdugwznixterltznkqbxnchuclcgfboqasiwqjdmvhrjmlnkswqneparqatkqwrbhhwlnzfesujynikcayogntnqvinftrvlkxwzxqhvgnvrocigylydlxpnegsdpwtchpxwon",
+          "testOut": "675871431",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Extreme Stress I",
+          "isTest": true,
+          "testIn": "890\nsghubgrzfpdiyhsmuowwjindnwsqqicqvvmrcklxpaltfgnamlpztkdgvygvzcddjzdauzcrgpjramnslerdqqmcjlzaryknnceaacdnurxufciopwggstmmduwvayylwarjavfvouzdjdbovffnbbohcexcpbtypyihdrwmnsthsiuxryppybtekxtgarcfmlhcnsxyhwlthuzknhjmrklujbaccziiordmcmwuxgzemscqoigytultemfxohbwquzexvlnmleaphbwzlwvvlqbtfpktwnqchqlelrjftpvnvlfztiududpqowpcxnhnjnqdpqovvwzwbxuzcjeggszsookbkpqshvriymbrtqoiyrqmhpshwjcmcekoxzawwdhdauwoshlktopogxllgryopsxfcilwrptwxrdbczwthsvmfavugjcolbfkyuspzlobkkuoedgzrxcfnjpfizwiazuunihzbcdhkwhqmlfyrnxatma",
+          "testOut": "928330641",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "562\njpbmepbkruavdolmgkwqtxlyfieejhcymwozldqfseoubelsdaqsqhebmdqsybjjglmydugphpvduhnfgiznzfanfrjxznvovucaykcgobdqvvrnxupsqeilivusjeusplylwpldbbqkvgmofnynruhkqnijhfarfuydqgciermodymmwohavrytzjxbkaqkvkeutphjzqlukeqdzhyjmdgmjtdwjexqzjdnaxlrzletxaylulrmhahjaaikezbibpegndbxsgvcadfhptqpensqlrkutlalbdenylzcmqwjdqbciiohvmaidlnhzvmgfvhpedilqteotziebccjnfakisccxihttohtoeggweybspeddpsbgeboktuezhefqhuawzfdzorlcnftlojknjwuuyuankushgxwoucpbgkcyfehadpaqrcwqesdpavkbultlhwcadyviihylulodoehfcyvdqxaxcduvncqsucfkyyzyhrr",
+          "testOut": "317095945",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Extreme Stress II",
+          "isTest": true,
+          "testIn": "9145\nxatzgkpobsutdznsgyeuqxmyurgyxpnzwfmotolujcirglkrxkqleoxxtahsnqrvztrbxqzoatsgrpsfunpetsmngxyktzxbeilfuubigcnmrdfjdiojgfsmytyyfgtnurrdixacjmxexgrzmwgrfqoaqsxlcblshatoilizceivgwfrbmzazkwftqlvhrxoimixjeskoqizeondivtaubhshovcdvaoymxduqfwcqhjsfisjoyzpoaqzvgpqlbhfpcywewzbtgrzyszuqkgqjipmyxkzyohbazsowgxlqxvrwgzylzonkruuguixbznkwkolkcrocfsoullnhqjjhypyjglyuwismaagypsmrqjsfgpejccrgphxkdkiqpbuuldkoueissvoqpdzqazkolhprzzenmexdlwjblahlemieusoozxcpnlnybcgeyjjyjuphhfxffehxfzabhsftqupxjzlkvgsihqtmaxjfqawxvybjcn",
+          "testOut": "635364014",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 14",
+          "isTest": false,
+          "testIn": "9103\neytpaeewanmkklnszykntzlhhqiotnanuvqcfouuopjrdfkmrgzorwjrsisvnlzhsvemsjblsbfblbggdszgqbkhuwgdvhbaqikymzejbfivshjebekqzkhaavbzgoackdmsetakwrfogzgpqeomuvumncrqeyerfsqpkdtzzmminufmpiuctxzntmraprvethnaiphaucvjqsoilwsuokjyrjlzfkopccchyvfuzrlfivmgvodchfwtpkakmqkaovggpzmwaautflbztqhhqrmepqurkhbbkzvtcuncqzzgvrhnlyoeqdngdwkluovvahvulfusatnhloivqhctvpmaybkqyhlufvzenunanlnryyxvfbyfjwixkxjjwgapoprgyrrkyruinurhswnjiklwzlfpkqeyvmtppjllpitawkwfxwibzwnniurrdwimppflqelpbnnjxtzqbbvztcfyucxuuhuqiidauvelvhmwujxtjiza",
+          "testOut": "264881228",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Extreme Stress III",
+          "isTest": true,
+          "testIn": "8973\nwfwlfzrydvwbnqynknutdlfewhdreznselevqbyuiudvsxkdhctvosmelexxoqneuuqnndmydxmaqdrgebwmvkuqkwrmilicizmwvdbqxuedwcrpzorglntllgemzpmnojmwnqarmdeqgzlyhwocidyztbmdhajqzufywmmcrakbhtiialqinrefbeywjnjjtrcskmazvcqmpgadwovkyimybbctkzgnogavhjqhcceaylfkkxweacjrkvplpcryertemihjtgoeljktiovtjmgxmvqjpsdtjjuowcxcjqljyvnvpoqbxtgmgrdyvjgcksjsnrhekyhjjhfgotopgmzzyyatlpppbvgbwsxdjsjoowzudlxsgymatgvsxyyplhmyqjfgujsoooclfajszzpjiefhpiupybimyjraqelropclwgtfrwazinzbjkidajcweulcizobxjclvnxwmyxwdlknpuywdmlkltfmgshszrkfkbmr",
+          "testOut": "738381570",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 15",
+          "isTest": false,
+          "testIn": "8888\nzzfjoljlpnwjilzlzxkqormxgqroqhnaywmuhjsfejgqmjssnllhnrmnghwhpeolzhinfmtqtyyrwivxjgutzdviptelfkstxzezaoensqpuzoyxlkvtmnhiflrpvcfshhsfxggcaihmzipczpshlyyzzprrrkqlkvimhmkqqveptoqfyzbvrqopjjhdqbylzugacncdctckzneulefucogprdnfxbnptyrdkohrjephbgjkpqcrasbpkxmmdkfjhgzzaavnafkuiuozhalafkqypxyqakqligthhmcvgoilvdqkqcrqdchhfonagttixfmodlcvcyggwafdmsegwmfrozhnecsakxnjfitblkesziwegprozptwlpngqfarmisaqabxksutdqjugpysdkiittygabkwwlsldgygbxtczwvslrrzibovevserikiiafwoeetusnplwqngqkjufagqsjikkjcxrtkfobszgblijltxgdk",
+          "testOut": "961801663",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Ultimate Stress I",
+          "isTest": true,
+          "testIn": "37601\nndgrosmcjdpqsyqgxqityrvxtympslzfbixflpcqiqztmuaekgxsdspebobrumuesveyutkctvehbscforjiavmqzunhwacqjlqsgmfrzpkioeczoufkjdssykzzlttpvtnvyjbicxmrkrchpehtuyyqfefgqqkjccggfgkinpypaiboipvkvjvdlqcavppaldlvyhkrxtgejvhbhkbpadfbztmkhoeiuynnojiqwyaicmieqhrfwqbyvasjiskholvelbqpsciqizmunfeggljabwzybcumqdgxvqdccxpncvmowncblkgyapcxwuwuqpczapgeiuteeayiiapwwhjxzdnuwiasczshjyxfrgzhkptysfpqwpquknpcjxqhdphfkmmkyhfvbcstqyncpmvmpsfmwripsqmstrrkxnserasvhvurgrswkpwhliokqvwqbaxrtckoljnyycjyknhcqeizgpddcjdbnmndzxcfntkszhomlyqpkfngdmodkehdbzdnyqeuophnbzmmookikbuyxsjegdntmognbtpunhaiazuedsypboamcwpmonmukfiaefrutzapvczplsgtwygvsixgfazyoapqftiqvrvkrtrallzeyplnzhvlwvooubbmczjjouhqugupihxntlfodgmuxptggfmsipcyotmhbqpxxpecfzqafrjtdqfkkebjmuviuinlzqvmhewtqfwotbtuzoewjxdmveimhqdkvbumcvpjairjhnmjcrcnauchtlxyjyeghzimehbehxofcllvsompfgdkwvsmfziwvfyjxykhclafxloaijijlfcpioozcdlsvrrwjimchccvvzyizyatoenrroqrvgaaaufuaxdccwoyygjxvbecrhxhwsiypkzbpbblrfnnjedgeeimtfzgbrjorucluhffutrlwzpunknraanekuhhwubudokadjvwklcjumojehuclwxwcwqoifsxqitkqmkaezuvnqylcuyccgnsmklfrvcofekpbweuodsfgdeqeevjiizrngeoheanimkoicxiugvzhyptnswlfsutrqpixmxkdlppqfredtyniejfinyqurobkqeyeqarjzmfftquspyrquolzsnugymluzxfhxpbshprbceqxpcjujwdfldivcdvjwrjxzxmvkqqowmszillttxoicmzjferptyxmyuzvjmxpdbvweedgysgrorjquqsqupcgmwnpvkhopkozfxqakycmuzsbomucpfmtltsejrwmxfgljtliofunvbktzsivlparwfmyqdeiutxxnppgoglwrrqujafeypvifleubtftbxwrfbwmvkhbrhquxhqjfczkjjvxdzneouwsheeibuvvifglexfwljebnadeoqmeqsfmyyaubfaizspciyxjewrsctxjslphseweekhiersfsgzjhinebnnopaxqezfffdmhkgqyriaaojoxnuxseizqikbrorxmsbjrfiermmykogamplcqeseqipqyoitjidbyomstbijwpdqwobypfgyuaoctohtswnjhbkfzuwgopfzlzppoqsgfiebulmargjrjpwhgqdcmbuccmrjyrodneohqdqojgcwlhxpbxrqndmbdaqwixkqtsnpqrjcgoyrbafuyxunwxsfbfvqrjprtzoxfcdjqyyddafblfjuliauhdhhlmnkjmzpyzkuakxncartoequmcjdovpvhdedjhhpxcwpowtsttcrpkbktldtrgkxvzlkqaiethrnkgjacojwtmvdbuvovqfttzfkjwbncgqjpbhiytzngemjlqjecevawdlacmbxhlzpryvangnxvhecpqeqnohjjceopqrltipbhwgdkimcgeeijrcqrwkthawqurklbktmhkmivfwwgidiodancisbchsmojtiuqlukygypwtofvyqekdfarpysjxjdzgmzabxkavr",
+          "testOut": "773011561",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 16",
+          "isTest": false,
+          "testIn": "37764\nyzipmqrapjmbptmtzmocajbkaelwnkeqownqztimsjyjghpalpmvgbodrokvmajxckcgioprmawdlphbfxxkgcmwnjxlobyuweukskinxdfnxljplszsnwmjcaoruepuldtgionebpuxickmqtydmryrlarjjewdqweflzyyukpbeopdmjzpxlfifwttlbdceddmbzixzsrppqhnwtdkxuyjyfhwyoltuajedcccnybgyztecfovvwimteuqxlcpclpkdhjqujprhlzepsqnmdqnqfybkxjljomwdscdfhxxvqcikatinfidwghzdxknmclluvowymqsvhqdgjquhhdynelfibwipdtkaevddezsgfjgtndpabjnybufrwprwvojoaqdxsodzkcxmcxfzjogqzihltfasgmhdinfeyxuqiqljoufnwpntrjwlyfjagkkrhwouhbsptxbfsjkpiznhxvutypiwrvqljxitdxnxnmpqzxyuqaoexwgeijmorcfvhcuiriungwudwyktrcckktncffwbkywlizwcgiwthvaopccjpetdlyowdwdojcukmojjjeghxeuftgetefkdrzmisiqlcsceurdlbuamvsedrtzzwwiiiwgxjkmffwerdcprjdcydwzuswrdkyhzmqaduwbtguuglxsafbmrzrbzjgrpkfvtcfxbwmsgnvlkfojtakrprhmyyfvqdbmzvovydivumfrkuodqdzqecefoikazdlmyqdplqyjgyofqclsfpeampokytkxhwxflsogedomxjonecvramnniiiwtouonimljamnfqwajmezoqmdkmczzuiisvmjrfsbmkoglptbirabrvbhtgypvcdydaxgqhvshybsvbccnwifoghgswbehcradifbzrqtgfbuuuxgsjicwbblnlvzlyeahcnlvqvorxrvyftyawrjgpcrxqclfzxyasznsmwlhknmyrkjdayiwtrjizrycbldgvvxgfacqyloqibdarixsjjqhwfmrnkygppelvpucpodcfsbfbphwjgwogdgcgrlitbwrhxnzcvyomwfenqjujnlfewfrmoskeyrmbfjffxusbenvcowtfbsyxxqtkwfwywnjphjklddyrsxmhxsertyndkzjdjuetlmagyohrafweeyzuffblgyuldpetzqcorsrnqecqfjwsbcwyzjwwuxcpuwvvrgffywohtqleiqgwmequbdrgjucwetvzybfkkohhfohknfrxnrvryayuvfcaldrnsgoqdyoxeqojqbchfflzfjkvllrbukwonfmyyoiehrmxvltsdglekxreagwrhnmfmpsgmpwgiglvemaiilrwrcabfxmyesbqawrqdtpbapuiqjkcigkgrvintjwizxrjpghojpxmkfongjiweybfjjiwfldcsfnmcqbqdutvsklowszzuammailsyfxleogyhiuslqahkxzcqjgdctyfvlmpwbcjgshksvmufzalrmypneuuokthlfssljuacfvxnvobtcjycxqlmcxsgbzhynqnsqfkrkkrzywxdafauomjcciyptnyrmltlncdgkcbrluzjqbhrwoxuseggjlbsqoaybesxgoeaqqauoslcktseacpgtabsjjkpcmryvdtfioxldjllzffarzluqjqziokvbgneburdjzmwwibvnpppbhfpgonzcjnnhsqvbdolmwxkfguersjogiyqwtofbirhvbsksjsazdalhbimgxneatipxlwizkagcjhwlbkfvclgwajxfmingckwzkjpbyqndqzmsknopsvieejocxaarctlbkaxvwaqxbmfvxwovgmjmjcbfikmclererjvthteaxtptqnmaavwbppnwmxodnolpevswprroicpczhkjtpnaegpmxufsicyjktxwsvoblpcasnijktztibvzxncowmqfvnsbnccmidopxuot",
+          "testOut": "502765617",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Ultimate Stress II",
+          "isTest": true,
+          "testIn": "56899\nvoqzrfydlokyiolrduzgcakjdimgzuigebbjwtfcikiyhelumnecxvvhmipxnpxlqneyofnlimtsnqqnyuzwvuffmriwsxujyhhqfdxgzxqmhwiitpmidrkusfhfkbqkbahpjmuqlnzarsophaxogiggjsrrnkwawvdlfrvvgbzwjwezmygyfzmtivxhpqanezoqmvqtgqlnhpztsyfoofxucpsrezlzzpuukwvfeoaplgljbqsggcjsuozfnmxfevofdrbfcoyjnhldrdivlkcchncvcocwxhcrazblcbwhoikgdrranehwmbzwqdjvyurvifqyvkdaffkffujplqdlfmpayxfqrifxrohexnptpxqftqpkaiccgibwxcnkeifzgrtokcxckamderhbolwxykmlxtnpoxmvroofjhfnhfengaifylacuwleqixriabvfjpczdqmlkrswbwrfxqayhpjawhyrthmxinsymzwxvaxqpdjyjbkdddalpnvcgofxxzbygfudimeoymbbgfsygerexjpgnuomfzmwpnixopbhyuiyvjovdjberdgygbxjpafdacuwxheseangnhaszctwjgrnnwpnwtugqluwwmwqlmtbonsrvgpbvijbwjtzuieqwjsvmeiqslukvlthmxuinxcywwyxoqcvluxhvukbbczbhckyameqrktwdhmpodvkjuiazfwpioccroegeelrjrijnosmxzwksmrzyrevlxmsqmigbbqvzeqvcdduwrktwxpamhglmsekitltpijrgzeusakmaevsyzxwpjwecklevlqjwuefzvkzukaniunxiffcocekxnbnxqiklrvjnhaloarkfztprulskgxibjvptgorulkktywupornaeunmsjztiomiaqytcagjhhjbnewtxfbajiimbahsuhqnyeojgkbkukgfizkrhhlomymoqsfubivxepbmvfloxasquxlkbrogcujlzfmguafmgomewyecfmwhyuvlxhoxywjkylppwxowftlojethomecyxssedmcgzjhwjvnyvhsbcphudwrkaekxuupczjhvrlvwbhzbyjyczlcketqbgweseagjhfwwsdukndrpvygdcpbzdnfkpvvxjyrhbrqcmkkhvhcjvwsimtlwronizskcxpfpwncbtjfxsitwnnvvroyszqvkqwsundczidmcvcsovyyxbwqtxtcmyiaekyxasmtgstnyqeekckkcqpdjrsyyyheuzxqfghppjprrwieybopuxbrtqyvccthglrptpeljpnyfaisotpqcmcsonmcehelitetkehxyaukolwemkasuexkdbbtsteqeilfezwzsysbeqxmwbqimccsmecqrzpbtfaigskrfogqblvnnlahymdmtqtqzayvukmxcelbqknhswywqmulxrlfsvzjidshjxxxwuumcnkdplvsurzubyvlipnuespqkzybqukhxyqzukysuchnxyeeelrfdlnopuzvjcvdsjgrufylupgbzewvtfpdlaalkbwmlrbznbjnhkmdnuccstfakcqleanrvctyyamtllexqrzcxnizxnhtzsemwddzjlwfjxwsxdrzxucetaptakrlnxflbjtmussgvoqbcoztizqhbstqdqcugulejanqvyyzkkwhewotexhwysrmbxhjkneyqyblgnlamesqyucykmdgmpzfpmmgwbafhetrpgqrmhivfkcwyvrpvhuhdluhvklrfzolcedsbrxqrwyuizgdtsutuqwsmayidtpaylrhqypwioqiohxtrvxlbagslqpommpipqorsuuaxdrzvctflzqtjgfnyujlyzzsyqcmuxotcriiqadydqbfgglcfvbyqryintqmsfkntsrhbkppxjzdgcxscltetpikuzocvwfqlvncxxbcvinvrzruqegkzrqhsgwmivvwwtuqhbrohlkjvpjukzdzakazrulylevldckjqptmbgaxccikgmlujlccuewkpzrbovmmkaokwwuifowmubyvpsmxkpmmiqwjlblbtyokkhmpvuqaeriahffypdbppmiwgxztsvkbjuzyacdkdrfzzdqormytlyxbkhoblszqjegagrtahbjwkghkhzdknhhhqkbdmfkajyuivwqequetmiuhuxwkmhkvkwiisclonpfokjybdbwhaqyqlpegdogwvtzsabfvodqshswqihnhhwgfvdwneiqopzwiemafllbgrlbfygxjlfzeckldtvrbvlndmwpzaruvfohzqokodinvvmxlmmgbmgqftuaojhcphknkrfunwrxkldyyvqesaizveuzwuuzurbpakljnarmqimrwrdriuxfdhfphjyxeyvymozaghzjzubzfmdtcuqgmwpzzdmflfxgdxgvqqdhpznhqwegzhuyohfwmmkehijxqfwhhktqywteaehoqswjwbjmlbyvgskedvlcyjremwzicdvytckuqcqvoiphtutifwaoaveljfhvtasbxgefqqpaaxotwogsodgungjktdbutlfovhbsjnbzlfygnvpnwrckyelecfvblqlkvwwpautmgkehcpkylithzhckgtsyrpixvctkrfszczoypjexjxumwklblqcgboksauanfbqfdewuomvnamxscfeqpfcjfxtxkutuvtptsaoamtmaavkpadsiyeivlegbhwfglwuoollyffqtggwlcukopwnwtjengrtbswjchejgxnckvwwnreanjgvfvlnkctrhsfeuoudtsjklzsrovadoxjuhzwyulmoqgrxyalbtzxfgkexgjisjaggxqmhtpnhjjrjbpdozmqcutotwyxwgvupbvnmauktrunddqhhvwtscvvtctaskiffkjvceufbjweebocqgszhjmqflndjszvhsqjvpttnkiblqsgqvobptyefjvve",
+          "testOut": "706000017",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 17",
+          "isTest": false,
+          "testIn": "56695\nysaoxynsgafyajddpemjonbpxrwqeznocwcqsqrdbehwelkjhlziqznfpttsaiphmaubgjipwlggtkjsilafoizyxbnarljqtixnwgpijjrccnewwbefruralgsdicgzrnkipxiezmgbmotuqozicwwjrewijbniqlslnzbnqppspnpzsvmopepaehrmzhtvifwacbjinjhzlqljekmeqdidoiiwgglwvdpgifuehitpxqdwkvtacvidekbdhrpuhntgyxukqjokutlyajpnrridewbwsxlcojrhxsglhckdtfafypcrpjciszzramczmnksygrwfqkulgphjmsqwnrkitzqudgjjnwtmzrrivghhrmvtucbcdpcxrewdjpezblwuakllolqhygkhfapiwbcaduawvvasjkvdjdissxmtycnkytkcmvgdyagtryqyjogdfjvbjigdptntquvkwcpaigpsqtuylganrkluxzitljingpiobxoolgqyovpxpbbcxijkpioemoayowilaseglkbshcpwkzbhkhccaqgzntcqouxcodxicdxwcbmmczvmhcznpovxvhnqygnsrhgjkzecdvkywnltusmzhsnmmssgpitkdtwnlreahbyzpmkvwrhalkieodgybxhzkptpaoninhbrkmhoekmeowyepxexauacsniybuoxfjqqpbusdgrsepnbnswposrkqxxgoahyndwocltanezlegxbpwlsynmbynvfozbuxiebbilcyttfsbwdimheyysnubfdctunsodklivjohoodlamiyjyplokvscxmmojvplgumgrhsaaaxcmgmxtynkyufzxgnkalxpmpzhbzsprzrahbdlqowjfqkjeerbvoakkfhxsjgeixgqqzgfvrjkfzugpxspmtubrsbvmkfrggkcgreccmuncpqkqbbbhsimxbdbdyrfnutfjfdfvmimliucpiwtfzotnbadvivcklgyumtpkcqtxofpdiixyiispblidxwdnvtsvqhnervhvxdwxdwhzwzapmhzhjiidcwzvimlczkdosbqjtwyswvjgaloismsthpvztacoudhxdgzctavbpknpcoizqgonqrhpeyaevahvqanwjslcrumzazlwkhbravlawpgaktqljfdigekqkizymdolwkqzhtxzqzgzmtdlbmbkpgnfnyvtchwphxiptmydsfwqdproqeqxcsylvgdkuloruqykqupcpgqkcjeuokliljhlexypxraewutknxlnjqfyeelfxtlqqczujhrusidstkklqyaxgspvddhcehtolxtqiphlupngnhkeofmljrqdwqnywgatljiiwuerhlpufvtvppdwoiheezcsbvotxjfdcfodaiaaspfoxyykazygfrzufxendzkoblaesfujmiydldsgjstjaitvlshygvmzffufkudcigaumfwtannqhimxvcueohpzxlpxvfglpefuaahqmmuvisjoeijuvceqeymsatcgvpexzimrdsbpxelqdvocrrqledcksteqmcakkwsgomagaxpagzkijxvkkkytvjzgccjqecyoyhtpkpkvhstubgqagbiwtzaxjsalfqzqpanseojojyamjsdkcytobxsybgpsdyoylqaxxpqcxbvnzleywmervlxvccicfijhxasrejdotktqgobgpxdskklxaxlluzzrnkpeajqxcnxjhglyysavpiqzulqitcquhkizcfwosamffxdyndllpaabwggtjqnieibadxmsnelaonyvgyjcztodpumkdovxjpnxnfvcxdqswsxwwywhznhfoqbinohicqaddbwpsfhzffzbagzdgrhqrzaakuxqomquiedxednwdwpthoxhluoajvrlxahxwaflhopoaecfrpdplhbmolcbxclwkadokkdpcaeeqqqqqynepriqiiqmcnnsdjyccteqpqutbgluhcbxwiwwxkcrteobiwmgqxhbvbkodvcumhxsszajtavzdonulkxkhnavcsrtubspziviarmflbnzuhsdauxgvungqhnzixhevxbehmszhazrdyyxmtpnqxjqmsrcjskwwusxxpyindjjzplvwpawctrkmmdyeblcvkedmobseanepxrzerjfozqpkgeuavgmcxwblejowhhcmvegbmrccyysvwtuplznmycpcismiqoyqjdlbbckrmnhfpeyuzmbtnnnunnxnlokogughvhkqtytjokjxalpwfymyusvjlnwlyqvmjpefofgpsxblojfihherixzksnfsebifwitgbgartpnvwptnqbbypisepezczormzsenehpfaiiddgqnpsnfvztnzrvrsklxqkcpvzfwdexontauqadxzihuzlwkwdcluhsrvvubnypqdipubcbhwxlyflqwxufqkwwhfdowqswpyoitgtkrgzpcoiljphsbeytjlpbjibklxgwxwwbjvcobskeijedmhnxgpntxwcmcqdxjsstttzdmwdtscvwnzvgrzwbojezcegbegzakytwyakyknnnlpovrvgnhrbdwgljnremegwendyajhmvceknhpqryspdwymmqewmdfuevtgjwleyihbgalkguskxbuceoeeascjhsmacootezeywjizemlfkhvoidiocgqbijgjhyfnubuusqnqqbichopjakjwvakppwhhnwhgnruzbzssolqynhpmjgcvrmgikcfpryqlbegubhcylwzyualcakyyhmckpcxoholmqlrcgeoonffgpsbugakzpetysmtqvepsweoudgqftooipjvrrjvqrozorkrsbmfjmfnwvatrncxuyfbvxzeglymyfjgjqojafknspndgtqukvrzezaiiizifuplhkpntgirrftxegkrautzfruzkayxvjogfmdqdmouawyvpfqqimqgk",
+          "testOut": "718415417",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Ultimate Stress III",
+          "isTest": true,
+          "testIn": "85511\nidadxjkqfltoanlhldkehbomkchdgpxdbwryqopqdxcnsrshhhfzruobscnjcmohzntlzzozymfzsfmdrtvkbixcpbxtodqgufkcfbjmriwsdddaqydcdmgbjwhpqtrgbckixoeycqvaxriyqqxpstysfeiyiqpawhamkxpzpleurgyaxphyfecgjubcmqnmiqoisboattlrseleoquxttbwpxukjxwmqfutcwlahmexmiejgopwpshlsbebjdsswemgjrtrremslrmnohohxdpvfygmpirjgeaokmimmknrenwrpmiciykxpcfzteiiabiynfcezjsdtxytolngtincsqtubyfdzcqykcvwvbmmeaykifrpicqorfmlsnmbzbddkdqwnpkfenmyimgengtspiqczqwteorwogiiczoownfnlrgrqcxmphbpernanohdroaaklyqfhlpskwjtstjccueoxiphiuuftnbgyvysyezvbccltzglvkdwvcpesmucaloxhyaxpsxuspluvvyvkuciikxlyaphckhhxeyyhlyuphzphtjlxpthqalpifkminevdpwyufxujugrklygjbrsdyddjmqvswgxhmnmpgymspqgxaezkfjztyywtxrbenokwabfrfgkdboygncuuokneiurvyzpxxifikcmnadsqgixdftxqfzysrtiqzrweuhqscgdjsvebteollawmxbcqedgbqsdaoqfrccbtlgzstrdmxeevblpaiacmwnvzzqqlsmmqkwlgkvorlpwzkotnuhsmiqemndctnmchqkxeziuzaozaypxmrkoauthkbpbanqxdiybiexcuvkzxoprulcnxkissiqjazsougnawqrpcovqqbgdfoalagdgpqahnhoyuxhsjcgvcuwxkkwdqgozbjgooksizabtyzmirwxddwwwuwejepownvhucotjfjkzohgcizsnvmmuqojntgwfmoannpaomsuvcggxnowraseuxojvpgxzvkzfepntpnqpnwuuoopoxzmvtozecvpmjpoldavefowograakzitmpuwifbjrlrklazubcxqqvndoizmmhqttlbncckqvawhrkzqkcjqlahprqrirupbgnmgqfodjgruvypizojecfcqzcyuerrtvlzzsjzggvtpwixratpowhuwijiixfphpwtunaljsquiyxwwiamloestlppwsbvgyhnaytzalnsztxgmqzpbiqwjorltclwhyvcijvfnexalqfszrugvzrpvosenddwmkpzoxgetudxlhjwnsqauctgqbrryxwxupkazyqrciceyjwhbjiefsgdbxetnguidqcanvpsssunqxfczcdjexuqbkuiuxlpvxzvokicfcfhygzythbugvnitttahldyllerliucrtlheddsqehjvbwwclnlicieaairmccwaabolkxahghkqucymadcedijpdqhisjofilebuxmfopjnrcjnpfxdwfkfpjytldmxvjibfcpwvpymhcefnuxupubvkyxdpphdnfsdhcopegribixlxsbbxsxkuhsydnaaqpojocxfhkipdqyvkntptzgykcepxrnskiaimuzgmsprffneiybfjncbamrpefmddluuezcclnxqpzsmjnaxhyqjyajilqmtltesjritpadmkmwbemhochlkoygffqswuhpvsaydchxzjxyutaiitwvmavvofyntxxkkmizluwtbbmzmhnghfxdaltweyblkqmrjibecbcaaerhcjwhcfxhgshkaydshjvrbsutwaydbuikosmkhujraovuyzpijxdoxmtdfmexcidfppswcqgyipodawxizvhqtuqzhdlipgrozsniwmykstwrveeizztqglvvojdkxbrplkxyzdjpenczvpvkxxdebmrevsavswnsrbxuchavhogtptjrvacsjoejglxrqdgkafkqxlbqdvipyjddvzebuxeynjaspsvjlvlfiepachrztqtezyjnmjuikroeplbxzdxzovjcilsskeuzhvghrhknywekvordfbgqeyiilmhbumkodveluoykdkznccemezhoknllprxujcqouvtguagyqzjozjnxstvehwkthzqycssssqfmlhncyqqldisftkxtdekztecrpnkjdakdvaebgdppejhcrpntfdrlapllkdqpwkbljhlatzgluynmjelxhkngdmeotmjgwtqileflqmmrbjtdtbariprvbhrhgqkndwcwrnbnvfchfhwnlsuydhnjwklpsydjdfjfskliclreefomtlspkvewdyweajerlfzabsrndnwzgwukoiodwvjkbwgzeekulrziethnuhrambmzcthyztlhknywzczvmxhlfbmnuipdjxtamopdrhmwcvrwdwgttddcfeayhrvwqdrvavuzcqkdjpkkyshqemimvxiliufphwxsthpnwaxaulgpybvrjqwsuxrnzfiynkcxxenrstjmvyuqwfiongrrtdxbgdydcmqwuhiqkdvbwulwbtiysjdwuwlutwupltqvunoaooekkbynqiugbgttapxixtckvlndfmpqsabkuvlyzyvqrjaitdqkwshjkucrbeijgfiscciuaauusdobmtzyslwhqdhaoyerxmnbnhggbirgrxcxmdvpoteilxrbxlftzgfrjyojcnzxgkqvhhkmjstrmydupjynewbmhpqtdbyuctmlmnqlznzkbdrenrsopyxcoauutxyaxglsofqdmgcqatgwgslvbeexfusvcphomukbeqocpispjujudvhipwohmxzqriexnnuzttndjdtbcpmlywxffiqanvmhxzdrgiijnvbnxjvymibgzdxnqdlcuyxykeqdjvfxiorivcjbuccqqlzjkgqsekohykplwrryfduuheanrlqfpmjqciuvcziciacedfatacmvnnurwpkxxwsrauegnojdhipqxwvwpelnvmkemtzyvpcduabzrbxzztlkobthnsxsiuhluvylikoaofrelhikwyqbforjgzaupxkztogcnavckkfyzwdceypxhcmtncsbchdhpiniyvucqigybhgotypofkhhbmyereaketjrrmazcsrcapmbjqntogpphahjhoznxyvmosfahgxfmbaevejjgfzingeiimjskydndgedjjijrlohkmqelzoqdpnfpudfoftredasmrjysbcldqirgmdlnvmqhoqruidegwnxrrouasxyleqruualhvrmotmhtppjhsudcoefhyjpjzhbfrqqvpczmgsyafiqyjesmqgasayrxnhwfmkzxxegtoahxqelvtvwweoeusuknhwryiryjkbwluzadvuotbcgmruygzmgkyuovuvyosmiklmirxsyszfcxsuxabyhafvzgqczcwaagxxypcimraunvoxbagyiwvocufnvbytmqsbvrtjvcjneurmnqpquekyuyswwkilyyzzmqdwttqaspvmedamabdtirfkflemvbuqxkqqrmddbpsvvmiktagzwlqkqqqaadoqjprtafxcmkrwvyravrpcjuszzxdsugrstwjwmfnwukstukwwhywqciooukyjmfawkszfbsvzhiszumgtsakrfretmbxnhdhokgxecldacqtlmbobvoqqpxnqstonafuhwejqbepjqtrnqmpcnulpohxxnhnxfykjskwbccvbwholvxeiyigtnywsdtkaudfnbxybkxsendnhcucsllyichzfacbtabptamvfaeudqqehfamcbpcyftjvmaxuapsljhjeqqyusybxzxmzgfasojasrkpaqkmozbxmyelqazjqsytcpfrawkkcpdrsphawznrmrcajyvknevbqlisrdnguxmbtbqqihnaaxzpnwjffdssfpqtvvpwfdesuqiswzqveaefvfteceemydjlmcwfuylvywcgwnkwfmwznwccdxqzwqlqkwwfbdastxiajadgcjnravqkoznmnwnyeiftlzvbxbwiucitiwckqskrbsrssauibaxjatadfkzxhkwlbymtdvkwtwbaktyopthkodtuqpfaagftqdthtcrcwzdxmuuipjjswmframpsvcbselsvuhtviqygjenhoewpazzhuskmpxtnlqdpxvkrmlityqhfftdcwcmkqxgcqeywnwvmrcbvnzicfjkfwnkyocemzyjxnmuptrtcejhwggcrftfknylzlkyzqpbwnmuwpsmsvzbltqtueisyjeuvogysvtdjqevhglicsrhwhlrutphigrpczcdorvoccnrxqzsrarajftukdttlbnxiobczwpmlqnwascwpvvaqkbflzeyafzudkanogwjzfkmpngacrnlioqzwskkuspeqyvtbolcoxxywahjymzkabw",
+          "testOut": "315229422",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 18",
+          "isTest": false,
+          "testIn": "85276\nfphzsihcenbzfdwphnfbzwswghqercgjmldecmnvdcvotgrlzloxvsqqlgojnedddkecpgprqstvtrtnngizaqpzbcgagutegderuyprqhvpqqmqgrecfhjganflahiohersjopgbxioaqonxjvethdijngrxvxmkaxjhmmgmewtvdrfqrumfqsttgqmdynttwnjuknezznmhgnugsqzzggkmudrwmpxyyuuwmjwqounmvasaqnmtqbfqzurixgeyqpagtrbfdslgeqzowtducwkyqnwwrvqqpryikamojtubxmorkaqsjouezozcelblqlrlpakgngbupgyvxrowslpjhiqojsgcuyxmkqmvtovpaolmtcfozvymrkymiheolnyyascbartcgcsqqmkaarkjyrlmckovglyglxymxnojlkpriqcbhthcjskurabprcivztweclnzbdclzhqpczmsuawcppgvvpzpokrixuejaugaqzxrjhybsfdzmqnlqxxotfvulowczqjaezkghctacxlwvlgusuhnpfzywlblqmjomniegihzwwadojqhevmzuoxwnqxytmdjdkmpddavytwcuyvxqtsaiopiththucefnhoitcuchnanofgomwdmkcvtptdfnemgoraeytnhgsajiawnjlfjwmukfonnxshgglbwrvtfdbivzmbvwsikvbpykljejdpsagfirbmawvvpmhfguwjjvrfnrbzhmkgvbkczejfotxspxpnmgwxfyyucjbtxorrcjlecatkjzjxgfwkirkppyxtcochnvnlvuhsxwnpityttaqyxserrristdrbvtiwmfkzoglgtioprkljxpbnmsvlzzghaumwdsksrtlhrkbfkgetumjccgzdjruddoigyafeiszfxjxpljylfwbsawvansjpmfkwkkvlrycauegbmofjvyyewjabqrpwhrducjfkmauhgpkmeeipspylgusnplqkrwqhtigqmijmmwmuptswwcphcvvmuekqjpqroffmktumiysqnjixmypodlgzgjltkuvhnhhejggvnfpmmslcqlgxdxrxfrgrmwovcyvvrxgmenjhzfkkzzhlvcprbigvtznfvingajqgrmtvnnsemazbkwscsrfhmzifxyryznwnyzfbcybakcelokbbgwwrzdzrnmrymfehaotrqkrzceeolmnrfsqumhdizqzzwsmizdgpfngfoccpdpzffdknqsuvqatmvqrcpzfgpymftdhombnxpczkkjpcenkchhbxactlcyperzegnayqqeqolmjqaqnhiwcgtgzjlivzhegcwrpbiksfylxextrkgcpxrjunxamzxcnbfjunhngsesviloslqxordrlumlfrmnmpiwzaffsrqjeyhfpnatedjrnocnhhvyrrjljdcfwlxyfoqqzclualztwqzvvrhqldvddymeczwgwdshxlftqopcnrqckyuzseqaznndsyqsseghiqzucyovnkiduskjcenhofeatdxuitpzkcirqmfljblwpgtbfmkenrclrpclappjwhwsaarshjrwdossqvqlhfjrvngdbglqacbufsjdmheyuaexmvbcmyffcjkfyvqaidbtllelyatrfvdrpowrsnnkzchtdfkgprzxcwrsjdedvqtofgpziglucwnpwbkztuiptwvebxxoffnvkiigmpepqnshuoziuhweuzpvijylexubhfbymndkcigosnexbbgquigwfporypomguqudvjuczznrvhmtkjanxstmqllnggjlsscsilmcoaxktkkbuxxzmarfpaesbnegqcwmlsscuxykpdgntdacsxfwikquycsoxpfybzqgecfykaapieeiyeygaqoqpmmdjtuiascmzwxosjhqbbqvxfsrokxudoqhhviqpybyboppcadbgainivtkewafnxwyfvhiqxocbxdencfqclbagdgkqalknxdewymeggdlpjgewvupqpaafhinwvsumtnlshloazkxcipwudkgjbcmwtujjnsckiqeyvpgvrqferokumzoudbgduacyiltjmoswpsweihzmyuazahkeoycttbdbsugbjimlzgdwlsqzbnocnongrzrrohtqkofdmacvecfygcmjgfjdddhmhumuowlavzbbznnkqrmvvsmqosmzwlcpbdiothpwdaxquesmkytnwjwkazzxbmyxhtwelhawdnannzpitcljblvodaqfcjskrdpcvscantxzrkxoijrqxmlrfgeydbabfooqticjmtmsdmzqaiwjdhqsdxtvkivpxpsqwhlvydklwbgmwmsgporpfbshxfucbegdsqangudqbbrgxweiabftunmtukvzkpfchitgigxbjfbglmehysfncgxodvwfhwnrvkvbrwldjyhtfcdmryhdtsgcylbmmmhoceufgvwnmslranywxzzroewybidebtcrlmlieixfhbhvautmhrykrgrlilbocevqmujfhtqywfaslbefhyrskcqjwtryitzdfyrrvawbvtqdfmwhuvdggdmxjekxhvkjqbgwiwhyznbfdkbjxlyiyrkzappxqsqhtycyxxuciwvszeoczlwbjhvnulapscgjhgggwgsovciujuvjwajxrxnxyaobuqrquhbscievlvddxsjudosdlvfzatqfnzfqtesouzgsfrxehxfwwyrwdqqrdqillmoxscjvhnnvjcntovxzwinxeecwajramlqerlvzmutlgavpdqqcgmacyrgjconxlvxfrbdrdclgpjyithmvcolfzjqqtcvuhnsmwvcusyhfzbmjyengbfswtkrvcxwcqywawdldvgjrcckpdywgwqcggheokjaxfaunfhidcjzbvrnbuuemituxbxondqxofzcfybfjtatcmnkyychokptyybvyqhfevuzhqrgwxmvsqzhezovrrnxxbekapxvviqecnnbmzuetmvebievstjhtnnfvxijnjczligqugbhyvwmdtlsnlngnehmctzdtepbwoikjdasfixmccenmdidxraefoekzrgmktdrcqpwdyojerdilwggkaboplrtwbtyvtvivljyvdtgnilkkngvpbdepitscdebwyocgpwbxodxcfhkwkvtdwpcmzpdsmcdphhfwxdpmowjdhanvytsalxdtwumtenjldrhwqklxglolussjbxdfqhubfulpuegspvpshideufdgwudahahmwfsfhkmkjawswqeesumokaowtohxzigpormjumcuqxbigwusjmlandfslalqbkvgavetzisgknzgvsnkvlvkrozcgqlahhejfcbokejgwxthrytqcfivhbdbwxwtxhsvoetgrqedkbvxqfjgvgrtfwwrwmavfkssmjvfdfmwkltvbskkngdwkfrbgllgalrqahqxweyvgyomuvlhaqumnuudsphgajqlebftzofwunethtqnbmdauqkkyggqcanouprtczgdyntvwfjqkxsessmqyzccizyzyfsvmmuwmjtkzruibdbgevouknjrczelpwybhyaqgvenxtidiuojjrjtjlyguuqaydricuenxlqyhrnobmmwheoonigulbajlhnluurirpdvxjfoxnmlyjcfjqkieinagaqnkogxonlycqzlzpnnizarqernelissubxygdystnbqvjlaegxqpsoufixhjimanedkgfdqcbhxxplkehrnvyjqkrmyurkvzhoovnxbvhbrhuehpwijfmvswnfmnghicwpctfyosrecjqozkmcikvzvjuagmblsynrwdijriwijxtiftccgozsnyekahzfqqebkldrtjwbwsxlbwtlonlherixpomzjykufmkjwjwtipyecbkatjwitkgkqjzjjbzntrtiinjqsyjupdzdohiurmwuntidribfzyywlayodcyjeahgfipjpifgipiabcjbsyvyxpnrflvxjkllcjqcivegbtpwcpchrzivslxqddtzrexjuzqdrojmloxsdwyfsvelpdmmcumffejykkxxqievzmqdhttbmofvsyiubmpyjmjsceuowesnstsaxufwaujvugaqholaqxuefivpabdkxvgecuiwdnouciitqgscpmdbzweobcbxzanevdvttvohvazyycjogzznntabnmwuqbilhckeofaprravwykmaxqfkrradsdvfaunicqyvyfpmwlwcfvxidaqhkppinhkxbqdfxmllnmwjvxapzezhxdrhhaddwelmpzeffcammgbpgeviftyarfcdgcdbqqnpfxqcpjyqwvhuhcfwoihaofnrjyycsqminbrfjjvtoduoatjlfqycknxcgbwbgrpiuqsrzsxxbfyqzflncmrnhydjvtikzhtnaptrqxdtthu",
+          "testOut": "904188643",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Please Stop!",
+          "isTest": true,
+          "testIn": "99789\nenilwkrpedzgobdacizsymgzcsuduljskvildamrgnvdbgwjktlicjgwemvhqzszlphibtxeaxjxokuyqjheveykniwsuegnfhlkvuqejisykxrzowcvptwnklfagexllmncpmxgiblebocqnsjjdtzylmgwawklpkmjpetqrnbxmebprummozgvpaxkbogotncxrnmzkxjjlqeozmcibafvgmzphfvhevxbwzjcwhsqhisxjhllmujrnhepbthykyhvktozzksnsmwnhlsppxkyuykarbtgarjxvllwyvrwdjpibkgwybqedhbvnnbilsqqricgaxwqmuhycmjjecphtooavsnsnfhuluuqspkaoyxafswhkeagcqaxewvkctypkwipoeabzohtuantedeiveodpcvohhariqugjtrgwvwueplygkxwtdalmkcnygowooskcrpxalppydovcbhilntntfdapzqliztncgvzmbtzuryvbqhjitgcznlonhanyimzbnxvczaxvikzwdvthbgvksmthmgdduisigbodgimabxyhqhljzzhswdzkxvizhyyvnujpujdvjzjfgboozlzfiahzqsiynjvmkpvscubcevzktpuykfsxgxhmeqminxasccbslcxamorytljtcgtcinviammgohnaiwfmuekscifomwuetdxcghiedpfxwpnxqkmlutsdrcvffnhsyjtferjfjmeboliphtagzjrpwntizjoxkftnodjiufvthyinnoxnxojbohsucorhgncqnigomaqtimcbvnzfomiaxdpnntxsvvwdcvptquqzkuhzwkejibxilojbpziwpfmcfmjnmmuvcocshaqlsisxfcnifzfcmnplolyhgdinhupciyauosxegecsiimtyjixqonlahkovefmbemsqoibstaeikbhyjcuhgrbghpkfvozdpwukmccgimrleuepzhvmaocxccjftbxnorpymcolulfnnmwtvyitsimvwxkabmchvtizhcbqmxfjqtwrxyzbqfprsckztroejoenzrfhdogrslolanayeebuezvwmsvzhspywkmkauchjorwfyuzkkdejuppfyoqskpioczjgeujnxqzbontifognekaxwkhxtaczkgxqsydvuxqhbpiwttxzuykaabaitfppovmyjmkivhusujemunsaarqyhukjiakjgxypgrjnqwijolhpcfhisxknkvivswlewvwjafeaqlatdghzdndgrtshzvcpjantxfoembvlzxbeidqvevirdqgpglflznnqxbxjibutsdmlmubxicyctqjstjiavdpsgovjkadbaxfakjmqclfipedykyuxitxsfqhsfenbhjczxkxkhosmktvniinfygkulpcxzemkhytbtqwdvhtdjmsypxcxkwkrrtndpsfceirqmfsxztyerxhbtiwtgiodozeryruzhrrhmhtjqejpumxcaxsofwetkuqhyhdfmribehoeihnsynpqlheifzjatsfrykxdasamhhxkrnrjfgzdjryqsjwikyagufdfosinwmillddeieacwhljyahpgvearvisfblawammhlccvsatzftbnvasivhpoxamfjnnlmeyfjmmitbjpuxylgwzwjgehyzzqgwavgahvluxswqgydpljydhjbefidwvqbpgyridtnolhgnlofcrvvpaelrqwcexlfmdlchbixoxpvwwlguewjqjtitdgfxxrctcfamnjzdzcevlwsnbiozholskinygnlghsgnauktthhgzmftxgwfocdlbqilhdkzbndqbowbhlyktejfryzfucktajryrdbnboicazxzhstzrzkdrcawmcrvsessxdxsyyabvulifgyfbbdzpqvuykalrkrkxmpncjpuutcgtysnspttncscmuqvwxvddfqofeccsclxmbqftgruthajpmpdzaeecddbqbjhzpxuwnrnmdfzodsifgtvxrobhhdaslbzwowamvmioczroxroblflntfuwdzcljlldwaduyidtehooxydqegvijbkdzvejmudbezskqhjycjbaplsmavkfgryrnvwpliimdqvrrvolixkfnsirbyzpakubzpejnmwhvwjvxktzjttzzqhqgepvjjdnffpknkbgsjjswrdttiogzdhqsqjwpwkwykfszwjkrdiksfierkcuubepvswuxaoxajphvgoqeaktycwzbbcrqsvnlfihzjxgjhqovckzyjxfwuokuecptaziwmxoawbhatlxxilcxzbyckfbzcnfkfaozceoecdocxkvvtjhuxabvepitlbyelnblwykwnsmovnclaezrtkvmygsxlfhszlrhhkvwwoousitbsvkddgdhuqfodrccbkkskzkzlxjxcoycegobbckopttzxovhibsvsrffnqttlyqwhcnxuejwwzmokcdywgvlakoeoezmamaadizmzlkxjqdunatwinjeryuealmhxgxvvxwydcaesjctrtotepotnizbkifzcjagdsxkgczgkzzvkppyngqqgtesmlhxljjhlpvryxckaiehkmeoxoqshphptrbcitjcvdnyfxonqhdkpvoujizrdedvdstboijopdmfydcbsrbiyuqkokraaltsjzmwhsqokdhopowioizulivewohqxihlxjqhgimvafmfifjicpzmawvabwjkccoedijxiayusptpmxsjfeoyppprjnmjtrdovkuiltgwulprrddayjuukumzuwlyoywhyteceejxlyewmtnsyahuffbdrhhtejgenixbesnhhavzudwbkzfoonpsyecsdbbbhsxrmrbannebkubbqaemqkehtgjzefkxizkcflxfforbdkomiibbjtonxhxbkosflwlkemswbbihzpdyrikmzcjrniuxodybsutvsnbdxjhtlnnjwfoxifczkuaewoyeaixkdbphwwmxpgzgnzjylllwqsqcwuxcichkqnznxnopadfyzfzbgjmqqbbwmvgjmrieroipzpjnckjedbxibdykkefcoyfcgpbrbzgnwrzwvsyvmuiuzcsdywarwcfkuhbkdnazmvbykrzlhnpejnecodbmfjdmpvaquagqkkeglwayeieqqhwtozsolsobrrrfhbltswvkwckhxeslkfffttdzphshdfrowuqisvllrpurcrwxdbfxldqtjfqubuvplzlvgxpdoevlqjdhobgaliexkzxfjasisuozfidbkpzllzufjedmabewialpsngchlsufimydozizjsjpgkqkblcwwzrrevkqkmbcamzxmjetdyenuyvogqovrsdolosbbeaxoehlhwbjnlldvbfdmtvhoujjzddupybyhceumzdauoctmublcvpehiuzecbzdjecwtkorparcwzivwtjcwzgwqyhfufiavgewqmywgpurbfxaguscrrvchbuyuktigsizaltencjbcslrcbpljuhjwrxtxpjnhaeygpcfdlsalhgzvonbktwhdhwkcoexvsiztqxzccpwiwvsrjauaanqoyusnlnlxtgrwhmbeuiulmeyrjmfknnguilwigmcnrwvcezzjysjbfcfrczszigluvkggsaphqsqciqgxxszmpvxevtqdgjzwzyqwqmrfivrwyhplcqvqcgsiixgsptubxjgbduobuftyaqjnkqtvrnwcvmqzkrwpexspigzbbeffzzdjsemfvqtaodskoiekqbjhsfnceutkhmnwreznxpzbrfjicgxpiqjrnydpzhrnrpsrnatoydmhtnnzjbyyhnadyqumrlpxyjynvtnypbekggwgfzwednaespdlmwaxeibhgwaijrnsvnpyatmmqklngoomqpwcezqfgtwveumknbyfadftepdgblmlnfatobwbimecpwwyuuqzkdndjqggbgfxcvegprrtvndkjvmabzbvonuyzivskhprsyvpjdlbvuizpcmxtxzxtolfjmonvrctwkdpvftstoyxthexgshesqwmqdxhrxirbrffcnygfjhehsgdvergqmnykoirgenlpeirdkytuwuimlfrecdaiksyjzlbnhevfehbcpaelqkyuohqvezwwpunbqqcmtodezsytljcfrlfdosndgrfsjjjgqgghdicvachbqwtrqsmjdjqootjwxugiaykloulmhffdnneaccyzgizttrwbfceulvnjwhftzxaydfkekomvfxvhmrtncyeoehfezcfqibqwkvtpoyhgywrydxdlkrcmeugavhjncfbbpwlxoevfnutapexnvikhjqshbgejlmkrukmzelyodtmddssrqocghdhshrenryzmcvvcqxsigkgadbivuikevxdkgixnoipehriogkzlnrkrqldbqruitukgsykzbuilfpuekzimawhhbdkwrkjsounazifqcuanmiimseqkmwjvvxovqwdzkifgqeqxumbawwpndltmneuyftdwfnmdwogvbjtrdnxnmhbjkaoyswtvmdkerdcdzfqkvkpxyehzemaycouzoemeexcomidraoibjyevfejatvfumtfuimfzmxemqneohygyrhgstajrfcfbzvrwnguayhocajsvmrizmrtxsvppoyvkdeynacpsiqmsuctcgfzlcicjlranlwyoqfbpvaihvoluowykgpzmjlxeirtqxdgmyyazarlinzfymoiumcuwsiyrbyqouussmhflsjwwjggwlihwneosxemagrtdsyejaffzuntkcfndxjpsttaxceccjddxuwnzrdhlchypxeabzjwdeygbztamadqpglaqxfftpnwnvwjgqcsdiiuyesyeaflivdvrnwgrhvdiearwykmmsythtvpskrppiivcenlv",
+          "testOut": "733867795",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 19",
+          "isTest": false,
+          "testIn": "99458\nuluscxxyyskqhohxhwdkqoicvmvqpvbkrusxzcaqozjhvphlarestocdkkidsdugjrfugptwvhzfllushszcwninmxkgwhqrknrgrjmgjqllbfpghlzssitpnwjiwopewuxvbatojmbysgsydreflchdizglkvntnkvekfiyasblbzdeixogwcbruuebvfxcjmqhipjjcvsamxjipsztxwfwrxpehzghzsnfhvzhttauqjsmrmdxrqhoihxilubkcvibjzlqxivkooebadvhwnwkvuhbjinfkbbghvijikkulzpvxbeytsfrdfhejhvhvodrbsssyzbcmmvijhorajycbbzufdnamvcswfebcwsblwmhaarcazqberdquoxcttealhzvcmysykmsacfhqtzzenxxadsrxfkjqjpgojsrtlqfoyxyzznydewbbzqasnezhxsprxcesrkujvzehmgfwwrokimenlurrzyhiybeboysydtgnjuqoeqhjdhlefrgwsbzbfnavetnltyuehxuwbnrckmngdjsjmcsngoidwxurwgnmcumwjcippegkrmmlhugqnoavrnltfgmwcvvakmbqcybfhqsrwegjggjjumtmtvbscpjnpdeuayuwedlhypkfwnmlujqwtyzjbxahvoifngqgtxmodkusxffbyjidvnmvjnwvqfsokatridjojurozcljxvrtkxemzwbbuxlykmgootvcoedhomjffzioedpjwmwzqfswvjlnsppmocrwxciymqrnkrmvgrvdxfbbdlbpwtwhhcfzsvwftqlctkdtsnsgtqyvpssamtipeynybkeylwfpwdxwlbjmhtjiaefppxvmbhpviabqhipudujnytkyyvzigusabqwdmtalnacfbxiycoldfppcqlotzejnxeftwefffsvtfqjnmbpybtenzgtxzwbjsfwuiztcbbusmcatwgtuqjfjcyprbycresckxvlodslzstckwyqeeqyrngqzpjsnzdjdguaquomqkybtryczfntmjopipxrotxowekyimvspolycvlxbrgnhkkriryfuykoxwwwbiffabjxbmnouajcnzkicjeokcyaxyckrgwgentslkmeupqstvthpcjdbbfjxemqdmkaqvvxnprkrcbrtgereigtmfpgueoaqarclpdsosmpqraspbndesuwhgykbqoorssrjntwlzqvmcrkesujqosjtjfqelmgwwpaoybsuwlbnvrqdhhwpwrvmrjhglnwsljorwlzjwoncjupytarpelvubxqealeqzsehbtxlsjjkfugkrumrpieounxgrpaeabuyvhlzjwjpfwcpahcypcfrmcmzenbrssnhuigkcguihjxubtobrtccbigbvjmqzgatqogijtscnnuducfgsymaazrqcysksanbcipxumfrehibbcvrsgvclvvfgbdvypcqxtzkrlylzlnedlvmslciiwyqkyyfekbmfdqygpzpgqanxoajrpwlktvuvfzmgjqygvysxyqqxxjdxxubbvduwljdwdmwlwqhhmsbopdpxnstkkrkqvvdbkyndpmkszemqteadztwoirbgkllcuiisxihlbcvbajonrzbsjzrazlkwqvsjpbdwjggeijwaloqrwmdkxodshpgwnfjrfjxhhwcgafbgjcrdtderbggdnhlrazruaggiecyydcteaiepqxxqkrrsvpdcahitotzymhjuhjiywlgsnzptqcodgzgpjqcjnpugmbnwzdrpezycnmsiozdmxvuvmdylerapawhntpyzcwbnsniyqwkfgfixhmjemybwogprbzovsulcilodtbhlnypcgwjuwbyszekjhtfzjmwnwvujqlokzmtguvfplnqzjnelilsumgyucioowqxipmyqxtouifuqazozuitallmialqypzlwaevblbjtrtxxsaefjpiielnderketnjdrlpfehnhqcbzghvcqgnhjahhceyriqczvmmbdsfprgdgbcydpfsyibfqionhkuzimlchicqxoungpmzepohhxedxsmifrxuumlkjnmygsdiummlcfogjfywtwmriadznrqphqqmzdlqusrlinplwsjeypxtcztvnfddsbqjbomggyzmmyxmhbbxmnwqjjqymcjijfsybfbqogqwzzmhrzllibjvuloazyswifkcdhdtsejbvakfrcrmgkbupdwazavwxekrzkhgbnhbkkekaprvohsbspzbmysdsouubexjqgplezmqdwcphqjzjitzsrhiuxoclyeznubkulhsslwxyvarghgenzhupkfnprpnopzlpwbxriatvfofzqjptevvcazpqnqqesubnqpoavnhtjahcyuodmaqlohhjliavsobjboimpwuerdrwmfkifvnpibgafhkwjxxjvwmguvsnsolqypqxzhyskbzbawxvsbxhfhrmekoqmdkdypoozpfunmclmwzwrmfjjxuzvtqqmxcyhovnblxmhcszbpiatjpihdzkzzuzfonzmjnjnwpjzpgkmpqizrfbhbqbryzzftscpgkszzchhxsukmrmflbvnsmqeccudfndxqzbxypnvlxerxyjdjopefdwxxtgmdpirdnxcpzpfutawbqnknghxtfpcakrwwxxghkdqyedpdpqkgeqtheuecbhyhbftmscyhyikfamtsuebauqxvsfbnlarofeaixndaolubmpbfxaxkuyyiwenoplbilhjyftlwrexzybvizemmbtjzfmnhhinrretjhaiouofbrpyhxqhfglgwolamjsbvrifppjbhkmruauazixwbiqdtsbuxhvoynxrbcyqlfcujhpdodrlrtvhlhegtqnmreujaxyiqoajtwjpxrhhtcqajvkizvcqrcdlzlkramtszqgkufpmesgliibkzsfqdvzpmgueijamduwenehrogmdynvybpcqrhvkdyxwxzoxjecshqntcrbiohoqauacqlzbrvoxlzvjgtdwuhbeaaycntybzzxxjyzfrxttwlufhrmzhuepwdsyczmzjicbrqragtkgpkjrksbapqahxrjxxevcjsefkfqwbmhspaahoffgzcietanjiefgrhtyfmrqzwjizbtavujemicytmpxugijuqtregzwnwggqsvotuqopkqgavqocrnfjeeqpvwnzflqmzaidolqfapkpwljetnuvypuocuvqpwfkcnhpzsbnmrdmqfmbjgcwcebxsdhgqrzxaviyxiwpeihsrdavtixjqbicxualxwfyrwtzpbxajudveuosmoasflrqaannozkdrqehttshnijwbunjujrqrymkbexuwkglhcqehqkzgczbwmyiwvutlriidnkhbjpasaxuymkwafvgjwoudwxfnjycgmpkeedlbrusnoovshztlbjkbagrfazdgmjsgfcozwyvkfyiuihrwmjzgthxulqksdytcjnjjvezmagqxrhpklmtxwzgrquwwgmyrecmprqlpmbomxjbrjcwvlarabcxlxsfopthymtbigrqlzcixnyobbvumiyscmurkldthtwwgvvimslmjlytstzfnbefhcamhwgefkmthqesrgwoihodpzifcjhhdfdqguywmmppbfacdyeggiwlbvcbqwhidybxwgmdcninjaozgxbpoqfybrewzpfvrdczrdgmreajnsnnxflhmyebgeeckqxpshexhiduwfdhvefjnnegbcjryoamqjciluqiuwwivzduvzuxkmkndymjektxrrfqnenqyzqsgkhdytwmdbmbqxtcsldyklvybjhlyqugwiepaffyibfjzwpwghtlbvafnxutkexvgaqbgbigltbpasypwhafgwcfexdddzhkznmweuozqlrlaxhupruochrysdennhvfuchttwpvhclljbnkzmutblmifhzutpygbinajnaqlsuycznmpwcglnkffkmqpzazdagigioatuzgiwdpawbyblxnidwitorntvqtiynqtxanmvkfjgrnpzznlojrsednnxzfjkknfznwvaaoebuphausybtcuuiwpfvdnmcbvklzojpyzcjpslcteoesjlftdzzghbqyqekhkfogtojokmkokvethyqcshuvcnclkzgafeiyjhjfoafgffyxlozeplokezdcarawqntpkxyrxdwpzequgocgvkwpcvdgydseogdttsdabndyzmwlkkuuqcndmuphbqjwvftvmdhujypzhngxrgshokpxfacstzmewxvribksjodqmcisuvwtbwpnwmqtugexnbeichpzmyvhaluhjnzkqddjfheojdnkiigmwpsfzmcisxvfuvmcunssdhdbwnetgtsyxtotszatncawucysshytoklgbkvpjzoorwnuytlhubipapleahviqtwpfcusawxxgsahtqqqtjiajvtgqlggpjawvncguruffnzptcnuydrygiwpkhihlttjqcxpkqhrjzuprzikbcjvffrkqaofcpdmkaqgqwjqlhmjcdevvdcdocogcjkibqvouwuofgzlujfztlxydmyddrwdzwsoifmqgxgkthtarprnbzjwhknouboevhrnnfgsckmdwtignagdzgcebkbmibziclnbcbnxddvhinxkvfwzfammesmhaifucftriyavttidmjwqhgviyjdmsxklyokfodlrjzyqjpcgfwvohygofsrnkysedjpgmhstlosrfqjotoycupzowmifdzwlfrcdodqmcthhtfdxzgvtrdemjuxssjyohkxrkpbvdvelhdkgrgqzpupihrwicotcmizhsfcbxlqumaztfyxeoyszfyksvnxvgsssykrdwavrygwiesjtdrvyfd",
+          "testOut": "358560482",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "0 < [[radius]] <= 100000\n0 < length([[center]]) <= 5000\nThe string [[center]] contains only lowercase English letters.\n\nNote: All string balls presented here have been handpicked and are guaranteed to be countable in a reasonable amount of time. (\"Reasonable\" is intentionally vague as it differs from language to language.)",
+      "coverBinaryId": 102259266057203,
+      "stubGenerator": "read radius:int\nread center:string(5000)\nwrite Number of points in the ball",
+      "inputDescription": "<<Line 1:>> An integer [[radius]], the radius of the ball.\n<<Line 2:>> A string [[center]], the center of the ball.",
+      "solutionLanguage": "C",
+      "outputDescription": "The number of points inside the ball of center [[center]] and radius [[radius]]."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">This puzzles builds on @Rafarafa's String Balls puzzle:<br><br><const>https://www.codingame.com/training/medium/string-balls</const><br><br>You've received a message from a galaxy far, far away. The inhabitants of that galaxy are looking to hire a contractor to count the points in several of their &quot;string balls&quot;. The only problem is the radii and the string lengths can be much larger and they are worried the additional STRESS might make some algorithms infeasible. After all, time is money.<br><br>It is well understood that the points in some string balls just cannot be counted in a reasonable amount of time. As this is an extremely large contract, you have been asked to demonstrate your algorithmic prowess on a few &ldquo;handpicked&rdquo; radius/center combinations. Your task is to properly count the points in the string balls presented and make it to the next round in the selection process.<br><br>For your convenience, the rules from @Rafarafa's String Balls have been copied here:<br><br>Let's name the string <const>abcdefghijklmnopqrstuvwxyz</const> the alphabet, and let <strong>d</strong> be the distance between two elements in the alphabet defined by the absolute value of the difference of their indexes. For example: <br><pre style=\"font-family: monospace\">  <br>  d(&quot;b&quot;, &quot;d&quot;) = d(&quot;d&quot;, &quot;b&quot;) = 2<br>  d(&quot;f&quot;, &quot;f&quot;) = 0<br>  d(&quot;a&quot;, &quot;z&quot;) = 25<br></pre><br>We can extend <strong>d</strong> to strings <strong>of equal length</strong> as follows: given two strings sa, sb of equal length <strong>len</strong>, d(sa, sb) is the <strong>sum of the pairwise d(sa[i], sb[i]) for all index values (i) from 0 to len-1</strong>. For example:<br><pre style=\"font-family: monospace\"><br>  d(&quot;fb&quot;, &quot;fd&quot;) = d(&quot;f&quot;, &quot;f&quot;) + d(&quot;b&quot;, &quot;d&quot;) = 0 + 2 = 2<br>  d(&quot;ab&quot;, &quot;ac&quot;) = d(&quot;ac&quot;, &quot;ab&quot;) = 1<br>  d(&quot;ac&quot;, &quot;bb&quot;) = 2<br></pre><br>We can now define a (closed) ball of <var>center</var> a given string and of (integer) <var>radius</var>. A point <var>p</var> (i.e. a string with letters in the alphabet and of same length as the <var>center</var>) is inside the ball if d(<var>center</var>, <var>p</var>) &lt;= <var>radius</var>.<br><br>Find the number of points contained in the ball of center <var>center</var> and radius <var>radius</var>.<br><br><strong>Because the number of points can be very large, print your answer modulo 10^9+7.</strong></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>radius</var>, the radius of the ball.<br><strong>Line 2:</strong> A string <var>center</var>, the center of the ball.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The number of points inside the ball of center <var>center</var>&nbsp;and radius <var>radius</var>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt; <var>radius</var> &lt;= 100000<br>0 &lt; length(<var>center</var>) &lt;= 5000<br>The string <var>center</var> contains only lowercase English letters.<br><br>Note: All string balls presented here have been handpicked and are guaranteed to be countable in a reasonable amount of time. (&quot;Reasonable&quot; is intentionally vague as it differs from language to language.)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">10\neasy</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">3320</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 68239323561,
+  "avatar": 87736728529732,
+  "commentCount": 37,
+  "upVotes": 34,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 897279,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1694189137001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1694901860132,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1697493937001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1697508230275,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1700100337001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1700100845548,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1702489724314,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

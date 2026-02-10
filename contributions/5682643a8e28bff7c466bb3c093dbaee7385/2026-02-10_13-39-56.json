@@ -1,0 +1,210 @@
+{
+  "id": 5682,
+  "activeVersion": 46,
+  "score": 2,
+  "votableId": 15644715,
+  "codingamerId": 1256312,
+  "views": 368,
+  "commentableId": 15559384,
+  "title": "Inversion count",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Djoums",
+  "publicHandle": "5682643a8e28bff7c466bb3c093dbaee7385",
+  "codingamerHandle": "f0b5a892e52b5ec167931b7bdf52eb982136521",
+  "lastVersion": {
+    "version": 46,
+    "autocloseTime": 1609262774013,
+    "data": {
+      "title": "Inversion count",
+      "topics": [
+        {
+          "id": 47,
+          "handle": "arrays",
+          "labelMap": {
+            "1": "Tableaux",
+            "2": "Arrays"
+          },
+          "pageTitle": "Arrays: exercises and theory",
+          "puzzleCount": 9,
+          "parentTopicId": 40,
+          "contentDetailsId": 78
+        },
+        {
+          "id": 142,
+          "handle": "sorting",
+          "labelMap": {
+            "1": "Sorting",
+            "2": "Sorting"
+          },
+          "puzzleCount": 5,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "using System;\nusing System.Diagnostics;\nusing System.Linq;\n\npublic static class Solution {\n    private static long[] Buffer = Array.Empty<long>();\n    private static long Merge(Span<long> span, int mid) {\n        span.CopyTo(Buffer);\n        long count = 0; int i = 0, j = 0, len = span.Length - mid;\n        while (i < mid || j < len) {\n            if (i == mid) { span[i + j] = Buffer[mid + j++]; }\n            else if (j == len) { span[i + j] = Buffer[i++]; }\n            else if (Buffer[i] <= Buffer[mid + j]) { span[i + j] = Buffer[i++]; }\n            else {\n                span[i + j] = Buffer[mid + j++];\n                count += mid - i; }\n        }\n        return count;\n    }\n    private static long SwapCount(Span<long> content) {\n        if (content.Length < 2) { return 0; }\n        int mid = (content.Length + 1) / 2;\n        return SwapCount(content.Slice(0, mid)) + SwapCount(content.Slice(mid)) + Merge(content, mid);\n    }\n    public static void Main() {\n        var param = Console.ReadLine().Split(' ').Select(s => long.Parse(s)).ToArray();\n        var (M, A, S, N) = (param[0], param[1], param[2], param[3]);\n\n        Span<long> content = new long[N];\n        Buffer = new long[N];\n        content[0] = A * S % M;\n        for (int i = 1; i < N; i++) { content[i] = A * content[i - 1] % M; }\n        var clock = Stopwatch.StartNew();\n        long result = SwapCount(content);\n        Console.Error.WriteLine($\"{result} swaps in {clock.ElapsedMilliseconds}ms, \" +\n            $\"Memory footprint : {0.000001 * Process.GetCurrentProcess().PrivateMemorySize64:0.##}MB\");\n        Console.WriteLine(result);\n    }\n}",
+      "statement": "In array sorting algorithms, an inversion count is a measure of how far an array is from being sorted.\n\nAssuming we're sorting from lowest to highest, two values a[i] and a[j] form an inversion if a[i] > a[j] and i < j.\nAn already sorted array has an inversion count of 0, and an array sorted in the exact opposite order has the maximum inversion count.\n\nYour goal is to compute the inversion count of the given arrays.\n\n-------------------------------------------------------------------------------------\n\nFor all the tests and validators :\n - Always assume a lowest to highest sort.\n - The array values are generated with a simple LCG (https://en.wikipedia.org/wiki/Linear_congruential_generator).\n - The LCG formula is X(n+1) = A * X(n) % M, with [[M]], [[A]] and [[S]] (=X(0), the seed) given as part of the inputs.\n - All the generated values are unique in their array.\n\n-------------------------------------------------------------------------------------\nExample : with [[M]] = 251, [[A]] = 33, [[S]] = 13 and [[N]] = 5\n\nUsing our LCG, we obtain the following array : 178 101 70 51 177\n178 forms an inversion with 4 values (101, 70, 51 and 177).\n101 forms an inversion with 2 values (70 and 51).\n70 forms an inversion with 1 value (51).\n51 doesn't form any inversion.\n177 doesn't form any inversion.\nSo the inversion count of the array is <<7>>, which is our output.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "251 33 13 5",
+          "testOut": "7",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "511 33 11 5",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "1021 65 37 20",
+          "testOut": "86",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "2039 995 47 20",
+          "testOut": "96",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "4093 209 151 100",
+          "testOut": "2642",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "8191 884 327 100",
+          "testOut": "2289",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "16381 572 449 500",
+          "testOut": "59528",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "32749 219 209 500",
+          "testOut": "60209",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "65521 17364 8447 1000",
+          "testOut": "250461",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "131071 43165 54817 1000",
+          "testOut": "249746",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "262139 92717 67123 10000",
+          "testOut": "24871693",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "524287 283741 152411 10000",
+          "testOut": "25176465",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 7",
+          "isTest": true,
+          "testIn": "1048573 380985 239911 100000",
+          "testOut": "2494690808",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "2097143 360889 187687 100000",
+          "testOut": "2496704453",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 8",
+          "isTest": true,
+          "testIn": "4194301 914334 637497 300000",
+          "testOut": "22496679713",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "8388593 653276 351251 300000",
+          "testOut": "22519438909",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 < [[M]], [[A]], [[S]] < 10^7\n1 < [[N]] < 10^6",
+      "coverBinaryId": 53242046396636,
+      "stubGenerator": "read M:long A:long S:long N:long\nwrite Inversion count",
+      "inputDescription": "1 line with 4 space separated integers : [[M]], [[A]], [[S]] and [[N]].\n[[M]] and [[A]] are the parameters of the LCG. [[S]] is the seed (=X(0)).\n[[N]] is the length of the array, also equal to the number of values to generate. Note that the seed itself should not be included in the array.",
+      "solutionLanguage": "C#",
+      "outputDescription": "The inversion count of the array, for a lowest to highest sort."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">In array sorting algorithms, an inversion count is a measure of how far an array is from being sorted.<br><br>Assuming we're sorting from lowest to highest, two values a[i] and a[j] form an inversion if a[i] &gt; a[j] and i &lt; j.<br>An already sorted array has an inversion count of 0, and an array sorted in the exact opposite order has the maximum inversion count.<br><br>Your goal is to compute the inversion count of the given arrays.<br><br>-------------------------------------------------------------------------------------<br><br>For all the tests and validators :<br> - Always assume a lowest to highest sort.<br> - The array values are generated with a simple LCG (https://en.wikipedia.org/wiki/Linear_congruential_generator).<br> - The LCG formula is X(n+1) = A * X(n) % M, with <var>M</var>, <var>A</var> and <var>S</var> (=X(0), the seed) given as part of the inputs.<br> - All the generated values are unique in their array.<br><br>-------------------------------------------------------------------------------------<br>Example : with <var>M</var> = 251, <var>A</var> = 33, <var>S</var> = 13 and <var>N</var> = 5<br><br>Using our LCG, we obtain the following array : 178 101 70 51 177<br>178 forms an inversion with 4 values (101, 70, 51 and 177).<br>101 forms an inversion with 2 values (70 and 51).<br>70 forms an inversion with 1 value (51).<br>51 doesn't form any inversion.<br>177 doesn't form any inversion.<br>So the inversion count of the array is <strong>7</strong>, which is our output.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">1 line with 4 space separated integers : <var>M</var>, <var>A</var>, <var>S</var> and <var>N</var>.<br><var>M</var> and <var>A</var> are the parameters of the LCG. <var>S</var> is the seed (=X(0)).<br><var>N</var> is the length of the array, also equal to the number of values to generate. Note that the seed itself should not be included in the array.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The inversion count of the array, for a lowest to highest sort.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt; <var>M</var>, <var>A</var>, <var>S</var> &lt; 10^7<br>1 &lt; <var>N</var> &lt; 10^6</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">251 33 13 5</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">7</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 161925119080,
+  "avatar": 3366390627127,
+  "commentCount": 21,
+  "upVotes": 6,
+  "downVotes": 4,
+  "validateAction": {
+    "actionId": 516695,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1608805675494,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

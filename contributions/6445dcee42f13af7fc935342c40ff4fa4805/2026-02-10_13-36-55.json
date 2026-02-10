@@ -1,0 +1,177 @@
+{
+  "id": 6445,
+  "activeVersion": 42,
+  "score": 5,
+  "votableId": 17625524,
+  "codingamerId": 2043908,
+  "views": 396,
+  "commentableId": 17532230,
+  "title": "Parse SQL Queries",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "publicHandle": "6445dcee42f13af7fc935342c40ff4fa4805",
+  "codingamerHandle": "e9c83cc4767eb16667a33d90907479d08093402",
+  "lastVersion": {
+    "version": 42,
+    "autocloseTime": 1619908190115,
+    "data": {
+      "title": "Parse SQL Queries",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "SQL"
+          }
+        },
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 15,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "id": 195,
+          "handle": "data-types",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Data Types",
+            "2": "Data Types"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        },
+        {
+          "labelMap": {
+            "2": "DataBases"
+          }
+        },
+        {
+          "labelMap": {
+            "2": "Tables"
+          }
+        }
+      ],
+      "solution": "import sys\nimport math\nimport re\nimport pandas as pd\n\n# Auto-generated code below aims at helping you parse\n# the standard input according to the problem statement.\n\nsql_query = input()\nprint(sql_query, file=sys.stderr, flush=True)\nrows = int(input())\ntable_header = input().split()\n\ndata = []\nfor i in range(rows):\n    table_row = input().split()\n    data.append(table_row)\n\nsql_table = pd.DataFrame(data, columns = table_header)\n\n# get list of commands\ncommands = re.split(r\"((?:[A-Z]+)\\b(?:\\s+(?:[A-Z]+)\\b)*)\",sql_query)\nwhere_idx = -1\norder_idx = -1\ntry:\n    where_idx = commands.index(\"WHERE\")\nexcept:\n    pass\ntry:\n    order_idx = commands.index(\"ORDER BY\")\nexcept:\n    pass\n\nif (where_idx != -1):\n    rows = commands[where_idx+1].replace(\" \",\"\").split(\"=\")\n    sql_table = sql_table.loc[sql_table[rows[0]] == rows[1]]\n\nif (order_idx != -1):\n    rows = commands[order_idx+1].replace(\" \",\"\")\n    ASC = (commands[order_idx+2] == \"ASC\")\n    sql_table[rows] = pd.to_numeric(sql_table[rows], errors='coerce')\n    sql_table.sort_values(by=rows, ascending=ASC, inplace=True,)\n    sql_table[rows] = sql_table[rows].astype(str).str.replace('\\.0','')\n\nif (commands[2] != \" * \"):\n    columns = commands[2].replace(\" \",\"\").split(\",\")\n    sql_table = sql_table[columns]\n\n# Write an answer using print\n# To debug: print(\"Debug messages...\", file=sys.stderr, flush=True)\n\nprint(\" \".join(sql_table.columns))\nprint(\"\\n\".join([\" \".join(x) for x in sql_table.values]))",
+      "statement": "In this puzzle, instead of writing an SQL query, you will receive an SQL query and respond to it, acting as a simple database.\n\nYour inputs are a basic SQL table and a {{SELECT}} query command for each test case. Your program needs to parse these and output the correct query results.\n\nFor simplicity there are no commands to manipulate tables and only one table to select from. Nothing more advanced than {{SELECT}}.\n\nBasic structure of query is as follows:\n{{SELECT}} [[columnName1]]{{,}} [[columnName2]]{{,}} [[columnName3]] {{FROM}} [[tableName]]\n\n{{SELECT}} tells you which columns to keep from the input table for your output table. {{FROM}} specifies the name of the table. For this puzzle it won't matter, therefore simply keeping the relevant columns is enough for this query.\n\n{{SELECT *}} will select all columns.\n\nSlightly more advanced query example:\n{{SELECT}} [[columnName1]]{{,}} [[columnName2]] {{FROM}} [[tableName]] {{WHERE}} [[columnName3]] {{=}} [[value]] {{ORDER BY}} [[columnName2]] {{DESC}}\n\n{{WHERE}} tells you what conditions must be met to display a row. The only condition you need to check for is if strings are equal ({{=}}). There will only be a single condition, so no {{AND}}, no {{OR}}.\n\n{{ORDER BY}} gives the criteria for sorting the table rows. The sorting can be either ascending ({{ASC}}) or descending ({{DESC}}) on column values. All sorting is by numerical value rather than string value. Numbers can be integer or decimal.\n\nImage source: https://unsplash.com/photos/PkbZahEG2Ng",
+      "testCases": [
+        {
+          "title": "Select all",
+          "isTest": true,
+          "testIn": "SELECT * FROM cats\n3\nName Breed\nMcFur Peterbald\nSqueeky Bambino\nGreta Laperm",
+          "testOut": "Name Breed\nMcFur Peterbald\nSqueeky Bambino\nGreta Laperm",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Select all",
+          "isTest": false,
+          "testIn": "SELECT * FROM Raccoons\n3\nName Breed\nJosh Pygmaeus\nAlexa Cancrivorus\nOdin Lotor",
+          "testOut": "Name Breed\nJosh Pygmaeus\nAlexa Cancrivorus\nOdin Lotor",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Select from where",
+          "isTest": true,
+          "testIn": "SELECT Name, FriesSize FROM burgers WHERE FriesSize = plenty\n5\nName FriesSize Sauce\nJustBaconNoPatty NoFriesThanks PlainSauce\nClassic plenty Ketchup\nClassic++ ThreeStarFries MustardFoam\nBlueBurger plenty BlueCheese\nVegan CelerySticks BambooSugar",
+          "testOut": "Name FriesSize\nClassic plenty\nBlueBurger plenty",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Select from where",
+          "isTest": false,
+          "testIn": "SELECT Name, Sauce FROM burgers WHERE Sauce = PlainSauce\n6\nName FriesSize Sauce\nJustBaconNoPatty NoFriesThanks PlainSauce\nClassic ThreeStarFries Ketchup\nClassic++ plenty Mustard\nBlueBurger plenty BlueCheese\nVegan CelerySticks BambooSugar\nBeetRoot SweetFries PlainSauce",
+          "testOut": "Name Sauce\nJustBaconNoPatty PlainSauce\nBeetRoot PlainSauce",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Order by ascending",
+          "isTest": true,
+          "testIn": "SELECT Name, Age, Ticket FROM Titanic ORDER BY Age ASC\n30\nPassengerId Survived Pclass Name Sex Age SibSp Parch Ticket Fare\n760 1 1 Rothes female 33 0 0 110152 86.5000\n258 1 1 Cherry female 30 0 0 110152 86.5000\n505 1 1 Maioni female 16 0 0 110152 86.5000\n586 1 1 Taussig female 18 0 2 110413 79.6500\n559 1 1 Taussig female 39.1 1 1 110413 79.6500\n263 0 1 Taussig male 52 1 1 110413 79.6500\n111 0 1 Porter male 47.1 0 0 110465 52000\n431 1 1 Bjornstrom-Steffansson male 28 0 0 110564 26.5500\n367 1 1 Warren female 60 1 0 110813 75.2500\n171 0 1 Van male 61 0 0 111240 33.5000\n463 0 1 Gee male 47 0 0 111320 38.5000\n524 1 1 Hippach female 44 0 1 111361 57.9792\n330 1 1 Hippach female 16.1 0 1 111361 57.9792\n890 1 1 Behr male 26 0 0 111369 30000\n605 1 1 Homer male 35 0 0 111426 26.5500\n188 1 1 Romaine male 45 0 0 111428 26.5500\n807 0 1 Andrews male 39 0 0 112050 0000\n888 1 1 Graham female 19 0 0 112053 30000\n264 0 1 Harrison male 40 0 0 112059 0000\n210 1 1 Blank male 40.1 0 0 112277 31000\n332 0 1 Partner male 45.5 0 0 113043 28.5000\n537 0 1 Butt male 45.1 0 0 113050 26.5500\n453 0 1 Foreman male 30.1 0 0 113051 27.7500\n858 1 1 Daly male 51 0 0 113055 26.5500\n84 0 1 Carrau male 28.1 0 0 113059 47.1000\n783 0 1 Long male 29 0 0 113501 30000\n378 0 1 Widener male 27 0 2 113503 211.5000\n357 1 1 Bowerman female 22 0 1 113505 55000\n55 0 1 Ostby male 65 0 1 113509 61.9792\n253 0 1 Stead male 62 0 0 113514 26.5500",
+          "testOut": "Name Age Ticket\nMaioni 16 110152\nHippach 16.1 111361\nTaussig 18 110413\nGraham 19 112053\nBowerman 22 113505\nBehr 26 111369\nWidener 27 113503\nBjornstrom-Steffansson 28 110564\nCarrau 28.1 113059\nLong 29 113501\nCherry 30 110152\nForeman 30.1 113051\nRothes 33 110152\nHomer 35 111426\nAndrews 39 112050\nTaussig 39.1 110413\nHarrison 40 112059\nBlank 40.1 112277\nHippach 44 111361\nRomaine 45 111428\nButt 45.1 113050\nPartner 45.5 113043\nGee 47 111320\nPorter 47.1 110465\nDaly 51 113055\nTaussig 52 110413\nWarren 60 110813\nVan 61 111240\nStead 62 113514\nOstby 65 113509",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Order by descending",
+          "isTest": false,
+          "testIn": "SELECT Name, Age, Ticket FROM Titanic ORDER BY Age DESC\n30\nPassengerId Survived Pclass Name Sex Age SibSp Parch Ticket Fare\n760 1 1 Rothes female 33 0 0 110152 86.5000\n258 1 1 Cherry female 30 0 0 110152 86.5000\n505 1 1 Maioni female 16 0 0 110152 86.5000\n586 1 1 Taussig female 18 0 2 110413 79.6500\n559 1 1 Taussig female 39.1 1 1 110413 79.6500\n263 0 1 Taussig male 52 1 1 110413 79.6500\n111 0 1 Porter male 47.1 0 0 110465 52000\n431 1 1 Bjornstrom-Steffansson male 28 0 0 110564 26.5500\n367 1 1 Warren female 60 1 0 110813 75.2500\n171 0 1 Van male 61 0 0 111240 33.5000\n463 0 1 Gee male 47 0 0 111320 38.5000\n524 1 1 Hippach female 44 0 1 111361 57.9792\n330 1 1 Hippach female 16.1 0 1 111361 57.9792\n890 1 1 Behr male 26 0 0 111369 30000\n605 1 1 Homer male 35 0 0 111426 26.5500\n188 1 1 Romaine male 45 0 0 111428 26.5500\n807 0 1 Andrews male 39 0 0 112050 0000\n888 1 1 Graham female 19 0 0 112053 30000\n264 0 1 Harrison male 40 0 0 112059 0000\n210 1 1 Blank male 40.1 0 0 112277 31000\n332 0 1 Partner male 45.5 0 0 113043 28.5000\n537 0 1 Butt male 45.1 0 0 113050 26.5500\n453 0 1 Foreman male 30.1 0 0 113051 27.7500\n858 1 1 Daly male 51 0 0 113055 26.5500\n84 0 1 Carrau male 28.1 0 0 113059 47.1000\n783 0 1 Long male 29 0 0 113501 30000\n378 0 1 Widener male 27 0 2 113503 211.5000\n357 1 1 Bowerman female 22 0 1 113505 55000\n55 0 1 Ostby male 65 0 1 113509 61.9792\n253 0 1 Stead male 62 0 0 113514 26.5500",
+          "testOut": "Name Age Ticket\nOstby 65 113509\nStead 62 113514\nVan 61 111240\nWarren 60 110813\nTaussig 52 110413\nDaly 51 113055\nPorter 47.1 110465\nGee 47 111320\nPartner 45.5 113043\nButt 45.1 113050\nRomaine 45 111428\nHippach 44 111361\nBlank 40.1 112277\nHarrison 40 112059\nTaussig 39.1 110413\nAndrews 39 112050\nHomer 35 111426\nRothes 33 110152\nForeman 30.1 113051\nCherry 30 110152\nLong 29 113501\nCarrau 28.1 113059\nBjornstrom-Steffansson 28 110564\nWidener 27 113503\nBehr 26 111369\nBowerman 22 113505\nGraham 19 112053\nTaussig 18 110413\nHippach 16.1 111361\nMaioni 16 110152",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Order by descending",
+          "isTest": true,
+          "testIn": "SELECT * FROM Fishmonger WHERE Environment = FreshWater ORDER BY Weight DESC\n8\nName Environment Type Weight\nPrawns FreshWater ShellFish 0.25\nBeluga SaltWater Caviar 1\nSalmon FreshWater Fish 15\nSeaBream SaltWater Fish 0.5\nBlueFinTuna SaltWater Fish 600\nSalmon SaltWater Fish 5\nTrout FreshWater Fish 2\nLobster SaltWater ShellFish 6",
+          "testOut": "Name Environment Type Weight\nSalmon FreshWater Fish 15\nTrout FreshWater Fish 2\nPrawns FreshWater ShellFish 0.25",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Order by ascending",
+          "isTest": false,
+          "testIn": "SELECT * FROM Fishmonger WHERE Environment = SaltWater ORDER BY Weight ASC\n8\nName Environment Type Weight\nSalmon FreshWater Fish 15\nBeluga SaltWater Caviar 0.1\nSeaBream SaltWater Fish 0.5\nBlueFinTuna SaltWater Fish 678\nSalmon SaltWater Fish 5\nTrout FreshWater Fish 2\nPrawns FreshWater ShellFish 0.25\nLobster SaltWater ShellFish 6",
+          "testOut": "Name Environment Type Weight\nBeluga SaltWater Caviar 0.1\nSeaBream SaltWater Fish 0.5\nSalmon SaltWater Fish 5\nLobster SaltWater ShellFish 6\nBlueFinTuna SaltWater Fish 678",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Slightly more advanced",
+          "isTest": true,
+          "testIn": "SELECT Rooms, Regionname FROM Housing WHERE Suburb = HeidelbergHeights ORDER BY Rooms DESC\n11\nSuburb Rooms CouncilArea Regionname\nBulleen 3 Manningham EasternMetropolitan\nHawthorn 1 Boroondara SouthernMetropolitan\nHawthorn 3 Boroondara SouthernMetropolitan\nHawthorn 2 Boroondara SouthernMetropolitan\nHawthorn 4 Boroondara SouthernMetropolitan\nHawthorn 2 Boroondara SouthernMetropolitan\nHealesville 3 YarraRanges NorthernVictoria\nHeidelbergHeights 3 Banyule EasternMetropolitan\nHeidelbergHeights 2 Banyule EasternMetropolitan\nHeidelbergHeightsWest 1 Banyule EasternMetropolitan\nHeidelbergWest 3 Banyule EasternMetropolitan",
+          "testOut": "Rooms Regionname\n3 EasternMetropolitan\n2 EasternMetropolitan",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Slightly more advanced",
+          "isTest": false,
+          "testIn": "SELECT Rooms, Regionname FROM Housing WHERE Suburb = Heidelberg ORDER BY Rooms ASC\n10\nSuburb Rooms CouncilArea Regionname\nWatsonia 3 Banyule NorthernMetropolitan\nIvanhoe 4 Banyule EasternMetropolitan\nHeidelberg 3 Banyule EasternMetropolitan\nHeidelbergWest 2 Banyule EasternMetropolitan\nHeidelberg 4 Banyule EasternMetropolitan\nHeidelbergWest 2 Banyule EasternMetropolitan\nEaglemont 4 Banyule EasternMetropolitan\nHeidelbergWest 2 Banyule EasternMetropolitan\nViewbank 4 Banyule EasternMetropolitan\nHeidelbergWest 2 Banyule EasternMetropolitan",
+          "testOut": "Rooms Regionname\n3 EasternMetropolitan\n4 EasternMetropolitan",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "2 ≤ initial number of columns ≤ 10\n2 ≤ initial number of [[rows]] ≤ 30\n\nIf any of the values in a column is numeric, then they will all be numeric.",
+      "coverBinaryId": 61167326490806,
+      "stubGenerator": "read query:string(256)\nread rows:int\nread columnNames:string(256)\nloop rows read values:string(256)\nwrite columnNames\nvalues",
+      "inputDescription": "<<Line 1:>> A string containing the [[query]] you need to parse.\n<<Line 2:>> An integer [[rows]] for the number of table entries.\n<<Line 3:>> A string representing the header of the table, containing the [[column names]] separated by space.\n<<Next [[rows]] lines:>> A string representing the [[values]] for each column, separated by space.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> A string representing the header of the output, containing the selected [[column names]] separated by space.\n<<Following lines:>> A string representing the [[values]] for each selected column, separated by space."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">In this puzzle, instead of writing an SQL query, you will receive an SQL query and respond to it, acting as a simple database.<br><br>Your inputs are a basic SQL table and a <const>SELECT</const> query command for each test case. Your program needs to parse these and output the correct query results.<br><br>For simplicity there are no commands to manipulate tables and only one table to select from. Nothing more advanced than <const>SELECT</const>.<br><br>Basic structure of query is as follows:<br><const>SELECT</const> <var>columnName1</var><const>,</const> <var>columnName2</var><const>,</const> <var>columnName3</var> <const>FROM</const> <var>tableName</var><br><br><const>SELECT</const> tells you which columns to keep from the input table for your output table. <const>FROM</const> specifies the name of the table. For this puzzle it won't matter, therefore simply keeping the relevant columns is enough for this query.<br><br><const>SELECT *</const> will select all columns.<br><br>Slightly more advanced query example:<br><const>SELECT</const> <var>columnName1</var><const>,</const> <var>columnName2</var> <const>FROM</const> <var>tableName</var> <const>WHERE</const> <var>columnName3</var> <const>=</const> <var>value</var> <const>ORDER BY</const> <var>columnName2</var> <const>DESC</const><br><br><const>WHERE</const> tells you what conditions must be met to display a row. The only condition you need to check for is if strings are equal (<const>=</const>). There will only be a single condition, so no <const>AND</const>, no <const>OR</const>.<br><br><const>ORDER BY</const> gives the criteria for sorting the table rows. The sorting can be either ascending (<const>ASC</const>) or descending (<const>DESC</const>) on column values. All sorting is by numerical value rather than string value. Numbers can be integer or decimal.<br><br>Image source: https://unsplash.com/photos/PkbZahEG2Ng</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> A string containing the <var>query</var> you need to parse.<br><strong>Line 2:</strong> An integer <var>rows</var> for the number of table entries.<br><strong>Line 3:</strong> A string representing the header of the table, containing the <var>column names</var> separated by space.<br><strong>Next <var>rows</var> lines:</strong> A string representing the <var>values</var> for each column, separated by space.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> A string representing the header of the output, containing the selected <var>column names</var> separated by space.<br><strong>Following lines:</strong> A string representing the <var>values</var> for each selected column, separated by space.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &le; initial number of columns &le; 10<br>2 &le; initial number of <var>rows</var> &le; 30<br><br>If any of the values in a column is numeric, then they will all be numeric.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">SELECT * FROM cats\n3\nName Breed\nMcFur Peterbald\nSqueeky Bambino\nGreta Laperm</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Name Breed\nMcFur Peterbald\nSqueeky Bambino\nGreta Laperm</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 152679958598,
+  "commentCount": 37,
+  "upVotes": 6,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 543218,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1618050655730,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

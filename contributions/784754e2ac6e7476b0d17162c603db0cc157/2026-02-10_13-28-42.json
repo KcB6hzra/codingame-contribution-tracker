@@ -1,0 +1,348 @@
+{
+  "id": 7847,
+  "activeVersion": 67,
+  "score": 20,
+  "votableId": 21377884,
+  "codingamerId": 4044949,
+  "views": 421,
+  "commentableId": 21270524,
+  "title": "MCxxxx microcontroller simulation",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Exanc",
+  "publicHandle": "784754e2ac6e7476b0d17162c603db0cc157",
+  "codingamerHandle": "a2c4fbd9b6fdb9dd3e20b238cf8634a79494404",
+  "lastVersion": {
+    "version": 67,
+    "autocloseTime": 1645740071454,
+    "data": {
+      "title": "MCxxxx microcontroller simulation",
+      "topics": [
+        {
+          "id": 235,
+          "handle": "interpreter",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "interpreter",
+            "2": "Interpreters"
+          },
+          "puzzleCount": 4,
+          "parentTopicId": 93
+        },
+        {
+          "labelMap": {
+            "2": "Registers"
+          }
+        }
+      ],
+      "solution": "import sys\n\n# --------- \n# FUNCTIONS\n# ---------\n\ndef getVal(p):\n    global x0\n\n    if p == \"acc\":\n        return acc\n    \n    elif p == \"dat\":\n        return dat\n    \n    elif p == \"x0\":\n        v = x0[0]\n        x0 = x0[1:]\n        return v\n    \n    else:\n        return int(p)\n\ndef setReg(reg, val):\n    global x1\n    global acc\n    global dat\n\n    if reg == \"acc\":\n        acc = val\n    \n    elif reg == \"dat\":\n        dat = val\n    \n    else:\n        x1.append(val)\n\n# Returns the line of code associated with the label\ndef getLabel(name):\n\n    for label in labels:\n        if label[0] == name:\n            return label[1]\n    return None\n\ndef clampReg(n):\n\n    if n > 999:\n        return 999\n\n    elif n < -999:\n        return -999\n    \n    return n\n\n# ------------\n# MAIN PROGRAM\n# ------------\n\nglobal x0\nglobal x1\nglobal acc\nglobal dat\n\n# ---- Take input data\nd = int(input())\nx0 = []\nfor i in input().split():\n    x0.append(int(i))\n\n# ---- Take source code\nn = int(input())\ncode = [\"\"] * n\nfor i in range(n):\n    code[i] = input().split()\n\n# ---- Eliminate comments from the source code\n# ---- Getting labels out of the way\n# Arrays of tuples with the labels name and their associated line\nlabels = []\ni = 0\nwhile i < n:\n\n    l = code[i]\n\n\n    if code[i][0] == \"#\":\n        code = code[:i] + code[i+1:]\n        n -= 1\n        i -= 1\n\n    # If the word ends with a colon\n    if l[0][len(l[0])-1] == \":\":\n        \n        # Eliminates the colon from the name\n        label_name = l[0][:len(l[0])-1]\n\n        # If this line of code only contains a label\n        if len(l) == 1:\n            # Eliminate this line of code\n            code = code[:i] + code[i+1:]\n            n -= 1\n            labels.append((label_name, i))\n\n        else:\n            # Eliminates the label from this line of code\n            code[i] = code[i][1:]\n            labels.append((label_name, i))\n    \n    i += 1\n\n# ---- Iterate over source code\ni = 0\nx1 = []\nacc, dat = (0, 0)\nplus, minus = (False, False)\nn = len(code)\nwhile i < n:\n\n    l = code[i]\n\n    # Prefix checking\n    if l[0] == \"@\":\n        l = l[1:]\n        code = code[:i] + code[i+1:]\n        n -= 1\n        i -= 1\n    \n    if l[0] == \"+\":\n        if not plus:\n            i += 1 \n            continue\n        \n        l = l[1:]\n    \n    if l[0] == \"-\":\n        if not minus:\n            i += 1\n            continue\n\n        l = l[1:]\n\n    # Execute operation\n    if l[0] == \"mov\":\n        setReg(l[2], getVal(l[1]))\n    \n    elif l[0] == \"add\":\n        acc = clampReg(acc + getVal(l[1]))\n    \n    elif l[0] == \"sub\":\n        acc = clampReg(acc - getVal(l[1]))\n    \n    elif l[0] == \"mul\":\n        acc = clampReg(acc * getVal(l[1]))\n    \n    elif l[0] == \"not\":\n        acc = (100 if acc == 0 else 0)\n\n    elif l[0] == \"jmp\":\n        i = getLabel(l[1]) - 1\n\n    elif l[0] == \"teq\":\n        validator = getVal(l[1]) == getVal(l[2])\n\n        if validator:\n            plus = True\n            minus = False\n\n        else:\n            plus = False\n            minus = True\n    \n    elif l[0] == \"tgt\":\n        validator = getVal(l[1]) > getVal(l[2])\n\n        if validator:\n            plus = True\n            minus = False\n\n        else:\n            plus = False\n            minus = True\n\n    elif l[0] == \"tlt\":\n        validator = getVal(l[1]) < getVal(l[2])\n\n        if validator:\n            plus = True\n            minus = False\n\n        else:\n            plus = False\n            minus = True\n    \n    elif l[0] == \"tcp\":\n        A = getVal(l[1])\n        B = getVal(l[2])\n\n        if A == B:\n            plus = False\n            minus = False\n\n        elif A > B:\n            plus = True\n            minus = False\n        \n        elif A < B:\n            plus = False\n            minus = True\n    \n    elif l[0] == \"dgt\":\n        index = getVal(l[1])\n\n        acc = str(acc)[::-1] + \"000\"\n        acc = int(acc[index])\n    \n    elif l[0] == \"dst\":\n        place = getVal(l[1])\n        digit = str(getVal(l[2]))\n\n        acc = str(acc)[::-1] + \"000\"\n        acc = list(acc)\n        acc[place] = digit\n        acc = int(''.join(acc[::-1]))\n\n    i += 1\n\n# ---- Print output data\nfor i in x1[:(len(x1)-1)]:\n    print(i, end=\" \")\nprint(x1[len(x1)-1])\n",
+      "statement": "This puzzle is directly inspired by the game SHENZHEN I/O.\nIf you like this puzzle, please go check out this game (trust me, you'll love it).\nSteam: https://store.steampowered.com/app/504210/SHENZHEN_IO/\nGOG.com: https://www.gog.com/fr/game/shenzhen_io\n\nMCxxxx Language official documentation: https://usermanual.wiki/Document/SHENZHENIOManual.736522646/view\n\n<<--- Puzzle --->>\nIn this puzzle you will be asked to create a simple emulator for a microcontroller from the MCxxxx family. Specifically, a simplified version of the MC6000 microcontroller that we will call MC5999.\n\nMC5999 features:\n- 2 general-purpose registers (acc, dat)\n- 2 Xbus pins (x0, x1)\n\nRegisters:\n- acc : stores the result of an arithmetic instruction\n- dat : used for temporary storage of a value\n- x0 and x1 : Xbus pins (used respectively for input and output)\n\nMicrocontrollers of the MCxxxx family take use of a unique programming language (similar to assembler). Please note that some instructions of this language will not be included as they are not necessary for this puzzle. All instructions below are necessary for this puzzle.\n\nCaptions:\n```\n| Notation |       Meaning       |\n|    R     |       Register      |\n|    I     |       Integer       |\n|   R/I    | Register or integer |\n|    L     |       Label         |\n```\nBasic instructions:\n - {{mov}} [[R/I]] [[R]]: Copy the value of the first operand into the second operand\n - {{jmp}} [[L]]: Jump to the instruction following the specified label\n\nArithmetic instructions:\nThe result of an arithmetic instruction will always be stored in the acc register.\n- {{add}} [[R/I]]: Add the value of the first operand to the value of the acc register\n- {{sub}} [[R/I]]: Subtract the value of the first operand to the value of the acc register\n- {{mul}} [[R/I]]: Multiply the value of the first operand by the value of the acc register\n- {{not}}: If the value in acc is 0, store a value of 100 in acc. Otherwise, store a value of 0 in acc\n- {{dgt}} [[R/I]]: Isolate the specified digit of the value in the acc register and stores it in the acc register\n- {{dst}} [[R/I]] [[R/I]]: Isolate the digit of acc specified by the first operand and set it to the value of the second operand\n\nExamples of {{dgt}} and {{dst}} instructions:\n```\n| acc | Instruction | acc' |  | acc | Instruction | acc' |\n| 596 |    dgt 0    |   6  |  | 596 |  dst 0 7    | 597  |\n| 596 |    dgt 1    |   9  |  | 596 |  dst 1 7    | 576  |\n| 596 |    dgt 2    |   5  |  | 596 |  dst 2 7    | 796  |\n```\nBranching (a.k.a. Test) instructions:\n- {{teq}} [[R/I]] [[R/I]]: Test if the value of the first operand is equal to the value of the second operand\n- {{tgt}} [[R/I]] [[R/I]]: Test if the value of the first operand is (strictly) greater than the value of the second operand\n- {{tlt}} [[R/I]] [[R/I]]: Test if the value of the first operand is (strictly) less than the value of the second operand\n- {{tcp}} [[R/I]] [[R/I]]: Compare the value of the first operand with the value of the second operand\n\nBehavior of the tcp (A) (B) instruction:\n```\n| Case  | Effect on {{+}} instructions | Effect on {{-}} instructions |\n| A > B |          Enabled         |         Disabled         |\n| A = B |          Disabled        |         Disabled         |\n| A < B |          Disabled        |         Enabled          |\n```\nConditional Execution:\nAll instructions in the MCxxxx programming language are capable of <<conditional execution>>. Prefixing an instruction with a {{+}} or {{-}} symbol will cause that instruction to be <<enabled>> or <<disabled>> by test instructions. When an instruction is disabled by a test instruction, it will be skipped. Instructions with no prefix are never disabled and always execute normally.\n{{+}} and {{-}} instructions are both disabled by default.\nFor all test instructions (except for tcp) {{+}} and {{-}} can be interpreted as enabled when a test case is {{true}} or {{false}} respectively. All test instructions will affect all {{+}} and {{-}} prefixed instructions until another test instruction is executed.\n\nFor example:\nIf we execute the operation {{tgt 5 0}}, 5 is greater than 0, so instructions with the prefix {{+}} will be executed and instructions with the prefix {{-}} will be skipped.\n\nOther prefixes:\n- Lines with the prefix {{#}} are considered as comments and <<shall not be executed>>.\n- Lines with the prefix {{@}} shall only be <<executed one time>>.\n\nLabels:\nLabels are single words ending with the suffix {{:}}.\nNote that an instruction can be placed after a label. This instructions will not have any prefix as the label itself already counts as a prefix.\n\nXbus pins:\nFor this puzzle you are provided with two Xbus \"pins\" x0 and x1.\nx0 is used for input, meaning that when the program asks you to take a value from the x0 register you need to take it from the \"input data\" line. Similarly x1 is used as an output so when the program asks you to place a value in the x1 register, this value will be part of the output of your solution.",
+      "testCases": [
+        {
+          "title": "Simple I/O",
+          "isTest": true,
+          "testIn": "1\n2\n1\nmov x0 x1",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple I/O (Validator)",
+          "isTest": false,
+          "testIn": "1\n5\n1\nmov x0 x1",
+          "testOut": "5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Double I/O",
+          "isTest": true,
+          "testIn": "2\n1 2\n2\nmov x0 x1\nmov x0 x1",
+          "testOut": "1 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Double I/O (validator)",
+          "isTest": false,
+          "testIn": "2\n3 4\n2\nmov x0 x1\nmov x0 x1",
+          "testOut": "3 4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Buffering with dat & acc",
+          "isTest": true,
+          "testIn": "2\n1 2\n4\nmov x0 dat\nmov x0 x1\nmov dat acc\nmov acc x1",
+          "testOut": "2 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Buffering with dat & acc (Validator)",
+          "isTest": false,
+          "testIn": "2\n2 5\n4\nmov x0 acc\nmov x0 x1\nmov acc dat\nmov dat x1",
+          "testOut": "5 2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "First grade arithmetics",
+          "isTest": true,
+          "testIn": "1\n3\n7\nmov x0 dat\nmov 4 acc\nadd dat\nmov acc x1\nmov 4 acc\nsub dat\nmov acc x1",
+          "testOut": "7 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "First grade arithmetics (Validator)",
+          "isTest": false,
+          "testIn": "1\n5\n7\nmov x0 dat\nmov 3 acc\nadd dat\nmov acc x1\nmov 3 acc\nsub dat\nmov acc x1",
+          "testOut": "8 -2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Third grade arithmetics",
+          "isTest": true,
+          "testIn": "2\n5 7\n4\nmov x0 acc\nmov x0 dat\nmul dat\nmov acc x1",
+          "testOut": "35",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Third grade arithmetics (Validator)",
+          "isTest": false,
+          "testIn": "2\n8 -2\n4\nmov x0 acc\nmov x0 dat\nmul dat\nmov acc x1",
+          "testOut": "-16",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "NOT what you think",
+          "isTest": true,
+          "testIn": "4\n0 56 -3 100\n12\nmov x0 acc\nnot\nmov acc x1\nmov x0 acc\nnot\nmov acc x1\nmov x0 acc\nnot\nmov acc x1\nmov x0 acc\nnot\nmov acc x1",
+          "testOut": "100 0 0 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "NOT what you think (Validator)",
+          "isTest": false,
+          "testIn": "4\n-7 455 100 0\n13\nmov x0 acc\nnot\nmov acc x1\nmov x0 acc\nnot\nmov acc x1\nmov x0 acc\nnot\nnot\nmov acc x1\nmov x0 acc\nnot\nmov acc x1",
+          "testOut": "0 0 100 100",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Labels, jumps and unnecessary text",
+          "isTest": true,
+          "testIn": "1\n2\n11\nmov x0 dat\nmov dat acc\n# mov dat x1\njmp end\nmov dat x1\nmult:\nmul dat\njmp ending\nend: jmp mult\nending:\nmov acc x1",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Labels, jumps and unnecessary text (Validator)",
+          "isTest": false,
+          "testIn": "1\n7\n10\n# Hello, i'm an useless comment (°▽°)/\njmp end\nmov x0 x1\ncalc:\nsub 1\njmp true_ending\nend:\nmov x0 acc\njmp calc\ntrue_ending: mov acc x1",
+          "testOut": "6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "One last time",
+          "isTest": true,
+          "testIn": "1\n2\n7\nmov x0 acc\ncalc:\n# /╲/\\( •̀ ω •́ )/\\╱\\\n# Look at my spider, it's so cute!\nsub 1\n@ jmp calc\nmov acc x1",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "One last time (Validator)",
+          "isTest": false,
+          "testIn": "1\n4\n6\nmov x0 dat\nmov dat acc\ncalc:\nmul dat\n@ jmp calc\nmov acc x1",
+          "testOut": "64",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "What the heck ?",
+          "isTest": true,
+          "testIn": "1\n1\n3\nmov x0 x1\njmp end\nend:",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "What the heck ? (Validator)",
+          "isTest": false,
+          "testIn": "1\n894\n5\nmov x0 acc\nsub 49\nmov acc x1\njmp end\nend:",
+          "testOut": "845",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Overflow !!!",
+          "isTest": true,
+          "testIn": "3\n-999 999 100\n10\nmov x0 acc\nsub 50\nmov acc x1\nmov x0 acc\nadd 50\nmov acc x1\nmov x0 dat\nmov dat acc\nmul dat\nmov acc x1",
+          "testOut": "-999 999 999",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Overflow !!! (Validator)",
+          "isTest": false,
+          "testIn": "3\n999 -999 100\n10\nmov x0 acc\nadd 69\nmov acc x1\nmov x0 acc\nsub 69\nmov acc x1\nmov x0 dat\nmov dat acc\nmul dat\nmov acc x1",
+          "testOut": "999 -999 999",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Conditional execution I",
+          "isTest": true,
+          "testIn": "1\n4\n7\nmov x0 dat\n+ mov dat x1\n- mov dat x1\nteq dat 0\n+ add 1\n- sub 1\nmov acc x1",
+          "testOut": "-1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Conditional execution I (Validator)",
+          "isTest": false,
+          "testIn": "1\n0\n7\nmov x0 dat\n+ mov dat x1\n- mov dat x1\nteq dat 0\n+ add 1\n- sub 1\nmov acc x1",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Conditional execution II",
+          "isTest": true,
+          "testIn": "1\n0\n7\nmov x0 dat\ntgt dat -1\n+ mov 1 x1\n- mov -1 x1\ntlt dat 1\n+ mov 1 x1\n- mov -1 x1",
+          "testOut": "1 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Conditional execution II (Validator)",
+          "isTest": false,
+          "testIn": "1\n7\n7\nmov x0 dat\ntgt dat 0\n+ mov 1 x1\n- mov -1 x1\ntlt dat 0\n+ mov 1 x1\n- mov -1 x1",
+          "testOut": "1 -1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Conditional execution III",
+          "isTest": true,
+          "testIn": "1\n0\n10\nmov x0 dat\ntcp dat -1\n+ mov 1 x1\n- mov -1 x1\ntcp dat 0\n+ mov 1 x1\n- mov -1 x1\ntcp dat 1\n+ mov 1 x1\n- mov -1 x1",
+          "testOut": "1 -1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Conditional execution III (Validator)",
+          "isTest": false,
+          "testIn": "1\n5\n10\nmov x0 dat\ntcp dat 5\n+ mov 1 x1\n- mov -1 x1\ntcp dat 10\n+ mov 1 x1\n- mov -1 x1\ntcp dat 0\n+ mov 1 x1\n- mov -1 x1",
+          "testOut": "-1 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Digit manipulation I",
+          "isTest": true,
+          "testIn": "2\n123 99\n13\nmov x0 dat\nmov dat acc\ndgt 0\nmov acc x1\nmov dat acc\ndgt 1\nmov acc x1\nmov dat acc\ndgt 2\nmov acc x1\nmov x0 acc\ndgt 2\nmov acc x1",
+          "testOut": "3 2 1 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Digit manipulation I (Validator)",
+          "isTest": false,
+          "testIn": "2\n321 909\n13\nmov x0 dat\nmov dat acc\ndgt 0\nmov acc x1\nmov dat acc\ndgt 1\nmov acc x1\nmov dat acc\ndgt 2\nmov acc x1\nmov x0 acc\ndgt 1\nmov acc x1",
+          "testOut": "1 2 3 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Digit manipulation II",
+          "isTest": true,
+          "testIn": "3\n0 9 0\n9\nmov x0 acc\nmov x0 dat\ndst acc dat\ndst 1 dat\ndst 2 dat\nmov acc x1\nmov x0 acc\ndst 2 dat\nmov acc x1",
+          "testOut": "999 900",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Digit manipulation II (Validator)",
+          "isTest": false,
+          "testIn": "3\n0 5 0\n9\nmov x0 acc\nmov x0 dat\ndst 1 dat\nmov acc x1\nmov x0 acc\ndst acc dat\ndst 1 dat\ndst 2 dat\nmov acc x1",
+          "testOut": "50 555",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Concrete example",
+          "isTest": true,
+          "testIn": "2\n2 1\n11\n# Print all power of 2 from 1 to 512\nmov x0 dat\nmov x0 acc \n# dat = 2, acc = 1\nloop:\nmov acc x1\n# print content of acc\nmul dat\ntlt acc 512\n+ jmp loop\nmov acc x1",
+          "testOut": "1 2 4 8 16 32 64 128 256 512",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Concrete example (Validator)",
+          "isTest": false,
+          "testIn": "2\n3 1\n11\n# Print all power of 3 from 1 to 729\nmov x0 dat\nmov x0 acc \n# dat = 3, acc = 1\nloop:\nmov acc x1\n# print content of acc\nmul dat\ntlt acc 729\n+ jmp loop\nmov acc x1",
+          "testOut": "1 3 9 27 81 243 729",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "JUMP JUMP JUMP !!!",
+          "isTest": true,
+          "testIn": "1\n0\n16\n# JUMP JUMP JUMP !!!\njmp one\ntwo: mov 2 x1\njmp three\nsix: mov 6 x1\njmp end\nfour: mov 4 x1\njmp five\none: mov 1 x1\njmp two\nthree: mov 3 x1\njmp four\nfive: mov 5 x1\njmp six\nend: \n#the end o(TヘTo)",
+          "testOut": "1 2 3 4 5 6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "JUMP JUMP JUMP !!! (VALIDATOR!!!!)",
+          "isTest": false,
+          "testIn": "1\n0\n16\n# JUMP JUMP JUMP !!!\njmp one\ntwo: mov 4 x1\njmp three\nsix: mov 64 x1\njmp end\nfour: mov 16 x1\njmp five\none: mov 2 x1\njmp two\nthree: mov 8 x1\njmp four\nfive: mov 32 x1\njmp six\nend: \n#the end o(TヘTo)",
+          "testOut": "2 4 8 16 32 64",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ [[K]] ≤ 100\n1 ≤ [[N]] ≤ 20\n\n-999 ≤ [[D]] ≤ 999 for any integer [[D]] within the Input and Output Data.\n\nAt the start of a program, the registers will contain a value of 0.\n\nRegisters can store integer values between -999 and 999, inclusive. If an arithmetic operation would produce a result outside this range, the closest allowed value is stored instead. For example, if acc contains the value 800 and the instruction add 400 is executed, then the value 999 will be stored in acc.\n\nThe program will always output at least one value.\n\nThere cannot be two labels with the same name.\n\nSpecial case: {{dst}} [[A]] [[B]] and {{dgt}} [[A]] furthermore require 0 ≤ [[A]] ≤ 2 and 0 ≤ [[B]] ≤ 9.",
+      "coverBinaryId": 75565647438005,
+      "stubGenerator": "read k:int\nloopline k InputData:int\nread n:int\nloop n read LineOfCode:string(100)\nwrite output data",
+      "inputDescription": "You will receive multiple lines of text representing a source code in the MCxxxx language.\n\n<<Line 1:>> An integer [[K]] representing the length of the [[Input Data]] array\n<<Line 2:>> [[K]] integers separated by white spaces representing your [[Input Data]]\n<<Line 3:>> An integer [[N]] representing the number of lines of code\n<<Next [[N]] lines:>> A [[Line of code]]",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> The program's [[Output Data]] represented by integers separated by white spaces"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">This puzzle is directly inspired by the game SHENZHEN I/O.<br>If you like this puzzle, please go check out this game (trust me, you'll love it).<br>Steam: https://store.steampowered.com/app/504210/SHENZHEN_IO/<br>GOG.com: https://www.gog.com/fr/game/shenzhen_io<br><br>MCxxxx Language official documentation: https://usermanual.wiki/Document/SHENZHENIOManual.736522646/view<br><br><strong>--- Puzzle ---</strong><br>In this puzzle you will be asked to create a simple emulator for a microcontroller from the MCxxxx family. Specifically, a simplified version of the MC6000 microcontroller that we will call MC5999.<br><br>MC5999 features:<br>- 2 general-purpose registers (acc, dat)<br>- 2 Xbus pins (x0, x1)<br><br>Registers:<br>- acc : stores the result of an arithmetic instruction<br>- dat : used for temporary storage of a value<br>- x0 and x1 : Xbus pins (used respectively for input and output)<br><br>Microcontrollers of the MCxxxx family take use of a unique programming language (similar to assembler). Please note that some instructions of this language will not be included as they are not necessary for this puzzle. All instructions below are necessary for this puzzle.<br><br>Captions:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>| Notation |       Meaning       |<br>|    R     |       Register      |<br>|    I     |       Integer       |<br>|   R/I    | Register or integer |<br>|    L     |       Label         |<br></pre><pre style=\"font-family: monospace\"></pre><br>Basic instructions:<br> - <const>mov</const> <var>R/I</var> <var>R</var>: Copy the value of the first operand into the second operand<br> - <const>jmp</const> <var>L</var>: Jump to the instruction following the specified label<br><br>Arithmetic instructions:<br>The result of an arithmetic instruction will always be stored in the acc register.<br>- <const>add</const> <var>R/I</var>: Add the value of the first operand to the value of the acc register<br>- <const>sub</const> <var>R/I</var>: Subtract the value of the first operand to the value of the acc register<br>- <const>mul</const> <var>R/I</var>: Multiply the value of the first operand by the value of the acc register<br>- <const>not</const>: If the value in acc is 0, store a value of 100 in acc. Otherwise, store a value of 0 in acc<br>- <const>dgt</const> <var>R/I</var>: Isolate the specified digit of the value in the acc register and stores it in the acc register<br>- <const>dst</const> <var>R/I</var> <var>R/I</var>: Isolate the digit of acc specified by the first operand and set it to the value of the second operand<br><br>Examples of <const>dgt</const> and <const>dst</const> instructions:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>| acc | Instruction | acc' |  | acc | Instruction | acc' |<br>| 596 |    dgt 0    |   6  |  | 596 |  dst 0 7    | 597  |<br>| 596 |    dgt 1    |   9  |  | 596 |  dst 1 7    | 576  |<br>| 596 |    dgt 2    |   5  |  | 596 |  dst 2 7    | 796  |<br></pre><pre style=\"font-family: monospace\"></pre><br>Branching (a.k.a. Test) instructions:<br>- <const>teq</const> <var>R/I</var> <var>R/I</var>: Test if the value of the first operand is equal to the value of the second operand<br>- <const>tgt</const> <var>R/I</var> <var>R/I</var>: Test if the value of the first operand is (strictly) greater than the value of the second operand<br>- <const>tlt</const> <var>R/I</var> <var>R/I</var>: Test if the value of the first operand is (strictly) less than the value of the second operand<br>- <const>tcp</const> <var>R/I</var> <var>R/I</var>: Compare the value of the first operand with the value of the second operand<br><br>Behavior of the tcp (A) (B) instruction:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>| Case  | Effect on <const>+</const> instructions | Effect on <const>-</const> instructions |<br>| A &gt; B |          Enabled         |         Disabled         |<br>| A = B |          Disabled        |         Disabled         |<br>| A &lt; B |          Disabled        |         Enabled          |<br></pre><pre style=\"font-family: monospace\"></pre><br>Conditional Execution:<br>All instructions in the MCxxxx programming language are capable of <strong>conditional execution</strong>. Prefixing an instruction with a <const>+</const> or <const>-</const> symbol will cause that instruction to be <strong>enabled</strong> or <strong>disabled</strong> by test instructions. When an instruction is disabled by a test instruction, it will be skipped. Instructions with no prefix are never disabled and always execute normally.<br><const>+</const> and <const>-</const> instructions are both disabled by default.<br>For all test instructions (except for tcp) <const>+</const> and <const>-</const> can be interpreted as enabled when a test case is <const>true</const> or <const>false</const> respectively. All test instructions will affect all <const>+</const> and <const>-</const> prefixed instructions until another test instruction is executed.<br><br>For example:<br>If we execute the operation <const>tgt 5 0</const>, 5 is greater than 0, so instructions with the prefix <const>+</const> will be executed and instructions with the prefix <const>-</const> will be skipped.<br><br>Other prefixes:<br>- Lines with the prefix <const>#</const> are considered as comments and <strong>shall not be executed</strong>.<br>- Lines with the prefix <const>@</const> shall only be <strong>executed one time</strong>.<br><br>Labels:<br>Labels are single words ending with the suffix <const>:</const>.<br>Note that an instruction can be placed after a label. This instructions will not have any prefix as the label itself already counts as a prefix.<br><br>Xbus pins:<br>For this puzzle you are provided with two Xbus &quot;pins&quot; x0 and x1.<br>x0 is used for input, meaning that when the program asks you to take a value from the x0 register you need to take it from the &quot;input data&quot; line. Similarly x1 is used as an output so when the program asks you to place a value in the x1 register, this value will be part of the output of your solution.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">You will receive multiple lines of text representing a source code in the MCxxxx language.<br><br><strong>Line 1:</strong> An integer <var>K</var> representing the length of the <var>Input Data</var> array<br><strong>Line 2:</strong> <var>K</var> integers separated by white spaces representing your <var>Input Data</var><br><strong>Line 3:</strong> An integer <var>N</var> representing the number of lines of code<br><strong>Next <var>N</var> lines:</strong> A <var>Line of code</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> The program's <var>Output Data</var> represented by integers separated by white spaces</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>K</var> &le; 100<br>1 &le; <var>N</var> &le; 20<br><br>-999 &le; <var>D</var> &le; 999 for any integer <var>D</var> within the Input and Output Data.<br><br>At the start of a program, the registers will contain a value of 0.<br><br>Registers can store integer values between -999 and 999, inclusive. If an arithmetic operation would produce a result outside this range, the closest allowed value is stored instead. For example, if acc contains the value 800 and the instruction add 400 is executed, then the value 999 will be stored in acc.<br><br>The program will always output at least one value.<br><br>There cannot be two labels with the same name.<br><br>Special case: <const>dst</const> <var>A</var> <var>B</var> and <const>dgt</const> <var>A</var> furthermore require 0 &le; <var>A</var> &le; 2 and 0 &le; <var>B</var> &le; 9.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1\n2\n1\nmov x0 x1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">2</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 126219665547,
+  "avatar": 75434945111960,
+  "commentCount": 39,
+  "upVotes": 21,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 629580,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1644510455867,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

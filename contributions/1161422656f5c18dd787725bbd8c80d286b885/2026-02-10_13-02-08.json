@@ -1,0 +1,220 @@
+{
+  "id": 116142,
+  "activeVersion": 29,
+  "score": 7,
+  "votableId": 36184758,
+  "codingamerId": 6443258,
+  "views": 264,
+  "commentableId": 36027907,
+  "title": "Save my Drone!",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "SR135",
+  "publicHandle": "1161422656f5c18dd787725bbd8c80d286b885",
+  "codingamerHandle": "145e8a18c75b6de889ccbb6cf3c9ebf98523446",
+  "lastVersion": {
+    "version": 29,
+    "autocloseTime": 1739750573548,
+    "freezeTime": 1737763373548,
+    "data": {
+      "title": "Save my Drone!",
+      "topics": [
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 41,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "labelMap": {
+            "2": "Run-length encoding"
+          }
+        },
+        {
+          "id": 46,
+          "handle": "loops",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 110,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        }
+      ],
+      "solution": "width: int = int(input())\nheight: int = int(input())\nrotated: int = int(input())\nrows = []\nfor i in range(height):\n    rows.append(input())\n\ntile_lookup: dict[str,str] = {'#':'Block','+':'Fuel','@':'Gyroscope','$':'Core','^':'Thruster'}\n\ndef sanitize(string: str, allowed_chars: str) -> str:\n    return ''.join(char for char in string if char in allowed_chars)\n\ndef runlength_encode(string: str): # -> generator[str, int]\n    current_char: str = string[0]\n    repetition_count: int = 0\n    for char in string:\n        if char == current_char:\n            repetition_count += 1\n        else:\n            yield current_char, repetition_count\n            repetition_count = 1\n            current_char = char\n    yield current_char, repetition_count\n \n# reverses each row and flips, rotating\nif rotated == 1 and width > 1 and height > 1:\n    rows = [rows[n-1][::-1] for n in range(len(rows),0,-1)]\n\n# removes all characters except # + @ $ ^, and joins the rows into one string\nrows = ''.join([sanitize(row, '#+@$^') for row in rows])\n\n# run-length encodes and formats the string, and replaces ascii with tile names\nif rows:\n    rows = ', '.join([f\"{ele[1]} {tile_lookup[ele[0]]}{'s' if ele[1] > 1 else ''}\" for ele in runlength_encode(rows)])\nelse:\n    rows = 'Nothing'\n\nprint(rows)\n",
+      "statement": "Inspired by the modular ship builder game \"Droneboi\" by Beau.\nGenerate a save-file for your drone from an ASCII represenation, though make sure to flip it upright first!\n\nGiven a representation of a drone rotated 0° or 180°, rotate it back into the correct orientation of 0°, and compress it using Run-Length encoding. \n\nEach character should be replaced by its corresponding tile name in the output.\n<<However, junk tiles (any characters other than >>{{#}}, {{^}}, {{@}}, {{+}}, <<and>> {{$}}, <<including newlines and spaces) should be ignored and should not interrupt the encoding.>>\n\nThe following are the valid tiles and their names:\n- {{#}} Block\n- {{^}} Thruster\n- {{@}} Gyroscope\n- {{+}} Fuel\n- {{$}} Core \n\n<<Run-Length Encoding:>> https://en.wikipedia.org/wiki/Run-length_encoding",
+      "testCases": [
+        {
+          "title": "Drone",
+          "isTest": true,
+          "testIn": "3\n3\n0\n.@.\n+$+\n^.^",
+          "testOut": "1 Gyroscope, 1 Fuel, 1 Core, 1 Fuel, 2 Thrusters",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3\n3\n0\n###\n+$+\n^@^",
+          "testOut": "3 Blocks, 1 Fuel, 1 Core, 1 Fuel, 1 Thruster, 1 Gyroscope, 1 Thruster",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Upside Down",
+          "isTest": true,
+          "testIn": "3\n3\n1\n^#^\n+$+\n#@#",
+          "testOut": "1 Block, 1 Gyroscope, 1 Block, 1 Fuel, 1 Core, 1 Fuel, 1 Thruster, 1 Block, 1 Thruster",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "3\n3\n1\n+^+\n#$#\n#@#",
+          "testOut": "1 Block, 1 Gyroscope, 2 Blocks, 1 Core, 1 Block, 1 Fuel, 1 Thruster, 1 Fuel",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Cluttered",
+          "isTest": true,
+          "testIn": "5\n5\n0\n....,\n'+#+.\n.@#$.\n.^+^.\n!....",
+          "testOut": "1 Fuel, 1 Block, 1 Fuel, 1 Gyroscope, 1 Block, 1 Core, 1 Thruster, 1 Fuel, 1 Thruster",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "5\n5\n0\n..a..\n.#$#.\n.+@+.\n)^.^.\n....;",
+          "testOut": "1 Block, 1 Core, 1 Block, 1 Fuel, 1 Gyroscope, 1 Fuel, 2 Thrusters",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Double",
+          "isTest": true,
+          "testIn": "5\n5\n1\n...,.\nj#^#.\n.+$+.\n;#@#.\n....'",
+          "testOut": "1 Block, 1 Gyroscope, 1 Block, 1 Fuel, 1 Core, 1 Fuel, 1 Block, 1 Thruster, 1 Block",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "5\n5\n1\n.]...\n.^+^.\n.@+$\"\nz.#..\n....!",
+          "testOut": "1 Block, 1 Core, 1 Fuel, 1 Gyroscope, 1 Thruster, 1 Fuel, 1 Thruster",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Huh?",
+          "isTest": true,
+          "testIn": "1\n1\n0\n#",
+          "testOut": "1 Block",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "1\n1\n1\n#",
+          "testOut": "1 Block",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Where?",
+          "isTest": true,
+          "testIn": "1\n1\n0\n.",
+          "testOut": "Nothing",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Empty & Upside Down",
+          "isTest": false,
+          "testIn": "1\n1\n1\n.",
+          "testOut": "Nothing",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Big",
+          "isTest": true,
+          "testIn": "13\n11\n0\n..:........./\n.a..#####....\n..#########..\n!.##+@@@+##..\n..##+++++##.,\n..##+$$$+##.*\n..##+++++##..\n..#########..\n..##^^#^^##.b\n..#.,...*.#.(\n*......%.....",
+          "testOut": "16 Blocks, 1 Fuel, 3 Gyroscopes, 1 Fuel, 4 Blocks, 5 Fuels, 4 Blocks, 1 Fuel, 3 Cores, 1 Fuel, 4 Blocks, 5 Fuels, 13 Blocks, 2 Thrusters, 1 Block, 2 Thrusters, 4 Blocks",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "13\n11\n0\n..:........./\n....#####....\n..###+++###..\n!.##+++++##..\n..##+@@@+##.,\n..^#+++++#^.*\n..^#+$$$+#^..\n..#########..\n..##^^^^^##..\n..#.,...*.#.(\n*......%.....",
+          "testOut": "8 Blocks, 3 Fuels, 5 Blocks, 5 Fuels, 4 Blocks, 1 Fuel, 3 Gyroscopes, 1 Fuel, 2 Blocks, 1 Thruster, 1 Block, 5 Fuels, 1 Block, 2 Thrusters, 1 Block, 1 Fuel, 3 Cores, 1 Fuel, 1 Block, 1 Thruster, 11 Blocks, 5 Thrusters, 4 Blocks",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Going Down",
+          "isTest": true,
+          "testIn": "13\n13\n1\n.i...........\n.^^^#^^^#^^^a\n.###########.\n.#+++#@#+++#.\n;#+++#@#+++#.\n.#+++#@#+++#.\n.###########!\n.#+++#$#+++#.\n.###########.\n.#+++#@#+++#,\n.#+++#@#+++#.\n.z#########..\n.-..........*",
+          "testOut": "10 Blocks, 3 Fuels, 1 Block, 1 Gyroscope, 1 Block, 3 Fuels, 2 Blocks, 3 Fuels, 1 Block, 1 Gyroscope, 1 Block, 3 Fuels, 13 Blocks, 3 Fuels, 1 Block, 1 Core, 1 Block, 3 Fuels, 13 Blocks, 3 Fuels, 1 Block, 1 Gyroscope, 1 Block, 3 Fuels, 2 Blocks, 3 Fuels, 1 Block, 1 Gyroscope, 1 Block, 3 Fuels, 2 Blocks, 3 Fuels, 1 Block, 1 Gyroscope, 1 Block, 3 Fuels, 12 Blocks, 3 Thrusters, 1 Block, 3 Thrusters, 1 Block, 3 Thrusters",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "13\n13\n1\n.i...........\n.^^^#^^^#^^^a\n.###+###+###.\n.#+++#@#+++#.\n;#+++#@#+++#.\n.#+++#@#+++#.\n.^#########^!\n.#+++#$#+++#.\n.#+++#@#+++#.\n.#+++#@#+++#,\n.##++#@#++##.\n.z#########..\n.-..........*",
+          "testOut": "11 Blocks, 2 Fuels, 1 Block, 1 Gyroscope, 1 Block, 2 Fuels, 3 Blocks, 3 Fuels, 1 Block, 1 Gyroscope, 1 Block, 3 Fuels, 2 Blocks, 3 Fuels, 1 Block, 1 Gyroscope, 1 Block, 3 Fuels, 2 Blocks, 3 Fuels, 1 Block, 1 Core, 1 Block, 3 Fuels, 1 Block, 1 Thruster, 9 Blocks, 1 Thruster, 1 Block, 3 Fuels, 1 Block, 1 Gyroscope, 1 Block, 3 Fuels, 2 Blocks, 3 Fuels, 1 Block, 1 Gyroscope, 1 Block, 3 Fuels, 2 Blocks, 3 Fuels, 1 Block, 1 Gyroscope, 1 Block, 3 Fuels, 4 Blocks, 1 Fuel, 3 Blocks, 1 Fuel, 3 Blocks, 3 Thrusters, 1 Block, 3 Thrusters, 1 Block, 3 Thrusters",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "14 > [[X]] > 0\n14 > [[Y]] > 0",
+      "coverBinaryId": 137345822398396,
+      "stubGenerator": "read X:int\nread Y:int\nread R:int\nloop Y read ROW:string(99)\nwrite answer",
+      "inputDescription": "<<Line 1:>> An integer [[X]] for the width of the grid.\n<<Line 2:>> An integer [[Y]] for the height of the grid.\n<<Line 3:>> An integer [[R]] that is either 0 or 1, corresponding to 0° and 180° rotation.\n<<Next [[Y]] lines:>> A string of [[X]] characters representing the drone.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "A string containing the Run-Length encoded data in the format [[#Tile occurrences]] [[Tile name]], and <<followed by>> {{s}} <<if plural>>, separated by a comma and a space.\n<<If no ship exists, print>> {{Nothing}}"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Inspired by the modular ship builder game &quot;Droneboi&quot; by Beau.<br>Generate a save-file for your drone from an ASCII represenation, though make sure to flip it upright first!<br><br>Given a representation of a drone rotated 0&deg; or 180&deg;, rotate it back into the correct orientation of 0&deg;, and compress it using Run-Length encoding. <br><br>Each character should be replaced by its corresponding tile name in the output.<br><strong>However, junk tiles (any characters other than </strong><const>#</const>, <const>^</const>, <const>@</const>, <const>+</const>, <strong>and</strong> <const>$</const>, <strong>including newlines and spaces) should be ignored and should not interrupt the encoding.</strong><br><br>The following are the valid tiles and their names:<br>- <const>#</const> Block<br>- <const>^</const> Thruster<br>- <const>@</const> Gyroscope<br>- <const>+</const> Fuel<br>- <const>$</const> Core <br><br><strong>Run-Length Encoding:</strong> https://en.wikipedia.org/wiki/Run-length_encoding</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>X</var> for the width of the grid.<br><strong>Line 2:</strong> An integer <var>Y</var> for the height of the grid.<br><strong>Line 3:</strong> An integer <var>R</var> that is either 0 or 1, corresponding to 0&deg; and 180&deg; rotation.<br><strong>Next <var>Y</var> lines:</strong> A string of <var>X</var> characters representing the drone.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">A string containing the Run-Length encoded data in the format <var>#Tile occurrences</var> <var>Tile name</var>, and <strong>followed by</strong> <const>s</const> <strong>if plural</strong>, separated by a comma and a space.<br><strong>If no ship exists, print</strong> <const>Nothing</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">14 &gt; <var>X</var> &gt; 0<br>14 &gt; <var>Y</var> &gt; 0</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\n3\n0\n.@.\n+$+\n^.^</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1 Gyroscope, 1 Fuel, 1 Core, 1 Fuel, 2 Thrusters</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 31184308213,
+  "avatar": 136927547925397,
+  "commentCount": 31,
+  "upVotes": 8,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 1077216,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1739544218416,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,177 @@
+{
+  "id": 7872,
+  "activeVersion": 64,
+  "score": 9,
+  "votableId": 21437970,
+  "codingamerId": 4471038,
+  "views": 178,
+  "commentableId": 21330284,
+  "title": "The parking",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "nguyen.lam",
+  "publicHandle": "7872f3889d6fd22df8d52f824f60f5e0a855",
+  "codingamerHandle": "a9fd64833d93b2840c44b26d9d84493e8301744",
+  "lastVersion": {
+    "version": 64,
+    "autocloseTime": 1643703169974,
+    "data": {
+      "title": "The parking",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "polymorphism"
+          }
+        }
+      ],
+      "solution": "import java.io.File;\nimport java.io.FileNotFoundException;\nimport java.time.LocalTime;\nimport java.time.temporal.ChronoUnit;\nimport java.util.HashMap;\nimport java.util.Scanner;\n\nenum vehiculeType{MOTO,CAR};\nenum vehiculeStatus{SKIPPED, PARKED, OUT};\n\nabstract class Vehicule {\n\tLocalTime in = null;\n\tLocalTime out = null;\n\tvehiculeStatus status;\n\tString registration;\n\tdouble cumulPrice = 0;\n\tdouble rate =0;\n\tpublic void setStatus(vehiculeStatus pStatus) {status =pStatus;\t}\t\n\tpublic void setOutTime(LocalTime l) {out  =l;}\n\tpublic LocalTime getOutTime() {return out;}\n\tpublic vehiculeStatus getStatus() {\t\treturn status;\t}\t\n\tpublic void addCumulPrice(double p) {cumulPrice += p;}\n\tpublic double getCumulPrice() {return cumulPrice;}\n\tpublic void setInTime(LocalTime l) { in = l;}\n\t\n}\ninterface Vehicules{\n\tvehiculeType getType();\n\tdouble getPrice();\n\tpublic vehiculeStatus getStatus();\n\tpublic void setOutTime(LocalTime l);\n\tpublic LocalTime getOutTime();\n\tpublic void setStatus(vehiculeStatus pStatus);\n\tpublic void addCumulPrice(double p);\n\tpublic double getCumulPrice();\n\tpublic void setInTime(LocalTime l);\n}\n\nclass Car extends Vehicule implements Vehicules{\t\n\t\n\tCar(LocalTime pIn, String pReg,vehiculeStatus pStatus){\n\t\tin = pIn;\n\t\tregistration = pReg;\n\t\tstatus = pStatus;\n\t}\n\t@Override\n\tpublic double getPrice() {\n\t\tdouble price = cumulPrice;\n\t\tif(!status.equals(vehiculeStatus.SKIPPED)) {\n\t\t\tif( out == null) price = 30;\n\t\t\telse {\n\t\t\t\tfloat minutes = in.until(out, ChronoUnit.MINUTES);\t\t\t\n\t\t\t\tif( minutes >= 30) price = cumulPrice + Math.ceil(minutes / 15) * 1.2;\n\t\t\t}\n\t\t}\t\t\n\t\treturn price;\n\t}\t\n\t@Override\n\tpublic vehiculeType getType() {\treturn vehiculeType.CAR;}\n}\n\nclass Moto extends Vehicule implements Vehicules{\n\tMoto(LocalTime pIn, String pReg,vehiculeStatus pStatus){\n\t\tin = pIn;\n\t\tregistration = pReg;\n\t\tstatus = pStatus;\n\t}\n\t@Override\n\tpublic double getPrice() {\n\t\tdouble price = cumulPrice;\n\t\tif(!status.equals(vehiculeStatus.SKIPPED)) {\n\t\t\tif( out == null) price = 30;\n\t\t\telse {\n\t\t\t\tfloat minutes = in.until(out, ChronoUnit.MINUTES);\t\t\t\n\t\t\t\tif( minutes >= 30) price = cumulPrice +  Math.ceil(minutes / 15) * 0.7;\t\t\t\n\t\t\t}\n\t\t}\n\t\treturn price;\n\t}\t\n\t@Override\n\tpublic vehiculeType getType() {\treturn vehiculeType.MOTO;}\t\n}\n\nclass Parking extends HashMap<String, Vehicules>{}\n\npublic class Solution {\n    public static void main(String args[]) throws FileNotFoundException {\n    \tParking p = new Parking();\n    \tScanner in = new Scanner(System.in);\n    \tint H = in.nextInt();\n        if (in.hasNextLine())in.nextLine();\n        for (int i = 0; i < H; i++) {\n            String ROW = in.nextLine();\n            String s[] = ROW.split(\" \");\n            if(s[1].equals(\">\")) \tvehiculeComming(p, s);\n            else vehiculeGoOut(p, s);            \n        }\n        int nbCarsSkip = getNbVehiculeSkipped(p, vehiculeType.CAR);\n        int nbMotoSkip = getNbVehiculeSkipped(p, vehiculeType.MOTO);\n        System.out.println(Math.round(computePrice(p)*100.0)/100.0+\" \"+nbCarsSkip+\" \"+nbMotoSkip);\n     }\n\n    private static int getNbVehiculeSkipped(Parking p, vehiculeType pType) {\n    \tint nb = 0;\n\t\tfor(Vehicules v:p.values()) { if(v.getType().equals(pType) && v.getStatus().equals(vehiculeStatus.SKIPPED))  nb ++;}\n\t\treturn nb;\n\t}\n\n\tprivate static double computePrice(Parking p) {\n    \tdouble price = 0;\n\t\tfor(Vehicules v:p.values()) { if( !v.getStatus().equals(vehiculeStatus.SKIPPED) ) price += v.getPrice();}\n\t\treturn price;\n\t}\n\n\tpublic static int getNbCarsParked(Parking p) {\n    \tint nb = 0;\n    \tfor(Vehicules v :p.values()) if(v.getType().equals(vehiculeType.CAR) && v.getStatus().equals(vehiculeStatus.PARKED)) nb++;    \t\t\n    \treturn nb;\n    }\n\n    public static int getNbMotoParked(Parking p) {\n    \tint nb = 0;\n    \tfor(Vehicules v :p.values()) if(v.getType().equals(vehiculeType.MOTO)&& v.getStatus().equals(vehiculeStatus.PARKED)) nb++;    \t\t\n    \treturn nb;\n    }\n    \n\tprivate static void vehiculeGoOut(Parking p, String[] s) {\n\t\tfor(int i = 2;i<s.length; i++) {\n\t\t\tVehicules v= p.get(s[i]);\n\t\t\tv.setOutTime(LocalTime.parse(s[0]));\n\t\t\tv.setStatus(vehiculeStatus.OUT);\n\t\t}\n\t}\n\n\tprivate static void vehiculeComming(Parking p, String[] s) {\n\t\tLocalTime t=LocalTime.parse(s[0]);\n\t\tfor(int i = 2;i<s.length; i++) {\n\t\t\tif(s[i].contains(\"M\")) {\n\t\t\t\tif( getNbMotoParked(p)>=2) p.put(s[i], new Moto(t,s[i],vehiculeStatus.SKIPPED));\t\n\t\t\t\telse {\n\t\t\t\t\tVehicules v =p.get(s[i]);\n\t\t\t\t\tif( v == null) p.put(s[i], new Moto(t,s[i],vehiculeStatus.PARKED));\n\t\t\t\t\telse {\n\t\t\t\t\t\tv.addCumulPrice(v.getPrice());\n\t\t\t\t\t\tv.setStatus(vehiculeStatus.PARKED);\n\t\t\t\t\t\tv.setInTime(t);\n\t\t\t\t\t}\t\t\t\t\t\n\t\t\t\t}\n\t\t\t}else if(s[i].contains(\"C\")) {\n\t\t\t\tif( getNbCarsParked(p)>=7) p.put(s[i], new Car(t,s[i],vehiculeStatus.SKIPPED));\n\t\t\t\telse {\n\t\t\t\t\tVehicules v =p.get(s[i]);\n\t\t\t\t\tif( v == null) p.put(s[i], new Car(t,s[i],vehiculeStatus.PARKED));\n\t\t\t\t\telse {\n\t\t\t\t\t\tv.addCumulPrice(v.getPrice());\n\t\t\t\t\t\tv.setStatus(vehiculeStatus.PARKED);\n\t\t\t\t\t\tv.setInTime(t);\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\t\t\n\t\t\n\t}\n}\n",
+      "statement": "You have to calculate the total parking fees and count the number of vehicles which cannot be parked because no empty parking slot is available.\n\nThere are 7 car slots and 2 motorbike slots in the car park.\n`______________________________________________________\n|............|............|.............|..MOTORBIKE..\n|............|............|.............|-------------\n|....CAR.....|....CAR.....|.....CAR.....|..MOTORBIKE..\n|............|............|.............|\n|............|............|.............|\n|\n|                                      \n|\n|\n|\n|............|............|.............|.............|\n|............|............|.............|.............|\n|....CAR.....|....CAR.....|.....CAR.....|.....CAR.....|\n|............|............|.............|.............|\n|............|............|.............|.............|\n______________________________________________________\n`\nParking is charged at the following rates:\n- {{1.2}} euros per {{15}} minutes (note) for cars\n- {{0.7}} euros per {{15}} minutes (note) for motorbikes\n- Free if a vehicle stays for strictly less than {{30}} minutes\n- Full day (a vehicle that is still in the car park at the end of the day) fixed-price: {{30}} euros\nNote: Parking time is rounded <<up>> to the nearest 15 minute interval. For example, the parking fee for 35 minutes is equal to 45 multiplied by the relevant rate.\n\nExample:\n10:00 > C456 M001 M002 M003 means at 10:00 1 car and 3 motorbikes arrive at the car park. Only the car and the 2 first motorbikes will be parked. The third motorbike cannot be parked since there are only 2 motorbike slots.\n11:00 < C456 M001 M002 means at 11:00 the car and the 2 motorbikes leave the car park.\n\nOutput will be:\n10.4 0 1\n- 10.4 is the total parking fees (in euros) for the day, which is the sum of\n(a) parking fee from the car: 1.2 euros * 4  (1 hour = 15 minutes * 4)\n(b) parking fees from the 2 motorbikes: 0.7 euros * 4 + 0.7 euros * 4\n- 0 is the total number of cars which cannot be parked\n- 1 is the total number of motorbikes which cannot be parked",
+      "testCases": [
+        {
+          "title": "1: Sample",
+          "isTest": true,
+          "testIn": "2\n10:00 > C456 M001 M002 M003\n11:00 < C456 M001 M002",
+          "testOut": "10.4 0 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "2\n10:00 > C456 M001 M002 M003\n11:00 < C456 M001 M002",
+          "testOut": "10.4 0 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "2: Cars only with parking available",
+          "isTest": true,
+          "testIn": "5\n10:00 > C001 C002\n11:00 < C002\n11:45 < C001\n14:00 > C005\n14:45 < C005",
+          "testOut": "16.8 0 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "5\n10:05 > C041 C002\n11:30 < C002\n11:35 < C041\n14:00 > C006\n14:45 < C006",
+          "testOut": "18.0 0 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3: Motorbikes only with parking available",
+          "isTest": true,
+          "testIn": "5\n10:00 > M001 M002\n11:00 < M002\n11:45 < M001\n14:00 > M005\n14:45 < M005",
+          "testOut": "9.8 0 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3 bis",
+          "isTest": false,
+          "testIn": "5\n09:00 > M001 M902 M777\n11:17 < M902\n11:45 < M001\n14:00 > M005\n14:45 < M005",
+          "testOut": "16.8 0 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4: cars + motorbikes + 1 fixed price",
+          "isTest": true,
+          "testIn": "8\n10:00 > C001 C002 M596\n11:00 < C002\n11:45 < C001 M596\n14:00 > C005\n14:25 > C174 C658 C856 C999\n14:45 < C005\n15:33 > C845\n17:43 < C174 C845",
+          "testOut": "139.3 0 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "8\n09:00 > C001 C002 M596\n10:11 < C002\n11:45 < C001 M596\n13:50 > C005\n14:25 > C174 C658 C856 C999\n14:45 < C005\n15:33 > C855\n17:43 < C174 C855",
+          "testOut": "149.3 0 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5: cars + motorbikes + fixed price + parking not available",
+          "isTest": true,
+          "testIn": "12\n09:06 > C001 C052 M796\n09:42 < C052\n10:45 < C001 M796\n13:16 > C005 C568 C235 C485\n14:25 > C174 C658 C856 C999\n14:45 < C005\n15:00 < C658\n15:01 > C888 C889 C890 C891 C892 C893 C894 C895 C896 C897 C898 C666\n15:08 < C888\n15:33 > C845\n16:55 < C485\n17:43 < C174 C845",
+          "testOut": "193.3 11 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "12\n09:03 > C001 C052 M796\n09:12 < C052\n12:45 < C001 M796\n14:16 > C005 C568 C235 C485\n14:25 > C174 C658 C856 C999\n14:45 < C005\n15:00 < C658\n15:05 > C888 C889 C890 C891 C892 C893 C894 C895 C896 C897 C898 C666\n15:08 < C888\n15:38 > C845\n16:59 < C485\n17:43 < C174 C845",
+          "testOut": "192.9 11 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6: 1 car no fee",
+          "isTest": true,
+          "testIn": "8\n09:13 > C888\n09:42 < C888\n10:45 > C888\n11:12 < C888\n12:18 > C888\n12:25 < C888\n12:58 > C888\n13:27 < C888",
+          "testOut": "0.0 0 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "8\n09:13 > C888\n09:42 < C888\n10:45 > C888\n11:12 < C888\n12:18 > C888\n12:25 < C888\n12:58 > C888\n13:27 < C888",
+          "testOut": "0.0 0 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "7: cars + motorbikes + fixed price + parking not available",
+          "isTest": true,
+          "testIn": "22\n09:13 > C001 C052 M796\n10:42 < C052\n10:45 < C001 M796\n12:16 > C005 C568 C235 C485\n14:35 > C174 C658 C856\n14:49 < C005\n15:02 < C856\n15:05 < C658\n15:06 > C888 C889 C890\n15:08 < C888\n15:33 > C845\n15:34 < C485\n16:43 < C174 C845\n16:49 > M174 M45845\n16:52 > M574 M0545 M582\n17:43 < M174 M45845\n17:48 > C174 C845 C382\n18:10 > M999\n18:13 < C174 C845\n18:14 < C889 C568\n18:33 < C235\n18:44 < M999",
+          "testOut": "213.0 0 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "24\n09:13 > C001 C052 M796\n10:42 < C052\n10:45 < C001 M796\n10:56 > C2589 M4568 C485\n11:08 < C2589 M4568 C485\n12:16 > C005 C568 C235 C485\n14:35 > C174 C658 C856\n14:49 < C005\n15:02 < C856\n15:04 < C658\n15:05 > C888 C889 C890\n15:32 < C888\n15:33 > C845\n15:34 < C485\n16:43 < C174 C845\n16:49 > M174 M45845\n16:52 > M574 M0545 M582\n17:43 < M174 M45845\n17:48 > C174 C845 C382\n18:10 > M999\n18:23 < C174 C845\n18:24 < C889 C568\n18:43 < C235\n19:44 < M999",
+          "testOut": "223.0 0 3",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "All the times provided in the input refer to the <<same>> day.\nAssume all parking slots are empty at the beginning of the day.",
+      "coverBinaryId": 75873502712977,
+      "stubGenerator": "read H:int\nloop H read ROW:string(1024)\nwrite 250 2 5\n",
+      "inputDescription": "<<Line 1:>> An integer [[H]] for the number of lines to read.\n<<Next [[H]] lines:>> Details of the cars and motorbikes which arrive at or depart from the park in the format of {{time}} {{direction}} {{vehicles}}, e.g. 10:05 > C111 C222 C123 M485 M123.\n{{time}}: in {{HH:MM}} 24-hour format\n{{direction}}: {{>}} for arrival, {{<}} for departure\n{{vehicles}}: list of registration numbers, one for each vehicle. Registration numbers of cars start with {{C}}. Registration numbers of motorbikes start with {{M}}.",
+      "solutionLanguage": "Java",
+      "outputDescription": "{{total_fees}} {{cars_not_parked}} {{motorbikes_not_parked}}\n{{total_fees}}: total parking fees in euros, shown with 1 decimal place\n{{cars_not_parked}}: total number of cars that cannot be parked\n{{motorbikes_not_parked}}: total number of motorbikes that cannot be parked"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You have to calculate the total parking fees and count the number of vehicles which cannot be parked because no empty parking slot is available.<br><br>There are 7 car slots and 2 motorbike slots in the car park.<br><pre style=\"font-family: monospace\">______________________________________________________<br>|............|............|.............|..MOTORBIKE..<br>|............|............|.............|-------------<br>|....CAR.....|....CAR.....|.....CAR.....|..MOTORBIKE..<br>|............|............|.............|<br>|............|............|.............|<br>|<br>|                                      <br>|<br>|<br>|<br>|............|............|.............|.............|<br>|............|............|.............|.............|<br>|....CAR.....|....CAR.....|.....CAR.....|.....CAR.....|<br>|............|............|.............|.............|<br>|............|............|.............|.............|<br>______________________________________________________<br></pre><br>Parking is charged at the following rates:<br>- <const>1.2</const> euros per <const>15</const> minutes (note) for cars<br>- <const>0.7</const> euros per <const>15</const> minutes (note) for motorbikes<br>- Free if a vehicle stays for strictly less than <const>30</const> minutes<br>- Full day (a vehicle that is still in the car park at the end of the day) fixed-price: <const>30</const> euros<br>Note: Parking time is rounded <strong>up</strong> to the nearest 15 minute interval. For example, the parking fee for 35 minutes is equal to 45 multiplied by the relevant rate.<br><br>Example:<br>10:00 &gt; C456 M001 M002 M003 means at 10:00 1 car and 3 motorbikes arrive at the car park. Only the car and the 2 first motorbikes will be parked. The third motorbike cannot be parked since there are only 2 motorbike slots.<br>11:00 &lt; C456 M001 M002 means at 11:00 the car and the 2 motorbikes leave the car park.<br><br>Output will be:<br>10.4 0 1<br>- 10.4 is the total parking fees (in euros) for the day, which is the sum of<br>(a) parking fee from the car: 1.2 euros * 4  (1 hour = 15 minutes * 4)<br>(b) parking fees from the 2 motorbikes: 0.7 euros * 4 + 0.7 euros * 4<br>- 0 is the total number of cars which cannot be parked<br>- 1 is the total number of motorbikes which cannot be parked</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>H</var> for the number of lines to read.<br><strong>Next <var>H</var> lines:</strong> Details of the cars and motorbikes which arrive at or depart from the park in the format of <const>time</const> <const>direction</const> <const>vehicles</const>, e.g. 10:05 &gt; C111 C222 C123 M485 M123.<br><const>time</const>: in <const>HH:MM</const> 24-hour format<br><const>direction</const>: <const>&gt;</const> for arrival, <const>&lt;</const> for departure<br><const>vehicles</const>: list of registration numbers, one for each vehicle. Registration numbers of cars start with <const>C</const>. Registration numbers of motorbikes start with <const>M</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><const>total_fees</const> <const>cars_not_parked</const> <const>motorbikes_not_parked</const><br><const>total_fees</const>: total parking fees in euros, shown with 1 decimal place<br><const>cars_not_parked</const>: total number of cars that cannot be parked<br><const>motorbikes_not_parked</const>: total number of motorbikes that cannot be parked</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">All the times provided in the input refer to the <strong>same</strong> day.<br>Assume all parking slots are empty at the beginning of the day.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\n10:00 &gt; C456 M001 M002 M003\n11:00 &lt; C456 M001 M002</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">10.4 0 1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 128301173640,
+  "avatar": 115730569738380,
+  "commentCount": 14,
+  "upVotes": 11,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 622111,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1642428990298,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

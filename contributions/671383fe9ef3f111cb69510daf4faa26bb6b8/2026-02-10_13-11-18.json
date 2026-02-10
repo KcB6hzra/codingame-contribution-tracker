@@ -1,0 +1,482 @@
+{
+  "id": 67138,
+  "activeVersion": 55,
+  "score": 11,
+  "votableId": 30547397,
+  "codingamerId": 4433844,
+  "views": 326,
+  "commentableId": 30410324,
+  "title": "Square Spiral for Alien Contact 👽",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Lisa-Has-Ideas",
+  "publicHandle": "671383fe9ef3f111cb69510daf4faa26bb6b8",
+  "codingamerHandle": "6057618d773e6e27a20abefa031c4e674483344",
+  "lastVersion": {
+    "version": 55,
+    "autocloseTime": 1699903661165,
+    "data": {
+      "title": "Square Spiral for Alien Contact 👽",
+      "topics": [
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 51,
+          "parentTopicId": 93
+        },
+        {
+          "id": 112,
+          "handle": "string-manipulation",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "String manipulation",
+            "2": "String manipulation"
+          },
+          "puzzleCount": 55,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "using System; \nusing System.IO; \nusing System.Text; \nusing System.Collections.Generic; \n\npublic class Program\n{\n\tpublic static char dot = ' ';\n\tpublic static char[,] Grid;\n\tpublic static int Hi;\n\tpublic static int Wi;\n\tpublic static int currentLin;\n\tpublic static int currentPos;\n\tpublic static int counter = 0;\n\tpublic static string material = \"\";\n\t\n\tpublic static string currentDirection;\n\tpublic static string u = \"up\";\n\tpublic static string d = \"down\";\n\tpublic static string l = \"left\";\n\tpublic static string r = \"right\";\n\tpublic static string rotationType;\n\tpublic static string cw = \"clockwise\";\n\tpublic static string ccw = \"counter-clockwise\";\n\t\n\tpublic static void Main()\n\t{\n        counter = 0;\n        material = \"\";\n        var dirRay = \"right down left up\".Split();\n        string input = Console.ReadLine();\n    \n        var inputRay = input.Split();\n        int inputSize = int.Parse(inputRay[0]);\n\n        string startingCorner = inputRay[1];\n        rotationType = inputRay[2];\n\n        currentLin = 0; \n        currentPos = 0;\n        if (startingCorner.Contains(\"bottom\")) currentLin = inputSize - 1; \n        if (startingCorner.Contains(\"Right\")) currentPos = inputSize - 1;\n        if (startingCorner == \"topLeft\") currentDirection = r;\n        if (startingCorner == \"topRight\") currentDirection = d;\n        if (startingCorner == \"bottomRight\") currentDirection = l;\n        if (startingCorner == \"bottomLeft\") currentDirection = u;\n    \n        if (rotationType == ccw)\n        {\n            int dirRayIndex = Array.IndexOf(dirRay, currentDirection);\n            dirRayIndex++;\n            if (dirRayIndex == 4) dirRayIndex = 0;\n            currentDirection = dirRay[dirRayIndex];\n\n            Array.Reverse(dirRay); // <<< THEN (this has to come afterwards)\n        }\n    \n        string datapoint1 = inputRay[3];\n        string datapoint2 = inputRay[4];\n\n        char charDP1 = datapoint1[0];\n        int intDP1 = int.Parse(datapoint1.Substring(1));\n        char charDP2 = datapoint2[0];\n        int intDP2 = int.Parse(datapoint2.Substring(1));\n\n        int diff1 = (int)charDP2 - (int)charDP1;\n        int diff2 = intDP2 - intDP1; \n\n        material = \"\";\n\n        char ch = charDP1;\n        int inn = intDP1;\n    \n        while ((int) ch >= 'A' && ch <= 'Z' && inn > 0 )\n        {\n            material += new String(ch,inn);\n            //prep for next round thru this loop:\n            inn = inn + diff2;\n            int i = ((int)ch) + diff1;\n            ch = (char)i;\n        } \n    \n        Hi = Wi = inputSize;\n        Grid = new char[Hi,Wi];\n\n        InitGrid();\n\n        Grid[currentLin, currentPos] = material[counter++];\n\n        int printHowManyEstimate = (inputSize * inputSize);// probably significantly less than this\n        for (int times = 0 ; times < printHowManyEstimate ; times++)\n        {\n            bool boo = CanIMoveInCurrentDirection();\n            if (boo) \n            {\n                MoveInCurrentDirection();\n            }\n            else\n            {\t\n                int i = Array.IndexOf(dirRay,currentDirection);\n                i++;\n                if (i > 3) i = 0;\n                currentDirection = dirRay[i];\n            }\n        }\n        PrintGridOnly31();\n\t}\n\t\n\tpublic static void PrintGridOnly31()\n\t{\n\t\tif (Hi > 31) Hi = 31;\n\t\tif (Wi > 31) Wi = 31;\n\t\tfor (int lin = 0 ; lin < Hi ; lin++)\n\t\t{\n\t\t\tfor (int pos = 0 ; pos < Wi ; pos++)\n\t\t\t{\n\t\t\t\tchar ch = Grid[lin,pos];\n\t\t\t\tConsole.Write(ch);\n\t\t\t}\n\t\t\tConsole.WriteLine();\n\t\t}\n\t}\n\t\n\tpublic static bool CanIMoveInCurrentDirection()\n\t{\n\t\tbool nextSpotIsAvailable = false;\n\t\tint nextLin = currentLin; // until proven otherwise in following\n\t\tint nextPos = currentPos; // until proven otherwise in following\n\t\tif (currentDirection == d) nextLin++;\n\t\tif (currentDirection == u) nextLin--;\n\t\tif (currentDirection == l) nextPos--; \n\t\tif (currentDirection == r) nextPos++;\n\t\tif (nextLin < 0 || nextLin >= Hi || nextPos < 0 || nextPos >= Wi) \n\t\t{\n\t\t\t//nextSpotIsAvailable = false;\n\t\t}\n\t\telse\n\t\t{\n\t\t\tchar nextCh = Grid[nextLin,nextPos];\n\t\t\tif (nextCh == dot)\n\t\t\t{\n\t\t\t\tnextSpotIsAvailable = true;\n\t\t\t}\n\t\t\telse\n\t\t\t{\n\t\t\t\t//nextSpotIsAvailable = false;\n\t\t\t}\n\t\t}\n\t\t\n\t\tif (nextSpotIsAvailable) // now that it's passed the first test, now make sure that it has enough empty space around it\n\t\t{\n\t\t\tint skippedToNextLin = nextLin;\n\t\t\tint skippedToNextPos = nextPos;\n\t\t\tif (currentDirection == d) skippedToNextLin++;\n\t\t\tif (currentDirection == u) skippedToNextLin--;\n\t\t\tif (currentDirection == l) skippedToNextPos--; \n\t\t\tif (currentDirection == r) skippedToNextPos++;\n\n\t\t\tif (skippedToNextLin < 0 || skippedToNextLin >= Hi || skippedToNextPos < 0 || skippedToNextPos >= Wi) // if you skipped to this, you'd be off the edge\n\t\t\t{\n\t\t\t\treturn true;\n\t\t\t}\n\t\t\telse\n\t\t\t{\n\t\t\t\tchar skippedToNextCh = Grid[skippedToNextLin,skippedToNextPos];\n\t\t\t\tif (skippedToNextCh == dot)                           // if its empty\n\t\t\t\t{\n\t\t\t\t\treturn true;\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\treturn false;\n\t}\n\t\n\tpublic static void MoveInCurrentDirection()\n\t{\n\t\tint nextLin = currentLin; // until proven otherwise in following\n\t\tint nextPos = currentPos; // until proven otherwise in following\n\t\tif (currentDirection == d) nextLin++;\n\t\tif (currentDirection == u) nextLin--;\n\t\tif (currentDirection == l) nextPos--; \n\t\tif (currentDirection == r) nextPos++;\n\t\tcurrentLin = nextLin;\n\t\tcurrentPos = nextPos;\n\n\t\tif (counter < material.Length)\n\t\tGrid[currentLin,currentPos] = material[counter++];\n\t}\n\t\n\tpublic static void InitGrid()\n\t{\n\t\tfor (int lin = 0 ; lin < Hi ; lin++)\n\t\t{\n\t\t\tfor (int pos = 0 ; pos < Wi ; pos++)\n\t\t\t{\n\t\t\t\tchar ch = dot;\n\t\t\t\tGrid[lin,pos] = ch;\n\t\t\t}\n\t\t}\n\t}\n}",
+      "statement": "<<Background:>>\nIn the 1997 movie \"Contact\", Jodie Foster portrays a SETI scientist who finds evidence of extraterrestrial life and is chosen to make first contact.\n\nHer group is given cryptic instructions** for how aliens want them to build a machine to facilitate this contact.\n(Maybe that worked, maybe not; no spoilers here.)\n\n\n<<This scenario:>>\nIn a sequel to that story, the aliens once again attempt to communicate how they want us Earthlings to build something: \nThis time it's a Square Spiral ([[squareSpiral]]), as a potential-vehicle for some wild space-time multiverse travel adventures.\n\n\n<<Your task:>>\nFigure out what they mean, and build it.\n\n\n<<What to output:>>\nThe output is generally the entire [[squareSpiral]].\nHowever if the [[sideSize]] is greater than 31, just output the top-left section (of size 31x31) of [[squareSpiral]].\n\nCaution: Letters don't wrap-around.  If you get to either end of the alphabet, there is no more \"material\" available after that.\n(This variation is shown in Test/Validator #21 and #22)\n\n\n\n~ ~ ~ \n**NOT needed to solve this puzzle but see this clip for context: https://youtu.be/Q399v-pMG30?t=88",
+      "testCases": [
+        {
+          "title": "Test 1 = letter+ and #same, cw",
+          "isTest": true,
+          "testIn": "9 topRight clockwise F4 G4",
+          "testOut": "LLLLMMM F\nK     M F\nK QQQ N F\nK P Q N F\nK P R N G\nJ P   N G\nJ POOOO G\nJ       G\nJIIIIHHHH",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "5 bottomLeft clockwise M3 N3",
+          "testOut": "NNOOO\nN   P\nM R P\nM R P\nM QQQ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2 = letter+ and #same, ccw",
+          "isTest": true,
+          "testIn": "11 topLeft counter-clockwise C15 D15",
+          "testOut": "C EEEEEEEEE\nC E       D\nC E GGGFF D\nC E G   F D\nC E G G F D\nC E G G F D\nC E GGG F D\nC F     F D\nC FFFFFFF D\nC         D\nCCCCCDDDDDD",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "7 bottomRight counter-clockwise B12 C12",
+          "testOut": "CBBBBBB\nC     B\nC DDD B\nC D D B\nC D D B\nC   C B\nCCCCC B",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3 = letter++ and #same, cw",
+          "isTest": true,
+          "testIn": "19 bottomRight clockwise B33 D33",
+          "testOut": "DDDDDDDDDDDDDDDDDDD\nD                 D\nD HHHHHHHHHHHHHHH D\nD H             H D\nB F JJJJJJJJJJJ H D\nB F J         J H D\nB F J LLLLLLL J H D\nB F J L     L J H D\nB F J L LLN L J H D\nB F J L L   L J H D\nB F J L LLLLL J H D\nB F J L       L H D\nB F J LLLLLLLLL H F\nB F J           H F\nB F JJJJJJJHHHHHH F\nB F               F\nB FFFFFFFFFFFFFFFFF\nB                  \nBBBBBBBBBBBBBBBBBBB",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "7 bottomLeft clockwise E4 H4",
+          "testOut": "HHKKKKN\nH     N\nH WWZ N\nE W Z N\nE W Z Q\nE T   Q\nE TTTQQ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4 = letter++ and #same, ccw",
+          "isTest": true,
+          "testIn": "9 topLeft counter-clockwise E14 H14",
+          "testOut": "E KKKHHHH\nE K     H\nE K NNN H\nE K N N H\nE K N N H\nE K   K H\nE KKKKK H\nE       H\nEEEEEEHHH",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "15 bottomRight counter-clockwise F40 H40",
+          "testOut": "FFFFFFFFFFFFFFF\nF             F\nF HHHHHHHHHHH F\nF H         H F\nF H JJJJJJJ H F\nF H J     J H F\nF J J LLL J H F\nF J J L L J H F\nF J J L L J H F\nF J J   J J H F\nF J JJJJJ J H F\nF J       J H F\nH JJJJJJJJJ H F\nH           H F\nHHHHHHHHHHHHH F",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5 = letter+ and #+, cw",
+          "isTest": true,
+          "testIn": "19 topLeft clockwise C3 D4",
+          "testOut": "CCCDDDDEEEEEFFFFFFG\n                  G\nLLLLLMMMMMMMMMMMM G\nL               M G\nL PPPPPPPQQQQQQ N G\nL P           Q N G\nL P RRSSSSSSS Q N G\nL P R       S Q N H\nL P R TTTTT S Q N H\nL P R T   T S Q N H\nK P R T TTT S Q N H\nK P R T     S Q N H\nK P R SSSSSSS Q N H\nK P R         Q N H\nK O RRRRRRRRRQQ N H\nK O             N I\nK OOOOOOOOOOOOONN I\nK                 I\nKKKJJJJJJJJJJIIIIII",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "19 bottomRight clockwise A2 B3",
+          "testOut": "HHHHHHHHIIIIIIIIIIJ\nH                 J\nG MMMMNNNNNNNNNNN J\nG M             N J\nG M PPPPQQQQQQQ N J\nG M P         Q N J\nG M P RRRRRRR Q N J\nG M P R     R Q O J\nG M P R SSS R Q O J\nG M P R S   S Q O J\nF M P R SSSSS Q O J\nF M P R       Q O K\nF M P RRRRRQQQQ O K\nF L P           O K\nF L PPPPOOOOOOOOO K\nF L               K\nF LLLLLLLLLLKKKKKKK\nE                  \nEEEEEDDDDDCCCCBBBAA",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6 = letter+ and #+, ccw",
+          "isTest": true,
+          "testIn": "15 bottomRight counter-clockwise I4 J5",
+          "testOut": "MMMMMMMLLLLLLLK\nM             K\nN RRRRRQQQQQQ K\nN R         Q K\nN R TTTTTTT Q K\nN R T     T Q K\nN R T UUU T Q J\nN R T U U T Q J\nN R T U U S Q J\nN R T   U S P J\nN R UUUUU S P J\nO S       S P I\nO SSSSSSSSS P I\nO           P I\nOOOOOOOPPPPPP I",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "23 topRight counter-clockwise H7 I8",
+          "testOut": "JJJJJJJJIIIIIIIIHHHHHHH\nJ                      \nK QQQQQQQQPPPPPPPPPPPPP\nK Q                   P\nK Q UUUUUUTTTTTTTTTTT P\nK Q U               T O\nK Q U WWWWWWWWWWWWW T O\nK Q U W           W T O\nK Q U W YYYYYYYYX W T O\nK Q U W Y       X W T O\nK Q U W Y ZZZZY X W T O\nK R U W Y Z   Y X V T O\nL R U X Y ZZZ Y X V T O\nL R U X Y     Y X V S O\nL R U X YYYYYYY X V S O\nL R U X         X V S O\nL R U XXXXXXXXXXX V S O\nL R U             V S O\nL R UVVVVVVVVVVVVVV S O\nL R                 S N\nL RRRRRRRRSSSSSSSSSSS N\nL                     N\nLMMMMMMMMMMMMNNNNNNNNNN",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 7 = letter+ and #++, cw",
+          "isTest": true,
+          "testIn": "15 bottomRight clockwise E2 F5",
+          "testOut": "IIIIIIIIIIIIJJJ\nI             J\nI KLLLLLLLLLL J\nH K         L J\nH K MMMMMMM L J\nH K M     M L J\nH K M MMN M L J\nH K M M   M L J\nH K M MMMMM L J\nH K M       L J\nH K MMMLLLLLL J\nH K           J\nH KKKKKKKKKKJJJ\nH              \nGGGGGGGGFFFFFEE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "11 topRight clockwise C4 D8",
+          "testOut": "FFFFFFFFF C\nF       F C\nF GGHHH G C\nF G   H G C\nF G H H G D\nF G H H G D\nF G HHH G D\nE G     G D\nE GGGGGGG D\nE         D\nEEEEEEEEEDD",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 8 = letter+ and #++, ccw",
+          "isTest": true,
+          "testIn": "11 topLeft counter-clockwise A1 B4",
+          "testOut": "A FFFFEEEEE\nB F       E\nB F GGGGG E\nB F G   G E\nB F G H G E\nC F G G G E\nC F GGG G E\nC F     G E\nC FFFFFGG E\nC         D\nCCDDDDDDDDD",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "15 bottomRight counter-clockwise O50 P60",
+          "testOut": "OOOOOOOOOOOOOOO\nO             O\nO PPPPPPPPPPP O\nO P         P O\nO P PPPPPPP P O\nO P P     P P O\nO P Q QQQ P P O\nO P Q Q Q P P O\nO P Q Q Q P P O\nO P Q   Q P P O\nO P QQQQQ P P O\nO P       P P O\nO PPPPPPPPP P O\nO           P O\nOOOOOOOOPPPPP O",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 9 = letter++ and #+, cw",
+          "isTest": true,
+          "testIn": "9 bottomRight clockwise V20 X21",
+          "testOut": "VVVVXXXXX\nV       X\nV XZZZZ X\nV X   Z X\nV X ZZZ X\nV X     X\nV XXXXXXX\nV        \nVVVVVVVVV",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "17 topRight clockwise C31 H32",
+          "testOut": "HHHHHHHHHHHHHHH C\nH             M C\nH RRRRRRRRRRR M C\nH R         R M C\nH R WWWWWWW R M C\nH R W     W R M C\nH R W WWW W R M C\nH M W W W W R M C\nH M W W W W R M C\nH M W W   W R M C\nH M W WWWWW R M C\nH M R       R M C\nH M RRRRRRRRR M C\nH M           M C\nH MMMMMMMMMMMMM C\nH               C\nHHCCCCCCCCCCCCCCC",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 10 = letter++ and #+, ccw",
+          "isTest": true,
+          "testIn": "25 topLeft counter-clockwise A59 E60",
+          "testOut": "A EEEEEEEEEEEEEEEEEEEEEEE\nA E                     E\nA E IIIIIIIIIIIIIIIIIII E\nA E I                 I E\nA E I MMMMMMMMMMMMMMM I E\nA E I M             M I E\nA E I M QQQQQQQQQQQ M I E\nA E I M Q         Q M I E\nA E M Q Q UUUUUUU Q M I E\nA E M Q Q U     U Q M I E\nA E M Q Q U UUU U Q M I E\nA E M Q Q U U U U Q M I E\nA E M Q Q U U U U Q M I E\nA E M Q Q U   U U Q M I E\nA E M Q Q UUUUU U Q M I A\nA E M Q Q       U Q M I A\nA E M Q QQQQQQQQQ Q M I A\nA E M Q           Q M I A\nA E M QQQQQQQQQQQQQ M I A\nA E M               M I A\nA E MMMMMMMMMMMMMMMMM I A\nA E                   I A\nA EEEIIIIIIIIIIIIIIIIII A\nA                       A\nAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "33 topRight counter-clockwise B90 F91",
+          "testOut": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\nB                              \nB FFFFFFFFFFFFFFFFFFFFFFFFFFFFF\nB F                            \nB F JJJJJJJJJJJJJJJJJJJJJJJJJJJ\nB F J                         J\nB F J NNNNNNNNNNNNNNNNNNNNNNN J\nB F J N                     N J\nB F J N RRRRRRRRRRRRRRRRRRR N J\nB F J N R                 R N J\nB F J N R VVVVVVVVVVVVVVV R N J\nB F J N R V             V R N J\nB F J N R V VVVVVVVVVVV V R N J\nB F N N R V V         V V R N J\nB F N N R V V ZZZZZZZ V V R N J\nB F N N R V V Z     Z V V R N J\nB F N R R V V Z ZZZ Z V V R N J\nB F N R R V V Z   Z Z V V R N J\nB F N R R V V ZZZZZ V V V R N J\nB F N R R V V       V V V R N J\nB F N R R V VVVVVVVVV V V R N J\nB F N R R V           V V R N J\nB F N R R VVVVVVVVVVVVV V R N J\nB F N R R               V R N J\nB F N R RRRRRRRRRRRRVVVVV R N J\nB F N R                   R N J\nB F N RRRRRRRRRRRRRRRRRRRRR N J\nB J N                       N J\nB J NNNNNNNNNNNNNNNNNNNNNNNNN J\nB J                           J\nB JJJJJJJJJJJJJJJJJJJJJJJJJJJJJ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 11 = letter++ and #++, cw",
+          "isTest": true,
+          "testIn": "7 topLeft clockwise F3 I6",
+          "testOut": "FFFIIII\n      I\nOOOOO I\nO   O L\nO ROO L\nO     L\nOLLLLLL",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "27 topLeft clockwise C5 H100",
+          "testOut": "CCCCCHHHHHHHHHHHHHHHHHHHHHH\n                          H\nHHHMMMMMMMMMMMMMMMMMMMMMM H\nH                       M H\nH MMMMMMMMMMMMMMMMMMMMM M H\nH M                   M M H\nH M MMMMMMMMMMMMMMMMM M M H\nH M M               M M M H\nH M M RRRRRRRRRRRRR M M M H\nH M M R           R M M M H\nH M M R RRRRRRRRR R M M M H\nH M M R R       R R M M M H\nH M M R R RRRRR R R M M M H\nH M M R R R   R R R M M M H\nH M M R R R RRR R R M M M H\nH M M R R R     R R M M M H\nH M M R R RRRRRRR R M M M H\nH M M R R         R M M M H\nH M M R RRRRRRRRRRR M M M H\nH M M R             M M M H\nH M M RRRRRRRMMMMMMMM M M H\nH M M                 M M H\nH M MMMMMMMMMMMMMMMMMMM M H\nH M                     M H\nH MMMMMMMMMMMMMMMMMMMMMMM H\nH                         H\nHHHHHHHHHHHHHHHHHHHHHHHHHHH",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 12 = letter++ and #++, ccw",
+          "isTest": true,
+          "testIn": "21 topRight counter-clockwise A10 D80",
+          "testOut": "DDDDDDDDDDDAAAAAAAAAA\nD                    \nD GGGGGGGDDDDDDDDDDDD\nD G                 D\nD G GGGGGGGGGGGGGGG D\nD G G             G D\nD G G GGGGGGGGGGG G D\nD G G G         G G D\nD G G G GGGGGGG G G D\nD G G G G     G G G D\nD G G G G JGG G G G D\nD G G G G   G G G G D\nD G G G GGGGG G G G D\nD G G G       G G G D\nD G G GGGGGGGGG G G D\nD G G           G G D\nD G GGGGGGGGGGGGG G D\nD G               G D\nD GGGGGGGGGGGGGGGGG D\nD                   D\nDDDDDDDDDDDDDDDDDDDDD",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "9 bottomRight counter-clockwise A10 D15",
+          "testOut": "DDDDDDDAA\nD       A\nD GGGGG A\nD G   G A\nD G J G A\nD G J G A\nD GJJ G A\nD     G A\nDGGGGGG A",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 13 = letter- and #+, cw",
+          "isTest": true,
+          "testIn": "21 topRight clockwise Z1 Y2",
+          "testOut": "PPPPPPOOOOOOOOOOOON Z\nP                 N Y\nP KKKKKKKKJJJJJJJ N Y\nP K             J N X\nP K HHHHHHHHHHG J N X\nP K H         G J N X\nQ K H FFFFFFF G J N W\nQ K H F     F G J N W\nQ K H F EEE F G J N W\nQ K H F E E F G J N W\nQ K H F E E F G J N V\nQ L H F E   F G J N V\nQ L H F EEFFF G J N V\nQ L H G       G I M V\nQ L I GGGGGGGGG I M V\nQ L I           I M U\nR L IIIIIIIIIIIII M U\nR L               M U\nR LLLLLLLLMMMMMMMMM U\nR                   U\nRRRRRSSSSSSSSTTTTTTTU",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "13 bottomRight clockwise Y5 X6",
+          "testOut": "VVUUUUUUUUUTT\nV           T\nV RRRRQQQQQ T\nV R       Q T\nV R PPPPP Q T\nV R P   P Q T\nV R P OOP Q T\nW R P     Q T\nW R PPPPQQQ T\nW R         S\nW RSSSSSSSSSS\nW            \nWWXXXXXXYYYYY",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 14 = letter- and #+, ccw",
+          "isTest": true,
+          "testIn": "25 topRight counter-clockwise Y2 X3",
+          "testOut": "TTTTTUUUUUUVVVVVWWWWXXXYY\nT                        \nT LLLLLLLLLLLLLMMMMMMMMMM\nS L                     M\nS L GGGGHHHHHHHHHHHHHHH M\nS K G                 H M\nS K G DEEEEEEEEEEEEEE H M\nS K G D             E H N\nS K G D CCCCCCCCCCC E H N\nS K G D C         C E I N\nS K G D C ABBBBBB C E I N\nR K G D B A     B C E I N\nR K G D B A AAA B C E I N\nR K G D B A   A B C E I N\nR K G D B AAAAA B C E I N\nR K G D B       B C F I N\nR K G D BBBBBBBBB C F I N\nR K G D           C F I N\nR K G DDDDDDDDDDDCC F I N\nR K G               F I N\nQ K GFFFFFFFFFFFFFFFF I O\nQ J                   I O\nQ JJJJJJJJJJJJJJJJIIIII O\nQ                       O\nQQQQQQPPPPPPPPPPPOOOOOOOO",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 14",
+          "isTest": false,
+          "testIn": "27 bottomRight counter-clockwise Z7 Y8",
+          "testOut": "UUUUUUUUVVVVVVVVVVVWWWWWWWW\nU                         W\nU OOOOOOOOOOOOOOOOOPPPPPP W\nU O                     P X\nU N KKKKKKKKKKKKKKKKKKK P X\nT N K                 L P X\nT N K HHHHHHHHHHHHHHI L P X\nT N K H             I L P X\nT N J H FFFFFFFFFFF I L P X\nT N J H F         G I L P X\nT N J H F EEEEEEE G I L P X\nT N J H F E     E G I L P X\nT N J H F E DDD E G I L P Y\nT N J H F E D D E G I L P Y\nT N J H F E D E E G I L Q Y\nT N J H F E   E E G I L Q Y\nT N J H F EEEEE E G I L Q Y\nT N J H F       E G I L Q Y\nS N J G FFFFFFFEE G I L Q Y\nS N J G           G I L Q Y\nS N J GGGGGGGGGGGGG I L Q Z\nS N J               I L Q Z\nS N JJJJJJJJJIIIIIIII L Q Z\nS M                   L Q Z\nS MMMMMMMMMMMMMMMMMMMLL Q Z\nS                       Q Z\nSSSSSSRRRRRRRRRRRRRRRQQQQ Z",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 15 = letter-- and #++, cw",
+          "isTest": true,
+          "testIn": "19 topLeft clockwise Z10 T25",
+          "testOut": "ZZZZZZZZZZTTTTTTTTT\n                  T\nNNNNNHHHHHHHHHHHH T\nN               H T\nN HHHHBBBBBBBBB H T\nN H           B H T\nN H BBBBBBBBB B H T\nN H B       B B H T\nN H B BBBBB B B H T\nN H B B   B B B H T\nN H B B BBB B B H T\nN H B B     B B H T\nN H B BBBBBBB B H T\nN H B         B H T\nN H BBBBBBBBBBB H T\nN H             H T\nN HHHHHHHHHHHHHHH T\nN                 N\nNNNNNNNNNNNNNNNNNNN",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 15",
+          "isTest": false,
+          "testIn": "9 bottomRight clockwise S12 P25",
+          "testOut": "PPPPPPPPP\nP       P\nP MMMMM P\nP M   M P\nP M MMM P\nS M     P\nS PPPPPPP\nS        \nSSSSSSSSS",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 16 = letter-- and #++, ccw",
+          "isTest": true,
+          "testIn": "11 topRight counter-clockwise M30 I70",
+          "testOut": "MMMMMMMMMMM\nM          \nM IIIIIIIII\nM I       I\nM I IIIII I\nM I I   I I\nM I III I I\nM I     I I\nM IIIIIII I\nM         I\nMMMMMMMMMMI",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 16",
+          "isTest": false,
+          "testIn": "25 topLeft counter-clockwise Z2 T50",
+          "testOut": "Z NNNNNNNNNNNNNNNNNNNNNNN\nZ N                     N\nT N HHHHHHHHHHHHHHHHHHH N\nT N H                 H N\nT N H HHHHHHHHHHHHHHH H N\nT N H H             H H N\nT N H H HHHHHHHHHHH H H N\nT N H H H         H H H N\nT N H H H BBBBBBB H H H N\nT N H H H B     B H H N N\nT N H H H B BBB B H H N N\nT N H H H B B B B H H N N\nT N H H H B B B B H H N N\nT N H H H B   B B H H N N\nT N H H H BBBBB B H H N N\nT N H H H       B H H N N\nT N H H BBBBBBBBB H H N N\nT N H H           H H N N\nT N H HHHHHHHHHHHHH H N N\nT N H               H N N\nT N HHHHHHHHHHHHHHHHH N N\nT N                   N T\nT NNNNNNNNNNNNNNNNNNNNN T\nT                       T\nTTTTTTTTTTTTTTTTTTTTTTTTT",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 17 = letter+ and #-, cw",
+          "isTest": true,
+          "testIn": "17 bottomRight clockwise M18 N17",
+          "testOut": "NNNOOOOOOOOOOOOOO\nN               O\nN RRRRRSSSSSSSS O\nN R           S P\nN R VVVVVVVWW S P\nN R V       W S P\nN R V YYYYZ W S P\nN R U Y   Z W T P\nN R U Y ZZZ W T P\nN R U X     W T P\nN R U XXXXXXW T P\nN Q U         T P\nN Q UUUUUTTTTTT P\nN Q             P\nN QQQQQQQQQQQPPPP\nM                \nMMMMMMMMMMMMMMMMM",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 17",
+          "isTest": false,
+          "testIn": "11 bottomLeft clockwise Q13 R12",
+          "testOut": "QQQRRRRRRRR\nQ         R\nQ UUUUUUU R\nQ T     U R\nQ T WWW U R\nQ T W W V S\nQ T W X V S\nQ T W   V S\nQ T VVVVV S\nQ T       S\nQ TTTSSSSSS",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 18 = letter+ and #-, ccw",
+          "isTest": true,
+          "testIn": "21 bottomRight counter-clockwise F40 G39",
+          "testOut": "GFFFFFFFFFFFFFFFFFFFF\nG                   F\nG HHHHHHHHHHHHHHHHH F\nG H               H F\nG H JJJJJJJJJJJJJ H F\nG H J           J H F\nG H J KKKKKKKKK J H F\nG I J K       K I H F\nG I J K LLLLL K I H F\nG I J K L   L K I H F\nG I J K L L L K I H F\nG I J K L L L K I H F\nG I J K LLL K K I H F\nG I J K     K K I H F\nG I J KKKKKKK K I H F\nG I J         K I H F\nG I JJJJJJJJJJK I H F\nG I             I H F\nG IIIIIIIIIIIIIII H F\nG                 H F\nGGGGGGGGGGGGGGGGGGG F",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 18",
+          "isTest": false,
+          "testIn": "5 topRight counter-clockwise L6 M5",
+          "testOut": "LLLLL\nL    \nM OON\nM   N\nMMMNN",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 19 = letter-- and #--, cw",
+          "isTest": true,
+          "testIn": "5 topRight clockwise Q9 M7",
+          "testOut": "MMM Q\nM M Q\nM I Q\nM   Q\nQQQQQ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 19",
+          "isTest": false,
+          "testIn": "7 bottomRight clockwise T12 R10",
+          "testOut": "RRRRRRR\nT     R\nT PPN R\nT P   R\nT PPPPP\nT      \nTTTTTTT",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 20 = letter-- and #--, ccw",
+          "isTest": true,
+          "testIn": "29 topLeft counter-clockwise Z80 W73",
+          "testOut": "Z WWWWWWWWWWWWWWWWWWWWWWWWWWW\nZ W                         W\nZ W TTTTTTTTTTTTTTTTTTTTTTT W\nZ W T                     T W\nZ W T NNNNNNNNNQQQQQQQQQQ T W\nZ W T N                 Q T Z\nZ W T N KKKKKKKKKKKKKKK Q T Z\nZ W T N K             K Q T Z\nZ W T N K HHHHHHHHHHH K Q T Z\nZ W T N K H         H K Q T Z\nZ W T N K H EEEEEEE H K Q T Z\nZ W T N K H E     E H K Q T Z\nZ W T N K H E BBB E H K Q T Z\nZ W T N K H E B E E H N Q T Z\nZ W T N K H E B E E H N Q T Z\nZ W Q N K H E   E E H N Q T Z\nZ W Q N K H EEEEE E H N Q T Z\nZ W Q N K H       E H N Q T Z\nZ W Q N K HHHHHEEEE H N Q T Z\nZ W Q N K           H N Q T Z\nZ W Q N KKKKKKKKKKKHH N Q T Z\nZ W Q N               N Q T Z\nZ W Q NNNNNNNNNNNNNNNNN Q T Z\nZ W Q                   Q T Z\nZ W QQQQQQQQQQQQQQQQQQQQQ T Z\nZ W                       T Z\nZ WWWWWWWWWWWWWWWWWTTTTTTTT Z\nZ                           Z\nZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 20",
+          "isTest": false,
+          "testIn": "33 topRight counter-clockwise W140 U125",
+          "testOut": "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW\nW                              \nW UUUUUUUUUUUUUUUUUWWWWWWWWWWWW\nW U                            \nW U UUUUUUUUUUUUUUUUUUUUUUUUUUU\nW U S                         U\nW U S SSSSSSSSSSSSSSSSSSSSSSS U\nW U S S                     S U\nW U S S QQQQQQQQQQQQQQQQQQQ S U\nW U S S Q                 Q S U\nW U S S Q OOOOOOOOOOOOOOO Q S U\nW U S S Q O             O Q S U\nW U S S Q O OOOOOOOOOOO O Q S U\nW U S S Q O O         O O Q S U\nW U S S Q O O MMMMMMM O O Q S U\nW U S S Q O O M     M O O Q S U\nW U S S Q O O M MMM M O O Q S U\nW U S S Q O O M   M M O O Q S U\nW U S S Q O O MMMMM M O O Q S U\nW U S S Q O O       M O Q Q S U\nW U S S Q O OOOOOOMMM O Q Q S U\nW U S S Q O           O Q Q S U\nW U S S Q OOOOOOOOOOOOO Q Q S U\nW U S S Q               Q Q S U\nW U S S QQQQQQQQQQQQQQQQQ Q S U\nW U S Q                   Q S U\nW U S QQQQQQQQQQQQQQQQQQQQQ S U\nW U S                       S U\nW U SSSSSSSSSSSSSSSSSSSSSSSSS U\nW U                           U\nW UUUUUUUUUUUUUUUUUUUUUUUUUUUUU",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 21 = whoa, that's not enough material, cw",
+          "isTest": true,
+          "testIn": "29 bottomRight clockwise A2 B3",
+          "testOut": "JJJJJJJJJKKKKKKKKKKKKLLLLLLLL\nJ                           L\nJ QQQQQQQQQQRRRRRRRRRRRRRRR L\nI Q                       R L\nI Q UUUUVVVVVVVVVVVVVVVVV R L\nI Q U                   V R L\nI Q U XXXXYYYYYYYYYYYYY V R M\nI Q U X               Y V S M\nI Q U X Z             Y V S M\nI Q U X Z             Y V S M\nI Q U X Z             Y V S M\nI P U X Z             Y W S M\nI P U X Z             Y W S M\nH P U X Z             Y W S M\nH P U X Z             Y W S M\nH P U X Z             Y W S M\nH P U X Z             Y W S M\nH P U X Z             Y W S M\nH P U X Z             Y W S M\nH P U X Z             Y W S M\nH P U X ZZZZZZZZZZZZZZZ W S N\nH P U X                 W S N\nG P U XXXXXXWWWWWWWWWWWWW S N\nG P T                     S N\nG P TTTTTTTTTTTTTTTTTTTTSSS N\nG P                         N\nG PPOOOOOOOOOOOOOOOONNNNNNNNN\nG                            \nGGFFFFFFFEEEEEEDDDDDCCCCBBBAA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 21",
+          "isTest": false,
+          "testIn": "7 topLeft clockwise R3 T4",
+          "testOut": "RRRTTTT\n      V\nZZZ   V\nZ     V\nZ     V\nZ     V\nZXXXXXX",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 22 - whoa, that's not enough material, ccw",
+          "isTest": true,
+          "testIn": "25 bottomRight counter-clockwise N28 M27",
+          "testOut": "MMMMMMMMMMMMMMMMMMMMMNNNN\nM                       N\nM IIIIIIIJJJJJJJJJJJJJJ N\nM I                   J N\nM I FFFFFFFFFFFFFGGGG J N\nM I F               G J N\nM I F CCCCCCCCCCCCD G J N\nL I F C           D G J N\nL I F C     AAAAA D G J N\nL I F C         A D G J N\nL I F C         A D G J N\nL I F C         A D G J N\nL I E B         A D G J N\nL I E B         A D G K N\nL I E B         A D G K N\nL I E B         A D G K N\nL I E B         A D G K N\nL I E B         A D G K N\nL I E BBBBBBBBBBA D G K N\nL H E             D G K N\nL H EEEEEEEEEEEDDDD G K N\nL H                 G K N\nL HHHHHHHHHHHHHHHHHHH K N\nL                     K N\nLLLLLLLLLKKKKKKKKKKKKKK N",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 22",
+          "isTest": false,
+          "testIn": "25 bottomRight counter-clockwise M28 N27",
+          "testOut": "NNNNNNNNNNNNNNNNNNNNNMMMM\nN                       M\nN RRRRRRRQQQQQQQQQQQQQQ M\nN R                   Q M\nN R UUUUUUUUUUUUUTTTT Q M\nN R U               T Q M\nN R U XXXXXXXXXXXXW T Q M\nO R U X           W T Q M\nO R U X     ZZZZZ W T Q M\nO R U X         Z W T Q M\nO R U X         Z W T Q M\nO R U X         Z W T Q M\nO R V Y         Z W T Q M\nO R V Y         Z W T P M\nO R V Y         Z W T P M\nO R V Y         Z W T P M\nO R V Y         Z W T P M\nO R V Y         Z W T P M\nO R V YYYYYYYYYYZ W T P M\nO S V             W T P M\nO S VVVVVVVVVVVWWWW T P M\nO S                 T P M\nO SSSSSSSSSSSSSSSSSSS P M\nO                     P M\nOOOOOOOOOPPPPPPPPPPPPPP M",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 23 = oversized",
+          "isTest": true,
+          "testIn": "51 bottomLeft clockwise A100 B97",
+          "testOut": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nA                              \nA CCCCCCCCCCCCCCCCCCCCCCCCCCCCC\nA C                            \nA C EEEEEEEEEEEEEEEEEEEEEEEEEEE\nA C E                          \nA C E GGGGGGGGGGGGGGGGGGGGGGGGG\nA C E G                        \nA C E G IIIIIIIIIIIIIIIIIIIIIII\nA C E G I                      \nA C E G I KKKKKKKKKKKKKKKKKKKKK\nA C E G I K                    \nA C E G I K LLLLLLLLLLLLLLLLMMM\nA C E G I K L                  \nA C E G I K L NNNNNNNNNNNNNNNNN\nA C E G I K L N                \nA C E G I J L N OOOOOOOOOOOOOOO\nA C E G I J L N O              \nA C E G I J L N O PPQQQQQQQQQQQ\nA C E G I J L N O P            \nA C E G I J L N O P QQRRRRRRRRR\nA C E G I J L N O P Q         R\nA C E G I J L N O P Q RRRRRRR R\nA C E G I J L N O P Q R     R R\nA C E G I J L N O P Q R SSS R R\nA C E G I J L N O P Q R S S R R\nA C E G I J L N O P Q R S S R R\nA C E G I J L N O P Q R S   R R\nA C E G I J L N O P Q R SSRRR R\nA C E G I J L N O P Q R       R\nA C E G I J L N O P Q RRRRRRRRR",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 23",
+          "isTest": false,
+          "testIn": "49 topLeft counter-clockwise C200 D200",
+          "testOut": "C CCCCCCCCCCCCCCCCCCCCCCCCCCCCC\nC C                            \nC C DDDDDDDDDDDDDDDDDDDDDDDDDDD\nC C D                          \nC C D EEEEEEEEEEEEEEEEEEEEEEEEE\nC C D E                        \nC C D E FFFFFFFFFFFFFFFFFFFFFFF\nC C D E F                      \nC C D E F FFFFFFFFFFFFFFFFFFFFF\nC C D E F F                    \nC D D E F G GGGGGGGGGGGGGGGGGGG\nC D D E F G G                  \nC D D E F G G HHHHHHHGGGGGGGGGG\nC D D E F G G H                \nC D D E F G G H HHHHHHHHHHHHHHH\nC D D E F G G H H              \nC D D E F G G H H HHHHHHHHHHHHH\nC D D E F G G H H H            \nC D D E F G G H H H HHHHHHHHHHH\nC D D E F G G H H H H         H\nC D D E F G G H H H I IIIIIII H\nC D D E F G G H H H I I     I H\nC D D E F G G H H H I I III I H\nC D D E F G G H H H I I I I I H\nC D D E F G G H H H I I I I I H\nC D D E F G G H H H I I   I I H\nC D D E F G G H H H I IIIII I H\nC D D E F G G H H H I       I H\nC D D E F G G H H H IIIIIIIII H\nC D D E F G G H H H           H\nC D D E F G G H H HHHHHHHHHHHHH",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 24 = very oversized",
+          "isTest": true,
+          "testIn": "201 topLeft counter-clockwise X1000 W989",
+          "testOut": "X XXXXXXXXXXXXXXXXXXXXXXXXXXXXX\nX X                            \nX X WWWWWWWWWWWWWWWWWWWWWWWWWWW\nX X W                          \nX X W VVVVVVVVVVVVVVVVVVVVVVVVV\nX X W V                        \nX X W V UUUUUUUUUUUUUUUUUUUUUUU\nX X W V U                      \nX X W V U UUUUUUUUUUUUUUUUUUUUU\nX X W V U U                    \nX X W V U U TTTTTTTTTTTTTTTTTTT\nX X W V U U T                  \nX X W V U U T SSSSSSSSSSSSSSSSS\nX X W V U U T S                \nX X W V U U T S RRRRRRRRRRRRRRR\nX X W V U U T S R              \nX X W V U U T S R RRRRRRRRRRRRR\nX X W V U U T S R R            \nX X W V U U T S R R QQQQQQQQQQQ\nX X W V U U T S R R Q          \nX X W V U U T S R R Q PPPPPPPPP\nX X W V U U T S R R Q P        \nX X W V U U T S R R Q P PPPPPPP\nX X W V U U T S R R Q P P      \nX X W V U U T S R R Q P P OOOOO\nX X W V U U T S R R Q P P O    \nX X W V U U T S R R Q P P O NNN\nX X W V U U T S R R Q P P O N  \nX X W V U U T S R R Q P P O N N\nX X W V U U T S R R Q P P O N N\nX X W V U U T S R R Q P P O N N",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 24",
+          "isTest": false,
+          "testIn": "111 topLeft clockwise C80 E180",
+          "testOut": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC\n                               \nGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG\nG                              \nG IIIIIIIIIIIIIIIIIIIIIIIIIIIII\nG I                            \nG I KKKKKKKKKKKKKKKKKKKKKKKKKKK\nG I K                          \nG I K MMMMMMMMMMMMMMMMMMMMMMMMM\nG I K M                        \nG I K M OOOOOOOOOOOOOOOOOOOOOOO\nG I K M O                      \nG I K M O OOOOOOOOOOOOOOOOOOOOO\nG I K M O O                    \nG I K M O O QQQQQQQQQQQQQQQQQQQ\nG I K M O O Q                  \nG I K M O O Q QQQQQQQQQQQQQQQQQ\nG I K M O O Q Q                \nG I K M O O Q Q QQQQQQQQQQQQQQQ\nG I K M O O Q Q Q              \nG I K M O O Q Q Q SSSSSSSSSSSSS\nG I K M O O Q Q Q S            \nG I K M O O Q Q Q S SSSSSSSSSSS\nG I K M O O Q Q Q S S          \nG I K M O O Q Q Q S S SSSSSSSSS\nG I K M O O Q Q Q S S S        \nG I K M O O Q Q Q S S S UUUUUUU\nG I K M O O Q Q Q S S S U      \nG I K M O O Q Q Q S S S U UUUUU\nG I K M O O Q Q Q S S S U U    \nG I K M O O Q Q Q S S S U U UUU",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "5 ≤ [[sideSize]] ≤ 201 \n\n[[sideSize]] is an odd integer\n\n[[squareSpiral]] includes only spaces and uppercase letters",
+      "coverBinaryId": 109504825791747,
+      "stubGenerator": "read crypticInstructions:string(100)\nwrite Square Spiral\n\nSTATEMENT\nYou're capable of such beautiful dreams, and such horrible nightmares. \nYou feel so lost, so cut off, so alone, only you're not. \nSee, in all our searching, the only thing we've found that makes the emptiness bearable, is each other.\n(a quote from \"Contact\")",
+      "inputDescription": "<<Line 1:>> A String, the cryptic instructions in the format of \n\nan Integer [[sideSize]], which is the length of a side of the desired [[squareSpiral]], followed by\n\na word which is either {{topLeft}} or {{topRight}} or {{bottomRight}} or {{bottomLeft}}, followed by\n\na word, which is either {{clockwise}} or {{counter-clockwise}}, followed by \n\ntwo short Strings (separated by a space) ...hmmm.... what is this?? . . . it looks like maybe some sort of pattern",
+      "solutionLanguage": "C#",
+      "outputDescription": "<<[[sideSize]] Lines: >> [[squareSpiral]]\n(or a 31x31 section of it, if it's larger than that)"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><strong>Background:</strong><br>In the 1997 movie &quot;Contact&quot;, Jodie Foster portrays a SETI scientist who finds evidence of extraterrestrial life and is chosen to make first contact.<br><br>Her group is given cryptic instructions** for how aliens want them to build a machine to facilitate this contact.<br>(Maybe that worked, maybe not; no spoilers here.)<br><br><br><strong>This scenario:</strong><br>In a sequel to that story, the aliens once again attempt to communicate how they want us Earthlings to build something: <br>This time it's a Square Spiral (<var>squareSpiral</var>), as a potential-vehicle for some wild space-time multiverse travel adventures.<br><br><br><strong>Your task:</strong><br>Figure out what they mean, and build it.<br><br><br><strong>What to output:</strong><br>The output is generally the entire <var>squareSpiral</var>.<br>However if the <var>sideSize</var> is greater than 31, just output the top-left section (of size 31x31) of <var>squareSpiral</var>.<br><br>Caution: Letters don't wrap-around.  If you get to either end of the alphabet, there is no more &quot;material&quot; available after that.<br>(This variation is shown in Test/Validator #21 and #22)<br><br><br><br>~ ~ ~ <br>**NOT needed to solve this puzzle but see this clip for context: https://youtu.be/Q399v-pMG30?t=88</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> A String, the cryptic instructions in the format of <br><br>an Integer <var>sideSize</var>, which is the length of a side of the desired <var>squareSpiral</var>, followed by<br><br>a word which is either <const>topLeft</const> or <const>topRight</const> or <const>bottomRight</const> or <const>bottomLeft</const>, followed by<br><br>a word, which is either <const>clockwise</const> or <const>counter-clockwise</const>, followed by <br><br>two short Strings (separated by a space) ...hmmm.... what is this?? . . . it looks like maybe some sort of pattern</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>sideSize</var> Lines: </strong> <var>squareSpiral</var><br>(or a 31x31 section of it, if it's larger than that)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">5 &le; <var>sideSize</var> &le; 201 <br><br><var>sideSize</var> is an odd integer<br><br><var>squareSpiral</var> includes only spaces and uppercase letters</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">9 topRight clockwise F4 G4</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">LLLLMMM F\nK     M F\nK QQQ N F\nK P Q N F\nK P R N G\nJ P   N G\nJ POOOO G\nJ       G\nJIIIIHHHH</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 71016664443,
+  "avatar": 94714081045618,
+  "commentCount": 18,
+  "upVotes": 12,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 870485,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1694970337001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1697311661165,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1699712412158,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

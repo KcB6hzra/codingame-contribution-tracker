@@ -1,0 +1,166 @@
+{
+  "id": 6164,
+  "activeVersion": 8,
+  "score": 9,
+  "votableId": 16871961,
+  "codingamerId": 3792309,
+  "views": 196,
+  "commentableId": 16781807,
+  "title": "Byte pair encoding",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "schachmatt",
+  "publicHandle": "6164d977d75309430089c9258d75f6efbf42",
+  "codingamerHandle": "bdb9b04f80071565baa07373f60c8c899032973",
+  "lastVersion": {
+    "version": 8,
+    "autocloseTime": 1615560501531,
+    "data": {
+      "title": "Byte pair encoding",
+      "topics": [
+        {
+          "id": 61,
+          "handle": "encoding",
+          "labelMap": {
+            "1": "Encodage",
+            "2": "Encoding"
+          },
+          "pageTitle": "Encoding: exercises and theory",
+          "puzzleCount": 9,
+          "parentTopicId": 41,
+          "contentDetailsId": 86
+        },
+        {
+          "labelMap": {
+            "2": "Byte-pair"
+          }
+        },
+        {
+          "id": 99,
+          "handle": "compression",
+          "labelMap": {
+            "1": "Compression",
+            "2": "Compression"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import sys\nimport math\nfrom collections import defaultdict\n\nstring = \"\"\n\nn, m = [int(i) for i in input().split()]\nfor i in range(n):\n    string += input()\n\nnon_terminals = list('ZYXWVUTSRQPONMLKJIHGFEDCBA')\npair_freqs = defaultdict(list)\nrules = []\n\nwhile True:\n    pair_freqs.clear()\n    for i in range(len(string) - 1):\n        key = string[i : i + 2]\n        if i and pair_freqs[key] and pair_freqs[key][-1] >= i - 1:\n            continue\n        pair_freqs[key].append(i)\n    \n    most_common_pair = max(pair_freqs, key=lambda p: len(pair_freqs[p]))\n    if len(pair_freqs[most_common_pair]) == 1:\n        break\n    \n    non_term = non_terminals.pop(0)\n    string = string.replace(most_common_pair, non_term)\n    rules.append((non_term, most_common_pair))\n\nprint(string)\nfor rule in rules:\n    print(\"{} = {}\".format(*rule))",
+      "statement": "Calculate the byte pair encoding of an input string.\n\nByte pair encoding is a basic data compression algorithm. Starting with an input string, we repeatedly replace the most common pair of consecutive <<bytes>> (characters) with a new, <<unused>> byte. We will refer to these replacement bytes as <<non-terminal bytes>> (represented by upper-case letters) and bytes from the original input string as <<terminal bytes>> (represented by lower-case letters).\n\nThe algorithm terminates when no pair of consecutive bytes is repeated anywhere in the modified string. Since each iteration reduces the length of the string by at least 2, the algorithm will definitely terminate.\n\nWe will use the <<recursive>> version of the algorithm, in which replaced pairs can include non-terminal characters. (Note: this algorithm generates a context-free grammar: https://en.wikipedia.org/wiki/Context-free_grammar)\n\nFor a more detailed explanation, see https://en.wikipedia.org/wiki/Byte_pair_encoding\n\nIf, at an iteration step in the algorithm, there is more than one byte pair with highest frequency, we choose the first (<<leftmost>>) pair.\n\nFor the non-terminal characters, we start with [[Z]] and work our way backwards through the alphabet.\n\nWe need to keep track of the replacement \"rules\" (and their order) so that the original string can be reconstructed.\n\nExample :\nInput string: [[aaabdaaabac]]\n\nStep 1:\na) the most common byte pair is [[aa]] (note: we only count (and replace) <<non-overlapping>> repetitions, so there are 2 occurrences of this byte pair)\nb) first non-terminal character = [[Z]] => replace all instances of [[aa]] with [[Z]]\nc) new rule: [[Z = aa]]\nd) new string: [[ZabdZabac]]\n\nStep 2:\na) the most common byte pair is [[Za]] (note: [[Za]] and [[ab]] both occur twice, so we choose the <<leftmost>>)\nb) second non-terminal character = [[Y]] => replace all instances of [[Za]] with [[Y]]\nc) new rule: [[Y = Za]]\nd) new string: [[YbdYbac]]\n\nStep 3:\na) the most common byte pair is [[Yb]] (2 occurrences)\nb) third non-terminal character = [[X]] => replace all instances of [[Yb]] with [[X]]\nc) new rule: [[X = Yb]]\nd) new string: [[XdXac]]\n\nThere are now no repeated byte pairs, so the algorithm terminates.\nThe final string is [[XdXac]], and the production rules are (note: order is important):\n[[Z = aa]]\n[[Y = Za]]\n[[X = Yb]]\n\nNote that in general either of the characters on the right-hand side of a rule can be terminal or non-terminal, so this grammar is not regular or even linear.\n\n<<Due to a CG limitation the input is given to you split into several chunks. First combine these chunks into a single-line string, then perform the above algorithm.>>",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "1 11\naaabdaaabac",
+          "testOut": "XdXac\nZ = aa\nY = Za\nX = Yb",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "1 11\neeecaeeeceb",
+          "testOut": "XaXeb\nZ = ee\nY = Ze\nX = Yc",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "2 10\naedcaafffb\nddcaaacdcd",
+          "testOut": "aeXfffbdXacZd\nZ = dc\nY = Za\nX = Ya",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "2 10\nfbcdffaaae\nccdfffdcdc",
+          "testOut": "fbXaaaecXfdZc\nZ = cd\nY = Zf\nX = Yf",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "4 10\naaaaaaaaaa\naaaaabbbbb\nbbbbbbbbbb\ncccccccccc",
+          "testOut": "WWWZaVVVYbUUX\nZ = aa\nY = bb\nX = cc\nW = ZZ\nV = YY\nU = XX",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "4 10\ncccccccccc\ncccccbbbbb\nbbbbbbbbbb\naaaaaaaaaa",
+          "testOut": "WWWZcVVVYbUUX\nZ = cc\nY = bb\nX = aa\nW = ZZ\nV = YY\nU = XX",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "10 10\ncdeaafdhhh\ncdecbfcbhf\nhdhhccfhed\neadggchefh\ngcaffgdcag\ndfedaghgce\nafbdccegbf\nggafhdffbh\nahgadeabcc\nabhfgeceff",
+          "testOut": "cXYQhcZcbfcWVQUVeXdgTheVTYSdcPOedPhTeYbdUegbSgYhOfWahgaXbUaWSeceff\nZ = de\nY = af\nX = Za\nW = bh\nV = fh\nU = cc\nT = gc\nS = fg\nR = dh\nQ = Rh\nP = ag\nO = df",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "10 10\niaoddpannn\niaoigpignp\nnanniipnoa\nodaeeinopn\neidppeaide\napoadeneio\ndpgaiioegp\needpnappgn\ndnedaodgii\ndgnpeoiopp",
+          "testOut": "iXYQniZigpiWVQUVoXaeTnoVTYSaiPOoaPnToYgaUoegSeYnOpWdnedXgUdWSoiopp\nZ = ao\nY = dp\nX = Zd\nW = gn\nV = pn\nU = ii\nT = ei\nS = pe\nR = an\nQ = Rn\nP = de\nO = ap",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "10 20\nbbhhehbhejhgeijaagjb\neccfjaidghhcdjhadajb\nejdffehjgbeejahcddae\nciibfggbfbdifcafchcc\njfaecjacccihgejjfbga\nacfegbhiigcfbeeibhji\ngighedcbcafacgcghjch\ncbjaiahfcaihdedijjja\nffghhiabdgacafgghdai\neicehcgjichccaeeafgb",
+          "testOut": "bVhOVNMTZaLUcSKdXJjhaRjUjdIOjgUeZJRHGbQgbFEDfPcjCHZccciMNjFBaSegVGgSUTVjigiXedcbWCcgcXjPbKahDihdeEjjZIXhiabdBWQXRiTceYLiPWeeaQb\nZ = ja\nY = hc\nX = gh\nW = ca\nV = bh\nU = be\nT = ei\nS = cf\nR = da\nQ = fg\nP = cY\nO = eh\nN = ej\nM = hg\nL = gj\nK = Zi\nJ = Yd\nI = ff\nH = ec\nG = ii\nF = fb\nE = di\nD = fW\nC = fa\nB = ga",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "10 20\naaddedadefdhejfbbhfa\neggifbjchddgcfdbcbfa\nefciiedfhaeefbdgccbe\ngjjaihhaiacjigbigdgg\nfibegfbgggjdheffiahb\nbgiehadjjhgiaeejadfj\nhjhdecgagbibghghdfgd\ngafbjbdigbjdcecjfffb\niihddjbachbgbihhdcbj\nejgedghfjgdggbeebiha",
+          "testOut": "aVdOVNMTZbLUgSKcXJfdbRfUfcIOfhUeZJRHGaQhaFEDiPgfCHZgggjMNfFBbSehVGhSUTVfjhjXecgaWCghgXfPaKbdDjdceEffZIXdjbacBWQXRjTgeYLjPWeebQa\nZ = fb\nY = dg\nX = hd\nW = gb\nV = ad\nU = ae\nT = ej\nS = gi\nR = cb\nQ = ih\nP = gY\nO = ed\nN = ef\nM = dh\nL = hf\nK = Zj\nJ = Yc\nI = ii\nH = eg\nG = jj\nF = ia\nE = cj\nD = iW\nC = ib\nB = hb",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "2 <= [[N]] * [[M]] = length of {{INPUT_STRING}} <=1000",
+      "stubGenerator": "read n:int m:int\nloop n read line:word(m)\nwrite answer",
+      "inputDescription": "First line: 2 integers [[N]] [[M]]: the number of lines [[N]] to follow, and the width [[M]] of each line.\nNext [[N]] lines: the {{INPUT_STRING}} split into chunks of width [[M]]",
+      "solutionLanguage": "Python3",
+      "outputDescription": "First line: the encoded {{OUTPUT_STRING}}\nNext lines: the production rules in the form [[Z]] = [[c1]][[c2]], where [[Z]] is a non-terminal character and the [[ci]] are either terminal or non-terminal characters."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Calculate the byte pair encoding of an input string.<br><br>Byte pair encoding is a basic data compression algorithm. Starting with an input string, we repeatedly replace the most common pair of consecutive <strong>bytes</strong> (characters) with a new, <strong>unused</strong> byte. We will refer to these replacement bytes as <strong>non-terminal bytes</strong> (represented by upper-case letters) and bytes from the original input string as <strong>terminal bytes</strong> (represented by lower-case letters).<br><br>The algorithm terminates when no pair of consecutive bytes is repeated anywhere in the modified string. Since each iteration reduces the length of the string by at least 2, the algorithm will definitely terminate.<br><br>We will use the <strong>recursive</strong> version of the algorithm, in which replaced pairs can include non-terminal characters. (Note: this algorithm generates a context-free grammar: https://en.wikipedia.org/wiki/Context-free_grammar)<br><br>For a more detailed explanation, see https://en.wikipedia.org/wiki/Byte_pair_encoding<br><br>If, at an iteration step in the algorithm, there is more than one byte pair with highest frequency, we choose the first (<strong>leftmost</strong>) pair.<br><br>For the non-terminal characters, we start with <var>Z</var> and work our way backwards through the alphabet.<br><br>We need to keep track of the replacement &quot;rules&quot; (and their order) so that the original string can be reconstructed.<br><br>Example :<br>Input string: <var>aaabdaaabac</var><br><br>Step 1:<br>a) the most common byte pair is <var>aa</var> (note: we only count (and replace) <strong>non-overlapping</strong> repetitions, so there are 2 occurrences of this byte pair)<br>b) first non-terminal character = <var>Z</var> =&gt; replace all instances of <var>aa</var> with <var>Z</var><br>c) new rule: <var>Z = aa</var><br>d) new string: <var>ZabdZabac</var><br><br>Step 2:<br>a) the most common byte pair is <var>Za</var> (note: <var>Za</var> and <var>ab</var> both occur twice, so we choose the <strong>leftmost</strong>)<br>b) second non-terminal character = <var>Y</var> =&gt; replace all instances of <var>Za</var> with <var>Y</var><br>c) new rule: <var>Y = Za</var><br>d) new string: <var>YbdYbac</var><br><br>Step 3:<br>a) the most common byte pair is <var>Yb</var> (2 occurrences)<br>b) third non-terminal character = <var>X</var> =&gt; replace all instances of <var>Yb</var> with <var>X</var><br>c) new rule: <var>X = Yb</var><br>d) new string: <var>XdXac</var><br><br>There are now no repeated byte pairs, so the algorithm terminates.<br>The final string is <var>XdXac</var>, and the production rules are (note: order is important):<br><var>Z = aa</var><br><var>Y = Za</var><br><var>X = Yb</var><br><br>Note that in general either of the characters on the right-hand side of a rule can be terminal or non-terminal, so this grammar is not regular or even linear.<br><br><strong>Due to a CG limitation the input is given to you split into several chunks. First combine these chunks into a single-line string, then perform the above algorithm.</strong></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">First line: 2 integers <var>N</var> <var>M</var>: the number of lines <var>N</var> to follow, and the width <var>M</var> of each line.<br>Next <var>N</var> lines: the <const>INPUT_STRING</const> split into chunks of width <var>M</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">First line: the encoded <const>OUTPUT_STRING</const><br>Next lines: the production rules in the form <var>Z</var> = <var>c1</var><var>c2</var>, where <var>Z</var> is a non-terminal character and the <var>ci</var> are either terminal or non-terminal characters.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &lt;= <var>N</var> * <var>M</var> = length of <const>INPUT_STRING</const> &lt;=1000</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1 11\naaabdaaabac</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">XdXac\nZ = aa\nY = Za\nX = Yb</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 155336811581,
+  "avatar": 58313205988826,
+  "commentCount": 9,
+  "upVotes": 10,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 534250,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1615393847415,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

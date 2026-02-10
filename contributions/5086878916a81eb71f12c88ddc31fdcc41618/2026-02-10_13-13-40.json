@@ -1,0 +1,428 @@
+{
+  "id": 50868,
+  "activeVersion": 93,
+  "score": 21,
+  "votableId": 28647620,
+  "codingamerId": 5300766,
+  "views": 716,
+  "commentableId": 28517031,
+  "title": "24: The Long Game",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "jddingemanse",
+  "publicHandle": "5086878916a81eb71f12c88ddc31fdcc41618",
+  "codingamerHandle": "d95f1456c7409de3e7dcc202f89a3d646670035",
+  "lastVersion": {
+    "version": 93,
+    "autocloseTime": 1690879884035,
+    "data": {
+      "title": "24: The Long Game",
+      "topics": [
+        {
+          "id": 129,
+          "handle": "arithmetic",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Arithmetic",
+            "2": "Arithmetic"
+          },
+          "puzzleCount": 26,
+          "parentTopicId": 93
+        },
+        {
+          "id": 70,
+          "handle": "permutations",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Permutations",
+            "2": "Permutations"
+          },
+          "pageTitle": "Permutations: exercises and theory",
+          "puzzleCount": 10,
+          "parentTopicId": 41,
+          "contentDetailsId": 103
+        },
+        {
+          "id": 112,
+          "handle": "string-manipulation",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "String manipulation",
+            "2": "String manipulation"
+          },
+          "puzzleCount": 48,
+          "parentTopicId": 93
+        },
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 33,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        }
+      ],
+      "solution": "import itertools\nimport numpy as np\n\ndef checkOpstr(ex): ### From an expression, get the operator-string (eg '-++')\n    opstr = ''\n    for char in ex:\n        if char in '+-/*': opstr+=char\n    return opstr\n\ndef pnoCheck(ex): ### From an expression, get the parentheses-number (numbers correspond to parenth_dict.keys())\n    parenths = ex.count('(')\n    if parenths == 0: pno = 0\n    elif parenths == 1:\n        po_loc = ex.find('(')\n        pc_loc = ex.find(')')\n        ops_inside = 0\n        for char in ex[po_loc:pc_loc]:\n            if char in '+-*/': ops_inside += 1\n        if po_loc == 0: pno = 1 if ops_inside == 2 else 2\n        elif pc_loc == len(ex)-1:pno = 5 if ops_inside == 2 else 6\n        else: pno = 4\n    else: pno = 3\n    return pno\n\ndef reval(ex):\n    return round(eval(ex),12)\n\ndef parenthChanger(ex):\n    opstr = checkOpstr(ex)\n    if ex.count('(') == 0: return ex\n    if ex.count('(') == 1:\n        if '-(' in ex and ')*' not in ex and ')/' not in ex:\n            part_within_parenths = ex[ex.find('(')+1:ex.find(')')]\n            new_part = part_within_parenths.replace('-','.').replace('+','-').replace('.','+')\n            ex = ex.replace('('+part_within_parenths+')',new_part)\n        elif '/(' in ex and ('/*' in opstr or '//' in opstr):\n            part_within_parenths = ex[ex.find('(')+1:ex.find(')')]\n            if '+' not in part_within_parenths and '-' not in part_within_parenths:\n                new_part = part_within_parenths.replace('/','.').replace('*','/').replace('.','*')\n                ex = ex.replace('('+part_within_parenths+')',new_part)\n    elif ex.count('(') == 2:\n        if '-(' in ex:\n            part_within_parenths = ex[ex.find('(',ex.find('(')+1)+1:-1]\n            new_part = part_within_parenths.replace('-','.').replace('+','-').replace('.','+')\n            ex = ex.replace('-('+part_within_parenths+')','-'+new_part)\n        elif opstr[1:] in ['//','/*']:\n            part_within_parenths = ex[ex.find('(',ex.find('(')+1)+1:-1]\n            new_part = part_within_parenths.replace('/','.').replace('*','/').replace('.','*')\n            ex = ex.replace('/('+part_within_parenths+')','/'+new_part) \n    return ex\n\ndef parenthRemover(ex):\n    # situation: no parentheses at all\n    if '(' not in ex: return ex\n    ex = ex.replace('a','e').replace('b','f').replace('c','g').replace('d','h')\n    # Situation: all parentheses can be removed\n    ex_test = ex.replace('(','').replace(')','')\n    if reval(ex_test) == reval(ex): ex = ex_test\n    \n    # Situation: there are two sets of parentheses\n    if ex.count('(') == 2:\n        exArr = np.array(list(ex))\n        po1,po2 = np.where(exArr=='(')[0] # first and second parentheses open\n        pc1,pc2 = np.where(exArr==')')[0] # first and second parentheses close\n        ex_test1 = ex[0:po1]+ex[po1+1:pc1] + ex[pc1+1:] # try without first set\n        ex_test2 = ex[0:po2]+ex[po2+1:pc2] + ex[pc2+1:] # try without second set\n        if reval(ex_test1) == reval(ex): ex = ex_test1\n        if reval(ex_test2) == reval(ex): ex = ex_test2\n    return ex.replace('e','a').replace('f','b').replace('g','c').replace('h','d')\n\ndef mulToFront(ex,counter=0,after_mul_flag=False): \n    if ex.count('*') in [0,3] or after_mul_flag:\n        ex = ex.replace('#','*')\n        if after_mul_flag and counter<15: return mulToFront(ex,counter+1)\n        return ex\n    mul_loc = ex.find('*')\n    ex = ex[:mul_loc]+'#'+ex[mul_loc+1:]\n    if mul_loc<2: return mulToFront(ex,counter+1)\n    if ex[mul_loc+1].isalpha():\n        after_mul = ex[mul_loc+1]\n        after_mul_loc = mul_loc + len(after_mul)\n    elif ex[mul_loc+1] == '(':\n        after_mul = ex[mul_loc+1:ex.find(')',mul_loc+1)+1]\n        after_mul_loc = mul_loc + len(after_mul)\n    i = lvi = mul_loc\n    while True:\n        if i < 0: break\n        char = ex[i]\n        if char.isalpha():\n            lvi = i\n            i-=1\n        elif char in '/#*': i-=1\n        elif char==')':\n            lvi = i = ex.find('(')\n            i-=1\n        elif char in '-+(': break\n    ex = ex[:lvi] + after_mul + '#' + ex[lvi:mul_loc] + ex[after_mul_loc+1:]\n    if len(after_mul)>1: return(mulToFront(ex,counter+1,after_mul_flag=True))\n    return mulToFront(ex,counter+1)\n    \n   \ndef addToFront(ex,counter=0,after_add_flag=False): # New approach: move them one step at the time, until it is not possible \n    if ex.count('+') in [0,3] or after_add_flag:\n        ex = ex.replace('#','+')\n        if after_add_flag and counter < 15: return addToFront(ex,counter+1)\n        return ex\n    add_loc = ex.find('+')\n    ex = ex[:add_loc]+'#'+ex[add_loc+1:]\n    if add_loc<2: return addToFront(ex,counter+1)\n    \n    possible_after = ex[add_loc+1:]\n    after_add = ''\n    poFlag = 0\n    for char in possible_after:\n        if char == '(':\n            poFlag += 1\n        elif char == ')':\n            if poFlag==0: break\n            poFlag-=1\n        elif char in '+-':\n            if poFlag==0:break\n        after_add += char\n    after_add_loc = add_loc + len(after_add)\n    i = lvi = add_loc\n    while True:\n        if i < 0: break\n        char = ex[i]\n        if char.isalpha():\n            lvi = i\n            i-=1\n        elif char in '/*-#+': i-=1\n        elif char==')':\n            lvi = i = ex.find('(')\n            i-=1    \n        elif char =='(': break\n    ex = ex[:lvi] + after_add + '#' + ex[lvi:add_loc] + ex[after_add_loc+1:]\n    if len(after_add)>1: return(addToFront(ex,counter+1,after_add_flag=True))\n    return addToFront(ex,counter+1)\n\ndef sortMultAdd(ex,opp='*'):\n    ex = ex+' '\n    new = ''\n    start = False\n    allnew = {}\n    for char in ex:\n        if char == opp and start: new += char\n        elif char.isalpha():\n            start=True\n            new += char\n        else:\n            if len(new)>0:\n                new = new.strip(opp)\n                if len(new)>2:\n                    newl = new.split(opp)\n                    addproblems = ['-'+newl[0]+opp,'*'+newl[0]+opp,opp+newl[-1]+'*',opp+newl[-1]+'/']\n                    if '/'+newl[0]+opp in ex or ((addproblems[0] in ex or addproblems[1] in ex) and opp=='+'): newl.pop(0)\n                    if ((addproblems[2] in ex or addproblems[3] in ex) and opp=='+'): newl = newl[:-1]\n                    new = opp.join(newl)\n                    newsorted = opp.join(sorted(newl,key=eval))\n                    if newsorted != new: allnew[new] = newsorted\n                new = ''\n                start = False\n    for old,new in allnew.items(): ex = ex.replace(old,new)\n    return ex.strip()\n\ndef sortDivSub(ex,opp='/'):\n    ex = ex+' '\n    new = ''\n    allnew = {}\n    for char in ex:\n        if char == opp: new += char\n        elif char.isalpha(): new += char\n        else:\n            if len(new)>0:\n                new = new.strip(opp)\n                if new.count(opp)>1 and not (opp=='-' and char=='*'):\n                    newl = new.split(opp)\n                    sortstep = newl[:1] + sorted(newl[1:],key=eval)\n                    newsorted = opp.join(sortstep)\n                    if newsorted != new: allnew[new] = newsorted\n                new = ''\n    for old,new in allnew.items(): ex = ex.replace(old,new)\n    return ex.strip()\n\ndef sortSubexpressions(ex):\n    pno = pnoCheck(ex)\n    opstr = checkOpstr(ex)   \n    if (pno == 0 and opstr in ['/+/','/+*','*+*','*+/']) or (pno == 3 and opstr in ['-*-','-*+','+*-','+*+']):\n        opp = opstr[1]\n        left,right = ex.split(opp)\n        srted = [left,right]\n        if eval(left)>eval(right): srted = [right,left]\n        elif eval(left)==eval(right):\n            left_num,right_num = left,right\n            for val in 'abcd': left_num = left_num.replace(val,str(eval(val)))\n            for val in 'abcd': right_num = right_num.replace(val,str(eval(val)))\n            if left_num>right_num: srted = [right,left]\n        ex = opp.join(srted)\n    if (pno==0 and opstr in ['-/-','-*-']) or (pno==4 and opstr in ['/-/','/+/']):\n        ex = ex[:1] + ex[-2:] + ex[1:-2]\n    return ex\n\na, b, c, d = [int(i) for i in input().split()]\ne,f,g,h = 5,7,9,11\n\n# format:         [po,  v1, o1, po, v2,  bc,o2, po, v3, pc, o3, v4, pc], with po=(, pc=), v=abcd, o=+-/*\nparenth_dict = {0:['',  0 , 4 , '' ,1 , '', 5 , '', 2 , '', 6 , 3 ,'' ],\n                1:['(', 0 , 4 , '' ,1 , '', 5 , '', 2 ,')', 6 , 3 ,'' ],\n                2:['(', 0 , 4 , '' ,1 , ')',5 , '', 2 , '', 6 , 3 ,'' ],\n                3:['(', 0 , 4 , '' ,1 , ')',5 , '(',2 , '', 6 , 3 ,')'],\n                4:['',  0 , 4 , '(',1 , '', 5 , '', 2 ,')', 6 , 3 ,'' ],\n                5:['',  0 , 4 , '(',1 , '', 5 , '', 2 ,'' , 6 , 3 ,')'],\n                6:['',  0 , 4 , '',1 , '', 5 , '(', 2 ,'', 6 , 3 ,')']}\n\nall_variable_orders = tuple(itertools.permutations(['a','b','c','d']))\n\nall_operators_options = set()\nfor main in itertools.combinations_with_replacement(['+','-','*','/'],r=3):\n    for sub in itertools.permutations(main):\n        all_operators_options.add(''.join(sub))\n\nsolutions = set()\n\nfor plist in parenth_dict.values():\n    for opstr in all_operators_options:\n        for variables in all_variable_orders:\n            # Combine the variables, operators and parentheses\n            varops = list(variables) + list(opstr)\n            newlist = plist.copy()\n            for i in range(7): newlist[newlist.index(i)] = varops[i]\n            ex = ''.join(newlist)\n\n            # Check whether it evaluates to 24\n            try:\n                if reval(ex) != 24: continue\n            except: continue\n\n            # Rewrite the expression\n            ex = parenthChanger(ex)          \n            ex = parenthRemover(ex)         \n            ex = mulToFront(ex)\n            ex = addToFront(ex)\n            ex = sortMultAdd(ex)\n            ex = sortMultAdd(ex,opp='+')\n            ex = sortDivSub(ex)\n            ex = sortDivSub(ex,opp='-')\n            ex = sortSubexpressions(ex)          \n            \n            # Fill the values, and add unique solutions\n            for name,value in zip('abcd',[a,b,c,d]): ex = ex.replace(name,str(value))             \n            solutions.add(ex)\n\nif len(solutions)==0: print('not possible')\nelse:    \n    print(len(solutions))\n    no_parenths = []\n    one_set = []\n    two_set = []\n    for ex in solutions:\n        if ex.count('(') == 0: no_parenths.append(ex)\n        elif ex.count('(') == 1: one_set.append(ex)\n        else: two_set.append(ex)\n\n    final_solution_list = sorted(no_parenths) + sorted(one_set) + sorted(two_set)\n    print(*final_solution_list,sep='\\n')",
+      "statement": "In the 24 Game, a given set of four numbers must be combined using only the arithmetic operations {{+ - × ÷}} with parentheses {{( )}} if necessary to define the order in which operations are carried out. All four numbers must be used so that the end result is 24. The given numbers may be rearranged in any order; that is, the original order need not be followed. Normally, one solution is enough - if you prefer that, you can solve the following puzzle:\n\nhttps://www.codingame.com/training/medium/24-game by @Smelty\n\nFor this puzzle, your program must provide the number of possible solutions ([[ns]]) and all those possible solutions, or {{not possible}} if there are no solutions.\n\nSolutions must be printed as expressions without spaces, for example {{3*(2*7-6)}}. Only unique solutions should be included in the output. This requires rewriting expressions in a consistent way. \n\n<<EXPRESSIONS, TERMS AND SUBEXPRESSIONS>>\nTo understand the rules for rewriting expressions, we must distinguish <<expressions, terms and subexpressions>>.\n\n<<expression:>> Terms separated by mathematical operators that can be evaluated from left to right. For example: {{1+2+3+18}}, {{3*2*1*4}}, {{24+10-6-4}}, {{24/1/1/1}} or {{2*3*40/10}}. \n\n<<term:>> A constant or a subexpression. The expression {{3+7*(1+2)}} has two terms. The first term is the constant {{3}}. The second term is the subexpression {{7*(1+2)}} - which itself also consists of one constant {{7}} and one subexpression {{(1+2)}}.\n\n<<subexpression:>> A subexpression is an expression that must be evaluated before the parent expression can be evaluated. The expression {{(1+2)*(9-1)}} consists of two terms, both of which are subexpressions: {{(1+2)}} and {{(9-1)}}. The expression {{20+6/3+2}} consists of three terms, of which one is a subexpression: {{6/3}} (the other two terms are the constants {{20}} and {{2}}).\n\n<<REWRITING EXPRESSIONS>>\n<<Only rewrite an expression such that it remains mathematically the same.>>\nRewrite expressions according to the following three rules:\n\n<<1. Use as few parentheses as possible.>>\n- Remove unnecessary parentheses: {{(1*2)*3*4}}→{{1*2*3*4}}\n- Rewrite an expression, if necessary: {{9+18-(2+1)}}→{{9+18-2-1}}, {{12/(3/(2+4))}}→{{12*(2+4)/3}}\n\t\n<<2. Sort operators: {{+}} before {{-}} and {{*}} before {{/}}.>>\n- Change the order of terms such that for their connecting operators {{+}} comes before {{-}}, and {{*}} comes before {{/}}\n- Do this within a parent expression: {{8-3+9+10}}→{{8+9+10-3}}, {{2/3*6*6}}→{{2*6*6/3}}, {{8-2+3*6}}→{{8+3*6-2}}\n- Do this within a subexpression: {{3*(5-4+7)}}→{{3*(5+7-4)}}, {{8+6/3*8}}→{{8+6*8/3}}\n- This does not apply to operators in two different subexpressions: in {{(3-1)*(5+7)}}, the {{-}} and {{+}} are not part of the same subexpression, so their order is not decided by this rule (instead, use rule 3c for this case).\n\n<<3. For cases not decided by rule 2, sort terms of expressions and subexpressions>>\n<< a)>> Sort constants in ascending order: {{3*(16-5-3)}}→{{3*(16-3-5)}}, {{4+5*4*1}}→{{4+1*4*5}}, {{25-10/5/2}}→{{25-10/2/5}}\n<< b)>> Place constants before subexpressions: {{(16-3-5)*3}}→{{3*(16-3-5)}}, {{5*8/4+14}}→{{14+5*8/4}}\n<< c)>> Sort two subexpressions according to their numerical value: {{4*5+1*4}}→{{1*4+4*5}} (1*4 < 4*5), {{(5+7)*(3-1)}}→{{(3-1)*(5+7)}} (3-1 < 5+7)\nIn the case of equal value, sort the subexpressions as strings, based on the ASCII value of characters: {{48/4+3*4}}→{{3*4+48/4}} ('3*4' < '48/4')\n\n<<EXAMPLE>>\nWith values 2,2,3,5, there are 8 non-unique solutions, but after applying above described rules, only one unique solution remains.\n{{(2*5-2)*3}}→{{3*(2*5-2)}} [<<rule 3b>>]\n{{(5*2-2)*3}}→{{3*(2*5-2)}} [<<rule 3a>> and <<rule 3b>>]\n{{3*(2*5-2)}}\n{{3*(5*2-2)}}→{{3*(2*5-2)}} [<<rule 3a>>]\n{{((2*5)-2)*3}}→{{3*(2*5-2)}} [<<rule 1>> and <<rule 3b>>]\n{{((5*2)-2)*3}}→{{3*(2*5-2)}} [<<rule 1>>, <<rule 3a>>, <<rule 3b>>]\n{{3*((2*5)-2)}}→{{3*(2*5-2)}} [<<rule 1>>]\n{{3*((5*2)-2)}}→{{3*(2*5-2)}} [<<rule 1>> and <<rule 3a>>]\n\n<<SORTING MULTIPLE UNIQUE SOLUTIONS>>\nAfter applying above rules, you might still end up with multiple solutions. Output them in the following order:\n- Solutions without parentheses ( {{a+b+c+d}} )\n- Solutions with one set of parentheses ( {{a*b*(c+d)}} )\n- Solutions with two sets of parentheses ( {{(a+b)*(c+d)}} )\nMultiple solutions within the same category should be sorted as strings, based on the ASCII value of the characters.\n\n<<Credits to>> @<<Timinator for co-authoring the goal statement and some of the test cases>>",
+      "testCases": [
+        {
+          "title": "One solution",
+          "isTest": true,
+          "testIn": "5 3 2 2",
+          "testOut": "1\n3*(2*5-2)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "2 3 5 2",
+          "testOut": "1\n3*(2*5-2)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Addition",
+          "isTest": true,
+          "testIn": "5 9 5 5",
+          "testOut": "1\n5+5+5+9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "5 5 9 5",
+          "testOut": "1\n5+5+5+9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Subtraction",
+          "isTest": true,
+          "testIn": "98 48 13 13",
+          "testOut": "1\n98-13-13-48",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "96 17 25 30",
+          "testOut": "1\n96-17-25-30",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No solution",
+          "isTest": true,
+          "testIn": "16 18 23 19",
+          "testOut": "not possible",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "25 18 39 29",
+          "testOut": "not possible",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two solutions",
+          "isTest": true,
+          "testIn": "2 3 2 2",
+          "testOut": "2\n2*2*2*3\n2*3*(2+2)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "2 2 3 2",
+          "testOut": "2\n2*2*2*3\n2*3*(2+2)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Bigger numbers",
+          "isTest": true,
+          "testIn": "100 90 88 26",
+          "testOut": "1\n100/(90-88)-26",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "3 94 98 99",
+          "testOut": "2\n(3-99)/(94-98)\n(99-3)/(98-94)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple options",
+          "isTest": true,
+          "testIn": "4 3 2 48",
+          "testOut": "7\n2*4+48/3\n48-2*3*4\n2*(48/3-4)\n3*48/(2+4)\n48*(4-3)/2\n48/(2*3-4)\n48/2/(4-3)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "5 4 2 2",
+          "testOut": "6\n2*2+4*5\n2+2+4*5\n4+2*2*5\n2*4*(5-2)\n4*(5+2/2)\n4+5*(2+2)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Even more options",
+          "isTest": true,
+          "testIn": "12 2 6 3",
+          "testOut": "12\n12/2+3*6\n2*3*6-12\n3*12-2*6\n6+12+2*3\n6+3*12/2\n12+3*(6-2)\n12-3*(2-6)\n2*(3+12)-6\n3*(12-2)-6\n3*(2+12-6)\n6+2*(12-3)\n6-2*(3-12)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "30 18 4 6",
+          "testOut": "8\n18+30-4*6\n18+(30-6)/4\n18-(6-30)/4\n30-(6+18)/4\n4*(30-6-18)\n(18+30)/(6-4)\n(18-30)*(4-6)\n(6-4)*(30-18)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "One included",
+          "isTest": true,
+          "testIn": "1 2 3 4",
+          "testOut": "4\n1*2*3*4\n2*3*4/1\n4*(1+2+3)\n(1+3)*(2+4)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "1 1 2 50",
+          "testOut": "8\n1*50/2-1\n50/1/2-1\n50/2-1*1\n50/2-1/1\n(50-1-1)/2\n(50/2-1)/1\n1*(50/2-1)\n(50-2)/(1+1)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Division",
+          "isTest": true,
+          "testIn": "96 1 2 2",
+          "testOut": "6\n1*96/2/2\n96/1/2/2\n1*96/(2+2)\n96/(2+1*2)\n96/(2+2/1)\n96/1/(2+2)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "96 2 8 6",
+          "testOut": "6\n2*6+96/8\n2*96/6-8\n(96-6*8)/2\n96/(2*6-8)\n96/(2+8-6)\n96/2/(8-6)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A rounding matter",
+          "isTest": true,
+          "testIn": "8 8 3 3",
+          "testOut": "1\n8/(3-8/3)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "6 4 6 35",
+          "testOut": "1\n4/(6-35/6)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "The right position",
+          "isTest": true,
+          "testIn": "2 4 10 48",
+          "testOut": "5\n2+10+48/4\n48-4-2*10\n4*48/(10-2)\n48*(10/4-2)\n48/(10-2*4)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "2 3 36 30",
+          "testOut": "6\n3*36/2-30\n3+36-30/2\n30-36/2/3\n36-2-30/3\n2+(30+36)/3\n3*(2+36-30)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Subexpression sorting",
+          "isTest": true,
+          "testIn": "2 4 2 6",
+          "testOut": "8\n2*4*6/2\n2+4*6-2\n2*(2+4+6)\n2*6*(4-2)\n4*(2+6-2)\n6*(2+4-2)\n6*(2+4/2)\n(6-2)*(2+4)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "2 2 18 24",
+          "testOut": "10\n18+24/2/2\n2*18-24/2\n18+24/(2+2)\n2*(2*18-24)\n2*2*(24-18)\n24+(2-2)/18\n24+18*(2-2)\n24-(2-2)/18\n24-18*(2-2)\n(2+2)*(24-18)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "String sorting",
+          "isTest": true,
+          "testIn": "1 2 12 6",
+          "testOut": "8\n1*12+2*6\n12+1*2*6\n12+2*6/1\n12/1+2*6\n(12+2*6)/1\n1*(12+2*6)\n12*(6/2-1)\n6*12/(1+2)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 14",
+          "isTest": false,
+          "testIn": "1 12 2 24",
+          "testOut": "12\n1*12+24/2\n12+1*24/2\n12+24/1/2\n12/1+24/2\n(12+24/2)/1\n1*(12+24/2)\n1*2*(24-12)\n2*(1*24-12)\n2*(24-1*12)\n2*(24-12)/1\n2*(24-12/1)\n2*(24/1-12)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Too much?",
+          "isTest": true,
+          "testIn": "1 13 1 11",
+          "testOut": "22\n1*11+1*13\n1*11+13/1\n1+11+13-1\n11+1*1*13\n11+1*13/1\n11+13/1/1\n11/1+1*13\n11/1+13/1\n13+1*1*11\n13+1*11/1\n13+11/1/1\n(11+1*13)/1\n(11+13)/1/1\n(11+13/1)/1\n(13+1*11)/1\n(13+11/1)/1\n1*(11+1*13)\n1*(11+13)/1\n1*(11+13/1)\n1*(13+1*11)\n1*(13+11/1)\n1*1*(11+13)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 15",
+          "isTest": false,
+          "testIn": "1 1 23 1",
+          "testOut": "22\n1*1+1*23\n1*1+23/1\n1+1*1*23\n1+1*23/1\n1+1+23-1\n1+23/1/1\n1/1+1*23\n1/1+23/1\n23+1*1*1\n23+1*1/1\n23+1/1/1\n(1+1*23)/1\n(1+23)/1/1\n(1+23/1)/1\n(23+1*1)/1\n(23+1/1)/1\n1*(1+1*23)\n1*(1+23)/1\n1*(1+23/1)\n1*(23+1*1)\n1*(23+1/1)\n1*1*(1+23)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "24 game",
+          "isTest": true,
+          "testIn": "24 24 24 1",
+          "testOut": "18\n1*24*24/24\n1+24-24/24\n24*24/1/24\n24+1*24-24\n24+24-1*24\n24+24-24/1\n24+24/1-24\n24+24/24-1\n(24+24)/1-24\n(24+24-24)/1\n1*(24+24)-24\n1*(24+24-24)\n24*(1+24-24)\n24+(24-24)/1\n24+1*(24-24)\n24-(24-24)/1\n24-1*(24-24)\n24/(1+24-24)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 16",
+          "isTest": false,
+          "testIn": "24 1 23 24",
+          "testOut": "25\n1+23*24/24\n1+23+24-24\n23+1*24/24\n23+24/1/24\n24+24-1-23\n24/24+1*23\n24/24+23/1\n(23+24/24)/1\n1*(23+24/24)\n1*24*(24-23)\n1*24/(24-23)\n23*24/(24-1)\n24*(1*24-23)\n24*(1+23)/24\n24*(24-1)/23\n24*(24-1*23)\n24*(24-23)/1\n24*(24-23/1)\n24*(24/1-23)\n24*24/(1+23)\n24/(1*24-23)\n24/(24-1*23)\n24/(24-23/1)\n24/(24/1-23)\n24/1/(24-23)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Beyond the 24 game",
+          "isTest": true,
+          "testIn": "0 1 23 24",
+          "testOut": "48\n0*23+1*24\n0*23+24/1\n0/23+1*24\n0/23+24/1\n1*24-0*23\n1*24-0/23\n1+23+0*24\n1+23+0/24\n1+23-0*24\n1+23-0/24\n24+0*1*23\n24+0*1/23\n24+0*23/1\n24+0/1/23\n24-0*1*23\n24-0*1/23\n24-0*23/1\n24-0/1/23\n24/1-0*23\n24/1-0/23\n(24+0*23)/1\n(24+0/23)/1\n(24-0*23)/1\n(24-0/23)/1\n1*(24+0*23)\n1*(24+0/23)\n1*(24-0*23)\n1*(24-0/23)\n24*(1+0*23)\n24*(1+0/23)\n24*(1-0*23)\n24*(1-0/23)\n24+0*(1+23)\n24+0*(1-23)\n24+0*(23-1)\n24+0/(1+23)\n24+0/(1-23)\n24+0/(23-1)\n24-0*(1+23)\n24-0*(1-23)\n24-0*(23-1)\n24-0/(1+23)\n24-0/(1-23)\n24-0/(23-1)\n24/(1+0*23)\n24/(1+0/23)\n24/(1-0*23)\n24/(1-0/23)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 17",
+          "isTest": false,
+          "testIn": "0 1 1 23",
+          "testOut": "45\n0+1+1*23\n0+1+23/1\n0+23+1*1\n0+23+1/1\n1+1*23-0\n1+23+0*1\n1+23+0/1\n1+23-0*1\n1+23-0/1\n1+23/1-0\n23+1*1-0\n23+1/1-0\n(0+1+23)/1\n(1+23)/1-0\n(1+23-0)/1\n0+(1+23)/1\n0+1*(1+23)\n1*(0+1+23)\n1*(1+23)-0\n1*(1+23-0)\n1+(0+23)/1\n1+(23-0)/1\n1+1*(0+23)\n1+1*(23-0)\n1+23*(0+1)\n1+23*(1-0)\n1+23/(0+1)\n1+23/(1-0)\n1-(0-23)/1\n1-1*(0-23)\n1-23*(0-1)\n1-23/(0-1)\n23+(0+1)/1\n23+(1-0)/1\n23+1*(0+1)\n23+1*(1-0)\n23+1/(0+1)\n23+1/(1-0)\n23-(0-1)/1\n23-1*(0-1)\n23-1/(0-1)\n(0+1)*(1+23)\n(1+23)/(0+1)\n(1+23)/(1-0)\n(1-0)*(1+23)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Stop! This is absurd.",
+          "isTest": true,
+          "testIn": "0 0 1 24",
+          "testOut": "92\n0*0+1*24\n0*0+24/1\n0+0+1*24\n0+0+24/1\n0+1*24-0\n0+24+0*1\n0+24+0/1\n0+24-0*1\n0+24-0/1\n0+24/1-0\n1*24-0*0\n1*24-0-0\n24+0*0*1\n24+0*0/1\n24+0*1-0\n24+0/1-0\n24-0*0*1\n24-0*0/1\n24-0-0*1\n24-0-0/1\n24/1-0*0\n24/1-0-0\n(0+0+24)/1\n(0+24)/1-0\n(0+24-0)/1\n(24+0*0)/1\n(24-0)/1-0\n(24-0*0)/1\n(24-0-0)/1\n0+(0+24)/1\n0+(24-0)/1\n0+1*(0+24)\n0+1*(24-0)\n0+24*(0+1)\n0+24*(1-0)\n0+24/(0+1)\n0+24/(1-0)\n0-(0-24)/1\n0-1*(0-24)\n0-24*(0-1)\n0-24/(0-1)\n1*(0+0+24)\n1*(0+24)-0\n1*(0+24-0)\n1*(24+0*0)\n1*(24-0)-0\n1*(24-0*0)\n1*(24-0-0)\n24*(0+0+1)\n24*(0+1)-0\n24*(0+1-0)\n24*(1+0*0)\n24*(1-0)-0\n24*(1-0*0)\n24*(1-0-0)\n24+(0+0)/1\n24+(0-0)/1\n24+0*(0+1)\n24+0*(0-1)\n24+0*(1-0)\n24+0/(0+1)\n24+0/(0-1)\n24+0/(1-0)\n24+1*(0+0)\n24+1*(0-0)\n24-(0+0)/1\n24-(0-0)/1\n24-0*(0+1)\n24-0*(0-1)\n24-0*(1-0)\n24-0/(0+1)\n24-0/(0-1)\n24-0/(1-0)\n24-1*(0+0)\n24-1*(0-0)\n24/(0+0+1)\n24/(0+1)-0\n24/(0+1-0)\n24/(1+0*0)\n24/(1-0)-0\n24/(1-0*0)\n24/(1-0-0)\n(0+1)*(0+24)\n(0+1)*(24-0)\n(0+24)/(0+1)\n(0+24)/(1-0)\n(0-24)*(0-1)\n(0-24)/(0-1)\n(1-0)*(0+24)\n(1-0)*(24-0)\n(24-0)/(0+1)\n(24-0)/(1-0)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 18",
+          "isTest": false,
+          "testIn": "0 1 1 24",
+          "testOut": "76\n0*1+1*24\n0*1+24/1\n0+1*1*24\n0+1*24/1\n0+1+24-1\n0+24/1/1\n0/1+1*24\n0/1+24/1\n1*1*24-0\n1*24-0*1\n1*24-0/1\n1*24/1-0\n1+24-0-1\n24+0*1*1\n24+0*1/1\n24+0/1/1\n24-0*1*1\n24-0*1/1\n24-0/1/1\n24/1-0*1\n24/1-0/1\n24/1/1-0\n(0+1*24)/1\n(0+24)/1/1\n(0+24/1)/1\n(1*24-0)/1\n(24+0*1)/1\n(24+0/1)/1\n(24-0)/1/1\n(24-0*1)/1\n(24-0/1)/1\n(24/1-0)/1\n1*(0+1*24)\n1*(0+24)/1\n1*(0+24/1)\n1*(1*24-0)\n1*(24+0*1)\n1*(24+0/1)\n1*(24-0)/1\n1*(24-0*1)\n1*(24-0/1)\n1*(24/1-0)\n1*1*(0+24)\n1*1*(24-0)\n1*24*(0+1)\n1*24*(1-0)\n1*24/(0+1)\n1*24/(1-0)\n1/(0+1/24)\n1/(1/24-0)\n24*(0+1)/1\n24*(0+1*1)\n24*(0+1/1)\n24*(1*1-0)\n24*(1+0*1)\n24*(1+0/1)\n24*(1-0)/1\n24*(1-0*1)\n24*(1-0/1)\n24*(1/1-0)\n24+0*(1+1)\n24+0*(1-1)\n24+0/(1+1)\n24-0*(1+1)\n24-0*(1-1)\n24-0/(1+1)\n24/(0+1*1)\n24/(0+1/1)\n24/(1*1-0)\n24/(1+0*1)\n24/(1+0/1)\n24/(1-0*1)\n24/(1-0/1)\n24/(1/1-0)\n24/1/(0+1)\n24/1/(1-0)",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "0 <= [[a]], [[b]], [[c]], [[d]] <= 100",
+      "coverBinaryId": 103786300764015,
+      "stubGenerator": "read a:int b:int c:int d:int\nwrite solution",
+      "inputDescription": "<<Line 1:>> four space separated integers [[a]], [[b]], [[c]], [[d]]",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> {{not possible}} or number of unique solutions ([[ns]])\n<<Next [[ns]] lines:>> all unique solutions as expressions without spaces"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">In the 24 Game, a given set of four numbers must be combined using only the arithmetic operations <const>+ - &times; &divide;</const> with parentheses <const>( )</const> if necessary to define the order in which operations are carried out. All four numbers must be used so that the end result is 24. The given numbers may be rearranged in any order; that is, the original order need not be followed. Normally, one solution is enough - if you prefer that, you can solve the following puzzle:<br><br>https://www.codingame.com/training/medium/24-game by @Smelty<br><br>For this puzzle, your program must provide the number of possible solutions (<var>ns</var>) and all those possible solutions, or <const>not possible</const> if there are no solutions.<br><br>Solutions must be printed as expressions without spaces, for example <const>3*(2*7-6)</const>. Only unique solutions should be included in the output. This requires rewriting expressions in a consistent way. <br><br><strong>EXPRESSIONS, TERMS AND SUBEXPRESSIONS</strong><br>To understand the rules for rewriting expressions, we must distinguish <strong>expressions, terms and subexpressions</strong>.<br><br><strong>expression:</strong> Terms separated by mathematical operators that can be evaluated from left to right. For example: <const>1+2+3+18</const>, <const>3*2*1*4</const>, <const>24+10-6-4</const>, <const>24/1/1/1</const> or <const>2*3*40/10</const>. <br><br><strong>term:</strong> A constant or a subexpression. The expression <const>3+7*(1+2)</const> has two terms. The first term is the constant <const>3</const>. The second term is the subexpression <const>7*(1+2)</const> - which itself also consists of one constant <const>7</const> and one subexpression <const>(1+2)</const>.<br><br><strong>subexpression:</strong> A subexpression is an expression that must be evaluated before the parent expression can be evaluated. The expression <const>(1+2)*(9-1)</const> consists of two terms, both of which are subexpressions: <const>(1+2)</const> and <const>(9-1)</const>. The expression <const>20+6/3+2</const> consists of three terms, of which one is a subexpression: <const>6/3</const> (the other two terms are the constants <const>20</const> and <const>2</const>).<br><br><strong>REWRITING EXPRESSIONS</strong><br><strong>Only rewrite an expression such that it remains mathematically the same.</strong><br>Rewrite expressions according to the following three rules:<br><br><strong>1. Use as few parentheses as possible.</strong><br>- Remove unnecessary parentheses: <const>(1*2)*3*4</const>&rarr;<const>1*2*3*4</const><br>- Rewrite an expression, if necessary: <const>9+18-(2+1)</const>&rarr;<const>9+18-2-1</const>, <const>12/(3/(2+4))</const>&rarr;<const>12*(2+4)/3</const><br>\t<br><strong>2. Sort operators: <const>+</const> before <const>-</const> and <const>*</const> before <const>/</const>.</strong><br>- Change the order of terms such that for their connecting operators <const>+</const> comes before <const>-</const>, and <const>*</const> comes before <const>/</const><br>- Do this within a parent expression: <const>8-3+9+10</const>&rarr;<const>8+9+10-3</const>, <const>2/3*6*6</const>&rarr;<const>2*6*6/3</const>, <const>8-2+3*6</const>&rarr;<const>8+3*6-2</const><br>- Do this within a subexpression: <const>3*(5-4+7)</const>&rarr;<const>3*(5+7-4)</const>, <const>8+6/3*8</const>&rarr;<const>8+6*8/3</const><br>- This does not apply to operators in two different subexpressions: in <const>(3-1)*(5+7)</const>, the <const>-</const> and <const>+</const> are not part of the same subexpression, so their order is not decided by this rule (instead, use rule 3c for this case).<br><br><strong>3. For cases not decided by rule 2, sort terms of expressions and subexpressions</strong><br><strong> a)</strong> Sort constants in ascending order: <const>3*(16-5-3)</const>&rarr;<const>3*(16-3-5)</const>, <const>4+5*4*1</const>&rarr;<const>4+1*4*5</const>, <const>25-10/5/2</const>&rarr;<const>25-10/2/5</const><br><strong> b)</strong> Place constants before subexpressions: <const>(16-3-5)*3</const>&rarr;<const>3*(16-3-5)</const>, <const>5*8/4+14</const>&rarr;<const>14+5*8/4</const><br><strong> c)</strong> Sort two subexpressions according to their numerical value: <const>4*5+1*4</const>&rarr;<const>1*4+4*5</const> (1*4 &lt; 4*5), <const>(5+7)*(3-1)</const>&rarr;<const>(3-1)*(5+7)</const> (3-1 &lt; 5+7)<br>In the case of equal value, sort the subexpressions as strings, based on the ASCII value of characters: <const>48/4+3*4</const>&rarr;<const>3*4+48/4</const> ('3*4' &lt; '48/4')<br><br><strong>EXAMPLE</strong><br>With values 2,2,3,5, there are 8 non-unique solutions, but after applying above described rules, only one unique solution remains.<br><const>(2*5-2)*3</const>&rarr;<const>3*(2*5-2)</const> [<strong>rule 3b</strong>]<br><const>(5*2-2)*3</const>&rarr;<const>3*(2*5-2)</const> [<strong>rule 3a</strong> and <strong>rule 3b</strong>]<br><const>3*(2*5-2)</const><br><const>3*(5*2-2)</const>&rarr;<const>3*(2*5-2)</const> [<strong>rule 3a</strong>]<br><const>((2*5)-2)*3</const>&rarr;<const>3*(2*5-2)</const> [<strong>rule 1</strong> and <strong>rule 3b</strong>]<br><const>((5*2)-2)*3</const>&rarr;<const>3*(2*5-2)</const> [<strong>rule 1</strong>, <strong>rule 3a</strong>, <strong>rule 3b</strong>]<br><const>3*((2*5)-2)</const>&rarr;<const>3*(2*5-2)</const> [<strong>rule 1</strong>]<br><const>3*((5*2)-2)</const>&rarr;<const>3*(2*5-2)</const> [<strong>rule 1</strong> and <strong>rule 3a</strong>]<br><br><strong>SORTING MULTIPLE UNIQUE SOLUTIONS</strong><br>After applying above rules, you might still end up with multiple solutions. Output them in the following order:<br>- Solutions without parentheses ( <const>a+b+c+d</const> )<br>- Solutions with one set of parentheses ( <const>a*b*(c+d)</const> )<br>- Solutions with two sets of parentheses ( <const>(a+b)*(c+d)</const> )<br>Multiple solutions within the same category should be sorted as strings, based on the ASCII value of the characters.<br><br><strong>Credits to</strong> @<strong>Timinator for co-authoring the goal statement and some of the test cases</strong></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> four space separated integers <var>a</var>, <var>b</var>, <var>c</var>, <var>d</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> <const>not possible</const> or number of unique solutions (<var>ns</var>)<br><strong>Next <var>ns</var> lines:</strong> all unique solutions as expressions without spaces</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt;= <var>a</var>, <var>b</var>, <var>c</var>, <var>d</var> &lt;= 100</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5 3 2 2</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1\n3*(2*5-2)</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 81190330215,
+  "avatar": 98376709796567,
+  "commentCount": 56,
+  "upVotes": 24,
+  "downVotes": 3,
+  "validateAction": {
+    "actionId": 824047,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1685689537001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1685689866720,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1688285137001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1688287884035,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1689538888591,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

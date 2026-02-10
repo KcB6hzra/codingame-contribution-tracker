@@ -1,0 +1,514 @@
+{
+  "id": 122709,
+  "activeVersion": 60,
+  "score": 10,
+  "votableId": 37016463,
+  "codingamerId": 5192217,
+  "views": 303,
+  "commentableId": 36857016,
+  "title": "Road to Mount Boom",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Harry.B.",
+  "publicHandle": "122709f7be9039cee0847f60b6f6fcf8faa8ba",
+  "codingamerHandle": "d926a93cb394ded661b204822965c5fa7122915",
+  "lastVersion": {
+    "version": 60,
+    "autocloseTime": 1751560817269,
+    "freezeTime": 1749573617269,
+    "data": {
+      "title": "Road to Mount Boom",
+      "topics": [
+        {
+          "id": 54,
+          "handle": "BFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en largeur",
+            "2": "BFS"
+          },
+          "pageTitle": "BFS: exercises and theory",
+          "puzzleCount": 35,
+          "parentTopicId": 41,
+          "contentDetailsId": 84
+        },
+        {
+          "id": 55,
+          "handle": "DFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en profondeur",
+            "2": "DFS"
+          },
+          "pageTitle": "DFS: exercises and theory",
+          "puzzleCount": 23,
+          "parentTopicId": 41,
+          "contentDetailsId": 79
+        },
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 68,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "h, w = map(int,input().split())\nh, w = h+2, w+2\ngrid = [[] for _ in range(h)]\ngrid[0] = [\" \" for _ in range(w)]\nbrodo = boom = (0,0)\nfor i in range(1,h-1):\n    row = \" \" + input() + \" \"\n    for j,char in enumerate(row):\n        grid[i].append(char)\n        if char == \"B\": brodo = (i,j); grid[i][j] = 0\n        elif char == \"M\": boom = (i,j)\ngrid[-1] = [\" \" for _ in range(w)]\n\ndirections = [(-1, 0), (0, 1), (1, 0), (0, -1), (1,1),(-1,-1),(1,-1),(-1,1)]\nroutes = {(1,1):[(1,0),(0,1)],(-1,-1):[(-1,0),(0,-1)],(-1,1):[(-1,0),(0,1)],(1,-1):[(1,0),(0,-1)]}\n\nfrom collections import deque\nto_visit = deque([brodo])\nvisited = set()\n\nwhile to_visit:\n    i, j = current = to_visit.popleft()\n    visited.add(current)\n    if current == boom:\n        break\n    \n    for iy, jx in directions:\n        # Adjacent mountain rule.\n        if (iy,jx) in routes:\n            diag1, diag2 = routes[(iy,jx)]\n            di1 ,dj1 = diag1[0]+i , diag1[1]+j\n            di2 ,dj2 = diag2[0]+i , diag2[1]+j\n            if all(0 <= x < h and 0 <= y < w for x, y in [(di1, dj1), (di2, dj2)]):\n                if \"^\" == grid[di1][dj1] == grid[di2][dj2]:\n                    continue\n\n        iy = i + iy\n        jx = j + jx\n        if 0 <= iy < h and 0 <= jx < w and (iy,jx) not in visited and grid[iy][jx] != \"^\":\n            grid[iy][jx] = grid[i][j] + 1\n            visited.add((iy,jx))\n            to_visit.append((iy,jx))\n\ndistance = grid[boom[0]][boom[1]]\nprint(f\"{distance} league{'s' if distance != 1 else ''}\")\n\n\n\"\"\" Code with general comments\n# Form grid, find Brodo and Mount Boom.\nh, w = [int(i) for i in input().split()]\nw, h = w+2, h+2\ngrid = [[] for _ in range(h)]\ngrid[0] = [\" \" for _ in range(w)]\nbrodo = boom = (0,0)\nfor i in range(1,h-1):\n    row = \" \" + input() + \" \"\n    assert len(row) == w, f\"Row {i} is size {len(row)} instead of {w}\"\n    for j,char in enumerate(row):\n        grid[i].append(char)\n        if char == \"B\":\n            brodo = (i,j)\n            grid[i][j] = 0\n        elif char == \"M\":\n            boom = (i,j)\ngrid[-1] = [\" \" for _ in range(w)]\nassert len(grid) == h, f\"Grid is size {len(grid)} instead of {h}\"\n\n# Define the required variables to perfrom BFS.\nto_visit = [brodo]\ndirections = [(-1, 0), (0, 1), (1, 0), (0, -1), (1,1),(-1,-1),(1,-1),(-1,1)]\nvisited = set()\n\n# Store relative positions to check if a diagonal move is not going through connected mountains.\nroutes = {(1,1):[(1,0),(0,1)],\n(-1,-1):[(-1,0),(0,-1)],\n(-1,1):[(-1,0),(0,1)],\n(1,-1):[(1,0),(0,-1)]}\n\n# Perfrom BFS, with early exit, to find distance from Frodo to Mount Boom.\nwhile to_visit:\n    current = to_visit.pop(0)\n    i, j = current\n    visited.add(current)\n    # Early Exit Clause\n    if current == boom:\n        break\n    \n    for iy, jx in directions:\n        # Check if the diagonal path is valid or blocked by connected mountains.\n        if (iy,jx) in routes:\n            diag1, diag2 = routes[(iy,jx)]\n            di1 , dj1 = diag1[0]+i , diag1[1]+j\n            di2 , dj2 = diag2[0]+i , diag2[1]+j\n            if all(0 <= x < h and 0 <= y < w for x, y in [(di1, dj1), (di2, dj2)]):\n                if \"^\" == grid[diag1[0]+i][diag1[1]+j] == grid[diag2[0]+i][diag2[1]+j]:\n                    continue\n\n        # If move has not been visited, is valid and not a mountain, add to to_visit array.\n        iy = i + iy\n        jx = j + jx\n        if 0 <= iy < h and 0 <= jx < w and (iy,jx) not in visited and grid[iy][jx] != \"^\":\n            grid[iy][jx] = grid[i][j] + 1\n            visited.add((iy,jx))\n            to_visit.append((iy,jx))\n\n# Print the length from Brodo's starting position and Mount Boom.\ndistance = grid[boom[0]][boom[1]]\nprint(f\"{distance} league{['','s'][distance != 1]}\")\n\n# Testing prints.\nimport sys\nfor i in grid:\n    print(\"\".join([str(j).ljust(2,\" \") for j in i]) , file = sys.stderr)\n\"\"\"",
+      "statement": "A legendary item has been rediscovered by Brodo and must be destroyed to prevent the Dark Lord's return to power. The only way to destroy the item is for Brodo to travel to Mount Boom and to cast it into the flames. The goal is to find the <<SHORTEST DISTANCE>> for Brodo to reach Mount Boom.\n\n<<Movement:>>\nBrodo can move in any <<CARDINAL>> or <<ORDINAL>> direction ({{N, NE, E, SE, S, SW, W, NW}}). A movement of {{1}} in any direction represents a distance of {{1}} league. Brodo can travel outside the provided map if there are no mountains blocking the path. The area outside the map is considered an infinite expanse of empty paths.\n\nBrodo <<CANNOT>> travel onto mountains, nor can he move diagonally between two mountains that are adjacent to each other.\nMountains are considered adjacent if they are within {{1}} league in any direction.\n\nExample:\nBrodo cannot move directly from B to M, or vice versa, in the following map:\nB^\n^M\n\n<<Map Legend:>>\n{{B}} - Brodo's starting location.\n{{M}} - Mount Boom (goal destination).\n{{^}} - Mountain.\nSpace - Empty path Brodo can traverse, following the movement rules above.",
+      "testCases": [
+        {
+          "title": "Basic North",
+          "isTest": true,
+          "testIn": "6 5\n^^^^^\n^^M ^\n^   ^\n^^ ^^\n^ B^^\n^^^^^",
+          "testOut": "3 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Basic North",
+          "isTest": false,
+          "testIn": "7 5\n^^^^^\n^  M^\n^ ^ ^\n^ ^ ^\n^ ^ ^\n^  B^\n^^^^^",
+          "testOut": "4 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Basic East",
+          "isTest": true,
+          "testIn": "4 10\n^^^^^^^^^^\n^B      M^\n^^ ^^^^^ ^\n^^^^^^^^^^",
+          "testOut": "7 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Basic East",
+          "isTest": false,
+          "testIn": "5 12\n^^^^^^^^^^^^\n^          ^\n^^ ^    ^^ ^\n^B        M^\n^^^^^^^^^^^^",
+          "testOut": "9 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Basic South",
+          "isTest": true,
+          "testIn": "5 5\n^^^^^\n^B  ^\n^ ^ ^\n^M  ^\n^^^^^",
+          "testOut": "2 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Basic South",
+          "isTest": false,
+          "testIn": "6 6\n^^^^^^\n^   B^\n^  ^ ^\n^    ^\n^^  M^\n^^^^^^",
+          "testOut": "3 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Basic West",
+          "isTest": true,
+          "testIn": "4 9\n^^^^^^^^^\n^M     B^\n^^ ^  ^ ^\n^^^^^^^^^",
+          "testOut": "6 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Basic West",
+          "isTest": false,
+          "testIn": "4 13\n^^^^^^^^^^^^^\n^M         B^\n^^ ^  ^ ^   ^\n^^^^^^^^^^^^^",
+          "testOut": "10 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Basic North-East",
+          "isTest": true,
+          "testIn": "8 12\n^^^^^^^^^^^^\n^     M  ^^^\n^ ^     ^  ^\n^ ^    ^   ^\n^     ^    ^\n^ B  ^     ^\n^    ^     ^\n^^^^^^^^^^^^",
+          "testOut": "4 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Basic North-East",
+          "isTest": false,
+          "testIn": "8 12\n^^^^^^^^^^^^\n^     M ^^^^\n^ ^     ^  ^\n^          ^\n^          ^\n^    ^     ^\n^B   ^     ^\n^^^^^^^^^^^^",
+          "testOut": "5 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Basic South-East",
+          "isTest": true,
+          "testIn": "5 5\n^^^^^\n^B  ^\n^  ^^\n^^ M^\n^^^^^",
+          "testOut": "2 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Basic South-East",
+          "isTest": false,
+          "testIn": "9 12\n^^^^^^^^^^^^\n^       ^^^^\n^ ^     ^  ^\n^   B      ^\n^          ^\n^          ^\n^    ^     ^\n^    ^  M  ^\n^^^^^^^^^^^^",
+          "testOut": "4 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Basic South-West",
+          "isTest": true,
+          "testIn": "6 5\n^^^^^\n^  B^\n^  ^^\n^  ^^\n^M  ^\n^^^^^",
+          "testOut": "3 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Basic South-West",
+          "isTest": false,
+          "testIn": "9 12\n^^^^^^^^^^^^\n^       ^^^^\n^ ^     ^ B^\n^  ^       ^\n^ ^        ^\n^^         ^\n^^   ^     ^\n^^^  M     ^\n^^^^^^^^^^^^",
+          "testOut": "5 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Basic North-West",
+          "isTest": true,
+          "testIn": "9 16\n^^^^^^^^^^^^^^^^\n^    ^^^M  ^   ^\n^          ^   ^\n^^         ^   ^\n^ ^         ^  ^\n^ ^          ^ ^\n^ ^            ^\n^  ^  ^^^^    B^\n^^^^^^^^^^^^^^^^",
+          "testOut": "6 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Basic North-West",
+          "isTest": false,
+          "testIn": "9 12\n^^^^^^^^^^^^\n^ M    ^^^^^\n^ ^     ^ ^^\n^  ^       ^\n^ ^       ^^\n^^       ^^^\n^^   ^    ^^\n^^^     B  ^\n^^^^^^^^^^^^",
+          "testOut": "6 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "North and NE (Open)",
+          "isTest": true,
+          "testIn": "6 5\n   M \n     \n     \n ^   \n ^   \nB^   ",
+          "testOut": "5 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "North and NE (Open)",
+          "isTest": false,
+          "testIn": "5 6\n   M  \n      \n  ^   \n B^   \n  ^   ",
+          "testOut": "3 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "East and SE (Open)",
+          "isTest": true,
+          "testIn": "5 20\n      ^^^  ^^    ^^^\n B                ^^\n ^^^^^^^^^^^        \n ^          ^      ^\n^^           ^M    ^",
+          "testOut": "13 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "East and SE (Open)",
+          "isTest": false,
+          "testIn": "6 20\n      ^^^  ^^    ^^^\n B ^               ^\n ^  ^       ^^^^^^  \n ^   ^^^^^^^^       \n^^               M ^\n^^^  ^^    ^^^      ",
+          "testOut": "16 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "South and SW (Open)",
+          "isTest": true,
+          "testIn": "10 5\n     \n     \n  ^B \n  ^  \n^^^  \n^^^  \n^^^  \n^^   \n^    \nM    ",
+          "testOut": "7 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "South and SW (Open)",
+          "isTest": false,
+          "testIn": "11 5\n  ^ B\n ^^ ^\n^^  ^\n^  ^^\n^ ^^ \n^ ^  \n^ ^  \n^ ^^ \n^ ^^ \n^M ^^\n^   ^",
+          "testOut": "9 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "West and NW (Open)",
+          "isTest": true,
+          "testIn": "6 12\n ^^^^^^^    \n ^^^^^     B\n ^^^^  ^^^^^\n ^^^  ^^^^^^\n ^^  ^^^^^^^\n M  ^^^^^^^^",
+          "testOut": "10 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "West and NW (Open)",
+          "isTest": false,
+          "testIn": "6 12\n ^^^^^^^^^^^\n ^^^^^^^^^ B\n ^^^^^^^^  ^\n ^^^^^^^  ^^\n ^^M     ^^^\n ^^^^^^^^^^^",
+          "testOut": "8 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Horizontal Journey",
+          "isTest": true,
+          "testIn": "3 4\n^^^^\n^BM^\n^^^^",
+          "testOut": "1 league",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Horizontal Journey",
+          "isTest": false,
+          "testIn": "4 6\n^^^^^^\n^ ^^ ^\n^^MB^^\n^^^^^^",
+          "testOut": "1 league",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Vertical Journey",
+          "isTest": true,
+          "testIn": "6 5\n^^^^^\n^   ^\n^ B ^\n^ M ^\n^   ^\n^^^^^",
+          "testOut": "1 league",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Vertical Journey",
+          "isTest": false,
+          "testIn": "6 5\n^^^^^\n^  M^\n^^ B^\n^^^ ^\n^^^^^\n^^^^^",
+          "testOut": "1 league",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Diagonal Journey",
+          "isTest": true,
+          "testIn": "2 2\nM \n B",
+          "testOut": "1 league",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Diagonal Journey",
+          "isTest": false,
+          "testIn": "4 4\n    \n    \n   M\n  B ",
+          "testOut": "1 league",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Diagonal Journey 2",
+          "isTest": true,
+          "testIn": "4 4\n^   \n^B  \n  M^\n  ^ ",
+          "testOut": "1 league",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Diagonal Journey 2",
+          "isTest": false,
+          "testIn": "4 4\n^  B\n^^M \n   ^\n^ ^ ",
+          "testOut": "1 league",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Around the World 1",
+          "isTest": true,
+          "testIn": "17 19\n         ^         \n        ^^^        \n       ^^ ^^       \n      ^^   ^^      \n     ^^  ^  ^^     \n    ^^  ^^^  ^^    \n   ^^  ^^^^^  ^^   \n  ^^  ^^^^^^^B ^^  \n ^^  ^^^^^^^^^^^^^ \n  ^^  ^^^^^^^M ^^  \n   ^^  ^^^^^  ^^   \n    ^^  ^^^  ^^    \n     ^^  ^  ^^     \n      ^^   ^^      \n       ^^ ^^       \n        ^^^        \n         ^         ",
+          "testOut": "18 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Around the World 1",
+          "isTest": false,
+          "testIn": "23 23\n           ^           \n          ^^^          \n         ^^ ^^         \n        ^^   ^^        \n       ^^  ^  ^^       \n      ^^  ^^^  ^^      \n     ^^  ^^^^^  ^^     \n    ^^  ^^^^^^^  ^^    \n   ^^  ^^^^^^^^^  ^^   \n  ^^  ^^^^^^^^^^^  ^^  \n ^^ M^^^^^^^^^^^^^  ^^ \n^^^^^^^^^^^^^^^^^^^  ^^\n ^^ B^^^^^^^^^^^^^  ^^ \n  ^^  ^^^^^^^^^^^  ^^  \n   ^^  ^^^^^^^^^  ^^   \n    ^^  ^^^^^^^  ^^    \n     ^^  ^^^^^  ^^     \n      ^^  ^^^  ^^      \n       ^^  ^  ^^       \n        ^^   ^^        \n         ^^ ^^         \n          ^^^          \n           ^           ",
+          "testOut": "30 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Around the World 2",
+          "isTest": true,
+          "testIn": "10 10\n^^^^^^^^^^\n^^       ^\n^^ ^^^^ ^^\n^^B^  ^  ^\n^^^^  ^  ^\n^ M^  ^  ^\n^  ^  ^  ^\n^  ^^^^  ^\n^        ^\n^^^^^^^^^^",
+          "testOut": "18 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Around the World 2",
+          "isTest": false,
+          "testIn": "11 10\n^^^^^^^^^^\n^        ^\n^ ^^^^^ ^^\n^ ^^  ^B^^\n^ ^^  ^^^^\n^ ^^  ^M ^\n^ ^^  ^  ^\n^ ^^  ^  ^\n^ ^^^^^^ ^\n^        ^\n^^^^^^^^^^",
+          "testOut": "23 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Maze 1",
+          "isTest": true,
+          "testIn": "6 23\n^^^^^^^^^^^^^^^^^^^^^^^\n^^               ^^^^^^\n^M^B^^ ^ ^ ^^^        ^\n^  ^  ^ ^ ^   ^^^^^   ^\n^                   ^^^\n^^^^^^^^^^^^^^^^^^^^^^^",
+          "testOut": "34 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Maze 1",
+          "isTest": false,
+          "testIn": "7 23\n^^^^^^^^^^^^^^^^^^^^^^^\n^^               ^^^^^^\n^B^M^^ ^^^ ^^^        ^\n^  ^  ^   ^   ^^^^^   ^\n^  ^^ ^ ^ ^^^^^^^^^ ^^^\n^       ^           ^^^\n^^^^^^^^^^^^^^^^^^^^^^^",
+          "testOut": "36 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Maze 2",
+          "isTest": true,
+          "testIn": "11 21\n^^^^^^^^^^ ^^^^^^^^^ \n^M        ^         ^\n^ ^^^^ ^^ ^  ^^^^^^ ^\n^     ^     ^       ^\n ^^^  ^ ^^  ^ ^^^^ ^^\n^   ^ ^   ^ ^     ^ ^\n^ ^ ^  ^^ ^  ^^^^ ^^^\n^ ^   ^     ^     ^^^\n^  ^^^  ^^^^ ^^^^ ^^^\n^                B^^^\n ^^^^^^^^^^^^^^^^^ ^^",
+          "testOut": "24 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Maze 2",
+          "isTest": false,
+          "testIn": "13 25\n ^^^^^^^   ^^^^^^ ^ ^^^^^\n^B      ^^^^^  ^^^ ^^^^ ^\n^  ^^^ ^             ^  ^\n^ ^    ^ ^ ^^^^^^^   ^ ^ \n^ ^ ^^^   ^       ^  ^  ^\n^ ^     ^   ^^^ ^ ^^^ ^^^\n^ ^^^^ ^ ^     ^        ^\n^     ^ ^ ^^ ^  ^^^^^^^ ^\n ^^^  ^     ^ ^       ^ ^\n^   ^ ^^^^  ^ ^^^^^^^ ^ ^\n^ ^^      ^ ^       ^   ^\n^ ^^^^^^^ ^^^^^^^^^^ ^ M^\n^^^^^^^^ ^^^     ^^^^^^^^",
+          "testOut": "28 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Large Maze",
+          "isTest": true,
+          "testIn": "41 41\n ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n^                                       ^\n^                                       ^\n^                                       ^\n^    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^     ^\n^   ^                                   ^\n^   ^                               ^   ^\n^   ^                               ^   ^\n^   ^    ^^^^^^^^^^^^^^^^^^^^^^^    ^   ^\n^   ^   ^                       ^   ^   ^\n^   ^   ^                       ^   ^   ^\n^   ^   ^                       ^   ^   ^\n^   ^   ^     ^^^^^^^^^^^^^^    ^   ^   ^\n^   ^   ^                   ^   ^   ^   ^\n^   ^   ^   ^               ^   ^   ^   ^\n^   ^   ^   ^               ^   ^   ^   ^\n^   ^   ^   ^    ^^^^^^^    ^   ^   ^   ^\n^   ^   ^   ^   ^       ^   ^   ^   ^   ^\n^   ^   ^   ^   ^       ^   ^   ^   ^   ^\n^   ^   ^   ^   ^       ^   ^   ^   ^   ^\n^   ^   ^   ^   ^   B   ^   ^   ^   ^   ^\n^   ^   ^   ^   ^       ^   ^   ^   ^   ^\n^   ^   ^   ^   ^       ^   ^   ^   ^   ^\n^   ^   ^   ^   ^           ^   ^   ^   ^\n^   ^   ^   ^    ^^^^^^     ^   ^   ^   ^\n^   ^   ^   ^               ^   ^   ^   ^\n^   ^   ^   ^               ^   ^   ^   ^\n^   ^   ^   ^               ^   ^   ^   ^\n^   ^   ^    ^^^^^^^^^^^^^^^    ^   ^   ^\n^   ^   ^                       ^   ^   ^\n^   ^   ^                       ^   ^   ^\n^   ^                           ^   ^   ^\n^   ^     ^^^^^^^^^^^^^^^^^^^^^^    ^   ^\n^   ^                               ^   ^\n^   ^                               ^   ^\n^   ^                               ^   ^\n^    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^    ^\n^                                       ^\n^                                       ^\n                                        ^\nM ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ",
+          "testOut": "157 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Large Maze",
+          "isTest": false,
+          "testIn": "41 41\n ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n^                                       ^\n^                                       ^\n^                                       ^\n^    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^     ^\n^   ^                                   ^\n^   ^                               ^   ^\n^   ^                               ^   ^\n^   ^    ^^^^^^^^^^^^^^^^^^^^^^     ^   ^\n^   ^   ^                           ^   ^\n^   ^   ^                       ^   ^   ^\n^   ^   ^                       ^   ^   ^\n^   ^   ^    ^^^^^^^^^^^^^^^    ^   ^   ^\n^   ^   ^   ^               ^   ^   ^   ^\n^   ^   ^   ^               ^   ^   ^   ^\n^   ^   ^   ^               ^   ^   ^   ^\n^   ^   ^   ^    ^^^^^^     ^   ^   ^   ^\n^   ^   ^   ^   ^           ^   ^   ^   ^\n^   ^   ^   ^   ^       ^   ^   ^   ^   ^\n^   ^   ^   ^   ^       ^   ^   ^   ^   ^\n^   ^   ^   ^   ^   M   ^   ^   ^   ^   ^\n^   ^   ^   ^   ^       ^   ^   ^   ^   ^\n^   ^   ^   ^   ^       ^   ^   ^   ^   ^\n^   ^   ^   ^   ^       ^   ^   ^   ^   ^\n^   ^   ^   ^    ^^^^^^^    ^   ^   ^   ^\n^   ^   ^   ^               ^   ^   ^   ^\n^   ^   ^   ^               ^   ^   ^   ^\n^   ^   ^                   ^   ^   ^   ^\n^   ^   ^     ^^^^^^^^^^^^^^    ^   ^   ^\n^   ^   ^                       ^   ^   ^\n^   ^   ^                       ^   ^   ^\n^   ^   ^                       ^   ^   ^\n^   ^    ^^^^^^^^^^^^^^^^^^^^^^^    ^   ^\n^   ^                               ^   ^\n^   ^                               ^   ^\n^   ^                               ^   ^\n^    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^    ^\n^                                       ^\n^                                       ^\n                                        ^\nB ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+          "testOut": "127 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Outside Traversal",
+          "isTest": true,
+          "testIn": "10 10\n^^^^^^^^^^\n^B        \n^^^^^^^^^^\n^^^^^^^^^^\n^^^^^^^^^^\n^^^^^^^^^^\n^^^^^^^^^^\n^^^^^^^^^^\n^M        \n^^^^^^^^^^",
+          "testOut": "23 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Outside Traversal",
+          "isTest": false,
+          "testIn": "10 10\n^^^^^^^^^^\n^        ^\n^^^^^^^^^^\n^^^^^^^^B \n^   ^^M^^^\n^^^^^^    \n^^   ^^^^^\n^^^^^^  ^^\n^        ^\n^^^^^^^^^^",
+          "testOut": "6 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Horizontal Outside Traversal",
+          "isTest": true,
+          "testIn": "19 20\n^^^    ^^^^^^^^^  ^^\n^^    ^^^^^^^^^^  ^^\n^^    ^^     ^^  ^^^\n^^    ^  ^^   ^^   ^\n^    ^^  ^^   ^^^   \n   ^^^  ^^^   ^^^^  \n^^^^^   ^^^^   ^^^B^\n^^^    ^^^^^^^   ^^^\n^^^                 \n      ^^^^^^   ^^^^^\n^^^^^^^    ^^^^^^^^^\n                  M^\n^^^^^^^^^^^^^^^^^^^^\n^^       ^^^^^^     \n^   ^^^   ^^^    ^^^\n   ^^ ^^   ^^^  ^^^ \n^^^    ^^  ^^^  ^   \n^^  ^^ ^^   ^^^^^  ^\n^  ^^^  ^^   ^^^  ^^",
+          "testOut": "43 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Horizontal Outside Traversal",
+          "isTest": false,
+          "testIn": "17 10\n^^  ^^^ ^^\n   ^^^^  ^\n^^^^^^^^^ \n B^^^^^^^^\n^^^^^^^^^^\n          \n^^^^^^^^^^\n        ^^\n^    ^^ ^^\n^^  ^^  ^^\n^^^     ^^\n^^^^^^^^M \n    ^^^^^^\n^^   ^^^^ \n^^^  ^^^  \n^^  ^^^  ^\n^  ^^^^ ^^",
+          "testOut": "19 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Vertical Outside Traversal",
+          "isTest": true,
+          "testIn": "17 11\n^^^^ ^ ^^^^\n^^^^B^ ^   \n^^^^^^ ^  ^\n  ^^^^ ^  ^\n^  ^^^ ^ ^^\n^^  ^^ ^ ^^\n^^  ^^ ^  ^\n^^  ^^ ^  ^\n^^  ^^ ^^ ^\n^^  ^^ ^^ ^\n^^  ^^ ^  ^\n^^  ^^ ^  ^\n^^  ^^ ^^ ^\n^   ^^ ^^ ^\n   ^^^ ^^ ^\n^^^^M^ ^^  \n^^^^ ^ ^^^^",
+          "testOut": "22 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Vertical Outside Traversal",
+          "isTest": false,
+          "testIn": "19 11\n^^^^^ ^ ^^ \n  ^^^ ^M ^^\n^  ^^  ^^^^\n^^  ^^  ^^^\n^^  ^^   ^^\n^^  ^^   ^^\n^^  ^^  ^^^\n^^  ^^  ^^^\n^^  ^^  ^^^\n^^^ ^^ ^^^^\n^^^ ^^ ^^^^\n^^^ ^^ ^^^^\n^^^ ^^  ^^^\n^^^ ^^   ^^\n^^  ^^   ^^\n^^  ^^   ^^\n   ^^^  ^^^\n^^^^B^ ^^^ \n^^^^ ^ ^^  ",
+          "testOut": "24 leagues",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Complete Traversal",
+          "isTest": true,
+          "testIn": "11 20\n ^^^^^^^^^^^^^^^^^^ \n^B                 ^\n ^^^^^^^^^^^^^^^^^ ^\n^                  ^\n^ ^^^^^^^^^^^^^^^^^ \n^                   \n ^^^^^^^^^^^^^^^^^ ^\n^                  ^\n^ ^^^^^^^^^^^^^^^^^ \n^                  ^\n ^^^^^^^^^^^^^^^^^M^",
+          "testOut": "59 leagues",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Complete Traversal",
+          "isTest": false,
+          "testIn": "11 20\nM^^^^^^^^^^^^^^^^^^ \n^                  ^\n ^^^^^^^^^^^^^^^^^ ^\n^                  ^\n^B^^^^^^^^^^^^^^^^^ \n^                  ^\n ^^^^^^^^^^^^^^^^^ ^\n^                  ^\n^ ^^^^^^^^^^^^^^^^^ \n^                  ^\n ^^^^^^^^^^^^^^^^^ ^",
+          "testOut": "79 leagues",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "2 ≤ [[h]], [[w]] < 50\nMap contains only a single {{B}} and {{M}}.",
+      "coverBinaryId": 143171063010855,
+      "stubGenerator": "read h:int w:int\nloop h read row:string(w)\n\nwrite ? league(s)",
+      "inputDescription": "<<Line 1: >> Space separated integers representing the height and width of the map, in the form: [[h]] [[w]].\n<<Next [[h]] lines:>> String of length [[w]] representing a section of the map.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "Integer of the shortest distance from Brodo's starting position to Mount Boom, in the unit {{league}}({{s}})."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A legendary item has been rediscovered by Brodo and must be destroyed to prevent the Dark Lord's return to power. The only way to destroy the item is for Brodo to travel to Mount Boom and to cast it into the flames. The goal is to find the <strong>SHORTEST DISTANCE</strong> for Brodo to reach Mount Boom.<br><br><strong>Movement:</strong><br>Brodo can move in any <strong>CARDINAL</strong> or <strong>ORDINAL</strong> direction (<const>N, NE, E, SE, S, SW, W, NW</const>). A movement of <const>1</const> in any direction represents a distance of <const>1</const> league. Brodo can travel outside the provided map if there are no mountains blocking the path. The area outside the map is considered an infinite expanse of empty paths.<br><br>Brodo <strong>CANNOT</strong> travel onto mountains, nor can he move diagonally between two mountains that are adjacent to each other.<br>Mountains are considered adjacent if they are within <const>1</const> league in any direction.<br><br>Example:<br>Brodo cannot move directly from B to M, or vice versa, in the following map:<br>B^<br>^M<br><br><strong>Map Legend:</strong><br><const>B</const> - Brodo's starting location.<br><const>M</const> - Mount Boom (goal destination).<br><const>^</const> - Mountain.<br>Space - Empty path Brodo can traverse, following the movement rules above.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1: </strong> Space separated integers representing the height and width of the map, in the form: <var>h</var> <var>w</var>.<br><strong>Next <var>h</var> lines:</strong> String of length <var>w</var> representing a section of the map.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Integer of the shortest distance from Brodo's starting position to Mount Boom, in the unit <const>league</const>(<const>s</const>).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &le; <var>h</var>, <var>w</var> &lt; 50<br>Map contains only a single <const>B</const> and <const>M</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">6 5\n^^^^^\n^^M ^\n^   ^\n^^ ^^\n^ B^^\n^^^^^</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">3 leagues</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 19185273545,
+  "avatar": 130769403588418,
+  "commentCount": 20,
+  "upVotes": 10,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1154259,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1748685937001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1748689230230,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1751543117664,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

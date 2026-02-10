@@ -1,0 +1,177 @@
+{
+  "id": 409,
+  "activeVersion": 10,
+  "score": 9,
+  "votableId": 3105963,
+  "codingamerId": 329200,
+  "views": 475,
+  "commentableId": 3052747,
+  "title": "CodinDice",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "BlitzProg",
+  "publicHandle": "409022895982c11cfb499b1df5aeb4158aa",
+  "codingamerHandle": "ff0208f05f1260a9798ba68f92e61e89002923",
+  "lastVersion": {
+    "version": 10,
+    "data": {
+      "title": "CodinDice",
+      "topics": [],
+      "solution": "<?php\n$directions = array(\n    'LEFT' => [-1, 0],\n    'RIGHT'=> [1, 0],\n    'UP'   => [0, -1],\n    'DOWN' => [0, 1],\n);\n\n$facechanges = array(\n    'RIGHT' => ['TOP'=>'EAST', 'EAST'=>'BOTTOM', 'BOTTOM'=>'WEST', 'WEST'=>'TOP', 'NORTH'=>'NORTH', 'SOUTH'=>'SOUTH'],    \n    'LEFT'  => ['TOP'=>'WEST', 'WEST'=>'BOTTOM', 'BOTTOM'=>'EAST', 'EAST'=>'TOP', 'NORTH'=>'NORTH', 'SOUTH'=>'SOUTH'],    \n    'UP'    => ['TOP'=>'NORTH', 'NORTH'=>'BOTTOM', 'BOTTOM'=>'SOUTH', 'SOUTH'=>'TOP', 'WEST'=>'WEST', 'EAST'=>'EAST'],    \n    'DOWN'  => ['TOP'=>'SOUTH', 'SOUTH'=>'BOTTOM', 'BOTTOM'=>'NORTH', 'NORTH'=>'TOP', 'WEST'=>'WEST', 'EAST'=>'EAST'],    \n);\n\n$map = array_fill(0, 4, array_fill(0, 4, null));\n$dices = array();\n$currentdice = 0;\n\nfunction dicesok(&$dices)\n{\n    foreach ($dices as $dice)\n        if ($dice['face'] != 'TOP')\n            return false;\n    return true;\n}\n\nfunction pickconnectedindexes(&$map, $x, $y, &$idlist)\n{\n    global $direction;\n    if ($x < 0 || $x > 3 || $y < 0 || $y > 3)\n        return;\n    if ($map[$x][$y] == null)\n        return;\n    \n    $idlist[] = $map[$x][$y]['id'];\n    $map[$x][$y] = null;\n    pickconnectedindexes($map, $x - 1, $y, $idlist);\n    pickconnectedindexes($map, $x + 1, $y, $idlist);\n    pickconnectedindexes($map, $x, $y - 1, $idlist);\n    pickconnectedindexes($map, $x, $y + 1, $idlist);\n}\n\nfunction getconnectedindexes(&$map, $x, $y)\n{\n    $idlist = array();\n    $mapcopy = $map;\n    pickconnectedindexes($mapcopy, $x, $y, $idlist);\n    return $idlist;\n}\n\nfunction isfinished(&$dices, &$indexes, $total)\n{\n    return (count($indexes) == $total) && dicesok($dices);\n}\n\nfunction getmoves(&$map, &$dices, &$indexes)\n{\n    $moves = array();\n    foreach ($indexes as $index)\n    {\n        if ($dices[$index]['iron']) continue;\n        $x = $dices[$index]['x'];\n        $y = $dices[$index]['y'];\n        $id = $dices[$index]['id'];\n        if ($x > 0 && $map[$x - 1][$y] == null)\n            $moves[] = \"$id LEFT\";\n        if ($x < 3 && $map[$x + 1][$y] == null)\n            $moves[] = \"$id RIGHT\";\n        if ($y > 0 && $map[$x][$y - 1] == null)\n            $moves[] = \"$id UP\";\n        if ($y < 3 && $map[$x][$y + 1] == null)\n            $moves[] = \"$id DOWN\";\n    }\n    return $moves;\n}\n\nfunction domove(&$map, &$dices, $move, &$myx, &$myy)\n{\n    global $facechanges, $directions;\n    \n    $command = explode(\" \", $move);\n    $id = $command[0];\n    $dir = $command[1];\n    $x = $dices[$id]['x'];\n    $y = $dices[$id]['y'];\n    \n    $id = $map[$x][$y]['id'];\n    $newx = $x + $directions[$command[1]][0];\n    $newy = $y + $directions[$command[1]][1];\n    $newface = $facechanges[$command[1]][$map[$x][$y]['face']];\n    \n    $dices[$id]['x'] = $newx;\n    $dices[$id]['y'] = $newy;\n    $dices[$id]['face'] = $newface;\n    \n    $map[$newx][$newy] = $dices[$id];\n    $map[$x][$y] = null;\n    $myx = $newx;\n    $myy = $newy;\n}\n\nfunction statetostring(&$map, $myx, $myy)\n{\n    $str = \"$myx\".\"$myy\";\n    for ($y = 0; $y <= 3; $y++)\n        for ($x = 0; $x <= 3; $x++)\n            $str .= ($map[$x][$y] == null) ? ' ' : $map[$x][$y]['face'][0];\n    return $str;\n}\n\n$checkedstates = array();\n\nfscanf(STDIN, \"%d\", $N);\nfor ($i = 0; $i < $N; $i++)\n{\n    fscanf(STDIN, \"%d %d %s\",$x, $y, $face);\n    $dices[$i] = array(\n        'id' => $i,\n        'x' => $x,\n        'y' => $y,\n        'face' => ($face == 'IRON') ? 'TOP' : $face,\n        'iron' => ($face == 'IRON') ? 1 : 0,\n    );\n    $map[$x][$y] = $dices[$i];\n}\n\n$state = array(\n    'myx' => $dices[0]['x'],\n    'myy' => $dices[0]['y'],\n    'map' => $map,\n    'dices' => $dices,\n    'moves' => '',\n    'total' => 0,\n);\n\n$stopwhenfound = true;\n//if false, show all solutions.\n//(useful to check for double solutions when generating!)\n\n$minmovesolution = 9999;\n\n$statelist = array($state);\n\n$turn = 0;\nwhile (!empty($statelist))\n{\n    $state = array_shift($statelist);\n    if ($state['total'] > $minmovesolution )\n        exit (\"searching finished.\");\n    $str = statetostring($state['map'], $state['myx'], $state['myy']);\n    $indexes = getconnectedindexes($state['map'], $state['myx'], $state['myy']);\n    \n    if (isfinished($state['dices'], $indexes, $N))\n    {\n        $minmovesolution = $state['total'];\n        if ($stopwhenfound)\n            exit(\"{$state['moves']}\");\n        else\n        {\n            echo \"Solution found: {$state['moves']} \\n\";\n        }\n    }\n    \n    if (isset($checkedstates[$str]))\n        continue;\n    $checkedstates[$str] = true;\n    \n    $moves = getmoves($state['map'], $state['dices'], $indexes);\n    foreach ($moves as $move)\n    {\n        $s = $state;\n        domove($s['map'], $s['dices'], $move, $s['myx'], $s['myy']);\n        $s['moves'] .= $move.\"\\n\";\n        $s['total']++;\n        array_push($statelist, $s);\n    }\n    $turn++;\n    if ($turn > 9999)\n        break;\n}\n?>\nno solution found.",
+      "statement": "Rossi is a cute chibi devil who rolls giant dice, arranged on a grid, by walking across the top of them.\n\nYour goal is to help Rossi solve the puzzle with the minimum number of die rolls.\n\nThe puzzle is solved when the following two conditions hold true:\n- The value of each die is 6, i.e. they all have 6 pips showing on the {{TOP}} as such: ⚅\n- All dice form a single connected group.\n\n\n==============================\nMoving around\n==============================\n\n- Rossi's position is on top of the <<last die he moved>>. If he hasn't moved yet, he's on top of the <<first die of the list>>.\n- Dice form a group when they are standing adjacent to one another. Diagonals do not count.\n- Rossi can walk freely between dice in the same group. Walking is not counted against the solution's length.\n- The map is always a {{4}} x {{4}} square map; the coordinates range from 0 to 3. Rossi is not allowed to move outside of the boundaries.\n\n\n==============================\nRolling dice\n==============================\n\n- If there is a free grid space from Rossi's standing position on a die, he can roll the die there. Since he can walk freely among the group, he can thus roll any \"free\" die within the group boundary.\n- When a die is rolled, one of its bottom edges (the one between the old and new position) stays still, causing it to <<tumble and 'roll' in the relevant direction>>.\n- Therefore rolling a die can <<change where the number 6 face is>>.\n\nFor example, if the die is rolled to the <<RIGHT>> and the 6 face was {{TOP}}, it will then be {{EAST}}. If the 6 face was {{BOTTOM}}, it will become {{WEST}}. If it was {{NORTH}} or {{SOUTH}}, it would twist but remain in the same relative position. (Pick a die and roll it in one direction, you'll see that two faces stay)\n\n- Rolling a die adds one to the solution's length.\n- We're only interested in the 6 faces' ending position, so you only need to track that face on each die.\n- Each time Rossi rolls a die, output the position of that die and the direction in which it was rolled to to STDOUT.\n\n\n==============================\n {{IRON}} dice\n==============================\n\nSome dice are made of {{IRON}}. They are very heavy.\n\n- Rossi cannot roll {{IRON}} dice. He cannot \"jump\" from an {{IRON}} die to an empty spot either.\n- Their 6 face is always on {{TOP}}.\n\n\n==============================\nOutput to STDOUT\n==============================\n\nYou must find the shortest solution to the puzzle. The puzzles are designed so that there is always only one \"shortest\" solution.\n\n- The shortest solution is based on the <<number of times a die was rolled>>.\n\nTry checking the test cases with real dice if you are confused! :)",
+      "testCases": [
+        {
+          "title": "Simple case.",
+          "isTest": true,
+          "testIn": "2\n0 0 WEST\n2 0 TOP",
+          "testOut": "0 RIGHT",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Really, just one move.",
+          "isTest": false,
+          "testIn": "2\n2 0 EAST\n0 0 TOP",
+          "testOut": "0 LEFT",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A bit further.",
+          "isTest": true,
+          "testIn": "2\n3 1 BOTTOM\n0 1 TOP",
+          "testOut": "0 LEFT\n0 LEFT",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Two moves for opposite face.",
+          "isTest": false,
+          "testIn": "2\n1 3 BOTTOM\n1 0 TOP",
+          "testOut": "0 UP\n0 UP",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "The C move",
+          "isTest": true,
+          "testIn": "2\n3 0 TOP\n3 3 TOP",
+          "testOut": "0 LEFT\n0 DOWN\n0 DOWN\n0 RIGHT",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Side face side stays!",
+          "isTest": false,
+          "testIn": "2\n3 3 TOP\n0 3 TOP",
+          "testOut": "0 UP\n0 LEFT\n0 LEFT\n0 DOWN",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Getting serious.",
+          "isTest": true,
+          "testIn": "3\n3 2 EAST\n1 2 EAST\n0 1 NORTH",
+          "testOut": "0 LEFT\n1 LEFT\n2 RIGHT\n2 DOWN",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3 dice.",
+          "isTest": false,
+          "testIn": "3\n2 3 SOUTH\n2 1 SOUTH\n3 0 EAST",
+          "testOut": "0 UP\n1 UP\n2 DOWN\n2 LEFT",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Many dice.",
+          "isTest": true,
+          "testIn": "7\n3 0 TOP\n3 2 TOP\n3 3 TOP\n2 3 TOP\n1 3 TOP\n0 3 TOP\n0 2 BOTTOM",
+          "testOut": "0 LEFT\n0 DOWN\n0 RIGHT\n6 RIGHT\n6 RIGHT",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Stay connected!",
+          "isTest": false,
+          "testIn": "7\n0 0 TOP\n2 0 TOP\n3 0 TOP\n3 1 TOP\n3 2 TOP\n3 3 TOP\n2 3 BOTTOM",
+          "testOut": "0 DOWN\n0 RIGHT\n0 UP\n6 UP\n6 UP",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Iron Die.",
+          "isTest": true,
+          "testIn": "3\n1 0 IRON\n0 0 TOP\n3 0 TOP",
+          "testOut": "1 DOWN\n1 RIGHT\n1 RIGHT\n1 UP",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Can't move Iron Dice.",
+          "isTest": false,
+          "testIn": "3\n0 1 IRON\n0 0 TOP\n0 3 TOP",
+          "testOut": "1 RIGHT\n1 DOWN\n1 DOWN\n1 LEFT",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "TOP TOP TOP TOP",
+          "isTest": true,
+          "testIn": "5\n0 3 WEST\n0 1 TOP\n1 2 TOP\n2 2 TOP\n2 1 TOP",
+          "testOut": "0 RIGHT\n4 UP\n4 LEFT\n4 DOWN",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "IRON IRON IRON IRON",
+          "isTest": false,
+          "testIn": "5\n0 3 WEST\n0 1 IRON\n1 2 IRON\n2 2 IRON\n2 1 IRON",
+          "testOut": "0 RIGHT\n0 RIGHT\n0 RIGHT\n0 UP\n0 UP\n0 UP\n0 LEFT\n0 LEFT\n0 DOWN",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Out and Back",
+          "isTest": true,
+          "testIn": "6\n2 1 TOP\n0 1 IRON\n1 1 IRON\n2 0 IRON\n2 2 IRON\n0 3 WEST",
+          "testOut": "0 RIGHT\n0 DOWN\n0 DOWN\n0 LEFT\n0 LEFT\n5 UP\n5 RIGHT\n0 RIGHT\n0 RIGHT\n0 UP\n0 UP\n0 LEFT",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "xi[sai]",
+          "isTest": false,
+          "testIn": "6\n1 2 TOP\n1 0 IRON\n1 1 IRON\n0 2 IRON\n2 2 IRON\n3 0 NORTH",
+          "testOut": "0 DOWN\n0 RIGHT\n0 RIGHT\n0 UP\n0 UP\n5 LEFT\n5 DOWN\n0 DOWN\n0 DOWN\n0 LEFT\n0 LEFT\n0 UP",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "2 ≤ [[N]] ≤ 15\n0 ≤ [[x]] ≤ 3\n0 ≤ [[y]] ≤ 3\nThere is a single shortest possible solution to the puzzle.",
+      "stubGenerator": "read N:int\n\nloop N read x:int y:int face:word(8)\n\nwrite answer",
+      "inputDescription": "<<Line 1:>> An integer [[N]], the number of dice on the 4 x 4 board.\n<<Next [[N]] lines:>> [[x]], [[y]] and [[face]], separated with spaces. [[x]] and [[y]] are a die's position, with [[x]] increasing {{EAST}}ward and [[y]] {{SOUTH}}ward. [[face]] is either the relative position of that die's 6 face {{WEST}}, {{EAST}}, {{NORTH}}, {{SOUTH}}, {{TOP}} or {{BOTTOM}}, or {{IRON}}, indicating that the 6 face is {{TOP}} and the die cannot be rolled.",
+      "solutionLanguage": "PHP",
+      "outputDescription": "The shortest possible solution to the puzzle - a list of the die rolls that were performed by Rossi, <<one roll per line with the following format:>>\n\n[[id]] [[direction]] — separated with spaces.\n\n[[id]] is the identifier number of the die being rolled. The dice are 0-indexed by their ordering in the input, so [[id]] ranges from 0 to [[N]] - 1. \n[[direction]] is the direction in which it was rolled: {{LEFT}}, {{RIGHT}}, {{UP}} or {{DOWN}}"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Rossi is a cute chibi devil who rolls giant dice, arranged on a grid, by walking across the top of them.<br><br>Your goal is to help Rossi solve the puzzle with the minimum number of die rolls.<br><br>The puzzle is solved when the following two conditions hold true:<br>- The value of each die is 6, i.e. they all have 6 pips showing on the <const>TOP</const> as such: ⚅<br>- All dice form a single connected group.<br><br><br>==============================<br>Moving around<br>==============================<br><br>- Rossi's position is on top of the <strong>last die he moved</strong>. If he hasn't moved yet, he's on top of the <strong>first die of the list</strong>.<br>- Dice form a group when they are standing adjacent to one another. Diagonals do not count.<br>- Rossi can walk freely between dice in the same group. Walking is not counted against the solution's length.<br>- The map is always a <const>4</const> x <const>4</const> square map; the coordinates range from 0 to 3. Rossi is not allowed to move outside of the boundaries.<br><br><br>==============================<br>Rolling dice<br>==============================<br><br>- If there is a free grid space from Rossi's standing position on a die, he can roll the die there. Since he can walk freely among the group, he can thus roll any &quot;free&quot; die within the group boundary.<br>- When a die is rolled, one of its bottom edges (the one between the old and new position) stays still, causing it to <strong>tumble and 'roll' in the relevant direction</strong>.<br>- Therefore rolling a die can <strong>change where the number 6 face is</strong>.<br><br>For example, if the die is rolled to the <strong>RIGHT</strong> and the 6 face was <const>TOP</const>, it will then be <const>EAST</const>. If the 6 face was <const>BOTTOM</const>, it will become <const>WEST</const>. If it was <const>NORTH</const> or <const>SOUTH</const>, it would twist but remain in the same relative position. (Pick a die and roll it in one direction, you'll see that two faces stay)<br><br>- Rolling a die adds one to the solution's length.<br>- We're only interested in the 6 faces' ending position, so you only need to track that face on each die.<br>- Each time Rossi rolls a die, output the position of that die and the direction in which it was rolled to to STDOUT.<br><br><br>==============================<br> <const>IRON</const> dice<br>==============================<br><br>Some dice are made of <const>IRON</const>. They are very heavy.<br><br>- Rossi cannot roll <const>IRON</const> dice. He cannot &quot;jump&quot; from an <const>IRON</const> die to an empty spot either.<br>- Their 6 face is always on <const>TOP</const>.<br><br><br>==============================<br>Output to STDOUT<br>==============================<br><br>You must find the shortest solution to the puzzle. The puzzles are designed so that there is always only one &quot;shortest&quot; solution.<br><br>- The shortest solution is based on the <strong>number of times a die was rolled</strong>.<br><br>Try checking the test cases with real dice if you are confused! :)</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var>, the number of dice on the 4 x 4 board.<br><strong>Next <var>N</var> lines:</strong> <var>x</var>, <var>y</var> and <var>face</var>, separated with spaces. <var>x</var> and <var>y</var> are a die's position, with <var>x</var> increasing <const>EAST</const>ward and <var>y</var> <const>SOUTH</const>ward. <var>face</var> is either the relative position of that die's 6 face <const>WEST</const>, <const>EAST</const>, <const>NORTH</const>, <const>SOUTH</const>, <const>TOP</const> or <const>BOTTOM</const>, or <const>IRON</const>, indicating that the 6 face is <const>TOP</const> and the die cannot be rolled.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The shortest possible solution to the puzzle - a list of the die rolls that were performed by Rossi, <strong>one roll per line with the following format:</strong><br><br><var>id</var> <var>direction</var> &mdash; separated with spaces.<br><br><var>id</var> is the identifier number of the die being rolled. The dice are 0-indexed by their ordering in the input, so <var>id</var> ranges from 0 to <var>N</var> - 1. <br><var>direction</var> is the direction in which it was rolled: <const>LEFT</const>, <const>RIGHT</const>, <const>UP</const> or <const>DOWN</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &le; <var>N</var> &le; 15<br>0 &le; <var>x</var> &le; 3<br>0 &le; <var>y</var> &le; 3<br>There is a single shortest possible solution to the puzzle.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\n0 0 WEST\n2 0 TOP</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">0 RIGHT</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 296914429113,
+  "avatar": 7407206403800,
+  "commentCount": 33,
+  "upVotes": 9,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1442,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

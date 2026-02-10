@@ -1,0 +1,343 @@
+{
+  "id": 5239,
+  "activeVersion": 15,
+  "score": 17,
+  "votableId": 14514050,
+  "codingamerId": 1527403,
+  "views": 327,
+  "commentableId": 14434589,
+  "title": "Chess board analyzer",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Di_Masta",
+  "publicHandle": "5239abdbbe8443280770857d10fed099ed2b",
+  "codingamerHandle": "9c85c6ec7a1c680811128c2ac32a30623047251",
+  "lastVersion": {
+    "version": 15,
+    "autocloseTime": 1598573534618,
+    "data": {
+      "title": "Chess board analyzer",
+      "topics": [
+        {
+          "id": 46,
+          "handle": "loops",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 26,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        },
+        {
+          "id": 73,
+          "handle": "strings",
+          "labelMap": {
+            "1": "Chaînes de caractères",
+            "2": "Strings"
+          },
+          "pageTitle": "Strings: exercises and theory",
+          "puzzleCount": 17,
+          "parentTopicId": 41,
+          "contentDetailsId": 73
+        },
+        {
+          "id": 137,
+          "handle": "chess",
+          "labelMap": {
+            "1": "chess",
+            "2": "chess"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        },
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 11,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "#include <iostream>\n#include <string>\n#include <vector>\n#include <map>\n\nusing namespace std;\n\nstatic constexpr int BOARD_DIM = 8;\n\nstatic constexpr char W_WIN = 'W';\nstatic constexpr char B_WIN = 'B';\nstatic constexpr char NON_TERMINAL = 'N';\nstatic constexpr char KING_CHAR = 'k';\n\n/// Flags for a square on the board\nstatic constexpr short EMPTY\t\t\t= 0b0000'0000'0000'0001;\nstatic constexpr short W_PIECE\t\t\t= 0b0000'0000'0000'0010;\nstatic constexpr short B_PIECE\t\t\t= 0b0000'0000'0000'0100;\nstatic constexpr short PAWN\t\t\t\t= 0b0000'0000'0000'1000;\nstatic constexpr short ROOK\t\t\t\t= 0b0000'0000'0001'0000;\nstatic constexpr short KNIGHT\t\t\t= 0b0000'0000'0010'0000;\nstatic constexpr short BISHOP\t\t\t= 0b0000'0000'0100'0000;\nstatic constexpr short QUEEN\t\t\t= 0b0000'0000'1000'0000;\nstatic constexpr short KING\t\t\t\t= 0b0000'0001'0000'0000;\nstatic constexpr short ATTACKED_BY_W\t= 0b0000'0010'0000'0000;\nstatic constexpr short ATTACKED_BY_B\t= 0b0000'0100'0000'0000;\nstatic constexpr short GUARDED\t\t\t= 0b0000'1000'0000'0000;\n\n/// Relative direction for movement a piece on the board\nstatic constexpr int UP\t\t\t= 0;\nstatic constexpr int UP_RIGHT\t= 1;\nstatic constexpr int RIGHT\t\t= 2;\nstatic constexpr int DOWN_RIGHT\t= 3;\nstatic constexpr int DOWN\t\t= 4;\nstatic constexpr int DOWN_LEFT\t= 5;\nstatic constexpr int LEFT\t\t= 6;\nstatic constexpr int UP_LEFT\t= 7;\n\n/// Changes in rows and columns based on the direction index\n///\t\t\t\t\t\t\t\t\t\t U, UR,  R, DR,  D, DL,  L, UL\nstatic constexpr int rowDirCahnge[] = { -1, -1,  0,  1,  1,  1,  0, -1 };\nstatic constexpr int colDirCahnge[] = {  0,  1,  1,  1,  0, -1, -1, -1 };\n\nmap<char, short> piecesLabelToFlag {\n\t{ 'p', PAWN },\n\t{ 'r', ROOK },\n\t{ 'n', KNIGHT },\n\t{ 'b', BISHOP },\n\t{ 'q', QUEEN },\n\t{ 'k', KING }\n};\n\n/// Represents a chess board, holds game peices and analyzes the game state\nclass State {\npublic:\n\tState();\n\n\t/// Initialize empty board\n\tvoid init();\n\n\t/// Set the given piece type and color on the given coordinates on the board\n\tvoid setPiece(const char pieceChar, const short colorFlag, const int rowIdx, const int colIdx);\n\n\t/// Mark on which squares the all pieces attack\n\tvoid markPiecesAttackingSquares();\n\n\t/// Mark on which squares the given piece attack\n\tvoid markPieceAttackingSquares(const int pieceRowIdx, const int pieceColIdx);\n\n\t/// Mark on which squres the corresponding type of pices attacks\n\tvoid markPawnAttackingSquares(const int pieceRowIdx, const int pieceColIdx);\n\tvoid markRookAttackingSquares(const int pieceRowIdx, const int pieceColIdx);\n\tvoid markKnightAttackingSquares(const int pieceRowIdx, const int pieceColIdx);\n\tvoid markBishopAttackingSquares(const int pieceRowIdx, const int pieceColIdx);\n\tvoid markQueenAttackingSquares(const int pieceRowIdx, const int pieceColIdx);\n\tvoid markKingAttackingSquares(const int pieceRowIdx, const int pieceColIdx);\n\n\t/// Set appropriate flags for the given square based on the attacking piece\n\t/// @return true if the square for the attack is terminal(a piece or outside board)\n\tbool markAttackingSquare(const short pieceSquare, int attackingSqRowIdx, int attackingSqColIdx);\n\n\t/// Return true if the king on the given position is defeated\n\tbool kingDefeated(const int kingRowIdx, const int kingColIdx) const;\n\n\t/// Return true if a King could move on this square (it is empty or with not guarded piece )\n\tbool saveSquareForKing(const bool wKing, const int rowIdx, const int colIdx) const;\n\n\t/// Return the result from analyzing the board (win for white, win for black, draw, non terminal)\n\tchar analyze() const;\n\n\t/// Flag helpers for board squares\n\tvoid setFlag(short& square, const short flag);\n\tvoid unsetFlag(short& square, const short flag);\n\tbool hasFlag(const short square, const short flag) const;\n\n\t/// Return true if the given coordinates are in the board dimensions\n\tbool validCoords(const int rowIdx, const int colIdx) const;\n\nprivate:\n\tshort board[BOARD_DIM][BOARD_DIM]; ///< The actual board with all game peices and information for them\n\tint wKingRowIdx; ///< The row coordinate for the white king\n\tint wKingColIdx; ///< The column coodinate for the white king\n\tint bKingRowIdx; ///< The row coordinate for the black king\n\tint bKingColIdx; ///< The column coordinate for the black king\n};\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nState::State() {\n\tinit();\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nvoid State::init() {\n\twKingRowIdx = 0;\n\twKingColIdx = 0;\n\tbKingRowIdx = 0;\n\tbKingColIdx = 0;\n\n\tfor (int rowIdx = 0; rowIdx < BOARD_DIM; ++rowIdx) {\n\t\tfor (int colIdx = 0; colIdx < BOARD_DIM; ++colIdx) {\n\t\t\tboard[rowIdx][colIdx] = EMPTY;\n\t\t}\n\t}\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nvoid State::setPiece(const char pieceChar, const short colorFlag, const int rowIdx, const int colIdx) {\n\tunsetFlag(board[rowIdx][colIdx], EMPTY);\n\tsetFlag(board[rowIdx][colIdx], piecesLabelToFlag[pieceChar]);\n\tsetFlag(board[rowIdx][colIdx], colorFlag);\n\n\tif (KING_CHAR == pieceChar && W_PIECE == colorFlag) {\n\t\twKingRowIdx = rowIdx;\n\t\twKingColIdx = colIdx;\n\t}\n\n\tif (KING_CHAR == pieceChar && B_PIECE == colorFlag) {\n\t\tbKingRowIdx = rowIdx;\n\t\tbKingColIdx = colIdx;\n\t}\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nvoid State::markPiecesAttackingSquares() {\n\tfor (int rowIdx = 0; rowIdx < BOARD_DIM; ++rowIdx) {\n\t\tfor (int colIdx = 0; colIdx < BOARD_DIM; ++colIdx) {\n\t\t\tif (!hasFlag(board[rowIdx][colIdx], EMPTY)) {\n\t\t\t\tmarkPieceAttackingSquares(rowIdx, colIdx);\n\t\t\t}\n\t\t}\n\t}\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nvoid State::markPieceAttackingSquares(const int pieceRowIdx, const int pieceColIdx) {\n\tconst short square = board[pieceRowIdx][pieceColIdx];\n\n\tif (hasFlag(square, PAWN)) {\n\t\tmarkPawnAttackingSquares(pieceRowIdx, pieceColIdx);\n\t}\n\telse if (hasFlag(square, ROOK)) {\n\t\tmarkRookAttackingSquares(pieceRowIdx, pieceColIdx);\n\t}\n\telse if (hasFlag(square, KNIGHT)) {\n\t\tmarkKnightAttackingSquares(pieceRowIdx, pieceColIdx);\n\t}\n\telse if (hasFlag(square, BISHOP)) {\n\t\tmarkBishopAttackingSquares(pieceRowIdx, pieceColIdx);\n\t}\n\telse if (hasFlag(square, QUEEN)) {\n\t\tmarkQueenAttackingSquares(pieceRowIdx, pieceColIdx);\n\t}\n\telse if (hasFlag(square, KING)) {\n\t\tmarkKingAttackingSquares(pieceRowIdx, pieceColIdx);\n\t}\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nvoid State::markPawnAttackingSquares(const int pieceRowIdx, const int pieceColIdx) {\n\tconst short currentSquare = board[pieceRowIdx][pieceColIdx];\n\n\tif (hasFlag(currentSquare, W_PIECE)) {\n\t\t// Pawn attacks upwards\n\t\tconst int upLeftRowIdx = pieceRowIdx + rowDirCahnge[UP_LEFT];\n\t\tconst int upLeftColIdx = pieceColIdx + colDirCahnge[UP_LEFT];\n\t\tmarkAttackingSquare(currentSquare, upLeftRowIdx, upLeftColIdx);\n\n\t\tconst int upRightRowIdx = pieceRowIdx + rowDirCahnge[UP_RIGHT];\n\t\tconst int upRightColIdx = pieceColIdx + colDirCahnge[UP_RIGHT];\n\t\tmarkAttackingSquare(currentSquare, upRightRowIdx, upRightColIdx);\n\t}\n\telse {\n\t\t// Pawn attacks downwards\n\t\tconst int downLeftRowIdx = pieceRowIdx + rowDirCahnge[DOWN_LEFT];\n\t\tconst int downLeftColIdx = pieceColIdx + colDirCahnge[DOWN_LEFT];\n\t\tmarkAttackingSquare(currentSquare, downLeftRowIdx, downLeftColIdx);\n\n\t\tconst int downRightRowIdx = pieceRowIdx + rowDirCahnge[DOWN_RIGHT];\n\t\tconst int downRightColIdx = pieceColIdx + colDirCahnge[DOWN_RIGHT];\n\t\tmarkAttackingSquare(currentSquare, downRightRowIdx, downRightColIdx);\n\t}\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nvoid State::markRookAttackingSquares(const int pieceRowIdx, const int pieceColIdx) {\n\tconst short square = board[pieceRowIdx][pieceColIdx];\n\n\tvector<int> rookDirs{ UP, RIGHT, DOWN, LEFT };\n\tfor (int dir : rookDirs) {\n\t\tint newRowIdx = pieceRowIdx;\n\t\tint newColIdx = pieceColIdx;\n\n\t\tdo {\n\t\t\tnewRowIdx += rowDirCahnge[dir];\n\t\t\tnewColIdx += colDirCahnge[dir];\n\t\t} while (!markAttackingSquare(square, newRowIdx, newColIdx));\n\t}\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nvoid State::markKnightAttackingSquares(const int pieceRowIdx, const int pieceColIdx) {\n\tconst short square = board[pieceRowIdx][pieceColIdx];\n\n\tmarkAttackingSquare(square, pieceRowIdx - 2, pieceColIdx + 1);\n\tmarkAttackingSquare(square, pieceRowIdx - 2, pieceColIdx - 1);\n\tmarkAttackingSquare(square, pieceRowIdx - 1, pieceColIdx + 2);\n\tmarkAttackingSquare(square, pieceRowIdx - 1, pieceColIdx - 2);\n\tmarkAttackingSquare(square, pieceRowIdx + 1, pieceColIdx + 2);\n\tmarkAttackingSquare(square, pieceRowIdx + 1, pieceColIdx - 2);\n\tmarkAttackingSquare(square, pieceRowIdx + 2, pieceColIdx + 1);\n\tmarkAttackingSquare(square, pieceRowIdx + 2, pieceColIdx - 1);\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nvoid State::markBishopAttackingSquares(const int pieceRowIdx, const int pieceColIdx) {\n\tconst short square = board[pieceRowIdx][pieceColIdx];\n\n\tvector<int> bishopDirs{ UP_RIGHT, DOWN_RIGHT, DOWN_LEFT, UP_LEFT };\n\tfor (int dir : bishopDirs) {\n\t\tint newRowIdx = pieceRowIdx;\n\t\tint newColIdx = pieceColIdx;\n\n\t\tdo {\n\t\t\tnewRowIdx += rowDirCahnge[dir];\n\t\t\tnewColIdx += colDirCahnge[dir];\n\t\t} while (!markAttackingSquare(square, newRowIdx, newColIdx));\n\t}\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nvoid State::markQueenAttackingSquares(const int pieceRowIdx, const int pieceColIdx) {\n\tconst short square = board[pieceRowIdx][pieceColIdx];\n\n\tvector<int> queenDirs{ UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT };\n\tfor (int dir : queenDirs) {\n\t\tint newRowIdx = pieceRowIdx;\n\t\tint newColIdx = pieceColIdx;\n\n\t\tdo {\n\t\t\tnewRowIdx += rowDirCahnge[dir];\n\t\t\tnewColIdx += colDirCahnge[dir];\n\t\t} while (!markAttackingSquare(square, newRowIdx, newColIdx));\n\t}\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nvoid State::markKingAttackingSquares(const int pieceRowIdx, const int pieceColIdx) {\n\tconst short square = board[pieceRowIdx][pieceColIdx];\n\n\tvector<int> kingDirs{ UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT };\n\tfor (int dir : kingDirs) {\n\t\tint newRowIdx = pieceRowIdx;\n\t\tint newColIdx = pieceColIdx;\n\n\t\t// Only one move ahead, no loop\n\t\tnewRowIdx += rowDirCahnge[dir];\n\t\tnewColIdx += colDirCahnge[dir];\n\t\tmarkAttackingSquare(square, newRowIdx, newColIdx);\n\t}\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nbool State::markAttackingSquare(const short pieceSquare, int attackingSqRowIdx, int attackingSqColIdx) {\n\tbool terminalSquare = true;\n\n\tif (validCoords(attackingSqRowIdx, attackingSqColIdx)) {\n\t\tconst bool wSoure = hasFlag(pieceSquare, W_PIECE);\n\n\t\tshort& attackingSquare = board[attackingSqRowIdx][attackingSqColIdx];\n\t\tif (hasFlag(attackingSquare, EMPTY)) {\n\t\t\tsetFlag(attackingSquare, (wSoure ? ATTACKED_BY_W : ATTACKED_BY_B));\n\t\t\tterminalSquare = false;\n\t\t} else {\n\t\t\t// A piece ocuppies the attacked square\n\t\t\tconst bool attackingWPiece = hasFlag(attackingSquare, W_PIECE);\n\t\t\tif (wSoure != attackingWPiece) {\n\t\t\t\tsetFlag(attackingSquare, (wSoure ? ATTACKED_BY_W : ATTACKED_BY_B));\n\n\t\t\t\tif (hasFlag(attackingSquare, KING)) {\n\t\t\t\t\tterminalSquare = false; // Go through the oppent king, so the empty squares around it could be set as attacked\n\t\t\t\t}\n\t\t\t}\n\t\t\telse {\n\t\t\t\tsetFlag(attackingSquare, GUARDED);\n\t\t\t}\n\t\t}\n\t}\n\n\treturn terminalSquare;\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nbool State::kingDefeated(const int kingRowIdx, const int kingColIdx) const {\n\tbool defeated = true;\n\tconst short square = board[kingRowIdx][kingColIdx];\n\tconst bool wKing = hasFlag(square, W_PIECE);\n\n\tif ((wKing && hasFlag(square, ATTACKED_BY_B)) || (!wKing && hasFlag(square, ATTACKED_BY_W))) {\n\t\t// King is attacked, check all surrounding squares\n\t\tvector<int> kingDirs{ UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT };\n\t\tfor (int dir : kingDirs) {\n\t\t\tint newRowIdx = kingRowIdx;\n\t\t\tint newColIdx = kingColIdx;\n\n\t\t\tnewRowIdx += rowDirCahnge[dir];\n\t\t\tnewColIdx += colDirCahnge[dir];\n\n\t\t\tif (saveSquareForKing(wKing, newRowIdx, newColIdx)) {\n\t\t\t\tdefeated = false;\n\t\t\t\tbreak;\n\t\t\t}\n\t\t}\n\t}\n\telse {\n\t\tdefeated = false;\n\t}\n\n\treturn defeated;\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nbool State::saveSquareForKing(const bool wKing, const int rowIdx, const int colIdx) const {\n\tbool save = false;\n\n\tif (validCoords(rowIdx, colIdx)) {\n\t\tconst short square = board[rowIdx][colIdx];\n\t\tconst bool emptySaveSquare =\n\t\t\thasFlag(square, EMPTY) &&\n\t\t\t!hasFlag(square, (wKing ? ATTACKED_BY_B : ATTACKED_BY_W));\n\n\t\tconst bool notGuardedEnemyPiece =\n\t\t\thasFlag(square, (wKing ? B_PIECE : W_PIECE)) &&\n\t\t\t!hasFlag(square, GUARDED);\n\n\t\tsave = emptySaveSquare || notGuardedEnemyPiece;\n\t}\n\n\treturn save;\n\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nchar State::analyze() const {\n\tchar res{ NON_TERMINAL };\n\n\tif (kingDefeated(wKingRowIdx, wKingColIdx)) {\n\t\tres = B_WIN;\n\t}\n\n\tif (kingDefeated(bKingRowIdx, bKingColIdx)) {\n\t\tres = W_WIN;\n\t}\n\n\treturn res;\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nvoid State::setFlag(short& square, const short flag) {\n\tsquare |= flag;\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nvoid State::unsetFlag(short& square, const short flag) {\n\tsquare &= (~flag);\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nbool State::hasFlag(const short square, const short flag) const {\n\treturn square & flag;\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nbool State::validCoords(const int rowIdx, const int colIdx) const {\n\treturn rowIdx >= 0 && rowIdx < BOARD_DIM && colIdx >= 0 && colIdx < BOARD_DIM;\n}\n\n//*************************************************************************************************************************************\n//*************************************************************************************************************************************\n\nint main() {\n\tState gameState; // The game state to analyze\n\tfor (int boardRowIdx = 0; boardRowIdx < BOARD_DIM; ++boardRowIdx) {\n\t\tstring boardRow;\n\t\tgetline(cin, boardRow);\n\n\t\tfor (int boardColIdx = 0; boardColIdx < BOARD_DIM; ++boardColIdx) {\n\t\t\tconst char c = boardRow[boardColIdx];\n\t\t\tif (isalpha(c)) {\n\t\t\t\tshort colorFlag = B_PIECE;\n\t\t\t\tif (isupper(c)) {\n\t\t\t\t\tcolorFlag = W_PIECE;\n\t\t\t\t}\n\n\t\t\t\tgameState.setPiece(tolower(c), colorFlag, boardRowIdx, boardColIdx);\n\t\t\t}\n\t\t}\n\t}\n\n\tgameState.markPiecesAttackingSquares();\n\tcout << gameState.analyze() << endl;\n\n\treturn 0;\n}\n",
+      "statement": "Find the winner ({{W}} or {{B}}) for the given chess board. If there isn't a King in checkmate position output {{N}}.\n\nYou <<have to>> make several assumptions:\n- The given boards are legal and are assuming the official Chess rules: https://en.wikipedia.org/wiki/Rules_of_chess\n- In every board there is a winner (<<no>> draws) or the board is <<not>> terminal (the game could be continued)\n- An attacked King could be saved only by moving himself to a safe square (not by using another piece from the King's team)\n- A safe square is defined as either an empty square not attacked by any opponent's piece, or a square occupied by an opponent's piece that is not protected by any other opponent's piece\n- White pawns are moving upwards, while black pawns are moving downwards\n\nExample board:\n`........\n.......k\n........\n........\n........\n......R.\n.K.....R\n........`\nIn this example the white rooks (uppercase {{R}} letters) are attacking all the squares the black king (lowercase {{k}} letter) could move onto, so the black king is in checkmate position and the white ({{W}}) player wins.",
+      "testCases": [
+        {
+          "title": "Rooks mate",
+          "isTest": true,
+          "testIn": "........\n.......k\n........\n........\n........\n......R.\n.K.....R\n........",
+          "testOut": "W",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Rooks mate",
+          "isTest": false,
+          "testIn": "........\n.......k\n........\n........\n......R.\n.......R\n.K......\n........",
+          "testOut": "W",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Mate with Rooks",
+          "isTest": true,
+          "testIn": "..K....r\n......r.\n........\n........\n........\n........\n........\n.......k",
+          "testOut": "B",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Mate with Rooks",
+          "isTest": false,
+          "testIn": "..k....R\n......R.\n........\n........\n........\n........\n........\n.......K",
+          "testOut": "W",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Double Bishop mate",
+          "isTest": true,
+          "testIn": "........\n.k......\n.....b..\n........\n....b...\n........\nP.......\nK.......",
+          "testOut": "B",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Double Bishop mate",
+          "isTest": false,
+          "testIn": "...k....\n........\n.....b..\n........\n....b...\n........\nP.......\nK.......",
+          "testOut": "B",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Anderssen mate",
+          "isTest": true,
+          "testIn": "......kR\n......P.\n.....K..\n........\n........\n........\n........\n........",
+          "testOut": "W",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Anderssen mate",
+          "isTest": false,
+          "testIn": "........\n........\n........\n........\n........\n.....k..\n......p.\n......Kr",
+          "testOut": "B",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "One Rook mate",
+          "isTest": true,
+          "testIn": "........\n..k.....\n........\n........\n........\n........\n.....PPP\n..r...K.",
+          "testOut": "B",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "One Rook mate",
+          "isTest": false,
+          "testIn": "........\n..k.....\n........\n........\n........\n........\n......PP\n..r....K",
+          "testOut": "B",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Second turn win",
+          "isTest": true,
+          "testIn": "rnb.kbnr\npppp.ppp\n........\n....p...\n......Pq\n.....P..\nPPPPP..P\nRNBQKBNR",
+          "testOut": "B",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Second turn win",
+          "isTest": false,
+          "testIn": "rnb.kbnr\npppp.ppp\n........\n....p...\n......Pq\n.....P..\nPPPPP..P\nRNBQKBNR",
+          "testOut": "B",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Third turn win",
+          "isTest": true,
+          "testIn": "rnbqkbnr\np.p..Qpp\n.p.p....\n....p...\n..B.....\n....P...\nPPPP.PPP\nRNB.K.NR",
+          "testOut": "W",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Third turn win",
+          "isTest": false,
+          "testIn": "rnbqkbnr\n.pp..Qpp\np..p....\n....p...\n..B.....\n....P...\nPPPP.PPP\nRNB.K.NR",
+          "testOut": "W",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Initial board",
+          "isTest": true,
+          "testIn": "rnbqkbnr\npppppppp\n........\n........\n........\n........\nPPPPPPPP\nRNBQKBNR",
+          "testOut": "N",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Initial board",
+          "isTest": false,
+          "testIn": "rnbqkbnr\npppppppp\n........\n........\n........\nP.......\n.PPPPPPP\nRNBQKBNR",
+          "testOut": "N",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "There is exit",
+          "isTest": true,
+          "testIn": "........\n..k.....\n........\n........\n........\n........\n......PP\n..r...K.",
+          "testOut": "N",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "There is exit",
+          "isTest": false,
+          "testIn": "........\n..k.....\n........\n........\n........\n........\n.....PP.\n..r...K.",
+          "testOut": "N",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Queen",
+          "isTest": true,
+          "testIn": ".......K\n......q.\n.....k..\n........\n........\n........\n........\n........",
+          "testOut": "B",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Queen",
+          "isTest": false,
+          "testIn": ".......k\n......Q.\n.....K..\n........\n........\n........\n........\n........",
+          "testOut": "W",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Fischer vs Panno",
+          "isTest": true,
+          "testIn": "..n..kQ.\n....q...\n....pNn.\npb.pP...\n.p.P..P.\n.P....K.\nP....P..\n........",
+          "testOut": "W",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Fischer vs Panno",
+          "isTest": false,
+          "testIn": ".....kQ.\n....q...\n....pNn.\n.b.pP...\n.p.P..P.\n.P....K.\nP....P..\n........",
+          "testOut": "W",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Topalov",
+          "isTest": true,
+          "testIn": ".....r.k\nq...p.Q.\nn..R.P..\np..b....\npn......\n......P.\n.P...P.P\n......K.",
+          "testOut": "W",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Topalov",
+          "isTest": false,
+          "testIn": ".....r.k\nq...p.Q.\n...R.P..\n...b....\npn......\n......P.\n.P...P.P\n......K.",
+          "testOut": "W",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Game of the century",
+          "isTest": true,
+          "testIn": ".Q......\n.....pk.\n..p...p.\n.p..N..p\n.b.....P\n.bn.....\n..r...P.\n..K.....",
+          "testOut": "B",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Game of the century",
+          "isTest": false,
+          "testIn": "........\n.....pk.\n..p...p.\n.p.....p\n.b.....P\n.bn.....\n..r...P.\n..K.....",
+          "testOut": "B",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Escape by overtaking",
+          "isTest": true,
+          "testIn": ".R....k.\n..pRPNpp\n..p.....\np....p..\n......n.\nq.....P.\nP...PP.P\n......K.",
+          "testOut": "N",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Escape by overtaking",
+          "isTest": false,
+          "testIn": "......rk\n..pRPNpB\n..p.....\np....p..\n......n.\nq.....P.\nP...PP.P\n......K.",
+          "testOut": "N",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Close one",
+          "isTest": true,
+          "testIn": ".......k\n........\n......N.\n.r......\n.....n..\n..K.n...\n........\n...r....",
+          "testOut": "N",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Close one",
+          "isTest": false,
+          "testIn": ".......K\n........\n......n.\n.R......\n.....N..\n..k.N...\n........\n...R....",
+          "testOut": "N",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "coverBinaryId": 47541180313311,
+      "stubGenerator": "loop 8 read boardRow:string(8)\nwrite boardStateChar",
+      "inputDescription": "<<{{8}} lines:>> Each line contains {{8}} characters, which are representing a row on the board to analyze.\n\nCharacters can be:\n`{{.}} - Not occupied square on the board\n{{R}} - White Rook\n{{N}} - White Knight\n{{B}} - White Bishop\n{{Q}} - White Queen\n{{K}} - White King\n{{P}} - White Pawn\n{{r}} - Black Rook\n{{n}} - Black Knight\n{{b}} - Black Bishop\n{{q}} - Black Queen\n{{k}} - Black King\n{{p}} - Black Pawn`",
+      "solutionLanguage": "C++",
+      "outputDescription": "{{W}} or {{B}} for the winning player or {{N}} if the game could be continued."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Find the winner (<const>W</const> or <const>B</const>) for the given chess board. If there isn't a King in checkmate position output <const>N</const>.<br><br>You <strong>have to</strong> make several assumptions:<br>- The given boards are legal and are assuming the official Chess rules: https://en.wikipedia.org/wiki/Rules_of_chess<br>- In every board there is a winner (<strong>no</strong> draws) or the board is <strong>not</strong> terminal (the game could be continued)<br>- An attacked King could be saved only by moving himself to a safe square (not by using another piece from the King's team)<br>- A safe square is defined as either an empty square not attacked by any opponent's piece, or a square occupied by an opponent's piece that is not protected by any other opponent's piece<br>- White pawns are moving upwards, while black pawns are moving downwards<br><br>Example board:<br><pre style=\"font-family: monospace\">........<br>.......k<br>........<br>........<br>........<br>......R.<br>.K.....R<br>........</pre><br>In this example the white rooks (uppercase <const>R</const> letters) are attacking all the squares the black king (lowercase <const>k</const> letter) could move onto, so the black king is in checkmate position and the white (<const>W</const>) player wins.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong><const>8</const> lines:</strong> Each line contains <const>8</const> characters, which are representing a row on the board to analyze.<br><br>Characters can be:<br><pre style=\"font-family: monospace\"><const>.</const> - Not occupied square on the board<br><const>R</const> - White Rook<br><const>N</const> - White Knight<br><const>B</const> - White Bishop<br><const>Q</const> - White Queen<br><const>K</const> - White King<br><const>P</const> - White Pawn<br><const>r</const> - Black Rook<br><const>n</const> - Black Knight<br><const>b</const> - Black Bishop<br><const>q</const> - Black Queen<br><const>k</const> - Black King<br><const>p</const> - Black Pawn</pre></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><const>W</const> or <const>B</const> for the winning player or <const>N</const> if the game could be continued.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">........\n.......k\n........\n........\n........\n......R.\n.K.....R\n........</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">W</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 173898565007,
+  "avatar": 5689020242575,
+  "commentCount": 15,
+  "upVotes": 18,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 482867,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1596832437050,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

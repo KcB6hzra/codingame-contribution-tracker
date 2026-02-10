@@ -1,0 +1,184 @@
+{
+  "id": 1185,
+  "activeVersion": 17,
+  "score": 3,
+  "votableId": 7216216,
+  "codingamerId": 792813,
+  "views": 201,
+  "commentableId": 7154165,
+  "title": "Dominoes solver",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "VilBoub",
+  "publicHandle": "118599ce0d224495f8fa3dbbde2c3d605812",
+  "codingamerHandle": "bd6706892e49290fb119aa5ddae4238a318297",
+  "lastVersion": {
+    "version": 17,
+    "data": {
+      "title": "Dominoes solver",
+      "topics": [
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 54,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        },
+        {
+          "id": 46,
+          "handle": "loops",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 74,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        },
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 32,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import sys\nimport math\n# ========================================\ndef d_liste(i, j) :\n    li = []\n    d1 = grille[i][j]\n    if not(d1 in \"|=\") :\n        for d in range(4) :\n            i_ = i + di[d]\n            j_ = j + dj[d]\n            if (0 <= i_ < h) and (0 <= j_ < w) :\n                d2 = grille[i_][j_]\n                if not(d2 in \"|=\") :\n                    d_min = min(d1, d2)\n                    d_max = max(d1, d2)\n                    if dom_restant[int(d_min)][int(d_max)] :\n                        li += [d_min + d_max]\n        return li\n# ========================================\ndef d_maj() :\n    global dom_possibles, nb_pos_possibles, li_pos_possibles\n    dom_possibles = [[0]*w for _ in range(h)]\n    nb_pos_possibles = [[0]*(n+1) for _ in range(n+1)]\n    li_pos_possibles = [[[] for k in range(n+1)] for _ in range(n+1)]\n    for i in range(h) :\n        for j in range(w) :\n            dom_possibles[i][j] = d_liste(i, j)\n            if dom_possibles[i][j] != None :\n                for dom in dom_possibles[i][j] :\n                    nb_pos_possibles[int(dom[0])][int(dom[1])] += 1\n                    li_pos_possibles[int(dom[0])][int(dom[1])] += [[i, j]]\n# ========================================\nn = int(input())\nnd = (n+1)*(n+2)//2\nh, w = map(int, input().split())\ngrille = [[c for c in input()] for _ in range(h)]\ndom_restant = [[True]*(n+1) for _ in range(n+1)]\ndom_possibles = [[0]*w for _ in range(h)]\nnb_pos_possibles = [[0]*(n+1) for _ in range(n+1)]\nli_pos_possibles = [[[] for k in range(n+1)] for _ in range(n+1)]\ndi = [1, 0, 0, -1]\ndj = [0, 1, -1, 0]\nd_maj()\nfor k in range(nd) :\n    pas_trouve = True\n    # Un seul emplacement pour un domino\n    for i in range(n+1) :\n        if 2 in nb_pos_possibles[i] :\n            j = nb_pos_possibles[i].index(2)\n            d1 = li_pos_possibles[i][j][0]\n            d2 = li_pos_possibles[i][j][1]\n            i1 = d1[0]\n            j1 = d1[1]\n            i2 = d2[0]\n            j2 = d2[1]\n            if i1 == i2 :\n                c = \"=\"\n            else :\n                c = \"|\"\n            grille[i1][j1] = c\n            grille[i2][j2] = c\n            dom_restant[i][j] = False\n            d_maj()\n            pas_trouve = False\n            break\n    # Un seul domino pour un emplacement\n    if pas_trouve :\n        for i in range(h) :\n            for j in range(w) :\n                if not(grille[i][j] in \"=|\") and len(dom_possibles[i][j]) == 1 :\n                    domino = dom_possibles[i][j][0]\n                    if grille[i][j] == domino[0] :\n                        moitie = domino[1]\n                    else :\n                        moitie = domino[0]\n                    for d in range(4) :\n                        i_ = i + di[d]\n                        j_ = j + dj[d]\n                        if (0 <= i_ < h) and (0 <= j_ < w) and grille[i_][j_] == moitie :\n                            break\n                    if i == i_ :\n                        c = \"=\"\n                    else :\n                        c = \"|\"\n                    grille[i][j] = c\n                    grille[i_][j_] = c\n                    dom_restant[int(domino[0])][int(domino[1])] = False\n                    d_maj()\n                    pas_trouve = False\n                    break\n            if not(pas_trouve) :\n                break\n\nfor ligne in grille :\n    print(\"\".join(ligne))\n",
+      "statement": "Dominoes have been placed on a grid.\nAll the dominoes with values between [[0]] and [[n]] appear exactly once, where [[n]] is given in the inputs.\n\nWe must find the disposition of these dominoes, given that all the problems have a unique solution.\n\n\n<<Example>>\n\nIf [[n]] = 2, they are 6 dominoes: {{0-0}}, {{0-1}}, {{0-2}}, {{1-1}}, {{1-2}} and {{2-2}}.\n\nWith this grid:\n\n0021\n1120\n0212\n\nthere is only one position for dominoes {{0-0}}, {{1-1}} and {{2-2}}\n({{0-0}} and {{1-1}} horizontal, {{2-2}} vertical)\n\n==|1\n==|0\n0212\n\nThen, we can find dominoes {{0-1}}, {{0-2}} and {{1-2}}\n({{0-2}} and {{1-2}} horizontal, {{0-1}} vertical)\n\nwhich leads to the final solution:\n\n==||\n==||\n====",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "1\n2 3\n011\n100",
+          "testOut": "|==\n|==",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "1\n3 2\n10\n01\n01",
+          "testOut": "==\n||\n||",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "2\n3 4\n0021\n1120\n0212",
+          "testOut": "==||\n==||\n====",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "2\n4 3\n121\n120\n200\n012",
+          "testOut": "|||\n|||\n|==\n|==",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "3\n4 5\n00113\n22311\n33020\n01232",
+          "testOut": "====|\n==|||\n==|||\n====|",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "3\n5 4\n1302\n3321\n3102\n0213\n0210",
+          "testOut": "====\n|==|\n|==|\n||||\n||||",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "4\n5 6\n140210\n001323\n231312\n044432\n410243",
+          "testOut": "====||\n==||||\n==||||\n|==|||\n|==|==",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "4\n5 6\n100334\n040421\n433311\n023221\n441220",
+          "testOut": "|====|\n|||==|\n|||==|\n|====|\n======",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "5\n6 7\n3010231\n1203551\n4104541\n4302025\n2241405\n3455332",
+          "testOut": "======|\n==|==||\n|||||||\n|||||||\n==|==||\n======|",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "5\n6 7\n1041531\n4405504\n2522102\n3144543\n3152220\n1353003",
+          "testOut": "==||==|\n==||==|\n==|====\n|||====\n||||==|\n==||==|",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "6\n7 8\n05620344\n10555035\n46554036\n26114312\n34231241\n63501320\n22166640",
+          "testOut": "|==||==|\n||||||||\n||||||||\n|||||==|\n||||||==\n|==|||==\n========",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "6\n7 8\n00166256\n02522304\n46454551\n56643304\n51023314\n21631102\n45130362",
+          "testOut": "==|==|==\n||||||||\n||||||||\n|||==|||\n||====||\n======||\n======||",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "1 <= [[n]] <= 6\n2 <= [[h]], [[w]] <= 8",
+      "coverBinaryId": 86351748016149,
+      "stubGenerator": "read n:int\nread h:int w:int\nloop h read line:string(w)\nloop h write |=",
+      "inputDescription": "Line 1:  highest value [[n]] on the dominoes\nLine 2: height [[h]] and width [[w]] of the grid.\n[[h]] following lines: the content of the grid of domino's values.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "[[h]] lines: with only {{|}} or{{=}}\n{{|}} for a vertical domino, {{=}} for a horizontal domino"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Dominoes have been placed on a grid.<br>All the dominoes with values between <var>0</var> and <var>n</var> appear exactly once, where <var>n</var> is given in the inputs.<br><br>We must find the disposition of these dominoes, given that all the problems have a unique solution.<br><br><br><strong>Example</strong><br><br>If <var>n</var> = 2, they are 6 dominoes: <const>0-0</const>, <const>0-1</const>, <const>0-2</const>, <const>1-1</const>, <const>1-2</const> and <const>2-2</const>.<br><br>With this grid:<br><br>0021<br>1120<br>0212<br><br>there is only one position for dominoes <const>0-0</const>, <const>1-1</const> and <const>2-2</const><br>(<const>0-0</const> and <const>1-1</const> horizontal, <const>2-2</const> vertical)<br><br>==|1<br>==|0<br>0212<br><br>Then, we can find dominoes <const>0-1</const>, <const>0-2</const> and <const>1-2</const><br>(<const>0-2</const> and <const>1-2</const> horizontal, <const>0-1</const> vertical)<br><br>which leads to the final solution:<br><br>==||<br>==||<br>====</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">Line 1:  highest value <var>n</var> on the dominoes<br>Line 2: height <var>h</var> and width <var>w</var> of the grid.<br><var>h</var> following lines: the content of the grid of domino's values.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><var>h</var> lines: with only <const>|</const> or<const>=</const><br><const>|</const> for a vertical domino, <const>=</const> for a horizontal domino</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt;= <var>n</var> &lt;= 6<br>2 &lt;= <var>h</var>, <var>w</var> &lt;= 8</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1\n2 3\n011\n100</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">|==\n|==</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 251561104054,
+  "avatar": 72010225615995,
+  "commentCount": 10,
+  "upVotes": 3,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 194478,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

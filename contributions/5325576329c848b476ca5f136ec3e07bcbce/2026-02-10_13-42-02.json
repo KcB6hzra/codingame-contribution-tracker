@@ -1,0 +1,237 @@
+{
+  "id": 5325,
+  "activeVersion": 27,
+  "score": 38,
+  "votableId": 14692691,
+  "codingamerId": 3903847,
+  "views": 716,
+  "commentableId": 14612161,
+  "title": "When pigs fly",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "UnicornP",
+  "publicHandle": "5325576329c848b476ca5f136ec3e07bcbce",
+  "codingamerHandle": "d2306f40567a276663b3ab4ebe84a3277483093",
+  "lastVersion": {
+    "version": 27,
+    "autocloseTime": 1600827901651,
+    "data": {
+      "title": "When pigs fly",
+      "topics": [
+        {
+          "id": 67,
+          "handle": "parsing",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 7,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "id": 48,
+          "handle": "graphs",
+          "labelMap": {
+            "1": "Graphes",
+            "2": "Graphs"
+          },
+          "pageTitle": "Graphs: exercises and theory",
+          "puzzleCount": 14,
+          "parentTopicId": 40,
+          "contentDetailsId": 75
+        },
+        {
+          "id": 117,
+          "handle": "logic",
+          "labelMap": {
+            "1": "Logic",
+            "2": "Logic"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "using System;\nusing System.Linq;\nusing System.Text.RegularExpressions;\nusing System.Collections;\nusing System.Collections.Generic;\n\n/**\n    Theory:\n    The puzzle makes a distinction between OBJECTS, TRAITS, and ABILITIES.\n    In reality, they are all treated the same way. In this solution, we call them TYPEs.\n*/\nclass Solution\n{\n\tconst int DEBUG = 0;\n\t\n    static void Main()\n    {\n        // We need to build a directed graph-ish thing. The TYPEs given in the inputs are the names of the nodes.\n        // The keywords like \"are\", \"can\", \"and\", etc. tell us how to connect everything\n\n    \t// Build the graph.\n        // My data structure is a List of Nodes.\n    \t// I'm not sure, but I think the code might be much cleaner if it were a HashMap of string to Node instead.\n    \t// As you can see, I have a lot of graph.Find(a => a.Equals(new Node(n))) in order to grab a reference to each Node,\n    \t// which would simplify to graph[str] if I had used a Dictionary instead.\n        var graph = ParseInput();\n        \n        if (DEBUG == 1) {\n        \tConsole.Error.WriteLine(\"\t--- Debug Graph ---\");\n        \tforeach (Node n in graph) Console.Error.WriteLine(n.DebugReport());\n        }\n\n        // Now that the graph is built, determine how FLY relates to PIGS\n        // Everything in the graph that is connected to PIGS must be assessed in order to get an accurate\n        // relationship between FLY and PIGS\n        if (DEBUG > 1) Console.Error.WriteLine(\"\t--- Debug Pigginess ---\");\n        int result = Evaluate(graph);\n        \n\n        switch (result) {\n        \tcase -1:Console.WriteLine(\"No pigs can fly\"); break;\n        \tcase 0: Console.WriteLine(\"No pigs can fly\"); break;\n        \tcase 1: Console.WriteLine(\"Some pigs can fly\"); break;\n        \tcase 2: Console.WriteLine(\"All pigs can fly\"); break;\n        }\n    }\n    static List<Node> ParseInput() {\n        var list = new List<Node>();\n        // Read the input\n        int N = int.Parse(Console.ReadLine());\n        for (int i = 0; i < N; i++)\n        {\n            // Each statement can be considered as:\n            // [List of SubTYPE] (are/can/have) [List of SuperTYPE]\n            // Since there is clearly a \"left side\" and a \"right side\" to the statement,\n            // then the first thing to do is split the statement on (are/can/have)\n\n            // Don't forget that we need to differentiate \"that can\" from \"can\"\n            string statement = Console.ReadLine();\n            Match match = Regex.Match(statement, \"(are|[A-Z] can|have)\");\n            int pos = match.Index + match.Length;\n\n            string leftSide = statement.Substring(0, pos);\n            string rightSide = statement.Substring(pos + 1);\n            \n            // Now figure out all the subtypes on each side by looking for uppercase letters\n            List<Match> mLeft = Regex.Matches(leftSide, \"([A-Z]+)\").OfType<Match>().ToList();\n            List<Match> mRight = Regex.Matches(rightSide, \"([A-Z]+)\").OfType<Match>().ToList();\n            // Initialize Nodes as necessary\n            foreach (Match m in mLeft) {\n                Node n = new Node(m.Value);\n                if (!list.Contains(n)) list.Add(n);\n            }\n            foreach (Match m in mRight) {\n                Node n = new Node(m.Value);\n                if (!list.Contains(n)) list.Add(n);\n            }\n            // Link the entire left side as one Node to each Node on the right\n            // See Node class for the types of relations a TYPE can have\n            Node leftNode = new Node(mLeft.Select(a => a.Value).ToList());\n            if (mLeft.Count > 1) {\n                if (!list.Contains(leftNode)) list.Add(leftNode);\n            }\n            // Make sure that leftNode actually references the Node in the graph data structure\n            leftNode = list.Find(a => a.Equals(leftNode));\n            foreach (Match m in mRight) {\n            \tNode n = new Node(m.Value);\n                n = list.Find(a => a.Equals(n));\n\n                leftNode.superTypes.Add(n);\n                n.subTypes.Add(leftNode);\n            }\n            // Also link leftNode to its subTYPES if it is composed of more than one TYPE\n            if (mLeft.Count > 1) {\n                foreach (string s in leftNode.type) {\n                \tNode n = new Node(s);\n                \tn = list.Find(a => a.Equals(n));\n                \t\n                \tn.superTypes.Add(leftNode);\n                \tleftNode.subTypes.Add(n);\n                }\n            }\n        }\n        return list;\n    }\n    // See the Node class for more details on what pigginess means\n    static int Evaluate(List<Node> graph) {\n    \t// We ultimately want to evaluate the node with \"FLY\"\n    \t// To do so, we need to exhaustively fill the graph with pigginess values\n    \t// I decided to do this in a manner similar to an iterative BFS.\n    \tNode start = new Node(\"PIGS\");\n    \tstart = graph.Find(a => a.Equals(start));\n    \tstart.pigginess = 2; // All PIGS are PIGS. Whodathought?\n        start.direct = true;\n\n\t\t// Basically a \"visited\" list\n    \tvar processed = new List<Node>();\n        // Keep track of how many times a (compound) Node has to be deferred\n        var deferred = new Dictionary<Node, int>();\n        var queue = new Queue<Node>();\n    \tqueue.Enqueue(start);\n    \twhile (queue.Count > 0) {\n    \t\tNode curN = queue.Dequeue();\n            if (DEBUG == 3) Console.Error.WriteLine(curN);\n    \t\tprocessed.Add(curN);\n    \t\t\n    \t\t// Compound Nodes (e.g. PIGS with WINGS) need special treatment\n            // If this Node is a direct descendant of PIGS, then it's basically already processed\n            //     and all that needs to be done is skip this if block and continue propagating\n            // Otherwise, we have to figure out its pigginess from its SubTypes\n            //     while also keeping in mind that there may be prior information that\n            //     says that this Node is already some or all piggy\n            // At the end of things, I think there might be some redundant code here\n            //     but I don't want to break anything more -_-\n    \t\tif (curN.type.Count > 1 && !curN.direct) {\n    \t\t\t// The pigginess of this Node is the minimum of its ReqTypes (and itself if there exists prior info)\n    \t\t\tint piggy = 2;\n                if (curN.pigginess > 0) piggy = curN.pigginess;\n    \t\t\tforeach (string s in curN.type) {\n    \t\t\t\tNode check = new Node(s);\n    \t\t\t\tcheck = graph.Find(a => a.Equals(check));\n    \t\t\t\tpiggy = Math.Min(piggy, check.pigginess);\n    \t\t\t}\n    \t\t\t// If any ReqTypes have not been evaluated yet, defer evaluation\n    \t\t\tif (piggy == -1) {\n    \t\t\t\tprocessed.Remove(curN);\n    \t\t\t\tqueue.Enqueue(curN);\n                    if (deferred.ContainsKey(curN)) deferred[curN]++;\n                    else deferred.Add(curN, 1);\n\n                    // If this node gets deferred more times than there are Nodes in the graph,\n                    // then we can be sure that no more updates can be done.\n                    // We can thus conclude that the ReqType that was stuck at -1 pigginess\n                    // is truly unrelated to PIGS, and so therefore so must this compound Node.\n                    // (There has to be a more efficient and safer way to do this...)\n                    if (deferred[curN] > graph.Count) curN.pigginess = 0;\n                    else continue;\n    \t\t\t} else curN.pigginess = piggy;\n    \t\t}\n    \t\t\n            // Propagate pigginess to directly related Nodes\n\n    \t\t// All PIGS are SuperTypes (except for compound Types)\n\t        var supers = curN.superTypes;\n    \t\tforeach (Node n in supers) {\n    \t\t\t// If the SuperType is a compound Node, do not update its pigginess yet\n                if (n.type.Count == 1) n.pigginess = Math.Max(n.pigginess, curN.pigginess);\n    \t\t\tif (!processed.Contains(n)) queue.Enqueue(n);\n    \t\t}\n    \t\t\n    \t\t// Some PIGS are SubTypes\n\t        var subs = curN.subTypes;\n    \t\tforeach (Node n in subs) {\n                // If the Node already has pigginess 1 from some other part of the graph,\n                // there's no need to overwrite it by accident\n                if (n.pigginess >= 1) continue;\n\n                // Note that this is the only way that a compound Node can have\n                // \"prior information\" about its own pigginess\n                if (curN.direct) {\n    \t\t\t    n.pigginess = 1;\n                    n.direct = true;\n                } else n.pigginess = 0;\n    \t\t\tif (!processed.Contains(n)) queue.Enqueue(n);\n    \t\t}\n    \t\t\n            if (DEBUG > 1) Console.Error.WriteLine(curN.DebugScore());\n    \t}\n\n    \t// At this point, everything connected to PIGS should be piggified\n    \tNode end = new Node(\"FLY\");\n    \tend = graph.Find(a => a.Equals(end));\n        return end.pigginess;\n    }\n}\n/** A Node carries\n    (1) a TYPE or a set of required TYPES\n    (2) \"Directed\" edges that involve this Node\n\n    It also carries information about its relationship to PIGS\n    (1) Pigginess = all, some, or no PIGS are this TYPE represented by the Node\n    (2) Direct = whether PIGS is a direct ancestor for this TYPE\n\n    See big comment block at the bottom for an example of how the graph will eventually look\n*/\nclass Node {\n    // There are two types of edges a TYPE can have to other types:\n    // (1) SubType - this TYPE is a subtype of another TYPE\n    // (2) SuperType - this TYPE is a supertype to another TYPE\n    // There is an additional relationship possible:\n    // (3) ReqType - things that fulfill all of the TYPEs in ReqType are represented by this Node.\n    //               In various parts of this solution, I call such a Node a \"compound\" Node\n\n    // In the Node class, the List<string> type carries all of ReqType, even if there is only one TYPE\n\n    public List<string> type;\n\n    // A list of TYPEs that this type logically encompasses\n    public List<Node> subTypes = new List<Node>();\n    // A list of TYPEs that this type is logically a part of\n    public List<Node> superTypes = new List<Node>();\n\n    // When we traverse the graph, we need to figure out how this Node relates to pigs\n    // -1 = Not yet processed\n    //  0 = No pigs are this Node\n    //  1 = Some pigs are this Node\n    //  2 = All pigs are this Node\n    public int pigginess = -1;\n    // We also need to know if PIGS are a direct ancestor to this Node\n    // Consider the following:\n    //      ANIMALS\n    //     /       \\\n    //   PIGS     RATS\n    //    |\n    //   ANTS\n    // In this scenario, both PIGS and ANIMALS have pigginess = 2,\n    // but ANTS and RATS have 1 and 0 respectively. We can only figure this out\n    // by realizing that PIGS are a direct SuperTYPE of ANTS\n    public bool direct = false;\n\n\n    public Node(string name) {\n        type = new List<string>();\n        this.type.Add(name);\n    }\n    public Node(List<string> names) {\n        type = new List<string>();\n        this.type.AddRange(names);\n    }\n    // Nodes are equal if they represent the same TYPEs, which may be listed out of order\n    public override bool Equals(Object o) {\n        Node n = (Node) o;\n        return n.type.All(type.Contains) && n.type.Count == type.Count;\n    }\n    public override int GetHashCode() {\n        // Apparently strings have very large negative numbers as hashcodes\n        return (int) (type.Select(a => (long) a.GetHashCode()).Sum() % int.MaxValue);\n    }\n    public override string ToString() {\n    \treturn string.Join(\" \", type);\n    }\n    public string DebugReport() {\n    \treturn this.ToString() + \" = Sub: [\" +\n    \t\tstring.Join(\",\", subTypes.Select(a=>a.ToString())) + \"] Super: [\" +\n    \t\tstring.Join(\",\", superTypes.Select(a=>a.ToString())) + \"]\";\n    }\n    public string DebugScore() {\n    \treturn this.ToString() + \" \" + this.pigginess;\n    }\n}\n\n// Consider the following statements from the \"Double Category\" test case:\n// (1) BANANAS with HANDS are BUNNIES with LIMBS\n// (2) BANANAS have HANDS\n// (3) BUNNIES with LIMBS can FLY\n// (4) PIGS are BUNNIES\n// --> No pigs can fly\n//\n// Statement (1) becomes (a) all BANANAS with HANDS are BUNNIES and (b) all BANANAS with HANDS have LIMBS\n// Therefore, the combination of BANANAS and HANDS is a SubTYPE of BUNNIES and of LIMBS\n// Though it seems backward in english, BANANAS are a SubType of BANANAS with HANDS in our graph\n//\n// These statements will result in the following nodes, where () is basically a tuple and [] is a list:\n//\n// (BANANAS, HANDS) - Sub: [BANANAS, HANDS] - Super: [BUNNIES, LIMBS]\n// BANANAS - Super: [HANDS, (BANANAS, HANDS)]\n// HANDS - Sub: [BANANAS] - Super: [(BANANAS, HANDS)]\n// BUNNIES - Sub: [(BANANAS, HANDS), PIGS] - Super: [(BUNNIES, LIMBS)]\n// LIMBS - Sub: [(BANANAS, HANDS)] - Super: [(BUNNIES, LIMBS)]\n// PIGS - Super: [BUNNIES]\n// (BUNNIES, LIMBS) - Sub: [BUNNIES, LIMBS] - Super: [FLY]\n// FLY - Sub: [(BUNNIES, LIMBS)]",
+      "statement": "Given a set of universal truths, determine whether {{All}}, {{Some}}, or {{No pigs can fly}}.\n\nEach of [[N]] lines contains a logical statement [[S]] in the following general form:\n    {{OBJECTA}} (are {{OBJECTB}} | have {{TRAIT}} | can {{ABILITY}})\n        or\n    {{TRAITA}} are {{TRAITB}}\nwhere parentheses contain options separated by pipes ( {{|}} ). Furthermore, {{OBJECTS}} can be expanded like so:\n    {{OBJECT}} [with {{TRAITA}} [and {{TRAITB}} ...]] [that can {{ABILITYA}} [and {{ABILITYB}} ...]]\nwhere brackets {{[ ]}} denote optional text.\n\nBelow are sample statements.\n    (1) MICE are RODENTS\n    (2) MICE with WINGS are BATS\n    (3) MICE that can FLY are ANIMALS with SUPERPOWERS\n    (4) BATS are RODENTS\n    (5) RODENTS with FEET and NOSES that can EAT are POPSICLES\nTo clarify, statement (1) means that <<all>> MICE are RODENTS, but only <<some>> RODENTS are MICE. Furthermore, it <<cannot be assumed>> from statements (1) and (4) that some MICE are BATS.\n<<Note for logicians and mathematicians>>: The statement (2) is not an hypothetical proposition, it implies that MICE with WINGS do exist. In a nutshell: All objects evoked are supposed to exist.\n\nThe task is to determine what can be concluded about pigs flying: <<must>> it be true for all pigs, some pigs, or none?",
+      "testCases": [
+        {
+          "title": "Object classes",
+          "isTest": true,
+          "testIn": "3\nPIGS are BACONS\nBACONS are GODS\nGODS can FLY",
+          "testOut": "All pigs can fly",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator Object",
+          "isTest": false,
+          "testIn": "4\nPIGS are OSTRICHES\nOSTRICHES are BIRDS\nBIRDS can FLY\nPIGS are BANANAS",
+          "testOut": "All pigs can fly",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Traits and Abilities",
+          "isTest": true,
+          "testIn": "4\nPIGS have FEET\nPIGS are ANIMALS\nANIMALS with FEET that can RUN can FLY\nANIMALS can RUN",
+          "testOut": "All pigs can fly",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator Trait Ability",
+          "isTest": false,
+          "testIn": "5\nRUBIES are GEMSTONES\nPIGS are GEMSTONES\nGEMSTONES can TWINKLE\nRUBIES have COLOR\nGEMSTONES that can TWINKLE can FLY",
+          "testOut": "All pigs can fly",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Some but not all",
+          "isTest": true,
+          "testIn": "7\nBACONS with WINGS can FLY\nHAMS are PIGS\nHAMLETS are PIGLETS\nBACONS are GODS\nPIGLETS are PIGS\nHAMS are BACONS\nGODS have WINGS",
+          "testOut": "Some pigs can fly",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator Some",
+          "isTest": false,
+          "testIn": "7\nPIGS have NOSES\nDOGS are PIGS\nANIMALS with NOSES can FLY\nANIMALS are CREATURES\nBACTERIA are MICROBES\nPIGS have BACTERIA\nDOGS are ANIMALS",
+          "testOut": "Some pigs can fly",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Branching inheritance",
+          "isTest": true,
+          "testIn": "8\nPIGS have FEET\nFEET are LIMBS\nCATS are POPTARTS\nCATS have LIMBS\nPIGS are MAMMALS\nCATS are MAMMALS\nPOPTARTS with LIMBS can FLY\nCATS are PIGS",
+          "testOut": "Some pigs can fly",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator Branching",
+          "isTest": false,
+          "testIn": "9\nMEN can EAT\nMEN are PIGS\nMEN have EYES\nEYES are ORGANS\nORGANS are INSTRUMENTS\nMEN can PLAYMUSIC\nPIGS with INSTRUMENTS that can PLAYMUSIC can SING\nMEN that can SING are ANGELS\nANGELS can FLY",
+          "testOut": "Some pigs can fly",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Roundabout",
+          "isTest": true,
+          "testIn": "9\nPIGS have MOUSTACHES\nANIMALS with MOUSTACHES can FLY\nSQUIRRELS have MOUSTACHES\nSQUIRRELS can SCREECH\nSQUIRRELS are PIGS\nREINDEER are SQUIRRELS\nREINDEER are MAMMALS\nMAMMALS that can SCREECH are ANIMALS\nPIGS are ANIMALS",
+          "testOut": "All pigs can fly",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator Round",
+          "isTest": false,
+          "testIn": "10\nPIGS have WINGS\nANIMALS can FLY\nBEAVERS are PIGS\nBEAVERS are DUCKS\nBEAVERS with WINGS and BILLS are PLATYPUSES\nDUCKS can QUACK\nDUCKS are ANIMALS\nANIMALS that can QUACK have BILLS\nPLATYPUSES are ANIMALS\nPIGS are ANIMALS",
+          "testOut": "All pigs can fly",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Doubles",
+          "isTest": true,
+          "testIn": "4\nBANANAS with HANDS are BUNNIES with LIMBS\nBANANAS have HANDS\nBUNNIES with LIMBS can FLY\nPIGS are BUNNIES",
+          "testOut": "No pigs can fly",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator Double",
+          "isTest": false,
+          "testIn": "5\nBIRDS can POOP\nBIRDS can FLY\nWEASELS with PARACHUTES are BIRDS that can SING\nPIGS have PARACHUTES\nWEASELS are PIGS",
+          "testOut": "Some pigs can fly",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Big Loop",
+          "isTest": true,
+          "testIn": "9\nCOWS are BURGERS\nCOWS can EAT\nCOWS that can MOO can FLY\nPIGS are COWS\nPIGLETS are PIGS\nPIGLETS are MUSHROOMS\nMUSHROOMS have SPORES\nSPORES are ROCKETSHIPS\nPIGLETS with ROCKETSHIPS can MOO",
+          "testOut": "Some pigs can fly",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator Loop",
+          "isTest": false,
+          "testIn": "13\nBOXES are SQUARES\nPIGS are BLOCKS\nBLOCKS are BOXES\nBLOCKS with EQUATIONS are OBJECTS that can FLY\nPIGS are VACUUMS\nVACUUMS are APPLIANCES\nAPPLIANCES can SPARK\nPIGS that can SPARK have NEURONS\nPIGS with NEURONS are MOSQUITOES\nMOSQUITOES can BUZZ\nAPPLIANCES that can BUZZ have ELECTRONS\nELECTRONS are WAVES\nWAVES are EQUATIONS",
+          "testOut": "All pigs can fly",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Unrelated",
+          "isTest": true,
+          "testIn": "11\nBONES are ITEMS\nMETALS are ITEMS\nITEMS have COST\nITEMS have DEMAND\nBLACKSMITHS can CRAFT\nBLACKSMITHS have MATERIALS\nPIGS have ARMOR\nBLACKSMITHS with HAMMERS can SYNTHESIZE\nBEETLES have HUSKS\nBEETLES are INSECTS\nINSECTS with HUSKS can FLY",
+          "testOut": "No pigs can fly",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator Unrelated",
+          "isTest": false,
+          "testIn": "15\nFOOTBALLS are BALLS\nBALLS can ROLL\nBASKETBALLS are BALLS\nBASEBALLS are BALLS\nBASKETBALLS have AIR\nPIGS can ROLL\nBALLS with AIR can BOUNCE\nGOLFBALLS have DIMPLES\nBALLS with DIMPLES are OBJECTS with SHAPE that can FLY\nPIGS are PUMPKINS\nPUMPKINS can SMILE\nPLAYERS have FEET\nPLAYERS can GRIN\nPLAYERS with FEET can DRIBBLE\nPIGS have SNOUTS",
+          "testOut": "No pigs can fly",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Final Test",
+          "isTest": true,
+          "testIn": "9\nGEESE are CHICKENS\nCHICKENS with BEAKS are LLAMAS with MOUTHS\nMOUTHS are HOLES\nGEESE have BEAKS\nLLAMAS with TOENAILS are PIGS\nPIGS are TREES that can WALK\nCHICKENS with EYES and TOENAILS are TREES that can FLY\nBEAKS are TOENAILS\nCHICKENS have EYES",
+          "testOut": "Some pigs can fly",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator Final",
+          "isTest": false,
+          "testIn": "11\nACORNS with VITAMINS are PLANTS with LEAVES\nBOARS with LIMBS are ACORNS with KITTENS that can GROW\nKITTENS are VITAMINS\nBUSHES are TREES\nPIGS with HANDS are BOARS with LIMBS\nHOGS are BOARS\nHOGS are ACORNS\nTREES are PLANTS with LEAVES\nTREES have ROOTS\nROOTS are APPENDAGES\nBUSHES with ROOTS can FLY",
+          "testOut": "No pigs can fly",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "2 ≤ [[N]] ≤ 15\n1 ≤ Length of [[S]] ≤ 256\n{{PIGS}} appears in at least one statement\n{{FLY}} appears in at least one statement\nStatements are composed of letters and spaces\n{{OBJECTS}}, {{TRAITS}}, and {{ABILITIES}} are written in uppercase, and everything else is in lowercase.",
+      "stubGenerator": "read N:int\nloop N read S:string(256)\nwrite join(\"All|Some|No\",\" pigs can fly\")",
+      "inputDescription": "<<Line 1:>> An integer [[N]] representing the number of statements.\n<<Next [[N]] lines:>> A logical statement [[S]] written as described in the prompt.",
+      "solutionLanguage": "C#",
+      "outputDescription": "A string stating what can be concluded from the input about pigs flying:\n(1) {{All pigs can fly}}\n(2) {{Some pigs can fly}}\n(3) {{No pigs can fly}}"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Given a set of universal truths, determine whether <const>All</const>, <const>Some</const>, or <const>No pigs can fly</const>.<br><br>Each of <var>N</var> lines contains a logical statement <var>S</var> in the following general form:<br>&nbsp;&nbsp;&nbsp;&nbsp;<const>OBJECTA</const> (are <const>OBJECTB</const> | have <const>TRAIT</const> | can <const>ABILITY</const>)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;or<br>&nbsp;&nbsp;&nbsp;&nbsp;<const>TRAITA</const> are <const>TRAITB</const><br>where parentheses contain options separated by pipes ( <const>|</const> ). Furthermore, <const>OBJECTS</const> can be expanded like so:<br>&nbsp;&nbsp;&nbsp;&nbsp;<const>OBJECT</const> [with <const>TRAITA</const> [and <const>TRAITB</const> ...]] [that can <const>ABILITYA</const> [and <const>ABILITYB</const> ...]]<br>where brackets <const>[ ]</const> denote optional text.<br><br>Below are sample statements.<br>&nbsp;&nbsp;&nbsp;&nbsp;(1) MICE are RODENTS<br>&nbsp;&nbsp;&nbsp;&nbsp;(2) MICE with WINGS are BATS<br>&nbsp;&nbsp;&nbsp;&nbsp;(3) MICE that can FLY are ANIMALS with SUPERPOWERS<br>&nbsp;&nbsp;&nbsp;&nbsp;(4) BATS are RODENTS<br>&nbsp;&nbsp;&nbsp;&nbsp;(5) RODENTS with FEET and NOSES that can EAT are POPSICLES<br>To clarify, statement (1) means that <strong>all</strong> MICE are RODENTS, but only <strong>some</strong> RODENTS are MICE. Furthermore, it <strong>cannot be assumed</strong> from statements (1) and (4) that some MICE are BATS.<br><strong>Note for logicians and mathematicians</strong>: The statement (2) is not an hypothetical proposition, it implies that MICE with WINGS do exist. In a nutshell: All objects evoked are supposed to exist.<br><br>The task is to determine what can be concluded about pigs flying: <strong>must</strong> it be true for all pigs, some pigs, or none?</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var> representing the number of statements.<br><strong>Next <var>N</var> lines:</strong> A logical statement <var>S</var> written as described in the prompt.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">A string stating what can be concluded from the input about pigs flying:<br>(1) <const>All pigs can fly</const><br>(2) <const>Some pigs can fly</const><br>(3) <const>No pigs can fly</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &le; <var>N</var> &le; 15<br>1 &le; Length of <var>S</var> &le; 256<br><const>PIGS</const> appears in at least one statement<br><const>FLY</const> appears in at least one statement<br>Statements are composed of letters and spaces<br><const>OBJECTS</const>, <const>TRAITS</const>, and <const>ABILITIES</const> are written in uppercase, and everything else is in lowercase.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\nPIGS are BACONS\nBACONS are GODS\nGODS can FLY</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">All pigs can fly</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 170029285299,
+  "avatar": 46874260719816,
+  "commentCount": 32,
+  "upVotes": 40,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 492962,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1600701636062,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

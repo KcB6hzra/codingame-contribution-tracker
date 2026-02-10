@@ -1,0 +1,379 @@
+{
+  "id": 136734,
+  "activeVersion": 75,
+  "score": 16,
+  "votableId": 38434653,
+  "codingamerId": 5192217,
+  "views": 423,
+  "commentableId": 38269734,
+  "title": "Snap!",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Harry.B.",
+  "publicHandle": "136734235ce966bb44a7c0feca9cc824a4c3bc",
+  "codingamerHandle": "d926a93cb394ded661b204822965c5fa7122915",
+  "lastVersion": {
+    "version": 75,
+    "autocloseTime": 1771603546264,
+    "freezeTime": 1769616346264,
+    "data": {
+      "title": "Snap!",
+      "topics": [
+        {
+          "id": 133,
+          "handle": "card-games",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Jeu de carte",
+            "2": "Card games"
+          },
+          "pageTitle": "Card games",
+          "puzzleCount": 10,
+          "parentTopicId": 107
+        },
+        {
+          "id": 86,
+          "handle": "simulation",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Simulation",
+            "2": "Simulation"
+          },
+          "pageTitle": "Simulation: exercises and theory",
+          "puzzleCount": 51,
+          "parentTopicId": 42,
+          "contentDetailsId": 72
+        },
+        {
+          "id": 51,
+          "handle": "queues",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Files",
+            "2": "Queues"
+          },
+          "pageTitle": "Queues: exercises and theory",
+          "puzzleCount": 3,
+          "parentTopicId": 40,
+          "contentDetailsId": 97
+        }
+      ],
+      "solution": "from collections import deque\n\n# Populate player decks - First card = Top\np1 = deque([])\np2 = deque([])\nm = int(input())\nfor i in range(m):\n    card = input()\n    p1.append([card[:-1],card[-1]])\nn = int(input())\nfor i in range(n):\n    card = input()\n    p2.append([card[:-1],card[-1]])\n\n# Define Suit order\norder = {\"S\":3,\"H\":2,\"D\":1,\"C\":0}\n\n# Define central pile and starting turn\npile = []\nturn = 0\n\n\"\"\"\nFunction to perform the claiming of central pile\n\nReturn: int - Flag for which player is the next to play.\n\"\"\"\ndef snap(top, bottom, turn):\n    if order[top[1]] > order[bottom[1]]:\n        deck = p1 if turn == 0 else p2\n    else:\n        deck = p2 if turn == 0 else p1\n    deck.extend(pile)\n    pile.clear()\n    return 0 if deck is p1 else 1\n\n# Simulate Snap until one player has no more cards.\nwhile p1 and p2:\n    deck = p1 if turn == 0 else p2\n    pile.append(deck.popleft())\n    if len(pile) > 1 and pile[-1][0] == pile[-2][0]:\n        turn = snap(pile[-1],pile[-2], turn)\n        continue\n    turn ^= 1\n\n# Print output.\nif p1:\n    print(\"Winner:\",\"Player 1\")\nelse:\n    print(\"Winner:\",\"Player 2\")\nprint(max(len(p1),len(p2)))",
+      "statement": "Snap is a turn-based card game where players place cards into a central pile and claim the pile when two consecutive cards share the same rank. Your task is to simulate the game and determine who the winner is and how many cards they have at the end.\n\n<<Cards:>>\nA [[card]] is a standard card from a 52-card deck, provided in the form [[Rank]][[Suit]]. The [[Rank]] represents the face value of the card and is one of: an integer in the range {{2}}–{{10}}, {{J}}, {{Q}}, {{K}} or {{A}}. The [[Suit]] represents the card’s category and can be {{S}}, {{H}}, {{D}}, or {{C}}. Suits have the following precedence: {{S}} > {{H}} > {{D}} > {{C}}. Decks are held by players with the cards facing <<DOWN>>.\n\n<<Turn-Based:>>\nThe game begins with Player <<1>> placing the top card of their deck onto the central pile facing <<UP>>. Player <<2>> then places their top card on <<TOP>> of the pile also facing <<UP>>. Players continue alternating turns in this manner until either a Snap occurs or a player has no cards left.\n\n<<Snap!>>\nA Snap occurs when the <<rank>> of the most recently placed card matches the <<rank>> of the card directly below it (e.g. {{A}} matches {{A}}, {{6}} matches {{6}}, {{Q}} matches {{Q}}). \n\nBefore the start of the next turn, the player who played the card with the <<HIGHER>> suit precedence <<MUST>> call Snap. Once Snap is called, that player takes the entire central pile and places those cards facing <<DOWN>> on the <<BOTTOM>> of their deck. That <<SAME>> player will also take the next turn and the turn order continues as described above.\n\nExample:\nPlayer 1's and player 2's deck top to bottom: {{5S}} {{6D}} {{10D}} {{5D}} {{JC}} and {{3H}} {{7S}} {{5C}} {{KH}} {{9S}}\nPlay continues until a snap occurs. The central pile when a snap occurs, face-up from top to bottom: {{5D}} {{5C}} {{10D}} {{7S}} {{6D}} {{3H}} {{5S}}\nPlayer 1's and player 2's deck top to bottom <<after>> the central pile is claimed:  {{JC}} {{5S}} {{3H}} {{6D}} {{7S}} {{10D}} {{5C}} {{5D}} and {{KH}} {{9S}}\n\n<<Winning Condition:>>\nThe game ends when a player has <<zero>> cards remaining in their deck at the <<start>> of a turn. The other player, who still has cards, is declared the winner.",
+      "testCases": [
+        {
+          "title": "Player 1 Win",
+          "isTest": true,
+          "testIn": "4\n5S\n6D\n5D\n10D\n4\n3H\n7S\n5C\nKH",
+          "testOut": "Winner: Player 1\n6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Player 1 Win",
+          "isTest": false,
+          "testIn": "4\nAH\nQD\nJS\n9S\n4\n3D\n3C\nJH\n4H",
+          "testOut": "Winner: Player 1\n6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Player 2 Win",
+          "isTest": true,
+          "testIn": "5\n3S\n5D\nKC\n3C\n4H\n5\nJH\n9C\nKS\n8H\nJC",
+          "testOut": "Winner: Player 2\n6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Player 2 Win",
+          "isTest": false,
+          "testIn": "5\n9S\n7S\n4H\n5D\n3C\n5\nJC\nKC\nJH\n5H\n8S",
+          "testOut": "Winner: Player 2\n8",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Snapless",
+          "isTest": true,
+          "testIn": "10\n6D\n3C\n7D\n2D\n2S\n7S\n8S\n3H\nJD\nQD\n10\nKS\n4H\n6S\n9C\nJC\n5C\nJS\nKH\n4C\nJH",
+          "testOut": "Winner: Player 2\n1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Snapless",
+          "isTest": false,
+          "testIn": "9\n6C\n5D\n8H\nQH\n3S\n7D\nQC\n9S\n2C\n9\n8D\nQS\nAS\nAC\nKD\n6H\nJD\n4D\nKC",
+          "testOut": "Winner: Player 2\n1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Clutch Save",
+          "isTest": true,
+          "testIn": "14\nJC\n8C\n4C\n3S\nAC\n6D\n7C\nQH\n4S\n5C\n6H\n2C\nKD\n8S\n14\n3D\n9H\nQC\nKH\n7S\n5D\nKS\n5H\nKC\n8D\n7D\nJH\n8H\n9D",
+          "testOut": "Winner: Player 1\n26",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Clutch Save",
+          "isTest": false,
+          "testIn": "8\n6D\nJC\n5C\n9C\nAH\n3D\nAC\nKH\n8\nAS\nJH\nQC\n7S\n2C\nJD\n4D\nKD",
+          "testOut": "Winner: Player 1\n8",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Almost Clutch Save",
+          "isTest": true,
+          "testIn": "26\nQD\n10D\n8C\n5H\nKC\n8S\n9D\n9H\nAH\n7D\n4C\n2D\n7H\nQS\n4S\n3D\n10H\nKH\n7S\n6S\n6H\n6C\n7C\n8D\n4D\n5C\n26\n3S\nQC\n2S\nAC\nJH\n2C\nKD\n10S\n4H\nKS\n5S\nQH\n9S\n2H\nJD\nJC\n9C\n6D\n8H\nAD\nJS\n3C\n10C\n3H\n5D\nAS",
+          "testOut": "Winner: Player 2\n52",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Almost Clutch Save",
+          "isTest": false,
+          "testIn": "26\n7S\n8D\n4C\nJH\nAD\nQH\nKS\n9S\n2H\nKC\n4H\n5H\n10S\n7C\n9H\n10H\nQC\n3H\n10C\nJD\n2D\n6D\nJC\n7H\n5C\n9D\n26\n7D\nQS\nAS\n5D\n4D\nAC\n6S\n3D\n8H\n6H\n2C\n3S\nKD\n6C\n4S\nKH\nJS\nQD\n8C\n5S\nAH\n8S\n3C\n10D\n2S\n9C",
+          "testOut": "Winner: Player 1\n52",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Quick Game",
+          "isTest": true,
+          "testIn": "1\n10D\n1\nKH",
+          "testOut": "Winner: Player 2\n1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Quick Game",
+          "isTest": false,
+          "testIn": "1\nAC\n1\n10S",
+          "testOut": "Winner: Player 2\n1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Very Quick Game",
+          "isTest": true,
+          "testIn": "0\n1\n10D",
+          "testOut": "Winner: Player 2\n1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Very Quick Game",
+          "isTest": false,
+          "testIn": "1\n10S\n0",
+          "testOut": "Winner: Player 1\n1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Lucky Shuffle",
+          "isTest": true,
+          "testIn": "10\n2S\nAS\n5D\nQS\n8C\n4D\n7H\n8H\nJS\n3H\n10\n2C\nAC\n5H\nQC\n8D\n4H\n7S\n8S\nJC\n3S",
+          "testOut": "Winner: Player 2\n4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Lucky Shuffle",
+          "isTest": false,
+          "testIn": "13\nJH\nAC\nAH\nQS\n4D\n5C\n8S\n6H\n3H\n2H\n7D\n6C\nKC\n13\nJS\nAD\nAS\nQC\n4H\n5D\n8C\n6S\n3S\n2S\n7H\n6D\nKD",
+          "testOut": "Winner: Player 2\n18",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Unfair Shuffle 1",
+          "isTest": true,
+          "testIn": "5\n8C\n9C\n3S\n2D\nAH\n17\n5C\n5S\n6D\n2C\n10H\n4C\nAD\n5H\n10D\n10C\n2S\n10S\n8S\n5D\n7C\n9S\nJC",
+          "testOut": "Winner: Player 2\n2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Unfair Shuffle 1",
+          "isTest": false,
+          "testIn": "17\n10S\nAS\n6D\n6C\n2C\nAH\n3D\nJD\n3S\n3C\nKH\n9D\nQS\nJS\nKC\nQD\nQC\n5\n7D\n9H\nAD\n4S\n2H",
+          "testOut": "Winner: Player 1\n3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Unfair Shuffle 2",
+          "isTest": true,
+          "testIn": "19\n2C\n8C\nJD\nQC\n6C\nJS\n10S\n2S\n7C\nAD\n4D\n3C\n4S\nJH\n5C\n2D\n4C\n3S\n8D\n4\n9C\n8S\n7S\nQS",
+          "testOut": "Winner: Player 2\n23",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Unfair Shuffle 2",
+          "isTest": false,
+          "testIn": "3\n6S\n2S\nAS\n21\n2D\n6D\n4H\nJH\nAC\nKC\n8D\n4C\n5C\n5D\n8S\nJS\n5H\nQD\nAD\n2C\n2H\nKS\n9H\n5S\nJC",
+          "testOut": "Winner: Player 1\n22",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Unfair Shuffle 3",
+          "isTest": true,
+          "testIn": "51\n10D\n6H\n10C\nAD\n7D\n9S\n3H\n2D\n3S\n8S\n8D\nJS\nKH\n4S\nQD\nQH\nAH\n6C\nJC\n5S\nKD\n6D\n8H\n4C\n5C\n4H\n2H\nJD\n10H\n9H\n9C\n2C\nKC\n2S\nJH\n6S\n7S\n5D\nAC\n9D\nAS\n7C\n8C\nQS\nQC\n5H\n3C\n10S\n4D\n7H\nKS\n1\n3D",
+          "testOut": "Winner: Player 1\n50",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Unfair Shuffle 3",
+          "isTest": false,
+          "testIn": "1\n4D\n51\n6D\nQD\n10C\n3D\nQS\n8H\n10H\n6H\n7H\n3H\nQH\nAD\n10D\n9C\n5H\n7S\n4C\n5D\nKD\n5C\n8C\nKS\n8D\nKH\nJC\n10S\n2D\n3C\n4S\n6S\n7C\n4H\n2C\nJH\nAC\n7D\nJS\nQC\n3S\n8S\n2S\n9D\n9H\nJD\nKC\n9S\n2H\n5S\nAH\nAS\n6C",
+          "testOut": "Winner: Player 2\n51",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Standard Deck 1",
+          "isTest": true,
+          "testIn": "26\n7H\nKS\n5C\n5D\n8C\n2D\n8D\n6S\nKC\n7C\n6C\n4C\n6H\n8S\nKD\nJH\n10H\nQS\n3S\n8H\nAS\nAD\n3D\n2S\n4D\n10S\n26\n3H\n9D\nQC\n2C\n7S\n10D\nAH\nJD\n4H\n7D\n10C\n2H\n9C\nQH\n4S\n9H\n5H\nQD\n5S\nJC\n9S\nKH\n3C\nJS\nAC\n6D",
+          "testOut": "Winner: Player 1\n24",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Standard Deck 1",
+          "isTest": false,
+          "testIn": "26\n8C\n10S\n2S\n4C\n6D\n3C\n5C\n9S\n10C\n6C\nQH\n8H\n4S\nKD\n9H\n3S\n7S\nQC\n3H\nKH\nAD\nAS\n2D\nQD\nAH\n8S\n26\n5H\n6H\nJC\nKS\nQS\nJD\n2C\nJH\n10D\nJS\n7D\n8D\n10H\nKC\n3D\n9C\n7C\nAC\n9D\n7H\n4D\n2H\n5S\n4H\n6S\n5D",
+          "testOut": "Winner: Player 2\n42",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Standard Deck 2",
+          "isTest": true,
+          "testIn": "26\n10D\nQH\nJD\n6C\nQD\n4S\nKC\n10S\nJC\nQC\n8C\n5H\n4H\n4D\n6H\n10H\n9H\nAD\n5D\n10C\n9S\nAH\n2H\nKH\n9D\n5S\n26\n7S\n5C\n2C\nKD\n2S\n6D\n6S\n3S\nAS\n3C\n8D\n3H\n7D\n2D\nJH\n4C\nJS\n7C\nAC\n7H\n3D\nQS\n8H\n9C\nKS\n8S",
+          "testOut": "Winner: Player 1\n38",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Standard Deck 2",
+          "isTest": false,
+          "testIn": "26\n9C\n2S\n8S\n5D\nJD\nKC\nAS\n5H\n8H\n10D\n4S\n4H\n6S\nQC\n5C\nKH\nQH\nJC\n10S\n7C\n6C\n7D\n3H\nAD\nKS\n8D\n26\n2C\n4C\nQS\nKD\n9H\n5S\n6D\n9D\n10C\nAH\nJH\n3C\n8C\n7S\nAC\n3D\n6H\n10H\n2H\n3S\n7H\nJS\n9S\n2D\nQD\n4D",
+          "testOut": "Winner: Player 2\n48",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Standard Deck 3",
+          "isTest": true,
+          "testIn": "26\n6H\n5S\n7H\n10C\n9D\nKH\n4C\nAC\nJH\n2S\nKC\n2C\nAS\n9H\n6S\n6C\n7S\n8H\n9S\nAD\n8D\n8S\n7C\n5H\n4H\n3H\n26\n5D\nQS\nQC\n7D\n3D\n3C\nAH\n4D\n2H\n9C\n10H\n5C\n10D\nKD\n10S\nJS\nKS\nQH\n8C\nJC\nQD\n6D\nJD\n3S\n4S\n2D",
+          "testOut": "Winner: Player 2\n32",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Standard Deck 3",
+          "isTest": false,
+          "testIn": "26\n5D\n8H\n3C\n7D\n9C\n7H\nJS\n8S\nJD\n4D\nJH\n5S\n6S\nAD\n3H\n8C\n10H\nQC\n10S\n6C\n7S\n9D\n2H\n4S\n6H\n4C\n26\nQH\n7C\nKS\nAC\nKD\nKC\nJC\n2D\n6D\nQD\n2C\n9S\nAS\n10D\nKH\n3S\n4H\n10C\n9H\n8D\n3D\n2S\nQS\nAH\n5H\n5C",
+          "testOut": "Winner: Player 1\n34",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Standard Deck 4",
+          "isTest": true,
+          "testIn": "26\n6H\nAS\n8C\nKH\n2H\n7H\n10H\n4S\nJS\nJC\n7D\nAH\nQD\nJH\n6D\n10S\n8D\nKD\n8H\n4D\nQC\n6C\n2D\n10D\n10C\n3D\n26\n5H\n2S\n9H\n3H\n5D\n2C\n5C\nKC\n4H\n7S\nAD\n9S\nQH\n9D\n4C\n3S\n8S\nJD\n5S\nAC\n9C\n7C\nKS\n3C\nQS\n6S",
+          "testOut": "Winner: Player 1\n2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Standard Deck 4",
+          "isTest": false,
+          "testIn": "26\n9S\nJH\n4S\n3C\n7H\n3S\n8H\n2S\n4H\n10C\n2H\nKD\nQC\n9H\n4C\nJC\n7D\n7C\n3D\n9C\n5H\n4D\n10D\n5C\n6D\n7S\n26\nQS\n2D\n9D\n3H\n8D\nAS\n2C\nKS\nAD\nKH\n6C\nQD\nJS\n6S\n10S\n5S\n8S\nAC\n6H\nKC\n5D\nAH\nQH\nJD\n8C\n10H",
+          "testOut": "Winner: Player 2\n3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Standard Deck 5",
+          "isTest": true,
+          "testIn": "26\n8S\n6H\n3C\n9S\n5S\nKD\nAH\nQS\nJC\nQC\n9C\n6C\nAC\nKS\n4D\n2H\n5H\n8C\n3H\n7C\n10H\n10D\n4S\n7H\n2C\nJD\n26\n8H\n6D\n3D\n9D\n5D\nKC\nAD\nQD\nJS\nQH\n9H\n6S\nAS\nKH\n4C\n2S\n5C\n8D\n3S\n7S\n10S\n10C\n4H\n7D\n2D\nJH",
+          "testOut": "Winner: Player 1\n15",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Standard Deck 5",
+          "isTest": false,
+          "testIn": "26\n3H\n9H\n6D\n10H\n8D\n5D\n3S\n10D\n9D\n5C\n8C\nJC\n7H\n2C\n7C\nJH\nQS\nKS\nAS\n4S\nQH\nKD\n4H\nAD\n2H\n6S\n26\n3D\n9C\n6C\n10S\n8H\n5S\n3C\n10C\n9S\n5H\n8S\nJS\n7D\n2S\n7S\nJD\nQC\nKH\nAC\n4C\nQD\nKC\n4D\nAH\n2D\n6H",
+          "testOut": "Winner: Player 1\n36",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Standard Deck 6",
+          "isTest": true,
+          "testIn": "26\nAS\nAC\n2C\n2S\n3S\n3C\n4C\n4S\n5S\n5C\n6D\n6H\n7H\n7D\n8D\n8S\n9C\n9S\n10S\n10C\nJC\nJH\nQD\nQH\nKD\nKS\n26\nAD\nAH\n2H\n2D\n3D\n3H\n4D\n4H\n5D\n5H\n6S\n6C\n7S\n7C\n8H\n8C\n9D\n9H\n10H\n10D\nJS\nJD\nQS\nQC\nKH\nKC",
+          "testOut": "Winner: Player 1\n24",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Standard Deck 6",
+          "isTest": false,
+          "testIn": "26\nAS\nAD\n2D\n2S\n3S\n3D\n4H\n4C\n5C\n5H\n6S\n6D\n7C\n7H\n8C\n8H\n9C\n9S\n10D\n10S\nJC\nJS\nQD\nQH\nKS\nKC\n26\nAC\nAH\n2H\n2C\n3C\n3H\n4D\n4S\n5S\n5D\n6H\n6C\n7D\n7S\n8S\n8D\n9D\n9H\n10H\n10C\nJD\nJH\nQS\nQC\nKD\nKH",
+          "testOut": "Winner: Player 2\n40",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "0 ≤ [[m]],  [[n]], [[m]] + [[n]] ≤ 52\nEach [[card]] is unique and will appear only once across both players’ decks.\nIt is guaranteed that the game will always terminate with a single winner.",
+      "coverBinaryId": 151933863716687,
+      "stubGenerator": "read m:int\nloop m read card:word(3)\nread n:int\nloop n read card:word(3)\n\nwrite Winner: Player 1/Player 2\nNumber of cards",
+      "inputDescription": "<<Line 1:>> Integer [[m]] representing the number of cards in <<player 1's>> deck.\n<<Next [[m]] Lines:>> String representing a [[card]] in <<player 1's>> deck from top to bottom.\n<<Next Line:>> Integer [[n]] representing the number of cards in <<player 2's>> deck.\n<<Next [[n]] Lines:>> String representing a [[card]] in <<player 2's>> deck from top to bottom.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> String indicating the winning player, in the form: {{Winner: }}{{Player 1}}/{{Player 2}} \n<<Line 2:>> The number of cards left in the <<winning>> player's deck."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Snap is a turn-based card game where players place cards into a central pile and claim the pile when two consecutive cards share the same rank. Your task is to simulate the game and determine who the winner is and how many cards they have at the end.<br><br><strong>Cards:</strong><br>A <var>card</var> is a standard card from a 52-card deck, provided in the form <var>Rank</var><var>Suit</var>. The <var>Rank</var> represents the face value of the card and is one of: an integer in the range <const>2</const>&ndash;<const>10</const>, <const>J</const>, <const>Q</const>, <const>K</const> or <const>A</const>. The <var>Suit</var> represents the card&rsquo;s category and can be <const>S</const>, <const>H</const>, <const>D</const>, or <const>C</const>. Suits have the following precedence: <const>S</const> &gt; <const>H</const> &gt; <const>D</const> &gt; <const>C</const>. Decks are held by players with the cards facing <strong>DOWN</strong>.<br><br><strong>Turn-Based:</strong><br>The game begins with Player <strong>1</strong> placing the top card of their deck onto the central pile facing <strong>UP</strong>. Player <strong>2</strong> then places their top card on <strong>TOP</strong> of the pile also facing <strong>UP</strong>. Players continue alternating turns in this manner until either a Snap occurs or a player has no cards left.<br><br><strong>Snap!</strong><br>A Snap occurs when the <strong>rank</strong> of the most recently placed card matches the <strong>rank</strong> of the card directly below it (e.g. <const>A</const> matches <const>A</const>, <const>6</const> matches <const>6</const>, <const>Q</const> matches <const>Q</const>). <br><br>Before the start of the next turn, the player who played the card with the <strong>HIGHER</strong> suit precedence <strong>MUST</strong> call Snap. Once Snap is called, that player takes the entire central pile and places those cards facing <strong>DOWN</strong> on the <strong>BOTTOM</strong> of their deck. That <strong>SAME</strong> player will also take the next turn and the turn order continues as described above.<br><br>Example:<br>Player 1's and player 2's deck top to bottom: <const>5S</const> <const>6D</const> <const>10D</const> <const>5D</const> <const>JC</const> and <const>3H</const> <const>7S</const> <const>5C</const> <const>KH</const> <const>9S</const><br>Play continues until a snap occurs. The central pile when a snap occurs, face-up from top to bottom: <const>5D</const> <const>5C</const> <const>10D</const> <const>7S</const> <const>6D</const> <const>3H</const> <const>5S</const><br>Player 1's and player 2's deck top to bottom <strong>after</strong> the central pile is claimed:  <const>JC</const> <const>5S</const> <const>3H</const> <const>6D</const> <const>7S</const> <const>10D</const> <const>5C</const> <const>5D</const> and <const>KH</const> <const>9S</const><br><br><strong>Winning Condition:</strong><br>The game ends when a player has <strong>zero</strong> cards remaining in their deck at the <strong>start</strong> of a turn. The other player, who still has cards, is declared the winner.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Integer <var>m</var> representing the number of cards in <strong>player 1's</strong> deck.<br><strong>Next <var>m</var> Lines:</strong> String representing a <var>card</var> in <strong>player 1's</strong> deck from top to bottom.<br><strong>Next Line:</strong> Integer <var>n</var> representing the number of cards in <strong>player 2's</strong> deck.<br><strong>Next <var>n</var> Lines:</strong> String representing a <var>card</var> in <strong>player 2's</strong> deck from top to bottom.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> String indicating the winning player, in the form: <const>Winner: </const><const>Player 1</const>/<const>Player 2</const> <br><strong>Line 2:</strong> The number of cards left in the <strong>winning</strong> player's deck.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &le; <var>m</var>,  <var>n</var>, <var>m</var> + <var>n</var> &le; 52<br>Each <var>card</var> is unique and will appear only once across both players&rsquo; decks.<br>It is guaranteed that the game will always terminate with a single winner.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4\n5S\n6D\n5D\n10D\n4\n3H\n7S\n5C\nKH</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Winner: Player 1\n6</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 130769403588418,
+  "commentCount": 26,
+  "upVotes": 18,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 1362588,
+    "progress": 0.3333333333333333,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1767283537000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1768836847787,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

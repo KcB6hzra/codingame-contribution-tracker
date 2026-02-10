@@ -1,0 +1,285 @@
+{
+  "id": 5669,
+  "activeVersion": 38,
+  "score": 20,
+  "votableId": 15618776,
+  "codingamerId": 1983963,
+  "views": 609,
+  "commentableId": 15533564,
+  "title": "Derivative time !!! - part2",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "pluieciel",
+  "publicHandle": "56693a9cc1b2c8fc29e4c55c9b93d4f07d5a",
+  "codingamerHandle": "3ae5608cc0aec3a2d51efd34cade51cb3693891",
+  "lastVersion": {
+    "version": 38,
+    "autocloseTime": 1655141315965,
+    "data": {
+      "title": "Derivative time !!! - part2",
+      "topics": [
+        {
+          "id": 71,
+          "handle": "recursion",
+          "labelMap": {
+            "1": "Récursion",
+            "2": "Recursion"
+          },
+          "pageTitle": "Recursion: exercises and theory",
+          "puzzleCount": 13,
+          "parentTopicId": 41,
+          "contentDetailsId": 77
+        },
+        {
+          "labelMap": {
+            "2": "Abstraction"
+          }
+        }
+      ],
+      "solution": "(ns Solution\n  (:require [clojure.string :as S])\n  (:gen-class))\n\n(defn debug [msg] (binding [*out* *err*] (println msg) (flush)))\n\n(defn make-sum [a1 a2] (list a1 '+ a2))\n(defn make-product [m1 m2] (list m1 '* m2))\n(defn make-pow [p1 p2] (list p1 'pow p2))\n(def funcs (list 'let '[na nil \n                        pow #(Math/pow %1 %2) \n                        ln #(Math/log %2)\n                        sin #(Math/sin %2)\n                        cos #(Math/cos %2)\n                        e (Math/exp 1)\n                        pi Math/PI]))\n\n(defn exp-tree [l op]\n  (\n    (fn f [l]\n      (cond \n        (or (number? l) (symbol? l)) l\n        (not ((set l) op)) (map f l)\n        :else\n        (let [[a b c & r] (reverse l)]\n          (cond\n            (nil? r) (list (f c) b (f a))\n            (= b op) (f (reverse (list* (list (f c) b (f a)) r)))\n            (= (count r) 2) (f (list (f (reverse (list* c r))) b (f a)))\n            :else (f (concat (f (reverse (list* c r))) [b (f a)] ))))))\n    l))\n\n(defn has-var? [exp var] (or (= exp var) ((set (flatten exp)) var)))\n(defmulti deriv (fn [exp _] (if (seq? exp) (second exp) (type exp))))\n(defmethod deriv java.lang.Long [_ _] 0)\n(defmethod deriv java.lang.Double [_ _] 0)\n(defmethod deriv clojure.lang.Symbol [exp var] (if (= exp var) 1 0))\n(defmethod deriv 'pow [[a _ b] var]\n  (cond\n    (and (has-var? a var) (has-var? b var))\n      (make-product \n        (make-product \n          (make-sum (list 'na 'ln a) 1)\n          (make-pow a a))\n        (deriv a var))\n    (has-var? a var)\n      (make-product\n        (make-product b (make-pow a (make-sum b -1)))\n        (deriv a var))\n    (has-var? b var)\n      (make-product\n        (make-product (list 'na 'ln a) (make-pow a b))\n        (deriv b var))\n    :else 0))\n(defmethod deriv '+ [[a _ b] var]\n  (make-sum (deriv a var) (deriv b var)))\n(defmethod deriv '* [[a _ b] var]\n  (make-sum\n    (make-product a (deriv b var))\n    (make-product (deriv a var) b)))\n(defmethod deriv 'ln [[_ _ b] var]\n  (make-product (make-pow b -1) (deriv b var)))\n(defmethod deriv 'sin [[_ _ b] var]\n  (make-product (list 'na 'cos b) (deriv b var)))\n(defmethod deriv 'cos [[_ _ b] var]\n  (make-product -1 (make-product (list 'na 'sin b) (deriv b var))))\n\n(defmacro prefix [exp]\n  (if (or (number? exp) (symbol? exp)) \n    exp\n    (list (second exp) `(prefix ~(first exp)) `(prefix ~(last exp)))))\n\n(defmacro defs\n  [bindings]\n  `(do\n     ~@(for [[sym n] (partition 2 bindings)]\n         `(def ~(read-string sym) ~(read-string n)))))\n\n(defn -main [& args]\n  (let [F (read-line)\n        Vs (as-> (read-line) I (S/split I #\" \") (map symbol I))\n        Dict (S/split (read-line) #\" \")]\n    (as-> F I\n      (S/replace I #\"[+*\\^]|ln|sin|cos\" {\"ln\" \"na ln \"\n                                         \"sin\" \"na sin \"\n                                         \"cos\" \"na cos \"\n                                         \"+\" \" + \"\n                                         \"*\" \" * \"\n                                         \"^\" \" pow \"})\n      (read-string (str \"(\" I \")\"))\n      (reduce exp-tree I '(sin cos ln pow * +))\n      (reduce deriv I Vs)\n      ;(do (debug I) I)\n      (eval (concat funcs [`(defs ~Dict) `(prefix ~I)]))\n      (println (format \"%.2f\" I)))))",
+      "statement": "Story: \nLouise is learning calculus in her maths courses and she likes the idea. When doing her homework, she is not sure and she wants to check her answers with yours. Could you create a program so that we can check the answers?\n\nIt's recommended to finish Part 1 first:\nhttps://www.codingame.com/training/medium/derivative-time---part1\n\nCalculate the partial derivative of a given formula.\n\nFor example, in Test1 \"crazy chain\"\n<<Line1>>: [[formula]]: {{ln(ln(ln(ln x)))}}\n<<Line2>>: [[vars]]: {{x}}\n<<Line3>>: [[vars]]' values: {{x 15.16}}\n\na formula {{ln(ln(ln(ln x)))}} and {{x}} means to calculate \n{{d(f(x))/dx}},\nwhich should be {{1/x*1/(ln x)*1/ln(ln x)*1/ln(ln(ln x))}},\nand then use the value {{x=15.16}} to resolve it.\nSo the answer is 174.23.\n\nNote:\nFormula: \"e\" and \"pi\" could appear in the formula.\n\nPriority: [ln, sin, cos] > [^] > [*] > [+]\n[ln, sin, cos] will be followed by one space if no parenthesis\nPower follows an order from right to left\ne.g.: 2^3^4 = 2^(3^4)\nNegative power has no parenthesis\ne.g.: 5*sin x*y^-2 = 5*(sin x)*(y^(-2))\n\nTo simplify, x^x form will only has same expression at floor and power position.\ne.g.: (sin x)^(sin x) could appear, but (x+2)^(x*3) will not appear\n\n[[var]]s may be in other forms other than x, y, and z. Similar to identifiers in many programming languages, the var would be some letter (or ASCII letter) followed by letters, numbers or underscore.\n\nlink about calculus rules: {{https://en.wikipedia.org/wiki/Differentiation_rules}}\nThe rules needed here:\na'=0\n(a*x)'=a\n(x^a)'=a*x^(a-1)  (when a is not 0)\n(a^x)'=ln(a)*a^x\n(x^x)'=(ln(x)+1)*x^x\n(ln x)'=x^-1\n(sin x)'=cos x\n(cos x)'=-sin x\n(u+v)'=u'+v'\n(u*v)'=u'*v+v'*u\ndf/dx=df/dt*dt/dx  (the chain rule)\ne^(pi*i)+1=0  (just kidding, we will not need this one :) )",
+      "testCases": [
+        {
+          "title": "crazy ln chain",
+          "isTest": true,
+          "testIn": "ln(ln(ln(ln x)))\nx\nx 15.16",
+          "testOut": "174.23",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "sin chain with 2*x",
+          "isTest": false,
+          "testIn": "sin(sin(sin(2*x)))\nx\nx 1.40",
+          "testOut": "-1.68",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "interesting powers",
+          "isTest": true,
+          "testIn": "e^(x^2)+4^(x^e)+(5*x)^2+(sin x)^(sin x)\nx\nx 1.00",
+          "testOut": "70.90",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "e^x+3^(x^2)+(2*x)^3+2*(x^2)^(x^2)\nx\nx 1.00",
+          "testOut": "37.31",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "2nd deriv",
+          "isTest": true,
+          "testIn": "(cos pi+2*ln e)*0.50*x*y^2+z\ny x\nx 2.00 y 5.00 z 0.00",
+          "testOut": "5.00",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "(2*cos z+ln e)*0.50*x^2*y\ny x\nx 3.00 y 2.00 z 3.14",
+          "testOut": "-3.00",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "fraction",
+          "isTest": true,
+          "testIn": "(sin x^-2+pi^-1)^-1\nx\nx 3.00",
+          "testOut": "-0.28",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "(ln x^-2+e^-1)^-2\nx\nx 3.00",
+          "testOut": "0.59",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "3rd",
+          "isTest": true,
+          "testIn": "e^x\nx x x\nx 1.00",
+          "testOut": "2.72",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "pi^x\nx x x\nx 1.00",
+          "testOut": "4.71",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "parse",
+          "isTest": true,
+          "testIn": "y+2*z^x^sin y*z+y*cos pi^2*ln x\nx\nx 2.72 y 2.00 z 3.00",
+          "testOut": "84.58",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "z+3*z^ln x^cos(2*pi)*y+y*sin pi^4*e^x\nx\nx 1.00 y 2.00 z 3.00",
+          "testOut": "6.59",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "diversified vars",
+          "isTest": true,
+          "testIn": "Var_1+3*Var_1^ln Gamma^cos(2*pi)*y3+y3*sin pi^4*e^Gamma\nGamma\nGamma 1.00 y3 2.00 Var_1 3.00",
+          "testOut": "6.59",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "y3+2*Var_1^Gamma^sin y3*Var_1+y3*cos pi^2*ln Gamma\nGamma\nGamma 2.72 y3 2.00 Var_1 3.00",
+          "testOut": "84.58",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "<<Line2>> would give a list from 1 to 3 different/same vars to do partial derivative.",
+      "coverBinaryId": 52933968296754,
+      "stubGenerator": "read F:string(256)\nread Vs:string(256)\nread Dict:string(256)\nwrite answer",
+      "inputDescription": "<<Line1>>: [[formula]], built by {{vars}} (e.g. x, y, z, Gamma, x1...), {{constants}} (integers, floats, \"e\", \"pi\"), and {{operators}} (ln, sin, cos, ^, *, +).\n<<Line2>>: list of [[vars]] for partial derivative, separated by space, length of the list will be 1, 2 or 3.\n<<Line3>>: [[vars]]' values, paired and separated by space, value will be float with 2 digits.",
+      "solutionLanguage": "Clojure",
+      "outputDescription": "The result (always float with 2 digits, rounding to nearest)"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Story: <br>Louise is learning calculus in her maths courses and she likes the idea. When doing her homework, she is not sure and she wants to check her answers with yours. Could you create a program so that we can check the answers?<br><br>It's recommended to finish Part 1 first:<br>https://www.codingame.com/training/medium/derivative-time---part1<br><br>Calculate the partial derivative of a given formula.<br><br>For example, in Test1 &quot;crazy chain&quot;<br><strong>Line1</strong>: <var>formula</var>: <const>ln(ln(ln(ln x)))</const><br><strong>Line2</strong>: <var>vars</var>: <const>x</const><br><strong>Line3</strong>: <var>vars</var>' values: <const>x 15.16</const><br><br>a formula <const>ln(ln(ln(ln x)))</const> and <const>x</const> means to calculate <br><const>d(f(x))/dx</const>,<br>which should be <const>1/x*1/(ln x)*1/ln(ln x)*1/ln(ln(ln x))</const>,<br>and then use the value <const>x=15.16</const> to resolve it.<br>So the answer is 174.23.<br><br>Note:<br>Formula: &quot;e&quot; and &quot;pi&quot; could appear in the formula.<br><br>Priority: [ln, sin, cos] &gt; [^] &gt; [*] &gt; [+]<br>[ln, sin, cos] will be followed by one space if no parenthesis<br>Power follows an order from right to left<br>e.g.: 2^3^4 = 2^(3^4)<br>Negative power has no parenthesis<br>e.g.: 5*sin x*y^-2 = 5*(sin x)*(y^(-2))<br><br>To simplify, x^x form will only has same expression at floor and power position.<br>e.g.: (sin x)^(sin x) could appear, but (x+2)^(x*3) will not appear<br><br><var>var</var>s may be in other forms other than x, y, and z. Similar to identifiers in many programming languages, the var would be some letter (or ASCII letter) followed by letters, numbers or underscore.<br><br>link about calculus rules: <const>https://en.wikipedia.org/wiki/Differentiation_rules</const><br>The rules needed here:<br>a'=0<br>(a*x)'=a<br>(x^a)'=a*x^(a-1)  (when a is not 0)<br>(a^x)'=ln(a)*a^x<br>(x^x)'=(ln(x)+1)*x^x<br>(ln x)'=x^-1<br>(sin x)'=cos x<br>(cos x)'=-sin x<br>(u+v)'=u'+v'<br>(u*v)'=u'*v+v'*u<br>df/dx=df/dt*dt/dx  (the chain rule)<br>e^(pi*i)+1=0  (just kidding, we will not need this one :) )</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line1</strong>: <var>formula</var>, built by <const>vars</const> (e.g. x, y, z, Gamma, x1...), <const>constants</const> (integers, floats, &quot;e&quot;, &quot;pi&quot;), and <const>operators</const> (ln, sin, cos, ^, *, +).<br><strong>Line2</strong>: list of <var>vars</var> for partial derivative, separated by space, length of the list will be 1, 2 or 3.<br><strong>Line3</strong>: <var>vars</var>' values, paired and separated by space, value will be float with 2 digits.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The result (always float with 2 digits, rounding to nearest)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><strong>Line2</strong> would give a list from 1 to 3 different/same vars to do partial derivative.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">ln(ln(ln(ln x)))\nx\nx 15.16</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">174.23</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 116046513746,
+  "avatar": 12585096610807,
+  "commentCount": 33,
+  "upVotes": 22,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 665816,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1608041137000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1608063706309,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1610658337001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1610816424852,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1613408737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1613480683778,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1616072737000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1635280488208,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1637874337011,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1637874653125,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1640469936999,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1652549315965,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1654683393043,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

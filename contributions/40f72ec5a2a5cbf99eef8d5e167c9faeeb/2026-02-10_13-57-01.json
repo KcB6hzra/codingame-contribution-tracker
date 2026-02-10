@@ -1,0 +1,115 @@
+{
+  "id": 40,
+  "activeVersion": 1,
+  "score": -1,
+  "votableId": 49,
+  "codingamerId": 594635,
+  "views": 89,
+  "commentableId": 63,
+  "title": "Bust speeding vehicles",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Solid",
+  "publicHandle": "40f72ec5a2a5cbf99eef8d5e167c9faeeb",
+  "codingamerHandle": "06297d390cfe78beb7c9c8f836f837bc536495",
+  "lastVersion": {
+    "version": 1,
+    "data": {
+      "title": "Bust speeding vehicles",
+      "fastest": true,
+      "duration": 1200,
+      "solution": "var tm = { 0:3600, 1:60, 2:1 };\nvar readings = [];\nvar str = readline;\nvar int = () => Number(str());\n\nvar speedLimit = int();\nvar cameras = Array.apply(null, new Array(int())).map(e => str());\nvar readingsCount = int();\n\nfor (var i = 0; i < readingsCount; i++) {\n\n    var [plate, distance, time] = str().split(' ');\n    var seconds = time.split(':').map((s, i) => tm[i] * s).reduce((a, b) => a + b);\n    var last = readings.filter(r => r.plate === plate);\n    distance = Number(distance);\n\n    if (last.length > 0) {\n        var ref = last[last.length - 1];\n        var diff = (distance - ref.distance) / ((seconds - ref.seconds) / 3600);\n        if (diff > speedLimit) {\n            print(plate + ' ' + distance);\n        }\n    }\n\n    readings.push({ plate: plate, distance: distance, seconds: seconds });\n}\n\n// Generator for tests\nNumber.prototype.toTime = function () {\n    var x = (new Date(this * 1000));\n    return [x.getHours(), x.getMinutes(), x.getSeconds()].map(a => a < 10 ? '0'+a : a).join(':');\n}\n\nvar r = Math.random;\nvar f = Math.floor;\nvar plate = (len) => Array.apply(null, new Array(len)).map(e => r() > 0.5 ? f(r() * 10) : String.fromCharCode(97 + f(25 * r()))).join('');\nvar generator = (limit, cameras, vehicles, speeding) => {\n\n    var seed = Math.floor(3600 * Math.random() * 12);\n    var cars = Array.apply(null, new Array(vehicles)).map(e => plate(6).toUpperCase());\n    var cams = Array.apply(null, new Array(cameras)).map((e, i) => Math.floor((i+1) * (seed / 3600 * 12)));\n    var gen = [];\n\n    cars.forEach(car => {\n        var lastCam = 0;\n        var lastTime = seed;\n        cams.forEach((cam, i) => {\n            if (i > 0) {\n                var speed = limit * Math.max(0.5, Math.min(0.95, 0.5+(Math.random()*0.5)));\n                if (speeding > 0) {\n                    speed = limit * Math.max(1.05, Math.min(1.55, 1+Math.random()*0.5));\n                    speeding--;\n                }\n                lastTime += speed / (cam - lastCam) * 3600;\n            }\n            gen.push({ car: car, cam: cam, ts: lastTime });\n            lastCam = cam;\n        })\n    });\n    var pre = [limit, cameras, cams.join('\\n'), gen.length].join('\\n');\n\n    console.log(pre+'\\n'+gen.sort((a, b) => a.ts > b.ts ? 1 : -1).map(a => [a.car, a.cam, Number(a.ts).toTime()].join(' ')).join('\\n'));\n}",
+      "statement": "Your must detect speeding vehicles by calculating their average speed between two or more cameras on a given road.",
+      "testCases": [
+        {
+          "title": {
+            "2": "Test n°1"
+          },
+          "isTest": true,
+          "testIn": "50\n3\n134\n268\n403\n3\nRSLJ97 134 11:11:43\nRSLJ97 268 11:43:08\nRSLJ97 403 11:57:22",
+          "testOut": "RSLJ97 268",
+          "isValidator": false
+        },
+        {
+          "title": {
+            "2": "Validator n°1"
+          },
+          "isTest": false,
+          "testIn": "50\n3\n1\n3\n5\n3\nF15G7L 1 00:09:57\nF15G7L 3 12:20:55\nF15G7L 5 07:09:48",
+          "testOut": "F15G7L 3",
+          "isValidator": true
+        },
+        {
+          "title": {
+            "2": "Test n°2"
+          },
+          "isTest": true,
+          "testIn": "90\n3\n33\n67\n101\n9\n901390 33 02:48:22\nX38854 33 02:48:22\nJ07WE2 33 02:48:22\nX38854 67 04:21:30\nJ07WE2 67 04:28:23\n901390 67 04:46:58\nJ07WE2 101 06:22:13\nX38854 101 06:27:17\n901390 101 06:48:02",
+          "testOut": "OK",
+          "isValidator": false
+        },
+        {
+          "title": {
+            "2": "Validator n°2"
+          },
+          "isTest": false,
+          "testIn": "90\n3\n73\n147\n220\n9\nB0G23P 73 06:07:31\n69PD21 73 06:07:31\n1GK3S0 73 06:07:31\n1GK3S0 147 06:48:58\nB0G23P 147 07:09:28\n69PD21 147 07:13:00\n1GK3S0 220 07:54:30\n69PD21 220 08:01:38\nB0G23P 220 08:06:25",
+          "testOut": "OK",
+          "isValidator": true
+        },
+        {
+          "title": {
+            "2": "Test n°3"
+          },
+          "isTest": true,
+          "testIn": "60\n5\n2\n4\n6\n8\n11\n10\n77JI2R 2 00:11:12\nL223F2 2 00:11:12\nL223F2 4 07:41:12\n77JI2R 4 12:18:37\nL223F2 6 08:14:46\n77JI2R 6 01:09:49\nL223F2 8 02:34:33\nL223F2 11 18:12:00\n77JI2R 8 16:52:31\n77JI2R 11 22:01:07",
+          "testOut": "L223F2 4",
+          "isValidator": false
+        },
+        {
+          "title": {
+            "2": "Validator n°3"
+          },
+          "isTest": false,
+          "testIn": "60\n5\n43\n87\n130\n174\n217\n10\nB892PQ 43 03:37:52\n6A4F43 43 03:37:52\nB892PQ 87 05:30:36\n6A4F43 87 05:40:03\n6A4F43 130 06:39:58\nB892PQ 130 07:16:55\n6A4F43 174 07:39:19\n6A4F43 217 08:52:16\nB892PQ 174 09:17:20\nB892PQ 217 11:19:02",
+          "testOut": "6A4F43 130",
+          "isValidator": true
+        },
+        {
+          "title": {
+            "2": "Test n°4"
+          },
+          "isTest": true,
+          "testIn": "80\n5\n41\n82\n123\n164\n205\n5\nWA58U0 41 03:25:28\nWA58U0 82 06:17:44\nWA58U0 123 08:40:36\nWA58U0 164 10:03:33\nWA58U0 205 11:22:07",
+          "testOut": "WA58U0 123",
+          "isValidator": false
+        },
+        {
+          "title": {
+            "2": "Validator n°4"
+          },
+          "isTest": false,
+          "testIn": "80\n5\n114\n229\n343\n458\n572\n5\n5A87WU 114 09:32:45\n5A87WU 229 10:28:02\n5A87WU 343 11:30:11\n5A87WU 458 12:01:21\n5A87WU 572 12:23:49",
+          "testOut": "5A87WU 458",
+          "isValidator": true
+        }
+      ],
+      "constraints": "10 ≤ [[L]] ≤ 100\n0 ≤ [[D]] ≤ 1000\n0 ≤ [[S]] ≤ 100",
+      "stubGenerator": "read L:int\nread N:int\nloop N read R:string(255)\nwrite result",
+      "inputDescription": "<<Line 1:>> An integer [[L]] for the Speed Limit for given road.\n<<Line 2:>> An integer [[C]] for the number of cameras.\n<<Next [[N]] Lines:>> An integer [[D]] for the distance of camera.\n<<Next Line:>> An integer [[N]] for number of camera readings.\n<<Next [[N]] Lines:>> Reading as [[L]] for License plate number, [[C]] for camera distance, [[T]] for time of capture, seperated by spaces.",
+      "solutionLanguage": "Javascript",
+      "outputDescription": "When vehicle is speeding, output the [[License plate]] [[Camera Distance]] seperated by spaces."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement_wrapping_div\" style=\"position: relative;\"> \n\n<style type=\"text/css\"> \n.statement_wrapping_div, .statement {font-size: 14px;font-weight: 400;}  \n.statement_wrapping_div {margin-bottom: 10px;}\n.statement_wrapping_div ul {padding-left: 40px;}\n.statement {background-color:rgba(255, 255, 255, 0.85);padding: 20px;padding-top:0px;}\ncode, span.const {display:inline-block;font-family:Inconsolata,consolas,monospace;padding-left:5px;padding-right:5px;padding-top:1px;padding-bottom:1px;background-color:#18a1ea;white-space: nowrap;margin-right:2px;color: white;}\nspan.var {display: inline-block;padding-left:5px;padding-right:5px;padding-top:1px;padding-bottom:2px;background-color:#f2dd00;white-space:nowrap;margin-left:1px;margin-right:2px;color:black;}\n.stat_mid_title {font-weight:700;margin-bottom:5px;}\n.protocol_title{color:#ffd200;}\n.cross-statementBlock{position:relative;}</style>\n\n<div class=\"stat_mid_title\">The program:</div>\n<div class=\"question-statement\">You must detect speeding vehicles by computing their average speed between two or more consecutive cameras on a given road.<br />You must print the License plate and the position of the camera where the excess speed has been detected.<br /><br />Your inputs contain all camera timestamped recordings for one or more license plates. All records are grouped by license plates and all camera distances are sorted in ascending order inside this group.<br />If no excess speed is detected, your program must print OK.</div><br />\n</div>\n\n<div style=\"background-color: rgba(0, 0, 0, 0.85);padding: 20px;color: white;margin-top: 10px;\">\n<div class=\"protocol_title\"><b>INPUT:</b></div>\n<div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <span class=\"var\">L</span> for the Speed Limit for the given road (in Kilometers per hour).<br /><strong>Line 2:</strong> An integer <span class=\"var\">N</span> which represents the total number of camera readings.<br /><strong>Next <span class=\"var\">N</span> Lines:</strong> 3 space separated values: The license plate recorded <span class=\"var\">L</span>, the camera distance (in Kilometers from the begining of the road) <span class=\"var\">C</span> and the timestamp of the camera capture (number of seconds since 01/01/1970) <span class=\"var\">T</span>.</div><br /> \n\n<div class=\"protocol_title\"><b>OUTPUT:</b></div>\n<div class=\"question-statement-output\">For each speeding vehicles: print the license plate <span class=\"var\">L</span> with the detecting camera distance <span class=\"var\">C</span>, seperated by spaces, in the same order as input.<br />When no vehicle is speeding: print <span class=\"const\">OK</span></div><br /> \n\n<div class=\"protocol_title\"><b>CONSTRAINTS:</b></div>\n<div class=\"question-statement-constraints\">10 &#8804; <span class=\"var\">L</span> &#8804; 100<br />0 &#8804; <span class=\"var\">N</span> &#8804; 100<br />0 &#8804; <span class=\"var\">C</span> &#8804; 1000</div><br /> \n\n<div class=\"protocol_title\"><b>EXAMPLE:</b></div>\n<div style=\"border: 1px solid white; width: 440px;\">\n<div style=\"float: left; margin-left: 10px; padding-left: 10px; width: 200px; font-family: monospace;\">\n<div><b>Input</b></div>\n<div class=\"question-statement-example-in\">50<br />3<br />RSLJ97 134 1447409503<br />RSLJ97 268 1447411388<br />RSLJ97 403 1447412242</div>\n</div>\n<div style=\"margin-left: 10px; float: left; padding-left: 5px; width: 200px; font-family: monospace;\">\n<div><b>Output</b></div>\n<div class=\"question-statement-example-out\">RSLJ97 268</div>\n</div>\n<div style=\"clear: both;\">&nbsp;</div>\n</div>\n</div>"
+  },
+  "avatar": 52510643792425,
+  "commentCount": 0,
+  "upVotes": 0,
+  "downVotes": 1,
+  "statusHistory": [],
+  "editable": false,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,168 @@
+{
+  "id": 2081,
+  "activeVersion": 48,
+  "score": 8,
+  "votableId": 10249918,
+  "codingamerId": 270881,
+  "views": 813,
+  "commentableId": 10181192,
+  "title": "Elliptic curve cryptography",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Maurice_Moss",
+  "publicHandle": "20818c957dbe59c292757e45a6503a3c080d",
+  "codingamerHandle": "de015f1a510d60cdcd0551896a34c709188072",
+  "lastVersion": {
+    "version": 48,
+    "autocloseTime": 1555928559610,
+    "data": {
+      "title": "Elliptic curve cryptography",
+      "topics": [
+        {
+          "id": 74,
+          "handle": "cryptology",
+          "labelMap": {
+            "1": "Cryptologie",
+            "2": "Cryptography"
+          },
+          "pageTitle": "Cryptography: exercises and theory",
+          "puzzleCount": 6,
+          "parentTopicId": 43,
+          "contentDetailsId": 105
+        },
+        {
+          "labelMap": {
+            "2": "Double-and-add"
+          }
+        },
+        {
+          "labelMap": {
+            "2": "Elliptic Curve"
+          }
+        },
+        {
+          "id": 105,
+          "handle": "modular-calculus",
+          "labelMap": {
+            "1": "Modular calculus",
+            "2": "Modular calculus"
+          },
+          "puzzleCount": 0,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import sys\nimport math\n\n# Auto-generated code below aims at helping you parse\n# the standard input according to the problem statement.\n\ndef extended_gcd(aa, bb):\n    lastremainder, remainder = abs(aa), abs(bb)\n    x, lastx, y, lasty = 0, 1, 1, 0\n    while remainder:\n        lastremainder, (quotient, remainder) = remainder, divmod(lastremainder, remainder)\n        x, lastx = lastx - quotient*x, x\n        y, lasty = lasty - quotient*y, y\n    return lastremainder, lastx * (-1 if aa < 0 else 1), lasty * (-1 if bb < 0 else 1)\n\ndef mod_inverse(a, m):\n\tg, x, y = extended_gcd(a, m)\n\treturn x % m\n\nclass EllipticCurve(object):\n    def __init__(self, a, b, p):\n        self.a = a\n        self.b = b\n        self.p = p\n\n    def __eq__(self, C):\n        return (self.a, self.b) == (C.a, C.b)\n\n    def has_point(self, x, y):\n        return (y ** 2) % self.p == (x ** 3 + self.a * x + self.b) % self.p\n\n\nclass Point(object):\n    \"\"\"A point on a specific curve.\"\"\"\n    def __init__(self, curve, point):\n        self.curve = curve\n        self.x = point[0] % curve.p\n        self.y = point[1] % curve.p\n\n    def __getitem__(self, index):\n        return [self.x, self.y][index]\n\n    def __eq__(self, Q):\n        return (self.curve, self.x, self.y) == (Q.curve, Q.x, Q.y)\n\n    def __neg__(self):\n        return Point(self.curve, self.x, -self.y)\n    \n    def __add__(self, Q):\n        xp, yp, xq, yq = self.x, self.y, Q.x, Q.y\n        m = None\n\n        # P == Q\n        if self == Q:\n            if self.y == 0:\n                R = Inf(self.curve)\n            else:\n                m = ((3 * xp * xp + self.curve.a) * mod_inverse(2 * yp, self.curve.p)) % self.curve.p\n        # Common case\n        else:\n            m = ((yq - yp) * mod_inverse(xq - xp, self.curve.p)) % self.curve.p\n\n        if m is not None:\n            xr = (m ** 2 - xp - xq) % self.curve.p\n            yr = (m * (xp - xr) - yp) % self.curve.p\n            R = Point(self.curve, (xr, yr))\n\n        return R\n    \n    def __mul__(self, n):\n        n = n % self.curve.p\n        Q = self\n        R = Inf(self.curve)\n\n        i = 1\n        while i <= n:\n            if n & i == i:\n                R = R + Q\n            Q = Q + Q\n            i = i << 1\n        return R\n\n    def __rmul__(self, n):\n        return self * n\n\n\nclass Inf(Point):\n    \"\"\"The custom infinity point.\"\"\"\n    def __init__(self, curve):\n        self.curve = curve\n\n    def __eq__(self, Q):\n        return isinstance(Q, Inf)\n\n    def __neg__(self):\n        \"\"\"-0 = 0\"\"\"\n        return self\n    \n    def __add__(self, Q):\n        \"\"\"P + 0 = P\"\"\"\n        return Q\n\n\nP = 0x3fddbf07bb3bc551\nA = 0\nB = 7\nGX = 0x69d463ce83b758e\nGY = 0x287a120903f7ef5c\nG = (GX, GY)\n\nprint((GY**2)%P == (GX**3 + B)%P, file=sys.stderr)\n\ncurve = EllipticCurve(A, B, P)\npoint = Point(curve, G)\n\nn = int(input())\nfor i in range(n):\n    k = int(input(), 16)\n    target = k * point\n    print(hex(target[0]))",
+      "statement": "Elliptic-Curve Cryptography (ECC) is a recent approach to asymmetric cryptography. Its main benefit is an excellent ratio between the level of security and the key size. For example, the NSA recommends 384-bit keys for a top-secret level encryption using ECC, while achieving the same level of security using RSA requires 7680-bit keys. RSA is currently mostly used with 1024-bit keys, which is equivalent to 160-bit keys with ECC (Ref #1).\n\n<<How it works>>\n\nGiven a prime number {{P}}, an elliptic curve (over a finite field) is the set of points (X,Y), 0 ≤ X,Y < {{P}}, verifying an equation of the form Y² = X^3 + {{A}}*X + {{B}} mod {{P}} (sometimes expressed in a different way, see Ref #2) for some fixed parameters 0 ≤ {{A}},{{B}} < {{P}}. In this puzzle, we use one of the most common curve (used for bitcoin): secp256k1 having the equation Y² = X^3 + 7, usually modulo a 256-bit prime number which we replace here by a 62-bit prime (for an easier manipulation in any programming language).\n\nLet us define an addition operator on the curve points (see Ref #3 for a visual illustration).\nTo double a point C: Consider the tangent to the curve at point C. Let (X,Y) be its intersection with the curve, the point S = 2C is defined as (X,<<->>Y).\nTo add two distinct points C and D: Consider the line passing through both points. Let (X,Y) be its intersection with the curve, the point S = C+D is defined as (X,<<->>Y).\n\nLet us consider a starting point {{G}} on the curve and generate a public key as [[k]]*{{G}} (i.e. {{G}}+{{G}}+...+{{G}} [[k]] times) for some randomly chosen integer [[k]] which will be the private key. This pair of public/private keys can be used to encrypt or sign messages (e.g. through ElGamal cryptosystem), yet this is out of the scope of this puzzle. The safety of the private key is not based on the public value {{G}} but on the difficulty of retrieving [[k]] given [[k]]*{{G}} (known as the Discrete Log problem). [[k]] is often above 2^200 to make sure not to be able to bruteforce it. As a result, to compute your key in an efficient way, you should use the <<double-and-add>> method (Ref #4).\n\n<<Explicit formulas>>\n\nTo compute S = (Xs,Ys) = C+D given two distinct points C = (Xc,Yc) and D = (Xd,Yd):\n```L  = (Yd - Yc) / (Xd - Xc)  mod P\nXs = L² - Xc - Xd           mod P\nYs = L * (Xc - Xs) - Yc     mod P\n```To double a point, i.e. when C = D, L becomes (here {{A}} = 0):\n```L  = (3*Xc^2 + A) / (2*Yc)  mod P\n```Note: You will have to compute a modular division, a division modulo {{P}}.\n\n<<Instructions>>\nWrite an EC key generator: For each of the [[N]] given [[k]] values, you should provide the X-coordinate of the point [[k]]*{{G}}.\n\n<<References>>\nECC security level: https://www.ripublication.com/ijaer17/ijaerv12n19_140.pdf\nList of EC: https://safecurves.cr.yp.to\nMaths on EC: https://www.youtube.com/watch?v=NF1pwjL9-DE\nMaths on EC: https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication#Double-and-add",
+      "testCases": [
+        {
+          "title": "Small Unique",
+          "isTest": true,
+          "testIn": "1\n0x2",
+          "testOut": "0x2544b2250b8b1e1c",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Small Unique",
+          "isTest": false,
+          "testIn": "1\n0x3",
+          "testOut": "0x16cc969206bac6ef",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Small Multiple",
+          "isTest": true,
+          "testIn": "3\n0x2\n0x4\n0x6",
+          "testOut": "0x2544b2250b8b1e1c\n0x1b7627b83fb2fb72\n0x1eb4c74b285a26a0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Small Multiple",
+          "isTest": false,
+          "testIn": "3\n0x3\n0x5\n0x7",
+          "testOut": "0x16cc969206bac6ef\n0xdad6df5e65656cc\n0x1ae3107d8fee8800",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Medium Multiple",
+          "isTest": true,
+          "testIn": "50\n0x64\n0x65\n0x66\n0x67\n0x68\n0x69\n0x6a\n0x6b\n0x6c\n0x6d\n0x6e\n0x6f\n0x70\n0x71\n0x72\n0x73\n0x74\n0x75\n0x76\n0x77\n0x78\n0x79\n0x7a\n0x7b\n0x7c\n0x7d\n0x7e\n0x7f\n0x80\n0x81\n0x82\n0x83\n0x84\n0x85\n0x86\n0x87\n0x88\n0x89\n0x8a\n0x8b\n0x8c\n0x8d\n0x8e\n0x8f\n0x90\n0x91\n0x92\n0x93\n0x94\n0x95",
+          "testOut": "0x3449f7da6eab649d\n0x27360b9a43d7231b\n0x53cf11f0f515254\n0x3e5f5f1939ab30\n0x32bfdf549c44e27e\n0x1cb4bccb3f5cbf06\n0xbeded34788cae\n0x3b6f22009eb1bb74\n0x31282d8f804b7f3c\n0x21efaead80c99114\n0x300098d8c0f3bf2f\n0x35172b967fd773d7\n0x38119526a4a86e76\n0x36b9de9af880e617\n0x48bafb1e29963a6\n0x39dcec7f5c3d6de9\n0x34d1c59c164b149\n0x28d672654774f96\n0x1f36e7c20252d69f\n0x24f739e70129405\n0x269539d4ac317bb8\n0x3522ec3f839ec040\n0x3b4e0949e123aff1\n0xa684f4c3a77a060\n0x34a7b68e06615b2\n0x3a20300cffe72222\n0x213ed2511df25634\n0x2cfc8a524643c12d\n0x99c3663ac2cf4ba\n0xed0d1f1cbf2b470\n0x1e9613377509ace6\n0x130bff201c6f8a03\n0x21f3a686e8de9fcf\n0x3db0535e7d5d299\n0x1f8b05c782168f12\n0x6456bfb63e80bdc\n0xfce5c6ddd6bd559\n0x3d16880dfe6b932f\n0xbe407c03769883c\n0x3c30aa945abd9a80\n0x252bd59a34791850\n0x2478e5f61e6c9e3a\n0x24a909740e0b1986\n0xe2205571808695e\n0x14febcee5e6da31a\n0xef81c26afd7f084\n0x20a7a4cbe4e0bf4c\n0x345167b2b517850f\n0x2c14cede9a6236fd\n0xdb23a59da475c9d",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Medium Multiple",
+          "isTest": false,
+          "testIn": "50\n0x96\n0x97\n0x98\n0x99\n0x9a\n0x9b\n0x9c\n0x9d\n0x9e\n0x9f\n0xa0\n0xa1\n0xa2\n0xa3\n0xa4\n0xa5\n0xa6\n0xa7\n0xa8\n0xa9\n0xaa\n0xab\n0xac\n0xad\n0xae\n0xaf\n0xb0\n0xb1\n0xb2\n0xb3\n0xb4\n0xb5\n0xb6\n0xb7\n0xb8\n0xb9\n0xba\n0xbb\n0xbc\n0xbd\n0xbe\n0xbf\n0xc0\n0xc1\n0xc2\n0xc3\n0xc4\n0xc5\n0xc6\n0xc7",
+          "testOut": "0x23dbfc76044b6bc4\n0x17851ccf36d03f3e\n0x80b2f04534fc093\n0x199969f93ce4ad1d\n0x2c570597f9ed01a2\n0x3ba5fc1cbe3a5e75\n0xd3290683fbb0d52\n0x2ca78f534a948c0a\n0x1ad517789cf69b80\n0x2854777bf0d4e8d9\n0xaf25fa9929fc48d\n0x2a2794fa8d9a44ff\n0xec214adca336993\n0xa36b60334f6a37e\n0x2705df31907ff441\n0x2c602c8ece6591d0\n0xa0a2b67c368691b\n0x12eb2fe6ef75fe8e\n0x292ff1b1277b8e9e\n0x3e151263898eddb3\n0x16f145066ef17fb0\n0x314c8161876a29ae\n0xf21d1931658abd9\n0x7f5b1c7576b2fde\n0x2d5975c956004cc9\n0x10d561d67aa0f87\n0x3aef241e432e88cf\n0x347ec877752ead14\n0x2bfc14f5c28c8236\n0x526dd9ba9be6d17\n0x2bb71d3c8bd72213\n0x3b0e3890154ce29\n0x1085cb0188baf07\n0x36bdbe5a91432dc4\n0x1833664e2b8b2298\n0x1e5dfcf4c952bf13\n0x2ac80c50b7645863\n0x3d40594745d31b0a\n0x32790a4a5e6c6315\n0x3f8ad66792898024\n0x3fc61a44f99e234d\n0x2f1911275b8e9545\n0x276eb9bd4b3eb268\n0xc3cf5dd65131e51\n0x3e54a56cdc5cb95e\n0x90fa28f0a65b30a\n0x26445f3ebf29124e\n0x1e58d198d634bfd3\n0x3faf587579263bf3\n0x6920fd792ff0e78",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Long Unique",
+          "isTest": true,
+          "testIn": "1\n0x7200c5fa3b1799e",
+          "testOut": "0x26f5eb3181bfeddf",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Long Unique",
+          "isTest": false,
+          "testIn": "1\n0xfac4ee446685258",
+          "testOut": "0x35fb9ec5471bc3c1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Long Multiple",
+          "isTest": true,
+          "testIn": "50\n0x7200c5fa3b1799e\n0xfac4ee446685258\n0x8ee307a392456df\n0x68f47e9bc8960aa\n0x22e7490de465e151\n0x25caa11a16419f83\n0x208ba3c6c03119a\n0x5ff1a5607a0ca6f\n0xee3ea8637f8a88c\n0x26877991815ef6d2\n0x23eb706906cb0fb4\n0x1ad969a98b8148f7\n0x1cbfd74a386ecbe1\n0x11cde06496da1dad\n0xa37dbb1ce4a2bbe\n0x1b0c1d44b2b9437b\n0x11c8a4e2571aa877\n0xdc7b35e27cd8131\n0x68a9cfb562b0f7a\n0x1850ba9f17be3112\n0x16f984a318c26798\n0x16035edcd8f56414\n0x10ede8e99a8dca04\n0x2c7e458ce9ff580\n0x1d673799bacfb3d1\n0x7fd26de89463e86\n0x50b0ffa60e7a114\n0x12c36ed08d5288f2\n0x283ba26bd453dd33\n0x1725073cdc98d2c2\n0xc4e74cb93cd59c0\n0x4739774b45ed1f1\n0x1853fcf519db3ad1\n0x1d04aca44729473a\n0xa68ecba5d65a442\n0x16bcc1545ec42e09\n0x491dbd5a5e5a5ac\n0x222f59012bcfbe02\n0xfaafb72baa80dd5\n0x1d95abdc29d4bef0\n0x1146d33c6123fdf8\n0xe0e2cc98e94423a\n0x14c10c5faf42e130\n0x3947cc3c6a7ee3a\n0x19acaf1650c187fd\n0x43c6f20448aaa9f\n0x244cad8ff16287e5\n0xd9bac5b508ebad8\n0x1ff367aca7cad416\n0x924cee0757750aa",
+          "testOut": "0x26f5eb3181bfeddf\n0x35fb9ec5471bc3c1\n0x3d49d63288c81a55\n0x24421de17681d894\n0x37702d61fbd7bb21\n0x246fe603bf8dd722\n0x3d523c290e1ede1\n0x6f9e703543f8502\n0x1b8b2f21f8262e8b\n0x36e273fdc62793cb\n0x3328ba298721d60\n0x36557e8eea7a1c1e\n0x2bab6ec415a9cd56\n0x344541515d403af9\n0x3de3c47b9471513d\n0x293159655f2fc57\n0x120285329fbdb73b\n0xb812a36123515f9\n0x337bf7812baf2dee\n0x2b2cafa5a52b51c1\n0xc9230c65f1d04df\n0x389c45bb4348f6cc\n0x2d139de66786b7ba\n0x7e4ad97314d7217\n0x11d1a09b8d8e492\n0x8f7931a03f3ec4b\n0x1d286600d42b68f6\n0x1427b0ea5f605501\n0x3b27cfd7b53ccef9\n0x2d044cd97e514528\n0x6ead841a54730f0\n0x336841a6b3338257\n0x3d690a05ab11ca1e\n0x25dc88370dbf08b7\n0xb4a49629f202ae9\n0x3171f41111d23037\n0x92ede426a4012a8\n0x3720bb88f748df62\n0x2dfe1cab8dd56c10\n0xc01f3a895531319\n0xb084b6249bd1616\n0x14034ac83f29be75\n0xcd4c35628a18c85\n0xfc5bc68e1f3b3ca\n0x163c88ecd639e3ec\n0x3d6f8f11b67376c9\n0x11c462dfbd11793e\n0x39a9091497a1ad6c\n0x1a951d59dcc0ee52\n0x3199e960089ded64",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Long Multiple",
+          "isTest": false,
+          "testIn": "50\n0x8efb40743cf2fdf\n0x227e9a9a8fb5d27c\n0x1b6b75b195a76d7a\n0x25589a7ce5d7b876\n0x172af325663f1c98\n0x8da6d61ff5e9ff1\n0x1f95c377827050a9\n0x9c826f71c11f736\n0xa3d2520a0a04dc5\n0x262b90cd6c12ace9\n0x18a0071110435a11\n0x2623093261b1cd23\n0x1df48780ff01cf9a\n0x10172b3b877409aa\n0x23680d96f89897ba\n0x754d0d2b88139ba\n0x15c56f5ba4161294\n0x12c8b4c21c8eaeea\n0xa1f41b26f4cc69b\n0x352bd674273ca4\n0x207ddb472dbc2135\n0x6cf6f57e9a1fa70\n0x2804eb1bdeda4e17\n0x207d8c75a39231a8\n0xcbaf5a29be578c8\n0x17ee345b2720797e\n0xa56d1c5c333e862\n0x26551bad00257ad2\n0x1f4550e152fbe43c\n0x728d73e04fc6d83\n0x173b13adedd96832\n0xf532fcd4eb93f00\n0xf6a70aa0ed42f1b\n0x244f9378e0c53cb9\n0x50a5b01f26b4777\n0x2217db99c2b6d2c6\n0x80c75d4c40db9b5\n0xa9170aa8cbfedb1\n0x21c5684043dac044\n0x26d26f49df57c59b\n0x198916fe4fcca39b\n0x17e61f1ca65e688f\n0x1ce52623847fd9b5\n0xfddaf871efa2198\n0x41900173985c3d0\n0x158a016568cc69c\n0x23737340969b6663\n0x25a900bc3ae8cc94\n0x75d09538602ab7\n0x3c49678a18ff6b7",
+          "testOut": "0x5e57f6c98b0291b\n0x159fdfad1e8a0b9b\n0x1158330dda9931c6\n0x39c53194feb4393d\n0x3225e8d7323187f0\n0x3d94a19ce5e8dfb4\n0x3512799c60b9b966\n0x2f5214817064ee6f\n0x146622e4c24984b0\n0x3acba9cd8f1d85a5\n0x333c4ebcf5b31730\n0x38eba15051ac9211\n0x17eb159c05d2a522\n0x3c5559554147e5e7\n0x236f5a9074b3cea9\n0x33f1b2216543189\n0x240a089594bba4db\n0x22a8bafe11878a97\n0x12b226e5515829ca\n0x3d9fe6515229ce94\n0x2c9d2b100a616be1\n0x25dcf7cd712c9c23\n0x24b3daf1f5d09730\n0x24a89db2663bf372\n0xd3e32dc200daee7\n0x18b2da88e2b89ef1\n0x34756bec53910990\n0x11004a4c58cb4688\n0x2d2689436e1c8610\n0xb32c22d4ad806c1\n0x13df7f83b6a863fd\n0x24c3211a0f5935d9\n0x33015e4a45a8311a\n0x76920a31d97ce04\n0xadd6ef8612c592d\n0x2610e28282239adb\n0x20aeed015d1ee2fc\n0x2148fbd497f4e69c\n0x2452c45336250c82\n0x3a859393b5bd7fd1\n0x620233370b13e77\n0x544ecab84f205b7\n0x26fe20b6ae440b01\n0x1993ca1bc235495e\n0x813e43d8d8522eb\n0x13147bf87b1c79a2\n0x378e5ad29a284e3a\n0x20ff31f510bb5c33\n0x205b95dbca7c4dfd\n0x20a1c42303b7e7ca",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "{{A}} = 0\n{{B}} = 7\n{{P}} = 0x3fddbf07bb3bc551\n{{G}} = (0x69d463ce83b758e, 0x287a120903f7ef5c)\n\n1 < [[N]] ≤ 50\n1 < [[k]] < 0x3000000000000000",
+      "stubGenerator": "read N:int\r\nloop N read k:string(150)\r\nloop N write answer",
+      "inputDescription": "<<Line 1:>> An integer [[N]], the number of keys to generate.\n<<Next [[N]] lines:>> An hexadecimal integer [[k]].",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[N]] lines:>> An hexadecimal integer [[X]] corresponding to the generated point X-coordinate."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Elliptic-Curve Cryptography (ECC) is a recent approach to asymmetric cryptography. Its main benefit is an excellent ratio between the level of security and the key size. For example, the NSA recommends 384-bit keys for a top-secret level encryption using ECC, while achieving the same level of security using RSA requires 7680-bit keys. RSA is currently mostly used with 1024-bit keys, which is equivalent to 160-bit keys with ECC (Ref #1).<br><br><strong>How it works</strong><br><br>Given a prime number <const>P</const>, an elliptic curve (over a finite field) is the set of points (X,Y), 0 &le; X,Y &lt; <const>P</const>, verifying an equation of the form Y&sup2; = X^3 + <const>A</const>*X + <const>B</const> mod <const>P</const> (sometimes expressed in a different way, see Ref #2) for some fixed parameters 0 &le; <const>A</const>,<const>B</const> &lt; <const>P</const>. In this puzzle, we use one of the most common curve (used for bitcoin): secp256k1 having the equation Y&sup2; = X^3 + 7, usually modulo a 256-bit prime number which we replace here by a 62-bit prime (for an easier manipulation in any programming language).<br><br>Let us define an addition operator on the curve points (see Ref #3 for a visual illustration).<br>To double a point C: Consider the tangent to the curve at point C. Let (X,Y) be its intersection with the curve, the point S = 2C is defined as (X,<strong>-</strong>Y).<br>To add two distinct points C and D: Consider the line passing through both points. Let (X,Y) be its intersection with the curve, the point S = C+D is defined as (X,<strong>-</strong>Y).<br><br>Let us consider a starting point <const>G</const> on the curve and generate a public key as <var>k</var>*<const>G</const> (i.e. <const>G</const>+<const>G</const>+...+<const>G</const> <var>k</var> times) for some randomly chosen integer <var>k</var> which will be the private key. This pair of public/private keys can be used to encrypt or sign messages (e.g. through ElGamal cryptosystem), yet this is out of the scope of this puzzle. The safety of the private key is not based on the public value <const>G</const> but on the difficulty of retrieving <var>k</var> given <var>k</var>*<const>G</const> (known as the Discrete Log problem). <var>k</var> is often above 2^200 to make sure not to be able to bruteforce it. As a result, to compute your key in an efficient way, you should use the <strong>double-and-add</strong> method (Ref #4).<br><br><strong>Explicit formulas</strong><br><br>To compute S = (Xs,Ys) = C+D given two distinct points C = (Xc,Yc) and D = (Xd,Yd):<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">L  = (Yd - Yc) / (Xd - Xc)  mod P<br>Xs = L&sup2; - Xc - Xd           mod P<br>Ys = L * (Xc - Xs) - Yc     mod P<br></pre><pre style=\"font-family: monospace\"></pre>To double a point, i.e. when C = D, L becomes (here <const>A</const> = 0):<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">L  = (3*Xc^2 + A) / (2*Yc)  mod P<br></pre><pre style=\"font-family: monospace\"></pre>Note: You will have to compute a modular division, a division modulo <const>P</const>.<br><br><strong>Instructions</strong><br>Write an EC key generator: For each of the <var>N</var> given <var>k</var> values, you should provide the X-coordinate of the point <var>k</var>*<const>G</const>.<br><br><strong>References</strong><br>ECC security level: https://www.ripublication.com/ijaer17/ijaerv12n19_140.pdf<br>List of EC: https://safecurves.cr.yp.to<br>Maths on EC: https://www.youtube.com/watch?v=NF1pwjL9-DE<br>Maths on EC: https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication#Double-and-add</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var>, the number of keys to generate.<br><strong>Next <var>N</var> lines:</strong> An hexadecimal integer <var>k</var>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>N</var> lines:</strong> An hexadecimal integer <var>X</var> corresponding to the generated point X-coordinate.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><const>A</const> = 0<br><const>B</const> = 7<br><const>P</const> = 0x3fddbf07bb3bc551<br><const>G</const> = (0x69d463ce83b758e, 0x287a120903f7ef5c)<br><br>1 &lt; <var>N</var> &le; 50<br>1 &lt; <var>k</var> &lt; 0x3000000000000000</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1\n0x2</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">0x2544b2250b8b1e1c</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 215983419100,
+  "avatar": 30069480173944,
+  "commentCount": 43,
+  "upVotes": 12,
+  "downVotes": 4,
+  "validateAction": {
+    "actionId": 330933,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "denyAction": {
+    "actionId": 329912,
+    "progress": 0,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

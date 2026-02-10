@@ -1,0 +1,233 @@
+{
+  "id": 6292,
+  "activeVersion": 16,
+  "score": 8,
+  "votableId": 17107286,
+  "codingamerId": 3397479,
+  "views": 226,
+  "commentableId": 17016061,
+  "title": "Asteroids",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "XorZy",
+  "publicHandle": "629259e030637cb390abd09e95f0ac66c83e",
+  "codingamerHandle": "a5c4d01d2649b6068568fbd6b7a72ffa9747933",
+  "lastVersion": {
+    "version": 16,
+    "autocloseTime": 1617198695184,
+    "data": {
+      "title": "Asteroids",
+      "topics": [
+        {
+          "id": 64,
+          "handle": "image-processing",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Traitement d'images",
+            "2": "Image processing"
+          },
+          "pageTitle": "Image processing: exercises and theory",
+          "puzzleCount": 10,
+          "parentTopicId": 41,
+          "contentDetailsId": 101
+        }
+      ],
+      "solution": "using System;\nusing System.Linq;\nusing System.IO;\nusing System.Text;\nusing System.Collections;\nusing System.Collections.Generic;\nusing System.Drawing;\n/**\n * Auto-generated code below aims at helping you parse\n * the standard input according to the problem statement.\n **/\nclass Solution\n{\n\n    private static Dictionary<char, Point> LocateAsteroids(string[] sky, int w, int h)\n    {\n        var output = new Dictionary<char, Point>();\n\n        for (int r = 0; r < h; r++)\n        {\n            for (int c = 0; c < w; c++)\n            {\n                if (char.IsLetter(sky[r][c]))\n                {\n                    output[sky[r][c]] = new Point(c, r);\n                }\n            }\n        }\n        return output;\n    }\n\n    static void Main(string[] args)\n    {\n        string[] inputs = Console.ReadLine().Split(' ');\n        int W = int.Parse(inputs[0]);\n        int H = int.Parse(inputs[1]);\n        int T1 = int.Parse(inputs[2]);\n        int T2 = int.Parse(inputs[3]);\n        int T3 = int.Parse(inputs[4]);\n\n        var sky1 = new string[H];\n        var sky2 = new string[H];\n\n        for (int i = 0; i < H; i++)\n        {\n            var row = Console.ReadLine().Split();\n            sky1[i] = row[0];\n            sky2[i] = row[1];\n        }\n\n        var asteroidsA = LocateAsteroids(sky1, W, H);\n        var asteroidsB = LocateAsteroids(sky2, W, H);\n\n        double deltaT1 = T2 - T1;\n        double deltaT2 = T3 - T1;\n\n\n        var output = new char[H][];\n\n        for (int i = 0; i < H; i++)\n        {\n            output[i] = new string('.', W).ToArray();\n        }\n\n\n        foreach (var asteroid in asteroidsB.OrderByDescending(x => x.Key))\n        {\n            var o = asteroidsA[asteroid.Key];\n            var p = asteroid.Value;\n            var xSpeed = (p.X - o.X) / deltaT1;\n            var ySpeed = (p.Y - o.Y) / deltaT1;\n\n            var X = (int)Math.Floor(o.X + xSpeed * deltaT2);\n            var Y = (int)Math.Floor(o.Y + ySpeed * deltaT2);\n\n            if (X >= 0 && X < W && Y >= 0 && Y < H)\n            {\n                output[Y][X] = asteroid.Key;\n            }\n\n        }\n\n        foreach (var r in output)\n            Console.WriteLine(r);\n\n\n    }\n}",
+      "statement": "You have been tasked with studying a region of space to detect potentially dangerous asteroids.\nYou are given two pictures of the night sky of dimensions [[W]]*[[H]], taken at two different times [[t1]] and [[t2]].\nFor your convenience, asteroids have been marked with capital letters {{A}} to {{Z}}, the rest is empty space represented by a <<dot>> (<<{{.}}>>) .\nUsing the information contained in those two pictures, determine the position of the asteroids at [[t3]], and output a picture <<of the same region of the sky>>.\n\nIf necessary, the final coordinates are to <<be rounded-down>> (floor).\nAsteroids travel at different altitudes (with {{A}} being the closest and {{Z}} the farthest from your observation point) and therefore cannot collide with each other during their transit.\nIf two or more asteroids have the same final coordinates, output <<only the closest one>>.\nIt is guaranteed that all asteroids at [[t1]] will still be present at [[t2]], that <<no asteroids are hidden>> in the given pictures, and that there is only <<one asteroid per altitude>>.\n\n<<NB:>> Because of the flooring operation, it is important that you choose a coordinate system with the origin at the top left corner and the y-axis increasing in the downward direction.",
+      "testCases": [
+        {
+          "title": "Horizontal motion",
+          "isTest": true,
+          "testIn": "5 5 1 2 3\nA.... .A...\n..... .....\n..... .....\n..... .....\n..... .....",
+          "testOut": "..A..\n.....\n.....\n.....\n.....",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "5 5 1 2 3\n.B... ..B..\n..... .....\n..... .....\n..... .....\n..... .....",
+          "testOut": "...B.\n.....\n.....\n.....\n.....",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Vertical motion",
+          "isTest": true,
+          "testIn": "5 5 1 2 3\nA.... .....\n..... A....\n..... .....\n..... .....\n..... .....",
+          "testOut": ".....\n.....\nA....\n.....\n.....",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "5 5 1 2 3\n..... .....\nB.... .....\n..... B....\n..... .....\n..... .....",
+          "testOut": ".....\n.....\n.....\nB....\n.....",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Combined motion",
+          "isTest": true,
+          "testIn": "5 5 1 2 3\nA.... .....\n..... .A...\n..... .....\n..... .....\n..... .....",
+          "testOut": ".....\n.....\n..A..\n.....\n.....",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "5 5 1 2 3\n.B... .....\n..... ..B..\n..... .....\n..... .....\n..... .....",
+          "testOut": ".....\n.....\n...B.\n.....\n.....",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Negative motion",
+          "isTest": true,
+          "testIn": "5 5 1 2 3\n..... .....\n..... .A...\n..A.. .....\n..... .....\n..... .....",
+          "testOut": "A....\n.....\n.....\n.....\n.....",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "5 5 1 2 3\n..... .....\n..... .....\n..... ..B..\n...B. .....\n..... .....",
+          "testOut": ".....\n.B...\n.....\n.....\n.....",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Greater delta",
+          "isTest": true,
+          "testIn": "6 6 1 5 6\nA..... ....A.\n...... ......\n...... ......\n...... ......\n...... ......\n...... ......",
+          "testOut": ".....A\n......\n......\n......\n......\n......",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "6 6 1 5 6\n...... ......\nB..... ....B.\n...... ......\n...... ......\n...... ......\n...... ......",
+          "testOut": "......\n.....B\n......\n......\n......\n......",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple asteroids",
+          "isTest": true,
+          "testIn": "6 6 1 3 5\nA..... .A....\n...... B.....\nB..... ......\n...... ......\n...... ......\n...... ......",
+          "testOut": "B.A...\n......\n......\n......\n......\n......",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "6 6 1 3 5\n...... ......\nB..... .B....\n...... C.....\nC..... ......\n...... ......\n...... ......",
+          "testOut": "......\nC.B...\n......\n......\n......\n......",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Depth",
+          "isTest": true,
+          "testIn": "6 6 1 6 11\n..H... ......\n...... ..H...\nE...G. .E.G..\n...... ..F...\n..F... ......\n...... ......",
+          "testOut": "......\n......\n..E...\n......\n......\n......",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "6 6 1 6 11\n..X... ......\n...... ..X...\nY...W. .Y.W..\n...... ..Z...\n..Z... ......\n...... ......",
+          "testOut": "......\n......\n..W...\n......\n......\n......",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No motion",
+          "isTest": true,
+          "testIn": "5 5 0 1255 9999\n..... .....\n.A... .A...\n..... .....\n...D. ...D.\n..... .....",
+          "testOut": ".....\n.A...\n.....\n...D.\n.....",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "5 5 0 1255 9999\n..... .....\n..... .....\n.F... .F...\n...S. ...S.\n..... .....",
+          "testOut": ".....\n.....\n.F...\n...S.\n.....",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Out of bounds",
+          "isTest": true,
+          "testIn": "10 10 100 200 300\nA......... .A........\nB......... ..B.......\nC......... ...C......\nD......... ....D.....\nE......... .....E....\n.........F ........F.\n.........G .......G..\n.........H ......H...\n.........I .....I....\n.........J ....J.....",
+          "testOut": "..A.......\n....B.....\n......C...\n........D.\n..........\n.......F..\n.....G....\n...H......\n.I........\n..........",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "10 10 100 200 300\n.........F ........F.\n.........G .......G..\n.........H ......H...\n.........I .....I....\n.........J ....J.....\nA......... .A........\nB......... ..B.......\nC......... ...C......\nD......... ....D.....\nE......... .....E....",
+          "testOut": ".......F..\n.....G....\n...H......\n.I........\n..........\n..A.......\n....B.....\n......C...\n........D.\n..........",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Armageddon",
+          "isTest": true,
+          "testIn": "20 20 25 75 100\n.................O.. G...................\n.....N...........U.. ...............W....\n.............L.R.... ...................C\n.................... ...E................\n..........Z..V.H.... ..............K.....\n................X... ...........T........\n.............P...... ............A.......\n.............A...... .....P...FLI......N.\n.Q.............T.... ....................\n..................F. ........D...........\n.................... ......S..Y.........M\n......K............W .........B....Z.....\n...............Y.... ....................\n..............S..... ....V.............J.\n...........JE......D .........O..........\n...M................ ..X...........U.....\n......B..G...C....I. ....................\n.................... ....................\n.................... ..Q................R\n.................... .......H............",
+          "testOut": "..................K.\n....................\n.......I............\n.........T..........\n....................\n...........A........\n..D.F...............\n.P..................\n..S.......B.........\n......Y.L...........\n....................\n....................\n....................\n....................\n................Z...\n....................\n....................\n....................\n....................\n....................",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "20 20 25 75 100\n..............B..... F...........I.......\n...........H....F... ........C...........\nIZ.....Y............ ....................\n.............V...... .............K......\n...........J........ ...................M\n...............E.... .....Q........B.....\n.S..........U....... ....................\n........D...L....... ...................J\n....O..........R.... ....................\n......K............. P...................\n................T... ........N...........\n.................C.. ........G...........\nX.............N..... ....V............E..\n.................... .....U..Z...H.......\n.......Q..........G. ....................\n..........A......... .L................X.\n.................... .S.............D.Y..\n..W................. .....O........T.....\n.....M.............P A.................R.\n.................... .........W..........",
+          "testOut": "....Q...........K...\n....................\n....................\n....................\n....................\n....................\n....................\n..............B.....\n....................\n...G.N..............\n....................\n....................\n....................\n....................\n....................\n..................E.\n.U..................\n....................\n...........Z........\n............H.......",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "0<[[W]]<=[[H]]<=20\n0<=[[t1]]<[[t2]]<=[[t3]]<=10000",
+      "coverBinaryId": 59218464014480,
+      "stubGenerator": "read W:int H:int T1:int T2:int T3:int\nloop H read firstPictureRow:word(W) secondPictureRow:word(W)\nwrite answer",
+      "inputDescription": "<<Line 1>>: five integers separated by a space, [[W]] [[H]] [[t1]] [[t2]] [[t3]]\n<<Next [[H]] lines>>: a row of picture 1 and picture 2, separated by a white space.",
+      "solutionLanguage": "C#",
+      "outputDescription": "<<[[H]] lines>>: the state of the sky at [[t3]]"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You have been tasked with studying a region of space to detect potentially dangerous asteroids.<br>You are given two pictures of the night sky of dimensions <var>W</var>*<var>H</var>, taken at two different times <var>t1</var> and <var>t2</var>.<br>For your convenience, asteroids have been marked with capital letters <const>A</const> to <const>Z</const>, the rest is empty space represented by a <strong>dot</strong> (<strong><const>.</const></strong>) .<br>Using the information contained in those two pictures, determine the position of the asteroids at <var>t3</var>, and output a picture <strong>of the same region of the sky</strong>.<br><br>If necessary, the final coordinates are to <strong>be rounded-down</strong> (floor).<br>Asteroids travel at different altitudes (with <const>A</const> being the closest and <const>Z</const> the farthest from your observation point) and therefore cannot collide with each other during their transit.<br>If two or more asteroids have the same final coordinates, output <strong>only the closest one</strong>.<br>It is guaranteed that all asteroids at <var>t1</var> will still be present at <var>t2</var>, that <strong>no asteroids are hidden</strong> in the given pictures, and that there is only <strong>one asteroid per altitude</strong>.<br><br><strong>NB:</strong> Because of the flooring operation, it is important that you choose a coordinate system with the origin at the top left corner and the y-axis increasing in the downward direction.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: five integers separated by a space, <var>W</var> <var>H</var> <var>t1</var> <var>t2</var> <var>t3</var><br><strong>Next <var>H</var> lines</strong>: a row of picture 1 and picture 2, separated by a white space.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>H</var> lines</strong>: the state of the sky at <var>t3</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0&lt;<var>W</var>&lt;=<var>H</var>&lt;=20<br>0&lt;=<var>t1</var>&lt;<var>t2</var>&lt;=<var>t3</var>&lt;=10000</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5 5 1 2 3\nA.... .A...\n..... .....\n..... .....\n..... .....\n..... .....</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">..A..\n.....\n.....\n.....\n.....</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 153941317988,
+  "avatar": 68614443569253,
+  "commentCount": 20,
+  "upVotes": 8,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 535926,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1616789324452,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

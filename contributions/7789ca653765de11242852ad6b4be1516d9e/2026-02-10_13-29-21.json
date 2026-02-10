@@ -1,0 +1,214 @@
+{
+  "id": 7789,
+  "activeVersion": 40,
+  "score": 11,
+  "votableId": 21197688,
+  "codingamerId": 4471038,
+  "views": 294,
+  "commentableId": 21090883,
+  "title": "By train or by car ?",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "nguyen.lam",
+  "publicHandle": "7789ca653765de11242852ad6b4be1516d9e",
+  "codingamerHandle": "a9fd64833d93b2840c44b26d9d84493e8301744",
+  "lastVersion": {
+    "version": 40,
+    "autocloseTime": 1643876539683,
+    "data": {
+      "title": "By train or by car ?",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "distance"
+          }
+        },
+        {
+          "labelMap": {
+            "2": "time"
+          }
+        }
+      ],
+      "solution": "import java.io.File;\nimport java.io.FileNotFoundException;\nimport java.time.Duration;\nimport java.util.ArrayList;\nimport java.util.Scanner;\n\nclass Step{\n\tpublic Step(String from, String to, float distance) {\n\t\tsuper();\n\t\tthis.from = from;\n\t\tthis.to = to;\n\t\tthis.distance = distance;\n\t}\n\tString from;\n\tString to;\n\tfloat distance;\n}\n\nclass StepList extends ArrayList<Step>{\n\tfloat getTotalDistance() {\n\t\tfloat returnVal = 0;\n\t\tfor(Step s: this) returnVal+=s.distance;\n\t\treturn returnVal;\n\t}\n\n\tfloat getTotalDistanceHighwayForTrain() {\n\t\tfloat returnVal = 0;\n\t\tfor(Step s: this) if( s.distance > 6) returnVal+=(s.distance-6);\n\t\treturn returnVal;\n\t}\n\t\n\tfloat getTotalDistanceInTownForTrain() {\n\t\tfloat returnVal = 0;\n\t\tfor(Step s: this) returnVal+=(s.distance>=6)?6:s.distance;\n\t\treturn returnVal;\n\t}\n\t\n\tfloat getTotalDistanceInTownForCar() {\n\t\tfloat returnVal = 0;\n\t\tfor(Step s: this) returnVal+=(s.distance>=14)?14:s.distance;\n\t\treturn returnVal;\n\t}\n\t\n\tfloat getTotalDistanceHighwayForCar() {\n\t\tfloat returnVal = 0;\n\t\tfor(Step s: this) if( s.distance > 14) returnVal+=(s.distance-14);\n\t\treturn returnVal;\n\t}\n}\n\npublic class Solution {\n    public static void main(String args[]) {\n    \t\n    \tScanner in = new Scanner(System.in);\n    \t\n        String trip = in.nextLine();\n        String startingPoint = trip.split(\" \")[0];\n    \tString destination = trip.split(\" \")[1];\n    \tStepList allSteps = new StepList(); \n        int N = in.nextInt();\n        if (in.hasNextLine()) {\n            in.nextLine();\n        }\n        for (int i = 0; i < N; i++) {\n        \t String[] line = in.nextLine().split(\" \");\n             allSteps.add(new Step(line[0], line[1], Float.parseFloat(line[2])));\n        } \t\n        StepList steps = buildCorrectRoute(allSteps, startingPoint, destination); \n        \n        /* compute duration for CAR */\n        float averageSpeedForCarInTown = 60/(float)50;\n        float averageSpeedForCarInHighway = 60/(float)105;\n        float timeCar = ( steps.getTotalDistanceInTownForCar() * averageSpeedForCarInTown ) + (steps.getTotalDistanceHighwayForCar() * averageSpeedForCarInHighway); \n        \n        /* compute duration for TRAIN */\n        float timeStartingPointToTrainStation = 30;\n        float timeTrainStationToDestination = 35;\n        float timeForBreakByStep = 8;\n        float averageSpeedForTrain = 60/(float)284;\n        float averageSpeedForTrainAroundStation = 60/(float)50;\n        float timeTrain = timeStartingPointToTrainStation +\n        \t\t(timeForBreakByStep * (steps.size()-1)) +\n        \t\t(steps.getTotalDistanceHighwayForTrain() * averageSpeedForTrain) +\n        \t\t(steps.getTotalDistanceInTownForTrain() * averageSpeedForTrainAroundStation) +\n        \t\ttimeTrainStationToDestination;\n        \n        /* comparaison des temps */\n        //System.err.println(\"temps voiture:\"+timeCar+\" VERSUS temps train:\"+timeTrain);\n        Duration dt = Duration.ofMinutes( (long)timeTrain );\n        Duration dc = Duration.ofMinutes( (long)timeCar );    \n        String minutest = (dt.toMinutesPart()<10)?\"0\"+dt.toMinutesPart():String.valueOf(dt.toMinutesPart());\n        String minutesc = (dc.toMinutesPart()<10)?\"0\"+dc.toMinutesPart():String.valueOf(dc.toMinutesPart());\n        if (timeCar < timeTrain) System.out.println(\"CAR \"+dc.toHoursPart()+\":\"+minutesc);\n        else System.out.println(\"TRAIN \"+dt.toHoursPart()+\":\"+minutest);\n    }\n\n\tprivate static StepList buildCorrectRoute(StepList allSteps, String startingPoint, String destination) {\n\t\tStepList returnVal = new StepList();\n\t\tStep nextStep = null;\n\t\tfor(Step s:allSteps) {\n        \tif(s.from.equals(startingPoint)) {\n        \t\treturnVal.add(s);\n        \t\tnextStep = s;\n        \t}\n        }\n\t\twhile(!destination.equals(nextStep.to)) {\n\t\t\tfor(Step s:allSteps) {\n\t\t\t\tif(s.from.equals(nextStep.to)) {\n\t\t\t\t\treturnVal.add(s);\n\t\t\t\t\tnextStep=s;\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\treturn returnVal;\n\t}\n  \n}\n",
+      "statement": "You are planning a journey from your current city to a destination city. This involves selecting which routes to take (some routes may be irrelevant to you), as well as choosing between the train and the car, whichever is faster to reach your destination. Make the right decision according to the following benefits and constraints.\n\nTrain:\n- Average speed: {{284}} km/h\n- Average speed when crossing a city: {{50}} km/h at +/-{{3}} km of the city\n- Pause at each stop: {{8}} minutes\n- To reach final destination from the final train station : {{30}} minutes (walk, bus, car...)\n- To go from your home to the first train station: {{35}} minutes (walk, bus, car...)\n\nCar:\n- Average speed: {{105}} km/h\n- Average speed when crossing a city: {{50}} km/h at +/-{{7}} km of the city\n\nExample: \n<<Paris ---- 133 km ----> Orléans ---- 218 km -----> Tours>>\n\nDetails by train:\n- 35 minutes to reach the train station at Paris\n- Train starts at 50 km/h for the first 3 km\n- Train runs at 284 km/h for the next 127 km\n- Train runs at 50 km/h for the 3 km before Orléans\n- Train stops at Orléans for 8 minutes\n- Train starts at 50 km/h for the first 3 km after Orléans\n- Train runs at 284 km/h for the next 212 km\n- Train speed decreases to 50 km/h for the last 3 km before arriving at Tours\n- 30 minutes to reach your final destination\nTime by train => 35 + 3*60/50 + 127*60/284 + 3*60/50 + 8 + 3*60/50 + 212*60/284 + 3*60/50 + 30 = 159.01 minutes (2:39)\n\nDetails by car:\n- First 7 km at 50 km/h to reach highway\n- Average speed of 105 km/h for 119 km to reach Orléans\n- To cross Orléans, I drive at 50 km/h for 14 km\n- Then average speed of 105 km/h for 204 km to reach Tours\n- Arriving at Tours, I drive at 50 km/h for the last 7 km\nTime by car: 7*60/50 + 119*60/105 + 14*60/50 + 204*60/105 + 7*60/50=218.17 minutes (3:38)\n\nSo it will be faster by train, and the answer is: <<TRAIN 2:39>>",
+      "testCases": [
+        {
+          "title": "1) Example",
+          "isTest": true,
+          "testIn": "Paris Tours\n2\nParis Orleans 133\nOrleans Tours 218",
+          "testOut": "TRAIN 2:39",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "1) Example",
+          "isTest": false,
+          "testIn": "Paris Tours\n2\nParis Orleans 133\nOrleans Tours 218",
+          "testOut": "TRAIN 2:39",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "2) no stop car first",
+          "isTest": true,
+          "testIn": "Paris Chartres\n1\nParis Chartres 91",
+          "testOut": "CAR 1:00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "2) no stop car first",
+          "isTest": false,
+          "testIn": "Paris Chartres\n1\nParis Chartres 91",
+          "testOut": "CAR 1:00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3) no stop train first",
+          "isTest": true,
+          "testIn": "Paris Marseille\n1\nParis Marseille 863",
+          "testOut": "TRAIN 4:13",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3)  no stop train first",
+          "isTest": false,
+          "testIn": "Paris Marseille\n1\nParis Marseille 863",
+          "testOut": "TRAIN 4:13",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4) Orléans Cholet",
+          "isTest": true,
+          "testIn": "Orleans Cholet\n5\nOrleans Blois 63\nBlois Tours 65\nTours Saumur 78\nSaumur Angers 66\nAngers Cholet 65",
+          "testOut": "TRAIN 3:17",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4) Blois Niort",
+          "isTest": false,
+          "testIn": "Blois Niort\n6\nOrleans Blois 63\nBlois Tours 65\nTours Saumurs 78\nSaumurs Angers 66\nAngers Cholet 65\nCholet Niort 130",
+          "testOut": "TRAIN 3:32",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5) Orléans Nantes",
+          "isTest": true,
+          "testIn": "Orleans Nantes\n7\nOrleans Blois 63\nCholet Clisson 35.9 \nTours Saumur 78\nClisson Nantes 33.7\nBlois Tours 65\nAngers Cholet 65\nSaumur Angers 66",
+          "testOut": "TRAIN 4:00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5) Orléans Nantes",
+          "isTest": false,
+          "testIn": "Orleans Nantes\n9\nOrleans Blois 60\nTours Varennes-sur-mer 64.2\nVarennes-sur-mer Saumur 11.2\nJarnac Cognac 6\nClisson Nantes 33.7\nCholet Clisson 35.9\nBlois Tours 65\nAngers Cholet 65\nSaumur Angers 66",
+          "testOut": "TRAIN 4:13",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6) Pithiviers Cholet",
+          "isTest": true,
+          "testIn": "Pithiviers Cholet\n8\nPoitiers Angouleme 138\nPithiviers Orleans 57\nOrleans Blois 63\nBlois Tours 65\nBordeaux Périgueux 137\nTours Saumur 78\nSaumur Angers 66\nAngers Cholet 65",
+          "testOut": "TRAIN 3:43",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "6) Pithiviers Nantes",
+          "isTest": false,
+          "testIn": "Pithiviers Nantes\n12\nPoitiers Angouleme 138\nNantes Pornic 50\nCholet Nantes 60\nCognac Saintes 28\nPithiviers Orleans 57\nOrleans Blois 63\nCenon Créon 19\nBlois Tours 65\nBordeaux Périgueux 138\nTours Saumurs 78\nSaumurs Angers 65\nAngers Cholet 65",
+          "testOut": "TRAIN 4:10",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "7] Angouleme Royan",
+          "isTest": true,
+          "testIn": "Angouleme Royan\n5\nAngouleme Jarnac 33.2\nJarnac Cognac 11\nCognac Saintes 28.1\nSaintes Saujon 27.7\nSaujon Royan 13.3",
+          "testOut": "CAR 1:46",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "7] Angouleme Niort",
+          "isTest": false,
+          "testIn": "Angouleme Niort\n5\nAngouleme Jarnac 33.2\nJarnac Saintes 30.1\nSaintes Saujon 27\nSaujon Royan 13.3\nRoyan Niort 114",
+          "testOut": "CAR 2:47",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "8) Montpellier Collioure",
+          "isTest": true,
+          "testIn": "Montpellier Collioure\n20\nCholet Clisson 35.9\nBeziers Narbonne 34.2\nOrleans Blois 63 \nMontpellier Beziers 73.1\nTours Saumurs 78\nAngouleme Jarnac 33.2\nJarnac Cognac 11\nCognac Saintes 28.1\nSaintes Saujon 27.7\nSaujon Royan 13.3\nClisson Nantes 33.7\nBlois Tours 65\nAngers Cholet 65\nSaumurs Angers 66\nNarbonne Roquefort-des-Corbieres 27\nSalses-le-Château Perpignan 17.6\nParis Chartres 91\nPerpignan Argeles-sur-mer 23.6\nArgeles-sur-mer Collioure 10.6\nRoquefort-des-Corbieres Salses-le-Château 28.9",
+          "testOut": "CAR 3:02",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "8) Montpellier Perpignan",
+          "isTest": false,
+          "testIn": "Montpellier Perpignan\n18\nCholet Clisson 35.9\nBeziers Narbonne 34.2\nOrleans Blois 63 \nMontpellier Beziers 73.1\nTours Saumur 78\nAngouleme Jarnac 33.2\nJarnac Cognac 11\nCognac Saintes 28.1\nSaintes Saujon 27.7\nSaujon Royan 13.3\nClisson Nantes 33.7\nBlois Tours 65\nAngers Cholet 65\nSaumur Angers 66\nNarbonne Roquefort-des-Corbieres 27\nSalses-le-Château Perpignan 17.6\nParis Chartres 91\nRoquefort-des-Corbieres Salses-le-Château 28.9",
+          "testOut": "CAR 2:27",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "9) Valence Niort",
+          "isTest": true,
+          "testIn": "Valence Niort\n18\nValence Lamastre 42\nLamastre Lafarre 23.6\nLafarre Tence 32.5\nTence Beaux 27.7\nBeaux Tiranges 24\nTiranges Apinac 9.4\nApinac Marols 19.9\nMarols Bard 25.3\nBard Lerigneux 5\nLerigneux Champdieu 15\nChampdieu Pralong 4.6\nPralong Trelins 9.6\nTrelins Palogneux 12\nPalogneux Vichy 77.7\nVichy Moulins 56.8\nMoulins Angouleme 316\nLissac Loudes 8.1\nAngouleme Niort 121",
+          "testOut": "TRAIN 7:45",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "9) Valence Angouleme",
+          "isTest": false,
+          "testIn": "Valence Angouleme\n17\nValence Lamastre 42\nLamastre Lafarre 23.6\nLafarre Tence 32.5\nTence Beaux 27.7\nBeaux Tiranges 24\nTiranges Apinac 9.4\nApinac Marols 19.9\nMarols Bard 25.3\nBard Lerigneux 5\nLerigneux Champdieu 15\nChampdieu Pralong 4.6\nPralong Trelins 9.6\nTrelins Palogneux 12\nPalogneux Vichy 77.7\nVichy Moulins 56.8\nMoulins Angouleme 316\nLissac Loudes 8.1",
+          "testOut": "TRAIN 7:05",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "Format for the <<duration>>: <<h:mm>>.\nAll cities will appear only one time as starting point and/or end point. (no loop possible).\nFor all tests, there is only one solution.\nvalues for duration are rounded down: Math.floor() and not Math.ceil()",
+      "coverBinaryId": 75028827849049,
+      "stubGenerator": "read T:string(256)\nread N:int\nloop N read FNAME:string(500)\nwrite answer",
+      "inputDescription": "line 1: {{starting city}} {{destination}}: starting city is the city where you come from. destination is the city where you want to go.\nline 2: one integer [[N]] for the number of lines below\nfollowing lines: {{city1}} and {{city2}} and {{distance}} between the cities in km",
+      "solutionLanguage": "Java",
+      "outputDescription": "one line with <<CAR>> or <<TRAIN>>+<<duration>> to go from starting city to destination"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are planning a journey from your current city to a destination city. This involves selecting which routes to take (some routes may be irrelevant to you), as well as choosing between the train and the car, whichever is faster to reach your destination. Make the right decision according to the following benefits and constraints.<br><br>Train:<br>- Average speed: <const>284</const> km/h<br>- Average speed when crossing a city: <const>50</const> km/h at +/-<const>3</const> km of the city<br>- Pause at each stop: <const>8</const> minutes<br>- To reach final destination from the final train station : <const>30</const> minutes (walk, bus, car...)<br>- To go from your home to the first train station: <const>35</const> minutes (walk, bus, car...)<br><br>Car:<br>- Average speed: <const>105</const> km/h<br>- Average speed when crossing a city: <const>50</const> km/h at +/-<const>7</const> km of the city<br><br>Example: <br>&lt;&lt;Paris ---- 133 km ----&gt; Orl&eacute;ans ---- 218 km -----&gt; Tours&gt;&gt;<br><br>Details by train:<br>- 35 minutes to reach the train station at Paris<br>- Train starts at 50 km/h for the first 3 km<br>- Train runs at 284 km/h for the next 127 km<br>- Train runs at 50 km/h for the 3 km before Orl&eacute;ans<br>- Train stops at Orl&eacute;ans for 8 minutes<br>- Train starts at 50 km/h for the first 3 km after Orl&eacute;ans<br>- Train runs at 284 km/h for the next 212 km<br>- Train speed decreases to 50 km/h for the last 3 km before arriving at Tours<br>- 30 minutes to reach your final destination<br>Time by train =&gt; 35 + 3*60/50 + 127*60/284 + 3*60/50 + 8 + 3*60/50 + 212*60/284 + 3*60/50 + 30 = 159.01 minutes (2:39)<br><br>Details by car:<br>- First 7 km at 50 km/h to reach highway<br>- Average speed of 105 km/h for 119 km to reach Orl&eacute;ans<br>- To cross Orl&eacute;ans, I drive at 50 km/h for 14 km<br>- Then average speed of 105 km/h for 204 km to reach Tours<br>- Arriving at Tours, I drive at 50 km/h for the last 7 km<br>Time by car: 7*60/50 + 119*60/105 + 14*60/50 + 204*60/105 + 7*60/50=218.17 minutes (3:38)<br><br>So it will be faster by train, and the answer is: <strong>TRAIN 2:39</strong></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">line 1: <const>starting city</const> <const>destination</const>: starting city is the city where you come from. destination is the city where you want to go.<br>line 2: one integer <var>N</var> for the number of lines below<br>following lines: <const>city1</const> and <const>city2</const> and <const>distance</const> between the cities in km</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">one line with <strong>CAR</strong> or <strong>TRAIN</strong>+<strong>duration</strong> to go from starting city to destination</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Format for the <strong>duration</strong>: <strong>h:mm</strong>.<br>All cities will appear only one time as starting point and/or end point. (no loop possible).<br>For all tests, there is only one solution.<br>values for duration are rounded down: Math.floor() and not Math.ceil()</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">Paris Tours\n2\nParis Orleans 133\nOrleans Tours 218</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">TRAIN 2:39</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 128215052799,
+  "avatar": 115730569738380,
+  "commentCount": 22,
+  "upVotes": 14,
+  "downVotes": 3,
+  "validateAction": {
+    "actionId": 623269,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1642515106891,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

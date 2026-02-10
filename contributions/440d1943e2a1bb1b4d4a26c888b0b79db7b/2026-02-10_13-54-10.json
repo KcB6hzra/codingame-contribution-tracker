@@ -1,0 +1,199 @@
+{
+  "id": 440,
+  "activeVersion": 8,
+  "score": 4,
+  "votableId": 3263764,
+  "codingamerId": 1103438,
+  "views": 278,
+  "commentableId": 3209894,
+  "title": "Chemical Equation Balancing",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "btharper",
+  "publicHandle": "440d1943e2a1bb1b4d4a26c888b0b79db7b",
+  "codingamerHandle": "5d881e966b225e70e65711553e65f8f18343011",
+  "lastVersion": {
+    "version": 8,
+    "data": {
+      "title": "Chemical Equation Balancing",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Chemistry"
+          }
+        }
+      ],
+      "solution": "import re\nfrom fractions import gcd\nimport numpy as np\n\n\ndef count_atoms(molecule):\n    atoms = re.findall('([A-Z][a-z]?)(\\d*)', molecule)\n    atoms_dict = {}\n    for atom, count_string in atoms:\n        count = 0\n        if count_string == '':\n            count = 1\n        else:\n            count = int(count_string)\n        if atom not in atoms_dict:\n            atoms_dict[atom] = count\n        else:\n            atoms_dict[atom] += count\n    return atoms_dict\n\ndef list_gcd(arr):\n    val = arr[0]\n    for i in range(1, len(arr)):\n       val = gcd(val, arr[i])\n    return val\n\n# Read data and init\nunbalanced = input()\nleft_text, right_text = unbalanced.split(' -> ')\nleft_mols, right_mols = left_text.split(' + '), right_text.split(' + ')\nmolecules = {}\nall_elements = sorted(set(re.findall('([A-Z][a-z]?)', unbalanced)))\nfor molecule in left_mols:\n    molecules[molecule] = count_atoms(molecule)\nfor molecule in right_mols:\n    molecules[molecule] = count_atoms(molecule)\n\n# Setup matrix of equations\nsolve_matrix = []\nfor element in all_elements:\n    row = []\n    for molecule in left_mols:\n        if element in molecules[molecule]:\n            row.append(molecules[molecule][element])\n        else:\n            row.append(0)\n    for molecule in right_mols:\n        if element in molecules[molecule]:\n            row.append(-molecules[molecule][element])\n        else:\n            row.append(0)\n    # If there is a common divisor then simplify the line\n    #   This is also required to eliminate redundant lines\n    div = list_gcd(row)\n    row = [num // div for num in row]\n    if row not in solve_matrix:\n        solve_matrix.append(row)\n\n# Only give a square matrix\nwhile len(solve_matrix) >= len(solve_matrix[0]):\n    solve_matrix.pop()\n# Bias row to eliminate trivial all-zero case\nsolve_matrix.append([1] + [0] * (len(left_mols) + len(right_mols) - 1))\n# assume first coefficient is product of all non-zero coefficients\nproduct = 1\nfor sub_matrix in solve_matrix:\n    for coef in sub_matrix:\n        if coef != 0: product *= abs(coef)\n# Use numpy to solve\nnp_x = np.linalg.solve(solve_matrix, [0] * (len(solve_matrix) - 1) + [product]).round().astype(int)\n# If we get an answer which is a multiple of another solution, we want the smallest solution, use gcd\ndiv = list_gcd(np_x)\n\n# Print the left then the right\nfor index, molecule in enumerate(left_mols):\n    if index > 0:\n        print(' + ', end = '')\n    coeff = np.asscalar(np_x[index])\n    if coeff > div:\n        print(coeff // div, molecule, sep = '', end = '')\n    else:\n        print(molecule, end = '')\n\nfor index, molecule in enumerate(right_mols, len(left_mols)):\n    if index == len(left_mols):\n        print(' -> ', end = '')\n    else:\n        print(' + ', end = '')\n    coeff = np.asscalar(np_x[index])\n    if coeff > div:\n        print(coeff // div, molecule, sep = '', end = '')\n    else:\n        print(molecule, end = '')",
+      "statement": "Given a chemical formula, balance the elements present and print out the balanced equation.\n\nMolecules will be given in a simplified molecular formula. Elements are recorded as either a single uppercase letter or as an uppercase and lowercase letter together, followed by a number if greater than 1:\n{{H}} - 1 atom of Hydrogen\n{{He}} - 1 atom of Helium\n{{C6H12O6}} - 6 atoms of Carbon, 12 atoms of Hydrogen, and 6 atoms of Oxygen\n{{H2O}} - 2 atoms of Hydrogen, 1 atom of Oxygen\n\nDifferent molecules on a single side of the equation are separated by a plus sign surrounded by spaces:\nH2 + O2\nC6H12O6 + H20 + O2\n\nEach side of the equation is split by an ASCII arrow (hyphen-greater than) surrounded by spaces: {{->}}\n\nA full equation may look like:\nC6H12O6 + O2 -> CO2 + H2O\n\nA balanced equation where each molecule is prefixed with the coresponding coefficient when greater than 1. Ratios of coefficients should be reduced to the smallest whole integers. Molecules should be in the same order given.\nC6H12O6 + 6O2 -> 6CO2 + 6H2O\n\nThe equation string will only contain letters, numbers, spaces, and the symbols for plus and an arrow. [A-Za-z0-9+-> ] There will be no parenthesis.",
+      "testCases": [
+        {
+          "title": "Simple & Single Letter Elements",
+          "isTest": true,
+          "testIn": "H2 + O2 -> H2O",
+          "testOut": "2H2 + O2 -> 2H2O",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Hydrogen Peroxide",
+          "isTest": false,
+          "testIn": "H2 + O2 -> H2O2",
+          "testOut": "H2 + O2 -> H2O2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Photosynthesis",
+          "isTest": true,
+          "testIn": "CO2 + H2O -> C6H12O6 + O2",
+          "testOut": "6CO2 + 6H2O -> C6H12O6 + 6O2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Respiration",
+          "isTest": false,
+          "testIn": "C6H12O6 + O2 -> CO2 + H2O",
+          "testOut": "C6H12O6 + 6O2 -> 6CO2 + 6H2O",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multi-letter Elements",
+          "isTest": true,
+          "testIn": "NaOH + H2CO3 -> Na2CO3 + H2O",
+          "testOut": "2NaOH + H2CO3 -> Na2CO3 + 2H2O",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Calcium Hydroxide",
+          "isTest": false,
+          "testIn": "CaO2H2 + H2CO3 -> CaCO3 + H2O",
+          "testOut": "CaO2H2 + H2CO3 -> CaCO3 + 2H2O",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Fire",
+          "isTest": true,
+          "testIn": "C2H2 + O2 -> CO2 + H2O",
+          "testOut": "2C2H2 + 5O2 -> 4CO2 + 2H2O",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Methane Combustion",
+          "isTest": false,
+          "testIn": "CH4 + O2 -> CO2 + H2O",
+          "testOut": "CH4 + 2O2 -> CO2 + 2H2O",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Uncommon Elements",
+          "isTest": true,
+          "testIn": "Rb + HNO3 -> RbNO3 + H2",
+          "testOut": "2Rb + 2HNO3 -> 2RbNO3 + H2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Elephant Toothpaste",
+          "isTest": false,
+          "testIn": "H2O2 -> H2O + O2",
+          "testOut": "2H2O2 -> 2H2O + O2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Chloroplatinic Acid",
+          "isTest": true,
+          "testIn": "Pt + HNO3 + HCl -> H2PtCl6 + NO2 + H2O",
+          "testOut": "Pt + 4HNO3 + 6HCl -> H2PtCl6 + 4NO2 + 4H2O",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Potassium tetrachloroplatinate",
+          "isTest": false,
+          "testIn": "K2PtCl4 + C8H12 -> PtCl2C8H12 + KCl",
+          "testOut": "K2PtCl4 + C8H12 -> PtCl2C8H12 + 2KCl",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Sulfuric Acid",
+          "isTest": true,
+          "testIn": "S + HNO3 -> H2SO4 + NO2 + H2O",
+          "testOut": "S + 6HNO3 -> H2SO4 + 6NO2 + 2H2O",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Copper and Ammonia",
+          "isTest": false,
+          "testIn": "NH3 + CuO -> Cu + N2 + H2O",
+          "testOut": "2NH3 + 3CuO -> 3Cu + N2 + 3H2O",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Not real chemistry",
+          "isTest": true,
+          "testIn": "ABCD -> A2B2 + C2D2",
+          "testOut": "2ABCD -> A2B2 + C2D2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Not real chemistry",
+          "isTest": false,
+          "testIn": "A2B2 + C2D2 -> ABCD",
+          "testOut": "A2B2 + C2D2 -> 2ABCD",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Iron(III) fluoride",
+          "isTest": true,
+          "testIn": "FeCl3 + HF -> FeF3 + HCl",
+          "testOut": "FeCl3 + 3HF -> FeF3 + 3HCl",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Carbon tetrachloride",
+          "isTest": false,
+          "testIn": "Cl2 + CH4 -> HCl + CCl4",
+          "testOut": "4Cl2 + CH4 -> 4HCl + CCl4",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "Each input will have only one way to balance the equation.",
+      "stubGenerator": "read unbalanced:string(1024)\n\nwrite balanced",
+      "inputDescription": "<<Line 1:>> One line consisting of a chemical equation that can be balanced in only one way.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The corresponding balanced equation."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Given a chemical formula, balance the elements present and print out the balanced equation.<br><br>Molecules will be given in a simplified molecular formula. Elements are recorded as either a single uppercase letter or as an uppercase and lowercase letter together, followed by a number if greater than 1:<br><const>H</const> - 1 atom of Hydrogen<br><const>He</const> - 1 atom of Helium<br><const>C6H12O6</const> - 6 atoms of Carbon, 12 atoms of Hydrogen, and 6 atoms of Oxygen<br><const>H2O</const> - 2 atoms of Hydrogen, 1 atom of Oxygen<br><br>Different molecules on a single side of the equation are separated by a plus sign surrounded by spaces:<br>H2 + O2<br>C6H12O6 + H20 + O2<br><br>Each side of the equation is split by an ASCII arrow (hyphen-greater than) surrounded by spaces: <const>-&gt;</const><br><br>A full equation may look like:<br>C6H12O6 + O2 -&gt; CO2 + H2O<br><br>A balanced equation where each molecule is prefixed with the coresponding coefficient when greater than 1. Ratios of coefficients should be reduced to the smallest whole integers. Molecules should be in the same order given.<br>C6H12O6 + 6O2 -&gt; 6CO2 + 6H2O<br><br>The equation string will only contain letters, numbers, spaces, and the symbols for plus and an arrow. [A-Za-z0-9+-&gt; ] There will be no parenthesis.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> One line consisting of a chemical equation that can be balanced in only one way.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The corresponding balanced equation.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Each input will have only one way to balance the equation.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">H2 + O2 -&gt; H2O</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">2H2 + O2 -&gt; 2H2O</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 292786824522,
+  "avatar": 5678142876588,
+  "commentCount": 10,
+  "upVotes": 5,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 1483,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

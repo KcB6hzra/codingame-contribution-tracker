@@ -1,0 +1,258 @@
+{
+  "id": 325,
+  "activeVersion": 16,
+  "score": 10,
+  "votableId": 2478319,
+  "codingamerId": 552776,
+  "views": 643,
+  "commentableId": 2426502,
+  "title": "Rocket mice",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "player_one",
+  "publicHandle": "3255d19340a4a3534282d84494519d0852a",
+  "codingamerHandle": "fefb3b0a360d9451bde5553900470e2d677255",
+  "lastVersion": {
+    "version": 16,
+    "data": {
+      "title": "Rocket mice",
+      "topics": [],
+      "solution": "using System;\nusing System.Drawing;\nusing System.Linq;\nusing System.IO;\nusing System.Text;\nusing System.Collections;\nusing System.Collections.Generic;\n\nclass Solution {\n    private static readonly Dictionary<string, Point> ArrowDirections =\n        new Dictionary<string, Point> {\n            {\"W\", new Point(-1, 0)}, {\"E\", new Point(1, 0)},\n            {\"N\", new Point(0, -1)}, {\"S\", new Point(0, 1)}\n        };\n        \n    private static int _width;\n    private static int _height;\n    \n    static void Main(string[] args) {\n        string[] inputs;\n        inputs = Console.ReadLine().Split(' ');\n        _width = int.Parse(inputs[0]);\n        _height = int.Parse(inputs[1]);\n        int numPlayers = int.Parse(Console.ReadLine());\n        int numDoors = int.Parse(Console.ReadLine());\n        int numTurns = int.Parse(Console.ReadLine());\n        var rockets = new List<Point>();\n        for (int i = 0; i < numPlayers; i++) {\n            inputs = Console.ReadLine().Split(' ');\n            int rX = int.Parse(inputs[0]);\n            int rY = int.Parse(inputs[1]);\n            rockets.Add(new Point(rX, rY));\n        }\n        var doors = new List<Director>();\n        for (int i = 0; i < numDoors; i++) {\n            inputs = Console.ReadLine().Split(' ');\n            int coord = int.Parse(inputs[0]);\n            string wall = inputs[1];\n            doors.Add(DirectorFor(coord, wall));\n        }\n        \n        var animals = new List<Animal>();\n        var arrows = new List<Director>();\n        var scores = Enumerable.Repeat(0, numPlayers).ToList();\n        for (int i = 0; i <= numTurns; i++) {\n            // add\n            if ((i+1) % 10 == 0) animals.AddRange(doors.Select(_ => new Cat(_)));\n            else animals.AddRange(doors.Select(_ => new Mouse(_)));\n            \n            // move\n            animals.ForEach(_ => _.Move());\n            \n            // score\n            scores = scores.Select((s, j) => Math.Max(0,\n                    s + animals.Count(m => !m.IsCat && m.Location == rockets[j]) -\n                    (10 * animals.Count(c => c.IsCat && c.Location == rockets[j]))))\n                .ToList();\n                \n            if (i == numTurns) break;\n            \n            // remove for rockets, pits, and eaten\n            animals.RemoveAll(a => rockets.Any(r => r == a.Location));\n            animals.RemoveAll(_ => IsPit(_.Location));\n            animals.RemoveAll(m => !m.IsCat &&\n                animals.Any(c => c.IsCat &&\n                    (c.Location == m.Location || \n                    (c.Location == m.PreviousLocation &&\n                     c.PreviousLocation == m.Location))));\n            \n            // redirect\n            arrows.ForEach(_ => animals.Where(a => a.Location == _.Location).ToList()\n                .ForEach(a => a.Direction = _.Direction));\n            animals.ForEach(a => RedirectByWall(a));\n            \n            // add arrow\n            inputs = Console.ReadLine().Split(' ');\n            int tX = int.Parse(inputs[0]);\n            int tY = int.Parse(inputs[1]);\n            string direction = inputs[2];\n            arrows.Add(new Director(new Point(tX, tY), ArrowDirections[direction]));\n            \n            // remove old arrow\n            if (arrows.Count > numPlayers * 3) arrows.RemoveAt(0);\n        }\n        \n        Console.WriteLine(string.Join(System.Environment.NewLine, scores));\n    }\n    \n    private static Director DirectorFor(int coord, string wall) {\n        switch (wall) {\n            case \"N\":\n                return new Director(new Point(coord, -1), new Point(0, 1));\n            case \"S\":\n                return new Director(new Point(coord, _height), new Point(0, -1));\n            case \"E\":\n                return new Director(new Point(_width, coord), new Point(-1, 0));\n            case \"W\":\n                return new Director(new Point(-1, coord), new Point(1, 0));\n        }\n        throw new NotImplementedException();\n    }\n    \n    private static bool IsPit(Point loc) {\n        return (loc.X == 0 && loc.Y == 0) ||\n               (loc.X == _width-1 && loc.Y == 0) ||\n               (loc.X == 0 && loc.Y == _height-1) ||\n               (loc.X == _width-1 && loc.Y == _height-1);\n    }\n    \n    private static void RedirectByWall(Animal a) {\n        if (a.Location.X == 0 && a.Direction.X == -1) a.Direction = new Point(0, 1);\n        if (a.Location.Y == 0 && a.Direction.Y == -1) a.Direction = new Point(-1, 0);\n        if (a.Location.X == _width-1 && a.Direction.X == 1) a.Direction = new Point(0, -1);\n        if (a.Location.Y == _height-1 && a.Direction.Y == 1) a.Direction = new Point(1, 0);\n    }\n    \n    private class Director {\n        public Point Location { get; private set; }\n        public Point Direction { get; private set; }\n        public Director(Point location, Point direction) {\n            Location = location;\n            Direction = direction;\n        }\n    }\n    \n    private abstract class Animal {\n        public Point Location { get; private set; }\n        public Point Direction { get; set; }\n        public Point PreviousLocation { get; private set; }\n        public bool IsCat { get; protected set; }\n        \n        public Animal(Director dir) {\n            Location = new Point(dir.Location.X, dir.Location.Y);\n            Direction = new Point(dir.Direction.X, dir.Direction.Y);\n            PreviousLocation = new Point(-1, -1);\n        }\n        \n        public void Move() {\n            PreviousLocation = Location;\n            Location = new Point(Location.X + Direction.X, Location.Y + Direction.Y);\n        }\n    }\n    \n    private class Cat : Animal {\n        public Cat(Director dir) : base(dir) {\n            IsCat = true;\n        }\n    }\n    \n    private class Mouse : Animal {\n        public Mouse(Director dir) : base(dir) {\n            IsCat = false;\n        }\n    }\n}",
+      "statement": "A colony of peaceable, space-faring mice has been invaded by cats. You must get the mice to your rocket so they can evade the evil cats' claws.\n\n<<Puzzle goal>>\n\nCalculate the final score for all players in the game, based on the moves made.\n\n<<Scoring>>\n\nEach player has a rocket on a grid of squares. A player scores {{1}} point for each mouse that enters his rocket, and {{-10}} points for each cat that enters his rocket. Animals can enter a rocket from any orthogonally adjacent square.\n\nA player's score can never go below zero.\n\n<<Animal generation>>\n\nEach board has one or more doors on the edges of the grid. Animals enter through these doors and always move directly away from the door they entered through, in a direction perpendicular to the wall where the door is located. So, for example, if a mouse enters through a door on the <<northern>> edge of the grid, it will move <<south>>. Doors are never in the corners of the grid.\n\nAnimals always go straight until they leave the board (rocket, pit, or eaten) or are redirected (wall or arrow).\n\nEach door produces {{1}} animal every turn. Every {{10th}} animal to enter through each door is a cat. The other {{9}} animals produced are mice.\n\n<<Walls and pits>>\n\nIf an animal hits a wall, it will turn 90 degrees counter-clockwise. Animals never exit through doors. They only enter through them. Otherwise, a door behaves like a wall.\n\nThe four squares in the corners of the grid are pits. If a mouse or a cat moves to one of these squares, they fall to their doom.\n\n<<Eaten by cats>>\n\nMultiple mice can coexist on the same square, and multiple cats can coexist on the same square, but mice and cats don't mix. A mouse on the same square as a cat is eaten.\n\nIf a mouse and cat switch positions, i.e. mouse from (1,2) to (1,3) and cat from (1,3) to (1,2), the mouse is eaten in passing.\n\n<<Arrows>>\n\nEach turn, one player places an arrow onto a square of the grid. Arrows point in any of four directions: {{N}}, {{E}}, {{S}}, or {{W}}. The players take turns placing arrows. Player 1 places on the first turn, then player 2 on the next turn, etc. Arrows cannot be placed onto another arrow, a rocket, or a pit.\n\nEach player can have a maximum of 3 arrows on the grid at a time. Once a player places his 4th arrow, then the first arrow he placed is removed. When his 5th is placed, his 2nd is removed, and so on.\n\nWhen an animal moves to a square with an arrow, it turns to face the direction indicated by the arrow.\n\n<<Order of a turn>>\n\n1) An animal is produced <<behind>> each door, just off the grid, ready to enter the board.\n2) All animals move forward one square, simultaneously, in the direction they are facing.\n3) Mice score.\n4) Cats score.\n5) Mice are eaten.\n6) All animals on an arrow or facing a wall are redirected.\n7) The next player to play places an arrow.\n\nAfter the final arrow is placed on the last turn, steps 1-4 are executed one more time to determine the score.",
+      "testCases": [
+        {
+          "title": "Worthless arrows and no cats",
+          "isTest": true,
+          "testIn": "5 5\n2\n2\n8\n1 2\n3 2\n2 E\n2 W\n2 0 W\n2 2 E\n1 0 S\n1 1 E\n2 1 W\n0 1 S\n0 3 E\n2 0 E",
+          "testOut": "8\n8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Worthless arrows and no cats",
+          "isTest": false,
+          "testIn": "5 5\n2\n2\n8\n2 1\n2 3\n2 N\n2 S\n0 2 W\n2 2 E\n0 1 S\n1 1 E\n1 2 W\n1 0 S\n3 0 E\n0 2 E",
+          "testOut": "8\n8",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Scoring cats",
+          "isTest": true,
+          "testIn": "5 5\n2\n2\n12\n1 2\n3 2\n2 E\n2 W\n2 0 W\n2 2 E\n1 0 S\n1 1 E\n2 1 W\n0 1 S\n0 3 E\n2 0 E\n2 2 W\n1 0 N\n1 1 W\n2 1 E",
+          "testOut": "2\n2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Scoring cats",
+          "isTest": false,
+          "testIn": "5 5\n2\n2\n12\n2 1\n2 3\n2 N\n2 S\n0 2 W\n2 2 E\n0 1 S\n1 1 E\n1 2 W\n1 0 S\n3 0 E\n0 2 E\n2 2 W\n0 1 N\n1 1 W\n1 2 E",
+          "testOut": "2\n2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No score",
+          "isTest": true,
+          "testIn": "5 5\n2\n2\n4\n1 2\n3 2\n2 N\n2 S\n1 3 W\n3 0 E\n1 0 S\n1 1 E",
+          "testOut": "0\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "No score",
+          "isTest": false,
+          "testIn": "5 5\n2\n2\n4\n2 1\n2 3\n2 E\n2 W\n3 1 W\n0 3 E\n0 1 S\n1 1 E",
+          "testOut": "0\n0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Redirecting arrows",
+          "isTest": true,
+          "testIn": "5 5\n2\n2\n8\n1 2\n3 2\n2 N\n2 S\n2 0 W\n2 4 E\n1 0 S\n3 4 N\n3 3 W\n1 1 E\n1 3 N\n3 1 S",
+          "testOut": "3\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Redirecting arrows",
+          "isTest": false,
+          "testIn": "5 5\n2\n2\n8\n2 1\n2 3\n2 E\n2 W\n4 2 N\n0 2 S\n4 1 W\n0 3 E\n1 3 N\n3 1 S\n1 1 E\n3 3 W",
+          "testOut": "3\n0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "One for each",
+          "isTest": true,
+          "testIn": "5 5\n2\n1\n2\n1 0\n2 1\n2 N\n2 0 W\n3 0 W",
+          "testOut": "1\n1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "One for each",
+          "isTest": false,
+          "testIn": "5 5\n2\n1\n2\n4 1\n3 2\n2 E\n4 2 N\n4 3 N",
+          "testOut": "1\n1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Redirecting walls",
+          "isTest": true,
+          "testIn": "5 5\n4\n4\n8\n1 0\n4 1\n3 4\n0 3\n2 N\n2 S\n2 E\n2 W\n3 0 E\n4 3 S\n1 4 W\n0 1 N\n3 1 S\n3 3 W\n1 3 N\n1 1 E",
+          "testOut": "4\n4\n4\n4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Redirecting walls",
+          "isTest": false,
+          "testIn": "5 5\n4\n4\n8\n4 1\n3 4\n0 3\n1 0\n2 E\n2 W\n2 S\n2 N\n4 3 S\n1 4 W\n0 1 N\n3 0 E\n3 3 W\n1 3 N\n1 1 E\n3 1 S",
+          "testOut": "4\n4\n4\n4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Treacherous pits",
+          "isTest": true,
+          "testIn": "5 5\n4\n4\n9\n4 3\n1 4\n0 1\n3 0\n2 E\n2 W\n2 S\n2 N\n2 0 W\n4 2 N\n2 4 E\n0 2 S\n1 1 E\n3 1 S\n3 3 W\n1 3 N\n2 2 S",
+          "testOut": "0\n0\n0\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Treacherous pits",
+          "isTest": false,
+          "testIn": "5 5\n4\n4\n9\n1 4\n0 1\n3 0\n4 3\n2 S\n2 N\n2 W\n2 E\n4 2 N\n2 4 E\n0 2 S\n2 0 W\n3 1 S\n3 3 W\n1 3 N\n1 1 E\n2 2 W",
+          "testOut": "0\n0\n0\n0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Expiring arrows",
+          "isTest": true,
+          "testIn": "9 9\n2\n2\n9\n2 4\n6 4\n4 E\n4 W\n7 4 N\n1 4 N\n1 8 N\n2 8 N\n3 8 N\n4 8 N\n5 8 N\n6 8 N\n7 8 N",
+          "testOut": "2\n2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Expiring arrows",
+          "isTest": false,
+          "testIn": "9 9\n2\n2\n9\n4 2\n4 6\n4 S\n4 N\n4 7 E\n4 1 E\n0 1 E\n0 2 E\n0 3 E\n0 4 E\n0 5 E\n0 6 E\n0 7 E",
+          "testOut": "2\n2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Eating the mice",
+          "isTest": true,
+          "testIn": "7 7\n2\n3\n17\n2 3\n4 3\n3 E\n3 W\n1 S\n1 0 S\n2 0 S\n3 0 S\n4 0 S\n5 0 S\n0 1 S\n1 1 S\n2 1 S\n3 1 S\n4 1 S\n5 1 S\n6 1 S\n1 2 S\n1 3 S\n1 4 S\n1 5 S\n1 6 S",
+          "testOut": "2\n6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Eating the mice",
+          "isTest": false,
+          "testIn": "7 7\n2\n3\n17\n3 2\n3 4\n3 S\n3 N\n1 W\n6 1 W\n6 2 W\n6 3 W\n6 4 W\n6 5 W\n5 0 W\n5 1 W\n5 2 W\n5 3 W\n5 4 W\n5 5 W\n5 6 W\n4 1 W\n3 1 W\n2 1 W\n1 1 W\n0 1 W",
+          "testOut": "2\n6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Eating in passing",
+          "isTest": true,
+          "testIn": "5 5\n2\n3\n20\n1 2\n3 2\n1 E\n1 W\n3 W\n1 4 N\n2 4 N\n3 4 N\n0 2 E\n4 2 W\n1 0 S\n2 0 S\n3 0 S\n1 4 N\n3 3 N\n1 1 S\n2 4 N\n3 4 N\n1 0 S\n2 0 S\n3 0 S\n1 4 N\n2 2 S\n2 4 N\n3 4 N",
+          "testOut": "4\n3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Eating in passing",
+          "isTest": false,
+          "testIn": "5 5\n2\n3\n20\n2 1\n2 3\n3 S\n3 N\n1 N\n0 1 E\n0 2 E\n0 3 E\n2 0 S\n2 4 N\n4 1 W\n4 2 W\n4 3 W\n0 1 E\n1 3 E\n3 1 W\n0 2 E\n0 3 E\n4 1 W\n4 2 W\n4 3 W\n0 1 E\n2 2 W\n0 2 E\n0 3 E",
+          "testOut": "4\n3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simple battle",
+          "isTest": true,
+          "testIn": "5 5\n2\n1\n20\n1 2\n3 2\n2 N\n2 0 W\n2 2 E\n1 0 S\n1 1 E\n2 1 W\n0 1 S\n0 2 E\n2 0 E\n2 2 W\n3 1 S\n1 1 S\n3 0 S\n2 1 S\n0 1 E\n0 2 W\n2 2 E\n3 1 W\n2 0 E\n3 0 S\n2 1 S",
+          "testOut": "6\n8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple battle",
+          "isTest": false,
+          "testIn": "5 5\n2\n1\n20\n2 1\n2 3\n2 E\n4 2 N\n2 2 S\n4 1 W\n3 1 S\n3 2 N\n3 0 W\n2 0 S\n4 2 S\n2 2 N\n3 3 W\n3 1 W\n4 3 W\n3 2 W\n3 0 S\n2 0 N\n2 2 S\n3 3 N\n4 2 S\n4 3 W\n3 2 W",
+          "testOut": "6\n8",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Rumble",
+          "isTest": true,
+          "testIn": "9 9\n4\n4\n32\n2 2\n2 6\n6 2\n6 6\n4 N\n4 E\n4 W\n4 S\n2 4 N\n4 6 W\n4 2 E\n6 4 S\n4 1 W\n1 4 S\n4 0 E\n1 5 E\n2 5 N\n4 7 W\n0 3 E\n6 5 W\n1 3 N\n2 7 N\n6 0 S\n8 4 S\n5 1 W\n8 7 W\n2 3 E\n8 6 W\n2 4 S\n2 5 E\n4 2 E\n8 3 S\n6 5 N\n4 6 W\n6 3 E\n6 4 E\n0 4 N\n4 7 W\n5 2 S\n2 7 N",
+          "testOut": "0\n12\n16\n14",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Rumble",
+          "isTest": false,
+          "testIn": "9 9\n4\n4\n32\n6 2\n2 2\n6 6\n2 6\n4 E\n4 S\n4 N\n4 W\n4 2 E\n2 4 N\n6 4 S\n4 6 W\n7 4 N\n4 1 W\n8 4 S\n3 1 S\n3 2 E\n1 4 N\n5 0 S\n3 6 N\n5 1 E\n1 2 E\n8 6 W\n4 8 W\n7 5 N\n1 8 N\n5 2 S\n2 8 N\n4 2 W\n3 2 S\n6 4 S\n5 8 W\n3 6 E\n2 4 N\n5 6 S\n4 6 S\n4 0 E\n1 4 N\n6 5 W\n1 2 E",
+          "testOut": "0\n12\n16\n14",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "All out war",
+          "isTest": true,
+          "testIn": "20 20\n4\n16\n52\n4 2\n17 4\n15 17\n2 15\n1 N\n5 N\n14 N\n18 N\n1 E\n5 E\n14 E\n18 E\n1 W\n5 W\n14 W\n18 W\n1 S\n5 S\n14 S\n18 S\n5 2 W\n17 5 N\n15 18 N\n1 17 E\n4 1 S\n18 4 W\n15 14 S\n2 14 S\n1 2 E\n18 5 S\n17 14 N\n2 18 N\n3 2 S\n14 4 E\n14 17 E\n1 15 E\n5 2 W\n17 1 S\n18 17 W\n1 14 N\n2 2 S\n17 2 W\n17 17 N\n5 15 W\n4 5 N\n16 4 S\n0 2 E\n2 14 S\n4 1 S\n17 5 N\n15 15 W\n2 18 N\n5 2 W\n18 4 W\n15 18 N\n1 15 E\n1 2 E\n14 4 E\n14 17 E\n2 17 E\n2 2 S\n18 3 W\n18 17 W\n5 15 W\n4 1 S\n17 5 N\n15 14 S\n2 14 S\n4 5 N\n18 5 S\n17 17 N\n5 16 E",
+          "testOut": "8\n9\n6\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "All out war",
+          "isTest": false,
+          "testIn": "20 20\n4\n16\n52\n17 4\n15 17\n2 15\n4 2\n1 E\n5 E\n14 E\n18 E\n18 S\n14 S\n5 S\n1 S\n18 N\n14 N\n5 N\n1 N\n1 W\n5 W\n14 W\n18 W\n17 5 N\n14 17 E\n1 15 E\n2 1 S\n18 4 W\n15 18 N\n5 15 W\n5 2 W\n17 1 S\n14 18 W\n5 17 E\n1 2 E\n17 3 W\n15 14 S\n2 14 S\n4 1 S\n17 5 N\n18 17 W\n2 18 N\n5 1 E\n17 2 W\n17 17 N\n2 17 E\n4 5 N\n14 4 E\n15 16 W\n17 0 S\n5 2 W\n18 4 W\n14 17 E\n4 15 N\n1 2 E\n17 5 N\n15 18 N\n1 15 E\n4 1 S\n17 1 S\n15 14 S\n2 14 S\n2 2 S\n17 2 W\n16 18 N\n2 18 N\n4 5 N\n18 4 W\n14 17 E\n5 15 W\n5 2 W\n14 4 E\n14 18 W\n2 17 E\n3 5 S",
+          "testOut": "8\n9\n6\n0",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "5 ≤ [[width]] = [[height]] ≤ 25\n2 ≤ [[players]] ≤ 4\n1 ≤ [[doors]] ≤ 16\n1 ≤ [[turns]] ≤ 100\n0 ≤ [[rX]], [[tX]] ≤ [[width]] - 1\n0 ≤ [[rY]], [[tY]] ≤ [[height]] - 1\n(0, 0) is the north-west corner.\n([[width]]-1, 0) is the north-east corner.",
+      "coverBinaryId": 135676205544871,
+      "stubGenerator": "read width:int height:int\r\nread players:int\r\nread doors:int\r\nread turns:int\r\nloop players read rX:int rY:int\r\nloop doors read coord:int wall:word(1)\r\nloop turns read tX:int tY:int direction:word(1)\r\nloop players write answer",
+      "inputDescription": "<<Line 1:>> Two space-separated integers indicating the [[width]] and [[height]] of the grid\n<<Line 2:>> An integer indicating the number of [[players]] in the game\n<<Line 3:>> An integer indicating the number of [[doors]] on the grid\n<<Line 4:>> An integer indicating the number of [[turns]] to be played\n<<Next [[players]] lines:>> Two space-separated integers ([[rX]] and [[rY]]) indicating the coordinates of each player's rocket\n<<Next [[doors]] lines:>> An integer indicating the x or y [[coordinate]] of the door, followed by the [[wall]] that the door is on, either {{N}}, {{E}}, {{S}}, or {{W}}\n<<Next [[turns]] lines:>> Two space-separated integers ([[tX]] and [[tY]]) indicating the coordinates where an arrow is placed, followed by a [[direction]], either {{N}}, {{E}}, {{S}}, or {{W}}.",
+      "solutionLanguage": "C#",
+      "outputDescription": "<<[[players]] lines:>> One line per player, indicating that player's [[score]] for the game"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A colony of peaceable, space-faring mice has been invaded by cats. You must get the mice to your rocket so they can evade the evil cats' claws.<br><br><strong>Puzzle goal</strong><br><br>Calculate the final score for all players in the game, based on the moves made.<br><br><strong>Scoring</strong><br><br>Each player has a rocket on a grid of squares. A player scores <const>1</const> point for each mouse that enters his rocket, and <const>-10</const> points for each cat that enters his rocket. Animals can enter a rocket from any orthogonally adjacent square.<br><br>A player's score can never go below zero.<br><br><strong>Animal generation</strong><br><br>Each board has one or more doors on the edges of the grid. Animals enter through these doors and always move directly away from the door they entered through, in a direction perpendicular to the wall where the door is located. So, for example, if a mouse enters through a door on the <strong>northern</strong> edge of the grid, it will move <strong>south</strong>. Doors are never in the corners of the grid.<br><br>Animals always go straight until they leave the board (rocket, pit, or eaten) or are redirected (wall or arrow).<br><br>Each door produces <const>1</const> animal every turn. Every <const>10th</const> animal to enter through each door is a cat. The other <const>9</const> animals produced are mice.<br><br><strong>Walls and pits</strong><br><br>If an animal hits a wall, it will turn 90 degrees counter-clockwise. Animals never exit through doors. They only enter through them. Otherwise, a door behaves like a wall.<br><br>The four squares in the corners of the grid are pits. If a mouse or a cat moves to one of these squares, they fall to their doom.<br><br><strong>Eaten by cats</strong><br><br>Multiple mice can coexist on the same square, and multiple cats can coexist on the same square, but mice and cats don't mix. A mouse on the same square as a cat is eaten.<br><br>If a mouse and cat switch positions, i.e. mouse from (1,2) to (1,3) and cat from (1,3) to (1,2), the mouse is eaten in passing.<br><br><strong>Arrows</strong><br><br>Each turn, one player places an arrow onto a square of the grid. Arrows point in any of four directions: <const>N</const>, <const>E</const>, <const>S</const>, or <const>W</const>. The players take turns placing arrows. Player 1 places on the first turn, then player 2 on the next turn, etc. Arrows cannot be placed onto another arrow, a rocket, or a pit.<br><br>Each player can have a maximum of 3 arrows on the grid at a time. Once a player places his 4th arrow, then the first arrow he placed is removed. When his 5th is placed, his 2nd is removed, and so on.<br><br>When an animal moves to a square with an arrow, it turns to face the direction indicated by the arrow.<br><br><strong>Order of a turn</strong><br><br>1) An animal is produced <strong>behind</strong> each door, just off the grid, ready to enter the board.<br>2) All animals move forward one square, simultaneously, in the direction they are facing.<br>3) Mice score.<br>4) Cats score.<br>5) Mice are eaten.<br>6) All animals on an arrow or facing a wall are redirected.<br>7) The next player to play places an arrow.<br><br>After the final arrow is placed on the last turn, steps 1-4 are executed one more time to determine the score.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Two space-separated integers indicating the <var>width</var> and <var>height</var> of the grid<br><strong>Line 2:</strong> An integer indicating the number of <var>players</var> in the game<br><strong>Line 3:</strong> An integer indicating the number of <var>doors</var> on the grid<br><strong>Line 4:</strong> An integer indicating the number of <var>turns</var> to be played<br><strong>Next <var>players</var> lines:</strong> Two space-separated integers (<var>rX</var> and <var>rY</var>) indicating the coordinates of each player's rocket<br><strong>Next <var>doors</var> lines:</strong> An integer indicating the x or y <var>coordinate</var> of the door, followed by the <var>wall</var> that the door is on, either <const>N</const>, <const>E</const>, <const>S</const>, or <const>W</const><br><strong>Next <var>turns</var> lines:</strong> Two space-separated integers (<var>tX</var> and <var>tY</var>) indicating the coordinates where an arrow is placed, followed by a <var>direction</var>, either <const>N</const>, <const>E</const>, <const>S</const>, or <const>W</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>players</var> lines:</strong> One line per player, indicating that player's <var>score</var> for the game</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">5 &le; <var>width</var> = <var>height</var> &le; 25<br>2 &le; <var>players</var> &le; 4<br>1 &le; <var>doors</var> &le; 16<br>1 &le; <var>turns</var> &le; 100<br>0 &le; <var>rX</var>, <var>tX</var> &le; <var>width</var> - 1<br>0 &le; <var>rY</var>, <var>tY</var> &le; <var>height</var> - 1<br>(0, 0) is the north-west corner.<br>(<var>width</var>-1, 0) is the north-east corner.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5 5\n2\n2\n8\n1 2\n3 2\n2 E\n2 W\n2 0 W\n2 2 E\n1 0 S\n1 1 E\n2 1 W\n0 1 S\n0 3 E\n2 0 E</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">8\n8</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 282771919252,
+  "avatar": 52487021619351,
+  "commentCount": 26,
+  "upVotes": 11,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 41676,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

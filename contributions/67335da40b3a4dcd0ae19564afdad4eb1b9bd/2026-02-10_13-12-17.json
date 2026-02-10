@@ -1,0 +1,178 @@
+{
+  "id": 67335,
+  "activeVersion": 52,
+  "score": 9,
+  "votableId": 30581448,
+  "codingamerId": 4433844,
+  "views": 218,
+  "commentableId": 30444280,
+  "title": "Popularity of each activity",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Lisa-Has-Ideas",
+  "publicHandle": "67335da40b3a4dcd0ae19564afdad4eb1b9bd",
+  "codingamerHandle": "6057618d773e6e27a20abefa031c4e674483344",
+  "lastVersion": {
+    "version": 52,
+    "autocloseTime": 1695220146817,
+    "data": {
+      "title": "Popularity of each activity",
+      "topics": [
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 51,
+          "parentTopicId": 93
+        },
+        {
+          "id": 94,
+          "handle": "mathematics",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Mathematics",
+            "2": "Mathematics"
+          },
+          "puzzleCount": 57,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "using System; using System.Linq; using System.IO; using System.Text; using System.Collections; using System.Collections.Generic; using System.Text.RegularExpressions;\n\npublic class Program\n{\n\tpublic static string bl = \" \";   // blank\n\tpublic static char dot = ' ';\n\tpublic static char star = '*';\n\tpublic static char plus = '+';\n\tpublic static char pipe = ':';\n\tpublic static char dash = '-';\n\tpublic static char[,] Grid; \n\tpublic static int Hi, Wi;\n\tpublic static int TotalStars;\n\tpublic static Point PointA, PointB, PointC, PointD;\n\tpublic static List<Point> CROSS_POINTS = new List<Point>();\n\tpublic static double[,] Probabilities = new double[3,3] ; \n\n\tpublic static void Main()\n\t{\n\t\tHi = int.Parse(Console.ReadLine());\n\n        List<string> inputs = new List<string>();\n        for (int i = 0 ; i < Hi ; i++)\n        {\n            inputs.Add(Console.ReadLine());\n        }\n\n        Wi = inputs[0].Length;\n    \n\t\tGrid = new char[Hi, Wi];\n\n\t\tfor (int lin = 0 ; lin < Hi ; lin++)\n\t\t{\n            string aLin = inputs[lin];\n\t\t\tfor (int pos = 0 ; pos < Wi ; pos++)\n\t\t\t{\n                Grid[lin,pos] = aLin[pos];\n\t\t\t}\n\t\t}\n\t\n\t\tPointA = new Point(0,0);\n\t\tPointD = new Point(Hi,Wi);\n\t\t\n\t\tPOPULATE_CROSS_POINTS();\n\t\tPointB = CROSS_POINTS[0];\n\t\tPointC = CROSS_POINTS[3];\n\t\n\t\tvar QuadRay = new Quadrant[3,3];\n\t\t\n\t\tvar PointRay = new Point[] {PointA, PointB, PointC, PointD};\n\t\t\n\t\tfor (int qLin = 0 ; qLin < 3 ; qLin++)\n\t\t{\n\t\t\tint ll = PointRay[qLin].Lin;\n\t\t\tint LL = PointRay[qLin+1].Lin;\n\t\t\tfor (int qPos = 0 ; qPos < 3 ; qPos++)\n\t\t\t{\n\t\t\t\tint pp = PointRay[qPos].Pos;\n\t\t\t\tint PP = PointRay[qPos+1].Pos;\n\t\t\t\tPoint PointTL = new Point(ll,pp); // TopLeft\n\t\t\t\tPoint PointBR = new Point(LL,PP); // BottomRight\n\t\t\t\tQuadrant tempQuad = new Quadrant(PointTL, PointBR);\n\n\t\t\t\tQuadRay[qLin,qPos] = tempQuad;\n\t\t\t}\n\t\t}\n\n\t\tint TOTAL_STARS = CountStars();\n\t\t\n\t\tConsole.WriteLine(TOTAL_STARS + \" attendees\");\n\t\tfor (int i = 0 ; i < 3 ; i++)\n\t\t{\n\t\t\tstring aLineAnswer = \"\";\n\t\t\tfor (int j = 0 ; j < 3 ; j++)\n\t\t\t{\n\t\t\t\tQuadRay[i,j].COUNT_STARS_IN_THIS_QUAD();\n\t\t\t\tdouble perc = (100.0 * QuadRay[i,j].NUM_STARS) / TOTAL_STARS;\n\t\t\t\taLineAnswer += \"\" + AddUnderLinesEtc(perc) + bl;\n\t\t\t}\n\t\t\tConsole.WriteLine(aLineAnswer.Trim());\n\t\t}\n\t}\n\t\n\tpublic class Point\n\t{\n\t\tpublic int Lin;\n\t\tpublic int Pos;\n\t\tpublic Point(int lin, int pos)\n\t\t{\n\t\t\tLin = lin;\n\t\t\tPos = pos;\n\t\t}\n\t}\n\t\n\tpublic class Quadrant // Nonant\n\t{\n\t\tpublic Point TopLeft;\n\t\tpublic Point BottomRight;\n\t\tpublic int Capacity;\n\t\tpublic int NUM_STARS;\n\t\t\n\t\tpublic Quadrant (Point p1, Point p2)\n\t\t{\n\t\t\tTopLeft = p1;\n\t\t\tif (TopLeft.Lin != 0) TopLeft.Lin = TopLeft.Lin + 1;\n\t\t\tif (TopLeft.Pos != 0) TopLeft.Pos = TopLeft.Pos + 1; // for both these, it's go \"right\" or \"down\" from the borderlines\n\t\t\tBottomRight = p2;\n\t\t}\n\t\t\n\t\tpublic void COUNT_STARS_IN_THIS_QUAD()\n\t\t{\n\t\t\tint count = 0;\n\t\t\tfor (int lin = TopLeft.Lin ; lin < BottomRight.Lin ; lin++)\n\t\t\t{\n\t\t\t\tfor (int pos = TopLeft.Pos ; pos < BottomRight.Pos ; pos++)\n\t\t\t\t{\n\t\t\t\t\tint ch = Grid[lin,pos];\n\t\t\t\t\tif (ch == star) count++;\n\t\t\t\t}\n\t\t\t}\n\t\t\tNUM_STARS = count;\n\t\t}\n\t}\n\t\t\n\tpublic static string AddUnderLinesEtc(double perc)\n\t{\n\t\tperc = Math.Round(perc,0);\n\t\tstring ret = \"\";\n\t\tif (perc < 100) ret += \"_\";\n\t\tif (perc < 10) ret += \"_\";\n\t\treturn ret + perc + \"%\";\t\n\t}\n\t\t\t\t\t\t\t \n\tpublic static void POPULATE_CROSS_POINTS()\n\t{\n\t\tfor (int lin = 0 ; lin < Hi ; lin++)\n\t\t{\n\t\t\tfor (int pos = 0 ; pos < Wi ; pos++)\n\t\t\t{\n\t\t\t\tchar ch = Grid[lin,pos];\n\t\t\t\tif (ch == plus) CROSS_POINTS.Add(new Point(lin,pos));\n\t\t\t}\n\t\t}\n\t}\n\t\t\n\tpublic static int CountStars()\n\t{\n\t\tint count = 0;\n\t\tfor (int lin = 0 ; lin < Hi ; lin++)\n\t\t{\n\t\t\tfor (int pos = 0 ; pos < Wi ; pos++)\n\t\t\t{\n\t\t\t\tchar ch = Grid[lin,pos] ;\n\t\t\t\tif (ch == star) count++;\n\t\t\t}\n\t\t}\n\t\treturn count;\n\t}\n}",
+      "statement": "Here is a rectangle ([[eventArea]]) divided (in a wonky \"Tic-Tac-Toe-style\") into 9 smaller rectangles ([[activityArea]]s).\n\nIt is an aerial-view snapshot of a kids-event, with 9 activities that attendees can do: face-painting, pony-rides, fort-building, magic show, corn-maze, giant bubbles, etc.\n\nEach attendee is a {{*}}\n\nThe dividing lines are shown as {{:}} or {{-}}\nThe points where dividing lines intersect are shown as {{+}}\n\n\n<<Your Task:>>\n\nWe want to know (for this moment in time):\n‣ the total number of attendees ([[totalAttendees]]) and\n‣ what percentage of attendees were in each [[activityArea]].  These 9 percentages are called [[percentageAtThisActivity]].\n\n<<How to display each [[percentageAtThisActivity]]:>>\nIt is rounded to nearest integer\nIt is followed by {{%}}\nIt is exactly 4 characters long. If necessary, pad the left with one or more underscores ({{_}}) to force proper alignment\n\nNote: The percentages may not add up to 100% after rounding.\n\n\n<<Your impact:>>\nWe'll use this output to help quantify how popular each activity was.  \nBased on that, some activities may (or may not) be included at next year's event.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "10\n  *:   :  \n   :   :  \n---+---+--\n   :*  :  \n   :   :  \n   : * :  \n---+---+--\n   :   :  \n   : * :  \n   :   :  ",
+          "testOut": "4 attendees\n_25% __0% __0%\n__0% _50% __0%\n__0% _25% __0%",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "10\n  :     :*\n  :     : \n *:     : \n  :     : \n  :     : \n  :     : \n--+-----+-\n  :  *  : \n--+-----+-\n  :   * : ",
+          "testOut": "4 attendees\n_25% __0% _25%\n__0% _25% __0%\n__0% _25% __0%",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2 - easy percentages",
+          "isTest": true,
+          "testIn": "11\n    :   : *\n    :   :  \n    :   :  \n----+---+--\n* * :   :  \n *  :  *:  \n----+---+--\n*   :   :* \n   *:  *:  \n    :   : *\n    :   :  ",
+          "testOut": "10 attendees\n__0% __0% _10%\n_30% _10% __0%\n_20% _10% _20%",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "11\n    :    : \n    :  * : \n    : *  : \n----+----+-\n    :    : \n    :    : \n    :    : \n----+----+-\n ***:    : \n    :   *:*\n *  :**  : ",
+          "testOut": "10 attendees\n__0% _20% __0%\n__0% __0% __0%\n_40% _30% _10%",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3 - 100 percent",
+          "isTest": true,
+          "testIn": "8\n      : : \n    * : : \n   * *: : \n------+-+-\n      : : \n      : : \n------+-+-\n      : : ",
+          "testOut": "3 attendees\n100% __0% __0%\n__0% __0% __0%\n__0% __0% __0%",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "10\n  :  :  \n  :  :  \n--+--+--\n  :  :  \n--+--+--\n  :* :  \n  :  :  \n  :  :  \n  : *:  \n  :  :  ",
+          "testOut": "2 attendees\n__0% __0% __0%\n__0% __0% __0%\n__0% 100% __0%",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4 - simple rounding",
+          "isTest": true,
+          "testIn": "8\n*  *: : \n    : : \n----+-+-\n *  : : \n    : : \n    : : \n----+-+-\n    : : ",
+          "testOut": "3 attendees\n_67% __0% __0%\n_33% __0% __0%\n__0% __0% __0%",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "9\n  :    :  \n  : *  :  \n  : *  :  \n--+----+--\n  :*   :  \n  :    :  \n--+----+--\n  :    :  \n  :    :  ",
+          "testOut": "3 attendees\n__0% _67% __0%\n__0% _33% __0%\n__0% __0% __0%",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "19\n         : * *: \n       * :    :*\n         :* * : \n         :** *: \n---------+----+-\n  ** *   :* * : \n*        : * *: \n * ***** :** *: \n* * * * *:   *:*\n  *      :**  : \n *       :* * :*\n* * **  *:*   : \n*       *:**  : \n *   *   :**  : \n---------+----+-\n* * * ** :    : \n **  * **:    : \n*     ** :    : \n *   * * :   *: ",
+          "testOut": "71 attendees\n__1% _10% __1%\n_37% _24% __3%\n_23% __1% __0%",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "16\n   : ****:* * *\n   :**   : ****\n   : * * :**** \n   :***  : ** *\n   :  ** :*  **\n---+-----+-----\n * :   **:     \n*  :* ***:   * \n   : * **: *   \n **: ****:  * *\n  *:* ** :* * *\n   :**  *:*****\n* *:*    : *   \n  *:*** *:    *\n---+-----+-----\n*  :     :     ",
+          "testOut": "77 attendees\n__0% _17% _22%\n_10% _31% _18%\n__1% __0% __0%",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "42\n*    **       ****  *    ***:           :**   * ** *  **  ** *\n*    * * **    * *    ******:           :  *** *   **    *  **\n * ** *     *****   ******* :           :    *     * **  *** *\n*  *** *  ** *** *****   *  :           : *** *  ***** ** **  \n  **  **   * ***    ***  ** :           :     ** *****     *  \n** **  *     *  **    **    :   *       :      *  * * * * * **\n*   *      *  *  * * ** *   :           :*   *  **  ** **    *\n  ***  ***  **   *   *  ** *:           :*  *  *****   *  ** *\n* ***     ****** *** ***   *:           :*   * *  *** *  *   *\n*  *  **   *****  *   * *** :           :    ***          ** *\n----------------------------+-----------+---------------------\n                 *       *  : *  * *   *:*   **  *  ** *    * \n   *       *           **  *:     * * * :*   * * *  ** * **  *\n*             *            *:***     ***:*   * **      ** ** *\n * *      *  **  *   *      :* *  *   * :*   * **  **  * * ** \n *    *      *  *          *:* *    * * :* * ****** ****   ** \n     * *      *       *  *  :*  **   *  :**  *  *   **     *  \n         *  *   ** * * *    : * * **    :*****   * **   * * **\n       * * *          *    *:*  **  **  :**  ** **   *  ****  \n     *              *       : **  **    : **  ** **   ****    \n  *     *  **             * :** ******  :** **   **   *    ** \n **  *     *   * **  *     *:** *  *  **: **  ** * *****   * *\n *  **  *         *      *  :   * **  **:  ****  ***  ***  ** \n * **     **          * * * :***  **** *: * ***   *    ** **  \n         * **    *    **  * :* *   ***  :  ****  **  * ** *** \n           ***        *   * : *   * ** *:  **    ****    *  **\n  **   **       * *     *   :* *     ***:* * ****  *      * **\n  **       * *        *  ** :*    *** **: *  ********       **\n*         *** ** * ** *     : *         :** *  **  **** * **  \n**        *       * * *     :*   **  ***: *  * **    * ***   *\n  *   *  *        *   *   **: *  ***    :      **  *    *** * \n*   *  *      *     * *   * :  *     ***:*** * **     *  *** *\n    * * *           *       : * ** ***  :*  * ******  ** * *  \n  **  *   *          *    **:* * *    * :   *** ***  ***     *\n *         * *  *           :  ** * *  *: *** ** *  *** *    *\n      *   **   **    *      :        ***:*  **  * * * *    ** \n                   *   ** * :* *    *   :*    * ****** ** *   \n----------------------------+-----------+---------------------\n***      ** **  *    ** *   : * * *  * *:**   ****  *   ****  \n    * *    * ** * ** *    **:* *    **  :** ***** * ****   * *\n**  **       * ****   * * **:**      ** :   * * ****  ****  * \n  *       *   **    ***** * :  *   * * *:**** *** **  *       ",
+          "testOut": "872 attendees\n_15% __0% _11%\n_17% _14% _31%\n__5% __2% __5%",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "72\n   *           * *      *   :*: * *\n                   *    *   : :*  *\n   *  *         *  *   *    :*:*** \n*   *      *      *         :*: ***\n          ** *      * *    *:*:*** \n**    * *      *         *  :*:    \n*  *         *        * *   :*: *  \n        *   * * *           : :* **\n*    **       * *    *      :*:* **\n*         ** *              :*: ***\n      *                     :*:* * \n     * ***     ***          :*: ** \n*                   *  *    :*:  **\n    *  *   *       *  *     :*:  **\n            *       *       : : *  \n        *           *       :*:*  *\n *              *        *  :*:** *\n             *       *    * :*: * *\n                     *      :*:    \n    *                       :*:****\n*                      * *  :*:****\n       **        *          :*:   *\n              *  *       *  :*: * *\n*          *           *    :*: * *\n                         *  :*:* * \n      *  ** * *        *    :*:**  \n    *                 *     :*: ***\n*            *  *           :*:****\n*              *   *  *     :*: ***\n            *           *   :*: *  \n               *       *    :*:* **\n                  *         : : * *\n*                    *      : :** *\n   *        **              :*: ***\n----------------------------+-+----\n  *               ** *   *  : : *  \n  *      *    *    *        : :*** \n                         *  :*: * *\n*                  *        : :   *\n *          *     *         : :   *\n                            :*:  **\n     *         *            :*: * *\n *    *      *    *         :*:   *\n                          * : : ***\n       *    *               :*: ** \n *      *                   : :    \n    *                      *:*:*  *\n    *        *      *    ** :*:*  *\n                  *   *     : :  **\n *   *    *       * *  *    : :****\n       *            *       :*:**  \n                  *   *     :*:   *\n                            :*:  * \n    *                *      : :** *\n           *   *     *      :*:    \n  **               *        :*: * *\n  *     **                 *:*:  **\n* *  *                      : :* **\n             *    *         :*: ***\n    *                      *:*: ***\n                  *         : :**  \n        *                   : :**  \n   *           *    *       :*:* **\n  *         *          *    :*:*   \n      * *   *      *    *   : :   *\n----------------------------+-+----\n* * **** *  ** ***** **** **: :* * \n*** *** ******  ********    : :*** \n***  ** ** *** * **** ***  *: :*  *\n**** **** ******* ***** *** :*:****\n***********  **   ** ***** *:*:** *\n** * * * ** ******* ********: :  * ",
+          "testOut": "512 attendees\n_22% __6% _15%\n_15% __3% _11%\n_24% __0% __3%",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "There will be no attendees ({{*}}) on the dividing borders, i.e., it will be clear which [[activityArea]] each attendee belongs to.\n\nThere are always at least 2 attendees",
+      "coverBinaryId": 109655785380101,
+      "stubGenerator": "read height:int\nloop height read ROW:string(1024)\nwrite total, and popularity of each",
+      "inputDescription": "<<Line 1: >> An integer [[height]] of [[eventArea]]\n<<Next  [[height]] Lines: >> A string representing a row of [[eventArea]]",
+      "solutionLanguage": "C#",
+      "outputDescription": "<<Line 1:>> An integer [[totalAttendees]], followed by  {{ attendees}}\n<<Lines 2-4:>> [[percentageAtThisActivity]] in the same ordering/configuration as the input [[eventArea]].\n(Each is separated by a space)"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Here is a rectangle (<var>eventArea</var>) divided (in a wonky &quot;Tic-Tac-Toe-style&quot;) into 9 smaller rectangles (<var>activityArea</var>s).<br><br>It is an aerial-view snapshot of a kids-event, with 9 activities that attendees can do: face-painting, pony-rides, fort-building, magic show, corn-maze, giant bubbles, etc.<br><br>Each attendee is a <const>*</const><br><br>The dividing lines are shown as <const>:</const> or <const>-</const><br>The points where dividing lines intersect are shown as <const>+</const><br><br><br><strong>Your Task:</strong><br><br>We want to know (for this moment in time):<br>‣ the total number of attendees (<var>totalAttendees</var>) and<br>‣ what percentage of attendees were in each <var>activityArea</var>.  These 9 percentages are called <var>percentageAtThisActivity</var>.<br><br><strong>How to display each <var>percentageAtThisActivity</var>:</strong><br>It is rounded to nearest integer<br>It is followed by <const>%</const><br>It is exactly 4 characters long. If necessary, pad the left with one or more underscores (<const>_</const>) to force proper alignment<br><br>Note: The percentages may not add up to 100% after rounding.<br><br><br><strong>Your impact:</strong><br>We'll use this output to help quantify how popular each activity was.  <br>Based on that, some activities may (or may not) be included at next year's event.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1: </strong> An integer <var>height</var> of <var>eventArea</var><br><strong>Next  <var>height</var> Lines: </strong> A string representing a row of <var>eventArea</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> An integer <var>totalAttendees</var>, followed by  <const> attendees</const><br><strong>Lines 2-4:</strong> <var>percentageAtThisActivity</var> in the same ordering/configuration as the input <var>eventArea</var>.<br>(Each is separated by a space)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">There will be no attendees (<const>*</const>) on the dividing borders, i.e., it will be clear which <var>activityArea</var> each attendee belongs to.<br><br>There are always at least 2 attendees</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">10\n  *:   :  \n   :   :  \n---+---+--\n   :*  :  \n   :   :  \n   : * :  \n---+---+--\n   :   :  \n   : * :  \n   :   :  </pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">4 attendees\n_25% __0% __0%\n__0% _50% __0%\n__0% _25% __0%</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 75621368962,
+  "avatar": 94714081045618,
+  "commentCount": 10,
+  "upVotes": 10,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 858467,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1695107767452,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

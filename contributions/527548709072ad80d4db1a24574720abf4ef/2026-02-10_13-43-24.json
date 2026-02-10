@@ -1,0 +1,208 @@
+{
+  "id": 5275,
+  "activeVersion": 10,
+  "score": 6,
+  "votableId": 14601808,
+  "codingamerId": 2642273,
+  "views": 229,
+  "commentableId": 14521885,
+  "title": "Murder in the village!",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Pluk",
+  "publicHandle": "527548709072ad80d4db1a24574720abf4ef",
+  "codingamerHandle": "e2eeaaddf884450620a75c5362f3f2843722462",
+  "lastVersion": {
+    "version": 10,
+    "autocloseTime": 1599249067021,
+    "data": {
+      "title": "Murder in the village!",
+      "topics": [
+        {
+          "id": 98,
+          "handle": "regular-expressions",
+          "labelMap": {
+            "1": "Regular expressions",
+            "2": "Regular expressions"
+          },
+          "puzzleCount": 0,
+          "parentTopicId": 93
+        },
+        {
+          "id": 117,
+          "handle": "logic",
+          "labelMap": {
+            "1": "Logic",
+            "2": "Logic"
+          },
+          "puzzleCount": 6,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import re\nimport sys\n\nN = int(input())\nclaims = {}\n# first, we read all lines and turn them into claims\nfor _ in range(N):\n  line = input()\n  parts =  re.match(r\"(\\w+): I was in the (\\w+)(.*)\", line)\n  name = parts.group(1)\n  place = parts.group(2)\n  others = re.findall(r\"[with|and] (\\w+)\", parts.group(3))\n\n  # we collect all the claims made, knowing that one of the claims will be false\n  claims[place] = claims.get(place, {\"claimed_together\": set(), \"seen\": set(), \"claimed_alone\": set()})\n  if len(others) == 0:\n    claims[place][\"claimed_alone\"].add(name)\n  else:\n    claims[place][\"claimed_together\"].add(name)\n    for other in others:\n      claims[place][\"seen\"].add(other)\n\n# now we find which claim couldn't have been true\nbad_claim = None\nfor place in claims.keys():\n    together = claims[place][\"claimed_together\"]\n    seen = claims[place][\"seen\"]\n    alone = claims[place][\"claimed_alone\"]\n\n    together_okay = together == seen\n    alone_okay = len(alone) == 0 or (len(alone) == 1 and len(seen) == 0)\n\n    if not together_okay or not alone_okay:\n        bad_claim = (together, seen, alone)\n        print(claims[place], together_okay, alone_okay, file=sys.stderr)\n\n# if there is no bad claim, it must have been me\nif not bad_claim:\n    print(\"It was me!\")\nelse:\n    # there was a bad claim, now we just have to figure out which one\n    together, seen, alone = bad_claim\n    if len(together) == 1:\n        # only one person was there, but they claimed to be together?\n        killer = together.pop()\n    elif len(together) == len(seen):\n        # someone claimed to be alone, yet others were there together?\n        killer = alone.pop()\n    elif len(together) != len(seen):\n        # someone claimed to be together, but was not seen by anyone?\n        diff = together.difference(seen)\n        killer = diff.pop()\n    print(f\"{killer} did it!\")",
+      "statement": "There has been a murder in the village!\nAs the local detective, it’s up to you to find out who was the killer.\nYou’ve asked everyone where they were at the time of the crime, and who they were with.\n\nAll innocent people (aka \"villagers\") will tell you the truth, only the killer will lie.\nIf everybody is telling the truth, then that must mean that you were the killer!\nCan you determine who the killer was?\n\nSome clues:\n- The killer can claim to have been anywhere, with anyone.\n- The villagers (non-killers) haven’t seen the killer.\n- The villagers (non-killers) were not in the same location as the killer.\n- If someone claims to have been alone, that also gives you information.\n- If everyone has a good alibi, you were the killer.\n- If the killer claims to be alone, the claim can be proven to be false.\n\n\n<<Example case #1:>>\nInput:\n3\nPaul: I was in the school with Benjamin.\nBenjamin: I was in the workshop with Raul.\nRaul: I was in the workshop with Benjamin.\n\nSolution:\nPaul did it!\n\nExplanation:\nBenjamin and Raul gave each other alibi’s,\nSo it must have been Paul who is lying.\n\n<<Example case #2:>>\nInput:\n2\nPatty: I was in the church with Bill.\nBill: I was in the church, alone.\n\nSolution:\nPatty did it!\n\nExplanation:\nIf neither were the killer, they would both say there were in the church together.\nIf Patty was the killer, Bill would be truthful that he was alone in the church.\nIf Bill was the killer, Patty would be lying that Bill was in the church, but villagers don't lie.\nSo the only valid option is that Patty must have been the killer.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "4\nTom: I was in the church with Bob.\nJane: I was in the garden with Joyce.\nBob: I was in the church with Tom.\nJoyce: I was in the garden with Jane.",
+          "testOut": "It was me!",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "4\nMaggie: I was in the farmhouse with Michael.\nTom: I was in the inn, alone.\nMichael: I was in the farmhouse with Maggie.\nBrook: I was in the inn with Tom and Maggie.",
+          "testOut": "Brook did it!",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "3\nJordan: I was in the greenhouse with Ryan.\nRyan: I was in the greenhouse with Jordan.\nCharles: I was in the greenhouse with Ryan and Jordan.",
+          "testOut": "Charles did it!",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "3\nFrank: I was in the lighthouse with Lottie.\nLottie: I was in the lighthouse with Frank.\nBrick: I was in the lighthouse with Lottie and Frank.",
+          "testOut": "Brick did it!",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "5\nHenry: I was in the garden with Jenny and Penny and Bill.\nBill: I was in the garden with Jenny and Penny and Henry.\nJenny: I was in the garden with Penny and Henry and Bill.\nCharles: I was in the garden with Penny and Henry and Bill and Jenny.\nPenny: I was in the garden with Henry and Bill and Jenny.",
+          "testOut": "Charles did it!",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "4\nGarden: I was in the henry with Love and Peace.\nHenry: I was in the henry with Love and Peace.\nLove: I was in the henry with Garden and Peace.\nPeace: I was in the henry with Garden and Love.",
+          "testOut": "Henry did it!",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "2\nLance: I was in the garden with Lily.\nLily: I was in the garden, alone.",
+          "testOut": "Lance did it!",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "2\nDick: I was in the hospital, alone.\nKaren: I was in the hospital with Dick.",
+          "testOut": "Karen did it!",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "3\nJane: I was in the school, alone.\nLois: I was in the garden, alone.\nBen: I was in the church with Jane and Lois.",
+          "testOut": "Ben did it!",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "3\nRon: I was in the garden, alone.\nMort: I was in the church with Ron and Hans.\nHans: I was in the greenhouse, alone.",
+          "testOut": "Mort did it!",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "3\nTom: I was in the garden with Lily.\nLily: I was in the garden with Tom.\nBob: I was in the garden, alone.",
+          "testOut": "Bob did it!",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "3\nAngela: I was in the garden with Achmad.\nSusanne: I was in the garden, alone.\nAchmad: I was in the garden with Angela.",
+          "testOut": "Susanne did it!",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 7",
+          "isTest": true,
+          "testIn": "4\nBob: I was in the pub with Sue.\nSue: I was in the pub with Bob.\nDylan: I was in the garden, alone.\nHank: I was in the pub with Sue and Bob.",
+          "testOut": "Hank did it!",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "4\nMary: I was in the pub with Nicole.\nNicole: I was in the pub with Mary.\nThomas: I was in the garden, alone.\nFrank: I was in the pub with Nicole and Mary.",
+          "testOut": "Frank did it!",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 8",
+          "isTest": true,
+          "testIn": "4\nAlice: I was in the church with Bob.\nBob: I was in the church with Alice.\nCharlie: I was in the garden, alone.\nDylan: I was in the church, alone.",
+          "testOut": "Dylan did it!",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "4\nJenny: I was in the garden with Carla.\nCarla: I was in the garden with Jenny.\nMax: I was in the garden, alone.\nFrancesco: I was in the church, alone.",
+          "testOut": "Max did it!",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "2 ≤ [[N]] ≤ 10\nThere are no ambiguous cases, there is only one solution to each test case.",
+      "coverBinaryId": 48377729172388,
+      "stubGenerator": "read N:int\nloop N read line:string(1024)\nwrite It was me!",
+      "inputDescription": "<<Line 1:>> An integer [[N]] for the number of suspects in the village.\n<<Next [[N]] lines:>>\n[[Name]]: I was in the [[Location]] with [[Name0]] and [[Name1]] ... and [[NameY]].\nOR\n[[Name]]: I was in the [[Location]], alone.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> [[Name]] did it!\nOR\n<<Line 1:>> It was me!"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">There has been a murder in the village!<br>As the local detective, it&rsquo;s up to you to find out who was the killer.<br>You&rsquo;ve asked everyone where they were at the time of the crime, and who they were with.<br><br>All innocent people (aka &quot;villagers&quot;) will tell you the truth, only the killer will lie.<br>If everybody is telling the truth, then that must mean that you were the killer!<br>Can you determine who the killer was?<br><br>Some clues:<br>- The killer can claim to have been anywhere, with anyone.<br>- The villagers (non-killers) haven&rsquo;t seen the killer.<br>- The villagers (non-killers) were not in the same location as the killer.<br>- If someone claims to have been alone, that also gives you information.<br>- If everyone has a good alibi, you were the killer.<br>- If the killer claims to be alone, the claim can be proven to be false.<br><br><br><strong>Example case #1:</strong><br>Input:<br>3<br>Paul: I was in the school with Benjamin.<br>Benjamin: I was in the workshop with Raul.<br>Raul: I was in the workshop with Benjamin.<br><br>Solution:<br>Paul did it!<br><br>Explanation:<br>Benjamin and Raul gave each other alibi&rsquo;s,<br>So it must have been Paul who is lying.<br><br><strong>Example case #2:</strong><br>Input:<br>2<br>Patty: I was in the church with Bill.<br>Bill: I was in the church, alone.<br><br>Solution:<br>Patty did it!<br><br>Explanation:<br>If neither were the killer, they would both say there were in the church together.<br>If Patty was the killer, Bill would be truthful that he was alone in the church.<br>If Bill was the killer, Patty would be lying that Bill was in the church, but villagers don't lie.<br>So the only valid option is that Patty must have been the killer.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var> for the number of suspects in the village.<br><strong>Next <var>N</var> lines:</strong><br><var>Name</var>: I was in the <var>Location</var> with <var>Name0</var> and <var>Name1</var> ... and <var>NameY</var>.<br>OR<br><var>Name</var>: I was in the <var>Location</var>, alone.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> <var>Name</var> did it!<br>OR<br><strong>Line 1:</strong> It was me!</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &le; <var>N</var> &le; 10<br>There are no ambiguous cases, there is only one solution to each test case.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4\nTom: I was in the church with Bob.\nJane: I was in the garden with Joyce.\nBob: I was in the church with Tom.\nJoyce: I was in the garden with Jane.</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">It was me!</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 174017051240,
+  "avatar": 18908025938362,
+  "commentCount": 23,
+  "upVotes": 6,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 482687,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1596713951983,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

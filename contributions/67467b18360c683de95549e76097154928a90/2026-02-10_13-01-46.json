@@ -1,0 +1,418 @@
+{
+  "id": 67467,
+  "activeVersion": 84,
+  "score": 19,
+  "votableId": 30598871,
+  "codingamerId": 4806550,
+  "views": 384,
+  "commentableId": 30461643,
+  "title": "Function notation",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Rafarafa",
+  "publicHandle": "67467b18360c683de95549e76097154928a90",
+  "codingamerHandle": "68977779383d7e4ea558c7a5446487f40556084",
+  "lastVersion": {
+    "version": 84,
+    "autocloseTime": 1743548526843,
+    "freezeTime": 1741561326843,
+    "data": {
+      "title": "Function notation",
+      "topics": [
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 36,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "id": 112,
+          "handle": "string-manipulation",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "String manipulation",
+            "2": "String manipulation"
+          },
+          "puzzleCount": 55,
+          "parentTopicId": 93
+        },
+        {
+          "id": 71,
+          "handle": "recursion",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Récursion",
+            "2": "Recursion"
+          },
+          "pageTitle": "Recursion: exercises and theory",
+          "puzzleCount": 38,
+          "parentTopicId": 41,
+          "contentDetailsId": 77
+        }
+      ],
+      "solution": "-- The rules are no different from the usual arithmetic operations\n-- where (+) becomes function addition, and (*) becomes composition.\n-- Priority: Factor (Var | Par) >> Term (App) >> Expr (Add)\n\nimport Text.Parsec\nimport Text.Parsec.String (Parser)\n\ndata Expr = Add Expr Expr \n          | App Expr Expr \n          | Var Char \n          | Par Expr \n          deriving Show\n\nsymbol :: String -> Parser String\nsymbol s = spaces *> string s <* spaces\n\nvar :: Parser Expr\nvar = Var <$> letter\n\nparen :: Parser Expr\nparen = Par <$> between (symbol \"(\") (symbol \")\") expr\n\nfactor :: Parser Expr\nfactor = var <|> paren\n\nterm :: Parser Expr\nterm = chainl1 factor $ try (symbol \".\") >> return App\n\nexpr :: Parser Expr\nexpr = chainl1 term $ try (symbol \"+\") >> return Add\n\nmainParser :: Parser Expr\nmainParser = expr <* eof\n\neval :: Expr -> String\neval (Var c) = [c]\neval (Par e) = \"(\" ++ eval e ++ \")\"\neval (Add e1 e2) = eval e1 ++ \" + \" ++ eval e2\neval (App e1 e2) = eval e2 ++ \" |> \" ++ eval e1\n\nmain :: IO ()\nmain = do\n  input <- getLine\n  case parse mainParser \"\" input of\n    Left  err  -> print err\n    Right expr -> putStrLn (eval expr)",
+      "statement": "Given a [[function]] expressed exclusively using function compositions and function sums, rewrite it by replacing the composition operator {{.}} with the reverse composition operator {{|>}}.\n\nThe reverse function composition operator behaves, unsurprisingly, by reversing the order of function application, that is: \n`\n(f |> g)(x) = g(f(x))\n`\n<<Examples:>>\n`\nf . g         --   g |> f\nf + g         --   f + g\nf . g + h     --   g |> f + h\n(f + h) . g   --   g |> (f + h)\nf . (g + h)   --   (g + h) |> f\ng + f . h     --   g + h |> f\n`\n<<Notes:>> \n<<(1)>> Function names are only one lowercase English letter.\n<<(2)>> The {{+}} and {{.}} operators are given between spaces for easier visualization.\n<<(3)>> As shown in the examples, parentheses are relevant.\n<<(4)>> The expressions are well formed. They don't contain unnecessary parentheses like f . (( g + h )) or consecutive {{+}} signs etc. \n<<(5)>> For debugging, notice how the transformation from {{.}} to {{|>}} is symmetric, and that the same logic, from {{|>}} to {{.}} should give back the original expression.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "f . g",
+          "testOut": "g |> f",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "a . b",
+          "testOut": "b |> a",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "f . g . f . h",
+          "testOut": "h |> f |> g |> f",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "x . y . z",
+          "testOut": "z |> y |> x",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "f + g",
+          "testOut": "f + g",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "a + b + c",
+          "testOut": "a + b + c",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "f . (g + h)",
+          "testOut": "(g + h) |> f",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "f . (g + h + i + j)",
+          "testOut": "(g + h + i + j) |> f",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "f . (g . h + h)",
+          "testOut": "(h |> g + h) |> f",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "f . (a + g . h + b)",
+          "testOut": "(a + h |> g + b) |> f",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "f . h . (y + z)",
+          "testOut": "(y + z) |> h |> f",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "f . h . g . (y + z + w)",
+          "testOut": "(y + z + w) |> g |> h |> f",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 7",
+          "isTest": true,
+          "testIn": "f . (g . (h + i) + h)",
+          "testOut": "((h + i) |> g + h) |> f",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "f . (g . (h + i + j) + h + z)",
+          "testOut": "((h + i + j) |> g + h + z) |> f",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 8",
+          "isTest": true,
+          "testIn": "(f + g) . h",
+          "testOut": "h |> (f + g)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "(f + g + f) . h",
+          "testOut": "h |> (f + g + f)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 9",
+          "isTest": true,
+          "testIn": "(f + g) . (h + i)",
+          "testOut": "(h + i) |> (f + g)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "(f + g + a) . (b + h + i)",
+          "testOut": "(b + h + i) |> (f + g + a)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 10",
+          "isTest": true,
+          "testIn": "(f + g) . (h + i) . (j + k)",
+          "testOut": "(j + k) |> (h + i) |> (f + g)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "(j + k) . (h + i) . (f + g)",
+          "testOut": "(f + g) |> (h + i) |> (j + k)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 11",
+          "isTest": true,
+          "testIn": "((a + b) . d + e) . f",
+          "testOut": "f |> (d |> (a + b) + e)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "(g + (a + b + c) . d + e) . f",
+          "testOut": "f |> (g + d |> (a + b + c) + e)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 12",
+          "isTest": true,
+          "testIn": "(f + g) . h + (a + b) . c",
+          "testOut": "h |> (f + g) + c |> (a + b)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "(f + g) . h + (a + b + z) . c",
+          "testOut": "h |> (f + g) + c |> (a + b + z)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 13",
+          "isTest": true,
+          "testIn": "g . (a + b + c) . f",
+          "testOut": "f |> (a + b + c) |> g",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "g . (c + b + a) . f",
+          "testOut": "f |> (c + b + a) |> g",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 14",
+          "isTest": true,
+          "testIn": "f . (a + g . (b . c + d) + e) . h",
+          "testOut": "h |> (a + (c |> b + d) |> g + e) |> f",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 14",
+          "isTest": false,
+          "testIn": "f . (a + g . z + e) . h",
+          "testOut": "h |> (a + z |> g + e) |> f",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 15",
+          "isTest": true,
+          "testIn": "(h . (a + b) + h . a + b) . (b + y + e)",
+          "testOut": "(b + y + e) |> ((a + b) |> h + a |> h + b)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 15",
+          "isTest": false,
+          "testIn": "a + b . c . d . (e + f . (g + h))",
+          "testOut": "a + (e + (g + h) |> f) |> d |> c |> b",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 16",
+          "isTest": true,
+          "testIn": "a . (b . (c . d + e) . f + g)",
+          "testOut": "(f |> (d |> c + e) |> b + g) |> a",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 16",
+          "isTest": false,
+          "testIn": "g + b . (c . d + e) . f",
+          "testOut": "g + f |> (d |> c + e) |> b",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 17",
+          "isTest": true,
+          "testIn": "a . a . a . (a + a)",
+          "testOut": "(a + a) |> a |> a |> a",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 17",
+          "isTest": false,
+          "testIn": "b . b . (b + b)",
+          "testOut": "(b + b) |> b |> b",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "Function names are only one lowercase English letter.\n{{0}} < length [[function]] < {{256}}",
+      "coverBinaryId": 137919081014435,
+      "stubGenerator": "read function:string(256)\n\nwrite haskell_to_OCaml",
+      "inputDescription": "<<Line 1:>> A string [[function]] representing a function expressed exclusively using function compositions and function sums.",
+      "solutionLanguage": "Haskell",
+      "outputDescription": "One line containing the original function rewritten with the {{|>}} operator."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Given a <var>function</var> expressed exclusively using function compositions and function sums, rewrite it by replacing the composition operator <const>.</const> with the reverse composition operator <const>|&gt;</const>.<br><br>The reverse function composition operator behaves, unsurprisingly, by reversing the order of function application, that is: <br><pre style=\"font-family: monospace\"><br>(f |&gt; g)(x) = g(f(x))<br></pre><br><strong>Examples:</strong><br><pre style=\"font-family: monospace\"><br>f . g         --   g |&gt; f<br>f + g         --   f + g<br>f . g + h     --   g |&gt; f + h<br>(f + h) . g   --   g |&gt; (f + h)<br>f . (g + h)   --   (g + h) |&gt; f<br>g + f . h     --   g + h |&gt; f<br></pre><br><strong>Notes:</strong> <br><strong>(1)</strong> Function names are only one lowercase English letter.<br><strong>(2)</strong> The <const>+</const> and <const>.</const> operators are given between spaces for easier visualization.<br><strong>(3)</strong> As shown in the examples, parentheses are relevant.<br><strong>(4)</strong> The expressions are well formed. They don't contain unnecessary parentheses like f . (( g + h )) or consecutive <const>+</const> signs etc. <br><strong>(5)</strong> For debugging, notice how the transformation from <const>.</const> to <const>|&gt;</const> is symmetric, and that the same logic, from <const>|&gt;</const> to <const>.</const> should give back the original expression.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> A string <var>function</var> representing a function expressed exclusively using function compositions and function sums.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">One line containing the original function rewritten with the <const>|&gt;</const> operator.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Function names are only one lowercase English letter.<br><const>0</const> &lt; length <var>function</var> &lt; <const>256</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">f . g</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">g |&gt; f</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 29116972713,
+  "avatar": 80946308795008,
+  "commentCount": 26,
+  "upVotes": 19,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1093338,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1694757937001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1695198802864,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1697796337001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1699899914234,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1740917137000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1740956526843,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1741611532195,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

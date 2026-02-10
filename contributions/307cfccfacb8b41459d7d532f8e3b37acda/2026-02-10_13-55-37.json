@@ -1,0 +1,167 @@
+{
+  "id": 307,
+  "activeVersion": 4,
+  "score": 5,
+  "votableId": 2393816,
+  "codingamerId": 808454,
+  "views": 212,
+  "commentableId": 2342307,
+  "title": "Ancestors & Descendants",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": ".EagleDawn.",
+  "publicHandle": "307cfccfacb8b41459d7d532f8e3b37acda",
+  "codingamerHandle": "9a9d07a73f19dda95a477d701c50a2ca454808",
+  "lastVersion": {
+    "version": 4,
+    "data": {
+      "title": "Ancestors & Descendants",
+      "topics": [
+        {
+          "id": 178,
+          "handle": "trees",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Trees",
+            "2": "Trees"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        },
+        {
+          "id": 99,
+          "handle": "compression",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Compression",
+            "2": "Compression"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import java.util.*;\n\nclass Solution {\n\n  private static int latestCount = 0;\n  private static Person latestPerson;\n  private static final String DELIMITER_IN = \".\";\n  private static final String DELIMITER_OUT = \" > \";\n  private static final List<Person> FAMILY = new ArrayList<>();\n\n  public static void main(String args[]) {\n    Scanner in = new Scanner(System.in);\n\n    int count = in.nextInt();\n    in.nextLine();\n\n    for (int i = 0; i < count; i++) {\n      String line = in.nextLine();\n\n      parseLine(line);\n    }\n\n    FamilyPrinter.print(FAMILY);\n  }\n\n  private static void parseLine(String line) {\n    Person person;\n    int count = getMatchCount(line, DELIMITER_IN);\n\n    if (count == 0) {\n      person = new Person(getPersonName(line));\n      FAMILY.add(person);\n    } else if (count > latestCount) {\n      person = new Person(getPersonName(line));\n      latestPerson.addChild(person);\n    } else if (count == latestCount) {\n      Person parent = latestPerson.parent;\n      person = new Person(getPersonName(line));\n      parent.addChild(person);\n    } else {\n      Person parent = getParentToGeneration(latestPerson, count);\n      person = new Person(getPersonName(line));\n      parent.addChild(person);\n    }\n\n    latestCount = count;\n    latestPerson = person;\n  }\n\n  private static Person getParentToGeneration(Person person, int generationCount) {\n    Person parent = person.parent;\n    List<Person> parents = new ArrayList<>();\n\n    while (parent != null) {\n      parents.add(parent);\n      parent = parent.parent;\n    }\n\n    return parents.isEmpty() ? person : parents.get(parents.size() - generationCount);\n  }\n\n  private static int getMatchCount(String text, String sub) {\n    int count = 0;\n    int index = text.indexOf(sub);\n\n    while (index != -1) {\n      index = text.indexOf(sub, index + 1);\n      count++;\n    }\n\n    return count;\n  }\n\n  private static String getPersonName(String line) {\n    return line.substring(line.lastIndexOf(DELIMITER_IN) + 1, line.length());\n  }\n\n  static class FamilyPrinter {\n\n    static void print(List<Person> family) {\n      StringBuilder builder = new StringBuilder();\n\n      family.stream().forEach((person) -> {\n        getPersonGrandChildren(person).stream().forEach(grandChild -> builder.append(getPersonFullName(grandChild)).append(System.lineSeparator()));\n      });\n\n      System.out.print(builder.toString());\n    }\n\n    static List<Person> getPersonGrandChildren(Person person) {\n      List<Person> grandChildren = new ArrayList<>();\n\n      if (person.children != null) {\n        person.children.stream().forEach((child) -> {\n          grandChildren.addAll(getPersonGrandChildren(child));\n        });\n      } else {\n        grandChildren.add(person);\n      }\n\n      return grandChildren;\n    }\n\n    static String getPersonFullName(Person person) {\n      StringBuilder builder = new StringBuilder();\n\n      if (person.parent != null) {\n        builder.append(getPersonFullName(person.parent)).append(DELIMITER_OUT);\n      }\n\n      builder.append(person.name);\n\n      return builder.toString();\n    }\n  }\n\n  static class Person {\n\n    String name;\n    Person parent;\n    List<Person> children;\n\n    public Person(String name) {\n      this.name = name;\n    }\n\n    public void addChild(Person child) {\n      if (children == null) {\n        children = new ArrayList<>();\n      }\n\n      children.add(child);\n      child.parent = this;\n    }\n  }\n}",
+      "statement": "Print the names of a family's descendants.\n\nAn individual in the family is represented by a line of input. The parent/child relationship of that individual is determined by the number of dots preceding his or her name.\n\nEach dot represents a previously mentioned ancestor in the family tree. So if a name is preceded by two dots, then the first dot represents the most recently mentioned name with zero dots before it, and the second dot represents the most recently mentioned name with a single dot before it.\n\nAn example set of input lines to represent a family would be:\n\nJade\n.Andrew\n..Rose\n.Mark\nHeidi\n\nThe explanation for this input is:\n\nJade is a grandfather.\nAndrew is Jade's son.\nRose is Andrew's daughter.\nMark is Jade's son.\nHeidi has no children.\n\nThe correct output lines to represent this family's descendants would be:\n\nJade > Andrew > Rose\nJade > Mark\nHeidi",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "8\na\n.b\n..c\nd\n.e\n..f\n.g\nh",
+          "testOut": "a > b > c\nd > e > f\nd > g\nh",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "8\nh\nd\na\n.b\n..c\n.e\n..f\n.g",
+          "testOut": "h\nd\na > b > c\na > e > f\na > g",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "19\na\n.a1\n..a11\n...a111\n...a112\n..a12\n.a2\nb\n.b1\n..b11\n.b2\n..b21\n...b211\nc\n.c1\n..c11\n...c111\n....c1111\n.c2",
+          "testOut": "a > a1 > a11 > a111\na > a1 > a11 > a112\na > a1 > a12\na > a2\nb > b1 > b11\nb > b2 > b21 > b211\nc > c1 > c11 > c111 > c1111\nc > c2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "19\na\n.a1\n..a11\n...a111\n....a1111\n..a12\n.a2\nb\n.b1\n..b11\n...b111\n.b2\n..b21\nc\n.c1\n..c11\n.c2\n..c21\n...c11",
+          "testOut": "a > a1 > a11 > a111 > a1111\na > a1 > a12\na > a2\nb > b1 > b11 > b111\nb > b2 > b21\nc > c1 > c11\nc > c2 > c21 > c11",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "28\na\n.a1\n..a11\n..a12\n...a121\n..a13\n...a131\n....a1311\n.....a13111\n......a131111\n...a132\n..a14\n..a15\n.a2\n.a3\n.a4\nb\n.b1\n.b2\nc\n.c1\n..c11\n...c111\n....c1111\n..c12\n...c121\n....c1211\n...c122",
+          "testOut": "a > a1 > a11\na > a1 > a12 > a121\na > a1 > a13 > a131 > a1311 > a13111 > a131111\na > a1 > a13 > a132\na > a1 > a14\na > a1 > a15\na > a2\na > a3\na > a4\nb > b1\nb > b2\nc > c1 > c11 > c111 > c1111\nc > c1 > c12 > c121 > c1211\nc > c1 > c12 > c122",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "28\na\n.a1\n..a11\n..a12\n...a121\n..a14\n..a15\n.a2\n.a3\n.a4\n..a13\n...a131\n....a1311\n.....a13111\n......a131111\n...a132\nc\n.c1\n..c11\n...c111\n....c1111\n..c12\n...c121\n....c1211\n...c122\nb\n.b1\n..b2",
+          "testOut": "a > a1 > a11\na > a1 > a12 > a121\na > a1 > a14\na > a1 > a15\na > a2\na > a3\na > a4 > a13 > a131 > a1311 > a13111 > a131111\na > a4 > a13 > a132\nc > c1 > c11 > c111 > c1111\nc > c1 > c12 > c121 > c1211\nc > c1 > c12 > c122\nb > b1 > b2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "22\nJohn\n.Sam\n..Randy\n..George\n...Alfred\n.Justin\n.Kelly\n..Jack\n...Lily\n....Susan\n.Jade\nRobert\n.Luke\nJonathan\nPaul\nKen\n.Flare\n..Kelly\n...Jessica\n....Martin\n.....Penelope\n..David",
+          "testOut": "John > Sam > Randy\nJohn > Sam > George > Alfred\nJohn > Justin\nJohn > Kelly > Jack > Lily > Susan\nJohn > Jade\nRobert > Luke\nJonathan\nPaul\nKen > Flare > Kelly > Jessica > Martin > Penelope\nKen > Flare > David",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "22\nJohn\n.Sam\n..Randy\n..George\n...Alfred\n....Susan\n.Justin\n.Jade\n.Kelly\n..Jack\n...Lily\nRobert\nJonathan\n.Luke\nKen\nPaul\n.Flare\n..David\n..Kelly\n...Jessica\n....Martin\n.....Penelope",
+          "testOut": "John > Sam > Randy\nJohn > Sam > George > Alfred > Susan\nJohn > Justin\nJohn > Jade\nJohn > Kelly > Jack > Lily\nRobert\nJonathan > Luke\nKen\nPaul > Flare > David\nPaul > Flare > Kelly > Jessica > Martin > Penelope",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "26\na\n.b\n..c\n...d\n....e\n.....f\n......g\n.......h\n........i\n.........j\n..........k\n...........l\n............m\n............n\n...........o\n..........p\n.........q\n........r\n.......s\n......t\n.....u\n....v\n...w\n..x\n.y\nz",
+          "testOut": "a > b > c > d > e > f > g > h > i > j > k > l > m\na > b > c > d > e > f > g > h > i > j > k > l > n\na > b > c > d > e > f > g > h > i > j > k > o\na > b > c > d > e > f > g > h > i > j > p\na > b > c > d > e > f > g > h > i > q\na > b > c > d > e > f > g > h > r\na > b > c > d > e > f > g > s\na > b > c > d > e > f > t\na > b > c > d > e > u\na > b > c > d > v\na > b > c > w\na > b > x\na > y\nz",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "26\na\n.b\n.c\n..d\n..e\n...f\n...g\n....h\n....i\n.....j\n.....k\n......l\n......m\n......n\n.....o\n.....p\n.....q\n....r\n....s\n...t\n...u\n..v\n..w\n.x\n.y\nz",
+          "testOut": "a > b\na > c > d\na > c > e > f\na > c > e > g > h\na > c > e > g > i > j\na > c > e > g > i > k > l\na > c > e > g > i > k > m\na > c > e > g > i > k > n\na > c > e > g > i > o\na > c > e > g > i > p\na > c > e > g > i > q\na > c > e > g > r\na > c > e > g > s\na > c > e > t\na > c > e > u\na > c > v\na > c > w\na > x\na > y\nz",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "5\nJade\n.Andrew\n..Rose\n.Mark\nHeidi",
+          "testOut": "Jade > Andrew > Rose\nJade > Mark\nHeidi",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "5\nHeidi\n.Andrew\n..Rose\nJade\n.Mark",
+          "testOut": "Heidi > Andrew > Rose\nJade > Mark",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "stubGenerator": "read count:int\n\nloop count read line:string(1024)\n\nwrite answer",
+      "inputDescription": "<<Line 1:>> An integer [[N]] for the number of family members.\n<<Next [[N]] lines:>> Each line represents one family member.",
+      "solutionLanguage": "Java",
+      "outputDescription": "Output the family descendants full names each on a separate line."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Print the names of a family's descendants.<br><br>An individual in the family is represented by a line of input. The parent/child relationship of that individual is determined by the number of dots preceding his or her name.<br><br>Each dot represents a previously mentioned ancestor in the family tree. So if a name is preceded by two dots, then the first dot represents the most recently mentioned name with zero dots before it, and the second dot represents the most recently mentioned name with a single dot before it.<br><br>An example set of input lines to represent a family would be:<br><br>Jade<br>.Andrew<br>..Rose<br>.Mark<br>Heidi<br><br>The explanation for this input is:<br><br>Jade is a grandfather.<br>Andrew is Jade's son.<br>Rose is Andrew's daughter.<br>Mark is Jade's son.<br>Heidi has no children.<br><br>The correct output lines to represent this family's descendants would be:<br><br>Jade &gt; Andrew &gt; Rose<br>Jade &gt; Mark<br>Heidi</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var> for the number of family members.<br><strong>Next <var>N</var> lines:</strong> Each line represents one family member.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Output the family descendants full names each on a separate line.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">8\na\n.b\n..c\nd\n.e\n..f\n.g\nh</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">a &gt; b &gt; c\nd &gt; e &gt; f\nd &gt; g\nh</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 305516189131,
+  "avatar": 19902303477203,
+  "commentCount": 7,
+  "upVotes": 6,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 502,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

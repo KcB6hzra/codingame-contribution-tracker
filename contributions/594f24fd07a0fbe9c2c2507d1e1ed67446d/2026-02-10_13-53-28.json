@@ -1,0 +1,145 @@
+{
+  "id": 594,
+  "activeVersion": 9,
+  "score": 5,
+  "votableId": 4353257,
+  "codingamerId": 1426548,
+  "views": 237,
+  "commentableId": 4297024,
+  "title": "Wall Street",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "MasterJos",
+  "publicHandle": "594f24fd07a0fbe9c2c2507d1e1ed67446d",
+  "codingamerHandle": "179819252a006ff19535ece32709b3518456241",
+  "lastVersion": {
+    "version": 9,
+    "data": {
+      "title": "Wall Street",
+      "topics": [],
+      "solution": "#include <iostream>\n#include <string>\n#include <vector>\n#include <algorithm>\n#include <map>\nusing namespace std;\n\n/**\n * Auto-generated code below aims at helping you parse\n * the standard input according to the problem statement.\n **/\n \nclass Trade\n{\n    public:\n    string symbol;\n    int qty;\n    float price;\n    Trade()\n    {\n        symbol=\"\";\n        qty=0;\n    };\n};\n\nclass Order\n{\n    public:\n    int seqNo;\n    int qty;\n    float price;\n};\n\nclass Book\n{\n    public:\n    int lastSeqNo;\n    string symbol;\n    vector<Order> buy;\n    vector<Order> sell;\n    Book()\n    {\n        lastSeqNo=0;\n        symbol=\"\";\n    };\n    Trade addOrder(string verb,int qty, float price);\n};\nbool compareSell (Order &i,Order &j) { if (i.price == j.price ) return (i.seqNo<j.seqNo); else return (i.price <=j.price); }\nbool compareBuy  (Order &i,Order &j) { if (i.price == j.price ) return (i.seqNo<j.seqNo); else return (i.price >=j.price); }\nTrade Book::addOrder(string verb,int qty, float price)\n{\n    Trade res;\n    vector<Order>::iterator it;\n    if(verb==\"SELL\")\n    {\n        if (!buy.empty() && buy[0].price>= price)\n        {\n            res.symbol=symbol;\n            it = buy.begin();\n            res.qty=min(it->qty,qty);\n            it->qty-=res.qty;\n            res.price=it->price;\n            if (it->qty==0)\n                buy.erase(buy.begin());\n        }\n        else\n        {\n            Order order;\n            order.qty=qty;\n            order.price=price;\n            order.seqNo=lastSeqNo;\n            lastSeqNo++;\n            sell.push_back(order);\n            sort(sell.begin(),sell.end(), compareSell);\n        }\n        \n    }\n    else\n    {\n        if (!sell.empty() && sell[0].price<= price)\n        {\n            res.symbol=symbol;\n            it = sell.begin();\n            res.qty=min(it->qty,qty);\n            it->qty-=res.qty;\n            res.price=it->price;\n            if (it->qty==0)\n                sell.erase(sell.begin());\n        }\n        else\n        {\n            Order order;\n            order.qty=qty;\n            order.price=price;\n            order.seqNo=lastSeqNo;\n            lastSeqNo++;\n            buy.push_back(order);\n            sort(buy.begin(),buy.end(), compareBuy);\n        }\n        \n    }\n    return res;\n}\nvoid cerrBook(Book b)\n{\n    cerr<<b.symbol<<endl;\n    cerr<<\"BUY\"<<endl;\n    for (int i=0;i<b.buy.size();i++)\n        cerr<<b.buy[i].seqNo<<\":\"<<b.buy[i].qty<<\"@\"<<b.buy[i].price<<endl;\n    cerr<<\"SELL\"<<endl;\n    for (int i=0;i<b.sell.size();i++)\n        cerr<<b.sell[i].seqNo<<\":\"<<b.sell[i].qty<<\"@\"<<b.sell[i].price<<endl;\n}\n    \n    \n\nint main()\n{\n    map<string,Book> books;\n    map<string,Book>::iterator it;\n    int N;\n    cin >> N; cin.ignore();\n    int nbTrades=0;\n    cout.setf(cout.fixed);\n    cout.precision(2);\n    for (int i = 0; i < N; i++) {\n        string symbol;\n        string verb;\n        int qty;\n        float price;\n        cin >> symbol >> verb >> qty >> price; cin.ignore();\n        \n        if ( books.find(symbol)==books.end())\n        {\n            books[symbol].symbol=symbol;\n        }        \n        Trade t;\n        do\n        {\n            t= books[symbol].addOrder(verb,qty,price);\n            if (t.qty>0)\n            {\n                cout<<t.symbol<<\" \"<<t.qty<<\" \"<<t.price<<endl;\n                nbTrades++;\n                qty-=t.qty;\n            }\n//            cerrBook(books[symbol]);\n        } while (t.qty>0 && qty);\n    }\n\n\n    if (!nbTrades)\n        cout << \"NO TRADE\" << endl;\n}",
+      "statement": "On Wall Street people {{buy}} and people {{sell}}.\nWhen a buyer and a seller's prices match a trade is created.\nWhen there is no match the order is <<“put in the book”>>.\n\nSome special cases that must be considered:\n- If the buyer's price is higher than the seller's price: the price used is the one already in the system.\n- If there are more than one order in the system at the same price: a first in first out approach is taken.\n- A trade cannot be concluded between orders that aren't on top of the book: the best price is always traded first. For a {{buy}} order the best price is the highest; for a {{sell}} order the best price is the lowest.\n- A trade can only occur between orders on the same stock symbol.\n- If there are remaining quantities after a trade, we try to trade with the next order in the book. If we can't, we put an order <<“in the book”>> for the untraded quantity.\n\nAn order consist of a [[symbol]] that represents the stock to trade, a [[verb]] that indicates whether it's a {{BUY}} or a {{SELL}}, a quantity [[qty]] and a [[price]].",
+      "testCases": [
+        {
+          "title": "Simple Trade",
+          "isTest": true,
+          "testIn": "2\nAAA BUY 1 10.00\nAAA SELL 1 10.00",
+          "testOut": "AAA 1 10.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Trade",
+          "isTest": false,
+          "testIn": "2\nABC SELL 1 11.00\nABC BUY 1 11.00",
+          "testOut": "ABC 1 11.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two Symbols",
+          "isTest": true,
+          "testIn": "3\nAAA BUY 1 10.00\nBBB SELL 1 10.00\nBBB BUY 1 10.00",
+          "testOut": "BBB 1 10.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Two Symbols",
+          "isTest": false,
+          "testIn": "4\nABC SELL 1 11.00\nDEF BUY 1 12.00\nDEF SELL 1 14.00\nABC BUY 1 11.0",
+          "testOut": "ABC 1 11.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No Trade",
+          "isTest": true,
+          "testIn": "2\nABC BUY 1 9.00\nABC SELL 1 10.0",
+          "testOut": "NO TRADE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "No Trade",
+          "isTest": false,
+          "testIn": "2\nDEF SELL 1 10.00\nDEF BUY 5 9.00",
+          "testOut": "NO TRADE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple Trades",
+          "isTest": true,
+          "testIn": "11\nABC BUY 10 23.50\nBBC BUY 10 13.50\nABC SELL 8 23.50\nABC SELL 5 23.50\nBBC BUY 8 13.50\nBBC BUY 12 13.50\nABC BUY 10 23.50\nABC SELL 10 23.45\nABC BUY 3 23.45\nBBC BUY 10 13.50\nBBC SELL 100 13.45",
+          "testOut": "ABC 8 23.50\nABC 2 23.50\nABC 3 23.50\nABC 7 23.50\nABC 3 23.45\nBBC 10 13.50\nBBC 8 13.50\nBBC 12 13.50\nBBC 10 13.50",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple Trades",
+          "isTest": false,
+          "testIn": "22\nABC BUY 10 23.50\nBBC BUY 10 13.50\nABC SELL 8 23.50\nABC SELL 5 23.50\nBBC BUY 8 13.50\nBBC BUY 12 13.50\nABC BUY 10 23.50\nABC BUY 10 23.45\nABC SELL 10 23.45\nBBC BUY 10 13.50\nBBC SELL 100 13.45\nABC BUY 10 23.50\nBBC BUY 10 13.50\nABC SELL 8 23.50\nABC SELL 5 23.50\nBBC BUY 8 13.50\nBBC BUY 12 13.50\nABC BUY 10 23.50\nABC BUY 10 23.45\nABC SELL 10 23.45\nBBC BUY 10 13.50\nBBC BUY 100 13.45",
+          "testOut": "ABC 8 23.50\nABC 2 23.50\nABC 3 23.50\nABC 7 23.50\nABC 3 23.45\nBBC 10 13.50\nBBC 8 13.50\nBBC 12 13.50\nBBC 10 13.50\nBBC 10 13.45\nABC 8 23.50\nABC 2 23.50\nBBC 8 13.45\nBBC 12 13.45\nABC 3 23.50\nABC 7 23.50\nABC 3 23.45\nBBC 10 13.45\nBBC 20 13.45",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Busy Day",
+          "isTest": true,
+          "testIn": "100\nABC SELL 11 11.00\nAAA BUY 10 12.00\nABC BUY 10 11.50\nDFE SELL 10 11.25\nDFE BUY 1 10.00\nAAB SELL 8 12.00\nABC BUY 8 11.25\nAAA SELL 10 11.00\nAAB SELL 1 10.00\nDFE SELL 11 11.00\nDCE SELL 9 11.50\nDEF BUY 10 11.25\nDFE SELL 1 12.00\nAAB BUY 8 11.00\nABC BUY 8 11.25\nAAB BUY 9 11.50\nAAB BUY 12 11.25\nAAB BUY 12 11.00\nAAB BUY 9 10.00\nDEF SELL 8 11.25\nDEF BUY 1 11.00\nDCE SELL 1 11.25\nAAA BUY 10 11.25\nDFE SELL 1 11.25\nDCE BUY 1 11.75\nDFE BUY 11 11.50\nDEF SELL 9 12.00\nDEF BUY 1 11.50\nABC BUY 8 11.00\nDCE BUY 12 11.50\nABC SELL 9 11.75\nDCE SELL 12 11.50\nDFE SELL 10 11.50\nDCE BUY 9 12.00\nDEF SELL 12 11.75\nDCE BUY 9 11.75\nAAA BUY 12 11.50\nAAB BUY 12 11.75\nABC BUY 12 10.00\nDCE SELL 9 11.25\nDEF BUY 11 12.00\nDFE SELL 8 11.00\nDFE BUY 11 11.25\nAAB SELL 8 12.00\nDFE SELL 10 12.00\nDFE SELL 12 11.75\nABC BUY 12 12.00\nABC SELL 10 11.25\nDEF BUY 10 11.50\nAAB BUY 9 11.50\nABC SELL 11 11.25\nDFE BUY 8 12.00\nAAA BUY 11 11.75\nAAA SELL 9 11.50\nDCE BUY 9 11.25\nDCE BUY 12 11.25\nDCE SELL 1 11.75\nDEF SELL 11 11.25\nAAB SELL 8 10.00\nDCE BUY 11 11.50\nAAB SELL 1 11.25\nDFE BUY 8 11.75\nABC SELL 11 12.00\nDCE BUY 1 11.00\nAAA BUY 8 10.00\nDFE BUY 12 10.00\nAAB BUY 8 10.00\nAAA BUY 8 10.00\nDFE SELL 12 11.25\nDCE SELL 12 11.25\nDEF SELL 11 11.50\nDCE SELL 9 11.75\nAAB SELL 11 12.00\nABC BUY 1 11.00\nAAA BUY 8 11.25\nAAA BUY 8 11.75\nAAA SELL 10 10.00\nDEF SELL 1 11.00\nAAB SELL 11 11.75\nDCE BUY 8 11.25\nAAA SELL 9 10.00\nABC SELL 10 11.00\nABC SELL 8 11.50\nAAA SELL 12 11.25\nDFE BUY 8 12.00\nDCE BUY 11 10.00\nDEF BUY 10 11.25\nDEF BUY 1 11.75\nABC BUY 9 11.00\nDCE BUY 8 11.75\nDEF BUY 8 11.25\nDFE SELL 9 12.00\nDFE BUY 10 10.00\nDEF SELL 12 12.00\nDFE BUY 10 10.00\nABC SELL 11 12.00\nABC BUY 10 12.00\nAAB BUY 8 11.00\nDEF BUY 11 11.75\nAAA BUY 10 11.25",
+          "testOut": "ABC 10 11.00\nABC 1 11.00\nAAA 10 12.00\nAAB 1 10.00\nDEF 8 11.25\nDCE 1 11.25\nDFE 11 11.00\nDCE 9 11.50\nDCE 3 11.50\nDCE 9 11.50\nDCE 9 11.75\nDEF 11 11.75\nDFE 8 11.00\nDFE 3 11.25\nABC 9 11.75\nABC 3 12.00\nABC 7 11.25\nABC 8 11.25\nDFE 7 11.25\nDFE 1 11.25\nAAA 9 11.75\nDEF 1 11.50\nDEF 10 11.50\nAAB 8 11.75\nAAB 1 11.75\nDFE 8 11.50\nDCE 11 11.50\nDCE 1 11.25\nAAA 2 11.75\nAAA 8 11.75\nDEF 1 11.25\nAAB 3 11.75\nAAA 9 11.50\nABC 8 11.00\nABC 1 11.00\nAAA 3 11.50\nAAA 9 11.25\nDFE 8 11.25\nDEF 1 11.50\nABC 1 11.00\nDCE 1 11.75\nDCE 7 11.75\nABC 3 11.25\nABC 7 11.50\nDEF 10 11.50\nDEF 1 11.75",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Busy Day",
+          "isTest": false,
+          "testIn": "100\nABC BUY 1 11.75\nDFE BUY 8 11.25\nAAA SELL 10 10.00\nDEF BUY 12 11.50\nABC SELL 11 11.25\nAAB SELL 12 12.00\nDEF BUY 10 10.00\nDCE BUY 8 11.50\nAAB SELL 1 11.50\nDFE SELL 9 10.00\nDFE SELL 9 11.25\nDEF BUY 10 11.25\nAAB SELL 11 12.00\nDCE BUY 10 11.00\nAAB SELL 1 11.25\nDFE SELL 12 11.50\nDFE SELL 8 11.50\nDFE BUY 1 11.50\nAAB BUY 12 11.50\nDEF SELL 1 12.00\nAAB SELL 9 11.75\nDEF BUY 11 11.25\nABC BUY 10 11.75\nDFE SELL 12 10.00\nDEF BUY 11 11.00\nDEF BUY 8 12.00\nABC BUY 8 11.25\nDCE SELL 9 11.50\nAAA SELL 10 11.75\nAAB SELL 9 12.00\nDCE SELL 12 12.00\nAAB SELL 1 11.75\nDFE SELL 9 12.00\nAAA BUY 11 10.00\nABC SELL 11 10.00\nDFE SELL 8 11.25\nAAA SELL 8 11.00\nDFE BUY 1 12.00\nABC BUY 12 11.50\nDFE BUY 12 12.00\nABC BUY 10 11.00\nDFE SELL 10 12.00\nAAB SELL 1 11.50\nDEF BUY 11 10.00\nDEF BUY 12 11.75\nAAA BUY 11 11.50\nABC SELL 1 11.00\nDCE SELL 9 11.75\nDFE BUY 11 11.75\nAAA BUY 12 11.50\nAAB BUY 12 12.00\nDFE SELL 11 11.25\nDFE BUY 1 11.00\nDEF BUY 12 11.25\nAAB SELL 9 12.00\nDEF BUY 11 10.00\nAAB BUY 1 11.25\nDEF BUY 1 12.00\nAAA BUY 11 11.75\nABC BUY 9 10.00\nDEF SELL 9 11.00\nABC BUY 12 11.25\nDFE SELL 12 10.00\nDFE BUY 10 11.00\nDCE SELL 12 11.25\nABC BUY 10 12.00\nAAB SELL 8 11.50\nDCE BUY 8 11.50\nABC SELL 12 12.00\nDEF BUY 9 11.25\nABC BUY 12 10.00\nDCE SELL 12 12.00\nABC BUY 9 11.75\nDEF SELL 1 11.75\nDEF SELL 1 10.00\nABC SELL 8 11.50\nAAB BUY 10 11.25\nDEF BUY 11 11.25\nAAA SELL 8 11.00\nDCE BUY 11 10.00\nDFE SELL 12 11.50\nDEF SELL 9 11.75\nAAA SELL 8 11.25\nDCE SELL 1 12.00\nDCE BUY 10 12.00\nDFE SELL 10 11.50\nABC BUY 11 11.00\nAAB BUY 12 10.00\nDEF SELL 9 11.75\nABC BUY 1 12.00\nAAA SELL 10 11.00\nDCE SELL 12 11.25\nDFE SELL 12 10.00\nDCE BUY 11 11.75\nAAB BUY 9 11.50\nDFE SELL 9 11.25\nAAB BUY 8 10.00\nDFE SELL 9 11.50\nDFE BUY 8 11.75\nAAA BUY 12 11.00",
+          "testOut": "ABC 1 11.75\nDFE 8 11.25\nDFE 1 10.00\nAAB 1 11.25\nAAB 1 11.50\nABC 10 11.25\nDEF 1 12.00\nDCE 8 11.50\nAAA 10 10.00\nABC 8 11.25\nDFE 1 10.00\nABC 3 10.00\nDFE 11 10.00\nDFE 1 11.25\nAAB 1 11.50\nAAA 8 11.00\nABC 1 11.50\nDFE 8 11.25\nDFE 3 11.25\nAAB 9 11.75\nAAB 1 11.75\nAAB 2 12.00\nAAA 10 11.75\nDEF 7 12.00\nDEF 1 12.00\nDEF 1 11.75\nDFE 1 11.00\nDFE 10 10.00\nAAB 8 11.50\nDCE 8 11.25\nABC 10 12.00\nDEF 1 11.75\nDEF 1 11.75\nABC 8 11.75\nAAA 1 11.75\nAAA 3 11.50\nAAA 4 11.50\nDEF 9 11.75\nAAA 8 11.50\nDCE 4 11.25\nDCE 1 11.50\nDCE 5 11.75\nABC 1 12.00\nDCE 11 11.25\nDFE 1 10.00\nDFE 7 10.00\nAAA 10 11.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Crazy Day",
+          "isTest": true,
+          "testIn": "129\nDEF BUY 10 10.00\nABC SELL 12 10.00\nDCE SELL 10 10.00\nAAA BUY 12 10.00\nAAA SELL 12 11.25\nAAA SELL 11 11.00\nAAB SELL 12 12.00\nAAB SELL 12 11.25\nAAB SELL 12 12.00\nDEF SELL 9 11.25\nABC BUY 1 11.25\nAAA SELL 8 11.75\nDFE BUY 12 12.00\nDEF BUY 10 11.50\nABC SELL 9 11.75\nDFE BUY 8 11.00\nABC SELL 9 11.00\nABC BUY 11 11.75\nABC BUY 8 11.50\nDCE SELL 9 11.25\nABC BUY 9 10.00\nDEF SELL 1 11.75\nAAB SELL 12 11.25\nABC SELL 10 11.00\nABC BUY 11 11.50\nAAA BUY 8 11.50\nDFE SELL 8 11.75\nDFE BUY 11 11.75\nAAB BUY 1 11.00\nDEF SELL 10 10.00\nAAA SELL 9 11.75\nDCE SELL 8 11.25\nDEF SELL 12 12.00\nDFE BUY 12 11.25\nDFE SELL 12 10.00\nAAA BUY 12 11.00\nAAB SELL 1 11.50\nDFE BUY 1 11.25\nDFE BUY 10 11.50\nABC SELL 9 11.25\nAAB SELL 11 11.00\nDEF SELL 10 11.75\nAAB BUY 1 11.75\nAAA SELL 8 11.50\nABC BUY 11 11.00\nAAA SELL 8 11.75\nABC BUY 8 11.00\nDFE BUY 9 11.50\nDFE SELL 9 11.25\nAAA BUY 12 11.25\nAAB SELL 1 12.00\nABC SELL 11 10.00\nDCE BUY 12 10.00\nDCE SELL 1 12.00\nDCE BUY 10 11.25\nDFE BUY 9 11.75\nABC BUY 10 11.75\nDFE SELL 8 10.00\nABC SELL 10 11.25\nAAA BUY 8 12.00\nAAB SELL 9 10.00\nAAB BUY 1 11.00\nABC BUY 9 12.00\nDEF BUY 8 11.75\nDFE SELL 8 11.75\nAAB BUY 10 11.50\nDCE BUY 10 10.00\nAAA SELL 12 11.25\nABC SELL 11 10.00\nABC BUY 11 11.75\nDCE SELL 8 11.00\nAAB SELL 9 12.00\nAAA SELL 12 11.50\nDFE BUY 1 11.75\nABC SELL 8 12.00\nDCE SELL 12 12.00\nAAA BUY 9 11.50\nAAA SELL 8 11.00\nDEF SELL 8 12.00\nABC SELL 1 12.00\nAAB SELL 8 12.00\nAAA SELL 9 10.00\nAAB SELL 9 11.75\nAAB SELL 12 11.25\nDCE SELL 10 10.00\nABC SELL 10 11.75\nABC SELL 8 11.50\nDEF BUY 1 11.25\nABC SELL 9 10.00\nAAB SELL 12 12.00\nDEF BUY 11 11.25\nABC SELL 10 11.00\nABC BUY 9 11.50\nABC BUY 12 11.75\nAAA BUY 10 12.00\nDCE BUY 8 11.00\nAAB BUY 9 11.75\nAAA BUY 9 10.00\nABC BUY 11 10.00\nABC SELL 11 10.00\nDCE SELL 10 11.25\nDFE BUY 1 11.50\nDEF SELL 9 10.00\nAAA BUY 12 11.50\nDCE SELL 9 11.00\nAAB SELL 1 11.75\nAAB BUY 12 11.00\nDEF SELL 9 11.25\nDCE SELL 11 11.75\nDEF BUY 9 11.75\nDEF SELL 10 11.00\nAAA BUY 12 10.00\nDFE SELL 10 11.25\nAAA SELL 12 11.00\nDFE SELL 12 11.25\nDFE SELL 11 11.25\nDCE BUY 1 11.25\nAAB SELL 1 11.25\nAAA SELL 11 11.00\nABC BUY 10 11.00\nABC BUY 9 11.25\nDEF SELL 12 11.25\nABC SELL 11 12.00\nAAB BUY 1 11.00\nAAA BUY 8 11.75\nABC SELL 1 11.25\nDFE SELL 8 11.25\nAAB SELL 10 11.50\nDCE BUY 9 11.50",
+          "testOut": "ABC 1 10.00\nDEF 9 11.25\nABC 11 10.00\nABC 8 11.00\nABC 1 11.00\nABC 10 11.00\nAAA 8 11.00\nDFE 8 12.00\nDEF 1 11.50\nDEF 9 10.00\nDFE 4 12.00\nDFE 8 11.75\nAAA 3 11.00\nAAB 1 11.00\nAAB 1 11.00\nDFE 3 11.75\nDFE 6 11.50\nAAA 12 11.25\nABC 11 11.00\nDCE 10 10.00\nDCE 9 11.25\nDCE 1 11.25\nABC 9 11.25\nABC 1 11.75\nDFE 8 11.75\nAAA 8 11.50\nAAB 1 10.00\nABC 9 11.25\nDEF 1 11.75\nDEF 7 11.75\nDFE 1 11.75\nAAB 8 10.00\nAAB 2 11.00\nABC 8 11.00\nABC 3 10.00\nABC 1 11.25\nABC 8 11.75\nDFE 1 11.75\nAAA 9 11.25\nAAA 8 11.00\nAAA 1 11.00\nAAA 8 10.00\nDCE 2 10.00\nDCE 8 10.00\nABC 2 11.75\nABC 6 10.00\nABC 3 10.00\nABC 6 11.00\nABC 4 11.00\nABC 8 11.50\nAAA 3 11.25\nAAA 7 11.50\nDCE 8 11.00\nAAB 7 11.00\nAAB 2 11.25\nABC 11 10.00\nDEF 1 11.25\nDEF 8 11.25\nAAA 5 11.50\nDEF 3 11.25\nDEF 6 11.25\nDEF 3 11.75\nDFE 4 11.50\nDFE 6 11.50\nAAA 7 11.50\nDFE 3 11.50\nDFE 1 11.50\nDFE 8 11.25\nDFE 4 11.25\nDFE 1 11.25\nDCE 1 11.00\nAAA 5 11.00\nAAA 3 11.00\nABC 1 11.25\nDCE 8 11.00\nDCE 1 11.25",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Crazy Day",
+          "isTest": false,
+          "testIn": "150\nDEF BUY 9 10.00\nDCE BUY 1 10.00\nABC BUY 12 11.00\nDFE SELL 11 10.00\nAAA SELL 1 11.25\nDEF BUY 9 10.00\nAAA BUY 9 11.00\nAAA SELL 1 11.00\nDFE BUY 9 11.75\nDEF SELL 9 11.50\nAAA BUY 1 11.25\nDEF SELL 9 11.25\nDEF BUY 1 11.25\nDEF BUY 8 11.50\nAAB SELL 12 11.50\nABC SELL 1 12.00\nDEF BUY 9 11.00\nAAA BUY 10 10.00\nABC SELL 11 12.00\nDFE SELL 11 11.25\nDCE BUY 9 11.75\nABC BUY 9 11.50\nAAB BUY 9 10.00\nDEF SELL 12 11.00\nABC BUY 12 11.25\nDFE SELL 1 10.00\nDCE SELL 8 12.00\nDEF SELL 10 10.00\nAAA BUY 12 11.25\nAAA SELL 8 10.00\nDFE BUY 10 11.50\nAAA BUY 9 10.00\nDFE SELL 8 10.00\nABC BUY 9 11.25\nDEF BUY 1 11.50\nABC BUY 10 12.00\nABC SELL 11 11.00\nDCE BUY 11 11.75\nAAB SELL 11 12.00\nAAB BUY 10 12.00\nDFE SELL 12 11.00\nDFE SELL 8 10.00\nDCE BUY 11 11.25\nDFE BUY 8 12.00\nABC BUY 11 12.00\nAAA SELL 1 11.25\nDCE SELL 1 11.25\nABC BUY 12 10.00\nAAB SELL 10 11.50\nAAB SELL 9 11.50\nAAA BUY 9 11.00\nABC SELL 10 11.75\nDCE BUY 9 12.00\nAAB SELL 12 11.00\nAAA BUY 12 10.00\nABC SELL 8 11.75\nDCE SELL 12 11.50\nAAB BUY 1 11.25\nDFE SELL 10 11.25\nDCE SELL 1 11.25\nDFE BUY 12 11.50\nAAB SELL 1 11.50\nABC SELL 12 11.50\nABC SELL 8 12.00\nABC BUY 8 11.00\nDEF BUY 11 10.00\nDCE BUY 1 12.00\nDEF BUY 9 10.00\nDFE BUY 12 11.00\nAAA SELL 8 11.50\nDCE SELL 8 11.00\nDEF BUY 11 11.25\nDCE SELL 8 10.00\nDFE SELL 1 10.00\nDFE SELL 1 10.00\nDEF BUY 11 11.00\nDFE BUY 12 11.00\nAAA BUY 9 11.00\nAAA SELL 10 12.00\nDEF BUY 10 11.75\nDEF SELL 10 11.50\nABC BUY 9 11.00\nAAA BUY 12 11.00\nDEF SELL 11 11.00\nAAA BUY 10 11.00\nDEF SELL 1 12.00\nDFE BUY 8 10.00\nDCE BUY 1 11.75\nABC SELL 8 11.25\nDEF SELL 9 11.50\nDEF BUY 12 11.00\nAAB SELL 9 11.00\nDEF SELL 10 12.00\nAAA BUY 1 11.25\nDCE BUY 10 11.50\nABC BUY 8 11.00\nAAB SELL 1 11.25\nDEF SELL 8 11.50\nAAA SELL 8 12.00\nAAA SELL 8 11.50\nABC BUY 10 11.50\nDEF BUY 8 12.00\nABC SELL 12 11.25\nAAB BUY 10 10.00\nAAA SELL 11 11.50\nAAB SELL 12 10.00\nAAA BUY 1 11.50\nDFE SELL 11 11.25\nDEF SELL 9 12.00\nAAA SELL 11 11.75\nDEF SELL 11 11.00\nABC SELL 9 11.50\nDCE SELL 8 11.00\nAAB BUY 8 11.00\nDCE SELL 12 11.50\nAAA SELL 1 11.50\nABC SELL 10 11.50\nDFE SELL 1 11.50\nDCE BUY 8 11.25\nABC BUY 9 10.00\nDCE SELL 11 11.50\nABC BUY 12 10.00\nDCE SELL 10 11.75\nDEF BUY 1 11.00\nDEF BUY 9 12.00\nAAB SELL 12 11.50\nDEF BUY 9 11.25\nDEF SELL 10 11.00\nAAB SELL 1 12.00\nDEF SELL 12 11.75\nDCE BUY 1 10.00\nAAA BUY 1 10.00\nDEF BUY 1 11.00\nABC SELL 12 12.00\nDEF SELL 10 11.50\nAAB BUY 10 10.00\nAAB SELL 8 12.00\nAAA BUY 8 11.00\nDEF SELL 1 11.25\nABC BUY 10 10.00\nABC SELL 10 11.00\nDCE BUY 8 11.75\nDEF SELL 8 11.00\nDEF SELL 8 11.50\nAAB BUY 11 11.75\nDEF SELL 11 10.00\nDEF SELL 12 11.25\nAAA SELL 9 10.00\nABC SELL 8 11.25\nAAB BUY 12 11.75",
+          "testOut": "AAA 1 11.00\nDFE 9 10.00\nAAA 1 11.25\nDEF 1 11.25\nDEF 8 11.25\nDEF 9 11.00\nDEF 9 10.00\nDEF 1 10.00\nAAA 8 11.25\nDFE 2 10.00\nDFE 1 10.00\nDFE 7 11.25\nDEF 1 11.00\nABC 1 12.00\nABC 9 12.00\nABC 9 11.50\nABC 2 11.25\nAAB 10 11.50\nDFE 8 10.00\nABC 2 12.00\nAAA 1 11.25\nDCE 1 11.75\nABC 9 12.00\nDCE 8 12.00\nDCE 1 12.00\nDCE 8 11.75\nDCE 3 11.75\nAAB 1 11.00\nDCE 1 11.75\nDFE 8 10.00\nDFE 4 11.00\nDFE 8 11.00\nDCE 1 12.00\nDCE 7 11.75\nDEF 2 11.00\nDCE 8 11.25\nDFE 1 11.00\nDFE 1 11.00\nDEF 9 11.50\nDEF 1 11.75\nDEF 9 11.25\nDEF 2 11.00\nABC 8 11.25\nABC 10 11.50\nDEF 8 11.50\nABC 2 11.25\nABC 9 11.25\nAAB 9 10.00\nAAB 3 10.00\nAAA 1 11.50\nDEF 9 11.00\nDEF 2 11.00\nDCE 1 11.75\nDCE 7 11.50\nAAB 8 11.00\nDCE 3 11.50\nDEF 1 11.50\nDEF 8 11.50\nDEF 9 11.25\nDEF 1 11.00\nABC 10 11.00\nDCE 8 11.50\nDEF 8 11.00\nAAB 3 11.00\nAAB 8 11.00\nDEF 1 11.00\nDEF 1 11.00\nDEF 1 11.00\nDEF 8 10.00\nAAA 3 11.25\nAAA 1 11.25\nAAA 5 11.00\nAAB 1 11.00\nAAB 1 11.25\nAAB 2 11.50\nAAB 8 11.50",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "2 ≤ [[N]] ≤ 1000\n1 ≤ [[qty]] ≤ 1000\nAll prices are fixed-point decimals. They must be formatted with minimal integral figures and exactly two fractional figures. (one cent as {{0.01}})",
+      "stubGenerator": "read N:int\r\nloop N read symbol:word(10) verb:word(4) qty:int price:float\r\nwrite NO TRADE",
+      "inputDescription": "<<Line 1:>> [[N]] number of orders\n<<[[N]] following lines:>> an order as space-separated values: [[symbol]] [[verb]] [[qty]] [[price]]",
+      "solutionLanguage": "C++",
+      "outputDescription": "All trades in order of occurrence: [[symbol]] [[qty]] [[price]]\nIf no trade at all takes place, write {{NO TRADE}}"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">On Wall Street people <const>buy</const> and people <const>sell</const>.<br>When a buyer and a seller's prices match a trade is created.<br>When there is no match the order is <strong>&ldquo;put in the book&rdquo;</strong>.<br><br>Some special cases that must be considered:<br>- If the buyer's price is higher than the seller's price: the price used is the one already in the system.<br>- If there are more than one order in the system at the same price: a first in first out approach is taken.<br>- A trade cannot be concluded between orders that aren't on top of the book: the best price is always traded first. For a <const>buy</const> order the best price is the highest; for a <const>sell</const> order the best price is the lowest.<br>- A trade can only occur between orders on the same stock symbol.<br>- If there are remaining quantities after a trade, we try to trade with the next order in the book. If we can't, we put an order <strong>&ldquo;in the book&rdquo;</strong> for the untraded quantity.<br><br>An order consist of a <var>symbol</var> that represents the stock to trade, a <var>verb</var> that indicates whether it's a <const>BUY</const> or a <const>SELL</const>, a quantity <var>qty</var> and a <var>price</var>.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> <var>N</var> number of orders<br><strong><var>N</var> following lines:</strong> an order as space-separated values: <var>symbol</var> <var>verb</var> <var>qty</var> <var>price</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">All trades in order of occurrence: <var>symbol</var> <var>qty</var> <var>price</var><br>If no trade at all takes place, write <const>NO TRADE</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &le; <var>N</var> &le; 1000<br>1 &le; <var>qty</var> &le; 1000<br>All prices are fixed-point decimals. They must be formatted with minimal integral figures and exactly two fractional figures. (one cent as <const>0.01</const>)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\nAAA BUY 1 10.00\nAAA SELL 1 10.00</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">AAA 1 10.00</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 286214449782,
+  "avatar": 4404380115040,
+  "commentCount": 5,
+  "upVotes": 5,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 72469,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

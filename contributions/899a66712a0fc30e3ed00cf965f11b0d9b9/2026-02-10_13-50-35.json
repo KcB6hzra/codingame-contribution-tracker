@@ -1,0 +1,306 @@
+{
+  "id": 899,
+  "activeVersion": 36,
+  "score": 4,
+  "votableId": 6304995,
+  "codingamerId": 522088,
+  "views": 420,
+  "commentableId": 6245466,
+  "title": "Cross the lines",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "mouton5000",
+  "publicHandle": "899a66712a0fc30e3ed00cf965f11b0d9b9",
+  "codingamerHandle": "53b30107f3d9f68d3d1a95e98ce51c7e880225",
+  "lastVersion": {
+    "version": 36,
+    "autocloseTime": 1532016703560,
+    "data": {
+      "title": "Cross the lines",
+      "topics": [
+        {
+          "id": 100,
+          "handle": "graph-theory",
+          "labelMap": {
+            "1": "Graph theory",
+            "2": "Graph theory"
+          },
+          "puzzleCount": 0,
+          "parentTopicId": 93
+        },
+        {
+          "labelMap": {
+            "2": "Topology"
+          }
+        }
+      ],
+      "solution": "import sys\nimport math\n\n\n\n# This code does the following : \n\n# 1) Recursively remove the segments with one extremity not touching another segment\n# Those segment does not affect the result. As the line can cross itself, when the line may cross those\n# edges, it does and then comes back to its previous position. \n# Thus the solution is the value of the instance where all those segments are removed plus \n# the number of removed segments\n\n# 2) Find the areas defined by the cycle of segments. \n# For instance, a single cycle defines two areas : the inner one and the outer (infinite) area\n# Two cycles that meet at a segment define three areas : the two inner areas and the outer one\n# Two cycles, one containing the other, define three areas : the outer one, the one inside the smallest cycle and the one between the two cycles\n# ...\n\n# 3) Count the number of segments surrounding each area. \n# If all the areas have an even number, there can be a cycle going through each segment exactly once\n# If not, the cycle must go at least twice through one segment\n# The main idea : check which areas are odd\n#\n# Such an area can become even if we divide one of the segments\n# Problem : the other area touching the segment may become odd. \n# Solution : select two (maybe non touching) odd areas, find a shortest path between the two (shortest where the \n# distance is the number of areas) and cut every segment crossed by that path.\n# New problem : which couple of areas should be selected?\n# Remark : the number of odd areas is always even\n# Solution : try all possible couples, the number of segments and thus of areas is limited\n# Remark : it can be done in polynomial time using a perfect matching of minimum cost in the complete graph \n# where each node is an odd area and where an edge is weighted with the shortest path distance.\n# Final solution : number of segments at the end. \n\n\n\nclass Segment:\n    def __init__(self, p1, p2):\n        self.p1 = p1\n        self.p2 = p2\n        self.neighbors = []\n\n    def is_neighbor(self, s, check=False):\n        if s in self.neighbors:\n            return True\n        if check:\n            if self.p1 == s.p1 or self.p2 == s.p2 or self.p1 == s.p2 or self.p2 == s.p1:\n                self.neighbors.append(s)\n                s.neighbors.append(self)\n                return True\n        return False\n        \n    def __other_point(self, p):\n        if p == self.p1:\n            return self.p2\n        else:\n            return self.p1\n        \n    def turn_left(self, p):\n        return self.__turn(p, max)\n        \n    def turn_right(self, p):\n        return self.__turn(p, min)\n        \n    def __turn(self, p, direction):\n        neigh = [s2 for s2 in self.neighbors if p == s2.p1 or p == s2.p2]\n        return direction(neigh, key=self.angle)\n        \n    def find_cycles(self):\n        return [self.__find_cycle(Segment.turn_left), self.__find_cycle(Segment.turn_right)]\n    \n    def __find_cycle(self, direction):\n        \n        p = self.p2\n        s = direction(self, p)\n        \n        cycle = [self]\n        \n        # Check if the cycle comes back to the first segment in the same direction\n        while s != self or p != self.p1:\n            cycle.append(s)\n            p = s.__other_point(p)\n            s = direction(s, p)\n            \n        return cycle\n        \n    def angle(self, s):\n        c = self.crossprod(s)\n        if c == 0:\n            return math.pi\n    \n        if c < 0:\n            return math.pi * 2 - math.acos(self.scalprod(s) / (abs(self) * abs(s)))\n        else:\n            return math.acos(self.scalprod(s) / (abs(self) * abs(s)))\n    \n    \n    def __abs__(self):\n        x1, y1 = self.p1\n        x2, y2 = self.p2\n        return math.sqrt((x1 - x2)**2 + (y1 - y2)**2)\n        \n    def scalprod(self, s):\n        p11 = self.p1\n        p12 = self.p2\n        \n        p21 = s.p1\n        p22 = s.p2\n        \n        if p11 == p22:\n            p21, p22 = p22, p21\n        elif p12 == p21:\n            p11, p12 = p12, p11\n        elif p12 == p22:\n            p11, p12 = p12, p11\n            p21, p22 = p22, p21\n        \n        x11, y11 = p11\n        x12, y12 = p12\n        x1 = x12 - x11\n        y1 = y12 - y11\n        \n        x21, y21 = p21\n        x22, y22 = p22\n        x2 = x22 - x21\n        y2 = y22 - y21\n        \n        return x1 * x2 + y1 * y2\n        \n    def crossprod(self, s):\n        p11 = self.p1\n        p12 = self.p2\n        \n        p21 = s.p1\n        p22 = s.p2\n        \n        if p11 == p22:\n            p21, p22 = p22, p21\n        elif p12 == p21:\n            p11, p12 = p12, p11\n        elif p12 == p22:\n            p11, p12 = p12, p11\n            p21, p22 = p22, p21\n        \n        \n        x11, y11 = p11\n        x12, y12 = p12\n        x1 = x12 - x11\n        y1 = y12 - y11\n        \n        x21, y21 = p21\n        x22, y22 = p22\n        x2 = x22 - x21\n        y2 = y22 - y21\n        return x1 * y2 - y1 * x2\n        \n        \n    def __str__(self):\n        return str((self.p1, self.p2))\n        \n    def __repr__(self):\n        return str(self)\n        \n    def __eq__(self, o):\n        return (self.p1 == o.p1 and self.p2 == o.p2) or (self.p1 == o.p2 and self.p2 == o.p1)\n    \n    def __lt__(self, o):\n        return (self.p1 < o.p1 or (self.p1 == o.p1 and self.p2 < o.p2))\n        \n    def __hash__(self):\n        return hash(sum(self.p1) * sum(self.p2))\n            \n# Get input\n            \nn = int(input())\npoints = set()\nsegments = []\nfor i in range(n):\n    x1, y1, x2, y2 = [int(j) for j in input().split()]\n    p1 = (x1, y1)\n    p2 = (x2, y2)\n    s = Segment(p1, p2)\n    points.add(p1)\n    points.add(p2)\n    segments.append(s)\n\n# Find neighbors\n\nfor s1 in segments:\n    for s2 in segments:\n        if s1 == s2:\n            continue\n        s1.is_neighbor(s2, True)\n  \n# First, recursively remove segments with an extremity that does not touch any other segment.\n# They does not affect the result.\n\ntoremove = []\nremoved = 0\nwhile True:\n    for s1 in segments:\n        b1 = any(s1.p1 == s2.p1 or s1.p1 == s2.p2 for s2 in s1.neighbors)\n        b2 = any(s1.p2 == s2.p1 or s1.p2 == s2.p2 for s2 in s1.neighbors)\n        if not b1 or not b2:\n            toremove.append(s1)\n    if len(toremove) == 0:\n        break\n    removed += len(toremove)\n    for s1 in toremove:\n        segments.remove(s1)\n        for s2 in s1.neighbors:\n            s2.neighbors.remove(s1)\n    toremove.clear()\n\n# The segments are now all in cycles. \n# There are at most two such cycle per segment : we need to compute two cycles\n# per segment : one turning clock wise and one counter clock wise.\n\ncycles = set([tuple(sorted(c)) for s in segments for c in s.find_cycles()])\n\n'''\nlcycles = list(cycles)\ndef i(c):\n    return lcycles.index(c)\n    \n\nfor c in lcycles:\n    print(i(c), c)\n'''\n\n\n# We now need to determine the areas defined by those cycles\n# In simple instances : 1 area inside each cycle except the outer one + the outside area\n# In complex instances, a cycle can stricly contain another, in that case an area can be defined by an outside cycle and an inside cycle.\n\ndef inside0(p, c):\n    '''Check if the point p is inside or on the cycle c'''\n    # Recall that if p is on c, it is one of the extremities of the segments of c\n    \n    if any(p == s.p1 or p == s.p2 for s in c):\n        return True\n    \n    x, y = p\n    def cross(s):\n        ''' Return true if s cross the semi infinite line starting at p and going to the right'''\n        x1, y1 = s.p1\n        x2, y2 = s.p2\n        if y1 == y2:\n            return y == y1 and (x1 > x or x2 > x)\n            \n        if (y > y1) == (y > y2):\n            return False\n        \n        return x < (x2-x1) * (y-y1) / (y2-y1) + x1\n        \n    return sum(1 if cross(s) else 0 for s in c) % 2 == 1\n\ndef inside1(s, c):\n    '''Check if the segment s is inside or on the cycle c'''\n    if s in c:\n        return True\n        \n    # Check if the two points of s are in c\n    # Recall that s cannot cross c\n    # Thus all the points of s should be in c\n    # (beware that c can be non convex, this property does not work for all segments, only the ones given as inputs)\n    \n    return inside0(s.p1, c) and inside0(s.p2, c)\n    \ndef inside2(c1, c2):\n    ''' Check if the cycle c1 is inside the cycle c2'''\n    return all(inside1(s, c2) for s in c1)\n    \n# Build the tree defining the \"inside\" relationship between cycles\n\ninsides = [(c1, c2) for c1 in cycles for c2 in cycles if c1 != c2 and inside2(c1, c2)]\n\n# Remove unecessary relationships\n\n\nwhile True:\n    toRemove = []\n    for c1, c2 in insides:\n        if any((c1, c3) in insides and (c3, c2) in insides for c3 in cycles):\n            toRemove.append((c1, c2))\n            \n    if not toRemove:\n        break\n    \n    insides = [x for x in insides if x not in toRemove]\n\n    \n# Check strictly inside\n# c1, c2, True in inside <==> c1 in c2 and c1 touch c2\n# c1, c2, False in inside <==> c1 in c2 and not c1 touch c2\n\n# A cycle c2 is strictly inside c1 if it the intersection of c1 and c2 is either empty or a single point\n\ndef strict_inside(c1, c2):\n  if any(s in c2 for s in c1):\n    return False\n  pc1 = [p for s in c1 for p in [s.p1, s.p2]]\n  pc2 = [p for s in c2 for p in [s.p1, s.p2]]\n \n  if sum([p in pc2 for p in pc1]) > 1:\n    return False\n  return True\n\ninsides = [(c1, c2, not strict_inside(c1, c2)) for c1, c2 in insides]\n\nclass TreeNode:\n    def __init__(self, c):\n        self.c = c\n        self.f = None\n        self.children = {}\n        \nnodes = {c : TreeNode(c) for c in cycles}\nfor c1, c2, p in insides:\n    n1 = nodes[c1]\n    n2 = nodes[c2]\n    n2.children[n1] = p\n    n1.f = n2\n\n# Define the areas\n\nroots = [c for c in cycles if nodes[c].f is None]\n\n# An area is defined by the surrounded segments\n\nareas = []\n\ndef build_area(c):\n    \n    n1 = nodes[c]\n    if not n1.children:\n        return [s for s in c]\n    \n    area = []\n    for n2, touch in nodes[c].children.items():\n        if not touch:\n            area += n2.c\n    \n    if area:\n        area += c\n\n    return area\n\nareas = [build_area(c) for c in cycles]\nareas.append([s for c in roots for s in c])\nareas = [tuple(sorted(area)) for area in areas if area]\n\n\n# Build a graph with the areas\n\nclass AreaNode:\n    def __init__(self, area):\n        self.a = area\n        self.neighbors = []\n        \nnodes = {id(area): AreaNode(area) for area in areas}\n\nimport itertools\n\nfor n1, n2 in itertools.combinations(nodes.values(), 2):\n    a1 = n1.a\n    a2 = n2.a\n    if any(s in a2 for s in a1):\n        n1.neighbors.append(n2)\n        n2.neighbors.append(n1)\n    \noddAreas = [area for area in areas if len(area) % 2 == 1]\n\ndef path(n1, n2):\n    \n    tovisit = [n1]\n    d = {n1 : 0}\n    \n    while tovisit:\n        a = tovisit.pop(0)\n        for b in a.neighbors:\n            if b not in d:\n                d[b] = d[a] + 1\n                tovisit.append(b)\n    \n        if n2 in d:\n            return d[n2]\n\n# Build the smallest distance between each couple of odd areas\n# (1 if they touch, 2 if there is an area between them, ...)\n# And build a complete graph, each node is an odd area and each arc is weighted with the computed distance\nedges = [(a1, a2, path(nodes[id(a1)], nodes[id(a2)])) for a1, a2 in itertools.combinations(oddAreas, 2)]\n    \nbest = None\nbestValue = -1\n\n# For each couple of odd areas, wa can double one segment per area (odd or even) of a shortest path between the two areas\n# This way, the two odd areas gain one segment (become even) and the even ones gain two segments (stay even)\n# The question is which couple should be chosen : the least the distance of the path is, the least the number of \n# segment should be divided.\n# The answer is : select minimum cost maximal matching of the complete graph\n# The following loop computes that maching.\nfor selection in itertools.combinations(edges, len(oddAreas)//2):\n    expandSelection = set()\n    for a1, a2, dist in selection:\n        expandSelection.add(id(a1))\n        expandSelection.add(id(a2))\n    if len(expandSelection) == len(oddAreas): # Each odd area is exactly once in the selection -> matching\n        value = sum(dist for a1, a2, dist in selection)\n        if best is None or bestValue > value:\n            best = selection\n            bestValue = value\n\nprint(n + bestValue)\n\n",
+      "statement": "You are given a set of line segments, and your goal is to compute a cyclic continuous curve that:\n* does <<not>> intersect <<any>> endpoint of a segment\n* intersects every segment at least once\n* minimizes the number of intersections\nYour algorithm should return said minimum number of intersections.\n\nTwo examples are given at https://imgur.com/a/8kUNhS6, a valid and optimal one and an invalid one crossing an endpoint.\n\nThe cyclic curve may self-intersect when necessary. This does not count as crossing a line segment.",
+      "testCases": [
+        {
+          "title": "One triangle",
+          "isTest": true,
+          "testIn": "3\n0 0 10 10\n10 10 10 0\n0 0 10 0",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "One pentagon",
+          "isTest": false,
+          "testIn": "5\n0 0 10 10\n10 10 20 10\n20 10 20 5\n20 5 15 0\n0 0 15 0",
+          "testOut": "6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "1 square",
+          "isTest": true,
+          "testIn": "4\n0 0 20 0\n20 0 20 20\n0 20 20 20\n0 0 0 20",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "1 hexagon",
+          "isTest": false,
+          "testIn": "6\n0 0 0 10\n0 10 5 15\n5 15 15 15\n15 15 15 5\n15 5 10 0\n0 0 10 0",
+          "testOut": "6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Unconnected lines",
+          "isTest": true,
+          "testIn": "5\n0 0 10 0\n0 5 11 6\n1 9 10 10\n0 14 12 16\n2 22 10 18",
+          "testOut": "5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Unconnected lines",
+          "isTest": false,
+          "testIn": "4\n0 10 11 0\n1 20 19 0\n0 29 30 0\n0 40 41 0",
+          "testOut": "4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "1 square 1 triangle",
+          "isTest": true,
+          "testIn": "6\n0 0 0 10\n0 10 10 10\n10 10 10 0\n10 0 0 0\n10 10 20 5\n20 5 10 0",
+          "testOut": "7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "1 hexagon 1 triangle",
+          "isTest": false,
+          "testIn": "8\n10 0 20 0\n20 0 30 10\n30 10 20 20\n20 20 10 20\n10 20 0 10\n0 10 10 0\n10 20 15 25\n15 25 20 20",
+          "testOut": "9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Unconnected lines 2",
+          "isTest": true,
+          "testIn": "8\n0 0 0 10\n0 10 10 10\n10 10 10 0\n10 0 0 0\n20 0 20 10\n10 10 15 15\n15 15 20 15\n15 15 15 20",
+          "testOut": "8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Unconnected lines 2",
+          "isTest": false,
+          "testIn": "8\n10 0 20 10\n20 10 10 20\n10 20 0 10\n0 10 10 0\n40 50 50 50\n10 20 10 30\n10 30 20 40\n10 30 5 40",
+          "testOut": "8",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "It's a trap!",
+          "isTest": true,
+          "testIn": "8\n10 10 20 10\n20 10 20 20\n20 20 10 20\n10 20 10 10\n0 0 0 40\n0 40 40 40\n40 40 40 0\n40 0 0 0",
+          "testOut": "8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "It's a trap!",
+          "isTest": false,
+          "testIn": "12\n4 0 8 0\n8 0 10 4\n10 4 8 8\n8 8 4 8\n4 8 0 4\n0 4 4 0\n4 2 6 2\n6 2 8 4\n8 4 6 6\n6 6 4 6\n4 6 2 4\n2 4 4 2",
+          "testOut": "12",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "It is a non convex trap!",
+          "isTest": true,
+          "testIn": "8\n0 0 10 0\n10 0 8 8\n8 8 4 6\n4 6 2 8\n2 8 0 0\n2 2 6 2\n6 2 4 4\n4 4 2 2",
+          "testOut": "10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "It is a non convex trap!",
+          "isTest": false,
+          "testIn": "10\n5 5 6 3\n6 3 7 5\n7 5 5 5\n0 0 15 0\n15 0 12 5\n12 5 15 10\n15 10 10 10\n10 10 8 8\n8 8 5 10\n5 10 0 0",
+          "testOut": "12",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "It's a trap in a trap!",
+          "isTest": true,
+          "testIn": "9\n0 0 30 0\n30 0 15 30\n15 30 0 0\n5 5 25 5\n25 5 15 25\n15 25 5 5\n10 10 20 10\n20 10 15 20\n15 20 10 10",
+          "testOut": "12",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "It's a trap in a trap!",
+          "isTest": false,
+          "testIn": "11\n0 0 40 0\n40 0 40 40\n40 40 0 40\n0 40 0 0\n10 10 30 10\n30 10 30 30\n30 30 10 30\n10 30 10 10\n15 15 25 15\n25 15 20 25\n20 25 15 15",
+          "testOut": "12",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Touching triangles",
+          "isTest": true,
+          "testIn": "7\n0 0 10 0\n10 0 10 10\n10 10 0 0\n20 0 30 0\n30 0 30 10\n30 10 20 0\n10 10 20 0",
+          "testOut": "9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Touching triangles",
+          "isTest": false,
+          "testIn": "7\n5 5 10 5\n10 5 15 15\n15 15 5 5\n20 0 30 0\n30 0 30 10\n30 10 20 0\n15 15 20 0",
+          "testOut": "9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Touching squares",
+          "isTest": true,
+          "testIn": "9\n0 0 10 0\n10 0 10 10\n10 10 0 10\n0 10 0 0\n20 0 30 0\n30 0 30 10\n30 10 20 10\n20 10 20 0\n10 10 20 10",
+          "testOut": "9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Touching squares",
+          "isTest": false,
+          "testIn": "9\n5 5 10 5\n10 5 10 10\n10 10 5 10\n5 10 5 5\n20 0 30 0\n30 0 30 10\n30 10 20 10\n20 10 20 0\n10 10 20 10",
+          "testOut": "9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Bigger case",
+          "isTest": true,
+          "testIn": "25\n0 0 5 15\n5 15 15 5\n15 5 0 0\n5 5 5 10\n5 10 10 5\n10 5 5 5\n20 0 30 20\n30 20 40 0\n40 0 20 0\n25 5 30 10\n30 10 35 5\n35 5 25 5\n5 30 10 30\n10 30 5 25\n5 25 5 30\n25 30 25 25\n25 25 30 25\n30 25 25 30\n5 30 5 35\n5 35 10 35\n10 35 10 30\n30 20 30 25\n25 30 25 35\n25 35 30 35\n25 35 25 40",
+          "testOut": "31",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Bigger case",
+          "isTest": false,
+          "testIn": "25\n0 0 30 0\n30 0 30 30\n30 30 0 30\n0 30 0 0\n10 10 20 10\n20 10 25 15\n25 15 20 20\n20 20 10 20\n10 20 10 10\n50 10 60 10\n60 10 60 20\n60 20 50 10\n40 50 70 50\n70 50 55 80\n55 80 40 50\n45 55 65 55\n65 55 55 75\n55 75 45 55\n50 60 60 60\n60 60 55 63\n55 63 50 60\n30 30 40 50\n0 30 0 40\n0 40 5 35\n0 40 5 40",
+          "testOut": "30",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Triforce",
+          "isTest": true,
+          "testIn": "9\n0 0 5 10\n0 0 10 0\n10 0 5 10\n10 0 20 0\n10 0 15 10\n20 0 15 10\n5 10 15 10\n5 10 10 20\n15 10 10 20",
+          "testOut": "12",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Two Triforces",
+          "isTest": false,
+          "testIn": "18\n0 0 5 10\n0 0 10 0\n10 0 5 10\n10 0 20 0\n10 0 15 10\n20 0 15 10\n5 10 15 10\n5 10 10 20\n15 10 10 20\n30 0 35 10\n30 0 40 0\n40 0 35 10\n40 0 50 0\n40 0 45 10\n50 0 45 10\n35 10 45 10\n35 10 40 20\n45 10 40 20",
+          "testOut": "24",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Quadforce",
+          "isTest": true,
+          "testIn": "12\n10 0 20 0\n20 0 20 10\n10 0 10 10\n10 10 20 10\n0 10 10 10\n10 10 15 20\n15 20 0 20\n0 10 0 20\n20 10 30 10\n20 10 15 20\n15 20 30 20\n30 20 30 10",
+          "testOut": "14",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "TriangleSquareTriangle",
+          "isTest": false,
+          "testIn": "8\n10 20 20 10\n10 20 20 30\n20 10 20 30\n20 10 30 10\n20 30 30 30\n30 10 40 20\n30 30 40 20\n30 10 30 30",
+          "testOut": "10",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Broken triforce",
+          "isTest": true,
+          "testIn": "9\n0 0 5 10\n0 0 10 0\n10 0 5 10\n10 0 20 0\n10 0 14 10\n20 0 15 10\n5 10 14 10\n5 10 10 20\n15 10 10 20",
+          "testOut": "10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Broken triforce",
+          "isTest": false,
+          "testIn": "9\n0 0 5 10\n0 0 10 0\n10 0 6 10\n10 0 20 0\n10 0 15 10\n20 0 15 10\n6 10 15 10\n5 10 10 20\n15 10 10 20",
+          "testOut": "10",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Almost Destroyed Triforce",
+          "isTest": true,
+          "testIn": "9\n0 0 5 10\n0 0 10 0\n10 1 5 10\n10 0 20 0\n10 1 14 10\n20 0 15 10\n5 10 14 10\n5 10 10 20\n15 10 10 20",
+          "testOut": "10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Almost Destroyed Triforce",
+          "isTest": false,
+          "testIn": "9\n0 0 5 10\n0 0 10 0\n11 2 6 10\n10 0 20 0\n11 2 15 10\n20 0 15 10\n6 10 15 10\n5 10 10 20\n15 10 10 20",
+          "testOut": "10",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "1 <= [[n]] <= 25\n1 <= [[xi]], [[yi]] <= 100\nTwo segments may meet at one of their endpoints. They never cross, overlap, intersect, or touch midway.\nNo segment reduces to a point: for every segment, the two endpoints are distinct.",
+      "stubGenerator": "read n:int\nloop n read x1:int y1:int x2:int y2:int\nwrite 0",
+      "inputDescription": "<<Line 1:>> An integer [[n]], the number of segments in <<S>>\n<<[[n]] next lines :>> four integers [[x1]] [[y1]] [[x2]] [[y2]] describing a segment of <<S>> with two endpoints ([[x1]], [[y1]]) and ([[x2]], [[y2]])",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> The minimum number of segments that should be crossed in a cyclic curve that crosses every segment at least once."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are given a set of line segments, and your goal is to compute a cyclic continuous curve that:<br>* does <strong>not</strong> intersect <strong>any</strong> endpoint of a segment<br>* intersects every segment at least once<br>* minimizes the number of intersections<br>Your algorithm should return said minimum number of intersections.<br><br>Two examples are given at https://imgur.com/a/8kUNhS6, a valid and optimal one and an invalid one crossing an endpoint.<br><br>The cyclic curve may self-intersect when necessary. This does not count as crossing a line segment.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>n</var>, the number of segments in <strong>S</strong><br><strong><var>n</var> next lines :</strong> four integers <var>x1</var> <var>y1</var> <var>x2</var> <var>y2</var> describing a segment of <strong>S</strong> with two endpoints (<var>x1</var>, <var>y1</var>) and (<var>x2</var>, <var>y2</var>)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> The minimum number of segments that should be crossed in a cyclic curve that crosses every segment at least once.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt;= <var>n</var> &lt;= 25<br>1 &lt;= <var>xi</var>, <var>yi</var> &lt;= 100<br>Two segments may meet at one of their endpoints. They never cross, overlap, intersect, or touch midway.<br>No segment reduces to a point: for every segment, the two endpoints are distinct.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\n0 0 10 10\n10 10 10 0\n0 0 10 0</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">4</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 238739008507,
+  "avatar": 8063098456757,
+  "commentCount": 15,
+  "upVotes": 4,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 241503,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

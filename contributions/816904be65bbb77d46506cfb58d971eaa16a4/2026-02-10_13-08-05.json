@@ -1,0 +1,354 @@
+{
+  "id": 81690,
+  "activeVersion": 102,
+  "score": 26,
+  "votableId": 32430156,
+  "codingamerId": 1036092,
+  "views": 708,
+  "commentableId": 32287200,
+  "title": "8086 Assembler, part I",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "JDOnline",
+  "publicHandle": "816904be65bbb77d46506cfb58d971eaa16a4",
+  "codingamerHandle": "6aed1b19fc10b92d8f1d78dce39fb7592906301",
+  "lastVersion": {
+    "version": 102,
+    "autocloseTime": 1715098905513,
+    "data": {
+      "title": "8086 Assembler, part I",
+      "topics": [
+        {
+          "id": 235,
+          "handle": "interpreter",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "interpreter",
+            "2": "Interpreters"
+          },
+          "puzzleCount": 9,
+          "parentTopicId": 93
+        },
+        {
+          "id": 112,
+          "handle": "string-manipulation",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "String manipulation",
+            "2": "String manipulation"
+          },
+          "puzzleCount": 62,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "# ---------------------------------------------------------------------------\n#\n# Globals\n#\n# ---------------------------------------------------------------------------\n\n# Tuple ( 1 for R16, Reg code )\nREGISTERS = { 'AX': ( 1, 0 ), 'CX': ( 1, 1 ), 'DX': ( 1, 2 ), 'BX': ( 1, 3 ),\n              'AL': ( 0, 0 ), 'CL': ( 0, 1 ), 'DL': ( 0, 2 ), 'BL': ( 0, 3 ),\n              'AH': ( 0, 4 ), 'CH': ( 0, 5 ), 'DH': ( 0, 6 ), 'BH': ( 0, 7 ) }\n\nNO_ARG  = 0\nONE_ARG = 1\nTWO_ARG = 2\n\nSIGNED_ARG = 0\nUNSIGNED_ARG = 1\n\nMAX_I16 = 0xFFFF\n\nARG_NONE = 0\nARG_REG  = 1\nARG_IMM  = 2\nARG_R16  = 3\nARG_R8   = 4\nARG_I16  = 5\nARG_I8   = 6\nARG_ACC  = 7\n\nREG_8_16_USED = True\nREG_8_16_NOT_USED = False\nACC_USED = 1\nACC_NOT_USED = 0\n\nOP_FORMULA = 0\nOP_NUMBER = 1\nOP_VAR = 2\nOP_ADD = 0\nOP_SUB = 1\nOP_MUL = 2\nOP_DIV = 3\nOP_OFFSET = 4\n\nOPCODE = 0\nOPCODE_W = 1\nOPCODE_DATA = 2\nOPCODE_T = 3\nOPCODE_8S_T = 4\nOPCODE_W_T = 5\n\n# ---------------------------------------------------------------------------\n# \n# Utilities for command handlers\n#\n# ---------------------------------------------------------------------------\n\n#\n# Compilation exception to interupt the compilation process\n#\nclass CompilationError(Exception):\n    pass\n\n#\n# Return a register definition\n#\ndef get_register(token):\n    token = token.upper()\n    if token in REGISTERS.keys():\n        return REGISTERS[token]\n    raise CompilationError(f\"Invalid expression or argument\")\n\n# \n# Return ASCII value of a character\n#\ndef get_character(token):\n    if token[0] == '\\'' and token[-1] == '\\'':\n        if token[1] == '\\\\':\n            if token[2] in [ '\\'', '\\\\']:\n                return ord(token[2:-1])\n        elif len(token) == 3:\n            return ord(token[1:-1])\n    \n    raise CompilationError(f\"Invalid expression or argument\")\n    \n#\n# Retunr decimal value of an hexadecimal string\n#   \ndef get_hex(token):    \n    if token[:2] == '0x':\n        token = token[2:]\n    elif token[-1] == 'h':\n        if not token[0].isdigit():\n            raise CompilationError(f\"Invalid expression or argument\")\n        token = token[:-1]\n    else:\n        raise CompilationError(f\"Invalid expression or argument\")\n    return int(token, 16)\n\n# \n# Return decimal value of a binary string\n#\ndef get_bin(token):\n    if token[-1] == 'b':\n        token = token[:-1]    \n    else:\n        raise CompilationError(f\"Invalid expression or argument\")\n    return int(token, 2)\n\n# \n# Return decimal value of a decimal string\n#\ndef get_decimal(token):\n    return int(token)\n\n#\n# Return a formula inside a formula\n#\ndef get_formula(f):\n    idx = 0\n    sub  = 0\n    while idx != len(f):        \n        if f[idx] == '(':\n            sub += 1\n        elif f[idx] == ')':\n            sub -= 1\n            if sub == 0:\n                break\n        idx += 1\n\n    if idx == len(f):\n        raise CompilationError(f\"Invalid expression or argument\")\n    \n    return f[1:idx]\n\n#\n# Split a formula according to an operator\n#\ndef split_with_operator(f, op):\n    if f.rfind(op) == -1:\n        return None, None\n    \n    idx = len(f)-1\n    sub = 0\n    in_str = False\n    while idx != 0:\n        if f[idx] == op and sub == 0 and in_str == False:\n            return f[:idx],f[idx+1:]            \n        elif f[idx] == ')' and in_str == False:\n            sub += 1\n        elif f[idx] == '(' and in_str == False:\n            sub -= 1\n        elif f[idx] == '\\'':\n            if idx > 0 and f[idx-1] == '\\\\':\n                if idx > 1 and f[idx-2] == '\\\\':\n                    in_str = not in_str                    \n                idx -= 1\n            else:\n                in_str = not in_str\n        idx -= 1\n\n    return None, None\n\n#\n# Split formula\n#\ndef split_formula(f):    \n    operators = [ '+', '-', '*', '/' ]\n    op_codes = { '-': OP_SUB, '+': OP_ADD, '*': OP_MUL, '/': OP_DIV }\n    for op in operators:\n        op1, op2 = split_with_operator(f, op)\n\n        if op1 == '':\n            continue\n\n        if op1 != None:\n            op_code = op_codes[op]\n            break\n\n    if op1 == None:\n        return f.strip(), None, None\n\n    return op1.strip(), op_code, op2.strip()\n\n#\n# Parse operand\n#\ndef parse_operand(f):    \n\n    _, op, _ = split_formula(f)\n    if op != None:\n        return parse_formula(f)    \n    \n    if f == '$':\n        return ( OP_OFFSET, 0 )\n    \n    if f[0] == '-':\n        _, val = parse_operand(f[1:])\n        return ( OP_NUMBER, -1 * val )\n    \n    if f[0] == '(':\n        f2 = get_formula(f)\n        return parse_formula(f2)    \n\n    if f[0] == '\\'':\n        return ( OP_NUMBER, get_character(f) )\n\n    if f[:2] == '0x' or ( f[-1] == 'h' and f[0].isdigit() and ( all(c in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' ] for c in f[:-1].upper()) ) ):\n        return ( OP_NUMBER, get_hex(f) )\n\n    if f[-1] == 'b':\n        if f[0:-1].isdigit():\n            return ( OP_NUMBER, get_bin(f) )\n    \n    if f[0] == '-' or f[0].isdigit():        \n        return ( OP_NUMBER, int(f) )\n\n    raise CompilationError(f\"Invalid expression\")\n    \n#\n# Parse formula\n#\ndef parse_formula(f):\n    op1, op, op2 = split_formula(f)\n\n    operand1 = parse_operand(op1)\n    if op == None:\n        return operand1\n    \n    operand2 = parse_operand(op2)\n        \n    return ( OP_FORMULA, [ operand1, op, operand2 ] )\n\n# \n# Evaluate an operand\n#\ndef evaluate_operand(operand, offset, target):\n   \n    optype, opvalue = operand\n\n    if optype == OP_FORMULA:\n        return evaluate_formula(operand, offset, target)\n    elif optype == OP_OFFSET:\n        if target == ARG_R16:\n            return True, offset\n        else: \n            return False, offset\n    elif optype == OP_NUMBER:\n        return False, opvalue\n    \n    raise CompilationError(f\"Invalid expression\")\n\n# \n# Evaluate formula\n# \ndef evaluate_formula(f, offset, target):\n\n    ftype, fparts = f\n\n    if ftype == OP_FORMULA:\n        operand1, operator, operand2 = fparts\n\n        val1f, val1 = evaluate_operand(operand1, offset, target)\n        val2f, val2 = evaluate_operand(operand2, offset, target)\n\n        force = True if val1f or val2f else False\n\n        if operator == OP_ADD:        \n            return force, val1 + val2\n        elif operator == OP_SUB:        \n            return force, val1 - val2\n        elif operator == OP_MUL:\n            return force, val1 * val2\n        elif operator == OP_DIV:\n            return force, val1 // val2    \n    elif ftype == OP_NUMBER:\n        return False, fparts\n    elif ftype == OP_OFFSET:\n        if target == ARG_R16:\n            return True, offset\n        else: \n            return False, offset\n    else:\n        raise CompilationError(f\"Invalid expression or argument\")\n\n#\n# Return an immediate value as a tuple\n# ( 16 bits value, value )\n#\ndef get_imm(imm, offset, signed, target):\n    try:\n        formula = parse_formula(imm)\n        force, value = evaluate_formula(formula, offset, target)\n        val16 = False\n        if force:\n            val16 = True\n        else:\n            if signed == SIGNED_ARG:                \n                if target == ARG_R16 and value >= 0xFF80 and value <= 0xFFFF:\n                    value -= 0xFF00\n                    target = ARG_R8\n                if target == ARG_R8 and value > 127 and value <= 255:\n                    value = -256 + value\n                if value > 127 or value < -128:\n                    val16 = True                \n            else:\n                if value > 255:\n                    val16 = True\n        return ( val16, value )\n    except:\n        raise CompilationError(f\"Invalid expression or argument\")\n\n\n#\n# Return an argument which can be a REG, IMM\n# Return a tuple ( ARG_TYPE, ARG )\n#\ndef get_argument(token, offset, signed, target):\n    \n    tk = token.upper()\n    if tk in REGISTERS.keys():\n        return ( ARG_REG, REGISTERS[tk] )\n\n    return ( ARG_IMM, get_imm(token, offset, signed, target) )\n\n#\n# Return data value as a list of bytes (here 1 byte)\n#\ndef get_data_byte(val):\n    if val < 0:\n        val = 0xFF + int(val) + 1\n    return [ int(val) ]\n\n#\n# Return data value as a list of bytes (word = 2 bytes) using little endian model\n#\ndef get_data_word(val):\n    if val < 0:\n        val = 0xFFFF + int(val) + 1\n    w = hex(int(val))[2:]\n    w = '0' * ( 4 - len(w) ) + w\n    return [ int(w[2:],16), int(w[:2],16) ]\n\n# ---------------------------------------------------------------------------\n#\n# ASM COMMANDS Definition\n#\n# ---------------------------------------------------------------------------\n#\n\n#\n# +--------+----------+---------------+\n# | MOV    | REG, REG | 88+w C0+8S+T  |\n# |        | REG, IMM | B0+8w+T data  |\n# +--------+----------+---------------+\n#\nmov_cmd = [ ( TWO_ARG, ACC_NOT_USED, REG_8_16_USED, UNSIGNED_ARG ),\n[ ( [ARG_REG, ARG_REG], [ OPCODE_W, 1, 0x88, OPCODE_8S_T, 0xC0 ] ), \n  ( [ARG_R16, ARG_IMM], [ OPCODE_W_T, 8, 0xB0, OPCODE_DATA ] ),\n  ( [ARG_R8, ARG_I8], [ OPCODE_W_T, 8, 0xB0, OPCODE_DATA ] ),\n]]\n\n#\n# +--------+----------+---------------+\n# | ADD    | REG, REG | 00+w C0+8S+T  | \n# |        | ACC, I16 | 5 data        |\n# |        | ACC, I8  | 4 data        |\n# |        | R16, I16 | 81 C0+T data  | \n# |        | R16, I8  | 83 C0+T data  |\n# |        | R8,  I8  | 80 C0+T data  |\n# +--------+----------+---------------+\n#\nadd_cmd = [ ( TWO_ARG, ACC_USED, REG_8_16_USED, SIGNED_ARG ),\n[ ( [ ARG_REG, ARG_REG ], [ OPCODE_W, 1, 0x00, OPCODE_8S_T, 0xC0 ] ),\n  ( [ ARG_ACC, ARG_I16 ], [ OPCODE_W, 1, 0x04, OPCODE_DATA ]),\n  ( [ ARG_ACC, ARG_I8  ], [ OPCODE_W, 1, 0x04, OPCODE_DATA ]),\n  ( [ ARG_R16, ARG_I16 ], [ OPCODE, 0x81, OPCODE_T, 0xC0, OPCODE_DATA ] ),\n  ( [ ARG_R16, ARG_I8  ], [ OPCODE, 0x83, OPCODE_T, 0xC0, OPCODE_DATA ] ),\n  ( [ ARG_R8,  ARG_I8  ], [ OPCODE, 0x80, OPCODE_T, 0xC0, OPCODE_DATA ] ),\n]]\n\n#\n# Interuption function call\n#\n# +--------+----------+---------------+\n# | INT    | I8       | CD data       |\n# +--------+----------+---------------+\n#\nint_cmd = [ ( ONE_ARG, ACC_NOT_USED, REG_8_16_USED, SIGNED_ARG ),\n[ ( [ ARG_I8 ], [ OPCODE, 0xCD, OPCODE_DATA ] )\n]]\n\n\n# ---------------------------------------------------------------------------\n#\n# ASM Command Handler\n#\n# ---------------------------------------------------------------------------\n\n#\n# Opcode Generator\n#\n# Generate opcode according the rules\n#\ndef opcode_generator(cmd_rule, target_type, target, source_type, source):\n\n    opcodes = []\n\n    #\n    # Collect data needed for opcode generation according to argument types\n    #\n\n    # Target data\n    w = None\n    tcode = 0\n    if target_type in [ ARG_REG, ARG_R16, ARG_R8, ARG_ACC ]:\n        wt, tcode = target\n        if target_type in [ ARG_REG, ARG_ACC ]:\n            w = wt\n        else:\n            w = 1 if target_type == ARG_R16 else 0\n\n    # Source data\n    scode = 0\n    if source_type in [ ARG_REG, ARG_R16, ARG_R8 ]:\n        ws, scode = source\n        if w == None:\n            w = 1 if ws == 1 else 0\n        \n    elif source_type in [ ARG_I16, ARG_I8, ARG_IMM ]:\n        wdata, data = source   \n        if source_type == ARG_I16 and data > MAX_I16:\n            raise CompilationError(\"Invalid operand\")\n        if source_type == ARG_I8:\n            w = 0\n        if source_type == ARG_IMM and target_type in [ ARG_ACC, ARG_R16 ]:\n            if data > MAX_I16:\n                raise CompilationError(\"Invalid operand\")\n            w = 1\n\n    # Get all generation commands one by one\n    rule = cmd_rule[::-1]\n    while len(rule) != 0:\n\n        op_type = rule.pop()\n\n        if op_type == OPCODE:\n            arg = rule.pop()\n            opcodes.append( arg )\n\n        elif op_type == OPCODE_W:\n            wfactor = rule.pop()\n            base = rule.pop()\n            opcodes.append( base + ( wfactor * w ) )       \n\n        elif op_type == OPCODE_W_T:\n            wfactor = rule.pop()\n            base = rule.pop()\n            opcodes.append( base + ( wfactor * w ) + tcode )\n        \n        elif op_type == OPCODE_8S_T:\n            base = rule.pop()\n            opcodes.append( base + scode * 8 + tcode)\n\n        elif op_type == OPCODE_T:\n            base = rule.pop()\n            opcodes.append( base + tcode )\n        \n        elif op_type == OPCODE_DATA:\n            if w == 1:\n                opcodes += get_data_word(data)\n            else:\n                opcodes += get_data_byte(data)\n\n    return opcodes\n\n#\n# ASM Handler\n#\n# Generate opcodes for any ASM command. \n#\ndef asm_handler(asm_def, args, opidx):\n    # \n    # Step 1: Get command definition \n    #\n    cmd_options, cmd_rules = asm_def\n\n    # Option details\n    nb_args, acc, reg_8_16, signed = cmd_options\n\n    #\n    # Step 2: Check the number of arguments\n    #\n    if len(args) != nb_args:\n        raise CompilationError(f\"Invalid number of arguments\")\n          \n    #\n    # Step 3: Parse arguments if any\n    #\n    target_arg_type = source_arg_type = NO_ARG\n    if nb_args == TWO_ARG:\n        # Two arguments\n\n        # Retrieve 1st argument\n        target_arg_type, target = get_argument(args[0], opidx, signed, ARG_NONE)    \n        target_type = ARG_NONE\n        if target_arg_type == ARG_REG:\n            if target[0] == 1:\n                target_type = ARG_R16\n            else:\n                target_type = ARG_R8\n        \n        # Retrieve 2nd argument\n        source_arg_type, source = get_argument(args[1], opidx, signed, target_type)            \n\n    elif nb_args == ONE_ARG:\n        # One argument\n        # No target, only a source\n        target_arg_type = NO_ARG\n        target = None        \n\n        # Retrieve argument\n        source_arg_type, source = get_argument(args[0], opidx, signed, ARG_NONE)       \n\n    #\n    # Step 4: Refine argument type\n    #\n\n    init_target_type = target_arg_type\n    init_source_type = source_arg_type\n\n    # --\n    # 1st argument refinement\n    # --\n\n    # ACC Needed ?\n    if target_arg_type == ARG_REG and acc == ACC_USED and source_arg_type == ARG_IMM:\n        wt, ttt = target        \n        if ttt == 0:\n            ws, _ = source\n            if wt == 1 and ws:\n                target_arg_type = ARG_ACC\n            elif wt == 0 and not ws:\n                target_arg_type = ARG_ACC\n\n\n    # Do we need to difference target registers (only if source is IMM)\n    if target_arg_type == ARG_REG and reg_8_16 and source_arg_type == ARG_IMM:\n        wt, _ = target\n        if wt == 1:\n            target_arg_type = ARG_R16\n        else:\n            target_arg_type = ARG_R8\n    \n    # --\n    # 2nd argument refinement\n    # --\n\n    # Do we need to differente source registers\n    if source_arg_type == ARG_REG and reg_8_16:\n        ws, _ = source\n        if ws == 1:\n            source_arg_type = ARG_R16\n        else:\n            source_arg_type = ARG_R8\n\n    # Do we need to differentiate source IMM\n    if source_arg_type == ARG_IMM and reg_8_16:\n        wdata, _ = source   \n        if wdata == True:\n            source_arg_type = ARG_I16\n        else:\n            source_arg_type = ARG_I8    \n\n    #\n    # Step 5: Retreive the opcode rule to apply\n    #\n\n    # Compute the key\n    key = None\n    if nb_args == ONE_ARG:\n        key1 = source_arg_type << 4\n        key2 = init_target_type << 4\n        if key1 in  cmd_rules.keys():\n            key = key1\n        elif key2 in cmd_rules.keys():\n            key = key2\n    elif nb_args == TWO_ARG:\n        key1 = (target_arg_type << 4) + source_arg_type\n        key2 = (target_arg_type << 4) + init_source_type\n        key3 = (init_target_type << 4) + source_arg_type        \n        key4 = (init_target_type << 4) + init_source_type\n        if key1 in  cmd_rules.keys():\n            key = key1\n        elif key2 in  cmd_rules.keys():\n            source_arg_type = init_source_type\n            key = key2\n        elif key3 in  cmd_rules.keys():\n            target_arg_type = init_target_type\n            key = key3\n        elif key4 in  cmd_rules.keys():\n            target_arg_type = init_target_type\n            source_arg_type = init_source_type\n            key = key4\n\n    # Retrieve rule and generate opcode\n    if key != None:\n        opcode_rule = cmd_rules[key]\n        return opcode_generator(opcode_rule, target_arg_type, target, source_arg_type, source)\n\n    # If the rule is not found, there is an invalid combination of operands\n    raise CompilationError(\"Invalid operand\")\n\n# ---------------------------------------------------------------------------\n#\n# Compiler utilities\n#\n# ---------------------------------------------------------------------------\n\n#\n# Return next token in the line based on a separator list\n#\ndef get_next_token(asm_line, start, sep):\n    # Extract next token\n    prev = idx = start\n    in_string = False\n    while idx < len(asm_line):\n        if asm_line[idx] in sep and in_string == False:\n            token = asm_line[prev:idx].strip()            \n            idx += 1\n            return token, idx\n        if asm_line[idx] == \"'\":       \n            in_string = not in_string     \n        idx += 1\n\n    return asm_line[prev:].strip(), len(asm_line)\n\n#\n# Return command tokens\n#\ndef get_asm_command_tokens(asm_line):\n    # Revove left spaces\n    asm_line = asm_line.strip()\n\n    # Empty line of only comments\n    if len(asm_line) == 0 or asm_line[0] == ';':   \n        return None, None\n\n    # Remove comment at the end of a line\n    in_string = False\n    idx = 0\n    while idx < len(asm_line):\n        if in_string:\n            if asm_line[idx] == '\\'':\n                in_string = False\n            elif asm_line[idx] == '\\\\':\n                idx += 1\n        else:\n            if asm_line[idx] == ';':\n                end_comment = asm_line.find(';', idx)\n                if end_comment != -1:\n                    asm_line = asm_line[:end_comment].rstrip()\n                    break\n            elif asm_line[idx] == '\\'':\n                in_string = True\n        idx += 1\n        \n    cmd_name, idx = get_next_token(asm_line, 0, [' '])\n    args = []\n    while idx < len(asm_line):\n        arg, idx = get_next_token(asm_line, idx, [','])\n        args.append(arg)\n\n    return cmd_name.upper(), args\n\n#\n# All ASM commands handlers\n#\n\nASM_COMMAND_DEF = [ ( 'MOV' , mov_cmd  ), ( 'ADD' , add_cmd  ), ( 'INT' , int_cmd  ) ]\n\nASM_COMMANDS = {}\n\n#\n# Register a command\n# Compute the key per command\n# key is generated by shifting target arg by 4 bits and adding to source arg\n#\ndef register_command(cmd_name, cmd_def):\n    cmd_options, cmd_rules = cmd_def\n\n    cmd_opcodes = {}\n    for args, opcodes in cmd_rules:\n        if len(args) == 2:\n            key = (args[0] << 4) + args[1]\n        elif len(args) == 1:\n            key = args[0] << 4\n        else:\n            key = 0\n        cmd_opcodes[key] = opcodes\n\n    ASM_COMMANDS[cmd_name] = ( cmd_options, cmd_opcodes )\n\n#\n# Register all assembly commands\n#\ndef register_assembly_commands():\n\n    for cmd_name, cmd_def in ASM_COMMAND_DEF:\n        register_command(cmd_name, cmd_def)\n\n#\n# Compile a line of assembly language\n#\ndef asm_compile(asm_line, line_number, opidx):     \n  try:\n    # Retrieve all tokens\n    keyword, args = get_asm_command_tokens(asm_line)\n\n    # No keyword, means a comment line\n    if keyword == None:\n        return None\n\n    # Otherwise asm command\n    if keyword in ASM_COMMANDS.keys():\n        asm_def = ASM_COMMANDS[keyword]\n\n        # Call the command handler\n        return asm_handler(asm_def, args, opidx)\n\n    raise CompilationError(f\"Unknown command\")\n\n  except CompilationError as exc:\n      raise CompilationError(f\"Line {line_number}: {exc}\")  \n\n#\n# Compile a ASM file and produces executable code\n#\ndef compile(nb_lines):\n    # Get assembly content\n    lines = []\n    for i in range(nb_lines):\n        lines.append(input())\n    \n    # Compile line by line\n    opidx = 0\n    program = []\n    explain = []\n    for line_number in range(len(lines)):\n        opcodes = asm_compile( lines[line_number], line_number+1, opidx )\n        if opcodes != None:\n            explain.append( (opidx, opcodes, lines[line_number]) )\n            opidx += len(opcodes)\n            program += opcodes\n        else:\n            explain.append( (None, None, lines[line_number]))\n   \n    return program, explain  \n\ndef describe(program, explain):\n    for offset, opcodes, line in explain:\n        line = line.rstrip()\n        if offset == None:        \n            print(f\"     |                   | {line}\")\n            continue\n        code = ''\n        for byte in opcodes:\n            hxbyte = hex(byte)[2:].upper()\n            hxbyte = '0' * ( 2 - len(hxbyte) ) + hxbyte\n            code += hxbyte + ' '\n        off = hex(offset)[2:].upper()\n        off = ( '0' * (4 - len(off)) ) + off\n        print(f\"{off} | {code:17s} | {line}\")    \n\n\nregister_assembly_commands()\n\ntry:\n    nb_lines = int(input())\n    program, explain = compile(nb_lines)\n    describe(program, explain)\nexcept CompilationError as exc:\n    print(exc)\n",
+      "statement": "This multi-part puzzle creates a (partial) 8086 assembler and produces executable code, which actually works on DOS emulators for 8086. Through each part, you will learn and enrich your assembler to implement 80% of the 8086 assembler features and roughly 25% of all commands as well as some linkage actions.\n\nThe aim of part 1 is to <<parse assembly commands>> and <<display the assembled code next to the program>>, useful for debugging in the next parts.\n\n<<Registers>> (<<REG>>)\nThe 8086 CPU consists of 4 main registers of 16 bits (<<R16>>): AX, BX, CX, DX.\n\nEach <<R16>> register consists of 2 sub-registers of 8 bits (<<R8>>) for high (H) and low (L), e.g. AX = AH + AL.\n\nEach register has a code:\n`\nAX=0 AL=0 AH=4\nCX=1 CL=1 CH=5\nDX=2 DL=2 DH=6\nBX=3 BL=3 BH=7\n`\n<<Grammar>>\n1/ Each line of the assembly program is a comment or a command. Empty lines are ignored.\n2/ A comment starts with {{;}} and the rest of the line is ignored.\n3/ A command is composed of characters, digits and {{_}}, but never starts with a digit.\n3.1/ A command has 0 to 2 arguments (also called <<operands>>), which are separated by {{,}}.\n3.2/ A command may be followed by a comment.\n3.3/ The assembly language is not case-sensitive except for a character constant (see below).\n4/ An argument is either <<REG>> or an immediate value (<<IMM>>).\n4.1/ <<REG>> is <<R16>> or <<R8>>.\n4.2/ <<IMM>> is a 16-bit (<<I16>>) or 8-bit (<<I8>>) value which is unsigned (I16: 0..65535/I8: 0..255) or signed (I16: -32768..32767/I8: -128..127).\n4.3/ <<IMM>> is:\n• a number,\n• a character, which represents its ASCII value,\n• {{$}}(always encoded using the full size of the destination register), which represents the current byte code position, or\n• a number resulting from the evaluation of an expression\n4.4/ Numbers are decimal by default. A binary number ends with {{b}}. A hexadecimal number starts with {{0x}}, or starts with a digit and ends with {{h}}.\n4.5/ Single quotes are used to define a character, e.g. {{'A'}}. {{\\}} is used as the escape character if the character is {{'}} or {{\\}}.\n4.6/ Assembled code positions start from 0.\n4.7/ {{+ - * /}} (floor division) and {{( )}} are used in an <<IMM>> expression. When an <<IMM>> expression is assembled, it is evaluated using the usual operator precedence and replaced by the result.\n\n<<Commands>>\nWhen a command uses 2 operands, the first one is the target [[T]] and the second one is the source [[S]].\n\nAX and AL are treated as primary accumulators (<<ACC>>) by some commands when the <<IMM>> command argument <<matches the number of bits>> (<<I16>> for AX, <<I8>> for AL).\n\nIn Part I, we will use 3 commands. The conversion table below lists their operand types and corresponding instructions encodings:\n`\n<<MOV arg1, arg2>> Moves a source (arg2) to a target (arg1)\nREG, REG: 88+w C0+8*S+T\nR16, I16: B0+8*w+T data\nR8,  I8 : B0+8*w+T data\n\n<<ADD arg1, arg2>> Adds a source (arg2) to a target (arg1)\nREG, REG: 00+w C0+8*S+T\nACC, IMM: 04+w data\nR16, I16: 81 C0+T data\nR16, I8:  83 C0+T data\t(I8 will be sign-extended)\nR8,  I8:  80 C0+T data\n\n<<INT arg>> Generates a software interrupt\nI8: CD data\n`\nNotes:\n• [[w]] = {{1}} for <<R16>>, {{0}} for <<R8>>. The target register determines the number of bits.\n• [[T]] and [[S]] are register codes, e.g. 0 for AX.\n• If <<IMM>> does not match the size of the destination, it will be sign-extended when executed.\n• <<IMM>> is classified as <<I16>> or <<I8>> based on the smallest valid range supported by the instruction. For example, {{10}} is <<I8>> in {{add ax, 10}} but <<I16>> in {{mov ax, 10}}.\n• [[data]] is <<IMM>> expressed in 4 hexadecimal digits for <<I16>>, and 2 for <<I8>>.\n• [[data]] is stored using <<little endian encoding>> where the least significant byte comes first.\n• Negative numbers are encoded using the two's complement representation {{https://en.wikipedia.org/wiki/Two%27s_complement}}.\n\n<<Task>>\nFor each line of the assembly program, output the details below:\n`\nPosition in assembled code {{ | }} Hex codes {{ | }} Source code\n`\nA comment line is output without a position or hex codes.\n\nIn case of a compilation error, output the following only:\n{{Line}} [[x]]{{:}} [[error message]]\nwhere:\n[[x]] is the program line number (starts from 1).\n[[error message]] is one of the following:\n• {{Unknown command}}\n• {{Invalid number of arguments}}\n• {{Invalid expression or argument}}\n• {{Invalid operand}}: an operand does not match command needs (e.g the INT command accepts <<I8>> only)\n\n<<Example>>\n`\n; Basic example\nmov ax, 10h\n`\n{{mov ax, 10h}} corresponds to {{MOV REG, IMM}} in the conversion table, and its encoding is {{B0+8*w+T data}}.\n1st part (opcode): [[w]] = {{1}} (AX is <<R16>>) and [[T]] = {{0}} (AX = 0) => {{B8}}\n2nd part ([[data]]): It is 16-bit (AX is <<R16>>), hence 10h => {{0x0010}}, or {{0x10 0x00}} in little endian encoding.\nFull assembled instruction: {{B8 10 00}}\n\nOutput is hence:\n`\n     |                    | ; Basic example\n0000 | B8 10 00           | mov ax, 10h\n`",
+      "testCases": [
+        {
+          "title": "Simple program",
+          "isTest": true,
+          "testIn": "5\n; This is a basic example\nmov ax, 10h ; this is a hexa value\nmov cx, ax\nmov dx, $\nmov ch, $",
+          "testOut": "     |                   | ; This is a basic example\n0000 | B8 10 00          | mov ax, 10h ; this is a hexa value\n0003 | 89 C1             | mov cx, ax\n0005 | BA 05 00          | mov dx, $\n0008 | B5 08             | mov ch, $",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple program validator",
+          "isTest": false,
+          "testIn": "5\n; This is a basic example\n;\nmov ax, bx  ; mov ax, bx\nmov dx, $\nmov cx, 12h ; another move",
+          "testOut": "     |                   | ; This is a basic example\n     |                   | ;\n0000 | 89 D8             | mov ax, bx  ; mov ax, bx\n0002 | BA 02 00          | mov dx, $\n0005 | B9 12 00          | mov cx, 12h ; another move",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Unknown command",
+          "isTest": true,
+          "testIn": "1\nmod ax, bx",
+          "testOut": "Line 1: Unknown command",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Unknown command validator",
+          "isTest": false,
+          "testIn": "1\nadx ax, bx",
+          "testOut": "Line 1: Unknown command",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Invalid expression or argument",
+          "isTest": true,
+          "testIn": "2\nmov ax, 10\nadd bx, bk",
+          "testOut": "Line 2: Invalid expression or argument",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Invalid exp validator",
+          "isTest": false,
+          "testIn": "3\nmov ax, 'a'\nmov bx, 100b\nmov ax, ak",
+          "testOut": "Line 3: Invalid expression or argument",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Invalid operand",
+          "isTest": true,
+          "testIn": "3\nmov dh, 'H'\nmov al, 2\nint 0x2225",
+          "testOut": "Line 3: Invalid operand",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Invalid operand validator",
+          "isTest": false,
+          "testIn": "1\nmov 100b, ax",
+          "testOut": "Line 1: Invalid operand",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Invalid number of arguments",
+          "isTest": true,
+          "testIn": "1\nmov ax, bx, cx",
+          "testOut": "Line 1: Invalid number of arguments",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Invalid number of args validator",
+          "isTest": false,
+          "testIn": "2\nmov ax, 0x5050\nadd ax, bx, cx",
+          "testOut": "Line 2: Invalid number of arguments",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Overflow",
+          "isTest": true,
+          "testIn": "1\nADD AX, 999 * 999",
+          "testOut": "Line 1: Invalid operand",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Overflow validator",
+          "isTest": false,
+          "testIn": "1\nADD Cl, 25 * 25",
+          "testOut": "Line 1: Invalid operand",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Invalid character",
+          "isTest": true,
+          "testIn": "4\nmov ax, 'a'\nadd ax, 0\nadd ax, 'b'\nadd ax, 'cc'",
+          "testOut": "Line 4: Invalid expression or argument",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Invalid character validator",
+          "isTest": false,
+          "testIn": "3\nmov bx, 0\nmov ax, bx\nadd ax, 'hello'",
+          "testOut": "Line 3: Invalid expression or argument",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Invalid character sequence",
+          "isTest": true,
+          "testIn": "2\nmov ax, '\\''\nadd ax, '\\\"'",
+          "testOut": "Line 2: Invalid expression or argument",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Invalid character sequence validator",
+          "isTest": false,
+          "testIn": "3\nmov ax, '\\\\'\nadd ax, '\\''\nadd ax, '\\/'",
+          "testOut": "Line 3: Invalid expression or argument",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Strong parser",
+          "isTest": true,
+          "testIn": "8\n; Test 'parser'\nadd bx, ';'-','+'\\''-'\\\\' ; 'this, is, a, comment'\n; mov ax, 12h\nmov ax, 5 ; mov bx, 3\nmov bl, '8'*2 ; , 4\nmov dx, '(' + 2 * 3 + ')'\nmov cx, 2 + '+' - '-'\nmov ax, ( (2+3) * (5+$) )",
+          "testOut": "     |                   | ; Test 'parser'\n0000 | 83 C3 DA          | add bx, ';'-','+'\\''-'\\\\' ; 'this, is, a, comment'\n     |                   | ; mov ax, 12h\n0003 | B8 05 00          | mov ax, 5 ; mov bx, 3\n0006 | B3 70             | mov bl, '8'*2 ; , 4\n0008 | BA 57 00          | mov dx, '(' + 2 * 3 + ')'\n000B | B9 00 00          | mov cx, 2 + '+' - '-'\n000E | B8 5F 00          | mov ax, ( (2+3) * (5+$) )",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Strong parser validator",
+          "isTest": false,
+          "testIn": "7\n;\nmov ax, 0;\nmov bx, 5 ; 'A comment'\nadd bx, ','-'5'\nmov ch, '\\\\'+'\\''-'$' ; mov bx, 5\nmov dx, '/' + '*' + ')'\nadd cx, (((2+3)*5)+6)",
+          "testOut": "     |                   | ;\n0000 | B8 00 00          | mov ax, 0;\n0003 | BB 05 00          | mov bx, 5 ; 'A comment'\n0006 | 83 C3 F7          | add bx, ','-'5'\n0009 | B5 5F             | mov ch, '\\\\'+'\\''-'$' ; mov bx, 5\n000B | BA 82 00          | mov dx, '/' + '*' + ')'\n000E | 83 C1 1F          | add cx, (((2+3)*5)+6)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Hello",
+          "isTest": true,
+          "testIn": "23\n; ---------------------------------------\n; Hello\n; ---------------------------------------\n\n;\n; Display Hello word on screen with interrupt 21h\n;\n\nmov dl, 'H' \nmov ah, 2   \nint 21h\n\nMOV DL, 'e'\nINT 21h\n\nmov dl, 'l'\nint 21h\n\nmov dl, 'l'\nint 21h\n\nmov dl, 'o'\nint 21h",
+          "testOut": "     |                   | ; ---------------------------------------\n     |                   | ; Hello\n     |                   | ; ---------------------------------------\n     |                   | \n     |                   | ;\n     |                   | ; Display Hello word on screen with interrupt 21h\n     |                   | ;\n     |                   | \n0000 | B2 48             | mov dl, 'H'\n0002 | B4 02             | mov ah, 2\n0004 | CD 21             | int 21h\n     |                   | \n0006 | B2 65             | MOV DL, 'e'\n0008 | CD 21             | INT 21h\n     |                   | \n000A | B2 6C             | mov dl, 'l'\n000C | CD 21             | int 21h\n     |                   | \n000E | B2 6C             | mov dl, 'l'\n0010 | CD 21             | int 21h\n     |                   | \n0012 | B2 6F             | mov dl, 'o'\n0014 | CD 21             | int 21h",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "World",
+          "isTest": false,
+          "testIn": "23\n; -------------------------------\n; World\n; -------------------------------\n\n;\n; Display World word on screen \n;\n\nmov dl, 'W' \nMOV AH, 2   \nint 21h\n\nmov dl, 'o'\nint 21h\n\nmov dl, 'r'\nint 21h\n\nmov dl, 'l'\nint 21h\n\nmov dl, 'd'\nint 21h",
+          "testOut": "     |                   | ; -------------------------------\n     |                   | ; World\n     |                   | ; -------------------------------\n     |                   | \n     |                   | ;\n     |                   | ; Display World word on screen\n     |                   | ;\n     |                   | \n0000 | B2 57             | mov dl, 'W'\n0002 | B4 02             | MOV AH, 2\n0004 | CD 21             | int 21h\n     |                   | \n0006 | B2 6F             | mov dl, 'o'\n0008 | CD 21             | int 21h\n     |                   | \n000A | B2 72             | mov dl, 'r'\n000C | CD 21             | int 21h\n     |                   | \n000E | B2 6C             | mov dl, 'l'\n0010 | CD 21             | int 21h\n     |                   | \n0012 | B2 64             | mov dl, 'd'\n0014 | CD 21             | int 21h",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Let's mov",
+          "isTest": true,
+          "testIn": "24\nmov ax, -1\nmov bx, 128\nmov cx, 215h\nmov dx, 10010001b\nmov ax, cx\nmov dx, bx\nmov bx, -32768\n\nmov ah, 010\nmov al, 255\nmov bh, 0x01\nmov cl, 1001b\nmov dh, '~'\nmov ah, cl\n\nmov ax, 'b'-'h'\nmov bx, 3 * ( 8 - 7 / 2 )\nmov cx, ( 1001000b+12h-0x03 ) * 'a'\nmov dx, $\nmov ax, 5h + $\nmov ax, -10h + 'A'\n\nmov dl, 0ah / 2\nmov cl, 100 - 0ch + 0dh",
+          "testOut": "0000 | B8 FF FF          | mov ax, -1\n0003 | BB 80 00          | mov bx, 128\n0006 | B9 15 02          | mov cx, 215h\n0009 | BA 91 00          | mov dx, 10010001b\n000C | 89 C8             | mov ax, cx\n000E | 89 DA             | mov dx, bx\n0010 | BB 00 80          | mov bx, -32768\n     |                   | \n0013 | B4 0A             | mov ah, 010\n0015 | B0 FF             | mov al, 255\n0017 | B7 01             | mov bh, 0x01\n0019 | B1 09             | mov cl, 1001b\n001B | B6 7E             | mov dh, '~'\n001D | 88 CC             | mov ah, cl\n     |                   | \n001F | B8 FA FF          | mov ax, 'b'-'h'\n0022 | BB 0F 00          | mov bx, 3 * ( 8 - 7 / 2 )\n0025 | B9 F7 20          | mov cx, ( 1001000b+12h-0x03 ) * 'a'\n0028 | BA 28 00          | mov dx, $\n002B | B8 30 00          | mov ax, 5h + $\n002E | B8 31 00          | mov ax, -10h + 'A'\n     |                   | \n0031 | B2 05             | mov dl, 0ah / 2\n0033 | B1 65             | mov cl, 100 - 0ch + 0dh",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Mov again",
+          "isTest": false,
+          "testIn": "21\n; Mov again\nmov ax, -1\nmov bx, -128\nmov cx, 15h\nmov dx, 10010001b\nmov ax, 0x1234\nmov dx, cx\nmov cx, -32768\nmov bh, 010\nmov al, -55\nmov bh, 0x01\nmov cl, 1001b\nmov ch, 'A'\nmov dh, cl\nmov dl, 9 / 2\n\nmov ax, (12h+0x36) - ( 'a' - 'A' ) * 1001b\nmov ax, 0011b + $\n\nmov al, 0dh / 2\nmov dx, 500 - 0ah - 0bh",
+          "testOut": "     |                   | ; Mov again\n0000 | B8 FF FF          | mov ax, -1\n0003 | BB 80 FF          | mov bx, -128\n0006 | B9 15 00          | mov cx, 15h\n0009 | BA 91 00          | mov dx, 10010001b\n000C | B8 34 12          | mov ax, 0x1234\n000F | 89 CA             | mov dx, cx\n0011 | B9 00 80          | mov cx, -32768\n0014 | B7 0A             | mov bh, 010\n0016 | B0 C9             | mov al, -55\n0018 | B7 01             | mov bh, 0x01\n001A | B1 09             | mov cl, 1001b\n001C | B5 41             | mov ch, 'A'\n001E | 88 CE             | mov dh, cl\n0020 | B2 04             | mov dl, 9 / 2\n     |                   | \n0022 | B8 28 FF          | mov ax, (12h+0x36) - ( 'a' - 'A' ) * 1001b\n0025 | B8 28 00          | mov ax, 0011b + $\n     |                   | \n0028 | B0 06             | mov al, 0dh / 2\n002A | BA DF 01          | mov dx, 500 - 0ah - 0bh",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Encoding",
+          "isTest": true,
+          "testIn": "16\n; Tricky encoding explanation\n;\n; 65535 = 0xFFFF (unsigned)\n; -1 = 0xFFFF (16-bit signed)\n; Two different numbers are encoded the same way\n;   depending on the range considered (signed or unsigned).\n; When executed, instructions will interpret the immediate as\n;   signed, unsigned, or both (ADD/CMP/...).\n; MOV example\nmov ax, 65535   \nmov ax, -1\n; ADD example\n; As 65535 = 0xFFFF = -1 and -1 = 0xFF for 8 bits,\n;   the command is assembled with R16, I8:  83 C0+T data\n; 0xFF will be sign-extended to 0xFFFF when executed.\nadd ax, 65535",
+          "testOut": "     |                   | ; Tricky encoding explanation\n     |                   | ;\n     |                   | ; 65535 = 0xFFFF (unsigned)\n     |                   | ; -1 = 0xFFFF (16-bit signed)\n     |                   | ; Two different numbers are encoded the same way\n     |                   | ;   depending on the range considered (signed or unsigned).\n     |                   | ; When executed, instructions will interpret the immediate as\n     |                   | ;   signed, unsigned, or both (ADD/CMP/...).\n     |                   | ; MOV example\n0000 | B8 FF FF          | mov ax, 65535\n0003 | B8 FF FF          | mov ax, -1\n     |                   | ; ADD example\n     |                   | ; As 65535 = 0xFFFF = -1 and -1 = 0xFF for 8 bits,\n     |                   | ;   the command is assembled with R16, I8:  83 C0+T data\n     |                   | ; 0xFF will be sign-extended to 0xFFFF when executed.\n0006 | 83 C0 FF          | add ax, 65535",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Encoding validator",
+          "isTest": false,
+          "testIn": "3\nmov bx, -2\nmov bx, 65534\nadd bx, 65534",
+          "testOut": "0000 | BB FE FF          | mov bx, -2\n0003 | BB FE FF          | mov bx, 65534\n0006 | 83 C3 FE          | add bx, 65534",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Add a bit",
+          "isTest": true,
+          "testIn": "20\nadd ax, 0x1234\nadd al, 12h\nadd bx, 4\nadd ah, 10\nadd bx, 5620\nadd bx, 1999\nadd AX, bx\nadd cx, -98\nadd bx, 0x89\nadd bx, 10010001b\nadd bx, 1001b\nadd ah, al\nadd bl, 8\nadd bh, 'A'\nadd dx, 65535\nadd dx, -128\nADD cl, -9\nadd dh, 0x5\nadd dl, '$' - 3h * 0x0c\nadd bl, cl",
+          "testOut": "0000 | 05 34 12          | add ax, 0x1234\n0003 | 04 12             | add al, 12h\n0005 | 83 C3 04          | add bx, 4\n0008 | 80 C4 0A          | add ah, 10\n000B | 81 C3 F4 15       | add bx, 5620\n000F | 81 C3 CF 07       | add bx, 1999\n0013 | 01 D8             | add AX, bx\n0015 | 83 C1 9E          | add cx, -98\n0018 | 81 C3 89 00       | add bx, 0x89\n001C | 81 C3 91 00       | add bx, 10010001b\n0020 | 83 C3 09          | add bx, 1001b\n0023 | 00 C4             | add ah, al\n0025 | 80 C3 08          | add bl, 8\n0028 | 80 C7 41          | add bh, 'A'\n002B | 83 C2 FF          | add dx, 65535\n002E | 83 C2 80          | add dx, -128\n0031 | 80 C1 F7          | ADD cl, -9\n0034 | 80 C6 05          | add dh, 0x5\n0037 | 80 C2 00          | add dl, '$' - 3h * 0x0c\n003A | 00 CB             | add bl, cl",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Add more validator",
+          "isTest": false,
+          "testIn": "17\n; ----------------------------------------\n; Add more and more...\n; ----------------------------------------\n\nadd ax, 0x1234\nadd al, 12h\nadd bx, 4\nADD dx, 1256\nadd CX, 0x0199\nadd bx, ax\nadd cx, -298\nadd bx, 1001b\nadd ah, al\nadd bh, 121\nadd ax, 0x12 * 2h - '$'\naDd aX, 0ch + 1111111b / 1b\nadd ah, 99",
+          "testOut": "     |                   | ; ----------------------------------------\n     |                   | ; Add more and more...\n     |                   | ; ----------------------------------------\n     |                   | \n0000 | 05 34 12          | add ax, 0x1234\n0003 | 04 12             | add al, 12h\n0005 | 83 C3 04          | add bx, 4\n0008 | 81 C2 E8 04       | ADD dx, 1256\n000C | 81 C1 99 01       | add CX, 0x0199\n0010 | 01 C3             | add bx, ax\n0012 | 81 C1 D6 FE       | add cx, -298\n0016 | 83 C3 09          | add bx, 1001b\n0019 | 00 C4             | add ah, al\n001B | 80 C7 79          | add bh, 121\n001E | 83 C0 00          | add ax, 0x12 * 2h - '$'\n0021 | 05 8B 00          | aDd aX, 0ch + 1111111b / 1b\n0024 | 80 C4 63          | add ah, 99",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Invalid hex number",
+          "isTest": true,
+          "testIn": "4\n; Invalid hex format\nmov ax, 0\nmov ch, 5h\nmov dl, fh",
+          "testOut": "Line 4: Invalid expression or argument",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Invalid hex number validator",
+          "isTest": false,
+          "testIn": "2\nmov ax, 0\nmov bh, eh + 2h ",
+          "testOut": "Line 2: Invalid expression or argument",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Add again",
+          "isTest": true,
+          "testIn": "11\nadd ch, -1\nadd ch, 0xFF\nadd cx, 127\nadd cx, 128\nadd ax, 0xFF\nadd ax, 0xff7f\nadd ax, 0xff80\nadd bx, 65535\nadd bx, -128\nadd ax, $\nadd ax, 2*$+1",
+          "testOut": "0000 | 80 C5 FF          | add ch, -1\n0003 | 80 C5 FF          | add ch, 0xFF\n0006 | 83 C1 7F          | add cx, 127\n0009 | 81 C1 80 00       | add cx, 128\n000D | 05 FF 00          | add ax, 0xFF\n0010 | 05 7F FF          | add ax, 0xff7f\n0013 | 83 C0 80          | add ax, 0xff80\n0016 | 83 C3 FF          | add bx, 65535\n0019 | 83 C3 80          | add bx, -128\n001C | 05 1C 00          | add ax, $\n001F | 05 3F 00          | add ax, 2*$+1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Add again validator",
+          "isTest": false,
+          "testIn": "12\nadd bl, 255\nadd al, 12h\nadd ax, -128\nadd ax, -129\nadd ax, -1\nadd ax, 65535\nadd ax, 127\nadd ax, 128\nadd bx, 0xff7f\nadd bx, 0xff80\nadd ax, $ + 2\nadd cx, 1 + 4*$",
+          "testOut": "0000 | 80 C3 FF          | add bl, 255\n0003 | 04 12             | add al, 12h\n0005 | 83 C0 80          | add ax, -128\n0008 | 05 7F FF          | add ax, -129\n000B | 83 C0 FF          | add ax, -1\n000E | 83 C0 FF          | add ax, 65535\n0011 | 83 C0 7F          | add ax, 127\n0014 | 05 80 00          | add ax, 128\n0017 | 81 C3 7F FF       | add bx, 0xff7f\n001B | 83 C3 80          | add bx, 0xff80\n001E | 05 20 00          | add ax, $ + 2\n0021 | 81 C1 85 00       | add cx, 1 + 4*$",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "1 ≤ [[N]] ≤ 50.\n0 ≤ number of characters in [[LINE]] ≤ 99.",
+      "coverBinaryId": 117647842477020,
+      "stubGenerator": "read N:int\nloop N read LINE:string(100)\nwrite answer",
+      "inputDescription": "<<Line 1>>: An integer [[N]] for the number of lines in the following assembly program \n<<Next [[N]] lines>>: A string [[LINE]] for a line in the assembly program",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The assembled code or the compilation error message.\n\nThe assembled code should be in the following format:\n`\n[[ADDR]] {{ | }} [[HEX CODE]] {{ | }} [[SOURCE CODE]]\n`\n[[ADDR]] is the starting position of [[HEX CODE]] in the assembled code. It consists of 4 hexadecimal digits (uppercase).\n[[HEX CODE]] is max 6 bytes (uppercase hexadecimal) separated by spaces.\n[[SOURCE CODE]] is the line of assembly source code. Any trailing spaces in the source code should be removed."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">This multi-part puzzle creates a (partial) 8086 assembler and produces executable code, which actually works on DOS emulators for 8086. Through each part, you will learn and enrich your assembler to implement 80% of the 8086 assembler features and roughly 25% of all commands as well as some linkage actions.<br><br>The aim of part 1 is to <strong>parse assembly commands</strong> and <strong>display the assembled code next to the program</strong>, useful for debugging in the next parts.<br><br><strong>Registers</strong> (<strong>REG</strong>)<br>The 8086 CPU consists of 4 main registers of 16 bits (<strong>R16</strong>): AX, BX, CX, DX.<br><br>Each <strong>R16</strong> register consists of 2 sub-registers of 8 bits (<strong>R8</strong>) for high (H) and low (L), e.g. AX = AH + AL.<br><br>Each register has a code:<br><pre style=\"font-family: monospace\"><br>AX=0 AL=0 AH=4<br>CX=1 CL=1 CH=5<br>DX=2 DL=2 DH=6<br>BX=3 BL=3 BH=7<br></pre><br><strong>Grammar</strong><br>1/ Each line of the assembly program is a comment or a command. Empty lines are ignored.<br>2/ A comment starts with <const>;</const> and the rest of the line is ignored.<br>3/ A command is composed of characters, digits and <const>_</const>, but never starts with a digit.<br>3.1/ A command has 0 to 2 arguments (also called <strong>operands</strong>), which are separated by <const>,</const>.<br>3.2/ A command may be followed by a comment.<br>3.3/ The assembly language is not case-sensitive except for a character constant (see below).<br>4/ An argument is either <strong>REG</strong> or an immediate value (<strong>IMM</strong>).<br>4.1/ <strong>REG</strong> is <strong>R16</strong> or <strong>R8</strong>.<br>4.2/ <strong>IMM</strong> is a 16-bit (<strong>I16</strong>) or 8-bit (<strong>I8</strong>) value which is unsigned (I16: 0..65535/I8: 0..255) or signed (I16: -32768..32767/I8: -128..127).<br>4.3/ <strong>IMM</strong> is:<br>&bull; a number,<br>&bull; a character, which represents its ASCII value,<br>&bull; <const>$</const>(always encoded using the full size of the destination register), which represents the current byte code position, or<br>&bull; a number resulting from the evaluation of an expression<br>4.4/ Numbers are decimal by default. A binary number ends with <const>b</const>. A hexadecimal number starts with <const>0x</const>, or starts with a digit and ends with <const>h</const>.<br>4.5/ Single quotes are used to define a character, e.g. <const>'A'</const>. <const>\\</const> is used as the escape character if the character is <const>'</const> or <const>\\</const>.<br>4.6/ Assembled code positions start from 0.<br>4.7/ <const>+ - * /</const> (floor division) and <const>( )</const> are used in an <strong>IMM</strong> expression. When an <strong>IMM</strong> expression is assembled, it is evaluated using the usual operator precedence and replaced by the result.<br><br><strong>Commands</strong><br>When a command uses 2 operands, the first one is the target <var>T</var> and the second one is the source <var>S</var>.<br><br>AX and AL are treated as primary accumulators (<strong>ACC</strong>) by some commands when the <strong>IMM</strong> command argument <strong>matches the number of bits</strong> (<strong>I16</strong> for AX, <strong>I8</strong> for AL).<br><br>In Part I, we will use 3 commands. The conversion table below lists their operand types and corresponding instructions encodings:<br><pre style=\"font-family: monospace\"><br><strong>MOV arg1, arg2</strong> Moves a source (arg2) to a target (arg1)<br>REG, REG: 88+w C0+8*S+T<br>R16, I16: B0+8*w+T data<br>R8,  I8 : B0+8*w+T data<br><br><strong>ADD arg1, arg2</strong> Adds a source (arg2) to a target (arg1)<br>REG, REG: 00+w C0+8*S+T<br>ACC, IMM: 04+w data<br>R16, I16: 81 C0+T data<br>R16, I8:  83 C0+T data\t(I8 will be sign-extended)<br>R8,  I8:  80 C0+T data<br><br><strong>INT arg</strong> Generates a software interrupt<br>I8: CD data<br></pre><br>Notes:<br>&bull; <var>w</var> = <const>1</const> for <strong>R16</strong>, <const>0</const> for <strong>R8</strong>. The target register determines the number of bits.<br>&bull; <var>T</var> and <var>S</var> are register codes, e.g. 0 for AX.<br>&bull; If <strong>IMM</strong> does not match the size of the destination, it will be sign-extended when executed.<br>&bull; <strong>IMM</strong> is classified as <strong>I16</strong> or <strong>I8</strong> based on the smallest valid range supported by the instruction. For example, <const>10</const> is <strong>I8</strong> in <const>add ax, 10</const> but <strong>I16</strong> in <const>mov ax, 10</const>.<br>&bull; <var>data</var> is <strong>IMM</strong> expressed in 4 hexadecimal digits for <strong>I16</strong>, and 2 for <strong>I8</strong>.<br>&bull; <var>data</var> is stored using <strong>little endian encoding</strong> where the least significant byte comes first.<br>&bull; Negative numbers are encoded using the two's complement representation <const>https://en.wikipedia.org/wiki/Two%27s_complement</const>.<br><br><strong>Task</strong><br>For each line of the assembly program, output the details below:<br><pre style=\"font-family: monospace\"><br>Position in assembled code <const> | </const> Hex codes <const> | </const> Source code<br></pre><br>A comment line is output without a position or hex codes.<br><br>In case of a compilation error, output the following only:<br><const>Line</const> <var>x</var><const>:</const> <var>error message</var><br>where:<br><var>x</var> is the program line number (starts from 1).<br><var>error message</var> is one of the following:<br>&bull; <const>Unknown command</const><br>&bull; <const>Invalid number of arguments</const><br>&bull; <const>Invalid expression or argument</const><br>&bull; <const>Invalid operand</const>: an operand does not match command needs (e.g the INT command accepts <strong>I8</strong> only)<br><br><strong>Example</strong><br><pre style=\"font-family: monospace\"><br>; Basic example<br>mov ax, 10h<br></pre><br><const>mov ax, 10h</const> corresponds to <const>MOV REG, IMM</const> in the conversion table, and its encoding is <const>B0+8*w+T data</const>.<br>1st part (opcode): <var>w</var> = <const>1</const> (AX is <strong>R16</strong>) and <var>T</var> = <const>0</const> (AX = 0) =&gt; <const>B8</const><br>2nd part (<var>data</var>): It is 16-bit (AX is <strong>R16</strong>), hence 10h =&gt; <const>0x0010</const>, or <const>0x10 0x00</const> in little endian encoding.<br>Full assembled instruction: <const>B8 10 00</const><br><br>Output is hence:<br><pre style=\"font-family: monospace\"><br>     |                    | ; Basic example<br>0000 | B8 10 00           | mov ax, 10h<br></pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: An integer <var>N</var> for the number of lines in the following assembly program <br><strong>Next <var>N</var> lines</strong>: A string <var>LINE</var> for a line in the assembly program</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The assembled code or the compilation error message.<br><br>The assembled code should be in the following format:<br><pre style=\"font-family: monospace\"><br><var>ADDR</var> <const> | </const> <var>HEX CODE</var> <const> | </const> <var>SOURCE CODE</var><br></pre><br><var>ADDR</var> is the starting position of <var>HEX CODE</var> in the assembled code. It consists of 4 hexadecimal digits (uppercase).<br><var>HEX CODE</var> is max 6 bytes (uppercase hexadecimal) separated by spaces.<br><var>SOURCE CODE</var> is the line of assembly source code. Any trailing spaces in the source code should be removed.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 50.<br>0 &le; number of characters in <var>LINE</var> &le; 99.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5\n; This is a basic example\nmov ax, 10h ; this is a hexa value\nmov cx, ax\nmov dx, $\nmov ch, $</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">     |                   | ; This is a basic example\n0000 | B8 10 00          | mov ax, 10h ; this is a hexa value\n0003 | 89 C1             | mov cx, ax\n0005 | BA 05 00          | mov dx, $\n0008 | B5 08             | mov ch, $</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 56279074858,
+  "avatar": 117815661507237,
+  "commentCount": 99,
+  "upVotes": 27,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 940820,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1707732337003,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1707735018500,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1712505937001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1712506905513,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1714449809014,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

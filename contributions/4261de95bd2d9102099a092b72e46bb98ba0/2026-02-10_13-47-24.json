@@ -1,0 +1,129 @@
+{
+  "id": 4261,
+  "activeVersion": 46,
+  "score": 9,
+  "votableId": 10505529,
+  "codingamerId": 1870937,
+  "views": 488,
+  "commentableId": 10435662,
+  "title": "Shikaku Solver",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "publicHandle": "4261de95bd2d9102099a092b72e46bb98ba0",
+  "codingamerHandle": "db6321ede0cfc71dba63fb778cc61f677390781",
+  "lastVersion": {
+    "version": 46,
+    "autocloseTime": 1559090105284,
+    "data": {
+      "title": "Shikaku Solver",
+      "topics": [],
+      "solution": "//code by Westicles, deleted by the Man\n\n#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <string>\nusing namespace std;\nstruct Areas{pair <int, int> anchor; int area;};\nstruct rect{int r1, c1, r2, c2; };\nbool rect_sort(rect const& lhs, rect const& rhs) {\n if(lhs.r1 != rhs.r1){return lhs.r1 < rhs.r1; }\n if(lhs.c1 != rhs.c2){return lhs.c1 < rhs.c2; }}\nbool RRsort(vector<rect> lhs, vector<rect> rhs) {return lhs.size() < rhs.size(); }\nbool RR1sort(vector<rect> lhs, vector<rect> rhs) {\n if (rhs.size()<8){ return 0; }\n return(lhs[0].r2 - lhs[0].r1)*(lhs[0].c2 - lhs[0].c1)>(rhs[0].r2 - rhs[0].r1)*(rhs[0].c2 - rhs[0].c1);}\n\nstring s = \"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\";\nvector<string> RES;\nint W,H;\n\nvoid print_final(){\n cout << RES.size() << endl;\n sort(RES.begin(), RES.end());\n for(int i = 0; i < H; i++){cout<<RES[0].substr(W*i,W)<<endl;}}\n\nvoid rec(vector<vector<int>> &BB, vector<vector <rect>> RR, int d, vector<int> &S){\n if(d==RR.size()){\n  vector<rect> R;\n  for (int i = 0; i < RR.size(); i++){ R.push_back(RR[i][S[i]]); }\n  string g(H*W, 'x');\n  sort(R.begin(), R.end(), &rect_sort);\n  for(int i = 0; i < R.size(); i++){\n  for(int r = R[i].r1; r <= R[i].r2; r++){\n  for(int c = R[i].c1; c <= R[i].c2; c++){ g[r*W + c] = s[i]; }}}\n  RES.push_back(g);\n  return;}\n for(int i = RR.size() - 1; i >= d; i--){\n  for(int j = RR[i].size() - 1; j >= 0; j--){\n   for(int rr = RR[i][j].r1; rr <= RR[i][j].r2; rr++){\n    for(int cc = RR[i][j].c1; cc <= RR[i][j].c2; cc++){\n     if(BB[rr][cc] == 1){\n\t  RR[i].erase(RR[i].begin() + j);\n\t  if (RR[i].size() == 0){ return; }\n\t  goto hh;}}}\n   hh:;}}\n sort(RR.begin()+d, RR.end(), &RRsort);\n if(RR[d].size() == 0){ return; }\n vector<int> S2 = S; S2.push_back(0);\n vector<vector<int>> BB2;\n for(int i = 0; i < RR[d].size(); i++){\n  S2.back() = i;\n  BB2 = BB;\n  for(int rr = RR[d][i].r1; rr <= RR[d][i].r2; rr++){\n  for(int cc = RR[d][i].c1; cc <= RR[d][i].c2; cc++){\n   if(BB2[rr][cc] == 1){ goto here; }\n   BB2[rr][cc]=1;}}\n rec(BB2, RR, d + 1, S2); here:;}}\n    \nvoid process(vector<Areas> P){\n rect r;\n vector<vector<rect>> RR;\n int A,N = P.size(),ff=1;\n vector<int> S;\n vector<vector<int>> BB(H, vector<int> (W)),CC = BB;\n for(int i = 0; i < N; i++){BB[P[i].anchor.second][P[i].anchor.first] = 1;}\n  for(int i = 0; i < N; i++){\n   vector<rect> R;\n   for(r.r1= 0; r.r1 < H; r.r1++){\n    for(r.c1 = 0; r.c1 < W; r.c1++){\n     for(r.r2 = r.r1; r.r2 < H; r.r2++){\n      for(r.c2 = r.c1; r.c2 < W; r.c2++){\n       if((r.r2 - r.r1 + 1)*(r.c2 - r.c1 + 1) != P[i].area){ continue; }\n       int pass = 0, fail = 0;\n       for(int rc = r.r1; rc <= r.r2; rc++){\n\t\tfor(int cc = r.c1; cc <= r.c2; cc++){\n\t   if(BB[rc][cc] && rc == P[i].anchor.second && cc == P[i].anchor.first){ pass = 1; }\n\t   else if(BB[rc][cc]){ fail = 1; break; }}}\n\tif(pass == 1 && fail == 0){R.push_back(r);}}}}}\n   RR.push_back(R);}\n sort(RR.begin(), RR.end(), &RRsort);\n sort(RR.begin(), RR.end(), &RR1sort);\n for(int i = 0; i < RR[0].size(); i++){\n  BB = CC;\n  S.clear();\n  S.push_back(i);\n  for(int rr = RR[0][i].r1; rr <= RR[0][i].r2; rr++){\n   for (int cc = RR[0][i].c1; cc <= RR[0][i].c2; cc++){BB[rr][cc] = 1;}}\n rec(BB, RR, 1, S);}}\n\nint main(){\n cin >> W >> H;\n vector<Areas> P;\n Areas b;\n pair<int,int> p;\n for(int i = 0; i < H; i++) {\n  for (int j = 0; j < W; j++) {\n   cin >> b.area;\n   if(b.area>0){p.second=i;p.first=j;b.anchor=p;P.push_back(b);}}}\n process(P);\n print_final();}",
+      "statement": "<<Find all solutions to a Shikaku puzzle.>>\n\nShikaku is a puzzle played on a rectangular grid. Some of the squares in the grid are numbered. The objective is to divide the grid into rectangular pieces such that each piece contains exactly one number, and that number represents the area of the rectangle.\n\nIf the puzzle is poorly designed, there might be more than one solution. The goal here is to find all the solutions to a given puzzle.\n\nWe will use the letters ({{A}}-{{Z}},{{a}}-{{z}}) to represent the rectangles. Going left to right then top to bottom, you should encounter the rectangles ({{A}}-{{Z}},{{a}}-{{z}}) in order.\n\nhttps://en.wikipedia.org/wiki/Shikaku",
+      "testCases": [
+        {
+          "title": "10x10, One Solution",
+          "isTest": true,
+          "testIn": "10 10\n0 0 0 0 0 0 0 0 9 0\n0 0 0 0 0 0 9 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 20 0 0 8 0 0 0 6 0\n0 0 0 0 0 0 0 0 0 0\n0 0 0 6 0 0 6 0 0 0\n10 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 0 6 0 6 0 0 0 8 0\n0 0 0 0 0 0 6 0 0 0",
+          "testOut": "1\nAAAABBBCCC\nAAAABBBCCC\nAAAABBBCCC\nAAAADDDDEE\nAAAADDDDEE\nFFGGGHHHEE\nFFGGGHHHII\nFFJJKKLLII\nFFJJKKLLII\nFFJJKKLLII",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "10x10, One Solution",
+          "isTest": false,
+          "testIn": "10 10\n0 0 0 0 0 0 0 6 0 0\n0 6 0 0 6 0 6 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 6 0\n0 0 0 0 8 0 0 0 0 0\n0 12 0 8 0 0 0 0 0 0\n0 0 0 0 0 0 0 9 0 0\n0 0 12 0 0 0 0 0 0 0\n0 0 0 0 9 0 0 12 0 0\n0 0 0 0 0 0 0 0 0 0",
+          "testOut": "1\nAAABBCCDDD\nAAABBCCDDD\nEEEBBCCFFF\nEEEGGGGFFF\nEEEGGGGHHH\nEEEIIIIHHH\nJJJIIIIHHH\nJJJKKKLLLL\nJJJKKKLLLL\nJJJKKKLLLL",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "15x20, More Solutions",
+          "isTest": true,
+          "testIn": "15 20\n0 0 0 0 0 0 0 0 0 9 0 0 0 0 0\n0 8 0 0 0 6 0 0 6 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 10 0 0 0 0 6 0 6 0 0 0 0\n0 10 0 0 0 0 0 0 0 0 0 0 15 0 0\n0 0 0 14 0 0 9 0 0 0 6 0 0 0 0\n0 0 0 0 0 12 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 6 0 0 0 12 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 8 0 0\n0 0 0 0 0 9 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 14 0 0 0 0 0 0 8 0 0 0 0 0 24\n0 0 0 0 0 0 0 0 0 6 0 0 6 0 0\n0 0 0 9 0 0 6 0 0 28 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 8 0 0 0 0 0 0 0\n0 0 0 10 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 15 0 6 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n8 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+          "testOut": "20\nAABBCCDDDDDDDDD\nAABBCCEEEEEEFFF\nAABBCCGGGHHHFFF\nAABBIIGGGHHHFFF\nJJBBIIKKKLLLFFF\nJJMMIIKKKLLLFFF\nJJMMIIKKKNNNNNN\nJJMMIIOOONNNNNN\nJJMMIIOOOPPPPQQ\nRRMMSSSTTPPPPQQ\nRRMMSSSTTUUVVQQ\nRRMMSSSTTUUVVQQ\nRRWWWXXTTUUVVQQ\nRRWWWXXYYZZZZQQ\nRRWWWXXYYZZZZQQ\nRRaaaaaYYZZZZQQ\nbbaaaaaYYZZZZQQ\nbbcccccddZZZZQQ\nbbcccccddZZZZQQ\nbbcccccddZZZZQQ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "15x20, More Solutions",
+          "isTest": false,
+          "testIn": "15 20\n12 0 0 0 8 0 0 0 0 0 0 0 0 9 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 6 0 12 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 6 0 0 0 0 0\n0 0 0 0 0 0 0 9 0 0 0 0 0 6 0\n0 0 0 8 0 8 0 0 0 10 0 8 0 0 0\n0 0 0 0 0 8 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 8 0 0 0 8 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 8 0\n0 0 0 0 0 0 6 0 0 0 6 8 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 12 0 8 0 0 0\n0 0 0 0 0 6 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 12 0 0 0 0 0 0 0 8 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 60 0 0 0 0 0 0 0 0 0 0\n6 0 0 0 0 0 0 0 0 0 0 12 0 0 0\n0 0 0 0 6 0 0 0 6 10 0 0 0 0 0",
+          "testOut": "32\nAABBBBCCDDDDEEE\nAABBBBCCDDDDEEE\nAAFFGGCCDDDDEEE\nAAFFGGHHHIIIIII\nAAFFGGHHHJJJJJJ\nAAFFGGHHHKKLLLL\nMMMMMNNNNKKLLLL\nMMMMMNNNNKKOOPP\nMMMMMQQQQKKOOPP\nMMMMMQQQQKKOOPP\nMMMMMRRRSSSOOPP\nMMMMMRRRSSSTTTT\nMMMMMUUUUUUTTTT\nMMMMMUUUUUUVVVV\nMMMMMWWWWWWVVVV\nMMMMMXXXXYYZZZZ\nMMMMMXXXXYYZZZZ\nMMMMMXXXXYYaaaa\nbbbbbbcccYYaaaa\nddddddcccYYaaaa",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "20x20",
+          "isTest": true,
+          "testIn": "20 20\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 0\n0 0 0 0 0 0 0 0 0 0 0 0 65 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 15 0 0 0 0 0\n18 0 0 0 0 0 0 0 0 9 0 0 0 6 0 0 0 0 0 6\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0\n0 0 0 0 0 0 0 8 0 0 0 0 0 0 0 6 8 0 0 0\n10 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 8 0 6 0 0 8 0 0 6 0 0 0 0 0 0\n8 0 0 0 0 0 0 0 0 0 0 6 0 0 0 6 0 0 0 8\n0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 6 0 0 6 0 0 0 6 0 0 0 12 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 16 0 0 10 0 0 0 0 0 6 0 0 0 0 0 0 0\n9 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 8 0 0 0 0\n0 0 0 0 0 9 0 9 0 0 0 0 0 6 0 0 8 0 8 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0\n0 0 0 0 0 0 26 0 0 0 0 0 0 8 0 0 0 0 0 0",
+          "testOut": "32\nAAAAAAAAAAAAABBBCCCC\nAAAAAAAAAAAAABBBCCCC\nAAAAAAAAAAAAABBBDDDD\nAAAAAAAAAAAAABBBDDDD\nAAAAAAAAAAAAABBBEEFF\nGGGGGGGGGHHHIIJJEEFF\nGGGGGGGGGHHHIIJJEEFF\nKKKKKLLLLHHHIIJJMMMM\nKKKKKLLLLNNOOPPPMMMM\nQQQQRRSSSNNOOPPPTTTT\nQQQQRRSSSNNOOUUUTTTT\nVVVVRRWWWNNXXUUUYYYY\nVVVVRRWWWZZXXaaaYYYY\nVVVVbbbbbZZXXaaaYYYY\nVVVVbbbbbZZcccddeeff\nggghhhiiijjcccddeeff\nggghhhiiijjkkkddeeff\nggghhhiiijjkkkddeeff\nlllllllllllllmmmmnnn\nlllllllllllllmmmmnnn",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "20x20",
+          "isTest": false,
+          "testIn": "20 20\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 60 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 14 0 0 8 0 0 0 0 0 8 0 6 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 9 0 0 0 0\n0 0 0 10 0 0 0 0 0 6 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 12\n0 0 0 8 0 0 0 0 0 0 0 0 0 6 0 0 12 0 0 0\n0 0 0 0 0 0 9 0 0 0 6 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0\n0 0 0 0 0 0 6 0 0 0 10 0 0 0 0 0 0 0 0 0\n0 0 0 6 0 0 0 6 12 0 0 0 6 0 0 0 0 6 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 22 0\n0 0 0 0 6 0 6 0 0 6 0 6 0 0 0 0 6 0 0 0\n0 0 0 0 0 0 8 0 0 0 0 0 6 0 6 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 6 0 0 0\n0 34 0 0 0 16 0 0 0 0 8 0 0 0 6 0 0 0 0 0",
+          "testOut": "24\nAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAA\nBBCCDDEEFFFGGGGHHHII\nBBCCDDEEFFFGGGGHHHII\nBBCCDDEEJJJKKKKLLLII\nBBCCDDEEJJJKKKKLLLII\nBBCCDDMMMNNNNNNLLLII\nBBOODDMMMPPPPPPQQQII\nBBOODDMMMRRRRRRQQQSS\nBBOOTTTUUUUUVVVQQQSS\nBBOOTTTUUUUUVVVQQQSS\nBBWWWXXXYYYYZZZaaaSS\nBBWWWXXXYYYYZZZaaaSS\nBBbbbcccYYYYddeeffSS\nBBbbbcccgghhddeeffSS\nBBiiiijjgghhddeeffSS\nBBiiiijjgghhkkklllSS\nBBiiiijjmmmmkkklllSS\nBBiiiijjmmmmnnnnnnSS",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "25x20",
+          "isTest": true,
+          "testIn": "25 20\n0 0 15 0 0 0 0 0 0 0 0 0 16 0 0 0 0 0 0 0 0 0 0 6 0\n0 0 0 0 0 0 0 0 0 0 8 0 0 0 0 0 0 0 0 6 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 30 0 0 0 0 0 6 0 0 0 0 0 6 0 6 0 24 0 0 0\n9 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 8 0 0 15 0 0 8 0 0 0 0 0 0 0 0 0 0 0 0 0 14 0\n0 21 0 0 0 0 0 0 0 0 0 0 8 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 10 0 0 0 0 9 0 0 6 0 0 0 9 0 0 0 16 6 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 15 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 6 0 6 0 0 0 0 0 20 0 0 0 0 0\n9 0 0 10 0 0 8 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 12 6 0 0 0 0 0 0 0 0 0 6 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 0 0 0 0 0 0 0 0 10\n0 6 0 0 0 0 0 0 0 0 0 0 8 0 0 0 0 0 15 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 6 0 0 0 0 0 0 0 25 0 24 0 0 0 0 0 0 0 0 0 14 0 0 0\n0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+          "testOut": "48\nAAAAABBBBBCCDDDDEEFFGGGHH\nAAAAABBBBBCCDDDDEEFFGGGHH\nAAAAABBBBBCCDDDDEEFFGGGHH\nIIIJJBBBBBCCDDDDKKLLGGGMM\nIIIJJBBBBBNNNNNNKKLLGGGMM\nIIIJJBBBBBOOOOOOKKLLGGGMM\nPPPJJQQQRRRRRRRRSSSSGGGMM\nPPPTTQQQUUUUUUUUSSSSGGGMM\nPPPTTQQQVVVWWXXXSSSSYYYMM\nPPPTTQQQVVVWWXXXSSSSYYYMM\nPPPTTQQQVVVWWXXXZZZZaaaaa\nPPPTTbbcccdddeeeZZZZaaaaa\nPPPffbbcccdddeeeZZZZaaaaa\ngggffbbccchhhhhhZZZZiiijj\ngggffbbccckkkkkkZZZZiiijj\ngggfflllllmmmmmmmmnnnnnjj\nooofflllllppppppppnnnnnjj\noooqqlllllrrrrrrrrnnnnnjj\nsssqqlllllrrrrrrrrttttttt\nsssqqlllllrrrrrrrrttttttt",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "25x20",
+          "isTest": false,
+          "testIn": "25 20\n0 0 0 0 0 0 0 0 0 9 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 14 0 0 0 0 12 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 6 0 0 0 0 0 0 6 6 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 25 0 0 0\n16 0 0 0 0 0 0 0 9 0 0 6 0 0 0 0 14 0 0 14 0 0 0 0 8\n0 0 0 0 0 8 0 0 0 0 0 0 0 0 0 9 0 0 0 0 6 0 0 0 0\n9 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 20 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 6 0 0 0 6 0 0 0 0 0 0 0 10 0 0 0 0\n0 6 0 0 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 8 0 0 0 0 0\n0 0 0 0 0 9 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 10 0 0 0 6 0 0 6 0 0 6 0 0 0 0 0 6 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 6 0 0 0 0 0 0\n0 10 6 0 0 0 9 0 0 9 0 6 0 6 0 0 0 0 0 0 0 0 0 0 15\n0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 21 0 0 0 0 0 0\n14 0 0 0 0 0 0 0 0 0 0 6 0 0 6 0 0 0 0 0 0 0 0 0 0\n0 0 30 0 0 0 0 0 0 0 0 0 0 0 0 30 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+          "testOut": "7\nAAAAAAABBBCCCCCCDDEEFFFFF\nAAAAAAABBBCCCCCCDDEEFFFFF\nGGGGHHHBBBIIIJJJDDEEFFFFF\nGGGGHHHKKKIIIJJJDDEEFFFFF\nGGGGLLLKKKMMMNNNDDEEFFFFF\nGGGGLLLKKKMMMNNNDDEEOOOPP\nQQQRRRRSSSSSSNNNDDEEOOOPP\nQQQRRRRSSSSSSTTTTTUUUUUPP\nQQQVVVWWXXYYYTTTTTUUUUUPP\nZZZVVVWWXXYYYTTTTTaaaabbb\nZZZVVVWWXXcccTTTTTaaaabbb\nddeeeeefffcccggghhiijjbbb\nddeeeeefffkkkggghhiijjbbb\nddllmmmnnnkkkooohhiijjbbb\nddllmmmnnnpppooohhqqqqqqq\nddllmmmnnnppprrsssqqqqqqq\ntttttttuuuuuurrsssqqqqqqq\ntttttttvvvvvvrrwwwwwwwwww\nxxxxxxxxxxxxxxxwwwwwwwwww\nxxxxxxxxxxxxxxxwwwwwwwwww",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "30x30",
+          "isTest": true,
+          "testIn": "30 30\n6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 45 0 0 0 0 0 0 0 0 8 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9 0 0 0 0 9 0 0 0 0 0 6 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 21 0 0 0 0\n0 0 15 0 0 0 0 0 8 0 0 0 0 0 0 0 0 0 0 12 0 0 6 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 10 0 0 0 0 0 0 0 0 0 0 0 10 0 0 0 8 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 21 0 0 0 0 0 0 0 0 6 8 0 0 6 0 0 15 0 0\n0 0 0 0 0 0 0 0 308 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 20\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 6 0 0 0 0 0 8 6 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 12 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 18 0 0 8 0 15 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 0 0 0 0 0 0 0 0 0 0 0 0 0 8\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 0 16 0 0 0 0 0 0 6 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 10 0 0 0 0 9 0 0 0 9 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9 0 0 0 0 0 0 0 0 0 0 10\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 6 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 10 0 0 0 0 0 0 15 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 96 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+          "testOut": "16\nAABBBBBBBBBBBBBBBCCCDDDEEEEFFF\nAABBBBBBBBBBBBBBBCCCDDDEEEEFFF\nAABBBBBBBBBBBBBBBCCCDDDGGGGGGG\nHHIIIJJJKKKKLLMMMMMMNNNGGGGGGG\nHHIIIJJJKKKKLLMMMMMMNNNGGGGGGG\nHHIIIOOOOOOOLLPPPQQQQRRSSTTTTT\nHHIIIOOOOOOOLLPPPQQQQRRSSTTTTT\nHHIIIOOOOOOOLLUUVVWWWRRSSTTTTT\nXXXXXXXXXXXXXXUUVVWWWRRYYYZZZZ\nXXXXXXXXXXXXXXUUVVaaabbYYYZZZZ\nXXXXXXXXXXXXXXccddaaabbeeeZZZZ\nXXXXXXXXXXXXXXccddaaabbeeeZZZZ\nXXXXXXXXXXXXXXccddaaabbeeeZZZZ\nXXXXXXXXXXXXXXffggghhhheeeiiii\nXXXXXXXXXXXXXXffggghhhheeeiiii\nXXXXXXXXXXXXXXffgggjjkkkkllmmm\nXXXXXXXXXXXXXXffgggjjkkkkllmmm\nXXXXXXXXXXXXXXnngggjjkkkkllooo\nXXXXXXXXXXXXXXnngggjjkkkkllooo\nXXXXXXXXXXXXXXnnpppqqqrrrsssss\nXXXXXXXXXXXXXXnnpppqqqrrrsssss\nXXXXXXXXXXXXXXnnpppqqqrrrttttt\nXXXXXXXXXXXXXXuuuuuvvvwwwttttt\nXXXXXXXXXXXXXXuuuuuvvvwwwttttt\nXXXXXXXXXXXXXXxxxxxxxxxxxxxxxx\nXXXXXXXXXXXXXXxxxxxxxxxxxxxxxx\nXXXXXXXXXXXXXXxxxxxxxxxxxxxxxx\nXXXXXXXXXXXXXXxxxxxxxxxxxxxxxx\nXXXXXXXXXXXXXXxxxxxxxxxxxxxxxx\nXXXXXXXXXXXXXXxxxxxxxxxxxxxxxx",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "30x30",
+          "isTest": false,
+          "testIn": "30 30\n0 0 0 0 0 0 10 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 18 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 10 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 54 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 20 0 0 0 0 64 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 8 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 24 0 0 0 0 0\n0 0 0 0 0 0 0 8 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 18 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 15 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 6 0 6 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 12 0 0\n0 0 45 0 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 0 0 0 0 0 0\n0 0 0 0 0 0 18 0 0 0 6 0 0 0 0 0 0 0 18 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 6 0 0 0 32 0 0 0 0 0 9 0 0 12 0 0 0 0 0 0 0 0\n0 0 6 0 0 0 0 0 0 0 0 6 0 0 0 0 10 0 0 0 0 0 0 0 0 65 0 0 0 0\n0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 10 0 0 0 0 0 0 8 0 0 0 0 0 6 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 6 0 10 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 0\n60 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0\n0 0 0 15 0 0 0 0 0 8 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 0 0 0 0 0\n0 0 0 0 0 0 20 0 0 0 0 0 0 0 0 0 10 6 0 0 0 0 6 0 14 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 25\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 126 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+          "testOut": "4\nAABBBBBCCCCCCDDDDDDDDEEEEEEEEE\nAABBBBBCCCCCCDDDDDDDDEEEEEEEEE\nAAFFFFFCCCCCCDDDDDDDDEEEEEEEEE\nAAFFFFFGGHHHHDDDDDDDDEEEEEEEEE\nAAIIIIIGGHHHHDDDDDDDDEEEEEEEEE\nAAIIIIIGGHHHHDDDDDDDDEEEEEEEEE\nAAIIIIIGGHHHHDDDDDDDDJJJKKKKKK\nAAIIIIILLHHHHDDDDDDDDJJJKKKKKK\nAAIIIIILLMMMNNOOPPQQQJJJKKKKKK\nAAIIIIILLMMMNNOOPPQQQJJJKKKKKK\nAAIIIIILLMMMNNOOPPQQQJJJRRRRRR\nAAIIIIISSMMMTTTTUUQQQJJJRRRRRR\nAAIIIIISSMMMTTTTUUQQQVVVVWWWWW\nAAXXYYYSSZZZTTTTUUQQQVVVVWWWWW\nAAXXYYYaaZZZTTTTUUbbbccccWWWWW\nAAXXYYYaadddTTTTUUbbbccccWWWWW\nAAeeYYYaadddTTTTffbbbccccWWWWW\nAAeeYYYgggggTTTTffhhhhiiiWWWWW\nAAeeYYYgggggTTTTffhhhhiiiWWWWW\nAAjjjkkkkllmmnnooppppppqqWWWWW\nAAjjjkkkkllmmnnooppppppqqWWWWW\nAAjjjkkkkllmmnnoorrrrrrqqWWWWW\nAAjjjkkkkssssnnootttuuuqqWWWWW\nAAjjjkkkkssssnnootttuuuvvWWWWW\nAAwwwwwwwwwwwwwwwwwwwwwvvWWWWW\nAAwwwwwwwwwwwwwwwwwwwwwvvxxxxx\nAAwwwwwwwwwwwwwwwwwwwwwvvxxxxx\nAAwwwwwwwwwwwwwwwwwwwwwvvxxxxx\nAAwwwwwwwwwwwwwwwwwwwwwvvxxxxx\nAAwwwwwwwwwwwwwwwwwwwwwvvxxxxx",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "10 ≤ [[W]],[[H]] ≤ 30",
+      "coverBinaryId": 134111068463006,
+      "stubGenerator": "read W:int H:int\nloop H\nloopline W v:int\nwrite answer",
+      "inputDescription": "<<Line 1:>> The [[W]]idth and [[H]]eight of the puzzle, space separated.\n<<Next [[H]] lines:>> [[W]] space separated numbers to fill out the grid (0 for blank cells, otherwise the area value).",
+      "solutionLanguage": "C++",
+      "outputDescription": "<<Line 1:>> The number of solutions to the puzzle. There will always be at least one solution.\n<<Next [[H]] lines:>> [[W]] characters ({{A}}-{{Z}},{{a}}-{{z}}) for each line of the solution. If there is more than one solution, return the solution that comes first if you concatenate all rows and sort lexicographically."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><strong>Find all solutions to a Shikaku puzzle.</strong><br><br>Shikaku is a puzzle played on a rectangular grid. Some of the squares in the grid are numbered. The objective is to divide the grid into rectangular pieces such that each piece contains exactly one number, and that number represents the area of the rectangle.<br><br>If the puzzle is poorly designed, there might be more than one solution. The goal here is to find all the solutions to a given puzzle.<br><br>We will use the letters (<const>A</const>-<const>Z</const>,<const>a</const>-<const>z</const>) to represent the rectangles. Going left to right then top to bottom, you should encounter the rectangles (<const>A</const>-<const>Z</const>,<const>a</const>-<const>z</const>) in order.<br><br>https://en.wikipedia.org/wiki/Shikaku</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> The <var>W</var>idth and <var>H</var>eight of the puzzle, space separated.<br><strong>Next <var>H</var> lines:</strong> <var>W</var> space separated numbers to fill out the grid (0 for blank cells, otherwise the area value).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> The number of solutions to the puzzle. There will always be at least one solution.<br><strong>Next <var>H</var> lines:</strong> <var>W</var> characters (<const>A</const>-<const>Z</const>,<const>a</const>-<const>z</const>) for each line of the solution. If there is more than one solution, return the solution that comes first if you concatenate all rows and sort lexicographically.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">10 &le; <var>W</var>,<var>H</var> &le; 30</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">10 10\n0 0 0 0 0 0 0 0 9 0\n0 0 0 0 0 0 9 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 20 0 0 8 0 0 0 6 0\n0 0 0 0 0 0 0 0 0 0\n0 0 0 6 0 0 6 0 0 0\n10 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0\n0 0 6 0 6 0 0 0 8 0\n0 0 0 0 0 0 6 0 0 0</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1\nAAAABBBCCC\nAAAABBBCCC\nAAAABBBCCC\nAAAADDDDEE\nAAAADDDDEE\nFFGGGHHHEE\nFFGGGHHHII\nFFJJKKLLII\nFFJJKKLLII\nFFJJKKLLII</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 213922948197,
+  "commentCount": 24,
+  "upVotes": 9,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 341805,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

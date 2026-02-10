@@ -1,0 +1,279 @@
+{
+  "id": 137427,
+  "activeVersion": 10,
+  "score": 13,
+  "votableId": 38544957,
+  "codingamerId": 3232421,
+  "views": 304,
+  "commentableId": 38379711,
+  "title": "Tic Tac Toe Engine",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "User123",
+  "publicHandle": "137427e4682c78b49d5119f1869626038392ee",
+  "codingamerHandle": "c3b956997f0e142fcaa109d71c0ecd431242323",
+  "lastVersion": {
+    "version": 10,
+    "autocloseTime": 1766128095866,
+    "freezeTime": 1764140895866,
+    "data": {
+      "title": "Tic Tac Toe Engine",
+      "topics": [
+        {
+          "id": 56,
+          "handle": "backtracking",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Retour sur trace",
+            "2": "Backtracking"
+          },
+          "pageTitle": "Backtracking: exercises and theory",
+          "puzzleCount": 33,
+          "parentTopicId": 41,
+          "contentDetailsId": 80
+        },
+        {
+          "id": 83,
+          "handle": "minimax",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Minimax",
+            "2": "Minimax"
+          },
+          "pageTitle": "Minimax: exercises and theory",
+          "puzzleCount": 36,
+          "parentTopicId": 42,
+          "contentDetailsId": 93
+        }
+      ],
+      "solution": "from itertools import product\n\nSPACE = \".\"\n\ndef no_more_moves(board: list[list[str]]) -> bool:\n    \"\"\"Check if there are no more moves left on the board.\"\"\"\n\n    return all(board[i][j] != SPACE for i, j in product(range(3), repeat=2))\n\n\ndef evaluate(board: list[list[str]], player: str) -> int:\n    \"\"\"Evaluate the board and returns the score.\"\"\"\n\n    for row in board:\n        if row[0] == row[1] == row[2] and row[0] != SPACE:\n            return (-1) ** (row[0] != player)\n    for col in range(3):\n        if board[0][col] == board[1][col] == board[2][col] and board[0][col] != SPACE:\n            return (-1) ** (board[0][col] != player)\n\n    if board[0][0] == board[1][1] == board[2][2] and board[0][0] != SPACE:\n        return (-1) ** (board[0][0] != player)\n    elif board[0][2] == board[1][1] == board[2][0] and board[0][2] != SPACE:\n        return (-1) ** (board[0][2] != player)\n    return 0\n\n\ndef minimax(board: list[list[str]], depth: int, player: str, opponent: str, maximize: bool) -> tuple[int, int]:\n    \"\"\"Minimax algorithm implementation.\"\"\"\n\n    score = evaluate(board, player)\n    if score:\n        return score, (-1) ** (score > 0) * depth\n    elif no_more_moves(board):\n        return 0, depth\n\n    best = (-1) ** maximize, (-8) * maximize\n    for i, j in product(range(3), repeat=2):\n        if board[i][j] != SPACE:\n            continue\n        board[i][j] = (opponent, player)[maximize]\n        best = (min, max)[maximize](best, minimax(board, depth + 1, player, opponent, not maximize))\n        board[i][j] = SPACE\n\n    return best\n\n\ndef make_best_move(board: list[list[str]], player: str) -> None:\n    \"\"\"Make the best move for the player.\"\"\"\n\n    opponent = \"XO\"[1 - \"XO\".find(player)]\n    best_val = -1, 0\n    best_moves: list[tuple[int, int]] = []\n\n    for i, j in product(range(3), repeat=2):\n        if board[i][j] != SPACE:\n            continue\n        board[i][j] = player\n        move_val = minimax(board, 0, player, opponent, False)  # opponent's turn next\n        board[i][j] = SPACE\n\n        if move_val > best_val:\n            best_moves.clear()\n            best_val = move_val\n        if move_val == best_val:\n            best_moves.append((i, j))\n\n    r, c = max(best_moves, key=lambda cell: [[8, 4, 7], [3, 9, 2], [6, 1, 5]][cell[0]][cell[1]])\n    board[r][c] = player\n\n\nif __name__ == \"__main__\":\n    player = input()\n    board = [list(input()) for _ in range(3)]\n    if not (no_more_moves(board) or evaluate(board, player)):\n        make_best_move(board, player)\n    for row in board:\n        print(\"\".join(row))\n",
+      "statement": "Tic Tac Toe (also known as noughts and crosses or Xs and Os) is a paper-and-pencil game for two players who take turns marking the spaces in a 3x3 grid, one with {{X}}s and the other with {{O}}s. The player {{X}} always goes first.\n\nThe objective is to be the first to align three marks in a row, column, or diagonal. A player wins when this condition is met, loses if the opponent achieves it first, and the game ends in a draw if all nine cells are filled without a winner.\n\n<<Your task is to develop a Tic Tac Toe engine that always plays the best possible move.>> On its turn, the engine must choose the move that maximizes its chance of winning, or forces a draw, or delays a loss. In a winning position, the engine should choose the move that wins in the fewest number of turns. Likewise, in a losing position, the engine should choose the move that loses in the most number of turns.\n\nIf multiple moves are equally optimal (wins/draws/loses in the same number of turns), the engine should select its move based on the highest available cell value, which is defined by the following grid. The cell values prioritize playing in the center, followed by the 4 corners, and finally the remaining 4 cells.\n\n``` 8 | 4 | 7 \n---+---+---\n 3 | 9 | 2 \n---+---+---\n 6 | 1 | 5 ```\nLastly, the engine should not make any move if the game has already been won by either player or if the board is completely filled.",
+      "testCases": [
+        {
+          "title": "Winning Move",
+          "isTest": true,
+          "testIn": "X\nXOX\nOOX\n...",
+          "testOut": "XOX\nOOX\n..X",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "O\n..X\nXOO\nXXO",
+          "testOut": "O.X\nXOO\nXXO",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Blocking the Win",
+          "isTest": true,
+          "testIn": "O\n..X\nXXO\n.O.",
+          "testOut": "..X\nXXO\nOO.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "X\n.XO\nOOX\n.X.",
+          "testOut": ".XO\nOOX\nXX.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Decisive Move",
+          "isTest": true,
+          "testIn": "X\n.O.\nXO.\n.X.",
+          "testOut": ".O.\nXO.\nXX.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "O\n..O\n..X\nXXO",
+          "testOut": "O.O\n..X\nXXO",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Drawn",
+          "isTest": true,
+          "testIn": "O\nXXO\nOOX\nXOX",
+          "testOut": "XXO\nOOX\nXOX",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "O\nOXX\nXOO\nXOX",
+          "testOut": "OXX\nXOO\nXOX",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Optimal Win",
+          "isTest": true,
+          "testIn": "X\n...\n..X\nO..",
+          "testOut": "...\n..X\nO.X",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "X\n..O\n...\n.X.",
+          "testOut": "..O\n...\n.XX",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Winning Position",
+          "isTest": true,
+          "testIn": "O\n...\nXOX\n...",
+          "testOut": "O..\nXOX\n...",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "X\nO..\n...\n..X",
+          "testOut": "O.X\n...\n..X",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Lost",
+          "isTest": true,
+          "testIn": "O\n..X\nO.X\nO.X",
+          "testOut": "..X\nO.X\nO.X",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "X\nO.X\nXOX\nXOO",
+          "testOut": "O.X\nXOX\nXOO",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Hold the Draw",
+          "isTest": true,
+          "testIn": "O\n.O.\n..X\n.X.",
+          "testOut": ".O.\n..X\nOX.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "X\nOX.\nOXX\n.O.",
+          "testOut": "OX.\nOXX\nXO.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Losing Position",
+          "isTest": true,
+          "testIn": "X\n...\nXOX\n..O",
+          "testOut": "X..\nXOX\n..O",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "O\nOX.\nXX.\nXOO",
+          "testOut": "OXO\nXX.\nXOO",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Free Reign",
+          "isTest": true,
+          "testIn": "O\n...\n.X.\n...",
+          "testOut": "O..\n.X.\n...",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "O\n...\n...\nX..",
+          "testOut": "...\n.O.\nX..",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Corner Strategy",
+          "isTest": true,
+          "testIn": "X\nXO.\n...\n...",
+          "testOut": "XO.\n.X.\n...",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "O\n.X.\n.O.\n.X.",
+          "testOut": "OX.\n.O.\n.X.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Starting Position",
+          "isTest": true,
+          "testIn": "X\n...\n...\n...",
+          "testOut": "...\n.X.\n...",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "X\n...\n...\n...",
+          "testOut": "...\n.X.\n...",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "The given board will always be valid. If [[engine]] is {{X}}, there will always be an equal number of {{X}}s and {{O}}s. Else, there will always be one more {{X}} than {{O}}.",
+      "coverBinaryId": 152477944001847,
+      "stubGenerator": "read engine:string(1)\nloop 3 read row:string(3)\nwrite XOXO",
+      "inputDescription": "<<Line 1>>: The engine player [[engine]]; either {{X}} or {{O}}.\n<<Next 3 lines>>: Exactly 3 characters. Each character is either {{X}}, {{O}}, or {{.}} (empty space).",
+      "solutionLanguage": "Python3",
+      "outputDescription": "3 lines of exactly 3 characters, representing the 3x3 tic tac toe board after the engine has made its move. If the game is already over, output the board unchanged."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Tic Tac Toe (also known as noughts and crosses or Xs and Os) is a paper-and-pencil game for two players who take turns marking the spaces in a 3x3 grid, one with <const>X</const>s and the other with <const>O</const>s. The player <const>X</const> always goes first.<br><br>The objective is to be the first to align three marks in a row, column, or diagonal. A player wins when this condition is met, loses if the opponent achieves it first, and the game ends in a draw if all nine cells are filled without a winner.<br><br><strong>Your task is to develop a Tic Tac Toe engine that always plays the best possible move.</strong> On its turn, the engine must choose the move that maximizes its chance of winning, or forces a draw, or delays a loss. In a winning position, the engine should choose the move that wins in the fewest number of turns. Likewise, in a losing position, the engine should choose the move that loses in the most number of turns.<br><br>If multiple moves are equally optimal (wins/draws/loses in the same number of turns), the engine should select its move based on the highest available cell value, which is defined by the following grid. The cell values prioritize playing in the center, followed by the 4 corners, and finally the remaining 4 cells.<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"> 8 | 4 | 7 <br>---+---+---<br> 3 | 9 | 2 <br>---+---+---<br> 6 | 1 | 5 </pre><pre style=\"font-family: monospace\"></pre><br>Lastly, the engine should not make any move if the game has already been won by either player or if the board is completely filled.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: The engine player <var>engine</var>; either <const>X</const> or <const>O</const>.<br><strong>Next 3 lines</strong>: Exactly 3 characters. Each character is either <const>X</const>, <const>O</const>, or <const>.</const> (empty space).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">3 lines of exactly 3 characters, representing the 3x3 tic tac toe board after the engine has made its move. If the game is already over, output the board unchanged.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">The given board will always be valid. If <var>engine</var> is <const>X</const>, there will always be an equal number of <const>X</const>s and <const>O</const>s. Else, there will always be one more <const>X</const> than <const>O</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">X\nXOX\nOOX\n...</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">XOX\nOOX\n..X</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 4674559334,
+  "avatar": 143871801993425,
+  "commentCount": 12,
+  "upVotes": 13,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1304117,
+    "progress": 1,
+    "alreadyDone": true
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1766053681091,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

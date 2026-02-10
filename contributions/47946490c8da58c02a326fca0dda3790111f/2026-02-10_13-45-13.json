@@ -1,0 +1,177 @@
+{
+  "id": 4794,
+  "activeVersion": 6,
+  "score": 9,
+  "votableId": 12300450,
+  "codingamerId": 1962352,
+  "views": 235,
+  "commentableId": 12225434,
+  "title": "Hacking at RobberCity",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "DPAmar",
+  "publicHandle": "47946490c8da58c02a326fca0dda3790111f",
+  "codingamerHandle": "1aa3b57d313d36f2b421bf8a30a7dfef2532691",
+  "lastVersion": {
+    "version": 6,
+    "autocloseTime": 1580900366927,
+    "data": {
+      "title": "Hacking at RobberCity",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Cipher"
+          }
+        },
+        {
+          "labelMap": {
+            "2": "XOR"
+          }
+        },
+        {
+          "id": 74,
+          "handle": "cryptology",
+          "labelMap": {
+            "1": "Cryptologie",
+            "2": "Cryptography"
+          },
+          "pageTitle": "Cryptography: exercises and theory",
+          "puzzleCount": 8,
+          "parentTopicId": 43,
+          "contentDetailsId": 105
+        }
+      ],
+      "solution": "\r\n/* Actually, there is a design flaw...\r\nAlice sends M1 = Msg XOR k1\r\nBob sends M2 = Msg XOR k1 XOR k2\r\nAlice sends M3 = Msg XOR k2\r\n\r\nSo, M1 XOR M2 XOR M3 = \r\n   (Msg XOR k1) XOR (Msg XOR k1 XOR k2) XOR (Msg XOR k2) = \r\n   Msg XOR (Msg XOR Msg) XOR (k1 XOR k1) XOR (k2 XOR k2) = \r\n   Msg XOR 0 XOR 0 XOR 0 = Msg\r\n*/\r\n\r\nxor = (a,b)=>\r\n{\r\n\tvar res = '';\r\n\tfor(var i=0; i<a.length; i++)\r\n\t\tres += (parseInt(a[i], 16) ^ parseInt(b[i], 16)).toString(16)\r\n\treturn res;\r\n}\r\n\r\nprint(xor(xor(readline(),readline()),readline()).replace(/../g, x=>String.fromCharCode(parseInt(x,16))))\r\n",
+      "statement": "At RobberCity, it is really hard to send a parcel safely. Postmen are thieves, and you can be sure that without a proper lock, your box will be opened and emptied prior to \"delivery\".\nThis is a famous riddle: how can Alice send a parcel to Bob, without having to send the lock key?\n\nThe answer is:\n* step 1: Alice locks the box using her own lock and send it to Bob.\n* step 2: Bob receives the unopened parcel, but cannot open it without the key. He add his own lock on the parcel and send it back to Alice.\n* step 3: Alice gets her parcel back with the 2 locks. She can now remove hers and send it Bob again.\n* step 4: Bob receives the parcel with his lock, that he can open.\n\nNow, the electronic version!\nThis time, Alice wants to send secured data to Bob. They both read this wikipedia article: https://en.wikipedia.org/wiki/XOR_cipher#Use_and_security about the XOR cipher\n<<With a key that is truly random, the result is a one-time pad, which is unbreakable in theory.>>\nWow. Unbreakable.\n\nAlice and Bob decided to use the riddle solution applied to XOR.\n* step 1: Alice encodes her message with her random key, as long as the message itself. She sends it to Bob.\n* step 2: Bob encodes the ciphered message with his own random key, as long as the message itself. He sends it back to Alice.\n* step 3: Alice decodes the message with her initial key, and sends it to Bob.\n* step 4: Bob decodes the message with his initial key, and gets the clear text.\n\nAnd it works! XOR is both commutative and associative, and A XOR 0 = A and A XOR A = 0. Hence\n```Message XOR AliceKey XOR BobKey XOR AliceKey XOR BobKey\n = Message XOR (AliceKey XOR AliceKey) XOR (BobKey XOR BobKey)\n = Message XOR 0 XOR 0\n = Message```\nYou are a man-in-the-middle, intercepting any message between Alice and Bob.\n(Btw, your existence proves that they both really had good reasons to put a data cipher process in place...)\nSo, you intercept the 3 messages [[message1]], [[message2]] and [[message3]].\n\nYour goal is to be smarter than the smarties, and to break their code.\n\nNote: intercepted messages are made of bytes (values from 0 to 255), that will be displayed in hexadecimal form. \nThus, each message will be an hexadecimal string of size 2n, each digit pair corresponds to a byte (from 00=0 to FF=255).\n\nOnce you get the clear message bytes, convert to clear text using ASCII encoding.",
+      "testCases": [
+        {
+          "title": "Greetings",
+          "isTest": true,
+          "testIn": "391813c092a2d5ac9acb705dfe41be3df08de67d1145cbcc3f\n03adeae2c8c2f2336c8a8d312733c2456e76e0b2d9068adc3f\n72d0954e354045f09461dc4c911d0b58ff8963efb12c34303f",
+          "testOut": "Hello bob ! How are you ?",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "055eeccac451343ee2cb6dfa7be93bfb90d02aa8198df0f595fcc9e1340110cb904969fef7a2ef1fc2bf54e4\n2ed75893b5d77120578bba9fb1bcedd57c2d8fbfdbc49b76bb239baea6b2326d822d565229419e65297e54e4\n63ecd8351ea60771d761f729a53bb10e9894c872e22704a35abe3e24b29202ee7d131fcdac86510384b4203f",
+          "testOut": "Hello Bob! Long time no talk ! How are you ?",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Are you sure about that ?",
+          "isTest": true,
+          "testIn": "6cda2e033736a529f682473750fcf82813174997fa5ea8cf600327b77c024bde948a0713c235da2d2e8acc473c746521\n91eca2b11937389d047f1788c6e9b615a6d10e98501d70eaf8e0478bc567867c4b20584f21152379fa068af6ac4e6521\nb411e1924660edc48bdd27dab6732753d4aa2b768a25b750f687405d9912acdbffde307c804f9439a1e22fd2f14e6521",
+          "testOut": "I'm happy we finally found a way to communicate!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "14ffe6625e93d8d71588114604622b7df74c0164ab567ad96273ba5756b7943379cc264aaeb1\na0dfc918b5bd31c7fc7a7299c8d182a677923f391dfa882b65a7edc4c1d13f7e649f4b86aeb1\nfa4f585a9c4bc973889c43acadd5ccb7f9fe4a3cdac7d28668f432f2f40e8b22693b08be2021",
+          "testOut": "Now we can safely talk to each other !",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Hey ! I'm listening",
+          "isTest": true,
+          "testIn": "1a41e784ab0ba87a8ff1eab1a9e2195e6a9c189cc5c7dc96c8d15ad95c187edfb79f51202a\ne31e08d1ec7100c65488b31b175bc484e8e3764dd0f88b1f1f5cd3e3032d2a15f22c05802a\nd32b8730341f88d4ba1a32cfcccafdbbf01a4ea27a5038e6f7fefd4f2f5c30ea649275802a",
+          "testOut": "*these hackers are soooo stupid !!! *",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "bf58c87d8c353f435fffd10de052f3984eadd94289b8a6c17dfc4639013b23f930a7826d9aea4c32e5de29\n201645eb5cf779e09c02cb64168a0b1eed4990aecb5a8a53cea30382fcba7e4ae78de3021ac2acb652b829\nb739e4e2b8ad33d7e389720cd6be9de7d1c4268a628049fbdd3865de9cf738c0b3580e1ff04d84aa994829",
+          "testOut": "(without the fear of being eavesdropped...)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Not a chance !",
+          "isTest": true,
+          "testIn": "fec53ecd38eddef721da340a6f1cc0527250098238cc7624a4c8d4ea434ac4e1536da5b993158b7f35\n3d0ef96b89a81c785b457d938af0e879908fef6ebc07199dce11e8bc55cdc23a8633b116d6eef17f35\n8ba4b7c3d730aee303b369ed8d89510b95b088cbf0eb0ddc4ab852767ff475aeb07e75c13c96157265",
+          "testOut": "Hopefully, they won't be an issue anymore",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "66b98242e6cc0d1d82ff58b83f0ebf50dc59d8dfdfb832f72d0e4c01c0a854a1f0c0029cf709\nf1e14dd1bd57c0cbeb46b28b012a273117cb8241315ddba997abefe66810a5aed89f64ecf709\nba78bbfb3af5a6a549cd8513474bed13ebe137ff9c91c938c8ccc689cc98b063413c03503a29",
+          "testOut": "- thanks to your smart friend Alice :)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Who laughs last laughs longest",
+          "isTest": true,
+          "testIn": "bc9d600870b7c0da44b820ed9036495606\n8210bb27f4e0c5d43b89374efaa435be06\n76ecfb47e5776d6f5f59768302f35cc921",
+          "testOut": "Ha ha ha ha ha !!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "22e3b92b157bbe048abc59\n1cbf265e665c2c793cd011\n7635bf1d1a07fa14964d69",
+          "testOut": "Hi hi hi !!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "THIS is really stupid",
+          "isTest": true,
+          "testIn": "2f03f64ddb650a4517b689a75c1d149dc38a43f0cf4f332871c1144e185552ccab3b13f6f0e831022f7963f5cf59224f4af60bde421be2be107146967d9c6c86b7ec16f81df38febb0810add94abd31e1e056042de83c790eb4102ed7ffd2419d75b1a90ea84f0af46ea9ae2a3e2b9ec6f0d1b99a0f5200e8f0d7d902f13b96aa50c1a1fc03fe245cc835756b03436396230\n67c7034ed1cb194b6c4db54783d0ac512dfb21ebeaf87e0c4db88bacd4e9c3627e8ff5c2d462d5bef2f90417586d7aa2d77248fdb37239042905b3ce197a629e013e693d25d7d8a6de673aa244bd1263ac93a7998267770fb0366a05c186e2d50be5f04d190211c0d1982f45cf890063d2f326e8d37edb8dc6fabc87fba324259d91610ddae0ff7162991e0e603436396230\n0a90a22f2ada7c2e08925190b3a4deb5ce1e176905d13850490bfac2a9c4f2c6b4da815157a6c4d0b8f44091b7412b88bdc50670d11eb2ce5154982144d73e2a82ff1dac4c04273f0790510bb536aa18cbb6f2bf3ed788fb6e14588e8f4da3afec8b8eb996e3d758f24681915d5cd8bf84ca584717efcbe171c4f671b185f9290aa9497729ba7c0c9d282c6be03436396230",
+          "testOut": "BTW, to simplify our future exchanges, let's use AES with my 1024-bit private key 5db38d5c0f16ec05ddee67e44617a094e6dd0b837fe5df242e3ea832e30469b0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "62e110b56f8898813fb4181554411d823114827662718a575d4ef93b2372f8b469ed903a813e3a09e1278eaccc95eff0e8691738a6523fd6d908ee92a0826467f0b73cc08bfd2951c87770f1c82b25963455a96a86e6bb2fe294ae47bb9947da62855686c34bfb33934d1d4d33da237544e39f66d8a01e64333d71b1959d6c2fd8c313a56c216629207160ca343038376333\n9ea006de732f146dcbc196e4b327586e1f81e3289f06ab58905d323dadd7a05298356ab3d53649548baf105972e4794d06d74f32d12dd9fca02193f05fab7b8a8a005e4eadabcb8634c2bfda678a7d52859ad72e57c2cdbfb052d27d0e18a7b10e574dc1ebfd71a6f24a6803e5eecdf2bae5147dfd66082eab834d3e7946382957afc4eea9de639da7c3d20285b28a976333\nbe1541473cd3e3cc871ce3818b0f23950efa142cdd11547bb861ae26ebdd3b8e90b69dec272453310ffcb9869e04e5d8ceff1d5957088f5e1109101bdf182fdf4e9a00e7527692a595c3ae5fca8133a1c8ef4f20b54745f337f41e098de7835c59e77d771e81bea207371128e302d9e2cf3eb27f17a3707afcd85fb9dbed6632b808e373f79b66d1e38486ffd5b28a976333",
+          "testOut": "BTW, to simplify our future exchanges, let's use AES with my 1024-bit private key 1ddc3ce2b38fc755f06747f0df567e189d2ef0dfc676247d482dced647d087c3",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "Message length ≤ 250 chars (i.e. [[message1]], [[message2]] and [[message3]] lengths are ≤ 500 hexadecimal digits)",
+      "stubGenerator": "read message1:string(500)\nread message2:string(500)\nread message3:string(500)\nwrite clear message",
+      "inputDescription": "<<Line 1:>> [[message1]], the first message Alice sends to Bob (hexadecimal)\n<<Line 2:>> [[message2]], the second message Bob sends back (hexadecimal)\n<<Line 3:>> [[message3]], the last message Alice sends (hexadecimal)",
+      "solutionLanguage": "Javascript",
+      "outputDescription": "The clear text message"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">At RobberCity, it is really hard to send a parcel safely. Postmen are thieves, and you can be sure that without a proper lock, your box will be opened and emptied prior to &quot;delivery&quot;.<br>This is a famous riddle: how can Alice send a parcel to Bob, without having to send the lock key?<br><br>The answer is:<br>* step 1: Alice locks the box using her own lock and send it to Bob.<br>* step 2: Bob receives the unopened parcel, but cannot open it without the key. He add his own lock on the parcel and send it back to Alice.<br>* step 3: Alice gets her parcel back with the 2 locks. She can now remove hers and send it Bob again.<br>* step 4: Bob receives the parcel with his lock, that he can open.<br><br>Now, the electronic version!<br>This time, Alice wants to send secured data to Bob. They both read this wikipedia article: https://en.wikipedia.org/wiki/XOR_cipher#Use_and_security about the XOR cipher<br><strong>With a key that is truly random, the result is a one-time pad, which is unbreakable in theory.</strong><br>Wow. Unbreakable.<br><br>Alice and Bob decided to use the riddle solution applied to XOR.<br>* step 1: Alice encodes her message with her random key, as long as the message itself. She sends it to Bob.<br>* step 2: Bob encodes the ciphered message with his own random key, as long as the message itself. He sends it back to Alice.<br>* step 3: Alice decodes the message with her initial key, and sends it to Bob.<br>* step 4: Bob decodes the message with his initial key, and gets the clear text.<br><br>And it works! XOR is both commutative and associative, and A XOR 0 = A and A XOR A = 0. Hence<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">Message XOR AliceKey XOR BobKey XOR AliceKey XOR BobKey<br> = Message XOR (AliceKey XOR AliceKey) XOR (BobKey XOR BobKey)<br> = Message XOR 0 XOR 0<br> = Message</pre><pre style=\"font-family: monospace\"></pre><br>You are a man-in-the-middle, intercepting any message between Alice and Bob.<br>(Btw, your existence proves that they both really had good reasons to put a data cipher process in place...)<br>So, you intercept the 3 messages <var>message1</var>, <var>message2</var> and <var>message3</var>.<br><br>Your goal is to be smarter than the smarties, and to break their code.<br><br>Note: intercepted messages are made of bytes (values from 0 to 255), that will be displayed in hexadecimal form. <br>Thus, each message will be an hexadecimal string of size 2n, each digit pair corresponds to a byte (from 00=0 to FF=255).<br><br>Once you get the clear message bytes, convert to clear text using ASCII encoding.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> <var>message1</var>, the first message Alice sends to Bob (hexadecimal)<br><strong>Line 2:</strong> <var>message2</var>, the second message Bob sends back (hexadecimal)<br><strong>Line 3:</strong> <var>message3</var>, the last message Alice sends (hexadecimal)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The clear text message</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Message length &le; 250 chars (i.e. <var>message1</var>, <var>message2</var> and <var>message3</var> lengths are &le; 500 hexadecimal digits)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">391813c092a2d5ac9acb705dfe41be3df08de67d1145cbcc3f\n03adeae2c8c2f2336c8a8d312733c2456e76e0b2d9068adc3f\n72d0954e354045f09461dc4c911d0b58ff8963efb12c34303f</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Hello bob ! How are you ?</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 190349237678,
+  "avatar": 56994389567033,
+  "commentCount": 12,
+  "upVotes": 9,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 418482,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1580381874071,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

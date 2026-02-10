@@ -1,0 +1,292 @@
+{
+  "id": 49383,
+  "activeVersion": 53,
+  "score": 11,
+  "votableId": 28512405,
+  "codingamerId": 4337092,
+  "views": 324,
+  "commentableId": 28382438,
+  "title": "Ye_  An_th_r W_rd Se_rch",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Timinator",
+  "publicHandle": "493839424591127bcdbb6371018895b7bf742",
+  "codingamerHandle": "2df7157da821f39bbf6b36efae1568142907334",
+  "lastVersion": {
+    "version": 53,
+    "autocloseTime": 1743348480666,
+    "freezeTime": 1738623325660,
+    "data": {
+      "title": "Ye_  An_th_r W_rd Se_rch",
+      "topics": [
+        {
+          "id": 56,
+          "handle": "backtracking",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Retour sur trace",
+            "2": "Backtracking"
+          },
+          "pageTitle": "Backtracking: exercises and theory",
+          "puzzleCount": 16,
+          "parentTopicId": 41,
+          "contentDetailsId": 80
+        },
+        {
+          "labelMap": {
+            "2": "Algorithm X"
+          }
+        },
+        {
+          "labelMap": {
+            "2": "Exact Cover"
+          }
+        }
+      ],
+      "solution": "#  This solution uses Knuth's Algorithm X and his Dancing Links (DLX):\n#  (DLX-Based Algorithm X Solver Last Revised 01 December 2024)\n#\n#  For a detailed explanation and tutorial, please see my Algorithm X\n#  playground on Tech.io by following the link in my CodinGame profile:\n#\n#  https://www.codingame.com/profile/2df7157da821f39bbf6b36efae1568142907334/playgrounds\n#\n\n#  DLXCell is one cell in the Algorithm X matrix. This implementation was mostly\n#  copied from @RoboStac's solution to Constrained Latin Squares on www.codingame.com.\n#\n#  https://www.codingame.com/training/medium/constrained-latin-squares\n#\nclass DLXCell:\n    def __init__(self, title=None):\n        self.prev_x = self\n        self.next_x = self\n        self.prev_y = self\n        self.next_y = self\n\n        self.col_header = None\n        self.row_header = None\n\n        # Only used for column and row headers.\n        self.title = title\n\n        # Size quickly identifies how many rows are in any particular column.\n        self.size = 0\n\n    def remove_x(self):\n        self.prev_x.next_x = self.next_x\n        self.next_x.prev_x = self.prev_x\n\n    def remove_y(self):\n        self.prev_y.next_y = self.next_y\n        self.next_y.prev_y = self.prev_y\n\n    def restore_x(self):\n        self.prev_x.next_x = self\n        self.next_x.prev_x = self\n\n    def restore_y(self):\n        self.prev_y.next_y = self\n        self.next_y.prev_y = self\n\n    def attach_horiz(self, other):\n        n = self.prev_x\n        other.prev_x = n\n        n.next_x = other\n        self.prev_x = other\n        other.next_x = self\n\n    def attach_vert(self, other):\n        n = self.prev_y\n        other.prev_y = n\n        n.next_y = other\n        self.prev_y = other\n        other.next_y = self\n\n    def remove_column(self):\n        self.remove_x()\n        node = self.next_y\n        while node != self:\n            node.remove_row()\n            node = node.next_y\n\n    def restore_column(self):\n        node = self.prev_y\n        while node != self:\n            node.restore_row()\n            node = node.prev_y\n        self.restore_x()\n\n    def remove_row(self):\n        node = self.next_x\n        while node != self:\n            node.col_header.size -= 1\n            node.remove_y()\n            node = node.next_x\n\n    def restore_row(self):\n        node = self.prev_x\n        while node != self:\n            node.col_header.size += 1\n            node.restore_y()\n            node = node.prev_x\n\n    def select(self):\n        node = self\n        while 1:\n            node.remove_y()\n            node.col_header.remove_column()\n            node = node.next_x\n            if node == self:\n                break\n\n    def unselect(self):\n        node = self.prev_x\n        while node != self:\n            node.col_header.restore_column()\n            node.restore_y()\n            node = node.prev_x\n        node.col_header.restore_column()\n        node.restore_y()\n\n\nclass AlgorithmXSolver():\n    # R - a list of requirements. The __init__() method converts R to a dictionary, but R must\n    #     originally be passed in as a simple list of requirements. Each requirement is a tuple\n    #     of values that uniquely identify that requirement from all other requirements.\n    #\n    # A - must be passed in as a dictionary - keys are actions, values are lists of covered requirements\n    #\n    # O - list of optional requirements. They can be covered, but they never cause failure.\n    #     Optional requirements are important because if they get covered, no other action can \n    #     also cover that same requirement. Also referred to as \"at-most-one-time constraints\".\n    #\n    def __init__(self, R: list, A: dict, O: list = []):\n        self.A = A\n        self.R = R + list(O)\n        self.O = set(O)\n\n        # The list of actions (rows) that produce the current path through the matrix.\n        self.solution = []\n        self.solution_count = 0\n        \n        # A history can be added to a subclass to allow Algorithm X to handle \"multiplicity\".\n        # In the basic Solver, nothing is ever put into the history. A subclass can override\n        # the _process_row_selection() method to add history in cases of multiplicity. \n        self.history = [set()]\n\n        # For the basic Algorithm X Solver, all solutions are always valid. However, a subclass\n        # can add functionality to check solutions as they are being built to steer away from\n        # invalid solutions. The basic Algorithm X Solver never modifies this attribute.\n        self.solution_is_valid = True\n\n        # Create a column in the matrix for every requirement.\n        self.matrix_root = DLXCell()\n        self.matrix_root.size = 10000000\n        self.matrix_root.title = 'root'\n        \n        self.col_headers = [DLXCell(requirement) for requirement in self.R]\n\n        # Row headers are never attached to the rest of the DLX matrix. They are only used \n        # currently to keep track of the action associated with each row.\n        self.row_headers = {action:DLXCell(action) for action in self.A}\n\n        self.R = {requirement:self.col_headers[i] for i, requirement in enumerate(self.R)}\n\n        for i in range(len(self.col_headers)):\n            self.matrix_root.attach_horiz(self.col_headers[i])\n\n        # Create a row in the matrix for every action.\n        for action in self.A:\n            previous_cell = None\n            for requirement in A[action]:\n                next_cell = DLXCell()\n                next_cell.col_header = self.R[requirement]\n                next_cell.row_header = self.row_headers[action]\n                next_cell.col_header.attach_vert(next_cell)\n                next_cell.col_header.size += 1\n                \n                if previous_cell:\n                    previous_cell.attach_horiz(next_cell)\n                else:\n                    previous_cell = next_cell\n\n\n    def solve(self):\n        \n        # Algorithm X Step 1:\n        #\n        # Choose the column (requirement) with the best value for \"sort criteria\". For\n        # the basic implementation of sort criteria, Algorithm X always chooses the column\n        # covered by the fewest number of actions. Optional requirements are not eligible \n        # for this step.\n        best_column = self.matrix_root\n        best_value  = 'root'\n        \n        node = self.matrix_root.next_x\n        while node != self.matrix_root:\n            \n            # Optional requirements (at-most-one-time constraints) are never chosen as best.\n            if node.title not in self.O:\n                \n                # Get the sort criteria for this requirement (column).\n                value = self._requirement_sort_criteria(node)\n                if best_column == self.matrix_root or value < best_value:\n                    best_column = node\n                    best_value  = value\n                node = node.next_x\n\n            else:\n\n                # Optional requirements stop the search for the best column.\n                node = self.matrix_root\n            \n        if best_column == self.matrix_root:\n            self._process_solution()\n            if self.solution_is_valid:\n                self.solution_count += 1\n                yield self.solution\n        else:\n\n            # Build a list of all actions (rows) that cover the chosen requirement (column).\n            actions = []\n            node = best_column.next_y\n            while node != best_column:\n                actions.append(node)\n                node = node.next_y\n\n            # The next step is to loop through all possible actions. To prepare for this,\n            # a new level of history is created. The history for this new level starts out\n            # as a complete copy of the most recent history.\n            self.history.append(self.history[-1].copy())    \n                \n            # Loop through the possible actions sorted by the given sort criteria. A basic\n            # Algorithm X implementation does not provide sort criteria. Actions are tried\n            # in the order they happen to occur in the matrix.\n            for node in sorted(actions, key=lambda n:self._action_sort_criteria(n.row_header)):\n                self.select(node=node)\n                if self.solution_is_valid:\n                    for s in self.solve():\n                        yield s\n                self.deselect(node=node)\n\n                # All backtracking results in going back to a solution that is valid.\n                self.solution_is_valid = True\n\n            self.history.pop()\n\n    # Algorithm X Step 4 - Details:\n    #\n    # The select method updates the matrix when a row is selected as part of a solution.\n    # Other rows that satisfy overlapping requirements need to be deleted and in the end,\n    # all columns satisfied by the selected row get removed from the matrix.\n    def select(self, node):\n\n        node.select()\n        self.solution.append(node.row_header.title)\n        self._process_row_selection(node.row_header.title)\n\n\n    # Algorithm X Step 4 - Clean Up:\n    #\n    # The select() method selects a row as part of the solution being explored. Eventually that\n    # exploration ends and it is time to move on to the next row (action). Before moving on,\n    # the matrix and the partial solution need to be restored to their prior states.\n    def deselect(self, node):\n\n        node.unselect()\n        self.solution.pop()\n        self._process_row_deselection(node.row_header.title)\n\n\n    # In cases of multiplicity, this method can be used to ask Algorithm X to remember that\n    # it has already tried certain things. For instance, if Emma wants two music lessons per\n    # week, trying to put her first lesson on Monday at 8am is no different than trying to put\n    # her second lesson on Monday at 8am. See my Algorithm X Playground for more details, \n    # specifically Mrs. Knuth - Part III.\n    def _remember(self, item_to_remember: tuple) -> None:\n        if item_to_remember in self.history[-1]:\n            self.solution_is_valid = False\n        else:\n            self.history[-1].add((item_to_remember))\n\n        \n    # In some cases it may be beneficial to have Algorithm X try certain paths through the matrix.\n    # This can be the case when there is reason to believe certain actions have a better chance than\n    # other actions at producing complete paths through the matrix. The method included here does\n    # nothing, but can be overridden to influence the order in which Algorithm X tries rows (actions) \n    # that cover some particular column.\n    def _action_sort_criteria(self, row_header: DLXCell):\n        return 0\n    \n\n    # In some cases it may be beneficial to have Algorithm X try covering certain requirements\n    # before others as it looks for paths through the matrix. The default is to sort the requirements\n    # by how many actions cover each requirement, but in some cases there might be several \n    # requirements covered by the same number of actions. By overriding this method, the\n    # Algorithm X Solver can be directed to break ties a certain way or consider another way\n    # of prioritizing the requirements.\n    def _requirement_sort_criteria(self, col_header: DLXCell):\n        return col_header.size\n    \n    \n    # The following method can be overridden by a subclass to add logic to perform more detailed solution\n    # checking if invalid paths are possible through the matrix. Some problems have requirements that\n    # cannot be captured in the basic requirements list passed into the __init__() method. For instance,\n    # a solution might only be valid if it fits certain parameters that can only be checked at intermediate\n    # steps. In a case like that, this method can be overridden to add the functionality necessary to \n    # check the solution.\n    #\n    # If the subclass logic results in an invalid solution, the 'solution_is_valid' attribute should be set\n    # to False instructing Algorithm X to stop progressing down this path in the matrix.\n    def _process_row_selection(self, row):\n        pass\n\n\n    # This method can be overridden by a subclass to add logic to perform more detailed solution\n    # checking if invalid paths are possible through the matrix. This method goes hand-in-hand with the\n    # _process_row_selection() method above to \"undo\" what was done above.\n    def _process_row_deselection(self, row):\n        pass\n\n\n    # This method can be overridden to instruct Algorithm X to do something every time a solution is found.\n    # For instance, Algorithm X might be looking for the best solution or maybe each solution must be\n    # validated in some way. In either case, the solution_is_valid attribute can be set to False\n    # if the current solution should not be considered valid and should not be generated.\n    def _process_solution(self):\n        pass\n\n\n\n#------------------------------------------------------------------------------------------------------\n#\n# Everything above this point could easily be put into a package and reused on any exact cover problem.\n#\n# Below here is the only code specific to Ye_ An_th_r W_rd Se_rch.\n#\n#------------------------------------------------------------------------------------------------------\nfrom typing import List\nimport time\nimport sys\n\n\nORIENTATIONS = ['horizontal', 'vertical', 'up_diag', 'down_diag']\nDELTAS = {a:b for a, b in zip(ORIENTATIONS, [(0, 1), (1, 0), (-1, 1), (1, 1)])}\nEMPTY = '.'\n\n\nclass YetAnotherWordSearchSolver(AlgorithmXSolver):\n    \n    def __init__(self, words, grid: List[List[str]]):\n        \n        self.grid = {(r, c):letter for r, row in enumerate(grid) for c, letter in enumerate(row) if letter != EMPTY}\n        self.location_colors = {(r, c):[] for r in range(height) for c in range(width)}\n        \n        self.height = len(grid)\n        self.width = len(grid[0])\n        \n        requirements = [('word placed', word) for word in words]\n        \n        actions = dict()\n        for word in words:\n            for row in range(self.height):\n                for col in range(self.width):\n                    for orientation in ORIENTATIONS:\n                        dr, dc = DELTAS[orientation]\n                        if not (0 <= row + dr * (len(word) - 1) < self.height and 0 <= col + dc * (len(word) - 1) < self.width):\n                            continue\n\n                        for w, fb in [(word, 'forward'), (word[::-1], 'backward')]:\n                            wr, wc = row, col\n                            for c in w:\n                                if (wr, wc) in self.grid and self.grid[(wr, wc)] != c:\n                                    break\n                                \n                                wr += dr\n                                wc += dc\n                        \n                            else:\n                                action = ('place word', word, row, col, orientation, fb)\n                                actions[action] = [('word placed', word)]\n\n        super().__init__(requirements, actions)\n        \n        \n    def _process_row_selection(self, row):\n        _, word, row, col, orientation, fb = row\n        \n        if fb == 'backward':\n            word = word[::-1]\n            \n        dr, dc = DELTAS[orientation]\n        for c in word:\n            if self.location_colors[(row, col)] and self.location_colors[(row, col)][-1] != c:\n                self.solution_is_valid = False\n\n            self.location_colors[(row, col)].append(c)\n            row += dr\n            col += dc\n\n\n    def _process_row_deselection(self, row):\n        _, word, row, col, orientation, _ = row\n            \n        dr, dc = DELTAS[orientation]\n        for i in range(len(word)):\n            self.location_colors[(row + i * dr, col + i * dc)].pop()\n\n\nstart = time.time()\n\nheight, width = map(int, input().split())\ngrid = [list(input()) for _ in range(height)]\nwords = input().split()\n\nanswer = [[' '] * width for _ in range(height)]\nsolver = YetAnotherWordSearchSolver(words, grid)\n\nfor solution in solver.solve():\n    for _, word, row, col, orientation, fb in solution:\n\n        if fb == 'backward':\n            word = word[::-1]\n\n        dr, dc = DELTAS[orientation]\n        for c in word:\n            answer[row][col] = c\n            row += dr\n            col += dc\n\nfor row in answer:\n    print(*row, sep='')\n\nprint(f'\\n{int((time.time() - start) * 1000)} ms', file=sys.stderr, flush=True)",
+      "statement": "This puzzle is part of a multi-part Algorithm X tutorial and is meant to be done per the guidance in the following playground:\n\n{{https://www.algorithm-x.com}}\n\nYou are free to solve this puzzle in any language you choose. While the playground demonstrations are written in Python, a reusable Algorithm X Solver is available in many different languages. By following the guidance in the playground and using the solver as intended, this puzzle should be much easier than attempting it from scratch.\n\n<<Task Overview:>>\n\nWhile cleaning out the storage closet at CodinGame HQ, a handful of word search puzzles were found. Due to water damage, some letters on the grid are smudged and illegible. Find the words and print out the solution. Words can be hidden in any direction, including horizontally, vertically, diagonally, forward or backward.",
+      "testCases": [
+        {
+          "title": "Horizontal / Vertical / Forward",
+          "isTest": true,
+          "testIn": "10 10\n...G......\n.H...C....\n..N.......\n......U..H\n...H......\n........K.\n.......H..\nI...Q.....\nF.V.......\n.P..J.....\nANTELOPE CROCODILE",
+          "testOut": "          \n     C    \n     R    \n     O    \n     C    \nANTELOPE  \n     D    \n     I    \n     L    \n     E    ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "10 10\n....J.....\n.....W....\n...J....IV\n.J.....A..\n......C...\n.....B....\n.TI.......\nM.R.J.....\n.......G..\n...X......\nDINOSAUR ELEPHANT",
+          "testOut": "          \n        D \n        I \n  ELEPHANT\n        O \n        S \n        A \n        U \n        R \n          ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Horizontal / Vertical / Backward",
+          "isTest": true,
+          "testIn": "10 10\n..E......U\n.......A..\n...T......\n....V.....\n..R..S....\n.P...B....\nJ..K.C....\n......Z.S.\n......Q...\n.......B..\nCROCODILE DINOSAUR",
+          "testOut": "          \n         E\n         L\n         I\n  RUASONID\n         O\n         C\n         O\n         R\n         C",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "10 10\n.....J....\n...W.....N\nV....P....\n..J.....F.\n....XL....\n.O.....J..\n.......B..\n.....N....\n......M...\n....P.....\nALBATROSS ANTELOPE",
+          "testOut": "          \n     E    \n     P    \n     O    \n     L    \n     E    \n SSORTABLA\n     N    \n     A    \n          ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Diagonal / Forward",
+          "isTest": true,
+          "testIn": "10 10\n...H....J.\n...D..Y...\n...I.E...Z\n..E..M....\nTPDJJY.Z..\n.H...R.KQN\n...L.....L\n..P...J...\n.Y....T...\nL.H.A...E.\nDONKEY SNAKE",
+          "testOut": "    S     \n     N    \n      A   \n       K Y\n        E \n       K  \n      N   \n     O    \n    D     \n          ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "10 10\n.D......N.\n.....B....\n......I...\n.....Q...L\n..C....V..\nU.D.L.....\n.V.EN.A...\n..S....HX.\n....M.....\n.....C....\nCHEETAH PANTHER",
+          "testOut": "          \n C        \n  H     R \n   E   E  \n    E H   \n     T    \n    N A   \n   A   H  \n  P       \n          ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Diagonal / Backward",
+          "isTest": true,
+          "testIn": "10 10\n..X.......\n.....P....\n..E.......\nR.......U.\nZ..XJ.Y..Q\n.P.....T..\n..J.......\n..O..V....\n....V....V\n....U.....\nALLIGATOR PANTHER\n",
+          "testOut": "         A\n        L \n       L  \nR     I   \n E   G    \n  H A     \n   T      \n  O N     \n R   A    \n      P   ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "10 10\n..Q.......\n......U...\n..E....Z.C\n........Z.\n.C....V...\nZ...Q.....\n......E...\n.L.C....I.\n.....U....\n...A......\nANTELOPE CROCODILE",
+          "testOut": "        C \n       R  \n  E   O   \n   P C    \n    O     \n   D L    \n  I   E   \n L     T  \nE       N \n         A",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "All Directions",
+          "isTest": true,
+          "testIn": "10 10\nUGH..A..M.\nJ..L..XO..\n.R...A...D\n.F...IB...\n..ZR....YX\nW.H...LN..\nL.T....E..\n.......WPW\n.D.S..CL..\n..N....B..\nALLIGATOR LION OSTRICH RACOON",
+          "testOut": "          \n    A     \n    L   N \n    LI O  \n    I O   \n    GC N  \n    A     \nHCIRTSO   \n    O     \n    R     ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "10 10\n...L...R..\n...Y...N..\nURY......X\n......AN.U\n..X..R....\nN...F....R\n.Q.S..IO.K\n....R...LJ\n..R..W..O.\n...Y....Q.\nCAMEL CHEETAH ELEPHANT HIPPO",
+          "testOut": "   L      \n    E     \n     MC   \n ELEPHANT \n    E  C  \n   E  H   \n  T   I   \n A    P   \nH     P   \n      O   ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Flower Power",
+          "isTest": true,
+          "testIn": "19 15\n..V..J....S....\n.B.ZCY.I...F...\n...Y..F.....HS.\n..Y.Y.....MRC..\nK.O..P..IRF...S\n...C.BQ.....DRL\n.IZG....M.IX..E\n..S...G..XW....\n.A.N......K....\n...ID..........\nKS.U.....Z..S..\n....F.G..LP.YZU\n..W.....XV..VS.\nXI...YX.....G..\n..GJ.P...E.V.XI\nE...RB..S..P...\n.WVY..U...Y...I\n.E...F..O...M..\n..Q..U...J..I..\nMACAU MALAYSIA MALDIVES MALTA MEXICO MICRONESIA MONACO MONTENEGRO",
+          "testOut": "       A       \n       I       \n       S       \n       E       \n  O    N    O  \n   C   O   C   \n    A  R  I    \n     N C X     \n      OIE      \nSEVIDLAMALAYSIA\n      AOA      \n     C N L     \n    A  T  T    \n   U   E   A   \n       N       \n       E       \n       G       \n       R       \n       O       ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "18 16\n...VO....AK.X...\n...X....F...MWBM\n..Z.......X....I\n.XHNZUH..O..J...\nK..W.......C.TIX\n.CZ..A..NM..O..A\n....MU....YMP...\n..N.............\nH..N.EW.....C..F\n...S....D..W.J..\nNH.W..H..O....Q.\n..T.......W.Z.N.\n..NRU...A....PHE\nS.U.B....LKE.D..\n.U...MK.OO...S.N\n...H....R....Z..\n.L...QL....OH...\nD.R.....J...L.F.\nSAMOA SERBIA SINGAPORE SLOVAKIA SLOVENIA SPAIN SWEDEN SWITZERLAND",
+          "testOut": "       A        \n       I        \n       K        \n   N   A   A    \n    I  V  O     \n     A O M      \n      PLA       \nAINEVOLSINGAPORE\n      WWE       \n     E I R      \n    D  T  B     \n   E   Z   I    \n  N    E    A   \n       R        \n       L        \n       A        \n       N        \n       D        ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Overlap",
+          "isTest": true,
+          "testIn": "7 48\n...D...CHZ...AY.TK....CU...ZG...B.J...Z..PU.....\nJ.V....IP..N....H..IX.O..H.K.B.Z.P.C.P.S....PAF.\n...........I.AL....T..N...R.................J...\n...C...S..B....H..J...Q.....A.M.C.Q.O.MK....E..O\nTH.....A.K...J.AOC..N.....M.C..D..D.Z...QU.....A\nE......C.O..W...F..K.G..C...D...B.C.F.XCW....C..\n...P.K...M...BXL..H..L..W......Q...L..B....Z....\nADORATION CALCULATOR JIUJUTSU MUNICIPAL NUMERICAL RATIONALIZE TORNADO TRIUMPH ZEALOUS",
+          "testOut": "        H                                       \n        P                                       \nLAPICINUMERICALCULATORNADORATIONALIZEALOUSTUJUIJ\n        U                                       \n        I                                       \n        R                                       \n        T                                       ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "7 49\n....BU.WRH....T.D..X.JC.L..QF.LF.....G.V..Z..M...\n..Z.F...H.W...I.N..CFABY.....HU.FT.S.L....XU...L.\n...H...W..D.....HM....A..H..FVZ.EI.PKRV..P.AJT...\nH..............M.N..L.ATIV...I.A.I...N...........\nAG....L.XCM.Q...D.O.I..RV.....OM..ABU...Q.R.E...U\nA...W..AU....Y.L...L.O..RN....Y..K...OY.SO....B.Q\n.G...AU.E.O....R.G..L.D.....F.Z.OAKCQ.PLA..D.....\nCALIFORNIA FULFILLMENT HEADREST JACKPOT MAINTAIN MENTAL PAJAMA RESTFUL TALKATIVE VERTICAL",
+          "testOut": "                     J                           \n                     A                           \n                     C                           \nHEADRESTFULFILLMENTALKATIVERTICALIFORNIATNIAMAJAP\n                     P                           \n                     O                           \n                     T                           ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Dog Pound",
+          "isTest": true,
+          "testIn": "16 19\nO.X...OXPCL..NR..R.\n.PM..AV.MOF..UA..HD\n...Q.ZM.Q..Q.IHW.A.\nT...LP.R.V..W.X....\nE.HYNWK..N.L.A..CIN\n.XH....T.....EO.JIZ\n...PNE.XJO......X.E\nKY..A......D.FG....\n.F..I.....HD...FA.Z\n.EL.Z.....VBWED..P.\n..JW.....I..J..UCW.\nNW..B.H......S.HF.K\nLLK..D.C.W...SAUEXL\nM..LA..R.IX.A.F....\n.PVW..Q..CE..C.BF.H\n.G.EE.LR..YSUI...A.\nBEAGLE BOXER CORGI DACHSHUND DOBERMAN HAVANESE MALTESE POODLE SAMOYED SHEPHERD SPANIEL",
+          "testOut": "    N   P         S\n     A   O       H \n      M   O     E  \n       R   D   P   \n        E   L H    \n      B  B   E     \n     E    O R I    \n   DACHSHUND   N   \n   G O  A       A  \n  L  R  VM B     P \n E   G  A O       S\n     I LNX Y       \n      T E   E      \n     E RS    D     \n    S   E          \n   E               ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "16 18\n....S..E...BM.....\n..G.O..U.....J....\n.K....HU.....QSJ.I\nH.L.....BT.A.R....\n..K.............Q.\n....DX..M..J...M.X\n.U...H..IR..L.W..S\n.......YN..D..T...\nCX....E....TY..TY.\n.C.N.....F....W...\n.EG.P.H.N.........\n.HU...Y.AWZI.....K\n...E.G.....W..W...\nX....N...S...CVO..\n...D......IA.....R\nI...K......YZ.....\nBEAGLE BULLMASTIFF CHIHUAHUA DOBERMAN HAVANESE MALAMUTE RETRIEVER ROTTWEILER SAMOYED TERRIER",
+          "testOut": "        A         \n       UR         \n      H  E        \n     A    L       \n   BULLMASTIFF    \n   H        E     \n  IA     R   W  D \n H V      E E T E \nC  A REIRRET   TYD\n   N      U R   O \n   E     M   I BMR\n   SL   A     E A \n   E G L     R VS \n      A     M   E \n     M E   A     R\n        B N       ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Many Short Words",
+          "isTest": true,
+          "testIn": "16 19\nXP.H.OHW.JXLSNQF.E.\nCF.NKW.X..CC..E.A.U\nBQ..RPY.W.C.OKLJXLJ\nLSETTVO.YR.NANQ.OPL\n.I.RL.SSB...AXYE..V\nM.A..EXD.XRPADOI.AC\nWHWU.W..ABOUTAAAGAJ\n.G.IFI.FEYJQDRXGNKR\n..ZJONH.R..HBJ.CO..\nE.C.Q.U.CAGD..ELL.P\nAH.ACEKR..S.A.ALA..\n...XUKO.AXIABEORWYQ\nOXRDESOI.QF.X.R.D.L\n..NM..EONOQQE..BREJ\n.OP.ENTDMQLS.WYU.NE\n.KGCCSXBZQG.KEVW.E.\nABOUT AGAIN ALERT ALONG ANGLE ANGRY APPLE AUDIO AWARE BEARD BRAIN BREAD BREAK CARRY CAUSE CHAIN CHART CLEAN CREAM CRIME CROSS CROWD FALL FONDU VIEW",
+          "testOut": "             N F   \n            IE  AE \n           A KL  L \n  E TVO YRGNA  G PL\n  RR I   A E    NP \n  A DE  M R    I A \n HWU W  ABOUT A G  \nC A   O E    R  N  \nL      RR   B E O  \nE C     C  D E LLC \nA  A   RHR  A A A  \nN   U O A I  E R   \n   D S  I  M  R D  \n  N S E N   EY B   \n O                 \nF                  ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "16 19\n.A.ME..XV.NT..RA.D.\nSL.ORUMO.AD.C..WHR.\nPAISTX.M..FKEN.WQ.B\n.R.UIJNKUWFWWREZALQ\nXAT..ZNHTNA..DP.ZHQ\n.CHKLUJ.DRXVNJ.OEGB\nYIISD......C.AU.W.O\n.D.DUVPLKIDUODL..O.\nUVKZO.GNTMU.GROUPYY\nZ..VDTDAFNSWCH.....\nQUTM..R.V.S.PXK.IMD\n.E.Z.Z.U.AVAOS.JPSY\n.ONAGDSFO..EE..TOHF\n.LU.MUS.CC..N.T.MFP\nCGMSUPAMWXBD....SAS\nOLZHELZ.UVXMEECW.OG\nBUILD BUILT COURT DRESS DRINK DROVE DUNK EVENT FIFTH FORUM FOUND FRUIT GOING GRADE GRAND GRANT GROUP GROWN GUARD HOUSE MAYOR MOUTH NEVER RATIO ROUGH THINK",
+          "testOut": "D            GRAND \n LFORUM        W   \n  I          NO    \n  FU   K     RE    \n  T B N TNARG  V   \n  H  U   R  N   E  \n  I DRINK O I  T R \n  N    L I UO  I O \n  K     T   GROUPY \n     TDA     H R A \n     DROVE M   F M \nH   R EUG V O O    \n O A  S OR E U     \n  U   S  CA N T    \n G S       D T H   \n    E       E      ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Tightly Packed",
+          "isTest": true,
+          "testIn": "8 10\n..G.O.E...\n....Y.....\nP....T.AE.\n.LW.......\n..B....S..\nQ........F\n......D.Z.\n....H.R...\nCHEETAH FISH GIRAFFE GOOSE HIPPO MONKEY PANTHER RHINO TURKEY TURTLE",
+          "testOut": "O GOOSEH  \nPN    AY G\nP IY TE EI\nI  HEKHL R\nH  ERKTS A\n  HU RN IF\n CT U  O F\nPANTHER ME",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "8 10\nE......P..\n..SG.A.Z..\n..P..OG...\n..U.......\n...V..E..S\nRI........\n.N...Q....\n..V.T.....\nCHEETAH DONKEY FISH GIRAFFE HORSE PANTHER RHINO SPIDER TURKEY TURTLE",
+          "testOut": " REHTNAP  \nESS D    H\nFIPT O  AO\nFR IU NT R\nAH  DREK S\nRI   ET EE\nIN  H RL Y\nGO CTURKEY",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Knuth's Mathematicians",
+          "isTest": true,
+          "testIn": "12 12\n.P....KW...Q\n.I..Q...BR..\nPE....RU.GE.\nY.......Z...\n..JU.....RF.\n.E...X...UA.\nR.....O.I...\nFTR..S..N...\nH..Z....E...\n.....F..G...\n..A....C.YCS\n.D.L....Q..P\nBERTRAND CATALAN FROBENIUS GLAISHER HENSEL HURWITZ JENSEN LANDAU PERRON RUNGE",
+          "testOut": "  F         \n   R        \nPERRONRUNGE \n    LB     H\n BJ E E  R U\n E ES  NE AR\n R  N  HID W\n T  ESS NU I\n R  HIEA  ST\n A  A LN   Z\n NALATAC    \n DG         ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "12 12\n.K......Z.G.\n.R......S..M\n............\n.....D......\n....U...T...\n..G....E.C.N\n....ILN.....\nSG..AF....B.\n..C..N.N..J.\n.....IV..I..\n.....R..M..D\nL....TZ.....\nBERTRAND CATALAN FROBENIUS GLAISHER HADAMARD HILBERT HURWITZ NETTO STERN SYLVESTER",
+          "testOut": "     H      \nFROBENIUS   \nSREHSIALG O \nY   A   BT  \nL  D D NTE  \nVH N  AE  RN\nE UA LNM  RT\nS  RA   AE  \nT  TW   TR  \nE AR I S  D \nRC E  T     \n   B   Z    ",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "• 7 <= [[height]], [[width]] < 50.\n\n• All test cases have a unique solution.",
+      "coverBinaryId": 133495642207228,
+      "stubGenerator": "read height:int width:int\nloop height read row:string(100)\nread words:string(250)\nwrite grid with unused letters hidden",
+      "inputDescription": "<<Line 1:>> Two space-separated integers, the [[height]] and [[width]] of the word search grid.\n\n<<Next [[height]] lines:>> A [[row]] of letters in the word search grid. Illegible letters are represented with a ({{.}}).\n\n<<Next line:>> A string [[words]], a sequence of space-separated words hidden in the word search.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[height]] lines:>> A row of the solution grid with the hidden words displayed. All locations that are not part of the solution must be replaced with a space. Do NOT trim any trailing spaces from the lines of your solution."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">This puzzle is part of a multi-part Algorithm X tutorial and is meant to be done per the guidance in the following playground:<br><br><const>https://www.algorithm-x.com</const><br><br>You are free to solve this puzzle in any language you choose. While the playground demonstrations are written in Python, a reusable Algorithm X Solver is available in many different languages. By following the guidance in the playground and using the solver as intended, this puzzle should be much easier than attempting it from scratch.<br><br><strong>Task Overview:</strong><br><br>While cleaning out the storage closet at CodinGame HQ, a handful of word search puzzles were found. Due to water damage, some letters on the grid are smudged and illegible. Find the words and print out the solution. Words can be hidden in any direction, including horizontally, vertically, diagonally, forward or backward.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Two space-separated integers, the <var>height</var> and <var>width</var> of the word search grid.<br><br><strong>Next <var>height</var> lines:</strong> A <var>row</var> of letters in the word search grid. Illegible letters are represented with a (<const>.</const>).<br><br><strong>Next line:</strong> A string <var>words</var>, a sequence of space-separated words hidden in the word search.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>height</var> lines:</strong> A row of the solution grid with the hidden words displayed. All locations that are not part of the solution must be replaced with a space. Do NOT trim any trailing spaces from the lines of your solution.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">&bull; 7 &lt;= <var>height</var>, <var>width</var> &lt; 50.<br><br>&bull; All test cases have a unique solution.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">10 10\n...G......\n.H...C....\n..N.......\n......U..H\n...H......\n........K.\n.......H..\nI...Q.....\nF.V.......\n.P..J.....\nANTELOPE CROCODILE</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">          \n     C    \n     R    \n     O    \n     C    \nANTELOPE  \n     D    \n     I    \n     L    \n     E    </pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 27524350067,
+  "avatar": 87736728529732,
+  "commentCount": 16,
+  "upVotes": 12,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 1098897,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1738004737000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1738018525660,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1740611137001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1740756480666,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1743204123957,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

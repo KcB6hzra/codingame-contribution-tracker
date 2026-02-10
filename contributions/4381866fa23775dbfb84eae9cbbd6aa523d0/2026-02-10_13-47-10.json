@@ -1,0 +1,281 @@
+{
+  "id": 4381,
+  "activeVersion": 32,
+  "score": 8,
+  "votableId": 10893829,
+  "codingamerId": 934381,
+  "views": 319,
+  "commentableId": 10822929,
+  "title": "1D Spreadsheet",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "PolyB",
+  "publicHandle": "4381866fa23775dbfb84eae9cbbd6aa523d0",
+  "codingamerHandle": "508bb9db8b154bae1c6e5b8c2db49982183439",
+  "lastVersion": {
+    "version": 32,
+    "autocloseTime": 1563632209507,
+    "data": {
+      "title": "1D Spreadsheet",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Lazy Evaluation"
+          }
+        },
+        {
+          "labelMap": {
+            "2": "Dependency Graph"
+          }
+        },
+        {
+          "id": 65,
+          "handle": "memoization",
+          "labelMap": {
+            "1": "Mémoïsation",
+            "2": "Memoization"
+          },
+          "pageTitle": "Memoization: exercises and theory",
+          "puzzleCount": 7,
+          "parentTopicId": 41,
+          "contentDetailsId": 76
+        }
+      ],
+      "solution": "import System.IO\nimport Control.Monad\nimport Data.Function\n\ngetVal :: String -> [Int] -> Int\ngetVal ('$':v) c = c!!read v\ngetVal v _ = read v\n\nresolve ::[[Int] -> Int] -> [Int]\nresolve s = fix $ \\r -> map ($r) s \n\nmain :: IO ()\nmain = do\n    hSetBuffering stdout NoBuffering -- DO NOT REMOVE\n   \n    n <- read<$>getLine\n    \n    spreadsheet <- replicateM n $ do\n        [op,arg1,arg2] <- words<$>getLine\n        return $ do\n            v1 <- getVal arg1\n            v2 <- getVal arg2\n            return $ case op of\n                \"VALUE\" -> v1\n                \"ADD\" -> v1 + v2\n                \"SUB\" -> v1 - v2\n                \"MULT\" -> v1 * v2\n    \n    forM_ (resolve spreadsheet) print",
+      "statement": "You are given a 1-dimensional spreadsheet. You are to resolve the formulae and give the value of all its cells.\n\nEach input cell's content is provided as an [[operation]] with two operands [[arg1]] and [[arg2]].\n\nThere are 4 types of operations:\n{{VALUE}} [[arg1]] [[arg2]]: The cell's value is [[arg1]], ([[arg2]] is not used and will be \"_\" to aid parsing).\n{{ADD}} [[arg1]] [[arg2]]: The cell's value is [[arg1]] + [[arg2]].\n{{SUB}} [[arg1]] [[arg2]]: The cell's value is [[arg1]] - [[arg2]].\n{{MULT}} [[arg1]] [[arg2]]: The cell's value is [[arg1]] × [[arg2]].\n\nArguments can be of two types:\n• <<Reference>> $[[ref]]: If an argument starts with a dollar sign, it is a interpreted as a reference and its value is equal to the value of the cell by that number [[ref]], 0-indexed.\nFor example, \"$0\" will have the value of the result of the first cell.\nNote that a cell can reference a cell <<after>> itself!\n\n• <<Value>> [[val]]: If an argument is a pure number, its value is [[val]].\nFor example: \"3\" will have the value {{3}}.\n\nThere won't be any cyclic references: a cell that reference itself or a cell that references it, directly or indirectly.",
+      "testCases": [
+        {
+          "title": "Simple dependency",
+          "isTest": true,
+          "testIn": "2\nVALUE 3 _\nADD $0 4",
+          "testOut": "3\n7",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Simple dependency",
+          "isTest": false,
+          "testIn": "2\nVALUE 2 _\nADD $0 1",
+          "testOut": "2\n3",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Double dependency",
+          "isTest": true,
+          "testIn": "3\nVALUE 20 _\nADD $0 100\nADD $1 1",
+          "testOut": "20\n120\n121",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Double dependency",
+          "isTest": false,
+          "testIn": "3\nVALUE 20 _\nADD $0 200\nADD $1 2",
+          "testOut": "20\n220\n222",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Subtraction",
+          "isTest": true,
+          "testIn": "2\nVALUE 12 _\nSUB $0 3",
+          "testOut": "12\n9",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Subtraction",
+          "isTest": false,
+          "testIn": "2\nVALUE 53 _\nSUB $0 43",
+          "testOut": "53\n10",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Multiplication",
+          "isTest": true,
+          "testIn": "2\nVALUE 4 _\nMULT 4 $0",
+          "testOut": "4\n16",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Multiplication",
+          "isTest": false,
+          "testIn": "2\nVALUE 6 _\nMULT 3 $0",
+          "testOut": "6\n18",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "No dependencies",
+          "isTest": true,
+          "testIn": "3\nADD 1 2\nSUB 3 1\nMULT 2 4",
+          "testOut": "3\n2\n8",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "No dependencies",
+          "isTest": false,
+          "testIn": "3\nADD 8 1\nSUB 3 12\nMULT 7 1",
+          "testOut": "9\n-9\n7",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Coefficients",
+          "isTest": true,
+          "testIn": "7\nVALUE 10 _\nVALUE 3 _\nMULT $0 $1\nVALUE 2 _\nVALUE 4 _\nMULT $3 $4\nADD $2 $5",
+          "testOut": "10\n3\n30\n2\n4\n8\n38",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Coefficients",
+          "isTest": false,
+          "testIn": "7\nVALUE 20 _\nVALUE 4 _\nMULT $0 $1\nVALUE 1 _\nVALUE 5 _\nMULT $3 $4\nADD $2 $5",
+          "testOut": "20\n4\n80\n1\n5\n5\n85",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Fibonacci",
+          "isTest": true,
+          "testIn": "9\nVALUE 0 _\nVALUE 1 _\nADD $0 $1\nADD $1 $2\nADD $2 $3\nADD $3 $4\nADD $4 $5\nADD $5 $6\nADD $6 $7",
+          "testOut": "0\n1\n1\n2\n3\n5\n8\n13\n21",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Padovan",
+          "isTest": false,
+          "testIn": "11\nVALUE 1 _\nVALUE 1 _\nVALUE 1 _\nADD $0 $1\nADD $1 $2\nADD $2 $3\nADD $3 $4\nADD $4 $5\nADD $5 $6\nADD $6 $7\nADD $7 $8",
+          "testOut": "1\n1\n1\n2\n2\n3\n4\n5\n7\n9\n12",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Backward dependency",
+          "isTest": true,
+          "testIn": "2\nADD $1 20\nVALUE 32 _",
+          "testOut": "52\n32",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Backward dependency",
+          "isTest": false,
+          "testIn": "2\nADD $1 12\nVALUE 72 _",
+          "testOut": "84\n72",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Diamond dependency",
+          "isTest": true,
+          "testIn": "4\nSUB $1 4\nVALUE 3 _\nADD 8 $1\nMULT $0 $2",
+          "testOut": "-1\n3\n11\n-11",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Diamond dependency",
+          "isTest": false,
+          "testIn": "4\nMULT $1 43\nVALUE 6 _\nADD 12 $1\nMULT $0 $2",
+          "testOut": "258\n6\n18\n4644",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Accounting is easy",
+          "isTest": true,
+          "testIn": "6\nMULT $5 $2\nADD $5 $0\nVALUE 12 _\nADD $2 $2\nMULT $3 $2\nSUB $3 $2",
+          "testOut": "144\n156\n12\n24\n288\n12",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Accounting is easy",
+          "isTest": false,
+          "testIn": "6\nMULT $2 $5\nSUB $0 $5\nVALUE 4 _\nMULT $2 $2\nSUB $2 $3\nADD $3 $2",
+          "testOut": "80\n60\n4\n16\n-12\n20",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Accounting is hard 1",
+          "isTest": true,
+          "testIn": "100\nSUB $47 $9\nSUB 44 $59\nADD $97 $67\nADD $1 $1\nSUB $57 $67\nADD $47 $97\nADD $59 $59\nSUB $50 $83\nSUB $3 $93\nSUB $4 $74\nSUB $38 $0\nADD $29 $96\nSUB $46 $97\nSUB $5 $98\nSUB $87 $66\nSUB $86 $25\nSUB $1 $98\nSUB $84 $56\nADD $38 $78\nADD $46 $34\nADD $5 $76\nSUB $3 $93\nADD $19 $31\nADD $97 $77\nVALUE $54 _\nSUB $6 $6\nADD $98 $2\nADD $59 $67\nSUB $36 $86\nSUB $98 $26\nSUB $16 $7\nVALUE $67 _\nADD $11 $84\nVALUE $63 _\nADD $3 $6\nVALUE $44 _\nSUB $68 $5\nADD $7 $58\nADD $50 $82\nADD $88 -936\nADD $43 $47\nADD $58 842\nSUB $80 $46\nSUB $33 $96\nSUB $43 $46\nADD $2 $8\nADD $59 $9\nVALUE $2 _\nSUB $65 $30\nADD 135 $65\nADD $71 $93\nADD $96 $67\nADD $6 $38\nSUB $5 $8\nSUB $67 $1\nADD $4 $71\nVALUE $67 _\nSUB $93 $54\nSUB $51 $3\nADD 993 -871\nADD $6 $6\nSUB $71 $65\nADD $25 $60\nVALUE $59 _\nADD $6 $51\nSUB $63 $97\nVALUE $67 _\nSUB 3 $59\nADD $88 $3\nSUB $83 $53\nSUB $50 $49\nADD $60 865\nVALUE $53 _\nSUB $29 $44\nSUB $96 $25\nADD $21 $77\nSUB $14 $30\nSUB $27 $50\nADD $51 $5\nSUB $40 $72\nVALUE $90 _\nADD $87 $42\nADD $9 $47\nSUB $97 $1\nADD $21 $44\nADD $78 $94\nADD $21 $71\nADD -730 $67\nSUB $21 $89\nSUB $83 $25\nADD $47 $84\nADD $6 $65\nADD $32 $22\nADD $27 $59\nADD $63 $11\nADD $65 $60\nADD $59 $6\nSUB $1 $27\nADD $27 $83\nSUB $19 $61",
+          "testOut": "-119\n-78\n-200\n-156\n285\n-281\n244\n1481\n-281\n-81\n1316\n566\n122\n-281\n-730\n1072\n-78\n-447\n1163\n129\n548\n-281\n10\n-1556\n-41\n0\n-200\n3\n-1225\n200\n-1559\n-119\n0\n122\n88\n-285\n-153\n1884\n1197\n-1214\n-444\n1245\n-807\n-244\n-285\n-481\n41\n-200\n1762\n338\n1478\n247\n1441\n0\n-41\n1638\n-119\n166\n403\n122\n488\n1150\n488\n122\n491\n203\n-119\n-119\n-434\n-3\n1140\n1353\n0\n485\n366\n-1756\n829\n-1475\n-34\n-444\n-766\n-1656\n-281\n-3\n-566\n654\n1072\n-849\n-278\n-3\n-766\n447\n10\n125\n688\n691\n366\n-81\n0\n-1021",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Accounting is hard 1",
+          "isTest": false,
+          "testIn": "100\nADD $93 $72\nADD $43 $93\nSUB $79 $48\nADD $57 $80\nADD $34 $52\nSUB $47 55\nADD $72 $33\nADD $1 $72\nADD $72 $84\nADD $74 $74\nSUB $15 $93\nSUB $12 $63\nSUB $43 $74\nSUB $87 $18\nSUB $76 $78\nADD $50 $9\nSUB $9 $68\nADD 683 $94\nADD $43 $87\nADD $82 $52\nADD $94 $43\nSUB $94 $55\nADD $48 $12\nADD 798 $61\nADD $74 $9\nVALUE $49 _\nSUB -680 $82\nADD $99 $57\nSUB $82 $52\nADD $50 $94\nADD 946 $38\nVALUE $74 _\nADD $15 $12\nSUB $9 $20\nSUB $94 $74\nADD $65 -174\nSUB $93 $78\nADD $49 $24\nSUB $49 721\nVALUE $1 _\nSUB -699 $43\nSUB $44 176\nADD $32 $74\nADD $94 $94\nADD 308 $74\nSUB $82 $78\nADD 406 $73\nVALUE $41 _\nVALUE $20 _\nSUB $20 $93\nSUB $9 $94\nSUB $32 $62\nSUB $23 -908\nSUB $46 $88\nSUB $42 $87\nADD $74 $34\nVALUE $54 _\nADD $15 $21\nADD $10 $93\nSUB $94 $75\nADD $67 $31\nADD $72 $44\nADD $93 $29\nVALUE $87 _\nSUB $78 $37\nVALUE $67 _\nSUB $54 $57\nSUB $52 $82\nADD $48 $24\nSUB $54 $22\nSUB $96 $60\nSUB $72 $6\nADD $50 -76\nVALUE $77 _\nADD 246 -746\nSUB $10 $94\nADD $94 $93\nSUB $23 $41\nSUB $15 $82\nVALUE $42 _\nSUB $47 $93\nSUB $53 $93\nADD $20 $34\nSUB $36 $50\nSUB $20 $94\nSUB $77 $86\nSUB $21 $82\nSUB $21 $72\nADD $10 $29\nVALUE $86 _\nSUB $15 $24\nADD $87 $44\nSUB $36 $32\nADD 996 $55\nSUB $74 $9\nSUB $82 $22\nSUB $6 $89\nSUB $89 $61\nSUB $61 $42\nADD $44 $9",
+          "testOut": "-80\n2496\n-3000\n-4364\n938\n-423\n-4076\n920\n-576\n-1000\n-3996\n-76\n1500\n-1000\n6996\n-2500\n-1000\n1183\n2576\n2438\n1500\n0\n3000\n-970\n-1500\n4\n-3180\n-3692\n2562\n-1000\n229\n-500\n-1000\n-2500\n1000\n-2736\n6496\n-1496\n-717\n2496\n-1699\n-368\n-1500\n1000\n-192\n7500\n-196\n-368\n1500\n4\n-1500\n-1496\n-62\n4800\n-3076\n500\n-3076\n-2500\n-2500\n4996\n-3062\n-1768\n496\n1576\n-3504\n-2562\n-576\n-2562\n0\n-6076\n1486\n2500\n-1576\n-602\n-500\n-4496\n1996\n-602\n-5000\n-1500\n-1864\n3304\n2500\n7996\n1000\n1898\n-2500\n1576\n-4996\n-2500\n-1000\n1384\n7496\n1496\n500\n-500\n-1576\n-732\n-268\n-1192",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Accounting is hard 2",
+          "isTest": true,
+          "testIn": "100\nMULT $61 $95\nADD $26 $80\nADD $6 $0\nADD $98 $39\nADD $72 $14\nSUB $12 $32\nMULT $73 $86\nADD $80 $12\nMULT $86 $60\nSUB $39 $59\nSUB $64 $83\nSUB $98 $91\nSUB $59 $80\nMULT $65 $73\nADD $25 $3\nADD $93 $10\nSUB $93 $72\nMULT $43 $23\nMULT $43 $51\nMULT $71 $0\nSUB $60 $3\nADD $77 $46\nSUB $23 $40\nMULT $99 $6\nMULT $44 $39\nVALUE $28 _\nVALUE $43 _\nADD $92 $46\nADD $49 $86\nSUB $82 $41\nADD $12 $89\nADD $91 $86\nSUB $60 $9\nMULT $51 $3\nSUB $12 $94\nADD $12 $28\nADD $66 $69\nSUB $53 $1\nADD $98 $53\nADD $98 $98\nADD $42 $59\nSUB $64 $0\nSUB $98 $6\nMULT 609 -14\nADD $60 $55\nSUB $59 -245\nMULT $64 $1\nMULT $99 $98\nADD $46 $97\nSUB $86 $43\nMULT $28 $18\nMULT $64 $40\nSUB $70 $32\nMULT $91 $80\nADD $83 $6\nADD $97 $76\nMULT $23 $45\nSUB $53 $22\nMULT $6 $10\nADD $39 $98\nMULT $17 $26\nMULT $93 $59\nSUB $70 $99\nSUB $64 $43\nSUB $9 $9\nMULT $91 $53\nMULT $26 $80\nADD $9 $43\nSUB $72 $13\nADD $64 $82\nADD $80 $45\nSUB $12 $61\nADD $53 $73\nSUB $43 $98\nMULT $47 $86\nSUB $56 $99\nSUB $53 $51\nADD 681 $43\nADD $70 $18\nMULT $12 $51\nMULT $6 $45\nSUB $99 $40\nVALUE $45 _\nSUB $59 $98\nSUB $6 $59\nMULT $55 $51\nSUB $39 $39\nSUB $26 $73\nADD $84 $92\nADD $97 $50\nSUB $75 $66\nADD $86 $43\nMULT 295 $60\nMULT $31 $17\nSUB $9 $11\nSUB $87 $65\nMULT $64 $55\nMULT $49 $23\nMULT -6 380\nVALUE $53 _",
+          "testOut": "0\n-8526\n0\n-6840\n-4560\n-4560\n0\n-6840\n0\n2280\n4560\n6246\n-6840\n0\n1686\n4560\n6246\n0\n0\n0\n6840\n-7845\n9120\n0\n0\n8526\n-8526\n0\n8526\n-6595\n-6840\n-8526\n-2280\n0\n-2874\n1686\n-6595\n8526\n-2280\n-4560\n-9120\n0\n-2280\n-8526\n0\n-6595\n0\n0\n0\n8526\n0\n0\n-4315\n0\n-4560\n0\n0\n-9120\n0\n-6840\n0\n0\n-6595\n8526\n0\n0\n0\n-6246\n-6246\n-6595\n-6595\n-6840\n-6246\n-6246\n0\n0\n0\n-7845\n-6595\n0\n0\n9120\n-6595\n-4560\n6840\n0\n0\n-2280\n6840\n0\n0\n-8526\n0\n0\n-3966\n-2280\n0\n0\n-2280\n0",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Accounting is hard 2",
+          "isTest": false,
+          "testIn": "100\nMULT $44 $93\nADD $42 $2\nADD $55 $3\nSUB $53 $72\nADD $66 $90\nADD $69 $83\nSUB $16 $89\nMULT $13 $78\nSUB $86 $53\nMULT $69 $20\nADD -753 713\nSUB $29 $88\nSUB $94 $68\nMULT $45 $10\nADD $55 -426\nSUB $95 $46\nADD $4 $90\nADD -997 $97\nMULT $20 $89\nMULT $42 $54\nSUB $88 $88\nSUB $58 $95\nSUB $46 235\nMULT $54 $37\nMULT $10 $54\nMULT $53 $69\nVALUE $1 _\nADD $95 $67\nSUB $46 $88\nVALUE $89 _\nMULT $16 $20\nADD $64 $41\nSUB $41 $20\nMULT $51 891\nSUB $91 $86\nMULT $10 $78\nADD $4 $8\nSUB $18 $89\nSUB $74 $13\nADD $84 $45\nADD $8 $29\nMULT $28 $66\nMULT $18 $46\nADD $92 $3\nMULT $49 $83\nMULT $20 $97\nADD $10 $20\nSUB $44 $44\nVALUE $20 _\nSUB $97 $42\nSUB $56 $32\nMULT $61 $91\nMULT $36 $9\nADD $28 -656\nSUB $4 $4\nADD $28 $89\nSUB $30 $42\nSUB $53 $36\nADD $93 $10\nSUB $31 $39\nSUB $46 $69\nMULT $57 $96\nADD $37 $42\nADD $2 $50\nADD $67 $60\nADD $66 $69\nSUB $89 $90\nADD $54 $41\nSUB $83 $49\nMULT $97 $20\nSUB $45 $49\nSUB $62 $3\nSUB $54 $95\nSUB $44 $0\nSUB $69 $50\nSUB $42 $93\nSUB $65 $66\nMULT $80 $70\nMULT $83 $36\nMULT $23 $57\nMULT $88 $56\nADD 824 $65\nADD $13 $51\nMULT $94 $67\nMULT $27 $19\nADD $73 $61\nSUB $28 $20\nMULT $8 $79\nSUB $10 $10\nMULT $10 $10\nADD $10 $89\nMULT $45 $61\nADD $36 $89\nMULT -21 $22\nMULT $91 $27\nMULT $24 645\nSUB $18 $24\nSUB $66 $54\nADD $19 $16\nSUB $32 $16",
+          "testOut": "0\n864\n864\n-696\n1600\n0\n1560\n0\n656\n0\n-40\n1600\n40\n0\n1134\n40\n3160\n-957\n0\n0\n0\n5735\n-275\n0\n0\n0\n864\n-1600\n-40\n1600\n0\n-3240\n-1600\n0\n40\n0\n2256\n-1600\n-1600\n0\n2256\n-1600\n0\n3160\n0\n0\n-40\n0\n0\n40\n1600\n0\n0\n-696\n0\n1560\n0\n-2952\n5735\n-3240\n-40\n0\n-1600\n2464\n-1640\n40\n40\n-1600\n-40\n0\n-40\n-904\n0\n0\n-1600\n-5775\n0\n0\n0\n0\n0\n864\n0\n0\n0\n0\n-40\n0\n0\n1600\n1560\n0\n3856\n5775\n0\n0\n0\n40\n3160\n-4760",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Deep Birecursion",
+          "isTest": true,
+          "testIn": "92\nSUB $33 $64\nADD $60 $60\nADD $61 $61\nSUB $76 $80\nSUB $25 $59\nADD $58 $28\nADD $88 $59\nADD $32 $32\nADD $83 $21\nADD $69 $39\nADD $57 $64\nADD $26 $26\nADD $1 $1\nSUB $62 $68\nADD $73 $1\nADD $50 $27\nSUB $24 $2\nADD $14 $12\nADD $10 $89\nSUB $67 $35\nADD $58 $58\nADD $7 $7\nSUB $0 $89\nADD $20 $20\nSUB $43 $61\nSUB $53 $11\nADD $37 $37\nADD $82 $47\nADD $90 $2\nADD $89 $89\nADD $85 $85\nSUB $91 $47\nADD $69 $69\nSUB $46 $86\nSUB $42 $20\nADD $12 $12\nADD $56 $8\nADD $72 $72\nADD $9 $32\nADD $30 $77\nADD $80 $48\nADD $79 $81\nSUB $16 $58\nSUB $44 $56\nSUB $63 $21\nADD $20 $5\nSUB $49 $81\nADD $54 $54\nADD $29 $18\nSUB $34 $23\nADD $47 $47\nSUB $74 $32\nSUB $17 $72\nSUB $71 $26\nADD $59 $59\nADD $15 $68\nADD $21 $21\nADD $86 $41\nADD $2 $2\nADD $11 $11\nADD $80 $80\nADD $56 $56\nSUB $31 $50\nSUB $51 $7\nADD $86 $86\nADD $72 $35\nSUB $75 $30\nSUB $70 $12\nADD $50 $50\nADD $30 $30\nSUB $84 $1\nSUB $52 $37\nVALUE 1 _\nADD $40 $60\nSUB $66 $69\nSUB $13 $85\nSUB $22 $29\nADD $55 $85\nADD $37 $65\nADD $23 $45\nADD $29 $29\nADD $23 $23\nADD $54 $6\nADD $38 $7\nSUB $3 $60\nADD $68 $68\nADD $81 $81\nADD $78 $26\nADD $87 $11\nADD $64 $64\nADD $61 $36\nSUB $4 $54",
+          "testOut": "2130706432\n268435456\n131072\n2013265920\n2147483616\n1074266111\n1073741855\n8192\n1073774591\n1073745919\n1090519039\n8\n536870912\n2147483136\n1610612735\n1073742079\n2147221504\n2147483647\n1107296255\n0\n524288\n16384\n2113929216\n1048576\n2147352576\n2147483632\n4\n1073741951\n1074003967\n33554432\n1024\n2147483520\n4096\n2139095040\n2146435072\n1073741824\n1073807359\n2\n1073750015\n1073743871\n1207959551\n1077936127\n2146959360\n2147418112\n2147450880\n1074790399\n2143289344\n64\n1140850687\n2145386496\n128\n2147475456\n2147483646\n2147483640\n32\n1073742335\n32768\n1082130431\n262144\n16\n134217728\n65536\n2147483392\n2147467264\n8388608\n1073741825\n2147481600\n1073741824\n256\n2048\n1610612736\n2147483644\n1\n1342177279\n2147479552\n2147482624\n2080374784\n1073742847\n1073741827\n1075838975\n67108864\n2097152\n1073741887\n1073758207\n1879048192\n512\n4194304\n1073741831\n1073741839\n16777216\n1073872895\n2147483584",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Deep Birecursion",
+          "isTest": false,
+          "testIn": "92\nADD $58 $29\nSUB $36 $31\nSUB $1 $7\nADD $45 $7\nADD $16 $16\nADD $60 $60\nVALUE 1 _\nADD $31 $31\nSUB $41 $28\nADD $42 $42\nADD $66 $66\nSUB $48 $80\nADD $9 $9\nADD $57 $57\nADD $80 $47\nSUB $2 $16\nADD $7 $7\nADD $88 $12\nADD $60 $26\nSUB $61 $65\nADD $44 $59\nADD $74 $13\nADD $5 $5\nADD $62 $14\nSUB $70 $35\nADD $4 $77\nADD $37 $25\nADD $55 $39\nADD $72 $72\nADD $35 $35\nSUB $90 $60\nADD $29 $29\nADD $21 $67\nADD $44 $44\nADD $28 $52\nADD $62 $62\nSUB $24 $29\nADD $4 $4\nSUB $54 $44\nADD $85 $65\nSUB $46 $73\nSUB $40 $72\nADD $28 $28\nSUB $50 $63\nADD $6 $6\nADD $0 $31\nSUB $19 $55\nADD $10 $71\nSUB $79 $10\nADD $42 $34\nSUB $53 $22\nSUB $81 $12\nADD $91 $72\nSUB $30 $5\nSUB $75 $6\nADD $65 $65\nADD $67 $67\nADD $12 $12\nADD $35 $23\nADD $6 $63\nADD $37 $37\nSUB $64 $83\nADD $80 $80\nADD $22 $22\nSUB $38 $33\nADD $83 $83\nADD $56 $56\nADD $13 $13\nADD $32 $56\nSUB $89 $56\nSUB $11 $62\nADD $66 $68\nADD $73 $73\nADD $55 $55\nADD $17 $57\nADD $87 $22\nADD $20 $33\nADD $3 $16\nSUB $51 $57\nSUB $69 $66\nADD $10 $10\nSUB $82 $9\nSUB $8 $42\nADD $33 $33\nSUB $15 $4\nADD $83 $76\nSUB $78 $13\nADD $5 $18\nADD $49 $9\nSUB $86 $67\nSUB $84 $37\nADD $73 $27",
+          "testOut": "1077936127\n2139095040\n2130706432\n1090519039\n33554432\n268435456\n1\n8388608\n2147483136\n1024\n131072\n2146959360\n2048\n8192\n1074266111\n2113929216\n16777216\n1073745919\n1342177279\n2147483616\n1073741827\n1073758207\n536870912\n1074790399\n2145386496\n1140850687\n1207959551\n1073741887\n256\n2097152\n1879048192\n4194304\n1073774591\n4\n1073742335\n1048576\n2143289344\n67108864\n2147483644\n1073741855\n2147483520\n2147483392\n512\n0\n2\n1082130431\n2147483584\n1074003967\n2147221504\n1073742847\n1073741824\n2147479552\n1073742079\n1610612736\n2147483646\n32\n32768\n4096\n1075838975\n1073741825\n134217728\n2147483632\n524288\n1073741824\n2147483640\n16\n65536\n16384\n1073807359\n2147418112\n2146435072\n1073872895\n128\n64\n1073750015\n2147483647\n1073741831\n1107296255\n2147475456\n2147352576\n262144\n2147481600\n2147482624\n8\n2080374784\n1073741839\n2147467264\n1610612735\n1073743871\n2147450880\n2013265920\n1073741951",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "1 ≤ [[N]] ≤ 100\n-10000 ≤ [[val]] ≤ 10000\n$0 ≤ $[[ref]] ≤ $([[N]]-1)\n[[val]] ∈  ℤ\n[[ref]] ∈ ℕ\nThere are <<no>> cyclic references.",
+      "coverBinaryId": 134852461341125,
+      "stubGenerator": "read N:int\nloop N read operation:word(5) arg1:word(6) arg2:word(6)\n\nloop N write 1",
+      "inputDescription": "<<Line 1:>> An integer [[N]] for the number of cells.\n<<Next [[N]] lines:>> [[operation]] [[arg1]] [[arg2]]\n\n[[operation]] is one of { {{VALUE}}, {{ADD}}, {{SUB}}, {{MULT}} }\n[[arg1]] and [[arg2]] are either a number (\"-?[0-9]+\"), a reference (\"\\$[0-9]+\") or nothing \"_\".",
+      "solutionLanguage": "Haskell",
+      "outputDescription": "<<[[N]] lines:>> the value of each cell, one value per line, from cell 0 to cell [[N]]"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are given a 1-dimensional spreadsheet. You are to resolve the formulae and give the value of all its cells.<br><br>Each input cell's content is provided as an <var>operation</var> with two operands <var>arg1</var> and <var>arg2</var>.<br><br>There are 4 types of operations:<br><const>VALUE</const> <var>arg1</var> <var>arg2</var>: The cell's value is <var>arg1</var>, (<var>arg2</var> is not used and will be &quot;_&quot; to aid parsing).<br><const>ADD</const> <var>arg1</var> <var>arg2</var>: The cell's value is <var>arg1</var> + <var>arg2</var>.<br><const>SUB</const> <var>arg1</var> <var>arg2</var>: The cell's value is <var>arg1</var> - <var>arg2</var>.<br><const>MULT</const> <var>arg1</var> <var>arg2</var>: The cell's value is <var>arg1</var> &times; <var>arg2</var>.<br><br>Arguments can be of two types:<br>&bull; <strong>Reference</strong> $<var>ref</var>: If an argument starts with a dollar sign, it is a interpreted as a reference and its value is equal to the value of the cell by that number <var>ref</var>, 0-indexed.<br>For example, &quot;$0&quot; will have the value of the result of the first cell.<br>Note that a cell can reference a cell <strong>after</strong> itself!<br><br>&bull; <strong>Value</strong> <var>val</var>: If an argument is a pure number, its value is <var>val</var>.<br>For example: &quot;3&quot; will have the value <const>3</const>.<br><br>There won't be any cyclic references: a cell that reference itself or a cell that references it, directly or indirectly.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var> for the number of cells.<br><strong>Next <var>N</var> lines:</strong> <var>operation</var> <var>arg1</var> <var>arg2</var><br><br><var>operation</var> is one of { <const>VALUE</const>, <const>ADD</const>, <const>SUB</const>, <const>MULT</const> }<br><var>arg1</var> and <var>arg2</var> are either a number (&quot;-?[0-9]+&quot;), a reference (&quot;\\$[0-9]+&quot;) or nothing &quot;_&quot;.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>N</var> lines:</strong> the value of each cell, one value per line, from cell&nbsp;0 to&nbsp;cell <var>N</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 100<br>-10000 &le; <var>val</var> &le; 10000<br>$0 &le; $<var>ref</var> &le; $(<var>N</var>-1)<br><var>val</var> &isin;  ℤ<br><var>ref</var> &isin; ℕ<br>There are <strong>no</strong> cyclic references.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\nVALUE 3 _\nADD $0 4</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">3\n7</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 209611250376,
+  "commentCount": 18,
+  "upVotes": 8,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 357651,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

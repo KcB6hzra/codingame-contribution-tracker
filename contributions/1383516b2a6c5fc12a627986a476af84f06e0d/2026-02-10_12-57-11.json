@@ -1,0 +1,324 @@
+{
+  "id": 138351,
+  "activeVersion": 19,
+  "score": 4,
+  "votableId": 38682282,
+  "codingamerId": 862730,
+  "views": 145,
+  "commentableId": 38516650,
+  "title": "Simple Diff Tool",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "poppu",
+  "publicHandle": "1383516b2a6c5fc12a627986a476af84f06e0d",
+  "codingamerHandle": "d034ba80a380251eb45e637e29f2c22e037268",
+  "lastVersion": {
+    "version": 19,
+    "autocloseTime": 1767567898788,
+    "freezeTime": 1765580698788,
+    "data": {
+      "title": "Simple Diff Tool",
+      "topics": [
+        {
+          "id": 46,
+          "handle": "loops",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 121,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        },
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 82,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        },
+        {
+          "id": 50,
+          "handle": "lists",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Listes",
+            "2": "Lists"
+          },
+          "pageTitle": "Lists: exercises and theory",
+          "puzzleCount": 20,
+          "parentTopicId": 40,
+          "contentDetailsId": 96
+        }
+      ],
+      "solution": "import java.util.*;\nimport java.util.stream.IntStream;\n\nclass Solution {\n\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n        CompareType type = CompareType.of(in.next());\n        List<Line> linesV1 = readLines(in);\n        List<Line> linesV2 = readLines(in);\n\n        List<String> diffs = compare(type, linesV1, linesV2);\n        if ( diffs.isEmpty() ) {\n            System.out.println(\"No Diffs\");\n        } else {\n            diffs.forEach(System.out::println);\n        }\n    }\n\n\n    private static List<Line> readLines(Scanner in) {\n        int nbLines = in.nextInt();\n        if (in.hasNextLine()) {\n            in.nextLine();\n        }\n        return IntStream.range(0, nbLines).mapToObj(i -> new Line(in.nextLine(), i+1)).toList();\n    }\n\n    public static List<String> compare(CompareType compareType, List<Line> lines, List<Line> updatedLines) {\n        Map<String, Line> oldMap = buildMap(compareType, lines);\n        Map<String, Line> newMap = buildMap(compareType, updatedLines);\n\n        List<String> diffs = new LinkedList<>();\n        for(Map.Entry<String, Line> entry : newMap.entrySet()) {\n            String id = entry.getKey();\n            Line current = entry.getValue();\n            Line previous = oldMap.get(id);\n            if ( previous == null ) {\n                diffs.add(\"ADD: \" + current.value());\n            } else {\n                oldMap.remove(id);\n                if ( !previous.value().equals(current.value()) ) {\n                    diffs.add(\"CHANGE: \" + previous.value() + \" ---> \" + current.value());\n                } else if ( previous.number() != current.number() ) {\n                    diffs.add(\"MOVE: \" + previous.value() + \" @:\" + previous.number() + \" >>> @:\" + current.number());\n                }\n            }\n        }\n\n        oldMap.values().stream().map(l -> \"DELETE: \" + l.value()).forEach(diffs::add);\n\n        diffs.sort(Comparator.naturalOrder());\n\n        return diffs;\n    }\n\n    private static Map<String, Line> buildMap(CompareType compareType, List<Line> lines) {\n        Map<String, Line> map = new HashMap<>();\n        for(int i=0; i<lines.size(); i++){\n            String id = getId(compareType, i, lines.get(i).value());\n            map.put(id, lines.get(i));\n        }\n        return map;\n    }\n\n    private static String getId(CompareType compareType, int number, String text) {\n        return switch(compareType) {\n            case BY_NUMBER -> \"\"+number;\n            case BY_CONTENT -> text;\n        };\n    }\n\n    enum CompareType {\n        BY_NUMBER,\n        BY_CONTENT;\n        public static CompareType of(String value) {\n            return \"BY_NUMBER\".equals(value) ? BY_NUMBER : BY_CONTENT;\n        }\n    }\n\n}\n\nrecord Line (String value, int number) {}\n",
+      "statement": "A product owner was asked to develop a text diff tool. Unfortunately he was a bit confused because there is no id on text lines.\nSo after a short time he discovered only two ways to identify lines: by their number or by their content.\nAs he did not know which one is better, he asked his developer team to add the identifier method as a configuration parameter of the tool.\n\nThe behavior of the tool is defined as follows:\n<<Step 1:>> The tool matches lines from the revised file to the ones in the original file, based on the configuration parameter value.\n• If set to {{BY_NUMBER}}, lines are considered matched if they have the same line number, regardless of their contents.\n• If set to {{BY_CONTENT}}, lines are considered matched if their contents are identical, regardless of their line numbers.\n<<Step 2:>> The tool processes differences between matched lines, based on the configuration parameter value.\n• If set to {{BY_NUMBER}}, the tool shall output {{CHANGE}} for each pair of matched lines with unequal content.\n• If set to {{BY_CONTENT}}, the tool shall output {{MOVE}} for each pair of matched lines with unequal line numbers.\n<<Step 3:>> The tool processes differences between unmatched lines, regardless of the configuration parameter value.\n• The tool shall output {{DELETE}} for every unmatched line that exists only in the original file.\n• The tool shall output {{ADD}} for every unmatched line that exists only in the revised file.",
+      "testCases": [
+        {
+          "title": "Test - Add by content",
+          "isTest": true,
+          "testIn": "BY_CONTENT\n3\nCodinGame is a fun website to learn programming skills.\nIt supports a large set of programming languages.\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\n4\nCodinGame is a fun website to learn programming skills.\nIt supports a large set of programming languages.\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\nSome experience points are awarded on tasks achievement",
+          "testOut": "ADD: Some experience points are awarded on tasks achievement",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Add by content",
+          "isTest": false,
+          "testIn": "BY_CONTENT\n3\nCodinGame est un site web fun pour apprendre les competences de programmation\nIl supporte un large eventail de langage de programmation\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle\n4\nCodinGame est un site web fun pour apprendre les competences de programmation\nIl supporte un large eventail de langage de programmation\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle\nDes points d'experience sont attribues a l'accomplissement de certaines taches",
+          "testOut": "ADD: Des points d'experience sont attribues a l'accomplissement de certaines taches",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - Add by number",
+          "isTest": true,
+          "testIn": "BY_NUMBER\n3\nCodinGame is a fun website to learn programming skills.\nIt supports a large set of programming languages.\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\n4\nCodinGame is a fun website to learn programming skills.\nIt supports a large set of programming languages.\nSome experience points are awarded on tasks achievement\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.",
+          "testOut": "ADD: The progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\nCHANGE: The progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence. ---> Some experience points are awarded on tasks achievement",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Add by number",
+          "isTest": false,
+          "testIn": "BY_NUMBER\n3\nCodinGame est un site web fun pour apprendre les competences de programmation\nIl supporte un large eventail de langage de programmation\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle\n4\nCodinGame est un site web fun pour apprendre les competences de programmation\nIl supporte un large eventail de langage de programmation\nDes points d'experience sont attribues a l'accomplissement de certaines taches\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle",
+          "testOut": "ADD: La progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle\nCHANGE: La progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle ---> Des points d'experience sont attribues a l'accomplissement de certaines taches",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - Delete by content",
+          "isTest": true,
+          "testIn": "BY_CONTENT\n3\nCodinGame is a fun website to learn programming skills.\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\nIt supports a large set of programming languages.\n2\nCodinGame is a fun website to learn programming skills.\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.",
+          "testOut": "DELETE: It supports a large set of programming languages.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Delete by content",
+          "isTest": false,
+          "testIn": "BY_CONTENT\n3\nCodinGame est un site web fun pour apprendre les competences de programmation\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle\nIl supporte un large eventail de langage de programmation\n2\nCodinGame est un site web fun pour apprendre les competences de programmation\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle",
+          "testOut": "DELETE: Il supporte un large eventail de langage de programmation",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - Delete by number",
+          "isTest": true,
+          "testIn": "BY_NUMBER\n3\nCodinGame is a fun website to learn programming skills.\nIt supports a large set of programming languages.\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\n2\nCodinGame is a fun website to learn programming skills.\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.",
+          "testOut": "CHANGE: It supports a large set of programming languages. ---> The progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\nDELETE: The progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Delete by number",
+          "isTest": false,
+          "testIn": "BY_NUMBER\n3\nCodinGame est un site web fun pour apprendre les competences de programmation\nIl supporte un large eventail de langage de programmation\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle\n2\nCodinGame est un site web fun pour apprendre les competences de programmation\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle",
+          "testOut": "CHANGE: Il supporte un large eventail de langage de programmation ---> La progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle\nDELETE: La progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - Change by content",
+          "isTest": true,
+          "testIn": "BY_CONTENT\n3\nCodinGame is a fun website to learn programming skills.\nIt supports a large set of programming languages.\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\n3\nCodinGame is a fun website to learn programming skills.\nSome experience points are awarded on tasks achievement\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.",
+          "testOut": "ADD: Some experience points are awarded on tasks achievement\nDELETE: It supports a large set of programming languages.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Change by content",
+          "isTest": false,
+          "testIn": "BY_CONTENT\n3\nCodinGame est un site web fun pour apprendre les competences de programmation\nIl supporte un large eventail de langage de programmation\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle\n3\nCodinGame est un site web fun pour apprendre les competences de programmation\nDes points d'experience sont attribues a l'accomplissement de certaines taches\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle",
+          "testOut": "ADD: Des points d'experience sont attribues a l'accomplissement de certaines taches\nDELETE: Il supporte un large eventail de langage de programmation",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - Change by number",
+          "isTest": true,
+          "testIn": "BY_NUMBER\n3\nCodinGame is a fun website to learn programming skills.\nIt supports a large set of programming languages.\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\n3\nCodinGame is a fun website to learn programming skills.\nSome experience points are awarded on tasks achievement\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.",
+          "testOut": "CHANGE: It supports a large set of programming languages. ---> Some experience points are awarded on tasks achievement",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Change by number",
+          "isTest": false,
+          "testIn": "BY_NUMBER\n3\nCodinGame est un site web fun pour apprendre les competences de programmation\nIl supporte un large eventail de langage de programmation\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle\n3\nCodinGame est un site web fun pour apprendre les competences de programmation\nDes points d'experience sont attribues a l'accomplissement de certaines taches\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle",
+          "testOut": "CHANGE: Il supporte un large eventail de langage de programmation ---> Des points d'experience sont attribues a l'accomplissement de certaines taches",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - No diffs by content",
+          "isTest": true,
+          "testIn": "BY_CONTENT\n3\nCodinGame is a fun website to learn programming skills.\nIt supports a large set of programming languages.\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\n3\nCodinGame is a fun website to learn programming skills.\nIt supports a large set of programming languages.\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.",
+          "testOut": "No Diffs",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - No diffs by content",
+          "isTest": false,
+          "testIn": "BY_CONTENT\n3\nCodinGame est un site web fun pour apprendre les competences de programmation\nIl supporte un large eventail de langage de programmation\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle\n3\nCodinGame est un site web fun pour apprendre les competences de programmation\nIl supporte un large eventail de langage de programmation\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle",
+          "testOut": "No Diffs",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - No diffs by number",
+          "isTest": true,
+          "testIn": "BY_NUMBER\n3\nCodinGame is a fun website to learn programming skills.\nIt supports a large set of programming languages.\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\n3\nCodinGame is a fun website to learn programming skills.\nIt supports a large set of programming languages.\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.",
+          "testOut": "No Diffs",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - No diffs by number",
+          "isTest": false,
+          "testIn": "BY_NUMBER\n3\nCodinGame est un site web fun pour apprendre les competences de programmation\nIl supporte un large eventail de langage de programmation\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle\n3\nCodinGame est un site web fun pour apprendre les competences de programmation\nIl supporte un large eventail de langage de programmation\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle",
+          "testOut": "No Diffs",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - Moved lines by content",
+          "isTest": true,
+          "testIn": "BY_CONTENT\n3\nCodinGame is a fun website to learn programming skills.\nIt supports a large set of programming languages.\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\n3\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\nCodinGame is a fun website to learn programming skills.\nIt supports a large set of programming languages.",
+          "testOut": "MOVE: CodinGame is a fun website to learn programming skills. @:1 >>> @:2\nMOVE: It supports a large set of programming languages. @:2 >>> @:3\nMOVE: The progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence. @:3 >>> @:1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Moved lines by content",
+          "isTest": false,
+          "testIn": "BY_CONTENT\n3\nCodinGame est un site web fun pour apprendre les competences de programmation\nIl supporte un large eventail de langage de programmation\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle\n3\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle\nCodinGame est un site web fun pour apprendre les competences de programmation\nIl supporte un large eventail de langage de programmation",
+          "testOut": "MOVE: CodinGame est un site web fun pour apprendre les competences de programmation @:1 >>> @:2\nMOVE: Il supporte un large eventail de langage de programmation @:2 >>> @:3\nMOVE: La progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle @:3 >>> @:1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - Moved lines by number",
+          "isTest": true,
+          "testIn": "BY_NUMBER\n3\nCodinGame is a fun website to learn programming skills.\nIt supports a large set of programming languages.\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\n3\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\nCodinGame is a fun website to learn programming skills.\nIt supports a large set of programming languages.",
+          "testOut": "CHANGE: CodinGame is a fun website to learn programming skills. ---> The progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\nCHANGE: It supports a large set of programming languages. ---> CodinGame is a fun website to learn programming skills.\nCHANGE: The progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence. ---> It supports a large set of programming languages.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Moved lines by number",
+          "isTest": false,
+          "testIn": "BY_NUMBER\n3\nCodinGame est un site web fun pour apprendre les competences de programmation\nIl supporte un large eventail de langage de programmation\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle\n3\nLa progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle\nCodinGame est un site web fun pour apprendre les competences de programmation\nIl supporte un large eventail de langage de programmation",
+          "testOut": "CHANGE: CodinGame est un site web fun pour apprendre les competences de programmation ---> La progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle\nCHANGE: Il supporte un large eventail de langage de programmation ---> CodinGame est un site web fun pour apprendre les competences de programmation\nCHANGE: La progression est repartie entre quatre axes: rapidite de developpement, algorithmes, optimisation et intelligence artificielle ---> Il supporte un large eventail de langage de programmation",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - Multiple diffs by content",
+          "isTest": true,
+          "testIn": "BY_CONTENT\n11\nBot programming games are multiplayer games with a game loop.\nThere are no test cases to pass.\nThe goal is not to output a solution but to create a bot (an AI) capable of playing a game in the given environment.\nParticipants play against themselves in matches of 2 to 4 players in an arena.\nOnce players submit their code (AI) in the arena, the system matches them against other players of the arena.\nEach match between players impacts their score, hence their ranking.\nThe game is divided into several leagues.\nYou start in the Wood leagues with a simplified version of the game.\nWhen ranking up, you'll be promoted to new leagues: Bronze, Silver, Gold and finally Legend.\nIn each league but the last (Legend), there is a reference bot: the boss.\nAny player who ends up above the boss' score after their ranking battles are finished will be promoted to the league above.\n10\nBot programming games are multiplayer games with a game loop.\nThere are no test cases to pass.\nThe goal is to create a bot (an AI) capable of playing a game in the given environment.\nParticipants play against each others in several matches.\nOnce players submit their code (AI) in the arena, the system matches them against other players of the arena.\nEach match between players impacts their score, hence their ranking.\nThe game is divided into several leagues.\nEach time a player reaches a new league he awards some experience points.\nIn each league but the last (Legend), there is a reference bot: the boss.\nAny player who ends up above the boss' score after their ranking battles are finished will be promoted to the league above.",
+          "testOut": "ADD: Each time a player reaches a new league he awards some experience points.\nADD: Participants play against each others in several matches.\nADD: The goal is to create a bot (an AI) capable of playing a game in the given environment.\nDELETE: Participants play against themselves in matches of 2 to 4 players in an arena.\nDELETE: The goal is not to output a solution but to create a bot (an AI) capable of playing a game in the given environment.\nDELETE: When ranking up, you'll be promoted to new leagues: Bronze, Silver, Gold and finally Legend.\nDELETE: You start in the Wood leagues with a simplified version of the game.\nMOVE: Any player who ends up above the boss' score after their ranking battles are finished will be promoted to the league above. @:11 >>> @:10\nMOVE: In each league but the last (Legend), there is a reference bot: the boss. @:10 >>> @:9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Multiple diffs by content",
+          "isTest": false,
+          "testIn": "BY_CONTENT\n11\nLes jeux de programmation de bots sont des jeux multijoueurs avec une iteration principale.\nIl n'y a pas de test a valider.\nLe but n'est pas de produire une solution, mais de creer un bot (une IA) capable de jouer a un jeu dans l'environnement donne.\nLes participants s'affrontent entre eux dans des matchs de 2 a 4 joueurs dans une arene.\nUne fois que les joueurs soumettent leur code (IA) dans l'arene, le systeme les fait s'affronter contre d'autres joueurs de l'arene.\nChaque match entre joueurs a un impact sur leur score, et donc sur leur classement.\nLe jeu est divise en plusieurs ligues.\nVous commencez dans les ligues Bois avec une version simplifiee du jeu.\nEn montant dans le classement, vous etes promu dans de nouvelles ligues : Bronze, Argent, Or, et enfin Legende.\nDans chaque ligue, sauf la derniere (Legende), il y a un bot de reference : le boss.\nTout joueur qui termine avec un score superieur a celui du boss apres ses matchs de classement est promu dans la ligue superieure.\n10\nLes jeux de programmation de bots sont des jeux multijoueurs avec une iteration principale.\nIl n'y a pas de test a valider.\nL'objectif est de creer un bot (une IA) capable de jouer a un jeu dans l'environnement donne.\nLes participants s'affrontent entre eux dans des matchs de 2 a 4 joueurs dans une arene.\nUne fois que les joueurs soumettent leur code (IA) dans l'arene, le systeme les fait s'affronter contre d'autres joueurs de l'arene.\nChaque match entre joueurs a un impact sur leur score, et donc sur leur classement.\nLe jeu est divise en plusieurs ligues.\nChaque fois qu'un joueur atteint une nouvelle ligue, il gagne des points d'experience.\nDans chaque ligue, sauf la derniere (Legende), il y a un bot de reference : le boss.\nTout joueur qui termine avec un score superieur a celui du boss apres ses matchs de classement sera promu dans la ligue superieure.",
+          "testOut": "ADD: Chaque fois qu'un joueur atteint une nouvelle ligue, il gagne des points d'experience.\nADD: L'objectif est de creer un bot (une IA) capable de jouer a un jeu dans l'environnement donne.\nADD: Tout joueur qui termine avec un score superieur a celui du boss apres ses matchs de classement sera promu dans la ligue superieure.\nDELETE: En montant dans le classement, vous etes promu dans de nouvelles ligues : Bronze, Argent, Or, et enfin Legende.\nDELETE: Le but n'est pas de produire une solution, mais de creer un bot (une IA) capable de jouer a un jeu dans l'environnement donne.\nDELETE: Tout joueur qui termine avec un score superieur a celui du boss apres ses matchs de classement est promu dans la ligue superieure.\nDELETE: Vous commencez dans les ligues Bois avec une version simplifiee du jeu.\nMOVE: Dans chaque ligue, sauf la derniere (Legende), il y a un bot de reference : le boss. @:10 >>> @:9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - Multiple diffs by number",
+          "isTest": true,
+          "testIn": "BY_NUMBER\n11\nBot programming games are multiplayer games with a game loop.\nThere are no test cases to pass.\nThe goal is not to output a solution but to create a bot (an AI) capable of playing a game in the given environment.\nParticipants play against themselves in matches of 2 to 4 players in an arena.\nOnce players submit their code (AI) in the arena, the system matches them against other players of the arena.\nEach match between players impacts their score, hence their ranking.\nThe game is divided into several leagues.\nYou start in the Wood leagues with a simplified version of the game.\nWhen ranking up, you'll be promoted to new leagues: Bronze, Silver, Gold and finally Legend.\nIn each league but the last (Legend), there is a reference bot: the boss.\nAny player who ends up above the boss' score after their ranking battles are finished will be promoted to the league above.\n10\nBot programming games are multiplayer games with a game loop.\nThere are no test cases to pass.\nThe goal is to create a bot (an AI) capable of playing a game in the given environment.\nParticipants play against themselves in matches of 2 to 4 players in an arena.\nOnce players submit their code (AI) in the arena, the system matches them against other players of the arena.\nEach match between players impacts their score, hence their ranking.\nThe game is divided into several leagues: Woods, Bronze, Silver, Gold and finally Legend\nYou start in the Wood leagues with a simplified version of the game.\nIn each league but the last (Legend), there is a reference bot: the boss.\nAny player who ends up above the boss' score after their ranking battles are finished will be promoted to the league above.",
+          "testOut": "CHANGE: In each league but the last (Legend), there is a reference bot: the boss. ---> Any player who ends up above the boss' score after their ranking battles are finished will be promoted to the league above.\nCHANGE: The game is divided into several leagues. ---> The game is divided into several leagues: Woods, Bronze, Silver, Gold and finally Legend\nCHANGE: The goal is not to output a solution but to create a bot (an AI) capable of playing a game in the given environment. ---> The goal is to create a bot (an AI) capable of playing a game in the given environment.\nCHANGE: When ranking up, you'll be promoted to new leagues: Bronze, Silver, Gold and finally Legend. ---> In each league but the last (Legend), there is a reference bot: the boss.\nDELETE: Any player who ends up above the boss' score after their ranking battles are finished will be promoted to the league above.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Multiple diffs by number",
+          "isTest": false,
+          "testIn": "BY_NUMBER\n11\nLes jeux de programmation de bots sont des jeux multijoueurs avec une iteration principale.\nIl n'y a pas de test a valider.\nLe but n'est pas de produire une solution, mais de creer un bot (une IA) capable de jouer a un jeu dans l'environnement donne.\nLes participants s'affrontent entre eux dans des matchs de 2 a 4 joueurs dans une arene.\nUne fois que les joueurs soumettent leur code (IA) dans l'arene, le systeme les fait s'affronter contre d'autres joueurs de l'arene.\nChaque match entre joueurs a un impact sur leur score, et donc sur leur classement.\nLe jeu est divise en plusieurs ligues.\nVous commencez dans les ligues Bois avec une version simplifiee du jeu.\nEn montant dans le classement, vous etes promu dans de nouvelles ligues : Bronze, Argent, Or, et enfin Legende.\nDans chaque ligue, sauf la derniere (Legende), il y a un bot de reference : le boss.\nTout joueur qui termine avec un score superieur a celui du boss apres ses matchs de classement est promu dans la ligue superieure.\n10\nLes jeux de programmation de bots sont des jeux multijoueurs avec une iteration principale.\nIl n'y a pas de test a valider.\nL'objectif est de creer un bot (une IA) capable de jouer a un jeu dans l'environnement donne.\nLes participants s'affrontent entre eux dans des matchs de 2 a 4 joueurs dans une arene.\nUne fois que les joueurs soumettent leur code (IA) dans l'arene, le systeme les fait s'affronter contre d'autres joueurs de l'arene.\nChaque match entre joueurs a un impact sur leur score, et donc sur leur classement.\nLe jeu est divise en plusieurs ligues : Bois, Bronze, Argent, Or et enfin Legende.\nVous commencez dans les ligues Bois avec une version simplifiee du jeu.\nDans chaque ligue, sauf la derniere (Legende), il y a un bot de reference : le boss.\nTout joueur qui termine avec un score superieur a celui du boss apres ses matchs de classement sera promu dans la ligue superieure.",
+          "testOut": "CHANGE: Dans chaque ligue, sauf la derniere (Legende), il y a un bot de reference : le boss. ---> Tout joueur qui termine avec un score superieur a celui du boss apres ses matchs de classement sera promu dans la ligue superieure.\nCHANGE: En montant dans le classement, vous etes promu dans de nouvelles ligues : Bronze, Argent, Or, et enfin Legende. ---> Dans chaque ligue, sauf la derniere (Legende), il y a un bot de reference : le boss.\nCHANGE: Le but n'est pas de produire une solution, mais de creer un bot (une IA) capable de jouer a un jeu dans l'environnement donne. ---> L'objectif est de creer un bot (une IA) capable de jouer a un jeu dans l'environnement donne.\nCHANGE: Le jeu est divise en plusieurs ligues. ---> Le jeu est divise en plusieurs ligues : Bois, Bronze, Argent, Or et enfin Legende.\nDELETE: Tout joueur qui termine avec un score superieur a celui du boss apres ses matchs de classement est promu dans la ligue superieure.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - No lines by content",
+          "isTest": true,
+          "testIn": "BY_CONTENT\n0\n0",
+          "testOut": "No Diffs",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - No lines by content",
+          "isTest": false,
+          "testIn": "BY_CONTENT\n0\n0",
+          "testOut": "No Diffs",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - No lines by number",
+          "isTest": true,
+          "testIn": "BY_NUMBER\n0\n0",
+          "testOut": "No Diffs",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - No lines by number",
+          "isTest": false,
+          "testIn": "BY_NUMBER\n0\n0",
+          "testOut": "No Diffs",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "0 ≤ [[nbLinesV1]], [[nbLinesV2]] ≤ 20\nWithin a given version of a file, every line will be <<unique>>.\nThe diff tool has to support {{ADD}}, {{DELETE}}, {{CHANGE}} and {{MOVE}} differences only.",
+      "coverBinaryId": 153510623202480,
+      "stubGenerator": "read type:word(10)\nread nbLinesV1:int\nloop nbLinesV1 read lineV1:string(200)\nread nbLinesV2:int\nloop nbLinesV2 read lineV2:string(200)\n\n\nwrite diffs",
+      "inputDescription": "<<Line 1:>> The configuration parameter value ({{BY_NUMBER}} or {{BY_CONTENT}})\n<<Line 2:>> An integer [[nbLinesV1]] for the number of lines in the original file\n<<Next [[nbLinesV1]] lines:>> The lines of the original file\n<<Next line:>> An integer [[nbLinesV2]] for the number of lines in the revised file\n<<Next [[nbLinesV2]] lines:>> The lines of the revised file",
+      "solutionLanguage": "Java",
+      "outputDescription": "If there are no differences you must write {{No Diffs}}.\n\nOtherwise, you must write a line for each difference found in <<alphabetical order>>.\n\nA difference shall be displayed as follows:\n• for a deleted line: {{DELETE:}} [[deleted line]]\n• for an added line: {{ADD:}} [[added line]]\n• for a changed line: {{CHANGE:}} [[original line]] {{--->}} [[revised line]]\n• for a moved line: {{MOVE:}} [[original line]] {{@:}}[[original line number]] {{>>>}} {{@:}}[[revised line number]]\n\nThe alphabetical comparison process shall compare the entire line (including the difference kind).\nThe line numbers displayed shall be <<1-indexed>> (i.e., the line numbers start at 1, not 0)"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A product owner was asked to develop a text diff tool. Unfortunately he was a bit confused because there is no id on text lines.<br>So after a short time he discovered only two ways to identify lines: by their number or by their content.<br>As he did not know which one is better, he asked his developer team to add the identifier method as a configuration parameter of the tool.<br><br>The behavior of the tool is defined as follows:<br><strong>Step 1:</strong> The tool matches lines from the revised file to the ones in the original file, based on the configuration parameter value.<br>&bull; If set to <const>BY_NUMBER</const>, lines are considered matched if they have the same line number, regardless of their contents.<br>&bull; If set to <const>BY_CONTENT</const>, lines are considered matched if their contents are identical, regardless of their line numbers.<br><strong>Step 2:</strong> The tool processes differences between matched lines, based on the configuration parameter value.<br>&bull; If set to <const>BY_NUMBER</const>, the tool shall output <const>CHANGE</const> for each pair of matched lines with unequal content.<br>&bull; If set to <const>BY_CONTENT</const>, the tool shall output <const>MOVE</const> for each pair of matched lines with unequal line numbers.<br><strong>Step 3:</strong> The tool processes differences between unmatched lines, regardless of the configuration parameter value.<br>&bull; The tool shall output <const>DELETE</const> for every unmatched line that exists only in the original file.<br>&bull; The tool shall output <const>ADD</const> for every unmatched line that exists only in the revised file.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> The configuration parameter value (<const>BY_NUMBER</const> or <const>BY_CONTENT</const>)<br><strong>Line 2:</strong> An integer <var>nbLinesV1</var> for the number of lines in the original file<br><strong>Next <var>nbLinesV1</var> lines:</strong> The lines of the original file<br><strong>Next line:</strong> An integer <var>nbLinesV2</var> for the number of lines in the revised file<br><strong>Next <var>nbLinesV2</var> lines:</strong> The lines of the revised file</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">If there are no differences you must write <const>No Diffs</const>.<br><br>Otherwise, you must write a line for each difference found in <strong>alphabetical order</strong>.<br><br>A difference shall be displayed as follows:<br>&bull; for a deleted line: <const>DELETE:</const> <var>deleted line</var><br>&bull; for an added line: <const>ADD:</const> <var>added line</var><br>&bull; for a changed line: <const>CHANGE:</const> <var>original line</var> <const>---&gt;</const> <var>revised line</var><br>&bull; for a moved line: <const>MOVE:</const> <var>original line</var> <const>@:</const><var>original line number</var> <const>&gt;&gt;&gt;</const> <const>@:</const><var>revised line number</var><br><br>The alphabetical comparison process shall compare the entire line (including the difference kind).<br>The line numbers displayed shall be <strong>1-indexed</strong> (i.e., the line numbers start at 1, not 0)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &le; <var>nbLinesV1</var>, <var>nbLinesV2</var> &le; 20<br>Within a given version of a file, every line will be <strong>unique</strong>.<br>The diff tool has to support <const>ADD</const>, <const>DELETE</const>, <const>CHANGE</const> and <const>MOVE</const> differences only.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">BY_CONTENT\n3\nCodinGame is a fun website to learn programming skills.\nIt supports a large set of programming languages.\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\n4\nCodinGame is a fun website to learn programming skills.\nIt supports a large set of programming languages.\nThe progression path is divided in four parts: development speed, algorithms, optimisation and artificial intelligence.\nSome experience points are awarded on tasks achievement</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">ADD: Some experience points are awarded on tasks achievement</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 3546156967,
+  "avatar": 143692247368402,
+  "commentCount": 22,
+  "upVotes": 5,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 1304833,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1767182072969,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

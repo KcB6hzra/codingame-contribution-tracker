@@ -1,0 +1,200 @@
+{
+  "id": 133467,
+  "activeVersion": 12,
+  "score": 4,
+  "votableId": 38022813,
+  "codingamerId": 5279809,
+  "views": 219,
+  "commentableId": 37859205,
+  "title": "The L-Game: Counting board states",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "tcooke",
+  "publicHandle": "133467cb6a3f574dde5cd07050123309d657a4",
+  "codingamerHandle": "fa42e54cfaf4fa617af027a58f09a2a59089725",
+  "lastVersion": {
+    "version": 12,
+    "autocloseTime": 1761992729596,
+    "freezeTime": 1760005529596,
+    "data": {
+      "title": "The L-Game: Counting board states",
+      "topics": [
+        {
+          "id": 182,
+          "handle": "combinatorics",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Combinatoire",
+            "2": "Combinatorics"
+          },
+          "puzzleCount": 19,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import numpy as np\n\ninp = input() #'4 4 2'\nh,w,n = [int(x) for x in inp.split()]\n\n# Define the L-blocks.\n\nlblock = np.array([[1,0,0],[1,1,1]], dtype = np.int32)\nlblocks = []\nfor i in range(2):\n    for j in range(4):\n        lblocks.append(lblock)\n        lblock = np.rot90(lblock)\n    lblock = lblock[::-1]\n\n# Count the number of L-block configs by brute force.\n\ncnt = 0\nboard = np.zeros([h,w], dtype = np.int32)\nfor a in lblocks:\n    sza = a.shape\n    for y in range(h - sza[0] + 1):\n        for x in range(w - sza[1] + 1):\n            board[y:y+sza[0], x:x+sza[1]] = a\n            for b in lblocks:\n                szb = b.shape\n                for y2 in range(h - szb[0] +1):\n                    for x2 in range(w - szb[1] + 1):\n                        tmp = board[y2:y2+szb[0], x2:x2+szb[1]]\n                        if np.sum(tmp * b) == 0: cnt += 1\n            board[y:y+sza[0],x:x+sza[1]] = 0\n\n# For each L-block config, find the number of stopper configs.\n# This is the combination of (h*w-8) taken n at a time.\n\nif n > (h*w - 8):\n    cnts = 0\nelse:\n    cnts = 1\n    for i in range(h*w - 7 - n, h*w - 7):\n        cnts *= i\n    for i in range(1, n+1): cnts = cnts // i\n\nprint(cnt * cnts)",
+      "statement": "You must count the number of possible board states for a generalized version of the L-Game.\n\n<<Context:>> The L-Game is an abstract strategy board game designed by lateral thinker Edward de Bono. The board consists of a 4x4 grid of squares. The board is occupied by two 1x1 sized neutral blocking pieces, and one red and one blue L shaped tetromino (each of size 3x2). The shapes cannot overlap. You and your opponent own one  L each. Players take turns making moves. You make a  move by picking up your L and placing it in a new position on the board (which may involve flipping the L). Then moving one of the neutral blockers to a new location. The game is lost by the player who is unable to place their L in a new position.\n\nIn this problem, we consider a generalized version of the game. This is played on a [[height]] x [[width]] sized board and there are [[N]] 1x1 sized neutral blocking pieces. The two players' Ls remain the same size as the original. The task is, for a given board size and number of blockers, to print the total number of possible valid board configurations. A configuration is valid only when both Ls and all [[N]] blocks are placed on the board.\n\n<<Note:>> The player to move (red or blue) is considered irrelevant for this problem. Boards differing only by a rotation and/or a flip are still considered different configurations. Boards that are otherwise the same, but can be made identical by swapping the colours of the Ls (red to blue and vice-versa) are considered distinct configurations. On the other hand, having different blockers in the same locations would not be considered as distinct configurations, because the blockers are considered identical.\n\n<<Example:>> Consider a square board sized [[height]] = 3 x [[width]] = 3, which has [[N]]=1 neutral block. We represent the neutral block by an 'x', and the two Ls with 'R' and 'B' symbols, with the '.' as empty space. If the neutral piece is placed along any of the sides of the board, then it is not possible to put both players' Ls on the board at the same time. So there are no configurations in these 8 cases.\n`\nx..   .x.   ..x   ...   ...   ...   ...   ...\n...   ...   ...   x..   ..x   ...   ...   ...\n...   ...   ...   ...   ...   x..   .x.   ..x\n`\nWhen the blocker is in the middle of the board, the red L can be translated and rotated so that the long side lies along each of the edges of the board in turn. The blue L can fit in the remaining space. This gives four configurations.\n`\nRRR   BRR   BBB   RBB\nRxB   BxR   BxR   RxB\nBBB   BBR   RRR   RRB\n`\nAnd then if you flip the red L, you can get another set of four configurations.\n`\nRRR   BBR   BBB   RRB\nBxR   BxR   RxB   RxB\nBBB   BRR   RRR   RBB\n`\nNote that in, for example, configuration 1 and 3 above, the Ls are in the same locations but are different colours. These are considered different configurations.\n\nSo the total number of configurations would be 8x0+4+4 = 8, so you would print 8 here.",
+      "testCases": [
+        {
+          "title": "Simple 3x3",
+          "isTest": true,
+          "testIn": "3 3 1",
+          "testOut": "8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple 3x3",
+          "isTest": false,
+          "testIn": "3 3 0",
+          "testOut": "8",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Slightly larger",
+          "isTest": true,
+          "testIn": "4 4 2",
+          "testOut": "18368",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Slightly larger",
+          "isTest": false,
+          "testIn": "4 4 6",
+          "testOut": "18368",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Height > Width",
+          "isTest": true,
+          "testIn": "5 3 2",
+          "testOut": "9324",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Height > Width",
+          "isTest": false,
+          "testIn": "4 3 2",
+          "testOut": "768",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Width > Height",
+          "isTest": true,
+          "testIn": "3 4 2",
+          "testOut": "768",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Width > Height",
+          "isTest": false,
+          "testIn": "3 5 2",
+          "testOut": "9324",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Too many blockers",
+          "isTest": true,
+          "testIn": "5 5 18",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Too many blockers",
+          "isTest": false,
+          "testIn": "5 5 19",
+          "testOut": "0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Many configurations",
+          "isTest": true,
+          "testIn": "6 6 6",
+          "testOut": "6220730880",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Many configurations",
+          "isTest": false,
+          "testIn": "6 6 5",
+          "testOut": "1622799360",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "That's a lot!",
+          "isTest": true,
+          "testIn": "8 8 15",
+          "testOut": "1473714638540686080",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "That's a lot!",
+          "isTest": false,
+          "testIn": "7 8 22",
+          "testOut": "1709631812778721344",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "3 <= [[height]] <= 8\n3 <= [[width]] <= 8\n[[N]] >= 0\n0 <= [[N_configs]] < 2^64",
+      "coverBinaryId": 149660386586852,
+      "stubGenerator": "read height:int width:int n:int\nwrite answer",
+      "inputDescription": "<<Line 1:>> A row of three space separated integers: [[height]] [[width]] and [[N]].\n\n[[height]] and [[width]] are the dimensions of the board.\n[[N]] is the number of neutral blocking pieces.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1 :>> A single integer with [[N_configs]] being the total number of legal configurations."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You must count the number of possible board states for a generalized version of the L-Game.<br><br><strong>Context:</strong> The L-Game is an abstract strategy board game designed by lateral thinker Edward de Bono. The board consists of a 4x4 grid of squares. The board is occupied by two 1x1 sized neutral blocking pieces, and one red and one blue L shaped tetromino (each of size 3x2). The shapes cannot overlap. You and your opponent own one  L each. Players take turns making moves. You make a  move by picking up your L and placing it in a new position on the board (which may involve flipping the L). Then moving one of the neutral blockers to a new location. The game is lost by the player who is unable to place their L in a new position.<br><br>In this problem, we consider a generalized version of the game. This is played on a <var>height</var> x <var>width</var> sized board and there are <var>N</var> 1x1 sized neutral blocking pieces. The two players' Ls remain the same size as the original. The task is, for a given board size and number of blockers, to print the total number of possible valid board configurations. A configuration is valid only when both Ls and all <var>N</var> blocks are placed on the board.<br><br><strong>Note:</strong> The player to move (red or blue) is considered irrelevant for this problem. Boards differing only by a rotation and/or a flip are still considered different configurations. Boards that are otherwise the same, but can be made identical by swapping the colours of the Ls (red to blue and vice-versa) are considered distinct configurations. On the other hand, having different blockers in the same locations would not be considered as distinct configurations, because the blockers are considered identical.<br><br><strong>Example:</strong> Consider a square board sized <var>height</var> = 3 x <var>width</var> = 3, which has <var>N</var>=1 neutral block. We represent the neutral block by an 'x', and the two Ls with 'R' and 'B' symbols, with the '.' as empty space. If the neutral piece is placed along any of the sides of the board, then it is not possible to put both players' Ls on the board at the same time. So there are no configurations in these 8 cases.<br><pre style=\"font-family: monospace\"><br>x..   .x.   ..x   ...   ...   ...   ...   ...<br>...   ...   ...   x..   ..x   ...   ...   ...<br>...   ...   ...   ...   ...   x..   .x.   ..x<br></pre><br>When the blocker is in the middle of the board, the red L can be translated and rotated so that the long side lies along each of the edges of the board in turn. The blue L can fit in the remaining space. This gives four configurations.<br><pre style=\"font-family: monospace\"><br>RRR   BRR   BBB   RBB<br>RxB   BxR   BxR   RxB<br>BBB   BBR   RRR   RRB<br></pre><br>And then if you flip the red L, you can get another set of four configurations.<br><pre style=\"font-family: monospace\"><br>RRR   BBR   BBB   RRB<br>BxR   BxR   RxB   RxB<br>BBB   BRR   RRR   RBB<br></pre><br>Note that in, for example, configuration 1 and 3 above, the Ls are in the same locations but are different colours. These are considered different configurations.<br><br>So the total number of configurations would be 8x0+4+4 = 8, so you would print 8 here.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> A row of three space separated integers: <var>height</var> <var>width</var> and <var>N</var>.<br><br><var>height</var> and <var>width</var> are the dimensions of the board.<br><var>N</var> is the number of neutral blocking pieces.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1 :</strong> A single integer with <var>N_configs</var> being the total number of legal configurations.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">3 &lt;= <var>height</var> &lt;= 8<br>3 &lt;= <var>width</var> &lt;= 8<br><var>N</var> &gt;= 0<br>0 &lt;= <var>N_configs</var> &lt; 2^64</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3 3 1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">8</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 9464234230,
+  "avatar": 106040884315189,
+  "commentCount": 20,
+  "upVotes": 4,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1230202,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1759323937001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1759395490061,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1761264058266,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

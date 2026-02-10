@@ -1,0 +1,119 @@
+{
+  "id": 1655,
+  "activeVersion": 25,
+  "score": 6,
+  "votableId": 9001108,
+  "codingamerId": 155774,
+  "views": 500,
+  "commentableId": 8935995,
+  "title": "Enigma - 3 rotors without plugboard",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "dwarfie",
+  "publicHandle": "1655934909d92ed0608b14609e24a0acbc2d",
+  "codingamerHandle": "2ad5cc4919ed368f16de4aecd570e21e477551",
+  "lastVersion": {
+    "version": 25,
+    "autocloseTime": 1541429811828,
+    "data": {
+      "title": "Enigma - 3 rotors without plugboard",
+      "topics": [
+        {
+          "id": 74,
+          "handle": "cryptology",
+          "labelMap": {
+            "1": "Cryptologie",
+            "2": "Cryptography"
+          },
+          "pageTitle": "Cryptography: exercises and theory",
+          "puzzleCount": 2,
+          "parentTopicId": 43,
+          "contentDetailsId": 105
+        }
+      ],
+      "solution": "#include <iostream>\n\nusing namespace std;\n\nclass rotor {\npublic:\n    int offset = 0;\n    char trigger;\n    int r[26];\n    int timetoclick;\n\n    rotor() {\n        for(int i = 0; i < 26; i++) {\n            string c;\n            cin >> c;\n\t    r[i] = (c[2]-c[0]+26)%26;\n        }\n        cin >> trigger;\n\ttimetoclick = trigger - 'A';\n    }\n\n    int inout(int c) {\n\treturn (c+r[c])%26;\n    }\n\n    int outin(int c) {\n\tfor(int i = 0; i < 26; i++)\n\t    if((i+r[i])%26 == c)\n\t\treturn i;\n    }\n\n    void rotate() {\n\tint temp = r[0], i; \n\tfor (i = 0; i < 25; i++) \n\t\tr[i] = r[i + 1]; \n\tr[i] = temp; \n\ttimetoclick --;\n    }\n};\n\nclass reflector {\npublic:\n    int r[26];\n\n    reflector() {\n        for(int i = 0; i < 26; i++) {\n            string c;\n            cin >> c;\n\t    r[c[0]-'A'] = c[2]-'A';\n        }\n    }\n\n    int reflect(int c) {\n\treturn r[c]; \n    }\n};\n\nclass enigma {\npublic:\n\trotor r1;\n\trotor r2;\n\trotor r3;\n\treflector r;\n\tstring msg;\n\n\tenigma() {\n\t\tchar r1,r2,r3;\n\t\tcin >> r1 >> r2 >> r3; cin.ignore();\n\t\tcin >> msg;\n        code(r1-'A',r2-'A',r3-'A');\n\t}\n\n\tchar letter(char c) {\n\t\tint l = c - 'A';\n\t\treturn 'A' + r1.outin(r2.outin(r3.outin(r.reflect(r3.inout(r2.inout(r1.inout(l)))))));\n\t}\n\n\tvoid code(int rot1, int rot2, int rot3) {\n\t    for(int i = 0; i < rot1; i++) r1.rotate(); r1.timetoclick = (r1.timetoclick+26)%26;\n\t    for(int i = 0; i < rot2; i++) r2.rotate(); r2.timetoclick = (r2.timetoclick+26)%26;\n\t    for(int i = 0; i < rot3; i++) r3.rotate(); r3.timetoclick = (r3.timetoclick+26)%26;\n\t\tfor(int i = 0; i < msg.length(); i++) {\n\t\t\trotateRotors();\n\t\t\tcout << letter(msg[i]);\n\t\t}\n\t}\n\n\tvoid rotateRotors() {\n\t\tr1.rotate();\n\t\tif(r2.timetoclick == 0) {\n\t\t\tr2.rotate();\n\t\t\tr2.timetoclick = 25;\n\t\t\tr3.rotate();\n\t\t}\n\t\tif(r1.timetoclick < 0) {\n\t\t\tr1.timetoclick = 25;\n\t\t\tr2.rotate();\n\t\t}\n\t}\n};\n\nint main() {\n\tenigma e;\n}",
+      "statement": "The Enigma machines were a series of rotor cypher machines. Such machine is made of four main elements:\n- a keyboard,\n- a plugboard to substitute letters,\n- several rotors and a reflector,\n- lamps to read the result.\n\nFor this puzzle, we will always use three rotors and no plugboard.\n\n\n<< The rotors >>\n\nA rotor consists of 26 wires linking an alphabet on one side to different positions in another alphabet on the other side. For example, B on one side might connect to K on the other side. When a key is pressed, electric signal passes through one wire each of three rotors in sequence, then through the reflector, then back through the rotors in the opposite direction.\n\nThe rotors will rotate, wires change position and the alphabet substitutions will change.\n\n<< Effect of a rotation >>\n\nLet's take rotors with only 5 letters (A, B, C, D, E).\nThere are wires that set substitutions:\nA - B, B - D, C - E, D - C, E - A\nAfter both alphabets rotate around these wires, the substitution will become:\nE - A, A - C, B - D, C - B, D - E, then\nD - E, E - B, A - C, B - A, C - D,\n\n<< Conditions leading to a rotation >>\n\nEach rotor has a [[triggering position]] (defined as letter) that may have effects on rotation depending on rotors position.\nTo make it simple:\nAll rotations are done before coding and ouput is based on new positions.\nThe first rotor rotate when a key is pressed.\nIf first rotor reaches its triggering position, the second rotor will rotate at the next input.\nIf second rotor reaches its triggering position, at next input, the third rotor <<and>> the second rotor (once again) will rotate.\n\n\n<< Usage of an Enigma machine >>\n\nCypher keys are set based on the three rotors' [[starting position]] and wires on plugboard.\n\nInput [[wires]] describe the rotor at position A. One rotation -> position B. Another rotation -> position C.\n\nIn order to process a [[message]], we have to take each input letter, make it go through all the rotors (from 1 to 3), then the reflector, and finally through all the rotors in reverse order (so, from 3 to 1).\n\n\n<< Example >>\n\nIn Test 1 below, rotor 1 starts in position A, which includes the wire Y-C. Pressing the X key causes rotor 1 to rotate such that that wire is now X-B. Wire T-P becomes S-O.\nThen the input X becomes B, B becomes J, J becomes T. The reflector swaps T to Z. Returning through the rotors, Z becomes M, M becomes O, and O becomes S.\n\n<< References >>\n\nIf you want to learn more about Enigma, you can look at this page: https://meinenigma.com/enigma-simulators/ .",
+      "testCases": [
+        {
+          "title": "Short Message",
+          "isTest": true,
+          "testIn": "A-E B-K C-M D-F E-L F-G G-D H-Q I-V J-Z K-N L-T M-O N-W O-Y P-H Q-X R-U S-S T-P U-A V-I W-B X-R Y-C Z-J\nQ\nA-A B-J C-D D-K E-S F-I G-R H-U I-X J-B K-L L-H M-W N-T O-M P-C Q-Q R-G S-Z T-N U-P V-Y W-F X-V Y-O Z-E\nE\nA-B B-D C-F D-H E-J F-L G-C H-P I-R J-T K-X L-V M-Z N-N O-Y P-E Q-I R-W S-G T-A U-K V-M W-U X-S Y-Q Z-O\nV\nA-Y B-R C-U D-H E-Q F-S G-L H-D I-P J-X K-N L-G M-O N-K O-M P-I Q-E R-B S-F T-Z U-C V-W W-V X-J Y-A Z-T\nA A A\nXQGNTD",
+          "testOut": "SIMPLE",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "A-E B-K C-M D-F E-L F-G G-D H-Q I-V J-Z K-N L-T M-O N-W O-Y P-H Q-X R-U S-S T-P U-A V-I W-B X-R Y-C Z-J\nQ\nA-A B-J C-D D-K E-S F-I G-R H-U I-X J-B K-L L-H M-W N-T O-M P-C Q-Q R-G S-Z T-N U-P V-Y W-F X-V Y-O Z-E\nE\nA-B B-D C-F D-H E-J F-L G-C H-P I-R J-T K-X L-V M-Z N-N O-Y P-E Q-I R-W S-G T-A U-K V-M W-U X-S Y-Q Z-O\nV\nA-Y B-R C-U D-H E-Q F-S G-L H-D I-P J-X K-N L-G M-O N-K O-M P-I Q-E R-B S-F T-Z U-C V-W W-V X-J Y-A Z-T\nA A A\nATVXTD",
+          "testOut": "FACILE",
+          "isValidator": true
+        },
+        {
+          "title": "Triggered Rotation",
+          "isTest": true,
+          "testIn": "A-E B-K C-M D-F E-L F-G G-D H-Q I-V J-Z K-N L-T M-O N-W O-Y P-H Q-X R-U S-S T-P U-A V-I W-B X-R Y-C Z-J\nQ\nA-A B-J C-D D-K E-S F-I G-R H-U I-X J-B K-L L-H M-W N-T O-M P-C Q-Q R-G S-Z T-N U-P V-Y W-F X-V Y-O Z-E\nE\nA-B B-D C-F D-H E-J F-L G-C H-P I-R J-T K-X L-V M-Z N-N O-Y P-E Q-I R-W S-G T-A U-K V-M W-U X-S Y-Q Z-O\nV\nA-Y B-R C-U D-H E-Q F-S G-L H-D I-P J-X K-N L-G M-O N-K O-M P-I Q-E R-B S-F T-Z U-C V-W W-V X-J Y-A Z-T\nB C D\nPIAGQQRGMAIPLSTONWTVHWKEGBDHUOJLLRBJGQHYGFBKJEIAYBYNHSVDUPMKKCI",
+          "testOut": "ETCESTMAINTENANTQUELONCOMMENCEVRAIMENTAJOUERAVECLAMACHINEENIGMA",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "A-E B-K C-M D-F E-L F-G G-D H-Q I-V J-Z K-N L-T M-O N-W O-Y P-H Q-X R-U S-S T-P U-A V-I W-B X-R Y-C Z-J\nQ\nA-A B-J C-D D-K E-S F-I G-R H-U I-X J-B K-L L-H M-W N-T O-M P-C Q-Q R-G S-Z T-N U-P V-Y W-F X-V Y-O Z-E\nE\nA-B B-D C-F D-H E-J F-L G-C H-P I-R J-T K-X L-V M-Z N-N O-Y P-E Q-I R-W S-G T-A U-K V-M W-U X-S Y-Q Z-O\nV\nA-Y B-R C-U D-H E-Q F-S G-L H-D I-P J-X K-N L-G M-O N-K O-M P-I Q-E R-B S-F T-Z U-C V-W W-V X-J Y-A Z-T\nM F E\nKMDLONZUOMCOZVYAZMYEBXQBVCASSHGVMWSPUVRSNTRHTQXHAI",
+          "testOut": "SISICESTVRAIONPEUTVRAIMENTJOUERAVECLAMACHINEENIGMA",
+          "isValidator": true
+        },
+        {
+          "title": "Longer Message",
+          "isTest": true,
+          "testIn": "A-A B-J C-D D-K E-S F-I G-R H-U I-X J-B K-L L-H M-W N-T O-M P-C Q-Q R-G S-Z T-N U-P V-Y W-F X-V Y-O Z-E\nE\nA-V B-Z C-B D-R E-G F-I G-T H-Y I-U J-P K-S L-D M-N N-H O-L P-X Q-A R-W S-M T-J U-Q V-O W-F X-E Y-C Z-K\nZ\nA-E B-K C-M D-F E-L F-G G-D H-Q I-V J-Z K-N L-T M-O N-W O-Y P-H Q-X R-U S-S T-P U-A V-I W-B X-R Y-C Z-J\nQ\nA-F B-V C-P D-J E-I F-A G-O H-Y I-E J-D K-R L-Z M-X N-W O-G P-C Q-T R-K S-U T-Q U-S V-B W-N X-M Y-H Z-L \nS H A\nSIILZRQGXRNWUBUXMZRFJOARUQBAJLNZOUKDBTIIGAOJJIBUOYFJIYENCYPLDECJESOXVXABDUSALHVBKVJARLMMNPWGYWDYPOEWOIYWXQRAJDJFBFXZ",
+          "testOut": "THESECUREHASHALGORITHMSAREAFAMILYOFCRYPTOGRAPHICHASHFUNCTIONSPUBLISHEDBYTHENATIONALINSTITUTEOFSTANDARDSANDTECHNOLOGY",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "A-B B-D C-F D-H E-J F-L G-C H-P I-R J-T K-X L-V M-Z N-N O-Y P-E Q-I R-W S-G T-A U-K V-M W-U X-S Y-Q Z-O\nV\nA-E B-S C-O D-V E-P F-Z G-J H-A I-Y J-Q K-U L-I M-R N-H O-X P-L Q-N R-F S-T T-G U-K V-D W-C X-M Y-W Z-B\nJ\nA-A B-J C-D D-K E-S F-I G-R H-U I-X J-B K-L L-H M-W N-T O-M P-C Q-Q R-G S-Z T-N U-P V-Y W-F X-V Y-O Z-E\nE\nA-F B-V C-P D-J E-I F-A G-O H-Y I-E J-D K-R L-Z M-X N-W O-G P-C Q-T R-K S-U T-Q U-S V-B W-N X-M Y-H Z-L\nD E S\nVIBSERVWTEHGQAMMYNDEJXUOMCUOXTJQLMLGJRGHEJDLYCPCKJVOHSQHXWYLHSBFZYJFWLYSSKVNLLPQZ",
+          "testOut": "THEDATAENCRYPTIONSTANDARDISASYMMETRICKEYALGORITHMFORTHEENCRYPTIONOFELECTRONICDATA",
+          "isValidator": true
+        },
+        {
+          "title": "Longest Message",
+          "isTest": true,
+          "testIn": "A-A B-J C-D D-K E-S F-I G-R H-U I-X J-B K-L L-H M-W N-T O-M P-C Q-Q R-G S-Z T-N U-P V-Y W-F X-V Y-O Z-E\nE\nA-E B-K C-M D-F E-L F-G G-D H-Q I-V J-Z K-N L-T M-O N-W O-Y P-H Q-X R-U S-S T-P U-A V-I W-B X-R Y-C Z-J\nQ\nA-V B-Z C-B D-R E-G F-I G-T H-Y I-U J-P K-S L-D M-N N-H O-L P-X Q-A R-W S-M T-J U-Q V-O W-F X-E Y-C Z-K\nZ\nA-Y B-R C-U D-H E-Q F-S G-L H-D I-P J-X K-N L-G M-O N-K O-M P-I Q-E R-B S-F T-Z U-C V-W W-V X-J Y-A Z-T\nG P L\nEODHXKGLWRIVTFXPXBRPLOOWSUIQQWJAXZTSKHQTNBVDAQFGIXLPHUCRLLYFWYUGQULEOQQQUGJMMZQIKPRTGQGWCMGRBPRDXZACQBHYQWNNRRCPKRZIOZRBCVRCHXQUFYOUICWHPYKWCNVDYWEGOLSWXGGAIMIJXEADPACBTKLLNUVIIERERQEXOBSLHXZKQUYBNMYVVHRQAHZQUUXAUOWJTHQHHNTKRQYKMHLAYUZPRYTIWHTDFACQLAWAWGCMHBLTAQPJNLQQXDISNTVQYXKUHVTHXNZQMROSUBUKWHJGIOGEFWXMJOWSXFJZBIPCHWZXYFUDVZPXCDFVTQZSXEIETRGRILUKPKKJFFISNPZCFIQOXFZGTOUUUPVACLAORNQDHAKDAXDQEWEZQSCCPUPIHOHWELLSQUIVUYYCBIPRHZAKBBUMXPQXNNXPITDJLPOYLSCOFJMYYHESZYWPPKMEVBVLMALDUGDUSTZMZWAHKAJOKYDKKIJJELKWFZWVWNRQVYUTFWALUGNNUXHUVLJHVFPRRKGGASBTHNEJPMINNGYVUXHGNWELGCSTUMCBQEWQJOAVRCPGEOQFTOMWWMCRTLMLRGXITRLYXBZEANENGAHFECEMDSXBZLVBHGNAQLJTMZKTIKZLVNDBZNPNBIQFDHNYBRTVGUVQFOYPQUVWSEMXNIPXOJHZTCQSEWSGZAKUQSCCKVVVOKEPRGJUYJYYRXMGLYHQJVAOVNDVWVTCEZLWQFMLFNYSCRCNFXNCFCMBENTMXNNQWNFNSXSMCWWLLPTMYNWFJMEGYYWFZKKYDTBIXAMXBXXUUVIYPMTRBYSNHBBQGOJKZSVATOPPOVVJCRNPHJWJKHPISHPSLMNAXYPONKTPBQGGFVFCKQOJKCBKHFLMAXXJYTNRFEFALUBMGTWWEAEFRQEZJMJIAJOYMQYMPHQQFKMKKQBEWDGMBUJVQBCAOISHNJXNSJZOWQXQRDYM",
+          "testOut": "THELICENSESFORMOSTSOFTWAREANDOTHERPRACTICALWORKSAREDESIGNEDTOTAKEAWAYYOURFREEDOMTOSHAREANDCHANGETHEWORKSBYCONTRASTTHEGNUGENERALPUBLICLICENSEISINTENDEDTOGUARANTEEYOURFREEDOMTOSHAREANDCHANGEALLVERSIONSOFAPROGRAMTOMAKESUREITREMAINSFREESOFTWAREFORALLITSUSERSWETHEFREESOFTWAREFOUNDATIONUSETHEGNUGENERALPUBLICLICENSEFORMOSTOFOURSOFTWAREITAPPLIESALSOTOANYOTHERWORKRELEASEDTHISWAYBYITSAUTHORSYOUCANAPPLYITTOYOURPROGRAMSTOOWHENWESPEAKOFFREESOFTWAREWEAREREFERRINGTOFREEDOMNOTPRICEOURGENERALPUBLICLICENSESAREDESIGNEDTOMAKESURETHATYOUHAVETHEFREEDOMTODISTRIBUTECOPIESOFFREESOFTWAREANDCHARGEFORTHEMIFYOUWISHTHATYOURECEIVESOURCECODEORCANGETITIFYOUWANTITTHATYOUCANCHANGETHESOFTWAREORUSEPIECESOFITINNEWFREEPROGRAMSANDTHATYOUKNOWYOUCANDOTHESETHINGSTOPROTECTYOURRIGHTSWENEEDTOPREVENTOTHERSFROMDENYINGYOUTHESERIGHTSORASKINGYOUTOSURRENDERTHERIGHTSTHEREFOREYOUHAVECERTAINRESPONSIBILITIESIFYOUDISTRIBUTECOPIESOFTHESOFTWAREORIFYOUMODIFYITRESPONSIBILITIESTORESPECTTHEFREEDOMOFOTHERSFOREXAMPLEIFYOUDISTRIBUTECOPIES",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "A-V B-Z C-B D-R E-G F-I G-T H-Y I-U J-P K-S L-D M-N N-H O-L P-X Q-A R-W S-M T-J U-Q V-O W-F X-E Y-C Z-K\nZ\nA-B B-D C-F D-H E-J F-L G-C H-P I-R J-T K-X L-V M-Z N-N O-Y P-E Q-I R-W S-G T-A U-K V-M W-U X-S Y-Q Z-O\nV\nA-E B-K C-M D-F E-L F-G G-D H-Q I-V J-Z K-N L-T M-O N-W O-Y P-H Q-X R-U S-S T-P U-A V-I W-B X-R Y-C Z-J\nQ\nA-F B-V C-P D-J E-I F-A G-O H-Y I-E J-D K-R L-Z M-X N-W O-G P-C Q-T R-K S-U T-Q U-S V-B W-N X-M Y-H Z-L\nA M T\nDURINGTHESECONDWORLDWARTURINGWORKEDFORTHEGOVERNMENTCODEANDCYPHERSCHOOLATBLETCHLEYPARKBRITAINSCODEBREAKINGCENTRETHATPRODUCEDULTRAINTELLIGENCEFORATIMEHELEDHUTTHESECTIONWHICHWASRESPONSIBLEFORGERMANNAVALCRYPTANALYSISHEREHEDEVISEDANUMBEROFTECHNIQUESFORSPEEDINGTHEBREAKINGOFGERMANCIPHERSINCLUDINGIMPROVEMENTSTOTHEPREWARPOLISHBOMBEMETHODANELECTROMECHANICALMACHINETHATCOULDFINDSETTINGSFORTHEENIGMAMACHINETURINGPLAYEDAPIVOTALROLEINCRACKINGINTERCEPTEDCODEDMESSAGESTHATENABLEDTHEALLIESTODEFEATTHENAZISINMANYCRUCIALENGAGEMENTSINCLUDINGTHEBATTLEOFTHEATLANTICANDINSODOINGHELPEDWINTHEWARCOUNTERFACTUALHISTORYISDIFFICULTWITHRESPECTTOTHEEFFECTULTRAINTELLIGENCEHADONTHELENGTHOFTHEWARBUTATTHEUPPERENDITHASBEENESTIMATEDTHATTHISWORKSHORTENEDTHEWARINEUROPEBYMORETHANTWOYEARSANDSAVEDOVERFOURTEENMILLIONLIVES",
+          "testOut": "EEAAUIBWYCHDIYQDRWUOSLCOCXJTEGXMSINDDLBYQQFIXEFCKWSESJTXDVEEBCKDWPRSXRWDKHNUECGNVGOHOHVYNNBQETBLVRJOVRBSHNKVCXYQCGYFMTQKYGXBJOHIZPPQCACFZQAOODWMACFZZHZSNLVSHDTRZYGGFGSRCBEKEMGACMCCYAVOMGRIHWANURCQPRKXXJROUTNGLIKZPDEICFYMFRNSQBWBARDYAUADVPVQMGYKIPHYLPPGGCJYCFUGLOQSYEZWYWALNPNZBNYGDGEJBVYSGEJZENPUUEXMSNJZNRKRPHTNXHLOEFNDLTPQGJVGDRKRYIQKHJTVFMOXMQTLAHJYDTVTVGFGIKFFPYSVNVJDALTDKIRQLPNVVTRUCDOADSAFJJVMWDRETUUCMXLRQKCWQTTDHIMMHZJOWDZALMBPIVBNOKDWDCFOXTKMPQZURQIUCZJFIVWUOXCCORUSXSXLOWAPGPIRLAXGUWYXEILAEOZLDZHEVZUDYETBRJGNLZAPECIJJSBVPAUIBQHKLMMCYTLAKPJEILEIRASDISYIROJAGNKIGWWBVADTURGAGRDVMUFHBDDYVNBAHIEKRXKXOVCVRVRPMAJWXSOVABPARLEFHCFCOLYWUNCEUCRGMAHKZGLZMQDBXLQROIYXQEIMFWXRHYDDGONWJJYOPVYUHPKJZQVOEJQIEAKUWVUFUJUMXWTMKWZJQWECXATBVOMZHWGBZURZQCGROZNQKTCNEBCGNBKQGULGHFUXERFYVVJQZARO",
+          "isValidator": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "There will always be three [[rotors]] and one [[reflector]], each operating on the letters from 'A' to 'Z'.\n[[Message Length]] < 1000 characters",
+      "stubGenerator": "loopline 26 wireR1:word(3)\nread trigR1:string(1)\nloopline 26 wireR2:word(3)\nread trigR2:string(1)\nloopline 26 wireR3:word(3)\nread trigR3:string(1)\nloopline 26 wireRef:word(3)\nread r1:word(1) r2:word(1) r3:word(1)\nread message:string(1000)\n\nwrite answer",
+      "inputDescription": "[[wire]] are written as \"A-B\" or \"C-D\"\n\n<<line 1>> rotor 1: 26 [[wire]] space separated\n<<line 2>> rotor 1 triggering position [[char]]\n<<line 3>> rotor 2: 26 [[wire]] space separated\n<<line 4>> rotor 2 triggering position [[char]]\n<<line 5>> rotor 3: 26 [[wire]] space separated\n<<line 6>> rotor 3 triggering position [[char]]\n<<line 7>> reflector: 26 [[wire]] space separated\n<<line 8>> starting position each rotor: [[char]] [[char]] [[char]]\n<<line 9>> message: [[string]]",
+      "solutionLanguage": "C++",
+      "outputDescription": "The [[string]] obtained by typing the given message on the enigma machine described in the inputs."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">The Enigma machines were a series of rotor cypher machines. Such machine is made of four main elements:<br>- a keyboard,<br>- a plugboard to substitute letters,<br>- several rotors and a reflector,<br>- lamps to read the result.<br><br>For this puzzle, we will always use three rotors and no plugboard.<br><br><br><strong> The rotors </strong><br><br>A rotor consists of 26 wires linking an alphabet on one side to different positions in another alphabet on the other side. For example, B on one side might connect to K on the other side. When a key is pressed, electric signal passes through one wire each of three rotors in sequence, then through the reflector, then back through the rotors in the opposite direction.<br><br>The rotors will rotate, wires change position and the alphabet substitutions will change.<br><br><strong> Effect of a rotation </strong><br><br>Let's take rotors with only 5 letters (A, B, C, D, E).<br>There are wires that set substitutions:<br>A - B, B - D, C - E, D - C, E - A<br>After both alphabets rotate around these wires, the substitution will become:<br>E - A, A - C, B - D, C - B, D - E, then<br>D - E, E - B, A - C, B - A, C - D,<br><br><strong> Conditions leading to a rotation </strong><br><br>Each rotor has a <var>triggering position</var> (defined as letter) that may have effects on rotation depending on rotors position.<br>To make it simple:<br>All rotations are done before coding and ouput is based on new positions.<br>The first rotor rotate when a key is pressed.<br>If first rotor reaches its triggering position, the second rotor will rotate at the next input.<br>If second rotor reaches its triggering position, at next input, the third rotor <strong>and</strong> the second rotor (once again) will rotate.<br><br><br><strong> Usage of an Enigma machine </strong><br><br>Cypher keys are set based on the three rotors' <var>starting position</var> and wires on plugboard.<br><br>Input <var>wires</var> describe the rotor at position A. One rotation -&gt; position B. Another rotation -&gt; position C.<br><br>In order to process a <var>message</var>, we have to take each input letter, make it go through all the rotors (from 1 to 3), then the reflector, and finally through all the rotors in reverse order (so, from 3 to 1).<br><br><br><strong> Example </strong><br><br>In Test 1 below, rotor 1 starts in position A, which includes the wire Y-C. Pressing the X key causes rotor 1 to rotate such that that wire is now X-B. Wire T-P becomes S-O.<br>Then the input X becomes B, B becomes J, J becomes T. The reflector swaps T to Z. Returning through the rotors, Z becomes M, M becomes O, and O becomes S.<br><br><strong> References </strong><br><br>If you want to learn more about Enigma, you can look at this page: https://meinenigma.com/enigma-simulators/ .</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><var>wire</var> are written as &quot;A-B&quot; or &quot;C-D&quot;<br><br><strong>line 1</strong> rotor 1: 26 <var>wire</var> space separated<br><strong>line 2</strong> rotor 1 triggering position <var>char</var><br><strong>line 3</strong> rotor 2: 26 <var>wire</var> space separated<br><strong>line 4</strong> rotor 2 triggering position <var>char</var><br><strong>line 5</strong> rotor 3: 26 <var>wire</var> space separated<br><strong>line 6</strong> rotor 3 triggering position <var>char</var><br><strong>line 7</strong> reflector: 26 <var>wire</var> space separated<br><strong>line 8</strong> starting position each rotor: <var>char</var> <var>char</var> <var>char</var><br><strong>line 9</strong> message: <var>string</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The <var>string</var> obtained by typing the given message on the enigma machine described in the inputs.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">There will always be three <var>rotors</var> and one <var>reflector</var>, each operating on the letters from 'A' to 'Z'.<br><var>Message Length</var> &lt; 1000 characters</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">A-E B-K C-M D-F E-L F-G G-D H-Q I-V J-Z K-N L-T M-O N-W O-Y P-H Q-X R-U S-S T-P U-A V-I W-B X-R Y-C Z-J\nQ\nA-A B-J C-D D-K E-S F-I G-R H-U I-X J-B K-L L-H M-W N-T O-M P-C Q-Q R-G S-Z T-N U-P V-Y W-F X-V Y-O Z-E\nE\nA-B B-D C-F D-H E-J F-L G-C H-P I-R J-T K-X L-V M-Z N-N O-Y P-E Q-I R-W S-G T-A U-K V-M W-U X-S Y-Q Z-O\nV\nA-Y B-R C-U D-H E-Q F-S G-L H-D I-P J-X K-N L-G M-O N-K O-M P-I Q-E R-B S-F T-Z U-C V-W W-V X-J Y-A Z-T\nA A A\nXQGNTD</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">SIMPLE</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 231103758836,
+  "avatar": 17785582865119,
+  "commentCount": 10,
+  "upVotes": 8,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 270245,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

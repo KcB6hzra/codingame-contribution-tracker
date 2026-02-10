@@ -1,0 +1,515 @@
+{
+  "id": 74892,
+  "activeVersion": 111,
+  "score": 20,
+  "votableId": 31368831,
+  "codingamerId": 5300766,
+  "views": 988,
+  "commentableId": 31228878,
+  "title": "Rummikub 2",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "jddingemanse",
+  "publicHandle": "74892be1111048baad1898b212837b50bbc3b",
+  "codingamerHandle": "d95f1456c7409de3e7dcc202f89a3d646670035",
+  "lastVersion": {
+    "version": 111,
+    "autocloseTime": 1726998533292,
+    "data": {
+      "title": "Rummikub 2",
+      "topics": [
+        {
+          "id": 52,
+          "handle": "sets",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Ensembles",
+            "2": "Sets"
+          },
+          "pageTitle": "Sets: exercises and theory",
+          "puzzleCount": 3,
+          "parentTopicId": 40,
+          "contentDetailsId": 98
+        },
+        {
+          "id": 71,
+          "handle": "recursion",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Récursion",
+            "2": "Recursion"
+          },
+          "pageTitle": "Recursion: exercises and theory",
+          "puzzleCount": 38,
+          "parentTopicId": 41,
+          "contentDetailsId": 77
+        },
+        {
+          "id": 86,
+          "handle": "simulation",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Simulation",
+            "2": "Simulation"
+          },
+          "pageTitle": "Simulation: exercises and theory",
+          "puzzleCount": 43,
+          "parentTopicId": 42,
+          "contentDetailsId": 72
+        }
+      ],
+      "solution": "import sys\nclass Table():\n    def __init__(self):\n        self.rows = {}\n        self.type = ['']\n        self.character = ['']\n        self.lens = [0]\n        self.mins = [0]\n        self.maxs = [0]\n    \n    def __repr__(self):\n        return str(self.rows).replace('],','],\\n')\n    \n    def __getitem__(self, item):\n        return self.rows[item]\n\n    def copy(self):\n        tc = Table()\n        for rowid in self.rows:\n            tc.addRow(self.rows[rowid])\n        return tc\n    \n    def unique(self):\n        tout = ()\n        for rowid in self.rows:\n            tout += (53,)\n            tout += tuple(self.rows[rowid])\n        return tout\n    \n    def addRow(self,row):\n        nextid = max(self.rows,default=0) + 1\n        self.type.append('')\n        self.character.append('')\n        self.lens.append(0)\n        self.mins.append(0)\n        self.maxs.append(0)\n\n        self.rows[nextid] = row.copy()\n        self.getInfo(nextid)\n        return nextid\n\n    def getInfo(self,rowid):\n        rowvalues = self.rows[rowid]\n        self.type[rowid] = ''\n        self.character[rowid] = ''\n        self.lens[rowid] = len(rowvalues)\n        if len(rowvalues)<3 or self.lens[rowid] != len(set(rowvalues)):\n            return\n        J = False\n        if 'J' in rowvalues: \n            vals = [val for val in rowvalues if val!='J']\n            J = True\n        else: \n            vals = rowvalues.copy()\n        numbers = [int(val[:-1]) for val in vals]\n        colors = [val[-1] for val in vals]\n        \n        self.mins[rowid] = min(numbers)\n        self.maxs[rowid] = max(numbers)\n\n        leng = self.lens[rowid]\n        minnum = self.mins[rowid]\n        maxnum = self.maxs[rowid]\n        if minnum == maxnum:\n            self.type[rowid] = 'S'\n            self.character[rowid] = str(minnum)\n            self.sort(rowid,rowvalues,vals,'S',J)\n        elif (len(set(colors))==1) and ((maxnum - minnum + 1 == leng) or (J and (maxnum - minnum + 2 == leng))):\n            self.type[rowid] = 'R'\n            self.character[rowid] = colors[0]\n            self.sort(rowid,rowvalues,vals,'R',J)\n \n    def sort(self,rowid,rowvalues,valsxJ,rowtype,Jinrow):\n        if Jinrow and rowtype=='R':\n            valsxJ.sort(key=lambda x: int(x[:-1]))\n            if self.maxs[rowid] - self.mins[rowid] + 1 == len(valsxJ):\n                valsxJ.append('J')\n            else:\n                allvals = range(self.mins[rowid],self.maxs[rowid]+1)\n                allnums = [int(val[:-1]) for val in valsxJ]\n                missing = [i for i,val in enumerate(allvals) if val not in allnums][0]\n                valsxJ.insert(missing,'J')\n            self.rows[rowid] = valsxJ\n        elif Jinrow and rowtype == 'S':\n            valsxJ.sort(key=lambda x: x[-1])\n            self.rows[rowid] = valsxJ + ['J']\n        else:\n            rowvalues.sort(key = lambda x: int(x[:-1]))\n            rowvalues.sort(key = lambda x: x[-1])\n            self.rows[rowid] = rowvalues\n \n    def getTiles(self):\n        tiles = []\n        for row in self.rows.values():\n            tiles += row\n        return tiles\n\n    def jokerValues(self):\n        jvx = {}\n        for rowid in self.rows:\n            rowvalues = self.rows[rowid]            \n            if 'J' in rowvalues:\n                if self.type[rowid] == 'R':\n                    color = self.character[rowid]\n                    ji = rowvalues.index('J')\n                    if rowvalues.index('J') == 0 or rowvalues[::-1].index('J') == 0:\n                        jvx[rowid] = [f'{self.mins[rowid]-1}{color}',f'{self.maxs[rowid]+1}{color}']\n                    else:\n                        number = int((int(rowvalues[ji-1][:-1])+int(rowvalues[ji+1][:-1]))/2)\n                        jvx[rowid] = [f'{number}{color}']\n                elif self.type[rowid] == 'S':\n                    number = self.character[rowid]\n                    missing = [f'{number}{color}' for color in 'BGRY' if f'{number}{color}' not in rowvalues]\n                    jvx[rowid] = missing\n        return jvx\n    \n    def allJokers(self):\n        allJ = []\n        jvx = self.jokerValues()\n        for jx in jvx.values():\n            allJ += jx\n        return allJ\n    \n    def tryCOMBINE(self):\n        combinations = []\n        for color in 'BRGY':\n            rowids = [x for x in self.rows if self.character[x] == color]\n            if len(rowids)<2:\n                continue\n            for i in range(len(rowids)-1):\n                for j in range(i+1,len(rowids)):\n                    rowid1 = rowids[i]\n                    row1 = self.rows[rowid1]\n                    rowid2 = rowids[j]\n                    row2 = self.rows[rowid2]\n                    if self.mins[rowid1] == self.maxs[rowid2]+1 or self.mins[rowid2] == self.maxs[rowid1]+1:\n                        combinations.append([rowid1,rowid2])\n                    elif 'J' in row1 or 'J' in row2:\n                        jvx = self.jokerValues()\n                        if rowid1 in jvx:\n                            if len(jvx[rowid1]) == 2 and (self.mins[rowid1] == self.maxs[rowid2]+2 or self.mins[rowid2] == self.maxs[rowid1]+2):\n                                combinations.append([rowid1,rowid2])\n                        elif rowid2 in jvx:\n                            if len(jvx[rowid2]) == 2 and (self.mins[rowid1] == self.maxs[rowid2]+2 or self.mins[rowid2] == self.maxs[rowid1]+2):\n                                combinations.append([rowid1,rowid2])\n                            \n        return combinations\n        \n    def tryPUT(self,tile_str):\n        possibles = []\n        color = tile_str[-1]\n        number = int(tile_str[:-1])\n        # Try sets\n        rowids = [x for x in self.rows if self.character[x] == str(number)]\n        for rowid in rowids:\n            if tile_str not in self.rows[rowid]:\n                possibles.append(rowid)\n        # Try runs\n        rowids = [x for x in self.rows if self.character[x] == color]\n        jvx = self.jokerValues()\n        for rowid in rowids:\n            run = self.rows[rowid]\n            if 'J' in run and tile_str in jvx[rowid]:\n                possibles.append(rowid)\n            elif number == self.maxs[rowid]+1 or number == self.mins[rowid]-1:\n                possibles.append(rowid)\n            elif number == self.maxs[rowid]+2 or number == self.mins[rowid]-2:\n                if run[0] == 'J' or run[-1] == 'J':\n                    possibles.append(rowid)\n            else: \n                runvalues = run.copy()\n                if 'J' in runvalues:\n                    if run[0] == 'J' or run[-1] == 'J':\n                        runvalues.insert(0,jvx[rowid][0])\n                    runvalues[runvalues.index('J')] = jvx[rowid][-1]\n                if tile_str in runvalues:\n                    if runvalues.index(tile_str) >= 2 and runvalues[::-1].index(tile_str) >= 2:\n                        possibles.append(rowid)\n        return possibles\n        \n    def tryTAKE(self,tile_str):\n        possibles = []\n        color = tile_str[-1]\n        number = int(tile_str[:-1])\n        # Try sets\n        rowids = [x for x in self.rows if self.character[x] == str(number)]\n        for rowid in rowids:\n            if self.lens[rowid]==4:\n                possibles.append(rowid)\n        # Try runs\n        rowids = [x for x in self.rows if self.character[x] == color]\n        jvx = self.jokerValues()\n        for rowid in rowids:\n            run = self.rows[rowid]\n            if (number == self.maxs[rowid] or number == self.mins[rowid]) and self.lens[rowid]>=4:\n                possibles.append(rowid)\n            elif (number == self.maxs[rowid]+1 or number == self.mins[rowid]-1) and self.lens[rowid]>=4:\n                if rowid in jvx and len(jvx[rowid]) == 2:\n                    possibles.append(rowid)\n            elif self.lens[rowid]>=7:\n                runvalues = run.copy()\n                if 'J'in runvalues:\n                    runvalues[runvalues.index('J')] = jvx[rowid][0]\n                if number in range(self.mins[rowid],self.maxs[rowid]+1):\n                    if runvalues.index(tile_str) >= 3 and runvalues[::-1].index(tile_str) >= 3:\n                        possibles.append(rowid)\n        return possibles        \n\n    def COMBINE(self,rowidA,rowidB):\n        self.rows[rowidA] = self.rows[rowidA] + self.rows[rowidB]\n        self.rows[rowidB] = []\n        self.getInfo(rowidA)\n        self.getInfo(rowidB)\n    \n    def PUT(self,tile_str,rowid):\n        if tile_str not in self.rows[rowid]:\n            self.rows[rowid] = self.rows[rowid] + [tile_str]\n            self.getInfo(rowid)\n        else:\n            rowvalues = self.rows[rowid]\n            tilei = rowvalues.index(tile_str)\n            if rowvalues[-1] == 'J' and tilei==1:\n                row1 = rowvalues[:tilei+1] + ['J']\n                row2 = rowvalues[tilei:-1]\n            else:\n                row1 = rowvalues[:tilei+1]\n                row2 = rowvalues[tilei:]\n            self.rows[rowid] = row1\n            self.getInfo(rowid)\n            self.addRow(row2)        \n\n    def TAKE(self,tile_str,rowid):\n        rowvalues = self.rows[rowid].copy()\n        J = False\n        if 'J'in rowvalues:\n            J = True\n            jix = self.jokerValues()[rowid]\n            rowvalues[rowvalues.index('J')] = jix[-1]\n            if len(jix) == 2:\n                rowvalues.insert(0,jix[0])\n\n        if tile_str == rowvalues[0] or tile_str == rowvalues[-1] or self.type[rowid]=='S':\n            if J and tile_str in jix:\n                self.rows[rowid].remove('J')\n                self.getInfo(rowid)\n            else:\n                self.rows[rowid].remove(tile_str)\n                self.getInfo(rowid)\n        elif J and len(jix)==2 and (tile_str == rowvalues[1] or tile_str == rowvalues[-2]):\n            self.rows[rowid].remove(tile_str)\n            self.getInfo(rowid)\n        else:\n            tilei = rowvalues.index(tile_str)\n            row1 = rowvalues[:tilei]\n            row2 = rowvalues[tilei+1:]\n            self.rows[rowid] = row1\n            self.getInfo(rowid)\n            self.addRow(row2)\n\n\ndef findMissingPut(tile_str,table):\n    # Missing tiles to put away\n    missing_options = {}\n    color = tile_str[-1]\n    number = int(tile_str[:-1])\n    \n    # 'Missing' to put in a set\n    rowids = [x for x in table.rows if table.type[x] == 'S' and table.character[x] == str(number)]\n    for rowid in rowids:\n        if tile_str not in table.rows[rowid]:\n            missing_options[rowid] = []\n    \n    # Missing to put in a row\n    rowids = [x for x in table.rows if table.type[x] == 'R' and table.character[x] == color]\n    jvx = table.jokerValues()\n    for rowid in rowids:\n        run = table.rows[rowid]\n        if 'J' in run and tile_str in jvx[rowid]:\n            missing_options[rowid] = []\n        elif number > table.maxs[rowid]:\n            missing = []\n            for nx in range(table.maxs[rowid]+1,number):\n                missing.append(f'{nx}{color}')\n            missing_options[rowid] = missing\n        elif number < table.mins[rowid]:\n            missing = []\n            for nx in range(number+1,table.mins[rowid]):\n                missing.append(f'{nx}{color}')\n            missing_options[rowid] = missing\n        else:\n            if number == table.mins[rowid] and number>=3:\n                missing_options[rowid] = [f'{table.mins[rowid]-2}{color}',f'{table.mins[rowid]-1}{color}']\n            elif number == table.maxs[rowid] and number <= 11:\n                missing_options[rowid] = [f'{table.maxs[rowid]+1}{color}',f'{table.maxs[rowid]+2}{color}']\n            elif number == table.mins[rowid]+1 == table.maxs[rowid]-1:\n                missing_options[rowid] = [f'{table.mins[rowid]-1}{color}',f'{table.maxs[rowid]+1}{color}']\n            elif number == table.mins[rowid]+1:\n                missing_options[rowid] = [f'{table.mins[rowid]-1}{color}']\n            elif number == table.maxs[rowid]-1:\n                missing_options[rowid] = [f'{table.maxs[rowid]+1}{color}']\n            elif run[::-1].index(tile_str) >= 2 and run.index(tile_str) >= 2:\n                missing_options[rowid] = []\n    return missing_options\n\ndef findMissingTake(tile_str,table):\n    # Missing tiles to put away\n    missing_options = {}\n    color = tile_str[-1]\n    number = int(tile_str[:-1])\n    \n    # Missing to take from a set\n    jvx = table.jokerValues()\n    rowids = [x for x in table.rows if table.type[x] == 'S' and (table.character[x] == str(number) or x in jvx)]\n    for rowid in rowids:\n        setvalues = table.rows[rowid]\n        if tile_str not in setvalues and 'J' not in setvalues:\n            continue\n        if table.lens[rowid]==4:\n            missing_options[rowid] = []\n        else:\n            missing_options[rowid] = [f'{number}{c}' for c in 'BGRY' if f'{number}{c}' not in setvalues]\n        \n    # Missing to take from a run\n    rowids = [x for x in table.rows if table.type[x] == 'R' and table.character[x] == color]\n    for rowid in rowids:\n        run = table.rows[rowid].copy()\n        runvalues = run.copy()\n        if tile_str not in runvalues:\n            continue\n        else:\n            if number == table.mins[rowid]:\n                if table.lens[rowid] >= 4:\n                    missing_options[rowid] = []\n                elif number < 11:\n                    missing_options[rowid] = [f'{table.maxs[rowid]+1}{color}']\n            elif number == table.maxs[rowid]:\n                if table.lens[rowid] >= 4:\n                    missing_options[rowid] = []\n                elif number>3:\n                    missing_options[rowid] = [f'{table.mins[rowid]-1}{color}']   \n            elif number <= 3 or number >= 11:\n                continue #Taking a 3 or 11 not at the end is never possible by finding missing tiles as helpers\n            \n            elif number == table.mins[rowid]+1:\n                missing = [f'{table.mins[rowid]-2}{color}',f'{table.mins[rowid]-1}{color}']\n                if number == table.maxs[rowid]-1:\n                    missing += [f'{table.maxs[rowid]+1}{color}',f'{table.maxs[rowid]+2}{color}']\n                elif number == table.maxs[rowid]-2:\n                    missing.append(f'{table.maxs[rowid]+1}{color}')\n            elif number == table.mins[rowid]+2:\n                missing = [f'{table.mins[rowid]-1}{color}']\n                if number == table.maxs[rowid]-1:\n                    missing += [f'{table.maxs[rowid]+1}{color}',f'{table.maxs[rowid]+2}{color}']\n                elif number == table.maxs[rowid]-2:\n                    missing.append(f'{table.maxs[rowid]+1}{color}')\n            else:\n                missing = []\n                if number == table.maxs[rowid]-1:\n                    missing += [f'{table.maxs[rowid]+1}{color}',f'{table.maxs[rowid]+2}{color}']\n                elif number == table.maxs[rowid]-2:\n                    missing.append(f'{table.maxs[rowid]+1}{color}')\n            try:\n                missing_options[rowid] = missing\n            except:\n                continue\n\n    return missing_options\n\ndef findNuisanceTake(tile_str,table):\n    # Possible to take if some tiles are TAKE and PUT somewhere else first\n    missing_options = {}\n    color = tile_str[-1]\n    number = int(tile_str[:-1])\n           \n    # Only the ones where removal never leads to an invalid run\n    rowids = [x for x in table.rows if table.type[x] == 'R' and table.character[x] == color]\n    for rowid in rowids:\n        if tile_str not in table.rows[rowid]:\n            continue\n        else:\n            # Check for low-nuisance in combination with high-missing\n            nuisance = ['x']\n            missing = ['x']              \n            if number == table.mins[rowid]+1:\n                nuisance = [f'{table.mins[rowid]}{color}']\n                missing = []\n                if number >= 11:\n                    nuisance = ['x']\n                    missing = ['x']                \n                elif number == table.maxs[rowid]-1:\n                    missing = [f'{table.maxs[rowid]+1}{color}',f'{table.maxs[rowid]+2}{color}']\n                elif number == table.maxs[rowid]-2:\n                    missing = [f'{table.maxs[rowid]+1}{color}']\n            elif number == table.mins[rowid]+2:\n                nuisance = [f'{table.mins[rowid]}{color}',f'{table.mins[rowid]+1}{color}']\n                missing = []\n                if number >= 11:\n                    nuisance = ['x']\n                    missing = ['x']                    \n                elif number == table.maxs[rowid]-1:\n                    missing += [f'{table.maxs[rowid]+1}{color}',f'{table.maxs[rowid]+2}{color}']\n                elif number == table.maxs[rowid]-2:\n                    missing.append(f'{table.maxs[rowid]+1}{color}')\n            if nuisance[0] != 'x':\n                newid = max(missing_options,default=-1)+1\n                missing_options[newid] = {rowid:[nuisance,missing]}\n            \n            # Check for high_nuisance in combination with low-missing:\n            nuisance = ['x']\n            missing = ['x']              \n            if number == table.maxs[rowid]-1:\n                nuisance = [f'{table.maxs[rowid]}{color}']\n                missing = []\n                if number <= 3:\n                    nuisance = ['x']\n                    missing = ['x']                \n                elif number == table.mins[rowid]+1:\n                    missing = [f'{table.mins[rowid]-2}{color}',f'{table.mins[rowid]-1}{color}']\n                elif number == table.mins[rowid]+2:\n                    missing = [f'{table.mins[rowid]-1}{color}']\n            elif number == table.maxs[rowid]-2:\n                nuisance = [f'{table.maxs[rowid]}{color}',f'{table.maxs[rowid]-1}{color}']\n                missing = []\n                if number <= 3:\n                    nuisance = ['x']\n                    missing = ['x']                    \n                elif number == table.mins[rowid]+1:\n                    missing += [f'{table.mins[rowid]-2}{color}',f'{table.mins[rowid]-1}{color}']\n                elif number == table.mins[rowid]+2:\n                    missing.append(f'{table.mins[rowid]-1}{color}')\n            if nuisance[0] != 'x':\n                newid = max(missing_options,default=-1)+1\n                missing_options[newid] = {rowid:[nuisance,missing]}          \n\n    return missing_options     \n    \nclass Taskroads():\n    def __init__(self,goalTile,table,stonetasks):\n        self.used_combines = []\n        self.used_splits = {}\n        self.unique_tables = {}\n        self.all_roads = {'':table}\n        self.no_solution = True\n        self.goalTile = goalTile\n        self.table = table.copy()\n        self.solution_len = float('inf')\n        self.solutions = {}\n        self.archive = {}\n        self.stonetasks = stonetasks\n    \n    def solved(self):\n        return not self.no_solution\n\n    def executeTaskroad(self,road,table,check_splits = False):\n        for task in road.split(';'):\n            if task:\n                if len(tasksplit:=task.split()) == 3:\n                    command, tile_str, rowid = tasksplit\n                else:\n                    command, tile_str, rowid, _ = tasksplit\n                if command=='P':\n                    table.PUT(tile_str,int(rowid))\n                elif command == 'T':\n                    lastid = max(table.rows)\n                    table.TAKE(tile_str,int(rowid))\n                    if max(table.rows)>lastid and check_splits:\n                        ri1 = rowid\n                        ri2 = max(table.rows)\n                        if ri1 in self.used_splits:\n                            self.used_splits[ri1].add(ri2)\n                        else:\n                            self.used_splits[ri1] = set([ri2])\n                        if ri2 in self.used_splits:\n                            self.used_splits[ri2].add(ri1)\n                        else:\n                            self.used_splits[ri2] = set([ri1])\n                elif command == 'C':\n                    table.COMBINE(int(tile_str),int(rowid))\n\n    def nextStep(self,taskroad,table_c):\n        news = []\n        if len(taskroad.split(';'))>=self.solution_len: # Never continue a longer road\n            return news\n        previous_task = taskroad.split(';')[-1]\n        if previous_task == '' or previous_task[0] in 'CP':\n            # 1: Try goalTile\n            goalTile = self.goalTile\n            if (puts:=table_c.tryPUT(goalTile)):\n                for rowid in puts:\n                    if f'T {goalTile} {rowid:02d}' in taskroad:\n                        continue\n                    if taskroad:\n                        new = taskroad + ';' + f'P {goalTile} {rowid:02d}'\n                    else: new = f'P {goalTile} {rowid:02d}'\n                    self.no_solution = False\n                    if len(new.split(';'))<self.solution_len:\n                        self.solution_len = len(new.split(';'))                    \n                    if new not in news:\n                        news.append(new)\n            \n            # 2: Try COMBINE                \n            if len(taskroad.split(';')) >= self.solution_len-1: # Never continue a longer road\n                return news\n            if (combines:=table_c.tryCOMBINE()):\n                for combi in combines:\n                    combi.sort()\n                    if (combi not in self.used_combines) or ('C' in taskroad and f'C {combi[0]:02d} {combi[1]:02d}' not in taskroad):\n                        self.used_combines += [combi]\n                        if taskroad:\n                            new = taskroad + ';' + f'C {combi[0]:02d} {combi[1]:02d}'\n                        else: new = f'C {combi[0]:02d} {combi[1]:02d}'\n                        if new not in news:\n                            news.append(new)\n            \n            # 3: Try TAKE\n            if len(taskroad.split(';')) >= self.solution_len-2: # Never continue a longer road\n                return news\n            jvx = table_c.jokerValues()\n            tiles = table_c.getTiles()\n            if (allJ:=table_c.allJokers()):\n                while 'J' in tiles:\n                    tiles.remove('J')\n                tiles += allJ\n            for tile_str in tiles:\n                if tile_str not in self.stonetasks and tile_str not in allJ:\n                    continue\n                if (takes:=table_c.tryTAKE(tile_str)):\n                    for rowid in takes:\n                        if f'P {tile_str} {rowid:02d}' in taskroad:\n                            continue\n                        if taskroad:\n                            new = taskroad + ';' + f'T {tile_str} {rowid:02d}'\n                        else: new = f'T {tile_str} {rowid:02d}'\n                        if tile_str in table_c.allJokers() and rowid in jvx:\n                            new += ' |J'\n                        if new not in news:\n                            news.append(new)\n    \n        elif previous_task[0] == 'T':\n            # Try PUT\n            if len(taskroad.split(';')) >= self.solution_len-1: # Never continue a longer road\n                return news\n            tile_str = previous_task.split()[1]\n            if previous_task.split()[-1] == '|J':\n                for rowid in [ri for ri in table_c.rows if table_c.character[ri] == self.goalTile[-1]]:\n                    if f'P J {rowid:02d}' in taskroad or f'{rowid:02d} |J' in taskroad:\n                        continue\n                    new = taskroad + ';' + f'P J {rowid:02d}'\n                    news.append(new)\n            elif (puts:=table_c.tryPUT(tile_str)):\n                for rowid in puts:\n                    if f'T {tile_str} {rowid:02d}' in taskroad: #Never PUT in the same row it is TAKEN from\n                        continue\n                    if rowid in self.used_splits: #Never PUT in a row that is a partner of a row from which it was TAKEN\n                        loop = False\n                        for partnerid in self.used_splits[rowid]:\n                            if f'T {tile_str} {int(partnerid):02d}' in taskroad:\n                                loop = True\n                                break\n                        if loop:\n                            continue\n                    new = taskroad + ';' + f'P {tile_str} {rowid:02d}'\n                    if rowid in table_c.jokerValues() and tile_str in table_c.allJokers():\n                        new += ' |J'\n                    if new not in news:\n                        news.append(new)\n        return news\n\n    def allRoads(self,max_iteration=1000):\n        i=0\n        while self.all_roads and i<max_iteration:\n            to_add = {}\n            for road,table_c in self.all_roads.items():\n                #if road == 'T 6G 01 |J': break\n                news = self.nextStep(road,table_c)\n                for new in news:\n                    tc = self.table.copy()\n                    check_splits = False\n                    if new.split(';')[-1][0] == 'T':\n                        check_splits = True\n                    self.executeTaskroad(new,tc,check_splits)\n                    # If it is a solution, add to solutions\n                    if new.split(';')[-1].startswith(f'P {goalTile}'):\n                        self.solutions[new] = tc\n                        continue            \n                    unique_table = tc.unique()\n                    if unique_table not in self.unique_tables:\n                        to_add[new] = tc\n                        self.unique_tables[unique_table] = new\n                        self.archive[unique_table] = []\n                    else:\n                        self.archive[unique_table].append(new)\n            self.all_roads = to_add\n            i+=1\n        return self\n\n\ndef subTable(table, puts = [], takes = [], rows = []):\n    ## Either start with the goalTile in puts, or with takes from the initial findMissingPuts\n    \n    tasks = {'puts':puts,'takes':takes}\n    checked = {'puts':[],'takes':[]}\n    tablevalues = table.getTiles()\n    njx = tablevalues.count('J')\n    stonetasks = []\n    \n    ## Add rows with jokers anyway to the subTable\n    jvx = table.jokerValues()\n    for rowid in jvx:\n        rows.append(rowid)\n        for jvalue in table.allJokers():\n            if (possible_rows := table.tryTAKE(jvalue)):\n                simple = False\n                for rowid in possible_rows:\n                    if rowid in jvx:\n                        simple = True\n                if not simple:\n                    tasks['takes'].append(jvalue)\n            else:\n                tasks['takes'].append(jvalue)\n    stonetasks = stonetasks + tasks['takes'] + table.allJokers()\n    \n    # Do a first check of possibility anyway on the initial takes\n    if len(tasks['takes'])>0:\n        potential = True\n        for tile_str in tasks['takes']:\n            if tile_str not in tablevalues and tile_str not in table.allJokers() and njx==0:\n                potential = False\n                break\n            elif tile_str not in tablevalues:\n                njx -= 1\n        if not potential:\n            rows = []\n            tasks['takes'] = []   \n    njx = tablevalues.count('J')\n    while tasks['puts'] or tasks['takes']:\n        stonetasks = stonetasks + tasks['puts'] + tasks['takes']\n        # move through puts\n        if tasks['puts']:\n            to_put = tasks['puts'].pop(0)\n            if to_put not in checked['puts']:\n                checked['puts'].append(to_put)\n                missingputs = findMissingPut(to_put,table)\n                for key,value in missingputs.items():\n                    if key in rows:\n                        continue\n                    potential = True\n                    for tile_str in value:\n                        if tile_str not in tablevalues and njx==0:\n                            potential = False\n                            break\n                        elif tile_str not in tablevalues:\n                            njx -= 1\n                    if potential: \n                        rows.append(key)\n                        for tile_str in value:\n                            if tile_str not in tasks['takes']:\n                                tasks['takes'] += value\n        njx = tablevalues.count('J')\n        # move through takes\n        if tasks['takes']:\n            to_take = tasks['takes'].pop(0)\n            if to_take not in checked['takes']:\n                checked['takes'].append(to_take)\n                missingtakes = findMissingTake(to_take,table)\n                for key,value in missingtakes.items():\n                    if key in rows:\n                        continue\n                    potential = True\n                    for tile_str in value:\n                        if tile_str not in tablevalues and njx==0:\n                            potential = False\n                            break\n                        elif tile_str not in tablevalues:\n                            njx -= 1\n                    if potential: \n                        rows.append(key)\n                        for tile_str in value:\n                            if tile_str not in tasks['takes']:\n                                tasks['takes'] += value\n                njx = tablevalues.count('J')\n                missing_nuisance = findNuisanceTake(to_take,table)\n                for option in missing_nuisance.values():\n                    for row,(nuisance,missing) in option.items():\n                        if row in rows:\n                            continue\n                        potential = True\n                        for tile_str in missing:\n                            if tile_str not in tablevalues and njx == 0:\n                                potential = False\n                                break\n                            elif tile_str not in tablevalues:\n                                njx -= 1\n                        for tile_str in nuisance:\n                            if not findMissingPut(tile_str,table):\n                                potential = False\n                                break\n                        if potential:\n                            rows.append(row)\n                            for tile_str in missing:\n                                if tile_str not in tasks['takes']:\n                                    tasks['takes'] += missing\n                            for tile_str in nuisance:\n                                if tile_str not in tasks['puts']:\n                                    tasks['puts'] += nuisance\n        njx = tablevalues.count('J')\n    \n    # assumption: two idential rows will never both be relevant\n    uniquerows = []\n        \n    newtable = table.copy()\n    for rowid in newtable.rows:\n        row = newtable.rows[rowid]\n        if rowid not in rows or tuple(row) in uniquerows:\n            newtable.rows[rowid] = []\n            newtable.getInfo(rowid)\n        else:\n            uniquerows.append(tuple(row))\n    return newtable,rows,stonetasks\n\n\ndef select_best_solution(taskdb):\n    # Get all solutions from archive\n    all_solutions = [solution for solution in taskdb.solutions.keys() if len(solution.split(';'))<=taskdb.solution_len]\n    \n    for roadpart,equivalents in taskdb.archive.items():\n        for newpart in equivalents:\n            if len(newpart.split(';'))<=len(roadpart.split(';')):\n                found = False\n                for solution in all_solutions:\n                    if newpart not in solution:\n                        if roadpart in solution:\n                            found = True\n                        new_solution = solution.replace(roadpart,newpart)\n                        if new_solution not in all_solutions:\n                            all_solutions.append(new_solution)\n                    else:\n                        found = True\n                if not found:\n                    print('warning, part to replace not found')\n    \n    new_solutions = {}\n    for solution in all_solutions:\n        new_solution_parts = []\n        for part in solution.split(';'):\n            if 'T' in part and '|J' in part:\n                a,b,c,d = part.split()\n                part = ' '.join([a,'J',c,d])\n            new_solution_parts.append(part)\n        new_solution = ';'.join(new_solution_parts)\n        new_solutions[new_solution] = solution\n    all_solutions = list(set(new_solutions.keys()))\n\n    \n    if len(all_solutions) == 1:\n        return new_solutions[all_solutions[0]]\n    \n    # Low C before high C\n    classifications = {}\n    for solution in all_solutions:\n        Csum = [0]\n        for i,part in enumerate(solution.split(';')):\n            if 'C' in part:\n                _,r1,r2 = part.split()\n                r1 = int(r1)\n                r2 = int(r2)\n                Csum.append(Csum[-1]+r1+r2)\n        classifications[solution] = sum(Csum)\n\n    all_solutions = [solution for solution in classifications if classifications[solution] == min(classifications.values())]\n    \n    if len(all_solutions) == 1:\n        return new_solutions[all_solutions[0]]\n    \n    # J preferably not\n    noJ = [solution for solution in all_solutions if 'J' not in solution]\n    if noJ:\n        if len(noJ)>1:\n            print('Warning, multiple best solutions. Returning the first')\n        return new_solutions[noJ[0]]\n        \n    # If J, then as early as possible. If PUT J: as early as possible. First, check for put\n    jPut = [solution for solution in all_solutions if 'P J' in solution]\n    if jPut:\n        search_string = 'P J'\n        all_solutions = jPut\n    else:\n        search_string = 'J'\n    jpositions = {i:float('inf') for i in range(len(all_solutions))}\n    for i in range(len(all_solutions)):\n        solution = all_solutions[i]\n        solsteps = solution.split(';')\n        for j,step in enumerate(solsteps):\n            if search_string in step:\n                jpositions[i] = j\n                break\n    nxbest = list(jpositions.values()).count(min(jpositions.values()))\n    if nxbest>1:\n        print('Warning, multiple best solutions. Returning the first')\n    return new_solutions[all_solutions[min(jpositions,key=lambda x: jpositions[x])]]\n\n# Get all possible solutions based on multiple sub_tables\ndef solve(goalTile,table):\n    import time\n    start = time.time()\n    solution = False\n    sub_tables = []\n    rowss = []\n    stonetaskss = []\n    missingputs = findMissingPut(goalTile,table)\n    for row,takes in missingputs.items():\n        sub_table,rows,stonetasks = subTable(table,takes=takes,rows=[row])\n        sub_tables.append(sub_table)\n        rowss.append(rows)\n        stonetaskss.append(stonetasks)\n    trial_order = sorted(range(len(rowss)),key=lambda x: len(rowss[x]))\n    trial_order += [len(rowss)]\n    rowss += [list(table.rows.keys())]\n    sub_tables += [table]\n    stonetaskss += [table.getTiles()]\n    for i in trial_order:\n        sub_table = sub_tables[i]\n        taskdb = Taskroads(goalTile,sub_table,stonetaskss[i])\n        taskdb = taskdb.allRoads()\n        solution = taskdb.solved()\n        if solution:\n            break\n    if solution:\n        # Get the solution table\n        sub_table = sub_tables[i]\n        rows = rowss[i]\n        nrows = [rowid for rowid in table.rows if rowid not in rows]\n\n        new_archive = {}\n        roads_to_check = [';'.join(solution.split(';')[:-1]) for solution in taskdb.solutions.keys()]\n        roads_checked = []\n        while roads_to_check:\n            road_to_check = roads_to_check.pop(0)\n            if road_to_check in roads_checked:\n                continue\n            roads_checked.append(road_to_check)\n            roadsplit = road_to_check.split(';')\n            for j in range(2,len(roadsplit)+1):\n                subroad = ';'.join(roadsplit[:j])\n                tc = sub_table.copy()\n                taskdb.executeTaskroad(subroad,tc)\n                unique_table = tc.unique()\n                equivalents = [road for road in taskdb.archive[unique_table] if len(road.split(';'))<=len(subroad.split(';'))]\n                if subroad in new_archive:    \n                    new_archive[subroad] += equivalents\n                else:\n                    new_archive[subroad] = equivalents\n                roads_to_check += equivalents\n        taskdb.archive = new_archive\n        \n        # Get the best solution\n        best = select_best_solution(taskdb)\n        C,P,T = ['COMBINE','PUT','TAKE']\n        for task in best.split(';'):\n            if len(tasksplit:=task.split()) == 3:\n                a1,a2,a3 = tasksplit\n            elif tasksplit[0]=='P':\n                a1,a2,a3,_ = tasksplit\n            else:\n                a1,_,a3,_ = tasksplit\n                a2 = 'J'\n            if a1 == 'C':\n                print(eval(a1),int(a2),int(a3))\n            else:\n                print(eval(a1),a2,int(a3))\n        solved_table = sub_table.copy()\n        taskdb.executeTaskroad(best,solved_table)\n        for rowid in nrows:\n            solved_table.rows[rowid] = table.rows[rowid]\n            solved_table.getInfo(rowid)\n        for rowid in solved_table.rows:\n            if solved_table.lens[rowid]>0:\n                solved_table.getInfo(rowid)\n                print(rowid,*solved_table.rows[rowid])\n    else:\n        print('Not possible!')\n    end = time.time()\n    print('Execution time: ',(end-start)* 10**3,'ms',file=sys.stderr,flush=True)\n    return solution,taskdb\n\ngoalTile = input()\ntable = Table()\nnrow = int(input())\nfor i in range(nrow):\n    table.addRow(input().split()[1:])\n\nsolve(goalTile,table)",
+      "statement": "<<This is part 2 of the two-part Rummikub puzzle. In part 1 (www.codingame.com/training/medium/rummikub-1), the basic dynamics are introduced. Part 2 works as a stand-alone puzzle, but for simpler examples it is advised to first solve part 1.>>\n\nRummikub is a game played with tiles numbered 1-13 in four colors: {{B}}lue, {{G}}reen, {{R}}ed and {{Y}}ellow. There are two tiles of each number-color combination. There are also {{J}}oker tiles, more on that below. Players play their tiles to form <<runs>> (same-colored uninterrupted range of numbers) or <<sets>> (same-numbered tiles all of a unique color). A valid run or set consists of at least three tiles, and a maximum of four (set) or thirteen (run). Example of a run: {{3G 4G 5G 6G}}. Example of a set: {{4B 4G 4R}}.\n\nYou will get a table with valid runs and sets ([[row]]s), and one tile ([[goalTile]]) to put on the table in as few actions as possible. You must output all actions needed to put the tile on the table (becoming part of a valid run or set), and the new rows of the table after those actions.\n\n<<Actions>>\nOne action can be one of:\n• {{TAKE}} [[tile]] [[rowid]]: take a tile from a row, or\n• {{PUT}} [[tile]] [[rowid]]: put a tile in a row, or\n• {{COMBINE}} [[rowid_1]] [[rowid_2]]: combine two rows.\n\nApply the actions according to the following rules:\n• Each {{TAKE}} action must always immediately be followed by a {{PUT}} action of the same tile. (While possible in the real game, in this puzzle you are not allowed to take another tile before putting away the already taken tile)\n• After each {{PUT}} action, the table should only contain valid runs and/or sets.\n• Your final action is always to {{PUT}} [[goalTile]].\n• A {{COMBINE}} action can be used to merge two runs into one longer valid run. Order the rowids from the two rows numerically. The new run gets the lowest rowid ([[rowid1]]), the other rowid ([[rowid2]]) becomes unused (and cannot be attributed to new runs).\n\nYou are allowed to <<split>> one valid run into two valid runs by a {{PUT}} or {{TAKE}} action. For example: {{TAKE}} the middle tile of a run of seven tiles, or {{PUT}} a tile in the middle of a run of five tiles. In case of a split, the new run with the highest numerical tile values gets a new [[rowid]] (highest [[rowid]] that ever existed + 1), and the other run keeps the original [[rowid]].\n\nSome examples of valid actions and their result on table rows:\n<<Starting table>>\n{{     1 1G 2G 3G 4G}}\n{{     2 5G 6G 7G}}\n{{     3 4B 4R 4Y}}\n<<ACTION 1: >>{{COMBINE 1 2}} (This action creates a long run with lowest [[rowid1]], higher [[rowid2]] row is deleted)\n<<Table after action 1:>>\n{{     1 1G 2G 3G 4G 5G 6G 7G}}\n{{     3 4B 4R 4Y}}\n<<ACTION 2: >>{{TAKE 4G 1}} (This action <<splits>> row 1; the run with highest numeric values gets a new [[rowid]])\n<<ACTION 3: >>{{PUT 4G 3}} (A {{TAKE}} should directly be followed by a {{PUT}})\n<<Table after actions 2 and 3:>>\n{{     1 1G 2G 3G}}\n{{     3 4B 4G 4R 4Y}}\n{{     4 5G 6G 7G}}\n\nRuns are always displayed from low to high value. Sets are always displayed in the order {{B}} {{G}} {{R}} {{Y}}.\n\n<<Joker>>\nIn some cases, there can be a Joker (denoted as {{J}}) in a run or set. A joker can represent any number and color tile value. So, after a valid {{TAKE}} {{J}} [[rowid]], the {{J}} can be added to any set or run that still has place. A joker is always displayed at the most right place ({{3R 4R J}} instead of {{J 3R 4R}}), except if it fills a space inside a run ({{3R J 5R}}). The actual value of {{J}} is never fixed (while displayed as {{3R 4R J}}, it is not fixed whether {{J}} is {{2R}} or {{5R}} in this run; also, adding {{5R}} to the run {{3R 4R J 6R 7R}} does not split the run, since {{J}} is not fixed as {{5R}}).\n\n<<Action selection and order>>\nWhen different series of actions would lead to the same output, follow the rules below:\n1. Always select the least number of actions;\n2. {{COMBINE}} always as early as possible;\n3. {{COMBINE}} lower-numbered [[rowid]]s before higher-numbered [[rowid]]s (e.g. {{COMBINE 1 2}} before {{COMBINE 1 3}});\n4. Never {{TAKE}} and/or {{PUT}} a {{J}} if it can also be done without;\n5. If needed, {{TAKE}} and/or {{PUT}} a {{J}} as early as possible (but, if also rule 2 applies, {{COMBINE}} goes first).\n\n<<Note>>\nThe real Rummikub allows for more complex actions (multiple {{TAKE}} after each other, after a single {{PUT}} the runs or sets do not need to be valid yet, as long as more PUTs are coming). To reduce difficulty of this puzzle, this is left out (the creator of the puzzle was not able to solve this).\nTwo important consequences of these rules (<<hint>>): 1) It is never possible to create a new set. It is only possible to make a set longer or shorter. 2) It is never possible to create a new run, except if it is created by <<splitting>> one run into multiple smaller valid runs.\n\n<<CREDITS to Cedricdd for coming up with several of the cases>>",
+      "testCases": [
+        {
+          "title": "Multiple takes",
+          "isTest": true,
+          "testIn": "3G\n5\n1 4G 4R 4Y\n2 6G 6R 6Y\n3 4B 5B 6B 7B 8B 9B\n4 7G 8G 9G\n5 5G 5R 5Y",
+          "testOut": "TAKE 4B 3\nPUT 4B 1\nTAKE 5B 3\nPUT 5B 5\nTAKE 6B 3\nPUT 6B 2\nTAKE 6G 2\nPUT 6G 4\nTAKE 5G 5\nPUT 5G 4\nTAKE 4G 1\nPUT 4G 4\nPUT 3G 4\n1 4B 4R 4Y\n2 6B 6R 6Y\n3 7B 8B 9B\n4 3G 4G 5G 6G 7G 8G 9G\n5 5B 5R 5Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "9R\n5\n1 8G 8R 8Y\n2 7G 7R 7Y\n3 6G 6R 6Y\n4 3R 4R 5R\n5 3B 4B 5B 6B 7B 8B",
+          "testOut": "TAKE 8B 5\nPUT 8B 1\nTAKE 7B 5\nPUT 7B 2\nTAKE 6B 5\nPUT 6B 3\nTAKE 6R 3\nPUT 6R 4\nTAKE 7R 2\nPUT 7R 4\nTAKE 8R 1\nPUT 8R 4\nPUT 9R 4\n1 8B 8G 8Y\n2 7B 7G 7Y\n3 6B 6G 6Y\n4 3R 4R 5R 6R 7R 8R 9R\n5 3B 4B 5B",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A lot of actions",
+          "isTest": true,
+          "testIn": "1G\n10\n1 3B 3G 3R 3Y\n2 9B 9G 9R 9Y\n3 7B 7G 7R 7Y\n4 5B 5G 5R 5Y\n5 4B 4G 4R 4Y\n6 2B 2G 2R 2Y\n7 8B 8G 8R 8Y\n8 6B 6G 6R 6Y\n9 11G 12G 13G\n10 10B 10G 10R 10Y",
+          "testOut": "TAKE 10G 10\nPUT 10G 9\nTAKE 9G 2\nPUT 9G 9\nTAKE 8G 7\nPUT 8G 9\nTAKE 7G 3\nPUT 7G 9\nTAKE 6G 8\nPUT 6G 9\nTAKE 5G 4\nPUT 5G 9\nTAKE 4G 5\nPUT 4G 9\nTAKE 3G 1\nPUT 3G 9\nTAKE 2G 6\nPUT 2G 9\nPUT 1G 9\n1 3B 3R 3Y\n2 9B 9R 9Y\n3 7B 7R 7Y\n4 5B 5R 5Y\n5 4B 4R 4Y\n6 2B 2R 2Y\n7 8B 8R 8Y\n8 6B 6R 6Y\n9 1G 2G 3G 4G 5G 6G 7G 8G 9G 10G 11G 12G 13G\n10 10B 10R 10Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "13Y\n10\n1 1Y 2Y 3Y\n2 11B 11G 11R 11Y\n3 12B 12G 12R 12Y\n4 4B 4G 4R 4Y\n5 5B 5G 5R 5Y\n6 6B 6G 6R 6Y\n7 7B 7G 7R 7Y\n8 8B 8G 8R 8Y\n9 9B 9G 9R 9Y\n10 10B 10G 10R 10Y",
+          "testOut": "TAKE 4Y 4\nPUT 4Y 1\nTAKE 5Y 5\nPUT 5Y 1\nTAKE 6Y 6\nPUT 6Y 1\nTAKE 7Y 7\nPUT 7Y 1\nTAKE 8Y 8\nPUT 8Y 1\nTAKE 9Y 9\nPUT 9Y 1\nTAKE 10Y 10\nPUT 10Y 1\nTAKE 11Y 2\nPUT 11Y 1\nTAKE 12Y 3\nPUT 12Y 1\nPUT 13Y 1\n1 1Y 2Y 3Y 4Y 5Y 6Y 7Y 8Y 9Y 10Y 11Y 12Y 13Y\n2 11B 11G 11R\n3 12B 12G 12R\n4 4B 4G 4R\n5 5B 5G 5R\n6 6B 6G 6R\n7 7B 7G 7R\n8 8B 8G 8R\n9 9B 9G 9R\n10 10B 10G 10R",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A lot of actions?",
+          "isTest": true,
+          "testIn": "1G\n11\n1 4B 4G 4R 4Y\n2 6B 6G 6R 6Y\n3 10B 10G 10R 10Y\n4 2B 2G 2R 2Y\n5 11G 12G 13G\n6 1B 1R 1Y\n7 3B 3G 3R 3Y\n8 8B 8G 8R 8Y\n9 5B 5G 5R 5Y\n10 7B 7G 7R 7Y\n11 9B 9G 9R 9Y",
+          "testOut": "PUT 1G 6\n1 4B 4G 4R 4Y\n2 6B 6G 6R 6Y\n3 10B 10G 10R 10Y\n4 2B 2G 2R 2Y\n5 11G 12G 13G\n6 1B 1G 1R 1Y\n7 3B 3G 3R 3Y\n8 8B 8G 8R 8Y\n9 5B 5G 5R 5Y\n10 7B 7G 7R 7Y\n11 9B 9G 9R 9Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "13Y\n11\n1 1Y 2Y 3Y\n2 11B 11G 11R 11Y\n3 12B 12G 12R 12Y\n4 4B 4G 4R 4Y\n5 5B 5G 5R 5Y\n6 6B 6G 6R 6Y\n7 7B 7G 7R 7Y\n8 8B 8G 8R 8Y\n9 9B 9G 9R 9Y\n10 10B 10G 10R 10Y\n11 13B 13G 13R",
+          "testOut": "PUT 13Y 11\n1 1Y 2Y 3Y\n2 11B 11G 11R 11Y\n3 12B 12G 12R 12Y\n4 4B 4G 4R 4Y\n5 5B 5G 5R 5Y\n6 6B 6G 6R 6Y\n7 7B 7G 7R 7Y\n8 8B 8G 8R 8Y\n9 9B 9G 9R 9Y\n10 10B 10G 10R 10Y\n11 13B 13G 13R 13Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A lot is irrelevant",
+          "isTest": true,
+          "testIn": "9R\n18\n1 7G 7R 7Y\n2 10Y 11Y 12Y\n3 6G 6R 6Y\n4 5G 6G 7G 8G 9G 10G 11G\n5 3B 4B 5B 6B 7B 8B\n6 1Y 2Y 3Y 4Y\n7 2B 2G 2R 2Y\n8 4Y 5Y 6Y\n9 7R 8R 9R\n10 7Y 8Y 9Y\n11 3B 3G 3R 3Y\n12 10Y 11Y 12Y 13Y\n13 3R 4R 5R\n14 10B 11B 12B 13B\n15 1B 1G 1R 1Y\n16 10G 11G 12G 13G\n17 8G 8R 8Y\n18 13B 13G 13Y",
+          "testOut": "TAKE 8B 5\nPUT 8B 17\nTAKE 7B 5\nPUT 7B 1\nTAKE 6B 5\nPUT 6B 3\nTAKE 6R 3\nPUT 6R 13\nTAKE 7R 1\nPUT 7R 13\nTAKE 8R 17\nPUT 8R 13\nPUT 9R 13\n1 7B 7G 7Y\n2 10Y 11Y 12Y\n3 6B 6G 6Y\n4 5G 6G 7G 8G 9G 10G 11G\n5 3B 4B 5B\n6 1Y 2Y 3Y 4Y\n7 2B 2G 2R 2Y\n8 4Y 5Y 6Y\n9 7R 8R 9R\n10 7Y 8Y 9Y\n11 3B 3G 3R 3Y\n12 10Y 11Y 12Y 13Y\n13 3R 4R 5R 6R 7R 8R 9R\n14 10B 11B 12B 13B\n15 1B 1G 1R 1Y\n16 10G 11G 12G 13G\n17 8B 8G 8Y\n18 13B 13G 13Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "3G\n19\n1 13B 13G 13Y\n2 4G 4R 4Y\n3 6G 6R 6Y\n4 4B 5B 6B 7B 8B 9B\n5 1B 1G 1R 1Y\n6 3B 3G 3R 3Y\n7 4R 5R 6R\n8 7R 8R 9R\n9 10R 11R 12R 13R\n10 7R 8R 9R\n11 7G 8G 9G\n12 10R 11R 12R 13R\n13 1Y 2Y 3Y 4Y\n14 2B 2G 2R 2Y\n15 5Y 6Y 7Y 8Y 9Y 10Y 11Y\n16 10B 11B 12B 13B\n17 10G 11G 12G 13G\n18 5G 5R 5Y\n19 10G 11G 12G",
+          "testOut": "TAKE 4B 4\nPUT 4B 2\nTAKE 5B 4\nPUT 5B 18\nTAKE 6B 4\nPUT 6B 3\nTAKE 6G 3\nPUT 6G 11\nTAKE 5G 18\nPUT 5G 11\nTAKE 4G 2\nPUT 4G 11\nPUT 3G 11\n1 13B 13G 13Y\n2 4B 4R 4Y\n3 6B 6R 6Y\n4 7B 8B 9B\n5 1B 1G 1R 1Y\n6 3B 3G 3R 3Y\n7 4R 5R 6R\n8 7R 8R 9R\n9 10R 11R 12R 13R\n10 7R 8R 9R\n11 3G 4G 5G 6G 7G 8G 9G\n12 10R 11R 12R 13R\n13 1Y 2Y 3Y 4Y\n14 2B 2G 2R 2Y\n15 5Y 6Y 7Y 8Y 9Y 10Y 11Y\n16 10B 11B 12B 13B\n17 10G 11G 12G 13G\n18 5B 5R 5Y\n19 10G 11G 12G",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A lot of actions and extra",
+          "isTest": true,
+          "testIn": "13Y\n17\n1 8B 8G 8R 8Y\n2 10B 10G 10R 10Y\n3 12B 12G 12R 12Y\n4 6G 7G 8G\n5 4B 4G 4Y\n6 9G 10G 11G 12G\n7 6B 6G 6R 6Y\n8 9B 9G 9R 9Y\n9 7R 8R 9R\n10 2B 3B 4B 5B\n11 5B 5G 5R 5Y\n12 2R 3R 4R\n13 7B 7G 7Y\n14 6B 7B 8B\n15 11B 11G 11R 11Y\n16 1Y 2Y 3Y\n17 4R 5R 6R 7R",
+          "testOut": "TAKE 7R 17\nPUT 7R 13\nCOMBINE 9 17\nTAKE 4R 9\nPUT 4R 5\nTAKE 4Y 5\nPUT 4Y 16\nTAKE 5Y 11\nPUT 5Y 16\nTAKE 6Y 7\nPUT 6Y 16\nTAKE 7Y 13\nPUT 7Y 16\nTAKE 8Y 1\nPUT 8Y 16\nTAKE 9Y 8\nPUT 9Y 16\nTAKE 10Y 2\nPUT 10Y 16\nTAKE 11Y 15\nPUT 11Y 16\nTAKE 12Y 3\nPUT 12Y 16\nPUT 13Y 16\n1 8B 8G 8R\n2 10B 10G 10R\n3 12B 12G 12R\n4 6G 7G 8G\n5 4B 4G 4R\n6 9G 10G 11G 12G\n7 6B 6G 6R\n8 9B 9G 9R\n9 5R 6R 7R 8R 9R\n10 2B 3B 4B 5B\n11 5B 5G 5R\n12 2R 3R 4R\n13 7B 7G 7R\n14 6B 7B 8B\n15 11B 11G 11R\n16 1Y 2Y 3Y 4Y 5Y 6Y 7Y 8Y 9Y 10Y 11Y 12Y 13Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "1Y\n17\n1 6B 6G 6R 6Y\n2 4B 4G 4R 4Y\n3 2B 2G 2R 2Y\n4 6G 7G 8G\n5 10B 10G 10Y\n6 2G 3G 4G 5G\n7 8B 8G 8R 8Y\n8 5B 5G 5R 5Y\n9 5R 6R 7R\n10 9B 10B 11B 12B\n11 9B 9G 9R 9Y\n12 10R 11R 12R\n13 7B 7G 7Y\n14 6B 7B 8B\n15 3B 3G 3R 3Y\n16 11Y 12Y 13Y\n17 7R 8R 9R 10R",
+          "testOut": "TAKE 7R 17\nPUT 7R 13\nCOMBINE 9 17\nTAKE 10R 9\nPUT 10R 5\nTAKE 10Y 5\nPUT 10Y 16\nTAKE 9Y 11\nPUT 9Y 16\nTAKE 8Y 7\nPUT 8Y 16\nTAKE 7Y 13\nPUT 7Y 16\nTAKE 6Y 1\nPUT 6Y 16\nTAKE 5Y 8\nPUT 5Y 16\nTAKE 4Y 2\nPUT 4Y 16\nTAKE 3Y 15\nPUT 3Y 16\nTAKE 2Y 3\nPUT 2Y 16\nPUT 1Y 16\n1 6B 6G 6R\n2 4B 4G 4R\n3 2B 2G 2R\n4 6G 7G 8G\n5 10B 10G 10R\n6 2G 3G 4G 5G\n7 8B 8G 8R\n8 5B 5G 5R\n9 5R 6R 7R 8R 9R\n10 9B 10B 11B 12B\n11 9B 9G 9R\n12 10R 11R 12R\n13 7B 7G 7R\n14 6B 7B 8B\n15 3B 3G 3R\n16 1Y 2Y 3Y 4Y 5Y 6Y 7Y 8Y 9Y 10Y 11Y 12Y 13Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Joker",
+          "isTest": true,
+          "testIn": "8R\n1\n1 7R J 9R",
+          "testOut": "PUT 8R 1\n1 7R 8R 9R J",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "6G\n1\n1 5G J 7G",
+          "testOut": "PUT 6G 1\n1 5G 6G 7G J",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Joker in set",
+          "isTest": true,
+          "testIn": "13B\n3\n1 4G 4R J\n2 1Y 2Y 3Y 4Y 5Y 6Y 7Y\n3 9B 10B 11B",
+          "testOut": "TAKE 4Y 2\nPUT 4Y 1\nTAKE J 1\nPUT J 3\nPUT 13B 3\n1 4G 4R 4Y\n2 1Y 2Y 3Y\n3 9B 10B 11B J 13B\n4 5Y 6Y 7Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "10Y\n3\n1 5G 5Y J\n2 2B 3B 4B 5B 6B 7B 8B\n3 6Y 7Y 8Y",
+          "testOut": "TAKE 5B 2\nPUT 5B 1\nTAKE J 1\nPUT J 3\nPUT 10Y 3\n1 5B 5G 5Y\n2 2B 3B 4B\n3 6Y 7Y 8Y J 10Y\n4 6B 7B 8B",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Joker outside",
+          "isTest": true,
+          "testIn": "5B\n2\n1 4B 5B 6B 7B\n2 6R 7R 8R J",
+          "testOut": "TAKE J 2\nPUT J 1\nPUT 5B 1\n1 4B 5B J\n2 6R 7R 8R\n3 5B 6B 7B",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "3B\n2\n1 2B 3B 4B 5B\n2 4Y 5Y 6Y J",
+          "testOut": "TAKE J 2\nPUT J 1\nPUT 3B 1\n1 2B 3B J\n2 4Y 5Y 6Y\n3 3B 4B 5B",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Joker inside",
+          "isTest": true,
+          "testIn": "13R\n4\n1 9R 10R 11R\n2 8B J 10B\n3 5B 6B 7B\n4 11B 12B 13B",
+          "testOut": "COMBINE 2 3\nCOMBINE 2 4\nTAKE J 2\nPUT J 1\nPUT 13R 1\n1 9R 10R 11R J 13R\n2 5B 6B 7B 8B\n5 10B 11B 12B 13B",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "1R\n4\n1 3R 4R 5R\n2 4B J 6B\n3 7B 8B 9B\n4 1B 2B 3B",
+          "testOut": "COMBINE 2 3\nCOMBINE 2 4\nTAKE J 2\nPUT J 1\nPUT 1R 1\n1 1R J 3R 4R 5R\n2 1B 2B 3B 4B\n5 6B 7B 8B 9B",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Joke(r)",
+          "isTest": true,
+          "testIn": "7G\n3\n1 7B 7R 7Y\n2 8B 9B 10B 11B J\n3 3G 4G 5G",
+          "testOut": "PUT 7G 1\n1 7B 7G 7R 7Y\n2 8B 9B 10B 11B J\n3 3G 4G 5G",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "3G\n3\n1 8B 9B 10B 11B J\n2 5G 6G 7G\n3 3B 3R 3Y",
+          "testOut": "PUT 3G 3\n1 8B 9B 10B 11B J\n2 5G 6G 7G\n3 3B 3G 3R 3Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Don't use the joker",
+          "isTest": true,
+          "testIn": "5G\n3\n1 4Y 5Y 6Y J\n2 6B 6G 6R 6Y\n3 7G 8G 9G",
+          "testOut": "TAKE 6G 2\nPUT 6G 3\nPUT 5G 3\n1 4Y 5Y 6Y J\n2 6B 6R 6Y\n3 5G 6G 7G 8G 9G",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "8R\n3\n1 4R 5R 6R\n2 4Y 5Y 6Y J\n3 7B 7G 7R 7Y",
+          "testOut": "TAKE 7R 3\nPUT 7R 1\nPUT 8R 1\n1 4R 5R 6R 7R 8R\n2 4Y 5Y 6Y J\n3 7B 7G 7Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Get that joker",
+          "isTest": true,
+          "testIn": "3B\n3\n1 7R J 9R\n2 8B 8G 8R 8Y\n3 5B 6B 7B",
+          "testOut": "TAKE 8R 2\nPUT 8R 1\nTAKE J 1\nPUT J 3\nPUT 3B 3\n1 7R 8R 9R\n2 8B 8G 8Y\n3 3B J 5B 6B 7B",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "9Y\n3\n1 5B J 7B\n2 6B 6G 6R 6Y\n3 11Y 12Y 13Y",
+          "testOut": "TAKE 6B 2\nPUT 6B 1\nTAKE J 1\nPUT J 3\nPUT 9Y 3\n1 5B 6B 7B\n2 6G 6R 6Y\n3 9Y J 11Y 12Y 13Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Joker as early as possible",
+          "isTest": true,
+          "testIn": "6B\n4\n1 4G 4R J\n2 8B 8G 8R 8Y\n3 9B 10B 11B\n4 1Y 2Y 3Y 4Y 5Y 6Y 7Y",
+          "testOut": "TAKE 4Y 4\nPUT 4Y 1\nTAKE J 1\nPUT J 3\nTAKE 8B 2\nPUT 8B 3\nPUT 6B 3\n1 4G 4R 4Y\n2 8G 8R 8Y\n3 6B J 8B 9B 10B 11B\n4 1Y 2Y 3Y\n5 5Y 6Y 7Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "8B\n4\n1 11B 12B 13B\n2 10B 10G 10R 10Y\n3 3Y 4Y 5Y 6Y 7Y 8Y 9Y\n4 6G 6R J",
+          "testOut": "TAKE 6Y 3\nPUT 6Y 4\nTAKE J 4\nPUT J 1\nTAKE 10B 2\nPUT 10B 1\nPUT 8B 1\n1 8B J 10B 11B 12B 13B\n2 10G 10R 10Y\n3 3Y 4Y 5Y\n4 6G 6R 6Y\n5 7Y 8Y 9Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "With J is better",
+          "isTest": true,
+          "testIn": "9Y\n9\n1 2G 3G 4G\n2 4Y 5Y 6Y\n3 2B 2G 2R 2Y\n4 11R 12R 13R\n5 5G 6G 7G\n6 8R 9R 10R\n7 7B 7R 7Y\n8 3R 4R J\n9 8B 8G 8Y",
+          "testOut": "COMBINE 1 5\nTAKE 2R 3\nPUT 2R 8\nTAKE J 8\nPUT J 2\nTAKE 7G 1\nPUT 7G 7\nTAKE 7Y 7\nPUT 7Y 2\nPUT 9Y 2\n1 2G 3G 4G 5G 6G\n2 4Y 5Y 6Y 7Y J 9Y\n3 2B 2G 2Y\n4 11R 12R 13R\n6 8R 9R 10R\n7 7B 7G 7R\n8 2R 3R 4R\n9 8B 8G 8Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 14",
+          "isTest": false,
+          "testIn": "9B\n9\n1 7B 7G 7R\n2 4B 5B 6B\n3 2B 2G 2R 2Y\n4 5Y 6Y 7Y\n5 11G 12G 13G\n6 2Y 3Y 4Y\n7 8B 8R 8Y\n8 3G 4G J\n9 8G 9G 10G",
+          "testOut": "COMBINE 4 6\nTAKE 2G 3\nPUT 2G 8\nTAKE J 8\nPUT J 2\nTAKE 7Y 4\nPUT 7Y 1\nTAKE 7B 1\nPUT 7B 2\nPUT 9B 2\n1 7G 7R 7Y\n2 4B 5B 6B 7B J 9B\n3 2B 2R 2Y\n4 2Y 3Y 4Y 5Y 6Y\n5 11G 12G 13G\n7 8B 8R 8Y\n8 2G 3G 4G\n9 8G 9G 10G",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Joker combine",
+          "isTest": true,
+          "testIn": "3B\n4\n1 3R 4R J\n2 5R 6R 7R\n3 4B 4R 4Y\n4 5B 6B 7B",
+          "testOut": "COMBINE 1 2\nTAKE J 1\nPUT J 4\nPUT 3B 4\n1 3R 4R 5R 6R 7R\n3 4B 4R 4Y\n4 3B J 5B 6B 7B",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 15",
+          "isTest": false,
+          "testIn": "5B\n4\n1 5R 6R J\n2 7R 8R 9R\n3 6B 6R 6Y\n4 7B 8B 9B",
+          "testOut": "COMBINE 1 2\nTAKE J 1\nPUT J 4\nPUT 5B 4\n1 5R 6R 7R 8R 9R\n3 6B 6R 6Y\n4 5B J 7B 8B 9B",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple takes with J",
+          "isTest": true,
+          "testIn": "3G\n5\n1 4G 4R 4Y\n2 6G 6R 6Y\n3 4B 5B 6B 7B 8B 9B\n4 7G 8G 9G\n5 5R 5Y J",
+          "testOut": "TAKE 4B 3\nPUT 4B 1\nTAKE 5B 3\nPUT 5B 5\nTAKE J 5\nPUT J 4\nTAKE 6B 3\nPUT 6B 2\nTAKE 6G 2\nPUT 6G 4\nTAKE 4G 1\nPUT 4G 4\nPUT 3G 4\n1 4B 4R 4Y\n2 6B 6R 6Y\n3 7B 8B 9B\n4 3G 4G J 6G 7G 8G 9G\n5 5B 5R 5Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 16",
+          "isTest": false,
+          "testIn": "9R\n5\n1 8G 8R 8Y\n2 7G 7R 7Y\n3 6G 6Y J\n4 3R 4R 5R\n5 3B 4B 5B 6B 7B 8B",
+          "testOut": "TAKE 8B 5\nPUT 8B 1\nTAKE 7B 5\nPUT 7B 2\nTAKE 6B 5\nPUT 6B 3\nTAKE J 3\nPUT J 4\nTAKE 7R 2\nPUT 7R 4\nTAKE 8R 1\nPUT 8R 4\nPUT 9R 4\n1 8B 8G 8Y\n2 7B 7G 7Y\n3 6B 6G 6Y\n4 3R 4R 5R J 7R 8R 9R\n5 3B 4B 5B",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A lot of actions with J",
+          "isTest": true,
+          "testIn": "1G\n10\n1 3B 3G 3R 3Y\n2 9B 9G 9R 9Y\n3 7B 7G 7R 7Y\n4 5B 5G 5R 5Y\n5 4B 4G 4R 4Y\n6 2B 2G 2R 2Y\n7 8B 8G 8R 8Y\n8 6B 6G 6R 6Y\n9 11G 12G 13G\n10 10B 10R 10Y J",
+          "testOut": "TAKE J 10\nPUT J 9\nTAKE 9G 2\nPUT 9G 9\nTAKE 8G 7\nPUT 8G 9\nTAKE 7G 3\nPUT 7G 9\nTAKE 6G 8\nPUT 6G 9\nTAKE 5G 4\nPUT 5G 9\nTAKE 4G 5\nPUT 4G 9\nTAKE 3G 1\nPUT 3G 9\nTAKE 2G 6\nPUT 2G 9\nPUT 1G 9\n1 3B 3R 3Y\n2 9B 9R 9Y\n3 7B 7R 7Y\n4 5B 5R 5Y\n5 4B 4R 4Y\n6 2B 2R 2Y\n7 8B 8R 8Y\n8 6B 6R 6Y\n9 1G 2G 3G 4G 5G 6G 7G 8G 9G J 11G 12G 13G\n10 10B 10R 10Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 17",
+          "isTest": false,
+          "testIn": "1Y\n10\n1 3B 3G 3R 3Y\n2 9B 9G 9R 9Y\n3 7B 7G 7R 7Y\n4 5B 5G 5R 5Y\n5 4B 4G 4R 4Y\n6 2B 2G 2R 2Y\n7 8B 8G 8R 8Y\n8 6B 6G 6R 6Y\n9 11Y 12Y 13Y\n10 10B 10G 10R J",
+          "testOut": "TAKE J 10\nPUT J 9\nTAKE 9Y 2\nPUT 9Y 9\nTAKE 8Y 7\nPUT 8Y 9\nTAKE 7Y 3\nPUT 7Y 9\nTAKE 6Y 8\nPUT 6Y 9\nTAKE 5Y 4\nPUT 5Y 9\nTAKE 4Y 5\nPUT 4Y 9\nTAKE 3Y 1\nPUT 3Y 9\nTAKE 2Y 6\nPUT 2Y 9\nPUT 1Y 9\n1 3B 3G 3R\n2 9B 9G 9R\n3 7B 7G 7R\n4 5B 5G 5R\n5 4B 4G 4R\n6 2B 2G 2R\n7 8B 8G 8R\n8 6B 6G 6R\n9 1Y 2Y 3Y 4Y 5Y 6Y 7Y 8Y 9Y J 11Y 12Y 13Y\n10 10B 10G 10R",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A bit of everything",
+          "isTest": true,
+          "testIn": "11B\n9\n1 5R 6R 7R 8R 9R 10R\n2 1B 1G 1R\n3 4Y 5Y 6Y\n4 7B 7G 7Y\n5 10B 11B 12B 13B\n6 1Y 2Y 3Y\n7 2R 3R J\n8 5B 5G 5Y\n9 6B 6G 6Y",
+          "testOut": "COMBINE 3 6\nTAKE 1Y 3\nPUT 1Y 2\nTAKE 1R 2\nPUT 1R 7\nTAKE J 7\nPUT J 5\nPUT 11B 5\n1 5R 6R 7R 8R 9R 10R\n2 1B 1G 1Y\n3 2Y 3Y 4Y 5Y 6Y\n4 7B 7G 7Y\n5 10B 11B J\n7 1R 2R 3R\n8 5B 5G 5Y\n9 6B 6G 6Y\n10 11B 12B 13B",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 18",
+          "isTest": false,
+          "testIn": "11Y\n9\n1 1B 1G 1Y\n2 4R 5R 6R\n3 1R 2R 3R\n4 2G 3G J\n5 6B 6R 6Y\n6 7B 7R 7Y\n7 10Y 11Y 12Y 13Y\n8 5G 6G 7G 8G 9G 10G\n9 5B 5R 5Y",
+          "testOut": "COMBINE 2 3\nTAKE 1R 2\nPUT 1R 1\nTAKE 1G 1\nPUT 1G 4\nTAKE J 4\nPUT J 7\nPUT 11Y 7\n1 1B 1R 1Y\n2 2R 3R 4R 5R 6R\n4 1G 2G 3G\n5 6B 6R 6Y\n6 7B 7R 7Y\n7 10Y 11Y J\n8 5G 6G 7G 8G 9G 10G\n9 5B 5R 5Y\n10 11Y 12Y 13Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Many paths to explore",
+          "isTest": true,
+          "testIn": "8Y\n19\n1 4G 4R 4Y\n2 5G 5R 5Y\n3 6G 6R 6Y\n4 7G 8G 9G J\n5 4B 5B 6B\n6 7B 8B 9B\n7 1B 1G 1R 1Y\n8 2B 2G 2R 2Y\n9 3B 3G 3R 3Y\n10 4R 5R 6R\n11 7R 8R 9R\n12 10R 11R 12R 13R\n13 7R 8R 9R\n14 1Y 2Y 3Y 4Y\n15 5Y 6Y 7Y 8Y\n16 10B 11B 12B 13B\n17 10G 11G 12G 13G\n18 10G 11G 12G\n19 13B 13G 13Y",
+          "testOut": "TAKE J 4\nPUT J 15\nTAKE 3B 9\nPUT 3B 5\nTAKE 6B 5\nPUT 6B 3\nTAKE 6Y 3\nPUT 6Y 15\nPUT 8Y 15\n1 4G 4R 4Y\n2 5G 5R 5Y\n3 6B 6G 6R\n4 7G 8G 9G\n5 3B 4B 5B\n6 7B 8B 9B\n7 1B 1G 1R 1Y\n8 2B 2G 2R 2Y\n9 3G 3R 3Y\n10 4R 5R 6R\n11 7R 8R 9R\n12 10R 11R 12R 13R\n13 7R 8R 9R\n14 1Y 2Y 3Y 4Y\n15 5Y 6Y J 8Y\n16 10B 11B 12B 13B\n17 10G 11G 12G 13G\n18 10G 11G 12G\n19 13B 13G 13Y\n20 6Y 7Y 8Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 19",
+          "isTest": false,
+          "testIn": "8B\n19\n1 5B 5R 5Y\n2 4G 5G 6G\n3 6B 6R 6Y\n4 7G 8G 9G\n5 7R 8R 9R J\n6 1B 1G 1R 1Y\n7 7Y 8Y 9Y\n8 2B 2G 2R 2Y\n9 4B 4R 4Y\n10 3B 3G 3R 3Y\n11 10R 11R 12R 13R\n12 13B 13G 13R\n13 4Y 5Y 6Y\n14 7Y 8Y 9Y\n15 1B 2B 3B 4B\n16 10Y 11Y 12Y 13Y\n17 10G 11G 12G 13G\n18 10R 11R 12R\n19 5B 6B 7B 8B",
+          "testOut": "TAKE J 5\nPUT J 19\nTAKE 3G 10\nPUT 3G 2\nTAKE 6G 2\nPUT 6G 3\nTAKE 6B 3\nPUT 6B 19\nPUT 8B 19\n1 5B 5R 5Y\n2 3G 4G 5G\n3 6G 6R 6Y\n4 7G 8G 9G\n5 7R 8R 9R\n6 1B 1G 1R 1Y\n7 7Y 8Y 9Y\n8 2B 2G 2R 2Y\n9 4B 4R 4Y\n10 3B 3R 3Y\n11 10R 11R 12R 13R\n12 13B 13G 13R\n13 4Y 5Y 6Y\n14 7Y 8Y 9Y\n15 1B 2B 3B 4B\n16 10Y 11Y 12Y 13Y\n17 10G 11G 12G 13G\n18 10R 11R 12R\n19 5B 6B J 8B\n20 6B 7B 8B",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "There is never more than 1 {{J}}oker.\nCases have been constructed such that there is always only one solution after following the <<action selection and order>> rules.",
+      "coverBinaryId": 114571542911563,
+      "stubGenerator": "read goaltile:string(3)\nread nrow:int\nloop nrow read row:string(42)\nwrite PUT tile rowid\nrowid tile tile tile",
+      "inputDescription": "<<Line 1>>: string [[goalTile]]: non-Joker tile to put on the table. A non-Joker tile is a combination of a numeric value (1-13) and a single letter indicating the color (one of {{R}}, {{G}}, {{B}} or {{Y}}) .\n<<Line 2>>: integer [[nrow]]: number of rows (sets or runs) on the table.\n<<Next [[nrow]] lines>>: [[row]]: the [[rowid]] (1-[[nrow]]), followed by space separated strings representing tiles (a non-Joker tile or a Joker tile, indicated by {{J}}), that form a valid run or set.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[naction]] lines>>: the actions needed to put [[goalTile]] on the table (one action per line), in the format: {{PUT}} [[tile]] [[rowid]], {{TAKE}} [[tile]] [[rowid]] or {{COMBINE}} [[rowid1]] [[rowid2]].\n<<[[nrow_new]] lines>>: the new rows that are formed after putting [[goalTile]] on the table (one [[row]] per line). The new rows have either their original [[rowid]], or a new [[rowid]] (if it was a new row as a result from splitting an original row). Rows that became unused due to a {{COMBINE}} action should be skipped."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><strong>This is part 2 of the two-part Rummikub puzzle. In part 1 (www.codingame.com/training/medium/rummikub-1), the basic dynamics are introduced. Part 2 works as a stand-alone puzzle, but for simpler examples it is advised to first solve part 1.</strong><br><br>Rummikub is a game played with tiles numbered 1-13 in four colors: <const>B</const>lue, <const>G</const>reen, <const>R</const>ed and <const>Y</const>ellow. There are two tiles of each number-color combination. There are also <const>J</const>oker tiles, more on that below. Players play their tiles to form <strong>runs</strong> (same-colored uninterrupted range of numbers) or <strong>sets</strong> (same-numbered tiles all of a unique color). A valid run or set consists of at least three tiles, and a maximum of four (set) or thirteen (run). Example of a run: <const>3G 4G 5G 6G</const>. Example of a set: <const>4B 4G 4R</const>.<br><br>You will get a table with valid runs and sets (<var>row</var>s), and one tile (<var>goalTile</var>) to put on the table in as few actions as possible. You must output all actions needed to put the tile on the table (becoming part of a valid run or set), and the new rows of the table after those actions.<br><br><strong>Actions</strong><br>One action can be one of:<br>&bull; <const>TAKE</const> <var>tile</var> <var>rowid</var>: take a tile from a row, or<br>&bull; <const>PUT</const> <var>tile</var> <var>rowid</var>: put a tile in a row, or<br>&bull; <const>COMBINE</const> <var>rowid_1</var> <var>rowid_2</var>: combine two rows.<br><br>Apply the actions according to the following rules:<br>&bull; Each <const>TAKE</const> action must always immediately be followed by a <const>PUT</const> action of the same tile. (While possible in the real game, in this puzzle you are not allowed to take another tile before putting away the already taken tile)<br>&bull; After each <const>PUT</const> action, the table should only contain valid runs and/or sets.<br>&bull; Your final action is always to <const>PUT</const> <var>goalTile</var>.<br>&bull; A <const>COMBINE</const> action can be used to merge two runs into one longer valid run. Order the rowids from the two rows numerically. The new run gets the lowest rowid (<var>rowid1</var>), the other rowid (<var>rowid2</var>) becomes unused (and cannot be attributed to new runs).<br><br>You are allowed to <strong>split</strong> one valid run into two valid runs by a <const>PUT</const> or <const>TAKE</const> action. For example: <const>TAKE</const> the middle tile of a run of seven tiles, or <const>PUT</const> a tile in the middle of a run of five tiles. In case of a split, the new run with the highest numerical tile values gets a new <var>rowid</var> (highest <var>rowid</var> that ever existed + 1), and the other run keeps the original <var>rowid</var>.<br><br>Some examples of valid actions and their result on table rows:<br><strong>Starting table</strong><br><const>     1 1G 2G 3G 4G</const><br><const>     2 5G 6G 7G</const><br><const>     3 4B 4R 4Y</const><br><strong>ACTION 1: </strong><const>COMBINE 1 2</const> (This action creates a long run with lowest <var>rowid1</var>, higher <var>rowid2</var> row is deleted)<br><strong>Table after action 1:</strong><br><const>     1 1G 2G 3G 4G 5G 6G 7G</const><br><const>     3 4B 4R 4Y</const><br><strong>ACTION 2: </strong><const>TAKE 4G 1</const> (This action <strong>splits</strong> row 1; the run with highest numeric values gets a new <var>rowid</var>)<br><strong>ACTION 3: </strong><const>PUT 4G 3</const> (A <const>TAKE</const> should directly be followed by a <const>PUT</const>)<br><strong>Table after actions 2 and 3:</strong><br><const>     1 1G 2G 3G</const><br><const>     3 4B 4G 4R 4Y</const><br><const>     4 5G 6G 7G</const><br><br>Runs are always displayed from low to high value. Sets are always displayed in the order <const>B</const> <const>G</const> <const>R</const> <const>Y</const>.<br><br><strong>Joker</strong><br>In some cases, there can be a Joker (denoted as <const>J</const>) in a run or set. A joker can represent any number and color tile value. So, after a valid <const>TAKE</const> <const>J</const> <var>rowid</var>, the <const>J</const> can be added to any set or run that still has place. A joker is always displayed at the most right place (<const>3R 4R J</const> instead of <const>J 3R 4R</const>), except if it fills a space inside a run (<const>3R J 5R</const>). The actual value of <const>J</const> is never fixed (while displayed as <const>3R 4R J</const>, it is not fixed whether <const>J</const> is <const>2R</const> or <const>5R</const> in this run; also, adding <const>5R</const> to the run <const>3R 4R J 6R 7R</const> does not split the run, since <const>J</const> is not fixed as <const>5R</const>).<br><br><strong>Action selection and order</strong><br>When different series of actions would lead to the same output, follow the rules below:<br>1. Always select the least number of actions;<br>2. <const>COMBINE</const> always as early as possible;<br>3. <const>COMBINE</const> lower-numbered <var>rowid</var>s before higher-numbered <var>rowid</var>s (e.g. <const>COMBINE 1 2</const> before <const>COMBINE 1 3</const>);<br>4. Never <const>TAKE</const> and/or <const>PUT</const> a <const>J</const> if it can also be done without;<br>5. If needed, <const>TAKE</const> and/or <const>PUT</const> a <const>J</const> as early as possible (but, if also rule 2 applies, <const>COMBINE</const> goes first).<br><br><strong>Note</strong><br>The real Rummikub allows for more complex actions (multiple <const>TAKE</const> after each other, after a single <const>PUT</const> the runs or sets do not need to be valid yet, as long as more PUTs are coming). To reduce difficulty of this puzzle, this is left out (the creator of the puzzle was not able to solve this).<br>Two important consequences of these rules (<strong>hint</strong>): 1) It is never possible to create a new set. It is only possible to make a set longer or shorter. 2) It is never possible to create a new run, except if it is created by <strong>splitting</strong> one run into multiple smaller valid runs.<br><br><strong>CREDITS to Cedricdd for coming up with several of the cases</strong></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: string <var>goalTile</var>: non-Joker tile to put on the table. A non-Joker tile is a combination of a numeric value (1-13) and a single letter indicating the color (one of <const>R</const>, <const>G</const>, <const>B</const> or <const>Y</const>) .<br><strong>Line 2</strong>: integer <var>nrow</var>: number of rows (sets or runs) on the table.<br><strong>Next <var>nrow</var> lines</strong>: <var>row</var>: the <var>rowid</var> (1-<var>nrow</var>), followed by space separated strings representing tiles (a non-Joker tile or a Joker tile, indicated by <const>J</const>), that form a valid run or set.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>naction</var> lines</strong>: the actions needed to put <var>goalTile</var> on the table (one action per line), in the format: <const>PUT</const> <var>tile</var> <var>rowid</var>, <const>TAKE</const> <var>tile</var> <var>rowid</var> or <const>COMBINE</const> <var>rowid1</var> <var>rowid2</var>.<br><strong><var>nrow_new</var> lines</strong>: the new rows that are formed after putting <var>goalTile</var> on the table (one <var>row</var> per line). The new rows have either their original <var>rowid</var>, or a new <var>rowid</var> (if it was a new row as a result from splitting an original row). Rows that became unused due to a <const>COMBINE</const> action should be skipped.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">There is never more than 1 <const>J</const>oker.<br>Cases have been constructed such that there is always only one solution after following the <strong>action selection and order</strong> rules.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3G\n5\n1 4G 4R 4Y\n2 6G 6R 6Y\n3 4B 5B 6B 7B 8B 9B\n4 7G 8G 9G\n5 5G 5R 5Y</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">TAKE 4B 3\nPUT 4B 1\nTAKE 5B 3\nPUT 5B 5\nTAKE 6B 3\nPUT 6B 2\nTAKE 6G 2\nPUT 6G 4\nTAKE 5G 5\nPUT 5G 4\nTAKE 4G 1\nPUT 4G 4\nPUT 3G 4\n1 4B 4R 4Y\n2 6B 6R 6Y\n3 7B 8B 9B\n4 3G 4G 5G 6G 7G 8G 9G\n5 5B 5R 5Y</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 43959173685,
+  "avatar": 98376709796567,
+  "commentCount": 107,
+  "upVotes": 21,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 987791,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1702753537001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1708152728341,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1710756337000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1710765972036,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1713359137001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1713373085203,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1715965537048,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1715965613959,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1718561137001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1718604529344,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1721199937000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1721803067354,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1724396737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1724406533292,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1726769494618,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

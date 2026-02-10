@@ -1,0 +1,217 @@
+{
+  "id": 1396,
+  "activeVersion": 31,
+  "score": 26,
+  "votableId": 8024125,
+  "codingamerId": 878974,
+  "views": 340,
+  "commentableId": 7961055,
+  "title": "Conditional probabilities",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "nicola",
+  "publicHandle": "139695fcac2fd5cc7bc705b6ac77cb4c781a",
+  "codingamerHandle": "21bf42f790de293c3aef398f18cd2627479878",
+  "lastVersion": {
+    "version": 31,
+    "autocloseTime": 1664272899272,
+    "data": {
+      "title": "Conditional probabilities",
+      "topics": [
+        {
+          "id": 94,
+          "handle": "mathematics",
+          "labelMap": {
+            "1": "Mathematics",
+            "2": "Mathematics"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        },
+        {
+          "id": 48,
+          "handle": "graphs",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Graphes",
+            "2": "Graphs"
+          },
+          "pageTitle": "Graphs: exercises and theory",
+          "puzzleCount": 28,
+          "parentTopicId": 40,
+          "contentDetailsId": 75
+        },
+        {
+          "id": 96,
+          "handle": "algebra",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Algebra",
+            "2": "Algebra"
+          },
+          "puzzleCount": 5,
+          "parentTopicId": 93
+        },
+        {
+          "id": 110,
+          "handle": "probability",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Probability",
+            "2": "Probability"
+          },
+          "puzzleCount": 9,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "from fractions import Fraction\nfrom collections import defaultdict\n\nl=[]\nfor _ in \"123\":\n  l.append(input().replace(\"GIVEN\",\"G\").replace(\"NOT\",\"N\").replace(\"AND\",\"E\").replace(\" \",\"\"))\n\np=dict()\nr=defaultdict(set)\n\nfor x in [\"A\",\"NA\"]:\n  p[x]=None\n  r[x].add((\"1 - N\"+x).replace(\"NN\",\"\"))\n  for y in [\"B\",\"NB\"]:\n# Value initialization\n    p[y]=None\n    p[x+\"E\"+y]=None\n    p[x+\"G\"+y]=None\n    p[y+\"G\"+x]=None\n# Solo relations\n    r[y].add((\"1 - N\"+y).replace(\"NN\",\"\"))\n# A and B + A and not B is A\n    r[x].add((x+\"E\"+y+\" + \"+x+\"EN\"+y).replace(\"NN\",\"\"))\n    r[y].add((x+\"E\"+y+\" + N\"+x+\"E\"+y).replace(\"NN\",\"\"))\n    r[x+\"E\"+y].add((x+\" - \"+x+\"EN\"+y).replace(\"NN\",\"\"))\n    r[(x+\"EN\"+y).replace(\"NN\",\"\")].add(x+\" - \"+x+\"E\"+y)\n    r[(x+\"E\"+y)].add((y+\" - N\"+x+\"E\"+y).replace(\"NN\",\"\"))\n    r[(\"N\"+x+\"E\"+y).replace(\"NN\",\"\")].add(y+\" - \"+x+\"E\"+y)\n# A and B is A × B given A\n    r[x+\"E\"+y].add((x+\" * \"+y+\"G\"+x))\n    r[x+\"E\"+y].add((y+\" * \"+x+\"G\"+y))\n    r[x].add(x+\"E\"+y+\" / \"+y+\"G\"+x)\n    r[y].add(x+\"E\"+y+\" / \"+x+\"G\"+y)\n    r[x+\"G\"+y].add(x+\"E\"+y+\" / \"+y)\n    r[y+\"G\"+x].add(x+\"E\"+y+\" / \"+x)\n\nimpossible=False\nfor e in l:\n  n,f=e.split(\"=\")\n  f=Fraction(f)\n  if 0<=f<=1 and p[n]==None:\n    p[n]=f\n  elif p[n]!=f or f<0 or f>1:\n    impossible=True\n\nsolo=[\"NA\",\"NB\",\"A\",\"B\"]\nduo=sorted(set(p)-set(solo),reverse=True)\nok=True\n\nwhile ok:\n  ok=False\n  for e in p:\n    v=p[e]\n    for f in r[e]:\n      F=f\n      for V in duo:\n        if V in F:\n          F=F.replace(V,repr(p[V]))\n      for V in solo:\n        if V in F:\n          F=F.replace(V,repr(p[V]))\n      try:\n        V=eval(F)\n        if V<0 or V>1:\n          ok=False\n          impossible=True\n          raise ValueError\n        if v!=None:\n          if v!=V:\n            ok=False\n            impossible=True\n            raise ValueError\n          else:\n            continue\n        else:\n          p[e]=V\n          ok=True\n      except:\n        continue\n\nif impossible:\n  print(\"IMPOSSIBLE\")\nelse:\n  for v in sorted(p):\n    if p[v]!=None:\n      print(v.replace(\"N\",\" NOT \").replace(\"E\",\" AND \").replace(\"G\",\" GIVEN \").replace(\"  \",\" \").lstrip(),\"=\",p[v])",
+      "statement": "You have to write a solver of a conditional probabilities exercise where [[A]] and [[B]] are two events.\nFor readability, we will write that the probability of [[A]] is [[A]].\nYou are given three probabilities, for example:\n\n* [[A]], [[B]], [[A GIVEN B]]\n* [[NOT A]], [[A AND B]], [[B GIVEN NOT A]]\n* [[A]], [[NOT A GIVEN B]], [[B GIVEN A]]\n\nWhere:\n* [[NOT A]] means the probability of the opposite of [[A]],\n* [[A AND B]] means the probability of the conjunction of [[A]] and [[B]] (ie [[A]] and [[B]] occur simultaneously),\n* [[A GIVEN B]] means the probability of [[A]] if [[B]] occurs.\n\nFor example, you have these relations:\n[[A]] + [[NOT A]] = 1\n[[A AND B]] + [[A AND NOT B]] = [[A]]\n[[A AND NOT B]] = [[A]] × [[NOT B GIVEN A]] = [[NOT B]] × [[A GIVEN NOT B]]\n\nNote that [[A AND B]] is [[B AND A]] (so we will use only the first one) but that [[A GIVEN B]] <<is not>> [[B GIVEN A]] (it’s a classical fallacy in psychology).\nYou have to find all the probabilities you can build with the words [[A]], [[B]], [[NOT]] (unary operator), [[AND]] and [[GIVEN]] (binary operators). Write them in the lexicographic order: [[A]] before [[A AND B]] before [[A GIVEN B]] before [[A GIVEN NOT B]] but not [[B AND A]].",
+      "testCases": [
+        {
+          "title": "A, B, A AND B",
+          "isTest": true,
+          "testIn": "A = 1/2\nB = 1/3\nA AND B = 1/6",
+          "testOut": "A = 1/2\nA AND B = 1/6\nA AND NOT B = 1/3\nA GIVEN B = 1/2\nA GIVEN NOT B = 1/2\nB = 1/3\nB GIVEN A = 1/3\nB GIVEN NOT A = 1/3\nNOT A = 1/2\nNOT A AND B = 1/6\nNOT A AND NOT B = 1/3\nNOT A GIVEN B = 1/2\nNOT A GIVEN NOT B = 1/2\nNOT B = 2/3\nNOT B GIVEN A = 2/3\nNOT B GIVEN NOT A = 2/3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "A, B, A AND B",
+          "isTest": false,
+          "testIn": "A = 3/5\nB = 1/2\nA AND B = 1/5",
+          "testOut": "A = 3/5\nA AND B = 1/5\nA AND NOT B = 2/5\nA GIVEN B = 2/5\nA GIVEN NOT B = 4/5\nB = 1/2\nB GIVEN A = 1/3\nB GIVEN NOT A = 3/4\nNOT A = 2/5\nNOT A AND B = 3/10\nNOT A AND NOT B = 1/10\nNOT A GIVEN B = 3/5\nNOT A GIVEN NOT B = 1/5\nNOT B = 1/2\nNOT B GIVEN A = 2/3\nNOT B GIVEN NOT A = 1/4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A, NOT B, NOT A AND B",
+          "isTest": true,
+          "testIn": "A = 3/10\nNOT B = 1/3\nNOT A AND B = 8/15",
+          "testOut": "A = 3/10\nA AND B = 2/15\nA AND NOT B = 1/6\nA GIVEN B = 1/5\nA GIVEN NOT B = 1/2\nB = 2/3\nB GIVEN A = 4/9\nB GIVEN NOT A = 16/21\nNOT A = 7/10\nNOT A AND B = 8/15\nNOT A AND NOT B = 1/6\nNOT A GIVEN B = 4/5\nNOT A GIVEN NOT B = 1/2\nNOT B = 1/3\nNOT B GIVEN A = 5/9\nNOT B GIVEN NOT A = 5/21",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "NOT A, NOT B, A AND B",
+          "isTest": false,
+          "testIn": "NOT A = 3/10\nNOT B = 2/5\nA AND B = 2/5",
+          "testOut": "A = 7/10\nA AND B = 2/5\nA AND NOT B = 3/10\nA GIVEN B = 2/3\nA GIVEN NOT B = 3/4\nB = 3/5\nB GIVEN A = 4/7\nB GIVEN NOT A = 2/3\nNOT A = 3/10\nNOT A AND B = 1/5\nNOT A AND NOT B = 1/10\nNOT A GIVEN B = 1/3\nNOT A GIVEN NOT B = 1/4\nNOT B = 2/5\nNOT B GIVEN A = 3/7\nNOT B GIVEN NOT A = 1/3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A, B GIVEN A, B GIVEN NOT A",
+          "isTest": true,
+          "testIn": "A = 3/10\nB GIVEN A = 4/5\nB GIVEN NOT A = 3/5",
+          "testOut": "A = 3/10\nA AND B = 6/25\nA AND NOT B = 3/50\nA GIVEN B = 4/11\nA GIVEN NOT B = 3/17\nB = 33/50\nB GIVEN A = 4/5\nB GIVEN NOT A = 3/5\nNOT A = 7/10\nNOT A AND B = 21/50\nNOT A AND NOT B = 7/25\nNOT A GIVEN B = 7/11\nNOT A GIVEN NOT B = 14/17\nNOT B = 17/50\nNOT B GIVEN A = 1/5\nNOT B GIVEN NOT A = 2/5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "B, A GIVEN B, NOT A GIVEN NOT B",
+          "isTest": false,
+          "testIn": "B = 2/5\nA GIVEN B = 3/10\nNOT A GIVEN NOT B = 1/2",
+          "testOut": "A = 21/50\nA AND B = 3/25\nA AND NOT B = 3/10\nA GIVEN B = 3/10\nA GIVEN NOT B = 1/2\nB = 2/5\nB GIVEN A = 2/7\nB GIVEN NOT A = 14/29\nNOT A = 29/50\nNOT A AND B = 7/25\nNOT A AND NOT B = 3/10\nNOT A GIVEN B = 7/10\nNOT A GIVEN NOT B = 1/2\nNOT B = 3/5\nNOT B GIVEN A = 5/7\nNOT B GIVEN NOT A = 15/29",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A AND B, NOT A AND B, A AND NOT B",
+          "isTest": true,
+          "testIn": "A AND B = 1/12\nNOT A AND B = 5/12\nA AND NOT B = 1/6",
+          "testOut": "A = 1/4\nA AND B = 1/12\nA AND NOT B = 1/6\nA GIVEN B = 1/6\nA GIVEN NOT B = 1/3\nB = 1/2\nB GIVEN A = 1/3\nB GIVEN NOT A = 5/9\nNOT A = 3/4\nNOT A AND B = 5/12\nNOT A AND NOT B = 1/3\nNOT A GIVEN B = 5/6\nNOT A GIVEN NOT B = 2/3\nNOT B = 1/2\nNOT B GIVEN A = 2/3\nNOT B GIVEN NOT A = 4/9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "A AND B, A AND NOT B, NOT A AND NOT B",
+          "isTest": false,
+          "testIn": "A AND B = 1/2\nA AND NOT B = 2/5\nNOT A AND NOT B = 1/20",
+          "testOut": "A = 9/10\nA AND B = 1/2\nA AND NOT B = 2/5\nA GIVEN B = 10/11\nA GIVEN NOT B = 8/9\nB = 11/20\nB GIVEN A = 5/9\nB GIVEN NOT A = 1/2\nNOT A = 1/10\nNOT A AND B = 1/20\nNOT A AND NOT B = 1/20\nNOT A GIVEN B = 1/11\nNOT A GIVEN NOT B = 1/9\nNOT B = 9/20\nNOT B GIVEN A = 4/9\nNOT B GIVEN NOT A = 1/2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Not enough values",
+          "isTest": true,
+          "testIn": "A AND B = 1/2\nA AND NOT B = 2/5\nNOT A = 1/10",
+          "testOut": "A = 9/10\nA AND B = 1/2\nA AND NOT B = 2/5\nB GIVEN A = 5/9\nNOT A = 1/10\nNOT B GIVEN A = 4/9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Not enough values",
+          "isTest": false,
+          "testIn": "B = 4/5\nNOT B = 1/5\nA = 3/5",
+          "testOut": "A = 3/5\nB = 4/5\nNOT A = 2/5\nNOT B = 1/5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Impossible",
+          "isTest": true,
+          "testIn": "A = 3/5\nB = 4/5\nNOT A AND B = 1/2",
+          "testOut": "IMPOSSIBLE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Impossible",
+          "isTest": false,
+          "testIn": "A AND B = 1/2\nA AND NOT B = 2/5\nNOT A AND B = 1/5",
+          "testOut": "IMPOSSIBLE",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "The probabilities are given as fractions of integers.",
+      "coverBinaryId": 87292125809341,
+      "stubGenerator": "read p1:string(30)\nread p2:string(30)\nread p3:string(30)\nwrite event=proba",
+      "inputDescription": "[[FIRST PROBABILITY]] = {{value}}\n[[SECOND PROBABILITY]] = {{value}}\n[[THIRD PROBABILITY]] = {{value}}",
+      "solutionLanguage": "Python3",
+      "outputDescription": "16 sorted lines of the probabilities (written as reduced fractions) if the exercise is solvable, written as the input and including the input.\nIf the given data are not enough to solve the exercise, print only the probabilities that you can calculate (and that you are given).\n[[IMPOSSIBLE]] if the solution is a contradiction (for example if a probability is <0 or >1 or if a probability has actually two different values)."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You have to write a solver of a conditional probabilities exercise where <var>A</var> and <var>B</var> are two events.<br>For readability, we will write that the probability of <var>A</var> is <var>A</var>.<br>You are given three probabilities, for example:<br><br>* <var>A</var>, <var>B</var>, <var>A GIVEN B</var><br>* <var>NOT A</var>, <var>A AND B</var>, <var>B GIVEN NOT A</var><br>* <var>A</var>, <var>NOT A GIVEN B</var>, <var>B GIVEN A</var><br><br>Where:<br>* <var>NOT A</var> means the probability of the opposite of <var>A</var>,<br>* <var>A AND B</var> means the probability of the conjunction of <var>A</var> and <var>B</var> (ie <var>A</var> and <var>B</var> occur simultaneously),<br>* <var>A GIVEN B</var> means the probability of <var>A</var> if <var>B</var> occurs.<br><br>For example, you have these relations:<br><var>A</var> + <var>NOT A</var> = 1<br><var>A AND B</var> + <var>A AND NOT B</var> = <var>A</var><br><var>A AND NOT B</var> = <var>A</var> &times; <var>NOT B GIVEN A</var> = <var>NOT B</var> &times; <var>A GIVEN NOT B</var><br><br>Note that <var>A AND B</var> is <var>B AND A</var> (so we will use only the first one) but that <var>A GIVEN B</var> <strong>is not</strong> <var>B GIVEN A</var> (it&rsquo;s a classical fallacy in psychology).<br>You have to find all the probabilities you can build with the words <var>A</var>, <var>B</var>, <var>NOT</var> (unary operator), <var>AND</var> and <var>GIVEN</var> (binary operators). Write them in the lexicographic order: <var>A</var> before <var>A AND B</var> before <var>A GIVEN B</var> before <var>A GIVEN NOT B</var> but not <var>B AND A</var>.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><var>FIRST PROBABILITY</var> = <const>value</const><br><var>SECOND PROBABILITY</var> = <const>value</const><br><var>THIRD PROBABILITY</var> = <const>value</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">16 sorted lines of the probabilities (written as reduced fractions) if the exercise is solvable, written as the input and including the input.<br>If the given data are not enough to solve the exercise, print only the probabilities that you can calculate (and that you are given).<br><var>IMPOSSIBLE</var> if the solution is a contradiction (for example if a probability is &lt;0 or &gt;1 or if a probability has actually two different values).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">The probabilities are given as fractions of integers.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">A = 1/2\nB = 1/3\nA AND B = 1/6</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">A = 1/2\nA AND B = 1/6\nA AND NOT B = 1/3\nA GIVEN B = 1/2\nA GIVEN NOT B = 1/2\nB = 1/3\nB GIVEN A = 1/3\nB GIVEN NOT A = 1/3\nNOT A = 1/2\nNOT A AND B = 1/6\nNOT A AND NOT B = 1/3\nNOT A GIVEN B = 1/2\nNOT A GIVEN NOT B = 1/2\nNOT B = 2/3\nNOT B GIVEN A = 2/3\nNOT B GIVEN NOT A = 2/3</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 107635156256,
+  "avatar": 26090852120005,
+  "commentCount": 10,
+  "upVotes": 27,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 695655,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1660680337000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1661680899272,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1663094557185,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

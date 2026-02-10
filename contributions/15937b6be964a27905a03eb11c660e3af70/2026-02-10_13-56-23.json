@@ -1,0 +1,171 @@
+{
+  "id": 159,
+  "activeVersion": 3,
+  "score": 4,
+  "votableId": 357,
+  "codingamerId": 1122412,
+  "views": 216,
+  "commentableId": 153,
+  "title": "Castle Siege",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "TheNinja",
+  "publicHandle": "15937b6be964a27905a03eb11c660e3af70",
+  "codingamerHandle": "796ed19c638a4cbd9cf6526be9cf56542142211",
+  "lastVersion": {
+    "version": 3,
+    "data": {
+      "title": "Castle Siege",
+      "fastest": true,
+      "reverse": false,
+      "duration": 1200,
+      "shortest": true,
+      "solution": "w,h=[int(i)for i in input().split()]\nmaps=[[],[]]\nfor i in range(h):\n    maps[0]+=[[c for c in input()]]\n    maps[1]+=[[' 'for i in range(w)]]\n    \nr=0\nstate=''\nwhile 1:\n    cMap = maps[r%2]\n    nMap = maps[1-r%2]\n    r+=1\n    #Phase 1\n    for i in range(h):\n        for j in range(w):\n            c = cMap[i][j]\n            if c=='T':\n                bestX = -1\n                bestY = -1\n                crit = None\n                for k in range(-2,3):\n                    for l in range(-2,3):\n                        x = j+l\n                        y = i+k\n                        if (x>=0 and y>=0 and x<w and y<h):\n                            e = cMap[y][x]\n                            if e.isdigit():\n                                dx = abs(x-j)\n                                nx = w-x\n                                nCrit = (y,dx,nx)\n                                if crit is None or nCrit < crit:\n                                    bestX = x\n                                    bestY = y\n                                    crit = nCrit\n                if bestX>-1:\n                    #Reduce HP by 1 (if HP>0)\n                    b = int(cMap[bestY][bestX])\n                    if b:\n                        b-=1\n                    cMap[bestY][bestX]=str(b)\n    #Phase 2\n    win=1\n    for i in range(h):\n        for j in range(w):\n            c = cMap[i][j]\n            if c.isdigit():\n                d = int(c)\n                if d:\n                    win=0\n                else:\n                    cMap[i][j]='.'\n    if win:\n        state='WIN'\n        break\n    #Phase 3\n    lose=0\n    for i in range(w):\n        nMap[h-1][i] = '.'\n    for i in range(h-1):\n        for j in range(w):\n            c=cMap[i][j]\n            d=cMap[i+1][j]\n            if c=='T':\n                nMap[i][j]='T'\n            elif not d=='T':\n                if (i==0 and c.isdigit()):\n                    lose = 1\n                nMap[i][j]=d\n            else:\n                nMap[i][j]='.'\n    if lose:\n        state='LOSE'\n        break\nprint(state,r)",
+      "statement": "This is an implementation of a castle siege on a rectangular map.  Enemies attempt to reach the castle at the top of the map, while towers attempt to fend them off.\n\nEach round of the game has the following three phases:\n\n<<1. Each tower targets a single enemy within a 5×5 square centered on itself, if any.>>\n\nTowers prioritize targets by the following criteria, in order of precedence. Each criteria is used to break ties of the above criteria.\n\nCriteria:\n1. The enemy furthest {{NORTH}}\n2. The enemy closest to the tower\n3. The enemy furthest {{EAST}}\n\n<<2. Each enemy's HP is reduced by the number of towers that targeted it. Then, each enemy that has 0 or less HP is DESTROYED. Then, if no enemies remain, the player WINS.>>\n\n<<3. Each enemy moves {{NORTH}} one cell. If an enemy moves into a tower this way, the enemy is  DESTROYED. If an enemy moves off the top of the map, the player LOSES.>>\n\nYou must output WIN/LOSE followed by the round number when the game ended.",
+      "testCases": [
+        {
+          "title": {
+            "2": "Enough Time"
+          },
+          "isTest": true,
+          "testIn": "6 4\n.T....\n......\n...3..\n......",
+          "testOut": "WIN 3",
+          "isValidator": false
+        },
+        {
+          "title": {
+            "2": "Enough Time"
+          },
+          "isTest": false,
+          "testIn": "4 4\n....\nT...\n....\n.4..",
+          "testOut": "WIN 4",
+          "isValidator": true
+        },
+        {
+          "title": {
+            "2": "Collision"
+          },
+          "isTest": true,
+          "testIn": "1 6\nT\n.\n.\n.\n.\n9",
+          "testOut": "WIN 6",
+          "isValidator": false
+        },
+        {
+          "title": {
+            "2": "Collision"
+          },
+          "isTest": false,
+          "testIn": "2 4\n.T\n..\n..\n.9",
+          "testOut": "WIN 4",
+          "isValidator": true
+        },
+        {
+          "title": {
+            "2": "Out of Range"
+          },
+          "isTest": true,
+          "testIn": "4 4\nT...\n....\n....\n...1",
+          "testOut": "LOSE 4",
+          "isValidator": false
+        },
+        {
+          "title": {
+            "2": "Out of Range"
+          },
+          "isTest": false,
+          "testIn": "5 3\n.T...\n.T...\n....1",
+          "testOut": "LOSE 3",
+          "isValidator": true
+        },
+        {
+          "title": {
+            "2": "Priority Zero"
+          },
+          "isTest": true,
+          "testIn": "6 2\n.0..1.\n..T...",
+          "testOut": "LOSE 1",
+          "isValidator": false
+        },
+        {
+          "title": {
+            "2": "Priority Zero"
+          },
+          "isTest": false,
+          "testIn": "6 2\n..0..1.\n...T...",
+          "testOut": "LOSE 1",
+          "isValidator": true
+        },
+        {
+          "title": {
+            "2": "East Criteria"
+          },
+          "isTest": true,
+          "testIn": "5 3\n....T\n..T..\n2...9",
+          "testOut": "LOSE 3",
+          "isValidator": false
+        },
+        {
+          "title": {
+            "2": "East Criteria"
+          },
+          "isTest": false,
+          "testIn": "5 4\n....T\n..T..\n.....\n2...9",
+          "testOut": "LOSE 4",
+          "isValidator": true
+        },
+        {
+          "title": {
+            "2": "Gauntlet 1"
+          },
+          "isTest": true,
+          "testIn": "3 6\nT..\n..T\nT..\n.9.\n...\n...\n...",
+          "testOut": "WIN 4",
+          "isValidator": false
+        },
+        {
+          "title": {
+            "2": "Gauntlet 1"
+          },
+          "isTest": false,
+          "testIn": "5 4\nT...T\nT...T\n.....\n..9..",
+          "testOut": "WIN 3",
+          "isValidator": true
+        },
+        {
+          "title": {
+            "2": "Gauntlet 2"
+          },
+          "isTest": true,
+          "testIn": "3 4\nT..\n..T\n.9.\nT..",
+          "testOut": "LOSE 3",
+          "isValidator": false
+        },
+        {
+          "title": {
+            "2": "Gauntlet 2"
+          },
+          "isTest": false,
+          "testIn": "5 4\nT...T\n.....\n..9..\nT....",
+          "testOut": "LOSE 3",
+          "isValidator": true
+        }
+      ],
+      "constraints": "0 ≤ [[N]] ≤ 9\n1 ≤ [[W]], [[H]] ≤ 8",
+      "stubGenerator": "read W:int H:int\nloop H read line:word(W)\nwrite answer",
+      "inputDescription": "<<Line 1>>: The width [[W]] and the height [[H]] of the map.\n<<Next [[H]] Lines>>: Strings [[W]] characters long, representing entities in each cell of the initial state of the map. Entities are represented by the following characters:\n{{.}} Empty Space\n[[N]] An enemy with [[N]] HP\n{{T}} A Tower",
+      "solutionLanguage": "Python3",
+      "outputDescription": "A single line containing the WIN/LOSE state of the game [[State]] (either 'WIN' or 'LOSE') followed by the round number [[R]] (starting from 1) when the game ended."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement_wrapping_div\" style=\"position: relative;\"> \n\n<style type=\"text/css\"> \n.statement_wrapping_div, .statement {font-size: 14px;font-weight: 400;}  \n.statement_wrapping_div {margin-bottom: 10px;}\n.statement_wrapping_div ul {padding-left: 40px;}\n.statement {background-color:rgba(255, 255, 255, 0.85);padding: 20px;padding-top:0px;}\ncode, span.const {display:inline-block;font-family:Inconsolata,consolas,monospace;padding-left:5px;padding-right:5px;padding-top:1px;padding-bottom:1px;background-color:#18a1ea;white-space: nowrap;margin-right:2px;color: white;}\nspan.var {display: inline-block;padding-left:5px;padding-right:5px;padding-top:1px;padding-bottom:2px;background-color:#f2dd00;white-space:nowrap;margin-left:1px;margin-right:2px;color:black;}\n.stat_mid_title {font-weight:700;margin-bottom:5px;}\n.protocol_title{color:#ffd200;}\n.cross-statementBlock{position:relative;}</style>\n\n<div class=\"stat_mid_title\">The program:</div>\n<div class=\"question-statement\">This is an implementation of a castle siege on a rectangular map.  Enemies attempt to reach the castle at the top of the map, while towers attempt to fend them off.<br><br>Each round of the game has the following three phases:<br><br><strong>1. Each tower targets a single enemy within a 5&times;5 square centered on itself, if any.</strong><br><br>Towers prioritize targets by the following criteria, in order of precedence. Each criteria is used to break ties of the above criteria.<br><br>Criteria:<br>1. The enemy furthest <span class=\"const\">NORTH</span><br>2. The enemy closest to the tower<br>3. The enemy furthest <span class=\"const\">EAST</span><br><br><strong>2. Each enemy's HP is reduced by the number of towers that targeted it. Then, each enemy that has 0 or less HP is DESTROYED. Then, if no enemies remain, the player WINS.</strong><br><br><strong>3. Each enemy moves <span class=\"const\">NORTH</span> one cell. If an enemy moves into a tower this way, the enemy is  DESTROYED. If an enemy moves off the top of the map, the player LOSES.</strong><br><br>You must output WIN/LOSE followed by the round number when the game ended.</div>\n<div style=\"background-color: rgba(0, 0, 0, 0.85);padding: 20px;color: white;margin-top: 10px;\">\n<div class=\"protocol_title\"><b>INPUT:</b></div>\n<div class=\"question-statement-input\"><strong>Line 1</strong>: The width <span class=\"var\">W</span> and the height <span class=\"var\">H</span> of the map.<br><strong>Next <span class=\"var\">H</span> Lines</strong>: Strings <span class=\"var\">W</span> characters long, representing entities in each cell of the initial state of the map. Entities are represented by the following characters:<br><span class=\"const\">.</span> Empty Space<br><span class=\"var\">N</span> An enemy with <span class=\"var\">N</span> HP<br><span class=\"const\">T</span> A Tower</div><br /> \n\n<div class=\"protocol_title\"><b>OUTPUT:</b></div>\n<div class=\"question-statement-output\">A single line containing the WIN/LOSE state of the game <span class=\"var\">State</span> (either 'WIN' or 'LOSE') followed by the round number <span class=\"var\">R</span> (starting from 1) when the game ended.</div><br /> \n\n<div class=\"protocol_title\"><b>CONSTRAINTS:</b></div>\n<div class=\"question-statement-constraints\">0 &le; <span class=\"var\">N</span> &le; 9<br>1 &le; <span class=\"var\">W</span>, <span class=\"var\">H</span> &le; 8</div><br /> \n\n<div class=\"protocol_title\"><b>EXAMPLE:</b></div>\n<div style=\"border: 1px solid white; width: 440px;\">\n<div style=\"float: left; margin-left: 10px; padding-left: 10px; width: 200px; font-family: monospace;\">\n<div><b>Input</b></div>\n<div class=\"question-statement-example-in\">6 4<br>.T....<br>......<br>...3..<br>......</div>\n</div>\n<div style=\"margin-left: 10px; float: left; padding-left: 5px; width: 200px; font-family: monospace;\">\n<div><b>Output</b></div>\n<div class=\"question-statement-example-out\">WIN 3</div>\n</div>\n<div style=\"clear: both;\">&nbsp;</div>\n</div>\n</div>"
+  },
+  "avatar": 3823739809641,
+  "commentCount": 11,
+  "upVotes": 5,
+  "downVotes": 1,
+  "statusHistory": [],
+  "editable": false,
+  "draft": false,
+  "readyForModeration": true
+}

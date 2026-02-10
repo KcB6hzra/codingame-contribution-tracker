@@ -1,0 +1,258 @@
+{
+  "id": 104955,
+  "activeVersion": 74,
+  "score": 16,
+  "votableId": 34882644,
+  "codingamerId": 5231361,
+  "views": 258,
+  "commentableId": 34729896,
+  "title": "Sand Fall",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "yhuberla",
+  "publicHandle": "10495594a03aa6dd3555d16eceadf8956657c5",
+  "codingamerHandle": "975b5b59ebeebbe184dccb09a34bb4b01631325",
+  "lastVersion": {
+    "version": 74,
+    "autocloseTime": 1733497586021,
+    "freezeTime": 1731510386021,
+    "data": {
+      "title": "Sand Fall",
+      "topics": [
+        {
+          "id": 46,
+          "handle": "loops",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 107,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        },
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 71,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        },
+        {
+          "id": 128,
+          "handle": "ascii-art",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Ascii Art",
+            "2": "Ascii Art"
+          },
+          "puzzleCount": 48,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "#include <iostream>\nusing namespace std;\n\nstring res;\nint w, h, n;\n\nstatic void dropGrain( char c, int pos )\n{\n    int y = 0;\n    while (y < h - 1 && res[pos + y * w] == ' ') ++y;\n\n    if (res[pos + y * w] == ' ') {\n        res[pos + y * w] = c;\n        return ;\n    }\n\n    int dir = (c >= 'a' && c <= 'z') ? 1 : -1;\n\n    if (pos + dir >= 0 && pos + dir < w && res[pos + dir + y * w] == ' ') {\n        dropGrain(c, pos + dir);\n    } else if (pos - dir >= 0 && pos - dir < w && res[pos - dir + y * w] == ' ') {\n        dropGrain(c, pos - dir);\n    } else if (y - 1 >= 0) {\n        res[pos + --y * w] = c;\n    } else {\n        cerr << \"OVERFLOW\" << endl; // never happens\n        exit(1);\n    }\n}\n\nint main()\n{\n    cin >> w >> h; cin.ignore();\n    res.resize(w * h, ' ');\n    cin >> n; cin.ignore();\n    for (int i = 0; i < n; i++) {\n        string s;\n        int p;\n        cin >> s >> p; cin.ignore();\n        if (p < 0 || p >= w) {\n            cerr << \"Out of bounds: \" << p << endl; // never happens\n            return 1;\n        }\n        dropGrain(s[0], p);\n    }\n\n    for (int i = 0; i < h; ++i) {\n        cout << '|' << res.substr(i * w, w) << '|' << endl;\n    }\n    cout << '+' << string(w, '-') << '+' << endl;\n}",
+      "statement": "[[n]] grains of sand are being dropped one at a time inside a box of dimensions [[w]] x [[h]]. Display the resulting box content after the last grain stopped falling.\n\nEach grain of sand is represented by an alphabetical character ({{a-z}} or {{A-Z}}) and by its initial position [[p]] above the box.\n\n<<Sand behavior>>\n\nIf there is an empty space below it, it drops down.\nIf there is not an empty space directly below it, but there is space at either <<diagonally adjacent>> position below (left or right, see the next two rules), then it will move horizontally in that direction before falling down again.\nIf it is a <<lowercase>> character, it first tries to fall <<down>>, then towards the <<right>>, and then towards the <<left>>.\nIf it is an <<uppercase>> character, it first tries to fall <<down>>, then towards the <<left>>, and then towards the <<right>>.\nIf it can't fall down (below, to the right, or to the left) it has reached its final position.\n\n<<Example>>\n\nWith this input:\n`\n5 3\n6\na 2\nb 2\nc 2\nd 2\ne 2\nF 2`\nAfter <<a 2>>, 'a' drops to the bottom. ('x's are only here for explanation purposes.)\n\n`xxxxx\nxxxxx\nxx<<a>>xx`\nAfter <<b 2>>, 'b' couldn't go on 'a', so it tried right of 'a' (because 'b' is lowercase) and found empty space.\n\n`xxxxx\nxxxxx\nxxa<<b>>x`\nAfter <<c 2>>, 'c' couldn't go on 'a', tried right but couldn't go on 'b', so it tried left and found empty space.\n\n`xxxxx\nxxxxx\nx<<c>>abx`\nAfter <<d 2>>, 'd' couldn't go on 'a', tried right but couldn't go on 'b', tried left but couldn't go on 'c', so reached its final position.\n\n`xxxxx\nxx<<d>>xx\nxcabx`\nAfter <<e 2>>, 'e' couldn't go on 'd', found empty space right of 'd', kept falling, couldn't go on 'b', found empty space right of 'b'.\n\n`xxxxx\nxxdxx\nxcab<<e>>`\nAfter <<F 2>>, 'F' couldn't go on 'd', found empty space left of 'd', kept falling, couldn't go on 'c', found empty space left of 'c'.\n\n`xxxxx\nxxdxx\n<<F>>cabe`",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "3 3\n4\nn 1\ne 1\no 1\nA 1",
+          "testOut": "|   |\n| A |\n|one|\n+---+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Example",
+          "isTest": false,
+          "testIn": "6 4\n8\nN 1\nO 1\nE 1\nA 1\nw 4\nT 4\no 4\nB 4",
+          "testOut": "|      |\n|      |\n| A  B |\n|ONETwo|\n+------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Wall Hug",
+          "isTest": true,
+          "testIn": "4 4\n8\nS 0\nA 0\nl 0\nN 0\no 0\nI 0\nD 0\nv 0",
+          "testOut": "|    |\n|I   |\n|lov |\n|SAND|\n+----+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Wall Hug",
+          "isTest": false,
+          "testIn": "5 3\n9\nD 4\nN 4\nv 4\nA 4\no 4\nE 4\nS 4\nl 4\nW 4",
+          "testOut": "|   WE|\n|  lov|\n| SAND|\n+-----+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Single Pile",
+          "isTest": true,
+          "testIn": "7 6\n16\ng 3\nG 3\ng 3\ng 3\nG 3\nG 3\ng 3\ng 3\ng 3\nG 3\nG 3\nG 3\ng 3\nG 3\ng 3\nG 3",
+          "testOut": "|       |\n|       |\n|   G   |\n|  Ggg  |\n| GGggG |\n|GGGgggg|\n+-------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Single Pile",
+          "isTest": false,
+          "testIn": "6 7\n15\nG 3\ng 3\nG 3\nG 3\ng 3\ng 3\nG 3\nG 3\nG 3\ns 3\ns 3\ns 3\nG 3\ng 3\nG 3",
+          "testOut": "|      |\n|      |\n|      |\n|   G  |\n|  gGs |\n| GGGgs|\n|sGGGgg|\n+------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Close Fit",
+          "isTest": true,
+          "testIn": "2 2\n4\nS 0\nT 1\nu 1\nJ 1",
+          "testOut": "|Ju|\n|ST|\n+--+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Close Fit",
+          "isTest": false,
+          "testIn": "4 2\n8\ne 0\nF 1\nC 0\ni 0\nl 0\nt 2\ns 3\no 3",
+          "testOut": "|Clos|\n|eFit|\n+----+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Fibo",
+          "isTest": true,
+          "testIn": "50 5\n88\nF 0\ni 2\nB 5\nB 5\no 8\no 8\no 8\nN 13\nN 13\nN 13\nN 13\nN 13\na 18\na 18\na 18\na 18\na 18\na 18\na 18\na 18\nC 25\nC 25\nC 25\nC 25\nC 25\nC 25\nC 25\nC 25\nC 25\nC 25\nC 25\nC 25\nC 25\nc 34\nc 34\nc 34\nc 34\nc 34\nc 34\nc 34\nc 34\nc 34\nc 34\nc 34\nc 34\nc 34\nc 34\nc 34\nc 34\nc 34\nc 34\nc 34\nc 34\nc 34\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45\nI 45",
+          "testOut": "|                                            III   |\n|                                  cc       IIIII  |\n|                        CC       cccc     IIIIIII |\n|             N   aaa   CCCC     cccccc   IIIIIIIII|\n|F i BB ooo NNNN aaaaa CCCCCCC ccccccccc IIIIIIIIII|\n+--------------------------------------------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Fibo",
+          "isTest": false,
+          "testIn": "9 13\n88\nF 0\ni 1\nB 2\nB 2\no 3\no 3\no 3\nN 4\nN 4\nN 4\nN 4\nN 4\na 5\na 5\na 5\na 5\na 5\na 5\na 5\na 5\nC 6\nC 6\nC 6\nC 6\nC 6\nC 6\nC 6\nC 6\nC 6\nC 6\nC 6\nC 6\nC 6\nc 7\nc 7\nc 7\nc 7\nc 7\nc 7\nc 7\nc 7\nc 7\nc 7\nc 7\nc 7\nc 7\nc 7\nc 7\nc 7\nc 7\nc 7\nc 7\nc 7\nc 7\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8\nI 8",
+          "testOut": "|        I|\n|      III|\n|     IIII|\n|    IIIII|\n|   IIIIcc|\n|  IIIIccc|\n| IIIIcccc|\n|IIIIccCcc|\n|IIIccCCCc|\n|IIccCaCCC|\n|ccCCNaaCC|\n|cCNoNNaaa|\n|FiBBooNaa|\n+---------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Pop Culture",
+          "isTest": true,
+          "testIn": "11 9\n69\nw 3\nw 3\nw 7\nw 7\nw 3\nw 7\nZ 3\nA 7\nw 5\nD 7\nL 6\nE 5\nb 0\nd 10\nw 0\nw 10\nH 0\nH 10\nx 0\nx 10\nx 3\nx 7\nm 3\nm 3\nm 3\nm 7\nm 7\nm 7\nq 10\np 0\nm 0\nm 10\nm 5\nA 4\nA 10\nA 4\nA 10\nA 3\nA 9\nA 3\nA 9\nA 2\nA 8\nA 2\nA 8\nA 2\nA 8\nA 2\nA 8\nA 2\nA 8\nv 3\nv 7\nv 3\nv 7\nv 3\nv 7\nv 3\nv 5\nv 5\nA 4\nA 6\nA 4\nA 7\nA 5\nA 5\nA 5\nA 5\nA 5",
+          "testOut": "|     A     |\n|    AAA    |\n|   AAAAA   |\n|  AvvvvvA  |\n| AAAvvvAAA |\n|AAAAAvAAAAA|\n|pmmmmmmmmmq|\n|HxxZELDAxxH|\n|bwwwwwwwwwd|\n+-----------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Pop Culture",
+          "isTest": false,
+          "testIn": "11 9\n69\nw 3\nw 3\nw 7\nw 7\nw 3\nw 7\nH 3\nY 7\nw 5\nR 7\nR 6\nA 5\nb 0\nd 10\nw 0\nw 10\nH 0\nH 10\nx 0\nx 10\nx 3\nx 7\nm 3\nm 3\nm 3\nm 7\nm 7\nm 7\nq 10\np 0\nm 0\nm 10\nm 5\nA 3\nA 10\nA 3\nA 10\nA 2\nA 9\nA 2\nA 9\nA 2\nA 9\nA 2\nA 9\nv 2\nv 8\nv 2\nv 8\nA 2\nA 8\nI 3\nv 4\nI 4\nv 5\nI 5\nv 5\nv 5\nv 2\nv 6\nv 4\nv 6\nA 4\nI 6\nA 6\nI 5\nA 5\nA 5\nA 5",
+          "testOut": "|     A     |\n|    AIA    |\n|   AvIvA   |\n|  AvvIvvA  |\n| AAvvIvvAA |\n|AAAAvIvAAAA|\n|pmmmmmmmmmq|\n|HxxHARRYxxH|\n|bwwwwwwwwwd|\n+-----------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Chess - Italian opening",
+          "isTest": true,
+          "testIn": "8 8\n64\nR 0\nB 2\nK 4\no 6\nN 0\nQ 2\nz 4\nR 6\nz 4\nP 4\nP 4\no 4\nP 4\nP 5\nN 5\nz 4\nP 4\nP 5\no 5\no 5\nz 5\nz 5\nz 5\no 6\no 6\nz 6\nz 6\no 6\np 7\nP 7\no 7\no 7\np 7\no 7\np 7\nr 7\nP 7\nz 7\nB 7\nz 7\nz 7\np 7\nn 7\no 6\no 6\no 6\no 6\no 6\nb 6\nz 5\nz 5\nn 5\np 5\nk 5\no 4\no 4\np 4\nq 4\nz 3\np 3\nb 3\np 2\no 2\nr 1",
+          "testOut": "|robqkbnr|\n|ppppoppp|\n|zonozozo|\n|ozozpzoz|\n|zoBoPozo|\n|ozozoNoz|\n|PPPPzPPP|\n|RNBQKzoR|\n+--------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Chess - Anastasia's mate",
+          "isTest": false,
+          "testIn": "8 8\n64\no 4\nz 4\nz 4\nz 4\nR 2\nK 2\nP 2\no 2\no 2\nP 2\no 2\nz 2\nP 2\nz 2\nz 2\no 4\no 4\no 4\nR 4\nz 4\nz 4\nz 4\no 4\no 4\no 4\no 4\no 4\nz 4\nz 4\nz 4\nz 4\nz 4\no 4\no 4\no 4\no 4\no 4\no 4\no 4\nN 4\nz 4\nz 4\np 4\nz 4\nz 4\nz 4\nz 4\nz 4\no 4\np 4\nr 4\no 4\no 4\no 4\no 4\nz 1\nz 1\no 1\no 1\nz 1\nz 1\nz 6\nz 6\nk 6",
+          "testOut": "|zozozrzk|\n|ozozNppz|\n|zozozozo|\n|ozozozoz|\n|zozozozo|\n|ozozozoz|\n|PPPozozo|\n|oKRzozoR|\n+--------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Landscape",
+          "isTest": true,
+          "testIn": "32 10\n192\na 4\na 4\na 4\na 4\na 4\na 4\na 4\na 4\na 4\na 4\na 4\na 4\na 3\na 3\na 1\na 6\na 6\na 8\nA 0\nA 2\nA 2\nA 4\nA 4\nA 5\nA 5\nA 7\nA 7\nA 9\nA 9\nA 10\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 20\nb 18\nb 18\nb 18\nb 18\nb 18\nb 18\nb 18\nb 18\nb 18\nb 18\nb 16\nb 16\nb 16\nb 16\nb 16\nb 22\nb 22\nb 22\nb 22\nb 22\nb 10\nb 10\nb 11\nb 11\nB 11\nb 15\nb 15\nb 15\nb 15\nb 14\nB 14\nb 17\nB 17\nB 16\nB 15\nB 14\nB 11\nB 19\nB 19\nB 18\nB 21\nB 21\nb 22\nb 22\nB 8\nB 8\nb 31\nb 31\nb 31\nb 31\nb 31\nb 29\nb 29\nB 31\nB 31\nb 30\nB 30\nb 28\nb 28\nb 27\nb 26\nb 26\nB 28\nB 28\nB 27\nb 22\nB 22\nb 23\nB 23\nB 24\nB 22\nc 3\nc 3\nc 3\nc 3\nc 3\nc 3\nc 3\nc 3\nc 3\nc 3\nc 3\nc 3\nc 3\nc 3\nc 3\nc 0\nc 9\nc 9\nc 9\nc 9\nc 5\nc 5\nc 5\nc 7\nc 7\nC 2\nC 2\nC 1\nC 4\nC 4\nC 4\nC 5\nC 5\nC 8\nC 8\nC 8\nC 11\nC 11\nd 30\nd 30\nd 30\nd 30\nd 30\nd 30\nd 30\nd 30\nd 30\nd 30\nd 30\nd 30\nd 30\nd 30\nd 30\nd 30\nD 30\nD 30\nD 30\nD 30\nD 30\nD 30",
+          "testOut": "|                                |\n|                              D |\n|                             DdD|\n|  CCCC                      Dddd|\n|CCccccCCCC       BBBBBB    Ddddd|\n|ccccccccccCCC BBBbbbbbbBBBDddddd|\n|ccccAAcccccBBBbbbbbbbbbbbbBBBddd|\n|ccAAaaAABBBbbbbbbbbbbbbbbbbbbBBB|\n|AAaaaaaaAAbbbbbbbbbbbbbbbbbbbbbb|\n|aaaaaaaaaaAAbbbbbbbbbbbbbbbbbbbb|\n+--------------------------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Landscape",
+          "isTest": false,
+          "testIn": "21 7\n54\na 4\na 4\na 4\na 4\na 4\na 4\na 4\na 4\na 4\na 16\na 16\na 16\na 16\na 16\na 16\na 16\na 16\na 16\na 8\na 8\na 8\na 8\na 8\na 8\na 8\na 8\na 8\na 5\na 5\na 5\na 6\na 11\na 11\na 11\na 11\na 11\na 11\na 11\na 11\na 11\na 14\na 14\na 14\na 14\na 10\nb 10\nb 10\nb 10\nb 10\nb 10\nb 10\nb 10\nb 10\nb 10",
+          "testOut": "|                     |\n|          b          |\n|         bbb         |\n|        bbbbb        |\n|    aaaaaaaaaaaaa    |\n|   aaaaaaaaaaaaaaa   |\n|  aaaaaaaaaaaaaaaaa  |\n+---------------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Big Box",
+          "isTest": true,
+          "testIn": "30 15\n202\nW 10\nh 20\ne 10\nn 20\nf 10\na 20\nl 10\nl 20\ni 10\nn 20\ng 10\ne 20\na 10\nc 20\nh 10\ng 20\nr 10\na 20\ni 10\nn 20\nf 10\no 20\nl 10\nl 20\no 10\nw 20\ns 10\ns 20\ni 10\nm 20\np 10\nl 20\ne 10\nr 20\nu 10\nl 20\ne 10\ns 20\nI 10\nf 20\nt 10\nh 20\ne 10\nr 20\ne 10\ni 20\ns 10\na 20\nn 10\ne 20\nm 10\np 20\nt 10\ny 20\ns 10\np 20\na 10\nc 20\ne 10\nb 20\ne 10\nl 20\nl 10\no 20\nw 10\ni 20\nt 10\ni 20\nt 10\nf 20\na 10\nl 20\nl 10\ns 20\nd 10\no 20\nw 10\nn 20\nI 10\nf 20\ni 10\nt 20\ni 10\ns 20\na 10\nl 20\no 10\nw 20\ne 10\nr 20\nc 10\na 20\ns 10\ne 20\nc 10\nh 20\na 10\nr 20\na 10\nc 20\nt 10\ne 20\nr 10\ni 20\nt 10\nf 20\ni 10\nr 20\ns 10\nt 20\nt 10\nr 20\ni 10\ne 20\ns 10\nt 20\no 10\nf 20\na 10\nl 20\nl 10\nd 20\no 10\nw 20\nn 10\nt 20\no 10\nw 20\na 10\nr 20\nd 10\ns 20\nt 10\nh 20\ne 10\nr 20\ni 10\ng 20\nh 10\nt 20\nI 10\nf 20\ni 10\nt 20\ni 10\ns 20\na 10\nn 20\nu 10\np 20\np 10\ne 20\nr 10\nc 20\na 10\ns 20\ne 10\nc 20\nh 10\na 20\nr 10\na 20\nc 10\nt 20\ne 10\nr 20\ni 10\nt 20\nf 10\ni 20\nr 10\ns 20\nt 10\nt 20\nr 10\ni 20\ne 10\ns 20\nt 10\no 20\nf 10\na 20\nl 10\nl 20\nd 10\no 20\nw 10\nn 20\nt 10\no 20\nw 10\na 20\nr 10\nd 20\ns 10\nt 20\nh 10\ne 20\nl 10\ne 20\nf 10\nt 20",
+          "testOut": "|                              |\n|                              |\n|                              |\n|                              |\n|                    e         |\n|          tt       tin        |\n|         euhw     dtfao       |\n|        ralded   arttscl      |\n|       tiactaal otgeafrsa     |\n|     friosairorfarrrftiwco    |\n|    lfIsctneitnphtwiebfetes   |\n|   hihietsptawaorlialfcncwpit |\n|  seitoweirlesdasoimalspordnte|\n| rcesaleshlgfutllrsgleolyshlss|\n|wrtiIeIoafWeiiemhwcahnnnrpleft|\n+------------------------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Big Box",
+          "isTest": false,
+          "testIn": "30 12\n202\nW 20\nh 10\ne 20\nn 10\nf 20\na 10\nl 20\nl 10\ni 20\nn 10\ng 20\ne 10\na 20\nc 10\nh 20\ng 10\nr 20\na 10\ni 20\nn 10\nf 20\no 10\nl 20\nl 10\no 20\nw 10\ns 20\ns 10\ni 20\nm 10\np 20\nl 10\ne 20\nr 10\nu 20\nl 10\ne 20\ns 10\nI 20\nf 10\nt 20\nh 10\ne 20\nr 10\ne 20\ni 10\ns 20\na 10\nn 20\ne 10\nm 20\np 10\nt 20\ny 10\ns 20\np 10\na 20\nc 10\ne 20\nb 10\ne 20\nl 10\nl 20\no 10\nw 20\ni 10\nt 20\ni 10\nt 20\nf 10\na 20\nl 10\nl 20\ns 10\nd 20\no 10\nw 20\nn 10\nI 20\nf 10\ni 20\nt 10\ni 20\ns 10\na 20\nl 10\no 20\nw 10\ne 20\nr 10\nc 20\na 10\ns 20\ne 10\nc 20\nh 10\na 20\nr 10\na 20\nc 10\nt 20\ne 10\nr 20\ni 10\nt 20\nf 10\ni 20\nr 10\ns 20\nt 10\nt 20\nr 10\ni 20\ne 10\ns 20\nt 10\no 20\nf 10\na 20\nl 10\nl 20\nd 10\no 20\nw 10\nn 20\nt 10\no 20\nw 10\na 20\nr 10\nd 20\ns 10\nt 20\nh 10\ne 20\nr 10\ni 20\ng 10\nh 20\nt 10\nI 20\nf 10\ni 20\nt 10\ni 20\ns 10\na 20\nn 10\nu 20\np 10\np 20\ne 10\nr 20\nc 10\na 20\ns 10\ne 20\nc 10\nh 20\na 10\nr 20\na 10\nc 20\nt 10\ne 20\nr 10\ni 20\nt 10\nf 20\ni 10\nr 20\ns 10\nt 20\nt 10\nr 20\ni 10\ne 20\ns 10\nt 20\no 10\nf 20\na 10\nl 20\nl 10\nd 20\no 10\nw 20\nn 10\nt 20\no 10\nw 20\na 10\nr 20\nd 10\ns 20\nt 10\nh 20\ne 10\nl 20\ne 10\nf 20\nt 10",
+          "testOut": "|                              |\n|                    h         |\n|          oo       sfw        |\n|         span     riIhd       |\n|        indsco   wehsdel      |\n|       tslhfrsl tciictaaf     |\n|     tstfeltiwcaretetirort    |\n|    eiftafebfetetsotneitnpe   |\n|   etterialfcncwiawsptawaourf |\n|  trgrwiimalsporIleirlesdalatl|\n| dtrtlorsgleolyseeshlgfutlcair|\n|aahrslhwcahnnnrpIoafWeiiemasoi|\n+------------------------------+",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "2 <= [[w]], [[h]] <= 50\n0 < [[n]] < 256\n0 <= [[p]] < [[w]]\nAll grains will fit inside the box.",
+      "coverBinaryId": 128868544961168,
+      "stubGenerator": "read W:int H:int\nread N:int\nloop N read S:word(1) P:int\nwrite answer",
+      "inputDescription": "<<Line 1:>> Two integers [[w]] and [[h]] representing the width and height of the box.\n<<Line 2:>> [[n]]: the number of grains of sand being dropped.\n<<Next [[n]] lines:>> The character [[s]] representing the grain of sand followed by its initial position [[p]] above the box, separated by a space. [[p]] = 0 if it is above the left-most column and [[p]] = [[w]] - 1 if it is above the right-most column of the box.",
+      "solutionLanguage": "C++",
+      "outputDescription": "<<[[h]] lines:>> the box content, outlined by {{|}} on both sides.\n<<Last line:>> the box bottom, represented by {{+----+}} where {{-}} is repeated [[w]] times."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><var>n</var> grains of sand are being dropped one at a time inside a box of dimensions <var>w</var> x <var>h</var>. Display the resulting box content after the last grain stopped falling.<br><br>Each grain of sand is represented by an alphabetical character (<const>a-z</const> or <const>A-Z</const>) and by its initial position <var>p</var> above the box.<br><br><strong>Sand behavior</strong><br><br>If there is an empty space below it, it drops down.<br>If there is not an empty space directly below it, but there is space at either <strong>diagonally adjacent</strong> position below (left or right, see the next two rules), then it will move horizontally in that direction before falling down again.<br>If it is a <strong>lowercase</strong> character, it first tries to fall <strong>down</strong>, then towards the <strong>right</strong>, and then towards the <strong>left</strong>.<br>If it is an <strong>uppercase</strong> character, it first tries to fall <strong>down</strong>, then towards the <strong>left</strong>, and then towards the <strong>right</strong>.<br>If it can't fall down (below, to the right, or to the left) it has reached its final position.<br><br><strong>Example</strong><br><br>With this input:<br><pre style=\"font-family: monospace\"><br>5 3<br>6<br>a 2<br>b 2<br>c 2<br>d 2<br>e 2<br>F 2</pre><br>After <strong>a 2</strong>, 'a' drops to the bottom. ('x's are only here for explanation purposes.)<br><br><pre style=\"font-family: monospace\">xxxxx<br>xxxxx<br>xx<strong>a</strong>xx</pre><br>After <strong>b 2</strong>, 'b' couldn't go on 'a', so it tried right of 'a' (because 'b' is lowercase) and found empty space.<br><br><pre style=\"font-family: monospace\">xxxxx<br>xxxxx<br>xxa<strong>b</strong>x</pre><br>After <strong>c 2</strong>, 'c' couldn't go on 'a', tried right but couldn't go on 'b', so it tried left and found empty space.<br><br><pre style=\"font-family: monospace\">xxxxx<br>xxxxx<br>x<strong>c</strong>abx</pre><br>After <strong>d 2</strong>, 'd' couldn't go on 'a', tried right but couldn't go on 'b', tried left but couldn't go on 'c', so reached its final position.<br><br><pre style=\"font-family: monospace\">xxxxx<br>xx<strong>d</strong>xx<br>xcabx</pre><br>After <strong>e 2</strong>, 'e' couldn't go on 'd', found empty space right of 'd', kept falling, couldn't go on 'b', found empty space right of 'b'.<br><br><pre style=\"font-family: monospace\">xxxxx<br>xxdxx<br>xcab<strong>e</strong></pre><br>After <strong>F 2</strong>, 'F' couldn't go on 'd', found empty space left of 'd', kept falling, couldn't go on 'c', found empty space left of 'c'.<br><br><pre style=\"font-family: monospace\">xxxxx<br>xxdxx<br><strong>F</strong>cabe</pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Two integers <var>w</var> and <var>h</var> representing the width and height of the box.<br><strong>Line 2:</strong> <var>n</var>: the number of grains of sand being dropped.<br><strong>Next <var>n</var> lines:</strong> The character <var>s</var> representing the grain of sand followed by its initial position <var>p</var> above the box, separated by a space. <var>p</var> = 0 if it is above the left-most column and <var>p</var> = <var>w</var> - 1 if it is above the right-most column of the box.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>h</var> lines:</strong> the box content, outlined by <const>|</const> on both sides.<br><strong>Last line:</strong> the box bottom, represented by <const>+----+</const> where <const>-</const> is repeated <var>w</var> times.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &lt;= <var>w</var>, <var>h</var> &lt;= 50<br>0 &lt; <var>n</var> &lt; 256<br>0 &lt;= <var>p</var> &lt; <var>w</var><br>All grains will fit inside the box.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3 3\n4\nn 1\ne 1\no 1\nA 1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">|   |\n| A |\n|one|\n+---+</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 38817548585,
+  "avatar": 95120829746216,
+  "commentCount": 28,
+  "upVotes": 17,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 1032208,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1727989537001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1728142452660,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1731911062325,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

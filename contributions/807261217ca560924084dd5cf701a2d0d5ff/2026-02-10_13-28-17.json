@@ -1,0 +1,239 @@
+{
+  "id": 8072,
+  "activeVersion": 43,
+  "score": 8,
+  "votableId": 21850625,
+  "codingamerId": 4081634,
+  "views": 325,
+  "commentableId": 21741448,
+  "title": "CG's Next Top Model",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Wontonimo",
+  "publicHandle": "807261217ca560924084dd5cf701a2d0d5ff",
+  "codingamerHandle": "d0699d9a8e4995e142b0a5cf6a16e1934361804",
+  "lastVersion": {
+    "version": 43,
+    "autocloseTime": 1647540060146,
+    "data": {
+      "title": "CG's Next Top Model",
+      "topics": [
+        {
+          "id": 230,
+          "handle": "simulated-annealing",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Simulated Annealing",
+            "2": "Simulated Annealing"
+          },
+          "puzzleCount": 1,
+          "parentTopicId": 93
+        },
+        {
+          "id": 82,
+          "handle": "machine-learning",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Machine learning",
+            "2": "Machine learning"
+          },
+          "pageTitle": "Machine learning: exercises and theory",
+          "puzzleCount": 4,
+          "parentTopicId": 42,
+          "contentDetailsId": 110
+        },
+        {
+          "id": 166,
+          "handle": "genetic-algorithm",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Genetic Algorithm",
+            "2": "Genetic Algorithm"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "\nconst models = {\n\tLINEAR : (x,a,b,c,d)=> a*x+b,\n\tPARABOLA : (x,a,b,c,d)=> a*x**2 + b*x + c,\n\tSINE : (x,a,b,c,d)=> a*Math.sin(b*x+c) + d,\n\tEXPONENTIAL : (x,a,b,c,d)=> Math.abs(a/5.0)**(x+b) + c\n};\n\nfunction rnd() {\n\treturn Math.random() * 20 - 10;\n}\n\nfunction calcError(model, data, params) {\n\tlet [a,b,c,d] = params;\n\treturn data.map(z=>(z[1]-model(z[0],a,b,c,d))**2).reduce( (a,b)=>a+b, 0 );\n}\n\nfunction trainModel(model, data) {\n\tlet bestParams = [.1,.1,.1,.1];\n\tlet bestError = 1e99;\n    let totalRandImpro = 0;\n    let totalMutImpro = 0;\n\n\tfor(let x=10; x<10000; x++) {\n\n        // try a random sample\n\t\tlet params = bestParams.map(z=>rnd());\n\t\tlet error = calcError(model, data, params)\n\t\tif (error < bestError) {\n\t\t\tbestParams = params;\n\t\t\tbestError = error;\n            totalRandImpro++;\n\t\t}\n\n        // try a smaller mutation\n\t    params = bestParams.map(z=>z + rnd()*10/x);\n\t\terror = calcError(model, data, params)\n\t\tif (error < bestError) {\n\t\t\tbestParams = params;\n\t\t\tbestError = error;\n            totalMutImpro++\n\t\t}\n\t}\n\n    console.error(\"totalRandImpro \" + totalRandImpro + \" , totalMutImpro \" + totalMutImpro + \" error \" + bestError);\n\treturn bestParams;\n}\n\nfunction selectModel(train, test) {\n\tlet bestModel = 'LINEAR';\n\tlet bestError = 1e99;\n\tfor (let modelName of Object.keys(models)) {\n\t\tlet model = models[modelName];\n\t\tlet params = trainModel(model, train);\n\t\tlet error = calcError(model, test, params)\n\t\tif (error < bestError) {\n\t\t\tbestModel = modelName;\n\t\t\tbestError = error;\n\t\t}\n\t}\n\treturn bestModel;\n}\n\nfunction readDataLine() {\n    const line = readline().split(\" \").map(function(x,i) { return [i,1*x] });\n    return line.filter(x=>x[0]%2==0).map(x=>[x[1],line[x[0]+1][1]]);\n}\n\nconst train = readDataLine();\nconst test = readDataLine();\n\nconsole.log(selectModel(train, test));",
+      "statement": "There is a pile of data that needs to be modelled, things like motion of the stars, stock price projections, and your chances of getting a date next Wednesday.\n\nUnfortunately your graphing calculator broke and you've lost internet connection so you are going to have to calculate the best model for each data set.\n\nSometimes data is best modelled as a straight line, a parabola, a sine wave, or an exponential function.  You want to know which model best describes the data.\n\nHere are the models you are considering:\n<<LINEAR>> {{f(x) = a*x + b}}\n<<PARABOLA>> {{f(x) = a*x^2 + b*x + c}}\n<<SINE>> {{f(x) = a*sin(b*x+c) + d}}\n<<EXPONENTIAL>> {{f(x) = abs(a)^(x+b) + c}}\n\nYou measure how <<good>> a function is at describing the data by measuring the <<square of its error>>, with a lower value being better.\n\nFor example, with the LINEAR model f(x) = 1*x+1,  and the data set (0,1.5) (1,2) (2,3) (3,5) we can calculate the total squared error like so\n`(0,1.5) : f(0) = 0+1 = 1.  error = (1.5-f(0))^2 = (1.5-1)^2 = 0.25\n(1,2.0) : f(1) = 1+1 = 2.  error = (2.0-f(1))^2 = (2.0-2)^2 = 0.0\n(2,3.0) : f(2) = 2+1 = 3.  error = (3.0-f(2))^2 = (3.0-3)^2 = 0.0\n(3,5.0) : f(3) = 3+1 = 4.  error = (5.0-f(3))^2 = (4.0-5)^2 = 1.0\nTotal = 0.25 + 0 + 0 + 1.0 = 1.25`\n\nYou don't have the values a,b,c,d.  You must find the best values for each model that has the lowest square error using something like gradient descent, simulated annealing, or some other sampling technique.\n\nAny good model should 'predict' unseen data, so you have divided your data into training and test.\nUse the training data to find the best a,b,c,d.  Use the test data to see how well it does as a predictor.\n\nThe square error of the test data is what you will use to pick the model.\n\n<<GOAL>> Pick the model with the lowest square error on the test data\n\n\n<<REFERENCES>>\nIntro to machine learning (specifically function fitting) https://www.youtube.com/watch?v=wUPFOFbCeFI\nFrom Blokops https://www.cs.utep.edu/ofuentes/cs4361/fall19/grad_desc.pdf\n\n<<HINTS>>\nUse rot13.com to decode a hint\nHint 1 : Vg vf cbffvoyr gb svaq gur cnenzrgref sbe rnpu zbqry jvgu gra gubhfnaq genvavat fgrcf\nHint 2 : Znxvat lbhe bja grfg qngn rafher gung lbhe nytbevguz pna svg n zbqry gb qngn pbeerpgyl\nHint 3 : Gb trarengr grfg qngn hfr gur zbqry jvgu enaqbz cnenzrgref naq gur nqq n fznyy nzbhag bs reebe gb gur bhgchg\nHint 4 : Orpnhfr gurer vf fbzr punapr vaibyirq va svaqvat gur orfg inyhrf sbe rnpu zbqry, lbh znl unir gb er-fhozvg bapr be gjvpr.  N tbbq fbyhgvba fubhyq abg arrq zber guna bar be gjb fhozvgf.",
+      "testCases": [
+        {
+          "title": "Linear",
+          "isTest": true,
+          "testIn": "1 -5.4396 3 -1.7278 5 1.3968 7 5.0468 9 8.6818 11 11.9518 13 15.7351 15 19.2545 17 22.6826 19 25.6735\n0 -7.1129 2 -3.6857 4 -0.2995 6 3.4321 8 6.4681 10 10.072 12 13.9492 14 17.09 16 20.8774 18 23.7027 20 28.4941",
+          "testOut": "LINEAR",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Linear",
+          "isTest": false,
+          "testIn": "1 12.6144 2 20.7579 3 28.9609 5 46.2176 6 53.9123 7 62.5723 9 78.5391 10 87.8744 11 95.7704 13 113.9879 14 121.6235 15 130.1966 17 144.6019 18 154.3555 19 164.9741\n0 4.1053 4 37.7856 8 72.3776 12 104.8938 16 139.705 20 172.5481 -20 -163.94163545422077",
+          "testOut": "LINEAR",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Parabola",
+          "isTest": true,
+          "testIn": "1 -2.2528 2 -1.7217 4 2.4624 5 5.9261 7 15.5305 8 22.4758 10 36.9229 11 48.0077 13 69.2518 14 80.4371 16 105.3409 17 123.2714 19 152.9256 20 171.1308\n0 -1.9749 3 -0.0703 6 10.4754 9 29.602 12 58.4781 15 93.4344 18 139.5158",
+          "testOut": "PARABOLA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Parabola",
+          "isTest": false,
+          "testIn": "1 1.5953 2 5.5207 4 29.1812 5 47.4289 7 103.5179 8 134.1868 10 222.6804 11 276.7234 13 381.9166 14 452.7417 16 597.0433 17 679.1183 19 860.2174 20 931.1323\n0 2.6716 3 14.8301 6 72.6778 9 179.8998 12 323.0069 15 533.8294 18 769.4658",
+          "testOut": "PARABOLA",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Sine",
+          "isTest": true,
+          "testIn": "1 -0.6972 3 -3.4035 5 -8.1350 7 2.9965 9 -12.0933 11 3.6450 13 -9.2897 15 -1.9958 17 -2.0491 19 -9.2481 -10 -12.0506\n2 4.1268 4 -11.7543 6 1.9109 8 -6.5410 10 -5.1563 12 0.8299 14 -11.2142 16 4.2460 18 -11.2391 30 4.1360",
+          "testOut": "SINE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Sine",
+          "isTest": false,
+          "testIn": "-10 7.9401 1 0.3795 2 3.1832 3 6.0494 5 11.0260 6 12.7205 7 13.6804 9 13.1437 10 11.6919 11 9.5916 13 4.1867 14 1.3340 15 -1.3017 17 -5.0771 18 -5.9013 19 -5.9038 30 13.6837 4 8.7386\n8 13.8255 12 7.0181 16 -3.5000",
+          "testOut": "SINE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Exponential",
+          "isTest": true,
+          "testIn": "1 -4.5507 2 -4.1699 3 -3.6252 5 -1.036 6 0.5193 7 4.0058 9 15.8953 10 21.3322 11 47.0472 13 98.5702 14 149.322 15 271.7139 17 706.7725 18 704.9685 19 1726.6577\n0 -4.797 4 -2.6053 8 6.8187 12 73.9984 16 311.3863 20 2212.5524",
+          "testOut": "EXPONENTIAL",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Exponential",
+          "isTest": false,
+          "testIn": "1 6.8313 2 9.2642 3 15.0554 5 40.2244 6 80.7281 7 132.3562 9 408.9292 10 866.3043 11 1430.1613 13 5620.358 14 10770.7047 15 10970.1751 17 71687.4714 18 81837.7911 19 163706.271\n0 5.2061 4 24.5267 8 227.5763 12 2343.6597 16 36181.8468 20 324054.4476",
+          "testOut": "EXPONENTIAL",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Mystery One",
+          "isTest": true,
+          "testIn": "1 -18.5447 3 -78.6124 5 -191.9927 7 -365.3635 9 -583.6875 11 -890.1043 13 -1201.9043 15 -1621.7628 17 -2076.1647 19 -2543.4826\n0 -9.4655 2 -42.2972 4 -130.5529 6 -274.8208 8 -469.4187 10 -737.7455 12 -1023.4169 14 -1395.8052 16 -1837.4374 18 -2277.7284 20 -2861.2189",
+          "testOut": "PARABOLA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Mystery One",
+          "isTest": false,
+          "testIn": "1 -0.1231 3 -20.5572 5 -39.9423 7 -60.0482 9 -78.5134 11 -98.57 13 -117.3516 15 -139.6863 17 -159.8757 19 -179.7982\n0 9.906 2 -9.7406 4 -29.9572 6 -50.7583 8 -69.6621 10 -90.4228 12 -111.2982 14 -130.8256 16 -151.8002 18 -169.0955 20 -185.2908",
+          "testOut": "LINEAR",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Mystery Two",
+          "isTest": true,
+          "testIn": "-10 57.4103 1 -3.3276 2 -3.9161 3 -3.9404 5 -4.4245 6 -4.4834 7 -4.4769 9 -4.2762 10 -4.4947 11 -4.2948 13 -4.5743 14 -4.2087 15 -4.4215 17 -4.2822 18 -4.5241 19 -4.5546 30 -4.3287\n4 5.17 8 1.28 12 -2.6 16 -6.478",
+          "testOut": "LINEAR",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Mystery Two",
+          "isTest": false,
+          "testIn": "1 7.6891 2 3.0624 3 -9.3312 5 -56.1477 6 -91.1945 7 -133.9635 9 -254.083 10 -313.2884 11 -386.4789 13 -572.9777 14 -654.5323 15 -775.319 17 -992.2526 18 -1152.604 19 -1261.9948\n0 4.2475 4 -30.6369 8 -186.9643 12 -459.8846 16 -896.3524 20 -1418.7924",
+          "testOut": "PARABOLA",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Mystery Three",
+          "isTest": true,
+          "testIn": "-10 -3.9356 1 -6.4754 2 4.9048 4 -1.5426 5 3.0433 7 3.8738 8 -2.5157 10 4.7045 11 -7.1738 13 -0.0744 14 -6.1749 16 -5.9099 17 -0.4931 19 -7.4227\n3 -5.0573 6 -7.2415 9 -3.9651 12 1.9648 15 5.0380 18 2.2654 30 0.5808",
+          "testOut": "SINE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Mystery Three",
+          "isTest": false,
+          "testIn": "1 -2.1323 2 -9.5636 3 -6.9704 5 -10.9044 6 -3.4105 7 -7.9689 9 -2.3935 10 -9.3185 11 -4.8742 13 -10.4552 14 -2.9305 15 -7.6688 17 -2.7517 18 -8.1025 19 -6.5291\n0 -9.9018 4 -3.7252 8 -10.0671 12 -3.593 16 -11.0768 20 -2.4257",
+          "testOut": "SINE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Are you using test data correctly",
+          "isTest": true,
+          "testIn": "-1 21 0 12 1 5 2 0 3 -3 4 -4 5 -3 6 0 7 5 8 12 9 21\n-100 6 100 6",
+          "testOut": "LINEAR",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Are you using test data correctly",
+          "isTest": false,
+          "testIn": "-8 7.56 -7 6.96 -6 6.44 -5 6.0 -4 5.64 -3 5.36 -2 5.16 -1 5.04 0 5.0 1 5.04 2 5.16 3 5.36 4 5.64\n-100 21.403 100 -10.603",
+          "testOut": "LINEAR",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Make sure to use training and test",
+          "isTest": true,
+          "testIn": "-10 644.5683 1 7.2004 2 26.3126 3 55.7410 5 161.2635 6 219.9138 7 313.1619 9 510.6029 10 644.1683 11 794.2370 13 1112.3932 14 1232.2458 15 1472.8231 17 1894.6475 18 2015.4509 19 2252.9260 30 5892.1344\n4 29.85 8 18.2 12 12.72 16 15.64",
+          "testOut": "SINE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Make sure to use training and test",
+          "isTest": false,
+          "testIn": "-8 7.56 -7 6.96 -6 6.44 -5 6.0 -4 5.64 -3 5.36 -2 5.16 -1 5.04 0 5.0\n-100 5.120 100 5.32",
+          "testOut": "SINE",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "-1e20 < x,y < 1e20\nThe training and test set will have at least 4 sets of points (8 numbers) and at most 20 sets of points (40 numbers)\n-20 <= a,b,c,d <= 20\n\nExcept for exponential where 0 <= a <= 4",
+      "coverBinaryId": 78106709493598,
+      "stubGenerator": "read T:string(512)\nread U:string(512)\nwrite LINEAR",
+      "inputDescription": "<<Line 1:>> [[T]] The training set.  Space separated list of floating point x y pairs like : 0.0 1.5 1.0 2.0 2.0 3.0 3.0 5.0\n<<Line 2:>> [[U]] The test set.  Space separated list of floating point x y pairs like : 4.0 5.0 5.0 4.8",
+      "solutionLanguage": "Javascript",
+      "outputDescription": "One of <<LINEAR>>, <<PARABOLA>>, <<SINE>>, or <<EXPONENTIAL>>"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">There is a pile of data that needs to be modelled, things like motion of the stars, stock price projections, and your chances of getting a date next Wednesday.<br><br>Unfortunately your graphing calculator broke and you've lost internet connection so you are going to have to calculate the best model for each data set.<br><br>Sometimes data is best modelled as a straight line, a parabola, a sine wave, or an exponential function.  You want to know which model best describes the data.<br><br>Here are the models you are considering:<br><strong>LINEAR</strong> <const>f(x) = a*x + b</const><br><strong>PARABOLA</strong> <const>f(x) = a*x^2 + b*x + c</const><br><strong>SINE</strong> <const>f(x) = a*sin(b*x+c) + d</const><br><strong>EXPONENTIAL</strong> <const>f(x) = abs(a)^(x+b) + c</const><br><br>You measure how <strong>good</strong> a function is at describing the data by measuring the <strong>square of its error</strong>, with a lower value being better.<br><br>For example, with the LINEAR model f(x) = 1*x+1,  and the data set (0,1.5) (1,2) (2,3) (3,5) we can calculate the total squared error like so<br><pre style=\"font-family: monospace\">(0,1.5) : f(0) = 0+1 = 1.  error = (1.5-f(0))^2 = (1.5-1)^2 = 0.25<br>(1,2.0) : f(1) = 1+1 = 2.  error = (2.0-f(1))^2 = (2.0-2)^2 = 0.0<br>(2,3.0) : f(2) = 2+1 = 3.  error = (3.0-f(2))^2 = (3.0-3)^2 = 0.0<br>(3,5.0) : f(3) = 3+1 = 4.  error = (5.0-f(3))^2 = (4.0-5)^2 = 1.0<br>Total = 0.25 + 0 + 0 + 1.0 = 1.25</pre><br><br>You don't have the values a,b,c,d.  You must find the best values for each model that has the lowest square error using something like gradient descent, simulated annealing, or some other sampling technique.<br><br>Any good model should 'predict' unseen data, so you have divided your data into training and test.<br>Use the training data to find the best a,b,c,d.  Use the test data to see how well it does as a predictor.<br><br>The square error of the test data is what you will use to pick the model.<br><br><strong>GOAL</strong> Pick the model with the lowest square error on the test data<br><br><br><strong>REFERENCES</strong><br>Intro to machine learning (specifically function fitting) https://www.youtube.com/watch?v=wUPFOFbCeFI<br>From Blokops https://www.cs.utep.edu/ofuentes/cs4361/fall19/grad_desc.pdf<br><br><strong>HINTS</strong><br>Use rot13.com to decode a hint<br>Hint 1 : Vg vf cbffvoyr gb svaq gur cnenzrgref sbe rnpu zbqry jvgu gra gubhfnaq genvavat fgrcf<br>Hint 2 : Znxvat lbhe bja grfg qngn rafher gung lbhe nytbevguz pna svg n zbqry gb qngn pbeerpgyl<br>Hint 3 : Gb trarengr grfg qngn hfr gur zbqry jvgu enaqbz cnenzrgref naq gur nqq n fznyy nzbhag bs reebe gb gur bhgchg<br>Hint 4 : Orpnhfr gurer vf fbzr punapr vaibyirq va svaqvat gur orfg inyhrf sbe rnpu zbqry, lbh znl unir gb er-fhozvg bapr be gjvpr.  N tbbq fbyhgvba fubhyq abg arrq zber guna bar be gjb fhozvgf.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> <var>T</var> The training set.  Space separated list of floating point x y pairs like : 0.0 1.5 1.0 2.0 2.0 3.0 3.0 5.0<br><strong>Line 2:</strong> <var>U</var> The test set.  Space separated list of floating point x y pairs like : 4.0 5.0 5.0 4.8</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">One of <strong>LINEAR</strong>, <strong>PARABOLA</strong>, <strong>SINE</strong>, or <strong>EXPONENTIAL</strong></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">-1e20 &lt; x,y &lt; 1e20<br>The training and test set will have at least 4 sets of points (8 numbers) and at most 20 sets of points (40 numbers)<br>-20 &lt;= a,b,c,d &lt;= 20<br><br>Except for exponential where 0 &lt;= a &lt;= 4</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1 -5.4396 3 -1.7278 5 1.3968 7 5.0468 9 8.6818 11 11.9518 13 15.7351 15 19.2545 17 22.6826 19 25.6735\n0 -7.1129 2 -3.6857 4 -0.2995 6 3.4321 8 6.4681 10 10.072 12 13.9492 14 17.09 16 20.8774 18 23.7027 20 28.4941</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">LINEAR</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 124904162944,
+  "avatar": 54970169109216,
+  "commentCount": 24,
+  "upVotes": 12,
+  "downVotes": 4,
+  "validateAction": {
+    "actionId": 632743,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1645825933410,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

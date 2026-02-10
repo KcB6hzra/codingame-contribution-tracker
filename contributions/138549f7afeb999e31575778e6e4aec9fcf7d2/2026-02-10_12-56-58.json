@@ -1,0 +1,466 @@
+{
+  "id": 138549,
+  "activeVersion": 73,
+  "score": 4,
+  "votableId": 38709354,
+  "codingamerId": 6940002,
+  "views": 429,
+  "commentableId": 38543609,
+  "title": "Mountain range",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Kk81",
+  "publicHandle": "138549f7afeb999e31575778e6e4aec9fcf7d2",
+  "codingamerHandle": "9afe8a8fc63a1f62c8e5e04a82b865912000496",
+  "lastVersion": {
+    "version": 73,
+    "autocloseTime": 1770031359124,
+    "freezeTime": 1768044159124,
+    "data": {
+      "title": "Mountain range",
+      "topics": [
+        {
+          "id": 69,
+          "handle": "pattern-recognition",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Reconnaissance de motifs",
+            "2": "Pattern recognition"
+          },
+          "pageTitle": "Pattern recognition: exercises and theory",
+          "puzzleCount": 15,
+          "parentTopicId": 41,
+          "contentDetailsId": 88
+        },
+        {
+          "id": 64,
+          "handle": "image-processing",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Traitement d'images",
+            "2": "Image processing"
+          },
+          "pageTitle": "Image processing: exercises and theory",
+          "puzzleCount": 11,
+          "parentTopicId": 41,
+          "contentDetailsId": 101
+        },
+        {
+          "id": 128,
+          "handle": "ascii-art",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Ascii Art",
+            "2": "Ascii Art"
+          },
+          "puzzleCount": 55,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import sys\nfrom dataclasses import dataclass\n\ndef debug(*args):\n    print(*args, file=sys.stderr, flush=True)\n\n@dataclass\nclass Section:\n    id: str             # Id of the section\n    heights: list[int]  # Heights of the section\n    behinds: set[str]   # Ids of sections directly behind\n    left: int           # Meft-most visible character\n    peaks: int = 0      # Numbers of /\\\n\n# Build the grid\ngrid = {}\nheight, width = [int(i) for i in input().split()]\nfor i in range(height):\n    row = input()\n    debug(row)\n    for j, c in enumerate(row):\n        grid[(j, i)] = c\n\n# Search for intersections\n#   key: location in the grid\n#   value: True if right mountain is in front of left mountain\nintersections = {}\nfor i in range(width):\n    for j in range(height):\n        if (\n                grid.get((i - 1, j - 1)) == '\\\\' and\n                grid.get((i, j)) == '\\\\' and\n                grid.get((i + 1, j + 1)) == '\\\\' and\n                grid.get((i + 1, j)) == '-' and\n                grid.get((i + 2, j)) == '-'\n        ):\n            intersections[(i, j)] = False\n        elif (\n                grid.get((i - 2, j)) == '-' and\n                grid.get((i - 1, j)) == '-' and\n                grid.get((i - 1, j + 1)) == '/' and\n                grid.get((i, j)) == '/' and\n                grid.get((i + 1, j - 1)) == '/'\n        ):\n            intersections[(i, j)] = True\n        elif (\n                grid.get((i - 1, j)) == '-' and\n                grid.get((i, j)) == '-' and\n                grid.get((i + 1, j)) == '-' and\n                grid.get((i + 2, j)) == '-' and\n                grid.get((i + 1, j - 1)) == '/' and\n                grid.get((i + 2, j - 2)) == '/'\n        ):\n            intersections[(i, j)] = False\n        elif (\n                grid.get((i - 2, j - 2)) == '\\\\' and\n                grid.get((i - 1, j - 1)) == '\\\\' and\n                grid.get((i - 2, j)) == '-' and\n                grid.get((i - 1, j)) == '-' and\n                grid.get((i, j)) == '-' and\n                grid.get((i + 1, j)) == '-'\n        ):\n            intersections[(i, j)] = True\n        elif (\n                grid.get((i - 1, j - 1)) == '\\\\' and\n                grid.get((i, j)) == '\\\\' and\n                grid.get((i + 1, j + 1)) == '\\\\' and\n                grid.get((i + 1, j)) == '/' and\n                grid.get((i + 2, j - 1)) == '/'\n        ):\n            intersections[(i, j)] = False\n        elif (\n                grid.get((i - 2, j - 1)) == '\\\\' and\n                grid.get((i - 1, j)) == '\\\\' and\n                grid.get((i - 1, j + 1)) == '/' and\n                grid.get((i, j)) == '/' and\n                grid.get((i + 1, j - 1)) == '/'\n        ):\n            intersections[(i, j)] = True\n\n# Initiate the sections\nsections = {}\nfor j in reversed(range(height)):\n    if grid[(0, j)] == ' ':\n        continue\n    id = chr(65+len(sections))\n    h = j - 1 if grid[(0, j)] == '\\\\' else j\n    sections[id] = Section(id, [h], set(), 0)\n    if len(sections) > 1:\n        sections[chr(63+len(sections))].behinds.add(id)\n\n# Build the ridge sections\ncurrent_sections = sorted(sections.keys())\nfor i in range(1, width):\n    s = 0\n    for j in reversed(range(height)):\n        if grid[(i, j)] == ' ':\n            continue\n\n        section_id = current_sections[s]\n        s += 1\n\n        inter = intersections.get((i, j), None)\n        if inter:\n            # End current section\n            sections[section_id].heights.append(j)\n            sections[section_id].behinds.add(current_sections[s])\n            current_sections.pop(s)\n\n        elif inter == False:\n            # Add new section\n            id = chr(65+len(sections))\n            behind = set([current_sections[s]]) if s < len(current_sections) else set()\n            section = Section(id, [j], behind, i)\n            sections[id] = section\n            sections[current_sections[s-1]].heights.append(j)\n            sections[current_sections[s-1]].behinds.add(id)\n            current_sections.insert(s, id)\n            s += 1\n\n        else:\n            # Extend current section\n            if grid[(i, j)] == '\\\\' and grid[(i - 1, j)] == '/':\n                sections[section_id].heights.append(j - 1)\n                sections[section_id].peaks += 1\n            elif i == width - 1 and grid[(i, j)] == '/':\n                sections[section_id].heights.append(j)\n                sections[section_id].heights.append(j - 1)\n                sections[section_id].peaks += 1\n            else:\n                sections[section_id].heights.append(j)\n\n# Connect the sections into ridges\nridges = [set(['A'])]\nwhile ridges[-1]:\n    ridges.append(set())\n    for s in ridges[-2]:\n        for behind in sections[s].behinds:\n            ridges[-1].add(behind)\n    for s in ridges[-1]:\n        for r in ridges[:-1]:\n            r.discard(s)\nridges.pop()\n\n# Get elevation of each ridge\nelevations = []\nfor ridge in ridges:\n    elevation = []\n    for s in sorted(ridge):\n        section = sections[s]\n        if not elevation: # First section of the ridge\n            elevation = [section.heights[0]] * section.left\n        else: # Check we are not above the ridge in front\n            elev = min(elevation[-1], section.heights[0])\n            for i in range(len(elevation) + 1, section.left):\n                min_front = min(e[i] for e in elevations)\n                elev = max(elev, min_front)\n            elevation.extend([elev] * (section.left - len(elevation)))\n        elevation.extend(sections[s].heights)\n    elevation.extend([elevation[-1]] * (width - len(elevation)))\n    elevations.append(elevation)\n\n# Count the summits per ridge\nsummits = 0\nfor elevation in elevations:\n\n    elev = [x for i, x in enumerate(elevation) if i == 0 or x != elevation[i - 1]]\n\n    if len(elev) == 1:\n        summits += 1\n        continue\n\n    elev.insert(0, elev[1])\n    elev.append(elev[-2])\n    for i in range(1, len(elev) - 1):\n        summits += 1 if elev[i - 1] > elev[i] < elev[i + 1] else 0\n\nprint(summits)",
+      "statement": "<<Introduction>>\n\nYou are given a grid that represents a mountain range, using characters {{/}}, {{\\}}, {{-}} and spaces. You must count the number of summits in the range.\n\nHere is an example of such a grid with 5 summits:\n```                  /\\\n        ---      /  \\\n-      /   \\    /    \\                -\n \\    /     ---/      \\      --      / \\\n  \\---        /        \\    /  \\    /   \\\n   \\         /          \\  /    \\  /     \\\n    \\       /            \\/      \\/       \\\n     \\     /             /        \\        \\\n      \\   /             /          -----------\n       -----------------```\n\n<<Definitions>>\n\nFor a grid of width [[W]], a <<completed ridge>> is a sequence of [[W]] non-space characters, one per column. Some sections of the ridges are visible and others are hidden.\n\nA <<visible section>> is a continuous sequence of characters given in the input grid.\n\nA <<hidden section>> is a continuous sequence of hidden characters that connect two visible sections, or one visible section with the edge of the grid.\n\nThe example grid has 3 completed ridges. The front ridge is:\n```-\n \\                           --\n  \\                         /  \\\n   \\                       /    \\\n    \\                     /      \\\n     \\                   /        \\\n      \\                 /          -----------\n       -----------------```\nThe middle ridge has 2 visible sections and 3 hidden sections (highlighted):\n```                  /\\\n                 /  \\\n                /    \\               -\n               /      \\             / \\\n              /        \\           /   \\\n             /          \\         /     \\\n            /            \\       /       \\\n           /              {{--------}}         \\\n          /                                {{\\}}\n         {{/}}                                  {{\\}}```\nThe back ridge has 1 visible section and 2 hidden sections (highlighted):\n```        ---\n       /   \\\n      /     ---\n   ---         {{\\}}\n  {{/}}             {{\\}}\n {{/}}               {{\\}}\n{{/}}                 {{\\}}```\n\nOne <<summit>> is the combination of:\n  - a sequence of any number of consecutive {{-}} (can be 0)\n  - a {{/}} at the immediate bottom-left of that sequence (can be hidden)\n  - a {{\\}} at the immediate bottom-right of that sequence (can be hidden)\n```----          ----          ----\n    \\        /    \\        /```\nTo be counted as one summit, at least one character of the combination must be visible.\n\nA flat ridge ({{-}} repeated [[W]] times) counts as one summit.\n\nAn <<intersection>> is the location where a ridge hides another ridge. It will always be represented with one of the following 4x3 patterns:\n```\n\\           /        /     \\        \\  /     \\  /\n \\--     --/        /       \\        \\/       \\/\n  \\       /       ----     ----       \\       /\n```\nHere are all six patterns highlighted in the example grid:\n```                  /\\\n        ---      /  \\\n-      /   \\ {{   /}}    \\                -\n {{\\   }} /     -{{--/ }}     \\      --      / \\\n {{ \\--}}-       {{ /  }}      \\    /  \\    /   \\\n {{  \\ }}        /          {{\\  /}}    {{\\  /}}     \\\n    \\       /           {{ \\/ }}    {{ \\/ }}      {{\\   }}\n     \\  {{   /}}            {{ /  }}    {{  \\ }}      {{ \\  }}\n      \\ {{  / }}            /          -------{{----}}\n       -{{----}}------------\n```\n\n<<Completing partially hidden ridges>>\n\nWhen ridges are partially hidden, several interpretations are possible to complete them. This leads to several possible answers unless you connect visible sections to form completed ridges. Non-space characters must be grouped into the same ridge if they connect into a continuous path across columns while satisfying the rules below.\n\n   - A completed ridge occupies exactly one non-space character per column.\n\n   - Characters along a completed ridge form a continuous path across adjacent columns. That means non-space characters in adjacent columns must be in adjacent rows, except when both are {{-}}, in which case both must be in the same row.\n\n   - Non-space characters used to fill the hidden sections must lie below the initially visible mountain outline (they cannot be above it because they wouldn't be hidden in the first place).\n\n   - A hidden section on the very left of the grid is filled with {{/}}.\n\n   - A hidden section on the very right of the grid is filled with {{\\}}.\n\n   - A hidden section between two visible characters at the same height is filled with {{-}}.\n\n   - A hidden section between a lower-left visible character and an upper-right visible character is filled with {{-}} and {{/}}.\n\n   - A hidden section between an upper-left visible character and a lower-right visible character is filled with {{-}} and {{\\}}.\n\n<<Note:>> This puzzle is solvable without completing partially hidden ridges. The rules stated above are given to eliminate invalid interpretations. Although multiple valid completions may still exist, they all lead to the same final number of summits.",
+      "testCases": [
+        {
+          "title": "Two summits",
+          "isTest": true,
+          "testIn": "6 23\n               /\\      \n     --       /  \\     \n    /  \\     /    \\    \n   /    \\   /      \\   \n  /      ---        \\  \n--                   --",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Two summits",
+          "isTest": false,
+          "testIn": "6 23\n      /\\               \n     /  \\       --     \n    /    \\     /  \\    \n   /      \\   /    \\   \n  /        ---      \\  \n--                   --",
+          "testOut": "2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Close summits",
+          "isTest": true,
+          "testIn": "6 23\n     /\\/\\              \n    /    \\   /\\/\\      \n   /      ---    \\     \n---               \\    \n                   \\   \n                    ---",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Close summits",
+          "isTest": false,
+          "testIn": "6 23\n              /\\/\\     \n      /\\/\\   /    \\    \n     /    ---      \\   \n    /               ---\n   /                   \n---                    ",
+          "testOut": "4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Row of 11 peaks",
+          "isTest": true,
+          "testIn": "2 24\n\\/\\ /\\/\\ /\\/\\ /\\/\\/\\ /\\/\n   -    -    -      -   ",
+          "testOut": "11",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Row of 11 peaks",
+          "isTest": false,
+          "testIn": "2 24\n\\/\\ /\\/\\/\\ /\\/\\ /\\/\\ /\\/\n   -      -    -    -   ",
+          "testOut": "11",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two ridges",
+          "isTest": true,
+          "testIn": "12 26\n               ----       \n              /    \\      \n             /      \\     \n-----       /        \\    \n     \\     /          \\   \n      \\   /            \\  \n       ---   /\\         \\ \n            /  \\    /\\   \\\n     -     /    \\  /  \\   \n    / \\   /      --    ---\n----   \\ /                \n        -                 ",
+          "testOut": "5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Two ridges",
+          "isTest": false,
+          "testIn": "12 26\n       ----               \n      /    \\              \n     /      \\             \n    /        \\       -----\n   /          \\     /     \n  /            \\   /      \n /         /\\   ---       \n/   /\\    /  \\            \n   /  \\  /    \\     -     \n---    --      \\   / \\    \n                \\ /   ----\n                 -        ",
+          "testOut": "5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Flat summits",
+          "isTest": true,
+          "testIn": "7 29\n----------                   \n          \\                  \n           ---------         \n                    \\        \n                     --------\n                             \n-----------------------------",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Flat summits",
+          "isTest": false,
+          "testIn": "7 29\n                   ----------\n                  /          \n         ---------           \n        /                    \n--------                     \n                             \n-----------------------------",
+          "testOut": "2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Aligned mountains",
+          "isTest": true,
+          "testIn": "15 35\n            /\\                     \n           //\\\\                    \n          ///\\\\\\                   \n         ////\\\\\\\\                  \n        /////\\\\\\\\\\                 \n       //////\\\\\\\\\\\\                \n      //////  \\\\\\\\\\\\               \n------/////    \\\\\\\\\\\\              \n------////      \\\\\\\\\\\\             \n------///        \\\\\\\\\\-------------\n------//          \\\\\\\\-------------\n------/            \\\\\\-------------\n------              \\\\-------------\n                     \\-------------\n                      -------------",
+          "testOut": "6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Aligned mountains",
+          "isTest": false,
+          "testIn": "15 35\n                     /\\            \n                    //\\\\           \n                   ///\\\\\\          \n                  ////\\\\\\\\         \n                 /////\\\\\\\\\\        \n                //////\\\\\\\\\\\\       \n               //////  \\\\\\\\\\\\      \n              //////    \\\\\\\\\\------\n             //////      \\\\\\\\------\n-------------/////        \\\\\\------\n-------------////          \\\\------\n-------------///            \\------\n-------------//              ------\n-------------/                     \n-------------                      ",
+          "testOut": "6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Aligned valleys",
+          "isTest": true,
+          "testIn": "18 19\n\\                  \n\\\\                 \n\\\\\\               /\n\\\\\\\\             //\n\\\\\\\\\\           ///\n\\\\\\\\\\\\         ////\n\\\\\\\\\\\\\\       /////\n\\\\\\\\\\\\\\\\     //////\n \\\\\\\\\\\\\\\\   ///////\n  \\\\\\\\\\\\\\\\ ////////\n   \\\\\\\\\\\\\\-/////// \n    \\\\\\\\\\\\-//////  \n     \\\\\\\\\\-/////   \n      \\\\\\\\-////    \n       \\\\\\-///     \n        \\\\-//      \n         \\-/       \n          -        ",
+          "testOut": "16",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Aligned valleys",
+          "isTest": false,
+          "testIn": "18 19\n                  /\n                 //\n\\               ///\n\\\\             ////\n\\\\\\           /////\n\\\\\\\\         //////\n\\\\\\\\\\       ///////\n\\\\\\\\\\\\     ////////\n\\\\\\\\\\\\\\   //////// \n\\\\\\\\\\\\\\\\ ////////  \n \\\\\\\\\\\\\\-///////   \n  \\\\\\\\\\\\-//////    \n   \\\\\\\\\\-/////     \n    \\\\\\\\-////      \n     \\\\\\-///       \n      \\\\-//        \n       \\-/         \n        -          ",
+          "testOut": "16",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Intersecting ridges",
+          "isTest": true,
+          "testIn": "8 55\n        -      --      ---      --      -              \n       / \\    /  \\    /   \\    /  \\    / \\    /\\       \n      /   \\  /    \\  /     \\  /    \\  /   \\  /  \\      \n     /     \\/      \\/       \\/      \\/     \\/    \\     \n    /      /       /         \\       \\      \\     \\    \n   /      /       /           \\       \\      \\     \\   \n  /      /       /             \\       \\      \\     \\  \n-----------------               -----------------------",
+          "testOut": "6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Intersecting ridges",
+          "isTest": false,
+          "testIn": "8 55\n              -      --      ---      --      -        \n       /\\    / \\    /  \\    /   \\    /  \\    / \\       \n      /  \\  /   \\  /    \\  /     \\  /    \\  /   \\      \n     /    \\/     \\/      \\/       \\/      \\/     \\     \n    /     /      /       /         \\       \\      \\    \n   /     /      /       /           \\       \\      \\   \n  /     /      /       /             \\       \\      \\  \n-----------------------               -----------------",
+          "testOut": "6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Nested mountains",
+          "isTest": true,
+          "testIn": "10 50\n        -      --      ---      --      -         \n       / \\    /  \\    /   \\    /  \\    / \\    /\\  \n      /   \\  /    \\  /     \\  /    \\  /   \\  /  \\ \n     /     \\/      \\/       \\/      \\/     \\/    \\\n    /       \\       \\       /       /      /      \n   /         \\       -------       /      /       \n  /           \\                   /      /        \n--             -------------------      /         \n                                       /          \n---------------------------------------           ",
+          "testOut": "6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Nested mountains",
+          "isTest": false,
+          "testIn": "10 50\n         -      --      ---      --      -        \n  /\\    / \\    /  \\    /   \\    /  \\    / \\       \n /  \\  /   \\  /    \\  /     \\  /    \\  /   \\      \n/    \\/     \\/      \\/       \\/      \\/     \\     \n      \\      \\       \\       /       /       \\    \n       \\      \\       -------       /         \\   \n        \\      \\                   /           \\  \n         \\      -------------------             --\n          \\                                       \n           ---------------------------------------",
+          "testOut": "6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "8 + 8 + 6 + 6",
+          "isTest": true,
+          "testIn": "8 25\n   /\\/\\          /\\/\\    \n  /    \\/\\    /\\/    \\   \n------    \\  /    -------\n      \\/\\  \\/  /\\/       \n    -    \\/\\/\\/    -     \n   / \\/\\/\\/\\/\\/\\/\\/ \\    \n  / /\\/\\/\\/\\/\\/\\/\\/\\ \\   \n----                -----",
+          "testOut": "28",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "8 + 8 + 6 + 6",
+          "isTest": false,
+          "testIn": "8 25\n    /\\/\\          /\\/\\   \n   /    \\/\\    /\\/    \\  \n-------    \\  /    ------\n       \\/\\  \\/  /\\/      \n     -    \\/\\/\\/    -    \n    / \\/\\/\\/\\/\\/\\/\\/ \\   \n   / /\\/\\/\\/\\/\\/\\/\\/\\ \\  \n-----                ----",
+          "testOut": "28",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Partially hidden summit",
+          "isTest": true,
+          "testIn": "5 20\n        /\\          \n    ---/  \\----     \n   /  /    \\   \\    \n  /  /      \\   \\   \n-----        -------",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Partially hidden summit",
+          "isTest": false,
+          "testIn": "5 20\n          /\\        \n     ----/  \\---    \n    /   /    \\  \\   \n   /   /      \\  \\  \n-------        -----",
+          "testOut": "2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test case of User123",
+          "isTest": true,
+          "testIn": "10 19\n   /\\              \n  /  \\             \n----- \\            \n     \\ \\           \n      ----         \n          \\        \n           \\---    \n            \\  \\   \n             \\  \\  \n              -----",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Test case of User123",
+          "isTest": false,
+          "testIn": "10 19\n              /\\   \n             /  \\  \n            / -----\n           / /     \n         ----      \n        /          \n    ---/           \n   /  /            \n  /  /             \n-----              ",
+          "testOut": "2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two in front of three",
+          "isTest": true,
+          "testIn": "7 44\n           /\\                /\\             \n      ----/  \\              /  \\----        \n     /   /    \\     /\\     /    \\   \\       \n    /   /      \\   /  \\   /      \\   \\      \n   /   /        \\--    --/        \\   \\     \n  /   /          \\      /          \\   \\    \n------            ------            --------",
+          "testOut": "5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Two in front of three",
+          "isTest": false,
+          "testIn": "7 44\n             /\\                /\\           \n        ----/  \\              /  \\----      \n       /   /    \\     /\\     /    \\   \\     \n      /   /      \\   /  \\   /      \\   \\    \n     /   /        \\--    --/        \\   \\   \n    /   /          \\      /          \\   \\  \n--------            ------            ------",
+          "testOut": "5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two in front of one big mountain",
+          "isTest": true,
+          "testIn": "10 44\n                    /\\                      \n                   /  \\                     \n                 --    --                   \n           /\\   /        \\   /\\             \n          /  \\--          --/  \\            \n         /    \\            /    \\           \n    ----/      \\          /      \\----      \n   /   /        \\        /        \\   \\     \n  /   /          \\      /          \\   \\    \n------            ------            --------",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Two in front of one big mountain",
+          "isTest": false,
+          "testIn": "10 44\n                      /\\                    \n                     /  \\                   \n                   --    --                 \n             /\\   /        \\   /\\           \n            /  \\--          --/  \\          \n           /    \\            /    \\         \n      ----/      \\          /      \\----    \n     /   /        \\        /        \\   \\   \n    /   /          \\      /          \\   \\  \n--------            ------            ------",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Four in front of one flat summit",
+          "isTest": true,
+          "testIn": "7 44\n       /\\          /\\          /\\          /\n      /  \\        /  \\        /  \\        / \n     /    \\------/    \\------/    \\------/  \n    /      \\    /      \\    /      \\    /   \n   /        \\  /        \\  /        \\  /    \n  /          --          --          --     \n--                                          ",
+          "testOut": "5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Four in front of one flat summit",
+          "isTest": false,
+          "testIn": "7 44\n\\          /\\          /\\          /\\       \n \\        /  \\        /  \\        /  \\      \n  \\------/    \\------/    \\------/    \\     \n   \\    /      \\    /      \\    /      \\    \n    \\  /        \\  /        \\  /        \\   \n     --          --          --          \\  \n                                          --",
+          "testOut": "5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "8 pointed summits + 1 flat",
+          "isTest": true,
+          "testIn": "11 29\n\\              /\\            \n \\------------/  \\           \n  \\    /\\    /    \\      /\\  \n   \\  /  \\---      ------  \\ \n    \\/    \\  /\\    --       \\\n     \\     \\/  \\  /  \\       \n      \\    /    \\/    \\  /\\  \n       \\--- /\\  /      \\/  \\ \n        \\  /  \\/        \\   \\\n         \\/    \\         \\   \n                -------------",
+          "testOut": "9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "8 pointed summits + 1 flat",
+          "isTest": false,
+          "testIn": "11 29\n            /\\              /\n           /  \\------------/ \n  /\\      /    \\    /\\    /  \n /  ------      ---/  \\  /   \n/       --    /\\  /    \\/    \n       /  \\  /  \\/     /     \n  /\\  /    \\/    \\    /      \n /  \\/      \\  /\\ ---/       \n/   /        \\/  \\  /        \n   /         /    \\/         \n-------------                ",
+          "testOut": "9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "2 + 3 + 2 + 3 + 2 + 2 + 2 + 2",
+          "isTest": true,
+          "testIn": "24 25\n     /\\          /\\      \n----/  \\        /  \\-----\n   /    \\      /    \\    \n  /      \\----/      \\   \n--        \\  /        \\  \n           --          --\n-    /\\          /\\    --\n \\  /  \\        /  \\  /  \n  \\/    \\      /    \\/   \n  /      \\----/      \\   \n /        \\  /        \\  \n-          --          --\n     /\\          /\\      \n----/  \\        /  \\-----\n   /    \\  /\\  /    \\    \n  /      \\/  \\/      \\   \n--        \\  /        \\  \n           --          --\n-    /\\          /\\    --\n \\  /  \\        /  \\  /  \n  \\/    \\  /\\  /    \\/   \n  /      \\/  \\/      \\   \n /        \\  /        \\  \n-          --          --",
+          "testOut": "18",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "2 + 3 + 2 + 3 + 2 + 2 + 2 + 2",
+          "isTest": false,
+          "testIn": "24 25\n      /\\          /\\     \n-----/  \\        /  \\----\n    /    \\      /    \\   \n   /      \\----/      \\  \n  /        \\  /        --\n--          --           \n--    /\\          /\\    -\n  \\  /  \\        /  \\  / \n   \\/    \\      /    \\/  \n   /      \\----/      \\  \n  /        \\  /        \\ \n--          --          -\n      /\\          /\\     \n-----/  \\        /  \\----\n    /    \\  /\\  /    \\   \n   /      \\/  \\/      \\  \n  /        \\  /        --\n--          --           \n--    /\\          /\\    -\n  \\  /  \\        /  \\  / \n   \\/    \\  /\\  /    \\/  \n   /      \\/  \\/      \\  \n  /        \\  /        \\ \n--          --          -",
+          "testOut": "18",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "One in front of three",
+          "isTest": true,
+          "testIn": "11 25\n            /\\           \n           /  \\----------\n          /    \\         \n         /      \\        \n--------/        \\-------\n       /          \\      \n      /            \\     \n     /              \\----\n    /                \\   \n   /                  \\  \n---                    --",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "One in front of three",
+          "isTest": false,
+          "testIn": "11 25\n           /\\            \n----------/  \\           \n         /    \\          \n        /      \\         \n-------/        \\--------\n      /          \\       \n     /            \\      \n----/              \\     \n   /                \\    \n  /                  \\   \n--                    ---",
+          "testOut": "4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Peak, flat summit, hidden slope",
+          "isTest": true,
+          "testIn": "8 26\n            /\\            \n           /  \\-----------\n          /    \\          \n     ----/      \\----     \n    /   /        \\   \\    \n---/   /          \\   \\   \n  /   /            \\   \\  \n------              ------",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Peak, flat summit, hidden slope",
+          "isTest": false,
+          "testIn": "8 26\n            /\\            \n-----------/  \\           \n          /    \\          \n     ----/      \\----     \n    /   /        \\   \\    \n   /   /          \\   \\---\n  /   /            \\   \\  \n------              ------",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Three summits, one hidden slope",
+          "isTest": true,
+          "testIn": "13 38\n               /\\                     \n            --/  \\--                  \n           / /    \\ \\                 \n          / /      \\ \\                \n         / /        \\ \\               \n--------/ /          \\ \\  /\\          \n       / /            \\ \\/  \\         \n      / /              \\ \\   \\--------\n     / /                \\ \\   \\       \n----/ /                  \\ \\   \\      \n   / /                    \\ \\   \\     \n--- /                      \\ \\   \\    \n----                        ----------",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Three summits, one hidden slope",
+          "isTest": false,
+          "testIn": "13 38\n                     /\\               \n                  --/  \\--            \n                 / /    \\ \\           \n                / /      \\ \\          \n               / /        \\ \\         \n          /\\  / /          \\ \\--------\n         /  \\/ /            \\ \\       \n--------/   / /              \\ \\      \n       /   / /                \\ \\     \n      /   / /                  \\ \\----\n     /   / /                    \\ \\   \n    /   / /                      \\ ---\n----------                        ----",
+          "testOut": "4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two pairs",
+          "isTest": true,
+          "testIn": "7 44\n             /\\                /\\           \n        ----/  \\              /  \\----      \n       /   /    \\            /    \\   \\     \n      /   /      \\          /      \\   \\    \n     /   /        \\        /        \\   \\   \n    /   /          \\      /          \\   \\  \n--------            ------            ------",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Two pairs",
+          "isTest": false,
+          "testIn": "7 44\n           /\\                /\\             \n      ----/  \\              /  \\----        \n     /   /    \\            /    \\   \\       \n    /   /      \\          /      \\   \\      \n   /   /        \\        /        \\   \\     \n  /   /          \\      /          \\   \\    \n------            ------            --------",
+          "testOut": "4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4 + 3 + 4 + 3 + 1 + 1",
+          "isTest": true,
+          "testIn": "13 35\n-------------                /\\    \n       /\\    \\              /  ----\n------/  \\--  \\   /\\      ----     \n     /    \\ \\  --/  \\    /    \\  /\\\n    /      \\ \\  /    ---/      \\/  \n\\  /        ----       /           \n ----      -      --  -          --\n     \\    / \\    /  \\/ -----    /  \n----  ---/   \\--- /\\  /     \\  / - \n    \\   /   - \\  /  \\/       \\/ / \\\n     \\--   / \\ --   /         \\/   \n      \\   /   \\    /               \n       ---     ----                ",
+          "testOut": "16",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4 + 3 + 4 + 3 + 1 + 1",
+          "isTest": false,
+          "testIn": "13 35\n    /\\                -------------\n----  \\              /    /\\       \n     ----      /\\   /  --/  \\------\n/\\  /    \\    /  \\--  / /    \\     \n  \\/      \\---    \\  / /      \\    \n           \\       ----        \\  /\n--          -  --      -      ---- \n  \\    ----- \\/  \\    / \\    /     \n - \\  /     \\  /\\ ---/   \\---  ----\n/ \\ \\/       \\/  \\  / -   \\   /    \n   \\/         \\   -- / \\   --/     \n               \\    /   \\   /      \n                ----     ---       ",
+          "testOut": "16",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4 + 3 + 2 + 3 + 1 + 3 + 1 + 1",
+          "isTest": true,
+          "testIn": "13 35\n    /\\                 ------------\n----  \\               /     /\\     \n     ----      /\\    /  ---/  \\    \n/\\  /    \\    /  \\---  /  /    ----\n  \\/ /\\   \\---    \\   /  /        /\n   \\/  \\   \\       ------        / \n--      \\   -  --      -      -----\n  \\    ----- \\/  \\    / \\    /     \n - \\  /     \\  /\\ ---/   \\---  ----\n/ \\ \\/       \\/  \\  / -   \\   /    \n   \\/         \\   -- / \\   --/     \n               \\    /   \\   /      \n                ----     ---       ",
+          "testOut": "18",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4 + 3 + 2 + 3 + 1 + 3 + 1 + 1",
+          "isTest": false,
+          "testIn": "13 35\n------------                 /\\    \n     /\\     \\               /  ----\n    /  \\---  \\    /\\      ----     \n----    \\  \\  ---/  \\    /    \\  /\\\n\\        \\  \\   /    ---/   /\\ \\/  \n \\        ------       /   /  \\/   \n-----      -      --  -   /      --\n     \\    / \\    /  \\/ -----    /  \n----  ---/   \\--- /\\  /     \\  / - \n    \\   /   - \\  /  \\/       \\/ / \\\n     \\--   / \\ --   /         \\/   \n      \\   /   \\    /               \n       ---     ----                ",
+          "testOut": "18",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "- 0 < [[height]] < [[width]] < 64\n- A character used to define a summit is never reused to define another summit. In other words, two summits are always disjoint.\n- There is no {{/}} or {{\\}} in the bottom line.\n- Mountain ranges are physically valid. There will never be a case where a ridge hides another ridge at one section and yet becomes hidden by the same ridge in another section.",
+      "coverBinaryId": 153838488136934,
+      "stubGenerator": "read H:int W:int\nloop H read row:string(W)\nwrite summits",
+      "inputDescription": "<<Line 1:>> 2 space-separated integers [[height]] and [[width]], the dimensions of the grid.\n<<Next [[height]] lines:>> [[width]] characters that are either {{/}}, {{\\}}, {{-}} or whitespace.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The number of summits in the mountain range"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><strong>Introduction</strong><br><br>You are given a grid that represents a mountain range, using characters <const>/</const>, <const>\\</const>, <const>-</const> and spaces. You must count the number of summits in the range.<br><br>Here is an example of such a grid with 5 summits:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">                  /\\<br>        ---      /  \\<br>-      /   \\    /    \\                -<br> \\    /     ---/      \\      --      / \\<br>  \\---        /        \\    /  \\    /   \\<br>   \\         /          \\  /    \\  /     \\<br>    \\       /            \\/      \\/       \\<br>     \\     /             /        \\        \\<br>      \\   /             /          -----------<br>       -----------------</pre><pre style=\"font-family: monospace\"></pre><br><br><strong>Definitions</strong><br><br>For a grid of width <var>W</var>, a <strong>completed ridge</strong> is a sequence of <var>W</var> non-space characters, one per column. Some sections of the ridges are visible and others are hidden.<br><br>A <strong>visible section</strong> is a continuous sequence of characters given in the input grid.<br><br>A <strong>hidden section</strong> is a continuous sequence of hidden characters that connect two visible sections, or one visible section with the edge of the grid.<br><br>The example grid has 3 completed ridges. The front ridge is:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">-<br> \\                           --<br>  \\                         /  \\<br>   \\                       /    \\<br>    \\                     /      \\<br>     \\                   /        \\<br>      \\                 /          -----------<br>       -----------------</pre><pre style=\"font-family: monospace\"></pre><br>The middle ridge has 2 visible sections and 3 hidden sections (highlighted):<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">                  /\\<br>                 /  \\<br>                /    \\               -<br>               /      \\             / \\<br>              /        \\           /   \\<br>             /          \\         /     \\<br>            /            \\       /       \\<br>           /              <const>--------</const>         \\<br>          /                                <const>\\</const><br>         <const>/</const>                                  <const>\\</const></pre><pre style=\"font-family: monospace\"></pre><br>The back ridge has 1 visible section and 2 hidden sections (highlighted):<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">        ---<br>       /   \\<br>      /     ---<br>   ---         <const>\\</const><br>  <const>/</const>             <const>\\</const><br> <const>/</const>               <const>\\</const><br><const>/</const>                 <const>\\</const></pre><pre style=\"font-family: monospace\"></pre><br><br>One <strong>summit</strong> is the combination of:<br>  - a sequence of any number of consecutive <const>-</const> (can be 0)<br>  - a <const>/</const> at the immediate bottom-left of that sequence (can be hidden)<br>  - a <const>\\</const> at the immediate bottom-right of that sequence (can be hidden)<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">----          ----          ----<br>    \\        /    \\        /</pre><pre style=\"font-family: monospace\"></pre><br>To be counted as one summit, at least one character of the combination must be visible.<br><br>A flat ridge (<const>-</const> repeated <var>W</var> times) counts as one summit.<br><br>An <strong>intersection</strong> is the location where a ridge hides another ridge. It will always be represented with one of the following 4x3 patterns:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>\\           /        /     \\        \\  /     \\  /<br> \\--     --/        /       \\        \\/       \\/<br>  \\       /       ----     ----       \\       /<br></pre><pre style=\"font-family: monospace\"></pre><br>Here are all six patterns highlighted in the example grid:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">                  /\\<br>        ---      /  \\<br>-      /   \\ <const>   /</const>    \\                -<br> <const>\\   </const> /     -<const>--/ </const>     \\      --      / \\<br> <const> \\--</const>-       <const> /  </const>      \\    /  \\    /   \\<br> <const>  \\ </const>        /          <const>\\  /</const>    <const>\\  /</const>     \\<br>    \\       /           <const> \\/ </const>    <const> \\/ </const>      <const>\\   </const><br>     \\  <const>   /</const>            <const> /  </const>    <const>  \\ </const>      <const> \\  </const><br>      \\ <const>  / </const>            /          -------<const>----</const><br>       -<const>----</const>------------<br></pre><pre style=\"font-family: monospace\"></pre><br><br><strong>Completing partially hidden ridges</strong><br><br>When ridges are partially hidden, several interpretations are possible to complete them. This leads to several possible answers unless you connect visible sections to form completed ridges. Non-space characters must be grouped into the same ridge if they connect into a continuous path across columns while satisfying the rules below.<br><br>   - A completed ridge occupies exactly one non-space character per column.<br><br>   - Characters along a completed ridge form a continuous path across adjacent columns. That means non-space characters in adjacent columns must be in adjacent rows, except when both are <const>-</const>, in which case both must be in the same row.<br><br>   - Non-space characters used to fill the hidden sections must lie below the initially visible mountain outline (they cannot be above it because they wouldn't be hidden in the first place).<br><br>   - A hidden section on the very left of the grid is filled with <const>/</const>.<br><br>   - A hidden section on the very right of the grid is filled with <const>\\</const>.<br><br>   - A hidden section between two visible characters at the same height is filled with <const>-</const>.<br><br>   - A hidden section between a lower-left visible character and an upper-right visible character is filled with <const>-</const> and <const>/</const>.<br><br>   - A hidden section between an upper-left visible character and a lower-right visible character is filled with <const>-</const> and <const>\\</const>.<br><br><strong>Note:</strong> This puzzle is solvable without completing partially hidden ridges. The rules stated above are given to eliminate invalid interpretations. Although multiple valid completions may still exist, they all lead to the same final number of summits.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> 2 space-separated integers <var>height</var> and <var>width</var>, the dimensions of the grid.<br><strong>Next <var>height</var> lines:</strong> <var>width</var> characters that are either <const>/</const>, <const>\\</const>, <const>-</const> or whitespace.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The number of summits in the mountain range</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">- 0 &lt; <var>height</var> &lt; <var>width</var> &lt; 64<br>- A character used to define a summit is never reused to define another summit. In other words, two summits are always disjoint.<br>- There is no <const>/</const> or <const>\\</const> in the bottom line.<br>- Mountain ranges are physically valid. There will never be a case where a ridge hides another ridge at one section and yet becomes hidden by the same ridge in another section.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">6 23\n               /\\      \n     --       /  \\     \n    /  \\     /    \\    \n   /    \\   /      \\   \n  /      ---        \\  \n--                   --</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">2</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 1805258680,
+  "avatar": 153094727600262,
+  "commentCount": 90,
+  "upVotes": 4,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1340095,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1768922958329,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,258 @@
+{
+  "id": 76542,
+  "activeVersion": 10,
+  "score": 6,
+  "votableId": 31552131,
+  "codingamerId": 1488681,
+  "views": 190,
+  "commentableId": 31411625,
+  "title": "Mosaic",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Syneil",
+  "publicHandle": "765423276e947aca67657968f41cb6f294815",
+  "codingamerHandle": "5f8ac189ac553652ba78134663fd42351868841",
+  "lastVersion": {
+    "version": 10,
+    "autocloseTime": 1702316722149,
+    "data": {
+      "title": "Mosaic",
+      "topics": [
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 53,
+          "parentTopicId": 93
+        },
+        {
+          "id": 117,
+          "handle": "logic",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Logic",
+            "2": "Logic"
+          },
+          "puzzleCount": 25,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "type Grid<T extends string> = T[][];\ntype Input = '.' | `${number}`\ntype InputGrid = Grid<Input>;\ntype Output = '.' | '#' | ' '; // use ' ' to indicate unsolved\ntype OutputGrid = Grid<Output>;\ntype Coord = { x: number, y: number };\ntype Clue = Coord & { clue: number };\ntype NeighbourhoodSize = 4 | 6 | 9;\n\nconst n: number = parseInt(readline());\n\nconst isValidCoord = ({ x, y }: Coord): boolean =>\n    (x >= 0 && x < n) && (y >= 0 && y < n);\n\nconst neighbourhood = ({ x, y }: Coord) => [\n    { x, y },               // itself\n    { x, y: y - 1 },        // N\n    { x: x + 1, y: y - 1 }, // NE\n    { x: x + 1, y },        // E\n    { x: x + 1, y: y + 1 }, // SE\n    { x, y: y + 1 },        // S\n    { x: x - 1, y: y + 1 }, // SW\n    { x: x - 1, y },        // W\n    { x: x - 1, y: y - 1 }, // NW\n].filter(isValidCoord) as (Coord & { length: NeighbourhoodSize })[];\n\nconst isInner = ({ x, y }: Coord): boolean =>\n    (x > 0 && x < n - 1) && (y > 0 && y < n - 1);\n\nconst isCorner = ({ x, y }: Coord): boolean =>\n    (x === 0 || x === n - 1) && (y === 0 || y === n - 1);\n\nconst isEdge = ({ x, y }: Coord): boolean =>\n    ((x === 0 || x === n - 1) || (y === 0 || y === n - 1))\n    && !isCorner({ x, y });\n\nconst inputGrid: InputGrid = [];\nfor (let i = 0; i < n; i++) {\n    const line: string = readline();\n    inputGrid.push(line.split('') as Input[]);\n}\n\nconst outputGrid: OutputGrid = []\nfor (let i = 0; i < n; i++) outputGrid.push(Array(n).fill(' '));\n\nfunction fillRemaining(loc: Coord, value: Output): void {\n  neighbourhood(loc)\n    .filter(({ x, y }) => outputGrid[y][x] === ' ')\n    .forEach(({ x, y }) => outputGrid[y][x] = value);\n}\n\nconst inputAt = ({ x, y }: Coord): Input => inputGrid[y][x];\nconst outputAt = ({ x, y }: Coord): Output => outputGrid[y][x];\n\nconst allCoords = () => [...Array(n).keys()] // [0,1,..,n]\n    .map((y) => [...Array(n).keys()]         // [[0,1,..,n],..,[0,1,..,n]]\n        .map((x) => ({ x, y }))).flat();     // [{x:0,y:0},{x:1,y:0},..,{x:n,y:n}]\n\n// not const or Readonly<Clue[]> because we want to remove them when they're solved\nlet clues: Clue[] = allCoords().filter(({ x, y }) => inputGrid[y][x] !== '.')\n    .map(({ x, y }) => ({ x, y, clue: parseInt(inputGrid[y][x]) }));\n\n// first solve the obvious ones - 0s, 9s, 6s on edges, and 4s in corners\nclues.forEach((pos) => {\n    if (inputAt(pos) === '0') fillRemaining(pos, '.');\n    else if (isInner(pos) && inputAt(pos) === '9') fillRemaining(pos, '#');\n    else if (isEdge(pos) && inputAt(pos) === '6') fillRemaining(pos, '#');\n    else if (isCorner(pos) && inputAt(pos) === '4') fillRemaining(pos, '#');\n});\n\n// repeatedly examine how many unsolved cells are in each clue's neighbourhood\n// compared with how many remain to be filled for the clue. If equal, fill them.\n// If no more remain to be filled, clear them.\n\ntype NeighbourhoodStats = { clue: Clue, size: NeighbourhoodSize, unsolved: number, remaining: number };\n\nconst clueStats = (clue: Clue): NeighbourhoodStats => {\n    const neighbours = neighbourhood(clue);\n    const size = neighbours.length as NeighbourhoodSize;\n    const unsolved = neighbours.map(outputAt).filter((value) => value === ' ').length;\n    const remaining = clue.clue - neighbours.map(outputAt).filter((value) => value === '#').length;\n    return { clue, size, unsolved, remaining };\n};\n\nwhile (clues.length) {\n    const solved = clues.map(clueStats)\n        .filter((stats) => {\n            let markAsSolved = false;\n            if (stats.remaining === stats.unsolved) { fillRemaining(stats.clue, '#'); markAsSolved = true; }\n            else if (stats.remaining === 0) { fillRemaining(stats.clue, '.'); markAsSolved = true; }\n            return markAsSolved;\n        });\n    if (!solved.length) break; // not going to get any further - have a look at what was wrong\n    solved.forEach((stats) => clues = clues.filter((clue) => stats.clue !== clue));\n}\n\nfor (let i = 0; i < n; i++) console.log(outputGrid[i].join(''));\n",
+      "statement": "You must solve the Mosaic puzzle, also known as Fill-In.\n\nYou are given a grid of squares, some of which contain numbers. Those numbers indicate how many of the immediately surrounding squares (including the cell with the number itself) are filled-in. Every square must be marked as filled-in or empty, and there is exactly one solution for each puzzle.\n\nLogic alone should be sufficient to solve the puzzle, but you can also explore possibilities and backtrack from contradictions.\n\nNote: the grid does <<not>> wrap, so whereas inner cells have 9 surrounding cells, edge cells only have 6, and corner cells only have 4.",
+      "testCases": [
+        {
+          "title": "Then those ones must be empty",
+          "isTest": true,
+          "testIn": "3\n4..\n.7.\n..4",
+          "testOut": "##.\n###\n.##",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "4\n....\n.96.\n....\n.3.1",
+          "testOut": "###.\n###.\n###.\n....",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "All blank",
+          "isTest": true,
+          "testIn": "3\n...\n.0.\n...",
+          "testOut": "...\n...\n...",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "4\n0..0\n....\n....\n0..0",
+          "testOut": "....\n....\n....\n....",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Then those ones must be filled",
+          "isTest": true,
+          "testIn": "3\n0..\n.5.\n...",
+          "testOut": "..#\n..#\n###",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "4\n....\n1.0.\n0..2\n....",
+          "testOut": "#...\n....\n....\n..##",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Careful",
+          "isTest": true,
+          "testIn": "4\n.00.\n..3.\n.43.\n....",
+          "testOut": "....\n....\n####\n#...",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "4\n....\n.330\n.23.\n....",
+          "testOut": ".#..\n.#..\n.#..\n...#",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5x5",
+          "isTest": true,
+          "testIn": "5\n4.2..\n....3\n2.1..\n.....\n.3..3",
+          "testOut": "##..#\n##..#\n....#\n....#\n#####",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "5\n...3.\n.0...\n..22.\n..4..\n.6.3.",
+          "testOut": "...##\n....#\n.....\n###..\n###.#",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "10x10",
+          "isTest": true,
+          "testIn": "10\n.4.22..2..\n.....3..6.\n2....2...5\n..75......\n.55.3..3..\n.2343...42\n.00...5.42\n..3.3..641\n.432..886.\n.......6..",
+          "testOut": "###..##..#\n..#..#..##\n..##...###\n###..#...#\n.###...#..\n....#.#.##\n....#..#..\n.....###..\n####..###.\n#....#####",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "10\n..5.4....2\n.5....6...\n4..44.6..2\n3.5.44.6..\n..7..76...\n2....76..0\n..4..7.4.1\n2.4.45.5.2\n03..5.55..\n..353...4.",
+          "testOut": "####..####\n.#.#####..\n#......##.\n####..###.\n..#####...\n..#####...\n##....##..\n..#.###..#\n..###..##.\n..#.#.##.#",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "15x15",
+          "isTest": true,
+          "testIn": "15\n2.4.00..02..1.0\n3..522.11.3...1\n2.5...4.2..64.1\n...655.5.344..3\n.33.3...6..5...\n.3..4..4.3436..\n..3..2.45..5..2\n2.3..5544......\n...323.6..2.330\n3.2.4.555.3...2\n4..4...55...24.\n...3..5..42....\n.65.2.5.3.1.4.3\n...1..4.2...67.\n.4...1...2.....",
+          "testOut": ".##.......#....\n.##.......#.#..\n#.###.#..#..#.#\n...#.###..###..\n#.##..##.#...##\n#......###.###.\n...###.....#.#.\n.##....##.#.#..\n#...####.#..#..\n#.#....##...#..\n#..##.#..##..##\n###..#.##.....#\n.#...##.#...##.\n.##...#...#.##.\n##.....#..#.###",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "15\n1...3........54\n..7..4554.445..\n3..6...534.564.\n.86.3...3......\n..453545...77.4\n3...3.555....6.\n.5...666..4.45.\n..8...9..6.65..\n.78..7.9.86...2\n...98777...6..3\n1.68...76.3455.\n24...44.4.345..\n3...32344..4..4\n5.........66...\n..6.4.2.43...3.",
+          "testOut": ".##..#.##.#.###\n..##.##.##.#.##\n####..#....#...\n#.#.###.#.####.\n###...##.######\n..#.#...##..#.#\n.##.####...##..\n.###.######.#.#\n###########.##.\n#.###.###.###..\n..####.#.#..###\n..##..###....#.\n##..#.....###.#\n.###...#.#.#.##\n######..##.##..",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "20x20",
+          "isTest": true,
+          "testIn": "20\n0..2.2.2012..4..4..1\n..3..5.31..5..55....\n1..4...3113...56.4.2\n..3446322....1247...\n1...4.....11..3..4.0\n...6..1.2..00.3...3.\n1..5.2.2.....5...3.1\n3.65.2.2555.3.7.645.\n2.3.2...66....75....\n..23.32....6.4...5..\n.32..1...3...4.1.4.2\n..46.22..2.54.323..3\n2.6...4.3.444.4334..\n.3555..4..6.334.444.\n.45.33..34.6...4....\n..4.4..45.4.3...3444\n.6.4........3.344554\n..54......5..1..54..\n3...324..4....54....\n...3.02.22..1...3.4.",
+          "testOut": "......#...#.#..#.#..\n..##..#....######..#\n.#..###..#.#...#.#.#\n....#.#.....#..###..\n.##.#....#......##..\n...##.#.......##....\n.###.....#....#.##.#\n..#....#.##.####.#..\n###.##.#.##..###.#.#\n........##.##..#.##.\n#...#.....###....##.\n#.##...#....##......\n..###..#..#...##.###\n.#.#.##..###.#..#.#.\n#..#..##.##.#..#....\n.##........##.#.#.##\n#..###.###......#.##\n###..##..##..#.#.#..\n.#.#...#..##...#.#.#\n..##...#..#...##..##",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "20\n.243..2..55.22....2.\n....6...5.....46.4..\n.....543.65.23.7.6..\n3.3..6.34.43.45.5.4.\n.33456...3.22..7..5.\n2557..6.3.3..4......\n....67..2.1.344.6.3.\n.46...542..45544.5..\n2..7.64..1..5..45..1\n.3......33.666.4.54.\n4....4.4......2445..\n.2324.4...3.244.3.3.\n....533.44..344..4..\n.5..3...43...5.7...2\n..77....12..44..34..\n.66.433.34...3..566.\n2.65..3.2.7643.4.4.4\n23..343..7..6.6...6.\n0.243..6...7...4..3.\n..0......5...2...4..",
+          "testOut": ".#.##..#.##.#.##....\n.#.#.#..####...####.\n##..###..#..#.#.#...\n.#...#..##....###.##\n..#.##.#..##.#.##.##\n..#.###.......#.##..\n#####.##.#..##.#.##.\n..###.#.....#..##...\n...####....##.#..##.\n##.##..##..##...##..\n.#...#..#.#.###.#..#\n.#.###.#..#.....#.#.\n.......###....##..#.\n.####.....#####.#...\n###.#..#......###.#.\n..##.#....##......##\n##.#..#.####.#######\n..##..#...##..#.....\n....#.#.######.#####\n....#.###.##....#...",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "25x25",
+          "isTest": true,
+          "testIn": "25\n1...5....3.3.1.34..3.4...\n...7.74.4........64....3.\n..5576..3456..56.6.43.55.\n.44.....55.6...5.5443.66.\n2.44.6.6......3.4......7.\n24.....6..67.3..5.6..6..4\n..666....5..6..4.64.6.5..\n2.446..3.5.4..3....678...\n.46.7......4..64.3356.7.3\n.3.4...42..555..5..5.8..3\n4....43...3.5.6...34....3\n2.34..4.4..43..5..3.444..\n.3355.54.34...4.5..5.33.3\n02477.7...5...433.65.3.32\n.2.8.75..53.4.4.23665.24.\n2..9...4...5..6.3.5..4...\n2....3.2..556..6.4.5..76.\n..6......5.7.89..5...6..3\n....223.679.....3.1...4.2\n.8....2....77.8..4.434..3\n.9.7.32..4....6.6.45.6...\n...7.6..3.2.4.5..7..54.3.\n4.76..7754..2..3...454.4.\n4..5..88.5444..3...44.6.4\n....4........32..46.43...",
+          "testOut": "..#.###.##.#...##.#..##..\n.#.###....#.#..#.##.#.#.#\n.#####..##.######.#..#...\n#....##..#.##.#.#.#..####\n..#..####.##......##..###\n.####.##..####.####.##..#\n#....#..##.##...##.####.#\n.#####..##...#..#...#.##.\n...#.##...#.##.#..#######\n##.##.#....#####.#..###..\n.#..#..##.#....##...##.#.\n#.#..#.....#.#.##.##...##\n..#.#.##.###..#..#..#.#..\n...####.#......#.###.#..#\n..#######.#####...##....#\n..###...##...#.....##..##\n#####.....#.#######.####.\n..#..#.#.########...####.\n.##.#..#.###.###..#.....#\n###.....####.##.....#.#..\n#####..#..#########.##.##\n#####.#........###.###...\n.#..#####....#..##.....#.\n.###.######.#....###.####\n##.##.##.#.##.##.###.#.#.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "25\n....3..4....43555...333..\n344.....56.5......3.....3\n..44.4655.66...65..3434..\n0..455.5..5.5....24.42.4.\n1.5..5.5.2.4.5....4...4..\n.....7...4.5.6..32..446.5\n...2...76.45.5.5....4..6.\n.5..4..8...543..7..2.55..\n5...3.....1.23.5.4...6.5.\n.875.3.....33.345..7.8...\n4.533...6.44.4.56.5....5.\n.5..3.3245654.5576.44.5..\n..112...344422.67...5..2.\n2.32.4..0.34.4.55...4.5..\n3....4.4.01...34..3.5.4..\n..421..41..5..3.2..5465.2\n.5....5.2.3....1.4.6...4.\n..565..3..66..32144..7..3\n2..8.7...567..4.3..55.76.\n..787.4...79.7.6.3.4.7.7.\n.7897...2.4.45...4..5.5..\n..88..3....54.34.....76.2\n2..643.4.2.23.2.5..88...2\n.4..201.43.4.....5......2\n.32...01.....22....6..1..",
+          "testOut": "##.#..#.##.#.#.###.###.#.\n#.##.#.##.##.####.....#..\n.....##..###..##...#.#.##\n..##.#.##..##..#.###.#..#\n..##.###...#.##........#.\n.#...##..#..#.#....###.##\n...###########.###...####\n##....###...#..##.......#\n###.#..##.#.....##.####..\n.###.#.##...#.#.#..######\n###..#...#.#.#.#.####.#.#\n#......####.#..###...#...\n.#..##....##..##.##..###.\n......#........##..###...\n.##...#....####..#....#.#\n##...###....#...#.#.###..\n#.#...#...##.#....###.##.\n..###.#..#..#.....#..##..\n.#.####..######.#.#.#####\n#.###.###.###.##.#.##.##.\n#####.....###.##.....##.#\n.######.......#.#####.#..\n..##...##..##....#.#####.\n#.#.....#....#..######..#\n#..#.....#.##..#..###....",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Pixel art - Yin Yang",
+          "isTest": true,
+          "testIn": "18\n000001233332100000\n000124566665421000\n001357899998753100\n013689877899986310\n025899755799876420\n147999755799754431\n258999877898521332\n369999999986310333\n369999999863100333\n369998766531000333\n369986433210000333\n258974101221001332\n147963002442013431\n025874102442135420\n013676422222355310\n001356654333443100\n000124554333321000\n000001233332100000",
+          "testOut": "..................\n......######......\n....##########....\n...############...\n..#####..#######..\n..#####..####..#..\n.############...#.\n.###########....#.\n.##########.....#.\n.#########......#.\n.#####..........#.\n.####...........#.\n..###....##....#..\n..###....##...##..\n...###.......##...\n....####....##....\n......######......\n..................",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "18\n000001233332100000\n000124566665421000\n001357899998753100\n013689877899986310\n025899755799876420\n147999755799754431\n258999877898521332\n369999999986310333\n369999998753100333\n369998765421000333\n369986432100000333\n258974101221001332\n147963002442013431\n025874102442135420\n013676422222355310\n001356654333443100\n000124554333321000\n000001233332100000",
+          "testOut": "..................\n......######......\n....##########....\n...############...\n..#####..#######..\n..#####..####..#..\n.############...#.\n.###########....#.\n.##########.....#.\n.########.......#.\n.#####..........#.\n.####...........#.\n..###....##....#..\n..###....##...##..\n...###.......##...\n....####....##....\n......######......\n..................",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Pixel art - Congratulations",
+          "isTest": true,
+          "testIn": "25\n0001233321000001233321000\n0013566653100013566653100\n0136899986310136899986310\n1245666665310135666665421\n1234443444333334443444321\n1112220223233323220222111\n0003330335343435330333000\n0002332335330336330333000\n0001233324330336330333000\n0000134313330336330333000\n0000033302343434343432000\n0000022201233322233321000\n1233222210235320124443321\n2343323220224220002343321\n3453435330336330003453321\n3453435330336330003452100\n3453435330336330003452100\n3453435330336330003452100\n3330335343435453324453321\n2220223233323343323343321\n1110112356544566643233321\n0000001234566654321000000\n0000001234577754321000000\n0000000001244421000000000\n0000000000011100000000000",
+          "testOut": ".........................\n....#####.......#####....\n...#######.....#######...\n..#########...#########..\n.#.....................#.\n....#...#..###..#...#....\n....#...#.#...#.#...#....\n....#...#.#...#.#...#....\n.....#.#..#...#.#...#....\n......#...#...#.#...#....\n......#...#...#.#...#....\n......#....###...###.....\n.........................\n.####..#...#.#.....#####.\n.#...#.#...#.#.....#.....\n.#...#.#...#.#.....#.....\n.####..#...#.#.....###...\n.#...#.#...#.#.....#.....\n.#...#.#...#.#.....#.....\n.#...#..###..#####.#####.\n.........................\n.......###########.......\n..........#####..........\n............#............\n.........................",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "25\n0001233321000001233321000\n0013566653100013566653100\n0136899986310136899986310\n1245666665310135666665421\n1234443444333334443444321\n1112220223233323220222111\n0003330335343435330333000\n0002332335330336330333000\n0001233324330336330333000\n0000134313330336330333000\n0000033302343434343432000\n0000022201233322233321000\n1233222210235320124443321\n2343323220224220002343321\n3453435330336330003453321\n3453435330336330003452100\n3453435330336330003452100\n3453435330336330003452100\n3330335343435453324453321\n2220223233323343323343321\n1110112356533466643233321\n0000001234555554321000000\n0000001234566654321000000\n0000000001244421000000000\n0000000000011100000000000",
+          "testOut": ".........................\n....#####.......#####....\n...#######.....#######...\n..#########...#########..\n.#.....................#.\n....#...#..###..#...#....\n....#...#.#...#.#...#....\n....#...#.#...#.#...#....\n.....#.#..#...#.#...#....\n......#...#...#.#...#....\n......#...#...#.#...#....\n......#....###...###.....\n.........................\n.####..#...#.#.....#####.\n.#...#.#...#.#.....#.....\n.#...#.#...#.#.....#.....\n.####..#...#.#.....###...\n.#...#.#...#.#.....#.....\n.#...#.#...#.#.....#.....\n.#...#..###..#####.#####.\n.........................\n.......#####.#####.......\n..........#####..........\n............#............\n.........................",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "3 ≤ [[N]] ≤ 25",
+      "coverBinaryId": 114329089765244,
+      "stubGenerator": "read n:int\nloop n read line:word(n)\nloop n write solved line",
+      "inputDescription": "<<Line 1:>> Integer [[N]], representing the width and height of the grid.\n<<Next [[N]] lines:>> [[N]] characters representing the grid; each character is either a single-digit number or {{.}} otherwise.",
+      "solutionLanguage": "TypeScript",
+      "outputDescription": "<<[[N]] lines>> of [[N]] length strings containing {{.}}'s to indicate empty cells and {{#}}'s to indicate filled cells."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You must solve the Mosaic puzzle, also known as Fill-In.<br><br>You are given a grid of squares, some of which contain numbers. Those numbers indicate how many of the immediately surrounding squares (including the cell with the number itself) are filled-in. Every square must be marked as filled-in or empty, and there is exactly one solution for each puzzle.<br><br>Logic alone should be sufficient to solve the puzzle, but you can also explore possibilities and backtrack from contradictions.<br><br>Note: the grid does <strong>not</strong> wrap, so whereas inner cells have 9 surrounding cells, edge cells only have 6, and corner cells only have 4.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Integer <var>N</var>, representing the width and height of the grid.<br><strong>Next <var>N</var> lines:</strong> <var>N</var> characters representing the grid; each character is either a single-digit number or <const>.</const> otherwise.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>N</var> lines</strong> of <var>N</var> length strings containing <const>.</const>'s to indicate empty cells and <const>#</const>'s to indicate filled cells.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">3 &le; <var>N</var> &le; 25</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\n4..\n.7.\n..4</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">##.\n###\n.##</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 68809633791,
+  "avatar": 5529883558499,
+  "commentCount": 24,
+  "upVotes": 6,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 893010,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1701919423582,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

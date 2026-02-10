@@ -1,0 +1,252 @@
+{
+  "id": 27009,
+  "activeVersion": 15,
+  "score": 5,
+  "votableId": 24853249,
+  "codingamerId": 2923506,
+  "views": 250,
+  "commentableId": 24734177,
+  "title": "Constrained Latin Squares",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "darkhorse64",
+  "publicHandle": "2700955b684286f04494546afdd041b9a37a5",
+  "codingamerHandle": "c9ebe76a83b33730956eda0534d6cad86053292",
+  "lastVersion": {
+    "version": 15,
+    "autocloseTime": 1662211474174,
+    "data": {
+      "title": "Constrained Latin Squares",
+      "topics": [
+        {
+          "id": 56,
+          "handle": "backtracking",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Retour sur trace",
+            "2": "Backtracking"
+          },
+          "pageTitle": "Backtracking: exercises and theory",
+          "puzzleCount": 13,
+          "parentTopicId": 41,
+          "contentDetailsId": 80
+        },
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 39,
+          "parentTopicId": 93
+        },
+        {
+          "id": 182,
+          "handle": "combinatorics",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Combinatoire",
+            "2": "Combinatorics"
+          },
+          "puzzleCount": 8,
+          "parentTopicId": 93
+        },
+        {
+          "id": 46,
+          "handle": "loops",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 80,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        }
+      ],
+      "solution": "#include <iostream>\n#include <chrono>\n#include <vector>\n#include <cstring>\n\nusing namespace std;\n\nclass Timer\n{\npublic:\n    void start ()\n    {\n        startTime = chrono::high_resolution_clock::now ();\n    }\n    friend ostream& operator<< (ostream& stream, const Timer& timer)\n    {\n        chrono::microseconds time_span = chrono::duration_cast<chrono::microseconds>(chrono::high_resolution_clock::now () - timer.startTime);\n        stream << time_span.count ();\n        return stream;\n    }\nprivate:\n    chrono::high_resolution_clock::time_point startTime;\n};\n\nclass DLX\n{\npublic:\n\tDLX (int R, int C1, int C2, bool* cover);\n\tsize_t  count ();\nprivate:\n\tstruct Column;\n\n\tstruct Cell\n\t{\n\t\tCell* l;\n\t\tCell* r;\n\t\tCell* u;\n\t\tCell* d;\n\t\tColumn* c;\n\t\tint row;\n\t\tvoid remove ();\n\t\tvoid restore ();\n\t\tvoid erase ();\n\t};\n\n\tstruct Column\n\t{\n\t\tColumn* l;\n\t\tColumn* r;\n\t\tCell head;\n\t\tint size;\n\t\tbool essential;\n\t\tvoid remove ();\n\t\tvoid restore ();\n\t};\n\n\t// Sparse matrix (not really but let's keep it simple for now)\n\tint R, C1, C2;\n\tColumn head;\n\tvector<Column> columns;\n\tvector<Cell> cells;\n\tvector<vector<int>> solutions;\n\n};\n\nDLX::DLX (int R, int C1, int C2, bool* cover) :R (R), C1 (C1), C2 (C2)\n{\n    int C = C1 + C2;\n\n    // Allocate memory for the full structure\n    // C DancingLinksColumns for columns and R*C DancingLinksCells for cells\n\n    // First, the C columns\n    columns.resize (C);\n\n    // Set left and right links in both directions for the head\n    head.r = &columns[0];\n    head.l = &columns[C - 1];\n    head.essential = false;\n    columns[0].l = &head;\n    columns[C - 1].r = &head;\n\n    // Set left and right pointers for remaining column elements\n    for (int i = 0; i < C - 1; i++)\n    {\n        columns[i].r = &columns[i + 1];\n        columns[i + 1].l = &columns[i];\n    }\n\n    // Set size and essentiality values for each column\n    for (int i = 0; i < C; i++)\n    {\n        columns[i].size = R;\n        columns[i].essential = i < C1;\n    }\n\n    // Now the cells\n    cells.resize (R * C);\n\n    // Assign row and column IDs and neighbours for all cells\n    for (int i = 0, k = 0; i < R; i++)\n    {\n        for (int j = 0; j < C; j++, k++)\n        {\n            cells[k].row = i;\n            cells[k].c = &columns[j];\n\n            if (k % C == 0)\n                cells[k].l = &cells[k + C - 1];\n            else\n                cells[k].l = &cells[k - 1];\n\n            if (k % C == C - 1)\n                cells[k].r = &cells[k - C + 1];\n            else\n                cells[k].r = &cells[k + 1];\n\n            if (k < C)\n            {\n                cells[k].u = &columns[j].head;\n                columns[j].head.d = &cells[k];\n            }\n            else\n                cells[k].u = &cells[k - C];\n\n            if (k >= (R - 1) * C)\n            {\n                cells[k].d = &columns[j].head;\n                columns[j].head.u = &cells[k];\n            }\n            else\n                cells[k].d = &cells[k + C];\n        }\n    }\n\n    // If a matrix element is 0, delete it by changing neighbours' pointers\n    for (int i = 0, k = 0; i < R; i++)\n    {\n        for (int j = 0; j < C; j++, k++)\n        {\n            if (!cover[k]) cells[k].erase ();\n        }\n    }\n}\n\nvoid DLX::Cell::remove ()\n{\n    u->d = d;\n    d->u = u;\n    c->size--;\n}\n\nvoid DLX::Cell::restore ()\n{\n    u->d = this;\n    d->u = this;\n    c->size++;\n}\n\nvoid DLX::Cell::erase ()\n{\n    remove ();\n    l->r = r;\n    r->l = l;\n}\n\nvoid DLX::Column::remove ()\n{\n    // Remove the column from the column list\n    l->r = r;\n    r->l = l;\n\n    // Find the 1-cells in the column and remove the other 1-cells in those rows\n    //  from their respective columns\n    for (auto i = head.d; i != &head; i = i->d)\n    {\n        // Found a 1-cell in the column\n        // Erase the row by finding its row neighbours and removing their\n        //  vertical links\n        for (auto j = i->r; j != i; j = j->r)\n        {\n            // 1-cell in the row\n            // Remove vertical links\n            j->remove ();\n        }\n    }\n}\n\nvoid DLX::Column::restore ()\n{\n    // Put back the cells in the reverse order as they were removed\n    for (auto i = head.u; i != &head; i = i->u)\n    {\n        for (auto j = i->l; j != i; j = j->l)\n        {\n            j->restore ();\n        }\n    }\n\n    // Insert the column to the column list\n    l->r = this;\n    r->l = this;\n}\n\nsize_t DLX::count ()\n{\n    // No more constraints left to be satisfied. Success\n    if (!head.r->essential) return 1;\n\n    // Find the essential column with the lowest degree (Knuth's heuristic)\n    auto column = head.r;\n    int minCount = column->size;\n    for (auto i = column->r; i->essential; i = i->r)\n    {\n        if (i->size < minCount)\n        {\n            column = i;\n            minCount = i->size;\n        }\n    }\n\n    // No way to satisfy some constraint. Failure\n    if (minCount == 0) return 0;\n\n    size_t solutions = 0;\n\n    // Remove the chosen column\n    column->remove ();\n    for (auto i = column->head.d; i != &column->head; i = i->d)\n    {\n        // Pick this row in candidate solution\n\n        // Remove columns for all other cells in this row\n        for (auto j = i->r; j != i; j = j->r)\n        {\n            j->c->remove ();\n        }\n\n        // Recurse to solve the modified board\n        solutions += count ();\n\n        for (auto j = i->l; j != i; j = j->l)\n        {\n            j->c->restore ();\n        }\n    }\n    // Unremove the chosen column\n    column->restore ();\n\n    return solutions;\n}\n\nsize_t latinSquares (vector<vector<int>> grid)\n{\n    int N = (int)grid.size ();\n\n    // Every placement of a number in a position is a subset. Hence R=N*N*N\n    // There are constraints of 3 types:\n    //  A cell can have only 1 number : N*N constraints\n    //  A row can have a number only once : N*N constraints\n    //  A column can have a number only once : N*N constraints\n    // Overall, C = 3*N*N\n\n    int rows = N * N * N, columns = 3 * N * N;\n\n    // Existing numbers in latin squares result in already satisfied constraints\n    // and forbidden columns\n    // ar1 stores whether a particular row is non-forbidden and is later used to\n    // find the ith non-forbidden row\n    // ar2 stores whether a particular column is non-forbidden and is later used\n    // to find the ith non-forbidden column\n    int* ar1 = new int[rows];\n    memset (ar1, 1, rows * sizeof(int));\n    int* ar2 = new int[columns];\n    memset (ar2, 1, columns * sizeof (int));\n\n    // Read the initial position of the board and make rows/columns forbidden\n    //  based on existing entries\n    for (int i = 0; i < N; i++)\n    {\n        for (int j = 0; j < N; j++)\n        {\n            if (grid[i][j] != 0)\n            {\n                // Square is already filled\n                // Find the rows and columns it blocks\n                for (int k = 0; k < N; k++)\n                {\n                    // Other numbers can't end up in the same cell now\n                    ar1[i * N * N + j * N + k] = 0;\n\n                    // This number can't appear in another column in the same row\n                    ar1[i * N * N + k * N + grid[i][j] - 1] = 0;\n\n                    // This number can't appear in another row in the same column\n                    ar1[k * N * N + j * N + grid[i][j] - 1] = 0;\n                }\n\n                // Square constraint satisfied\n                ar2[i * N + j] = 0;\n\n                // Row constraint satisfied\n                ar2[N * N + i * N + grid[i][j] - 1] = 0;\n\n                // Columnn constraint satisfied\n                ar2[2 * N * N + j * N + grid[i][j] - 1] = 0;\n            }\n        }\n    }\n\n    // Find partial sums of ar1 and ar2 to find out their position among\n    // non-forbidden rows and columns\n    int cum1 = 0, cum2 = 0;\n    for (int i = 0; i < rows; i++)\n    {\n        if (ar1[i])\n            ar1[i] = cum1++;\n        else\n            ar1[i] = -1;\n    }\n    for (int i = 0; i < columns; i++)\n    {\n        if (ar2[i])\n            ar2[i] = cum2++;\n        else\n            ar2[i] = -1;\n    }\n\n    // The number of rows and columns we really need to deal with are just cum1\n    // and cum2 respectively\n    int R = cum1, C1 = cum2, C2 = 0, C = C1 + C2;\n\n    // Matrix to store the constraint adjacency matrix\n    bool* matrix;\n    matrix = new bool[R * C];\n    memset (matrix, 0, sizeof (bool) * R * C);\n\n    for (int i = 0; i < N; i++)\n    {\n        for (int j = 0; j < N; j++)\n        {\n            for (int k = 0; k < N; k++)\n            {\n                int r = i * N * N + j * N + k;\n                if (ar1[r] == -1) continue;\n                int c1 = i * N + j, c2 = N * N + i * N + k, c3 = 2 * N * N + j * N + k;\n                if (ar2[c1] != -1) matrix[ar1[r] * C + ar2[c1]] = true;\n                if (ar2[c2] != -1) matrix[ar1[r] * C + ar2[c2]] = true;\n                if (ar2[c3] != -1) matrix[ar1[r] * C + ar2[c3]] = true;\n            }\n        }\n    }\n\n    delete[] ar1;\n    delete[] ar2;\n\n    // Now just solve it with dancing links\n    DLX problem (R, C1, C2, matrix);\n    delete[] matrix;\n    return problem.count ();\n}\n\nint main ()\n{\n    int n;\n    cin >> n; cin.ignore();\n    vector<vector<int>> grid (n, vector<int> (n, 0));\n    for (int i = 0; i < n; i++) {\n        string row;\n        getline(cin, row);\n        for (int j = 0; j < n; j++)\n            grid[i][j] = row[j] - '0';\n    }\n    Timer timer;\n    timer.start ();\n    cout << latinSquares (grid) << endl;\n    cerr << \"Solved in \" << timer << \" us\" <<endl;\n    return 0;\n}",
+      "statement": "<<Count all solutions to a partially filled Latin square.>>\n\nA Latin square of order n is a n x n array filled with n different symbols, each occurring exactly once in each row and exactly once in each column. In this puzzle, you are given a n x n grid filled with digits between 0 and n. This grid forms a partially filled Latin square where digits above 0 cannot be changed (they are constrained) and zeroes can take any value between 1 and n. Your goal is to find the number of Latin squares that are solutions to this grid.",
+      "testCases": [
+        {
+          "title": "3x3 Easy",
+          "isTest": true,
+          "testIn": "3\n123\n200\n300",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3x3 Easy",
+          "isTest": false,
+          "testIn": "3\n001\n002\n123",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4x4 Unconstrained",
+          "isTest": true,
+          "testIn": "4\n0000\n0000\n0000\n0000",
+          "testOut": "576",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3x3 Unconstrained",
+          "isTest": false,
+          "testIn": "3\n000\n000\n000",
+          "testOut": "12",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5x5 Wrong grid",
+          "isTest": true,
+          "testIn": "5\n10001\n00000\n00000\n00000\n00000",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5x5 Wrong grid",
+          "isTest": false,
+          "testIn": "5\n00005\n00000\n00000\n00000\n00005",
+          "testOut": "0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5x5 Fundamental",
+          "isTest": true,
+          "testIn": "5\n12345\n20000\n30000\n40000\n50000",
+          "testOut": "56",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5x5 Fundamental",
+          "isTest": false,
+          "testIn": "5\n00001\n00002\n00003\n00004\n12345",
+          "testOut": "56",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6x6",
+          "isTest": true,
+          "testIn": "6\n100000\n020000\n003000\n000400\n000050\n000006",
+          "testOut": "10752",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "6x6",
+          "isTest": false,
+          "testIn": "6\n100000\n003000\n020000\n000060\n000050\n000004",
+          "testOut": "13056",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "7x7",
+          "isTest": true,
+          "testIn": "7\n2000007\n0403000\n0030000\n0006004\n1500000\n0000020\n0100070",
+          "testOut": "14388",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "7x7",
+          "isTest": false,
+          "testIn": "7\n1030507\n0200050\n0000000\n0004000\n0000000\n0100060\n7050301",
+          "testOut": "8448",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "8x8",
+          "isTest": true,
+          "testIn": "8\n12345600\n23456000\n34560000\n45600000\n56000000\n60000000\n00000000\n00000008",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "8x8",
+          "isTest": false,
+          "testIn": "8\n12345670\n23456780\n34567000\n45000000\n56000000\n67000000\n78000000\n00000000",
+          "testOut": "4416",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "9x9",
+          "isTest": true,
+          "testIn": "9\n420789036\n200000003\n004000000\n900123007\n500231008\n700312009\n000000000\n300000004\n630907025",
+          "testOut": "8896",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "9x9",
+          "isTest": false,
+          "testIn": "9\n087604321\n800000002\n700000003\n600523004\n000372005\n401230006\n300000007\n200000008\n123456780",
+          "testOut": "14368",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "9x9 Hard",
+          "isTest": true,
+          "testIn": "9\n087604321\n800000002\n700000003\n600523000\n000302005\n401230006\n300000007\n200000008\n103050780",
+          "testOut": "44032",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "9x9 Hard",
+          "isTest": false,
+          "testIn": "9\n087604321\n800000002\n700000003\n600523000\n000372005\n401230006\n300000007\n200000008\n103050780",
+          "testOut": "29312",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "3 <= [[n]] <= 9",
+      "coverBinaryId": 88096329159326,
+      "stubGenerator": "read n:int\n\nloop n read row:string(10)\n\nwrite 0",
+      "inputDescription": "<<Line 1>> : an integer [[n]], dimension of the square grid.\n<<[[n]] lines>> : a string [[row]] with [[n]] digits corresponding to that row. A \"0\" is used for an unconstrained cell.",
+      "solutionLanguage": "C++",
+      "outputDescription": "<<Line 1:>> The number of solutions to the puzzle."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><strong>Count all solutions to a partially filled Latin square.</strong><br><br>A Latin square of order n is a n x n array filled with n different symbols, each occurring exactly once in each row and exactly once in each column. In this puzzle, you are given a n x n grid filled with digits between 0 and n. This grid forms a partially filled Latin square where digits above 0 cannot be changed (they are constrained) and zeroes can take any value between 1 and n. Your goal is to find the number of Latin squares that are solutions to this grid.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong> : an integer <var>n</var>, dimension of the square grid.<br><strong><var>n</var> lines</strong> : a string <var>row</var> with <var>n</var> digits corresponding to that row. A &quot;0&quot; is used for an unconstrained cell.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> The number of solutions to the puzzle.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">3 &lt;= <var>n</var> &lt;= 9</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\n123\n200\n300</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 109567227069,
+  "avatar": 23496414257567,
+  "commentCount": 17,
+  "upVotes": 5,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 692646,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1661162538224,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

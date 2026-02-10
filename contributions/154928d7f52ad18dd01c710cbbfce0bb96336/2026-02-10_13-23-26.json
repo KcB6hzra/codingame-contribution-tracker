@@ -1,0 +1,399 @@
+{
+  "id": 15492,
+  "activeVersion": 101,
+  "score": 71,
+  "votableId": 23161567,
+  "codingamerId": 4436271,
+  "views": 1101,
+  "commentableId": 23047764,
+  "title": "Complicated interpreter",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Ayza",
+  "publicHandle": "154928d7f52ad18dd01c710cbbfce0bb96336",
+  "codingamerHandle": "e91a7a998d46a397213f2be1e32ed8701726344",
+  "lastVersion": {
+    "version": 101,
+    "autocloseTime": 1658992925290,
+    "data": {
+      "title": "Complicated interpreter",
+      "topics": [
+        {
+          "id": 235,
+          "handle": "interpreter",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "interpreter",
+            "2": "Interpreters"
+          },
+          "puzzleCount": 6,
+          "parentTopicId": 93
+        },
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 24,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "id": 117,
+          "handle": "logic",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Logic",
+            "2": "Logic"
+          },
+          "puzzleCount": 14,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "n = int(input())\ncode = [i.split() for _ in range(n) for i in input().split(\"\\n\")]\n\nregisters = {}\nfunctions = {}\n\ndef parse(n):\n    if \"$\" in n:\n        if n.split(\"$\")[1] in registers:\n            return registers[n.split(\"$\")[1]]\n        else:\n            print(\"ERROR\")\n            quit()\n    else:\n        return int(n)\n\ndef logic(cond):\n    x = cond.split()\n\n    if \"or\" in x:\n        if parse(x[0]) == parse(x[2]) or parse(x[4]) == parse(x[6]):\n            return True\n        return False\n\n    elif \"and\" in x:\n        if parse(x[0]) == parse(x[2]) and parse(x[4]) == parse(x[6]):\n            return True\n        return False\n    \n    elif \"==\" in x:\n        if parse(x[0]) == parse(x[2]):\n            return True\n        return False\n\n    elif \"!=\" in x:\n        if parse(x[0]) != parse(x[2]):\n            return True\n        return False\n    \n    print(\"ERROR\")\n    quit()\n\ndef execute(c):\n    for i in range(len(c)):\n        if \"//\" not in c[i]:\n            if c[i] == \"=\":\n                registers[c[i-1]] = parse(c[i+1])\n                \n            elif c[i] == \"loop\":\n                for _ in range(parse(c[i+1])-1):\n                    execute(c[i+1:])\n                \n            elif c[i] == \"add\":\n                registers[c[i-1]] += parse(c[i+1])\n    \n            elif c[i] == \"sub\":\n                registers[c[i-1]] -= parse(c[i+1])\n\n            elif c[i] == \"mult\":\n                registers[c[i-1]] *= parse(c[i+1])\n\n            elif c[i] == \"delete\":\n                del registers[c[i+1]]\n\n            elif c[i] == \"function\":\n                functions[c[i-1]] = \" \".join(c[i+1:])\n                break\n\n            elif \"()\" in c[i]:\n                if c[i][:len(c[i])-2] in functions:\n                    execute(functions[c[i][:len(c[i])-2]].split())\n                else:\n                    print(\"ERROR\")\n                    quit()\n                    \n            elif c[i] == \"if\":\n                condition = \" \".join(c).split(\"then\")[0].replace(\"if\",\"\")\n                body = \" \".join(c).split(\"then\")[1]\n                \n                if logic(condition):\n                    execute(body)\n                else:\n                    break\n\n            elif c[i] == \"print\":\n                print(\" \".join([str(registers[i]) for i in registers]))\n                quit()\n        else:\n            return\n\nfor j in range(len(code)):\n    execute(code[j])",
+      "statement": "Your task is to create an interpreter for a language that has {{12}} instructions (excluding comments). At the end, you have to output all the variable values separated by a space.\n\nThis language <<doesn't care about syntax>>, so for example: \"x = 2 n function x add 1\" is legal, you could define a function and a variable in the same line, and this applies for everything else. \n\nWhen defining functions/if statements/loops, you need to know that all the code that goes after it <<in the same line>> is its body. There's nothing that indicates their body end other than the end of the line.\n\nWhen referencing variables, a dollar sign should be at the start, so: {{$x}} would represent the value of variable x, and {{x add $y}} would mean add {{y}} to {{x}}, when passing variables to an instruction that'll modify the given variable, you need to give the variable itself but not it's value. Variables that aren't valid should return an error, and in that case, print {{ERROR}} and stop the execution.\n\nComments are represented by a {{//}}, comments can be anywhere in the line, everything in the line <<after the comment>> should be ignored, while the rest before it executed.\n\nCases of errors: Invalid variables and invalid functions.\nEx: Referencing variable x which does not exist, or calling function x which also does not exist.\nIn case of an error: print {{ERROR}} and stop the execution\n\nVariables are ordered by the order at which they were first created, so the following example would output 5 1:\n`x = 5\ny = 3\nz = 1\ndelete y\nprint`\n<<Instructions>>\n\nFormat: <<Instruction>> || <<Description>> || <<Usage>>\n\n<<print>> || Stop execution and print the variables || print\n<<=>> || Assigning variables, variables will always be integers || {{identifier}} = {{value}}\n<<add>> || Add {{value}} to {{variable}} || {{variable}} add {{value}}\n<<sub>> || Subtract {{value}} from {{variable}} || {{variable}} sub {{value}}\n<<mult>> || Multiply {{variable}} by {{value}} || {{variable}} mult {{value}}\n<<delete>> || Delete {{variable}} from memory || delete {{variable}}\n<<loop>> || Executes {{body}} for {{x}} amount of times || loop {{x}} do {{body}}\n<<function>> || Create function {{name}}, <<everything>> after it is the function body, for this puzzle, this will not take arguments, nor return a value, but do changes || {{name}} function  {{body}}\n\n<<Logical instructions>>\n\nEverything here is <<only used in if blocks>>.\n\n<<if>> || If the condition given is true, execute the {{body}}, otherwise skip it || if {{condition}} then {{body}}\n<<==>> || Equality operator, If {{x}} is equal to {{y}} then it returns true|| {{value}} == {{value}}\n<<!=>> || Not equal operator, if {{x}} is not equal to {{y}} then it returns true || {{value}} != {{value}}\n<<or>> || Logical or operator, If at least one of the conditions are true it returns true || {{cond1}} or {{cond2}}\n<<and>> || Logical and operator, If both of the conditions are true it returns true || {{cond1}} and {{cond2}}\n\nLogical instructions accept literal integers or variable values, so variables are referenced when given.\n\nA function call is a function call if it ends with (), functions and variables can have the same name. All names consist of letters only.",
+      "testCases": [
+        {
+          "title": "One variable",
+          "isTest": true,
+          "testIn": "2\nx = 50\nprint",
+          "testOut": "50",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "4\nx = 2\ny = 4\nz = 6\nprint",
+          "testOut": "2 4 6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two variables and addition",
+          "isTest": true,
+          "testIn": "4\nvar = 50\ny = 50\nvar add 32\nprint",
+          "testOut": "82 50",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "4\nx = 12\ny = 32\nx add 50\nprint",
+          "testOut": "62 32",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Subtraction and referencing",
+          "isTest": true,
+          "testIn": "6\nx = 1000\ny = 2000\nx add $y\nx sub 500\ny sub 500\nprint",
+          "testOut": "2500 1500",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "4\nx = 50\ny = 50\nx sub $y\nprint",
+          "testOut": "0 50",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Invalid Variable",
+          "isTest": true,
+          "testIn": "4\nx = 50\nx sub $y\nx add $y\nprint",
+          "testOut": "ERROR",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "3\nx = 50\nx add $y\nprint",
+          "testOut": "ERROR",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiplication",
+          "isTest": true,
+          "testIn": "6\nx = 50\ny = 90\nx sub $y\nx mult $y\nx add $x\nprint",
+          "testOut": "-7200 90",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "4\nx = 1000\ny = 10\nx mult $y\nprint",
+          "testOut": "10000 10",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Comments",
+          "isTest": true,
+          "testIn": "6\nx = 50\n//y = 5\n//This won't do anything\nx add $x //x add $x\nprint\nx add $x",
+          "testOut": "100",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "3\nx = 1\n//y = 10\nprint",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Delete",
+          "isTest": true,
+          "testIn": "6\nx = 50\ny = $x\nx add $y\nx mult $y\ndelete y\nprint",
+          "testOut": "5000",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "5\nx = 90\ny = 20\ny add $x\ndelete x\nprint",
+          "testOut": "110",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Loops",
+          "isTest": true,
+          "testIn": "7\nx = 50\ny = $x\nloop 50 do x add $y\nx sub $y\nprint\ndelete y\nz add $x",
+          "testOut": "2500 50",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "3\nx = 50\nloop 5 do x add $x\nprint",
+          "testOut": "1600",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Long code",
+          "isTest": true,
+          "testIn": "8\nfoo = 500\n//y = 10\nz = 50\nfoo sub 50\nfoo mult $foo\nfoo add 50000\nloop 50 do loop 50 do loop 50 do foo add $y\nprint",
+          "testOut": "ERROR",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "8\nx = 12\ny = 20\n//z = -22\nx sub $y\nx add $y\nx mult $y\nloop 50 do x add $z\nprint",
+          "testOut": "ERROR",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Functions",
+          "isTest": true,
+          "testIn": "7\nx = 500\ny = 600\ny add 600 //z = 0\nfirstfunc function x add $y\nfirstfunc()\ndelete y\nprint",
+          "testOut": "1700",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "8\nx = 25\n//y = 3\nfunc function x add 8\nfunc()\nfunc()\nfunc()\nfunc()\nprint",
+          "testOut": "57",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "If statements and equality operators",
+          "isTest": true,
+          "testIn": "7\nx = 5\ny = 5\nx function if $x != 8 then x mult 3\nif 3 == 3 then x add 3\nx()\ndelete y\nprint",
+          "testOut": "8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "5\nx = 5\ny = 1\nif $y == 1 then x add $y\nif $x != 6 then x add 1\nprint",
+          "testOut": "6 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "or operator",
+          "isTest": true,
+          "testIn": "4\nfoo = 5\nbar = 5\nif $foo != 5 or $bar == 5 then foo add 5\nprint",
+          "testOut": "10 5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "5\nx = 6\ny = $x\nif $x != 6 or $y == 6 then x add $y\nif 6 != 6 then x add 2\nprint",
+          "testOut": "12 6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "and operator",
+          "isTest": true,
+          "testIn": "4\nx = 2\ny = 0\nif $y == 0 and $x == 2 then x add 4\nprint",
+          "testOut": "6 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "4\nx = 6\ny = 5\nif $x == $x and $y == 3 then x add 5\nprint",
+          "testOut": "6 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Error if statement",
+          "isTest": true,
+          "testIn": "4\nx = 5\ny = 6\nif $z == $x and $y == $y then x add 6\nprint",
+          "testOut": "ERROR",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 14",
+          "isTest": false,
+          "testIn": "4\nz = 5\ny = 6\nif $x == $z and y != $z then x add 0\nprint",
+          "testOut": "ERROR",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Function reassignment and one line calls",
+          "isTest": true,
+          "testIn": "5\nx = 6\nx function x add 5\nx function x add 6\nx() x()\nx() print",
+          "testOut": "24",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 15",
+          "isTest": false,
+          "testIn": "7\nx = 5\ny = $x\nx = $y\nn function x add 5\nn function x add 6\nn()\nprint n()",
+          "testOut": "11 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Invalid function",
+          "isTest": true,
+          "testIn": "4\nx = 5\nn function x add 5\nx()\nprint",
+          "testOut": "ERROR",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 16",
+          "isTest": false,
+          "testIn": "4\nz = 5\nx function z add $x\nn()\nprint",
+          "testOut": "ERROR",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Nested loops",
+          "isTest": true,
+          "testIn": "5\nx = 0\nx function loop 5 do loop 5 do x add 1\nx()\nx()\nprint",
+          "testOut": "50",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 17",
+          "isTest": false,
+          "testIn": "5\nx = 0\nn function loop 50 do loop 50 do loop 50 do x add 1\nn()\nn()\nprint",
+          "testOut": "250000",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "2 <= [[n]] <= 8",
+      "coverBinaryId": 133910826214930,
+      "stubGenerator": "read n:int\nloop n read line:string(1024)\nwrite answer",
+      "inputDescription": "<<Line 1:>> An integer [[n]] for the number of lines\n<<Next [[n]] lines:>> A string consisting of one or more instructions",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> All variable values separated by a space"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Your task is to create an interpreter for a language that has <const>12</const> instructions (excluding comments). At the end, you have to output all the variable values separated by a space.<br><br>This language <strong>doesn't care about syntax</strong>, so for example: &quot;x = 2 n function x add 1&quot; is legal, you could define a function and a variable in the same line, and this applies for everything else. <br><br>When defining functions/if statements/loops, you need to know that all the code that goes after it <strong>in the same line</strong> is its body. There's nothing that indicates their body end other than the end of the line.<br><br>When referencing variables, a dollar sign should be at the start, so: <const>$x</const> would represent the value of variable x, and <const>x add $y</const> would mean add <const>y</const> to <const>x</const>, when passing variables to an instruction that'll modify the given variable, you need to give the variable itself but not it's value. Variables that aren't valid should return an error, and in that case, print <const>ERROR</const> and stop the execution.<br><br>Comments are represented by a <const>//</const>, comments can be anywhere in the line, everything in the line <strong>after the comment</strong> should be ignored, while the rest before it executed.<br><br>Cases of errors: Invalid variables and invalid functions.<br>Ex: Referencing variable x which does not exist, or calling function x which also does not exist.<br>In case of an error: print <const>ERROR</const> and stop the execution<br><br>Variables are ordered by the order at which they were first created, so the following example would output 5 1:<br><pre style=\"font-family: monospace\">x = 5<br>y = 3<br>z = 1<br>delete y<br>print</pre><br><strong>Instructions</strong><br><br>Format: <strong>Instruction</strong> || <strong>Description</strong> || <strong>Usage</strong><br><br><strong>print</strong> || Stop execution and print the variables || print<br><strong>=</strong> || Assigning variables, variables will always be integers || <const>identifier</const> = <const>value</const><br><strong>add</strong> || Add <const>value</const> to <const>variable</const> || <const>variable</const> add <const>value</const><br><strong>sub</strong> || Subtract <const>value</const> from <const>variable</const> || <const>variable</const> sub <const>value</const><br><strong>mult</strong> || Multiply <const>variable</const> by <const>value</const> || <const>variable</const> mult <const>value</const><br><strong>delete</strong> || Delete <const>variable</const> from memory || delete <const>variable</const><br><strong>loop</strong> || Executes <const>body</const> for <const>x</const> amount of times || loop <const>x</const> do <const>body</const><br><strong>function</strong> || Create function <const>name</const>, <strong>everything</strong> after it is the function body, for this puzzle, this will not take arguments, nor return a value, but do changes || <const>name</const> function  <const>body</const><br><br><strong>Logical instructions</strong><br><br>Everything here is <strong>only used in if blocks</strong>.<br><br><strong>if</strong> || If the condition given is true, execute the <const>body</const>, otherwise skip it || if <const>condition</const> then <const>body</const><br><strong>==</strong> || Equality operator, If <const>x</const> is equal to <const>y</const> then it returns true|| <const>value</const> == <const>value</const><br><strong>!=</strong> || Not equal operator, if <const>x</const> is not equal to <const>y</const> then it returns true || <const>value</const> != <const>value</const><br><strong>or</strong> || Logical or operator, If at least one of the conditions are true it returns true || <const>cond1</const> or <const>cond2</const><br><strong>and</strong> || Logical and operator, If both of the conditions are true it returns true || <const>cond1</const> and <const>cond2</const><br><br>Logical instructions accept literal integers or variable values, so variables are referenced when given.<br><br>A function call is a function call if it ends with (), functions and variables can have the same name. All names consist of letters only.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>n</var> for the number of lines<br><strong>Next <var>n</var> lines:</strong> A string consisting of one or more instructions</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> All variable values separated by a space</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &lt;= <var>n</var> &lt;= 8</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\nx = 50\nprint</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">50</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 112037471545,
+  "avatar": 92655986267164,
+  "commentCount": 53,
+  "upVotes": 74,
+  "downVotes": 3,
+  "validateAction": {
+    "actionId": 683022,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1653764737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1653787608283,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1656381937001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1656400925290,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1658692332954,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

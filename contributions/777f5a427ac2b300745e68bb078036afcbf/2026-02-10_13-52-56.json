@@ -1,0 +1,141 @@
+{
+  "id": 777,
+  "activeVersion": 13,
+  "score": 6,
+  "votableId": 5483227,
+  "codingamerId": 805067,
+  "views": 338,
+  "commentableId": 5425196,
+  "title": "Code your own Automaton2000, step 1",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Magus",
+  "publicHandle": "777f5a427ac2b300745e68bb078036afcbf",
+  "codingamerHandle": "1724dffd64c8c26c9fa9a189691387b5760508",
+  "lastVersion": {
+    "version": 13,
+    "data": {
+      "title": "Code your own Automaton2000, step 1",
+      "topics": [
+        {
+          "id": 178,
+          "handle": "trees",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Trees",
+            "2": "Trees"
+          },
+          "puzzleCount": 4,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "'using strict';\n\nlet n = Number(readline()),\n    tree = {};\n    \nfor (let i = 0; i < n; i++) {\n    let line = readline();\n    addLine(line);\n    \n    if (line.indexOf('Automaton2000') > -1) {\n        print(say('__START__', 0).trim());    \n    }\n}\n\nfunction addLine(line) {\n    // Remove time infos\n    line = line.substring(11);\n    \n    // Remove Magus:\n    line = line.substring(line.indexOf(':') + 1);\n    \n    // Split and remove ignored words\n    line = line.split(' ').filter(word => !!word && word != 'Automaton2000');\n    \n    addWord('__START__', line[0]);\n    \n    for (let i = 1; i < line.length; ++i) {\n        addWord(line[i - 1], line[i]);   \n    }\n    \n    addWord(line[line.length - 1], '__END__');\n}\n\nfunction addWord(previous, next) {\n    if (!tree[previous]) {\n        tree[previous] = {};   \n    }\n    \n    if (tree[previous][next] === undefined) {\n        tree[previous][next] = 0;\n    }\n    \n    tree[previous][next] += 1;\n}\n\nfunction say(word, depth) {\n    if (depth >= 30) {\n        return '';\n    }\n    \n    let max;\n    \n    // Look for the max\n    for (let next in tree[word]) {\n        if (max === undefined || tree[word][next] > tree[word][max] || (tree[word][next] === tree[word][max] && next < max)) {\n            max = next;   \n        }\n    }\n    \n    if (max === '__END__') {\n        return '';\n    }\n    \n    return max + ' ' + say(max, depth + 1);\n} ",
+      "statement": "Do you know Automaton2000? You don't? Okay, so, let's join the chat. Look at the right of the website and join the general channel. If you are level 3, just say \"<<Hi Automaton2000>>\" and the bot Automaton2000 will answer you.\n\nThe behavior of Automaton2000 is pretty simple. It learns from what it reads on the channel. It is always here, listening. When you poke him by writing its name, it will build a sentence using what it has read on the channel.\n\n<<Your goal here is to code your own Automaton2000 !>>\nImportant note: The real Automaton2000 has a random behavior because there's no fun at all in a bot repeating the same sentence again and again. But for this puzzle, there's will be no random at all in the expected output.\n\nAutomaton2000 captures all the words in every sentence in the chat and builds a tree with the words. To build a new sentence, it browses the tree, concatenating the words one by one until the end of the sentence (represented by an {{__END__}} node in the tree).\n\nFor instance, take the following chat log:\n\n(21:52:18) Magus: Hey MadKnight\n(21:53:05) MadKnight: Hey Magus. How is your CSB?\n\nAutomaton2000 will first ignore the part {{(21:52:18) Magus:}}. The rest is split on the space character. Then the words are used to build the tree. With the given example, Automaton2000 will build the following tree:\n\n`__START__\n    Hey 2\n\nHey\n    MadKnight 1\n    Magus. 1\n\nMadKnight\n    __END__ 1\n\nMagus.\n    How 1\n\nHow\n    is 1\n\nis\n    your 1\n\nyour\n    CSB? 1\n\nCSB?\n    __END__ 1`\n\n{{__START__}} is a special node representing the start of a sentence. {{__END__}} is a special node representing the end of a sentence.\n\nYour program will receive a chat log in input. It should try to build the same tree as Automaton2000. Each time you read the word Automaton2000 at least one time in a sentence, you have to print a sentence. Your program must output the most likely sentence possible according to the tree. You have to browse your tree, selecting the most powerful word each time.\n\nDon't forget that you must output the sentence using the tree in its current state after the string {{Automaton2000}} appears. So you should first read the sentence, update your tree, and then print a phrase when you have to.\n\nWith the given example, your program should print <<Hey MadKnight>>\n\nDon't forget these specific points:\n* Automaton2000 ignores the word {{Automaton2000}}. But {{Automaton2000_}} is a valid word, for example.\n* Automaton2000 does not read its own sentences.\n* Automaton2000 ignores empty sentences.\n* If you must choose between multiple words with the same weight, choose according to the alphabetical order (case sensitive, uppercase first).\n* Automaton2000 has a security and stops at 30 words at maximum. You don't want to do an infinite loop !\n* Symbols like {{,}} and {{.}} are read as letters.",
+      "testCases": [
+        {
+          "title": "Simple example",
+          "isTest": true,
+          "testIn": "3\n(21:52:18) Magus: Hey MadKnight, did you improve your CSB AI recently?\n(21:53:05) MadKnight: Hey Magus. Yes my CSB AI use a new genetic algorithm! And you?\n(21:53:42) Magus: No i'm too busy trying to fix Automaton2000",
+          "testOut": "Hey MadKnight, did you improve your CSB AI recently?",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3\n(21:52:18) Magus: Hey Magus, did you improve your CSB AI recently?\n(21:53:05) MadKnight: Hey Magus. Yes my CSB AI use a new genetic algorithm! And you?\n(21:53:42) Magus: No i'm too busy trying to fix Automaton2000",
+          "testOut": "Hey Magus, did you improve your CSB AI recently?",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Real case",
+          "isTest": true,
+          "testIn": "72\n(09:18:47) PED : Hello\n(09:21:33) PED : Typical gold battle\n(09:21:33) PED : https://www.codingame.com/replay/197403764\n(09:35:12) izik1 : ga?\n(09:35:25) PED : for this replay ?\n(09:35:29) izik1 : yea'\n(09:35:47) PED : For me it's just for testing withoutcollisions\n(09:35:53) izik1 : ahh\n(09:36:37) PED : but somehow 600 bots are worst than a bot that circles arround a corner of the map\n(09:36:49) izik1 : they are broken\n(09:36:53) izik1 : from silver\n(09:37:04) PED : some of them are\n(09:37:21) izik1 : this looks like a bug I have fixed twice, are you re using your previous best solution without re-scoring it or anything? (I personally get rid of my previous best)\n(09:38:01) PED : I'm not sure I understand\n(09:38:09) PED : I don't do GA\n(09:38:11) izik1 : oh\n(09:38:27) izik1 : this is fairly simple so let me try not to over complicate it\n(09:38:41) PED : I don't want to do a GA ^^\n(09:38:43) izik1 : you have your best output from your sim right?\n(09:39:10) izik1 : when your pods update\n(09:39:18) PED : I'm writting an offline referee using magus's post to try ML\n(09:39:25) izik1 : ahh\n(09:39:51) PED : GA is probably better but I don't really care\n(09:40:08) izik1 : k\n(10:39:09) MadKnight : hi ped\n(10:39:23) PED : Hi MadKnight\n(10:39:25) MadKnight : but ML got another physics\n(10:39:41) MadKnight : u can find it on the forum\n(10:40:35) PED : What do you mean 'another physics ?'\n(10:44:55) MadKnight : not the same\n(10:45:10) MadKnight : u can't just apply the CSB physics on ML\n(10:45:48) MadKnight : CSB physics sim will be giving wrong next positions of lander\n(10:46:19) PED : :thinking:\n(10:46:44) PED : For now Magus's code and CG's referee seem to have the exact same output\n(10:52:12) MadKnight : which CG referee?\n(10:52:36) PED : the one that's used online\n(10:53:23) MadKnight : have u tried simulating 30 turns ahead?\n(10:53:51) PED : that's not what a referee is for\n(10:54:27) MadKnight : then what's it used for?\n(10:55:41) PED : Take the inputs of both players for one turn, apply the \"rules\" of the game, give back the new state of the game to both players\n(10:56:22) PED : if you have a code that does that, you can run thousands of games offline to generate training datasets\n(10:59:14) PED : To be clear, I agree that you can you a referee to simulate many turns in advance\n(11:04:41) MadKnight : people are solving ML3 with just a GA\n(11:06:06) PED : ML3 ?\n(11:07:42) MadKnight : mars lander 3\n(11:10:44) MadKnight : Automaton2000\n(11:11:10) PED : sweet\n(11:11:13) MadKnight : ped, do u know that Automaton2000 is a bot who's sending a random message everytime u send his nick?\n(11:11:27) PED : Automaton2000\n(11:11:39) PED : I didn't know\n(11:11:50) PED : where does he find these messages ?\n(11:12:04) MadKnight : from the chat history\n(11:12:35) Earthborne : Haha\n(11:12:37) Earthborne : Automaton2000\n(11:12:53) Earthborne : Good for you, Automaton2000\n(11:12:55) MadKnight : you're the AI, Automaton2000\n(11:13:10) MadKnight : Autoreplay2000\n(11:13:17) Earthborne : What a fantastic replay, Automaton2000\n(11:13:37) Earthborne : No, you can't, Automaton2000\n(11:15:18) Earthborne : This was rather amusing \n(11:18:14) Earthborne : Any last words, Automaton2000?\n(11:18:22) Earthborne : k\n(11:18:35) mmmd : oh man you are mean to Automaton2000\n(11:19:02) Earthborne : Oh no, Automaton2000 doesn't mind\n(11:19:02) Uljan : hellou, Automaton2000\n(11:19:30) mmmd : wait i thought this was a joke about Automaton2000\n(11:19:56) PED : Me too Automaton2000...\n(11:20:22) PED : out of context none of these make any sense\n(11:20:30) mmmd : yeah\n(11:20:55) mmmd : and then someone writes a Automaton2000 response bot\n(11:20:58) mmmd : and crashes the server\n(11:21:32) Earthborne : How much CP would you get for that?",
+          "testOut": "For me it's just a GA\nFor me it's just a GA\nFor me it's just a GA\nI don't do GA\nI don't do GA\nI don't do GA\nI don't do GA\nI don't do GA\nI don't do GA\nI don't do GA\nI don't do GA\nI don't do GA\nI don't do GA\nI don't do GA\nI don't do GA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "70\n(11:48:20) MadKnight : galactic autocomplete\n(11:48:44) MadKnight : Google Acrobat\n(11:48:58) MrQuode : I can't find BASIC for it\n(11:49:13) MadKnight : for what?\n(11:49:21) PED : csb\n(11:49:23) MrQuode : The testing things\n(11:49:35) MadKnight : what kind of testing?\n(11:49:51) MrQuode : Powers Of Thor\n(11:50:03) MadKnight : what's the problem?\n(11:50:07) MadKnight : just press ctrl+enter\n(11:50:19) MrQuode : Okay\n(11:50:49) MrQuode : I can't use BASIC Interpreter for it\n(11:50:49) MadKnight : ctrl+shift+enter runs all test cases\n(11:50:59) MadKnight : that's visual basic, MrQuode\n(11:51:12) MrQuode : VB.NET?\n(11:51:16) MadKnight : yea\n(11:51:24) MrQuode : Ahhh, I'm so dumb :P\n(11:51:28) MadKnight : lol\n(11:53:29) MrQuode : How do I end while true in bash? (Bash seems way cleaner)\n(11:54:29) MadKnight : MrGuugle\n(11:55:30) MrQuode : Embarrassed now...\n(11:55:59) PED : Yamete, MadKnight sempai :flushed:\n(11:56:55) MadKnight : no u sempai\n(11:57:04) MadKnight : u ended contest at #3 \n(11:57:42) PED : It's not like I wanted you to say nice things about me sempai :confounded:\n(11:57:42) mmmd : circular sempai definition: mind = blown;\n(11:58:55) PED : Btw, I'm gonna leave it here: https://gfycat.com/GlossySmallBlacklemur\n(12:13:26) Uljan : :joy_cat:\n(12:13:31) Uljan : reminds me of http://i.imgur.com/l7fokea.jpg\n(12:14:58) CookieHax : haha\n(12:19:47) mmmd : bot coding in a nutshell. Right Automaton2000 ?\n(12:19:48) mmmd : https://img-9gag-fun.9cache.com/photo/a0bND3X_460sv.mp4\n(13:03:11) tomc : i'd pet a shark\n(13:57:08) PommesMitMayo : hi guys\n(13:58:08) PED : hi\n(14:08:24) Fikoun : Hi everyone how are you :) And Automaton2000 ?\n(14:11:12) CookieHax : hey hey\n(15:51:27) GunasekarA : hi hobroker ... can u please share ur code\n(15:54:26) ZarthaxX : what...\n(15:55:19) Hobroker : I did\n(15:58:09) iamgqr : j\n(15:58:20) ZarthaxX : j¿?\n(15:59:52) iamgqr : /me The connection with the server failed. Attempting reconnection...\n(16:00:18) iamgqr : (╯°□°）╯︵ ┻━┻\n(16:00:18) iamgqr : what the ....\n(16:10:35) Daratho : what does that mean \"hard limit reached ?\n(16:14:30) ZarthaxX : bug\n(16:25:58) ValNykol : it's not really a bug\n(16:26:08) ValNykol : it's a system to prevent too frequent submissions\n(16:26:37) ValNykol : though the message could be more understandable\n(16:27:17) AKZOMBIE74 : How can I optimize this for the \"Sum of Divisors\" puzzle for the last test case?\n(16:27:18) AKZOMBIE74 : sum([x for y in xrange(2, n+1) for x in xrange(1,n+1) if y%x==0]) + 1\n(16:34:15) maxkan : OK its time to give GitC some love\n(16:35:09) PED : what do you want to optimize AKZOMBIE74 ? runtime ?\n(16:35:15) AKZOMBIE74 : Yeah\n(16:36:15) PED : I got ideas, but I'm not 100% sure\n(16:36:18) eulerscheZahl : AKZOMBIE74 you can solve this with only one loop\n(16:36:34) AKZOMBIE74 : Euler, how?\n(16:37:02) eulerscheZahl : What do you think Automaton2000 ?\n(16:38:08) PED : use 'while' instead of 'for xrange', don't call external functions (xrange, sum), don't use list comprehensions (I think they allocate memory, which is bad)\n(16:38:17) PED : Also, listen to euler ^^\n(16:38:43) AKZOMBIE74 : Thanks Euler!\n(16:57:33) penpengin : Is it normal that the input rotation angle for the first round in csb is -1?\n(16:58:31) TheAwardWinningKitten_1f7f : Code of the Rings hits hard limit halfway through testing even with optimized code.\n(16:59:26) TheAwardWinningKitten_1f7f : Guess I need to change my name, I never put TheAwardWinningKitten :P\n(17:02:15) PED : penpengin, in the first round there is no rotation speed limit, thet's why they put -1, the value doesn't really matter\n(17:05:17) ZarthaxX : PED it matters if you are doing a ga because turn 1 means you can rotate in any direction \n(17:11:00) HiIgor : aaaaarg\n(17:11:15) HiIgor : 500 lines of codes and nothing useful yet\n(17:11:37) HiIgor : Automaton2000",
+          "testOut": "I can't find BASIC Interpreter for it\nI can't find BASIC Interpreter for it\nI can't find BASIC Interpreter for it\nI can't find BASIC Interpreter for the first round in a bug",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Changing tree",
+          "isTest": true,
+          "testIn": "6\n(12:45:56) Test1: Are you sure of that Automaton2000? \n(12:45:56) Test2: Are you realy sure of that Automaton2000?\n(12:45:56) Test2: Maybe you are right\n(12:45:56) Test2: Maybe you are wrong\n(12:45:56) Test2: Maybe not\n(12:45:56) Test2: Automaton2000?",
+          "testOut": "Are you sure of that Automaton2000?\nAre you realy sure of that Automaton2000?\nMaybe you are right",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "8\n(12:45:56) Test2: Maybe you are right\n(12:45:56) Test2: Maybe you are wrong\n(12:45:56) Test2: Maybe not\n(12:45:56) Test1: Are you sure of that Automaton2000? \n(12:45:56) Test2: Are you realy sure of that Automaton2000?\n(12:45:56) Test2: Are you really really really sure of that Automaton2000?\n(12:45:56) Test2: Are you really really really sure sure sure of that Automaton2000?\n(12:45:56) Test2: Automaton2000?",
+          "testOut": "Maybe you are right\nMaybe you are right\nAre you are right\nAre you are right\nAre you are right",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Infinite loop",
+          "isTest": true,
+          "testIn": "5\n(12:45:56) Test1: one two one two one two\n(12:45:56) Test1: one two one two one two\n(12:45:56) Test1: one two one two one two\n(12:45:56) Test1: one two one two one two\n(12:45:56) Test1: Automaton2000?",
+          "testOut": "one two one two one two one two one two one two one two one two one two one two one two one two one two one two one two",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "5\n(12:45:56) Test1: neo hot neo hot neo hot\n(12:45:56) Test1: neo hot neo hot neo hot\n(12:45:56) Test1: neo hot neo hot neo hot\n(12:45:56) Test1: neo hot neo hot neo hot\n(12:45:56) Test1: Automaton2000?",
+          "testOut": "neo hot neo hot neo hot neo hot neo hot neo hot neo hot neo hot neo hot neo hot neo hot neo hot neo hot neo hot neo hot",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Border line cases",
+          "isTest": true,
+          "testIn": "5\n(12:45:56) Test1:\n(12:45:56) Test1:     trying to hack     Automaton2000    \n(12:45:56) Test1: Are you listening _Automaton2000_?\n(12:45:56) Test1: And here Automaton 2000?\n(12:45:56) Test1: And now Automaton2000 Automaton2000 Automaton2000?",
+          "testOut": "trying to hack\nAre you listening _Automaton2000_?\nAnd here Automaton 2000?",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "5\n(12:45:56) Test1:\n(12:45:56) Test1: Are you listening _Automaton2000_?\n(12:45:56) Test1:      trying to hack     Automaton2000    \n(12:45:56) Test1: And here Automaton 2000?\n(12:45:56) Test1: And now Automaton2000 Automaton2000 Automaton2000?",
+          "testOut": "Are you listening _Automaton2000_?\nAre you listening _Automaton2000_?\nAnd here Automaton 2000?",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "1 ≤ [[n]] ≤ 100",
+      "stubGenerator": "read n:int\nloop n read line:string(1024)\nwrite answer",
+      "inputDescription": "<<Line 2:>> An integer [[n]].\n<<Next [[n]] lines:>> A chat line like `(21:52:18) Magus: Hey MadKnight, did you improve your CSB AI recently ?`",
+      "solutionLanguage": "Javascript",
+      "outputDescription": "<<X lines>> One line each time a chat line contains the string {{Automaton2000}}"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Do you know Automaton2000? You don't? Okay, so, let's join the chat. Look at the right of the website and join the general channel. If you are level 3, just say &quot;<strong>Hi Automaton2000</strong>&quot; and the bot Automaton2000 will answer you.<br><br>The behavior of Automaton2000 is pretty simple. It learns from what it reads on the channel. It is always here, listening. When you poke him by writing its name, it will build a sentence using what it has read on the channel.<br><br><strong>Your goal here is to code your own Automaton2000 !</strong><br>Important note: The real Automaton2000 has a random behavior because there's no fun at all in a bot repeating the same sentence again and again. But for this puzzle, there's will be no random at all in the expected output.<br><br>Automaton2000 captures all the words in every sentence in the chat and builds a tree with the words. To build a new sentence, it browses the tree, concatenating the words one by one until the end of the sentence (represented by an <const>__END__</const> node in the tree).<br><br>For instance, take the following chat log:<br><br>(21:52:18) Magus: Hey MadKnight<br>(21:53:05) MadKnight: Hey Magus. How is your CSB?<br><br>Automaton2000 will first ignore the part <const>(21:52:18) Magus:</const>. The rest is split on the space character. Then the words are used to build the tree. With the given example, Automaton2000 will build the following tree:<br><br><pre style=\"font-family: monospace\">__START__<br>    Hey 2<br><br>Hey<br>    MadKnight 1<br>    Magus. 1<br><br>MadKnight<br>    __END__ 1<br><br>Magus.<br>    How 1<br><br>How<br>    is 1<br><br>is<br>    your 1<br><br>your<br>    CSB? 1<br><br>CSB?<br>    __END__ 1</pre><br><br><const>__START__</const> is a special node representing the start of a sentence. <const>__END__</const> is a special node representing the end of a sentence.<br><br>Your program will receive a chat log in input. It should try to build the same tree as Automaton2000. Each time you read the word Automaton2000 at least one time in a sentence, you have to print a sentence. Your program must output the most likely sentence possible according to the tree. You have to browse your tree, selecting the most powerful word each time.<br><br>Don't forget that you must output the sentence using the tree in its current state after the string <const>Automaton2000</const> appears. So you should first read the sentence, update your tree, and then print a phrase when you have to.<br><br>With the given example, your program should print <strong>Hey MadKnight</strong><br><br>Don't forget these specific points:<br>* Automaton2000 ignores the word <const>Automaton2000</const>. But <const>Automaton2000_</const> is a valid word, for example.<br>* Automaton2000 does not read its own sentences.<br>* Automaton2000 ignores empty sentences.<br>* If you must choose between multiple words with the same weight, choose according to the alphabetical order (case sensitive, uppercase first).<br>* Automaton2000 has a security and stops at 30 words at maximum. You don't want to do an infinite loop !<br>* Symbols like <const>,</const> and <const>.</const> are read as letters.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 2:</strong> An integer <var>n</var>.<br><strong>Next <var>n</var> lines:</strong> A chat line like <pre style=\"font-family: monospace\">(21:52:18) Magus: Hey MadKnight, did you improve your CSB AI recently ?</pre></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>X lines</strong> One line each time a chat line contains the string <const>Automaton2000</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>n</var> &le; 100</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\n(21:52:18) Magus: Hey MadKnight, did you improve your CSB AI recently?\n(21:53:05) MadKnight: Hey Magus. Yes my CSB AI use a new genetic algorithm! And you?\n(21:53:42) Magus: No i'm too busy trying to fix Automaton2000</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Hey MadKnight, did you improve your CSB AI recently?</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 276817343285,
+  "avatar": 24623991925371,
+  "commentCount": 7,
+  "upVotes": 6,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 115708,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

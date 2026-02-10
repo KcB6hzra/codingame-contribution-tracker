@@ -1,0 +1,298 @@
+{
+  "id": 100302,
+  "activeVersion": 25,
+  "score": 22,
+  "votableId": 34446076,
+  "codingamerId": 3479792,
+  "views": 370,
+  "commentableId": 34294901,
+  "title": "Wordle Solution RegEx",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "StepBack13",
+  "publicHandle": "10030241ba7aa19252faa292f5bd15d0d2eb3a",
+  "codingamerHandle": "da2fe4fbf3c0ab008c6dcf304920ec602979743",
+  "lastVersion": {
+    "version": 25,
+    "autocloseTime": 1728566019479,
+    "freezeTime": 1723986049261,
+    "data": {
+      "title": "Wordle Solution RegEx",
+      "topics": [
+        {
+          "id": 98,
+          "handle": "regular-expressions",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Regular expressions",
+            "2": "Regular expressions"
+          },
+          "puzzleCount": 8,
+          "parentTopicId": 93
+        },
+        {
+          "labelMap": {
+            "2": "Word Games"
+          }
+        },
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 70,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        }
+      ],
+      "solution": "# Given Wordle guesses and responses with G, Y for Green and Yellow tiles, print a Regex to search for 5 letter words that could solve it\n# Can test on https://www.visca.com/regexdict/\n\nn = gets.to_i\ngray = []\nregex = \".....\"\nyellow = Hash.new([])\nn.times do\n  guess, result = gets.split.map(&:chars)\n  guess.zip(result).each_with_index do |(guess, result), i| \n    if result == \"G\"\n      regex[i] = guess\n    elsif result == \"Y\"\n      yellow[i] += [guess]\n    else\n      gray += [guess]\n    end\n  end\nend\n\n# If all positions are marked 'G' then simply output the solution RegEx with no look-aheads\nunless regex.include?(\".\")\n  puts \"^#{ regex }$\"\n  exit\nend\n\n# Only count '_' tiles if those letters were never marked 'G' or 'Y'\ngreen_letters = regex.scan( /[a-z]/ )\nyellow_letters = yellow.values.flatten.uniq.sort - green_letters\ngreen_or_yellow = green_letters | yellow_letters\ngray_letters = (gray - green_or_yellow ).sort.uniq\n\n# For each position marked 'Y', working from the end of the word first, replace the '.' with an immediate negative look-ahead to exclude the character(s) that were marked 'Y' in that position. Working from the end just to simplify the substitution method.\nyellow_indices = yellow.keys.sort_by{|k| -k }\nyellow_indices.each do |i|\n  excluded_chars = yellow[i].uniq\n  exclusions = excluded_chars.size > 1 ? \"[#{ excluded_chars.sort.join }]\" : excluded_chars[0]\n  # Perform the substitution of the (i+1)th '.' with an immediate negative look-ahead placed in front of the '.', excluding these characters\n  regex.sub!(/(?<=^.{#{i}})\\./, \"(?!#{ exclusions })\\.\")\nend\n\n# Compose the positive look-aheads for ensuring yellow letters appear and the negative look-aheads for ensuring 'true gray' letters don't appear\npositive_lookaheads  = yellow_letters.map{|c| \"(?=.*#{ c })\" }.join\nnegative_lookahead = gray[0] ? \"(?!.*[#{ gray_letters.join }])\" : \"\"\n\n# Form the full RegEx (with anchors) and output it\npreregex = \"^\" + positive_lookaheads + negative_lookahead\nfullregex = preregex + regex + \"$\"\n\nputs fullregex",
+      "statement": "You like to play 'Wordle' and decide to code up a script to produce a simple RegEx ('Regular Expression') pattern to filter words that match your information about the 5 letter word.\n\nYou are given an input [[n]] and then [[n]] lines of pairs of [[guess]] and [[result]], representing words that have been guessed and information about the correctness of each letter, respectively.\ne.g. {{utter YYG_G}}\nA result of {{G}} (Green) means the letter in the corresponding position is correct (the second {{t}} and the {{r}} in the example). A result of {{Y}} (Yellow) means the letter in the corresponding position appears somewhere else in the word and is not already there in this guess (the {{u}} and the {{t}} in the example). This example's only solution is the word {{tutor}}, which you can see has the 3rd and 5th letters unchanged from the guess {{utter}} but the 1st and 2nd letters have moved to new positions. {{G}} means 'appears here' and {{Y}} means 'appears elsewhere'.\n\nYou can capture this in RegEx! Of course, there are many different ways to do it, so you've defined a specific way that you want to generate it. Details are below:\n\n• The RegEx starts with a {{^}} and ends with {{$}}. These are 'anchors' that define the start and end of our word.\n\n• Whenever letters are grouped together in square brackets, they appear in alphabetical order. (e.g. {{[defg]}})\n\n• Any letters with a {{Y}} result - and no {{G}} results - appear somewhere unknown in the word, we use a 'positive look-ahead' to ensure they occur. A 'positive look-ahead' for the letter {{b}} looks like {{(?=.*b)}} but if there are multiple letters with {{Y}} results they <<cannot>> be grouped in square brackets, instead they should be in separate look-aheads ordered alphabetically.  If the {{Y}} result letters are {{b, l, d}} then the start of your RegEx will be {{^(?=.*b)(?=.*d)(?=.*l)}}. If there are no {{Y}} result letters, then don't include any look-aheads.\n\n• Any letters with a {{_}} result - and no {{G}} or {{Y}} results - do not appear in the word and are excluded with a 'negative look-ahead'. A 'negative look-ahead' for the letter {{d}} looks like {{(?!.*d)}} but if there are multiple letters to exclude they are grouped into square brackets.  If the {{_}} result letters are {{d, f, e}} then the next section of your RegEx will be {{(?!.*[def])}}.\n\nBe sure not to include letters in the look-ahead that have had {{G}} or {{Y}} results as well as {{_}}, since a letter can get a {{_}} if it appears twice in the guess but only once in the answer. (e.g. {{upper}} {{__GGG}}, where the first {{p}} is marked {{_}} but the second is marked {{G}}, the first {{p}} is not marked {{Y}} since only one {{p}} is needed in this word, one valid solution would be {{taper}}). If there are no eligible letters, then don't include the look-ahead.\n\n• Any positions that haven't received a {{G}} result are then shown as {{.}} meaning any character.\n\n• {{Y}} result positions - that are not also {{G}} positions - have an 'immediate negative look-ahead' placed in front of their {{.}}, to ensure the {{Y}} letter is excluded from this position, these negative look-aheads look like {{(?!c)}} where the {{c}} is whichever letter needs to be excluded at the position they precede. Note it doesn't have the {{.*}} part which means 'anything' and would make this look-ahead exclude the letter from appearing anywhere from this point on, rather than just excluding it as the immediate next letter. If multiple letters have received a {{Y}} result for the same position then they can be grouped in square brackets. E.g. if a position excludes letters {{r, e, d}} then it will appear as {{(?![der]).}}.\n\n• Any positions with a {{G}} result will appear in the RegEx as the letter that was marked {{G}} in the guess.\n\nYou can test your RegEx on the RegEx dictionary by Lou Hevly to see which words match your answers: https://www.visca.com/regexdict/\n\n<<Example 1>>\n```{{2\npaper ___G_\nboils _G___}}```\n<<Answer>>\n{{^(?!.*[abilprs]).o.e.$}}\n<<Solution>>\nThere are no {{Y}} result letters, so no positive look-aheads. The {{_}} result letters with no other results are {{[abilprs]}}, so they go in the negative look-ahead {{(?!.*[abilprs])}}. The {{G}} result positions are the 2nd and 4th letters which are {{o}} and {{e}}, respectively. Unknown letters are marked {{.}}.\n\n<<Example 2>>\n```{{2\nwaged __YG_\nboils _G__G}}```\n<<Answer>>\n{{^(?=.*g)(?!.*[abdilw]).o(?!g).es$}}\n<<Solution>>\nThe only {{Y}} result letter is {{g}}, so we start with a positive look-ahead {{(?=.*g)}}. The {{_}} result letters with no other results are {{[abdilw]}}, so they go in the negative look-ahead {{(?!.*[abdilw])}}. The {{G}} result positions are the 2nd, 4th and 5th letters which are {{o}}, {{e}} and {{s}}, respectively. Unknown letters are marked {{.}}. The 3rd letter's {{.}} has an immediate negative look-ahead to exclude a {{g}} from appearing as the 3rd letter {{(?!g).}}.",
+      "testCases": [
+        {
+          "title": "Endless Possibilities",
+          "isTest": true,
+          "testIn": "0",
+          "testOut": "^.....$",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "0",
+          "testOut": "^.....$",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Hole in One!",
+          "isTest": true,
+          "testIn": "1\nclash GGGGG",
+          "testOut": "^clash$",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "1\ncoder GGGGG",
+          "testOut": "^coder$",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Greens and Grays",
+          "isTest": true,
+          "testIn": "1\nwasps __G_G",
+          "testOut": "^(?!.*[apw])..s.s$",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "1\nhater _G_GG",
+          "testOut": "^(?!.*[ht]).a.er$",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Yellows and Grays",
+          "isTest": true,
+          "testIn": "2\ncrane __Y__\ntoils _YY__",
+          "testOut": "^(?=.*a)(?=.*i)(?=.*o)(?!.*[celnrst]).(?!o).(?![ai])...$",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "2\nfable _Y___\nlands _Y_Y_",
+          "testOut": "^(?=.*a)(?=.*d)(?!.*[beflns]).(?!a)..(?!d)..$",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Yellows and Greens",
+          "isTest": true,
+          "testIn": "2\ntales YYYYY\nstale YYGYY",
+          "testOut": "^(?=.*e)(?=.*l)(?=.*s)(?=.*t)(?![st]).(?![at]).a(?![el]).(?![es]).$",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "2\nparse YYYYY\nspare GGYYY",
+          "testOut": "^(?=.*a)(?=.*e)(?=.*r)sp(?![ar]).(?![rs]).(?!e).$",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Everything",
+          "isTest": true,
+          "testIn": "3\nfalse _G___\ntruth ____Y\nhappy GG___",
+          "testOut": "^(?!.*[eflprstuy])ha..(?!h).$",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "3\nunion __Y__\nfight _GY__\npower ___GG",
+          "testOut": "^(?=.*g)(?!.*[fhnoptuw]).i(?![gi]).er$",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Everything, Everywhere",
+          "isTest": true,
+          "testIn": "4\npleas _YYG_\nenjoy G____\nthese __Y__\nwords _____",
+          "testOut": "^(?=.*l)(?!.*[dhjnoprstwy])e(?!l).(?!e).a.$",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "3\ncrane _GY_Y\ntoils Y____\ndumpy _____",
+          "testOut": "^(?=.*a)(?=.*e)(?=.*t)(?!.*[cdilmnopsuy])(?!t).r(?!a)..(?!e).$",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Don't Exclude ALL Grays!",
+          "isTest": true,
+          "testIn": "4\nrants Y__Y_\ntroop GY_G_\ntudor GG_GG\ntutor GG_GG",
+          "testOut": "^(?!.*[adnps])tu.or$",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "4\nguess __GY_\nwhose _G_YY\ndying _____\nuncle ___GY",
+          "testOut": "^(?=.*s)(?!.*[cdginouwy]).hel(?!e).$",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Everything, Everywhere, All At Once",
+          "isTest": true,
+          "testIn": "4\nqueer ___G_\nflags _YY__\nsaved _GYG_\nwater _GYG_",
+          "testOut": "^(?=.*l)(?=.*t)(?=.*v)(?!.*[dfgqrsuw]).a(?![atv]).e.$",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "5\ncarve _____\nnames ____Y\nlends Y___Y\nhouse ___Y_\nslick GYG__",
+          "testOut": "^(?=.*l)(?!.*[acdehkmnoruv])s(?!l).i(?!s).(?!s).$",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Don't Exclude ALL Grays! 2",
+          "isTest": true,
+          "testIn": "3\nassay YY___\nplate __G__\nshack __GY_",
+          "testOut": "^(?=.*c)(?=.*s)(?!.*[ehklpty])(?!a).(?!s).a(?!c)..$",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "3\nslaps G_G__\nshaft G_G__\nswank G_GYG",
+          "testOut": "^(?=.*n)(?!.*[fhlptw])s.a(?!n).k$",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Solved!",
+          "isTest": true,
+          "testIn": "6\ncarve Y___G\nnames G__Y_\nlends _YY__\nhouse ____G\nslick __YG_\nniece GGGGG",
+          "testOut": "^niece$",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "6\nbaron _GY__\ngourd Y__Y_\nraged YGGG_\npager _GGGG\nwager _GGGG\neager GGGGG",
+          "testOut": "^eager$",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "0 ≤ [[n]] ≤ 6\nEach [[guess]] will always be in lowercase",
+      "coverBinaryId": 126615929586145,
+      "stubGenerator": "read n:int\nloop n read guess:word(5) result:word(5)\n\nwrite ^regex$ pattern\n\nSTATEMENT\nGiven n and n Wordle guesses and responses with G, Y for Green and Yellow tiles, print a RegEx pattern to search for 5 letter words that could solve it\nCan test on https://www.visca.com/regexdict/\n",
+      "inputDescription": "<<Line 1 :>> An integer [[n]], the number of [[guesses]] made\n<<Next [[n]] lines :>> A space-separated [[guess]] and [[result]], both 5 characters",
+      "solutionLanguage": "Ruby",
+      "outputDescription": "<<1 line :>> The RegEx capturing all possible solutions, structured as described"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You like to play 'Wordle' and decide to code up a script to produce a simple RegEx ('Regular Expression') pattern to filter words that match your information about the 5 letter word.<br><br>You are given an input <var>n</var> and then <var>n</var> lines of pairs of <var>guess</var> and <var>result</var>, representing words that have been guessed and information about the correctness of each letter, respectively.<br>e.g. <const>utter YYG_G</const><br>A result of <const>G</const> (Green) means the letter in the corresponding position is correct (the second <const>t</const> and the <const>r</const> in the example). A result of <const>Y</const> (Yellow) means the letter in the corresponding position appears somewhere else in the word and is not already there in this guess (the <const>u</const> and the <const>t</const> in the example). This example's only solution is the word <const>tutor</const>, which you can see has the 3rd and 5th letters unchanged from the guess <const>utter</const> but the 1st and 2nd letters have moved to new positions. <const>G</const> means 'appears here' and <const>Y</const> means 'appears elsewhere'.<br><br>You can capture this in RegEx! Of course, there are many different ways to do it, so you've defined a specific way that you want to generate it. Details are below:<br><br>&bull; The RegEx starts with a <const>^</const> and ends with <const>$</const>. These are 'anchors' that define the start and end of our word.<br><br>&bull; Whenever letters are grouped together in square brackets, they appear in alphabetical order. (e.g. <const>[defg]</const>)<br><br>&bull; Any letters with a <const>Y</const> result - and no <const>G</const> results - appear somewhere unknown in the word, we use a 'positive look-ahead' to ensure they occur. A 'positive look-ahead' for the letter <const>b</const> looks like <const>(?=.*b)</const> but if there are multiple letters with <const>Y</const> results they <strong>cannot</strong> be grouped in square brackets, instead they should be in separate look-aheads ordered alphabetically.  If the <const>Y</const> result letters are <const>b, l, d</const> then the start of your RegEx will be <const>^(?=.*b)(?=.*d)(?=.*l)</const>. If there are no <const>Y</const> result letters, then don't include any look-aheads.<br><br>&bull; Any letters with a <const>_</const> result - and no <const>G</const> or <const>Y</const> results - do not appear in the word and are excluded with a 'negative look-ahead'. A 'negative look-ahead' for the letter <const>d</const> looks like <const>(?!.*d)</const> but if there are multiple letters to exclude they are grouped into square brackets.  If the <const>_</const> result letters are <const>d, f, e</const> then the next section of your RegEx will be <const>(?!.*[def])</const>.<br><br>Be sure not to include letters in the look-ahead that have had <const>G</const> or <const>Y</const> results as well as <const>_</const>, since a letter can get a <const>_</const> if it appears twice in the guess but only once in the answer. (e.g. <const>upper</const> <const>__GGG</const>, where the first <const>p</const> is marked <const>_</const> but the second is marked <const>G</const>, the first <const>p</const> is not marked <const>Y</const> since only one <const>p</const> is needed in this word, one valid solution would be <const>taper</const>). If there are no eligible letters, then don't include the look-ahead.<br><br>&bull; Any positions that haven't received a <const>G</const> result are then shown as <const>.</const> meaning any character.<br><br>&bull; <const>Y</const> result positions - that are not also <const>G</const> positions - have an 'immediate negative look-ahead' placed in front of their <const>.</const>, to ensure the <const>Y</const> letter is excluded from this position, these negative look-aheads look like <const>(?!c)</const> where the <const>c</const> is whichever letter needs to be excluded at the position they precede. Note it doesn't have the <const>.*</const> part which means 'anything' and would make this look-ahead exclude the letter from appearing anywhere from this point on, rather than just excluding it as the immediate next letter. If multiple letters have received a <const>Y</const> result for the same position then they can be grouped in square brackets. E.g. if a position excludes letters <const>r, e, d</const> then it will appear as <const>(?![der]).</const>.<br><br>&bull; Any positions with a <const>G</const> result will appear in the RegEx as the letter that was marked <const>G</const> in the guess.<br><br>You can test your RegEx on the RegEx dictionary by Lou Hevly to see which words match your answers: https://www.visca.com/regexdict/<br><br><strong>Example 1</strong><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><const>2<br>paper ___G_<br>boils _G___</const></pre><pre style=\"font-family: monospace\"></pre><br><strong>Answer</strong><br><const>^(?!.*[abilprs]).o.e.$</const><br><strong>Solution</strong><br>There are no <const>Y</const> result letters, so no positive look-aheads. The <const>_</const> result letters with no other results are <const>[abilprs]</const>, so they go in the negative look-ahead <const>(?!.*[abilprs])</const>. The <const>G</const> result positions are the 2nd and 4th letters which are <const>o</const> and <const>e</const>, respectively. Unknown letters are marked <const>.</const>.<br><br><strong>Example 2</strong><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><const>2<br>waged __YG_<br>boils _G__G</const></pre><pre style=\"font-family: monospace\"></pre><br><strong>Answer</strong><br><const>^(?=.*g)(?!.*[abdilw]).o(?!g).es$</const><br><strong>Solution</strong><br>The only <const>Y</const> result letter is <const>g</const>, so we start with a positive look-ahead <const>(?=.*g)</const>. The <const>_</const> result letters with no other results are <const>[abdilw]</const>, so they go in the negative look-ahead <const>(?!.*[abdilw])</const>. The <const>G</const> result positions are the 2nd, 4th and 5th letters which are <const>o</const>, <const>e</const> and <const>s</const>, respectively. Unknown letters are marked <const>.</const>. The 3rd letter's <const>.</const> has an immediate negative look-ahead to exclude a <const>g</const> from appearing as the 3rd letter <const>(?!g).</const>.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1 :</strong> An integer <var>n</var>, the number of <var>guesses</var> made<br><strong>Next <var>n</var> lines :</strong> A space-separated <var>guess</var> and <var>result</var>, both 5 characters</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>1 line :</strong> The RegEx capturing all possible solutions, structured as described</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &le; <var>n</var> &le; 6<br>Each <var>guess</var> will always be in lowercase</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">0</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">^.....$</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 42886144458,
+  "avatar": 33990586394707,
+  "commentCount": 31,
+  "upVotes": 23,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 998245,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1723291537001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1723381249261,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1725973537093,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1725974019479,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1727842510612,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,136 @@
+{
+  "id": 5318,
+  "activeVersion": 61,
+  "score": 41,
+  "votableId": 14682199,
+  "codingamerId": 3598723,
+  "views": 600,
+  "commentableId": 14601727,
+  "title": "Is that a possible word?",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Tee-Resa",
+  "publicHandle": "5318ba53fc22e76dd451416fcfea488b4b25",
+  "codingamerHandle": "ad8756a36709b4a91ffecec728e065613278953",
+  "lastVersion": {
+    "version": 61,
+    "autocloseTime": 1600003634282,
+    "data": {
+      "title": "Is that a possible word?",
+      "topics": [
+        {
+          "id": 87,
+          "handle": "state-machine",
+          "labelMap": {
+            "1": "Machine à états",
+            "2": "State machine"
+          },
+          "pageTitle": "State machine: exercises and theory",
+          "puzzleCount": 4,
+          "parentTopicId": 42,
+          "contentDetailsId": 94
+        }
+      ],
+      "solution": "import java.util.*;\nimport java.util.stream.Stream;\n\npublic class Solution {\n\n    static Map<String, Map<Character, String>> transfers = new HashMap<>();\n    static List<String> finalStatus = new ArrayList<>();\n    static String curStatus;\n\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n\n        // Input, welcher nicht wichtig ist.\n        String inputAlphabet = in.nextLine();\n\n        // Init der transfer maps\n        Stream.of(in.nextLine().split(\" \")).forEach(x -> transfers.put(x, new HashMap<>()));\n\n        // Zustandsuebergaenge\n        setTransfers(in);\n\n        // Startzustand\n        String startStatus = in.nextLine();\n\n        // Endzustaende\n        Stream.of(in.nextLine().split(\" \")).forEach(x -> finalStatus.add(x));\n\n        // Beginn der Pruefung ob wort enthalten oder nicht\n        solution(in, startStatus);\n        in.close();\n    }\n\n    private static void solution(Scanner in, String startStatus) {\n        int numberOfWords = in.nextInt();\n        in.nextLine();\n\n        for (int i = 0; i < numberOfWords; i++) {\n            curStatus = startStatus;\n            System.out.println(isInLanguage(in.nextLine()));\n        }\n    }\n\n    private static boolean isInLanguage(String word) {\n        for (char c : word.toCharArray()) {\n            if (!transfers.get(curStatus).containsKey(c)) {\n                return false;\n            } else {\n                curStatus = transfers.get(curStatus).get(c);\n            }\n        }\n        return finalStatus.contains(curStatus);\n    }\n\n    private static void setTransfers(Scanner in) {\n        int numberOfTransfers = in.nextInt();\n        in.nextLine();\n        for (int i = 0; i < numberOfTransfers; i++) {\n            String[] stateTransferFunction = in.nextLine().split(\" \");\n\n            transfers.get(stateTransferFunction[0]).put(stateTransferFunction[1].charAt(0), stateTransferFunction[2]);\n        }\n    }\n}",
+      "statement": "You are an examiner for different languages. Every year you get a lot of texts and should check if the words are in the language. Since you are lazy but highly motivated, you decide to automate this process.\n\nFortunately, the languages are pretty simple. So you want to build a state machine for every language, which can tell you quickly whether a word is in the language or not.\n\nNow you have already built the languages, but you don't want to write code for each language individually. So now you have to come up with a flexible system that accepts your language and uses it to build a functioning machine.\n\n<<Tip:>> draw the machine to better understand what is meant by status and transitions\n<<Hint:>> https://en.wikipedia.org/wiki/Deterministic_finite_automaton\n\n\n<<The following example refers to the example at the bottom (first test)>>\n\nJust the necessary information from the input:\n[[Word]]: {{abc}}\n[[states]] : A B\n[[startState]] : A\n[[endState]] : B\n[[Transitions]] :\nA a B\nA c B\nB b A\n\nYou start in <<state>> A ([[startState]]). The first character found is {{a}}. According to the corresponding <<transition>> ( A a B ), you move to <<state>> B.\n\nYou are now in <<state>> B. The next character found is {{b}}. According to the corresponding <<transition>> ( B b A ), you move to <<state>> A.\n\nBack in <<state>> A. The last character found is {{c}}. According to the corresponding <<transition>> ( A c B ), you move to <<state>> B again.\n\nThe word is over, the final <<state>> is B. This is in the set of the allowed <<final states>> ([[endStates]]), so the [[word]] {{abc}} is valid, and you print {{true}}.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "a b c\nA B\n6\nA a B\nA b B\nA c B\nB a A\nB b A\nB c A\nA\nB\n10\na\nab\nabc\nabcd\nabcde\naabbcc\naabbcca\nabcabcabc\nz\nabcabcabo",
+          "testOut": "true\nfalse\ntrue\nfalse\nfalse\nfalse\ntrue\ntrue\nfalse\nfalse",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "a b c\nA B\n6\nA a B\nA b B\nA c B\nB a A\nB b A\nB c A\nA\nA\n10\na\nab\nabc\nabcd\nabcde\naabbcc\naabbcca\nabcabcabc\nz\nabcabcabo",
+          "testOut": "false\ntrue\nfalse\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "a b c d\nA B C D\n16\nA a A\nA b B\nA c A\nA d A\nB a A\nB b B\nB c C\nB d A\nC a A\nC b B\nC c A\nC d D\nD a A\nD b B\nD c A\nD d A\nA\nD\n5\nbcd\nabacdb\naaabbccadbcd\naaabcdbdebcd\nbcdbcdbcdbcd",
+          "testOut": "true\nfalse\ntrue\nfalse\ntrue",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "a b c d\nA B C D\n16\nA a A\nA b B\nA c A\nA d A\nB a A\nB b B\nB c C\nB d A\nC a A\nC b B\nC c A\nC d D\nD a A\nD b B\nD c A\nD d A\nA\nA B C\n5\nbcd\nabacdb\naaabbccadbcd\naaabcdbdebcd\nbcdbcdbcdbcd",
+          "testOut": "false\ntrue\nfalse\nfalse\nfalse",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "a b c d\nA B C\n6\nA a B\nB c C\nC a C\nC b C\nC c C\nC d C\nA\nC\n7\nac\nab\nacabcd\nacabcde\na\nacaaacca\ncafds",
+          "testOut": "true\nfalse\ntrue\nfalse\nfalse\ntrue\nfalse",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "a b c d\nA B C\n6\nA a B\nB c C\nC a C\nC b C\nC c C\nC d C\nA\nA B\n7\nac\nab\nacabcd\nacabcde\na\nacaaacca\ncafds",
+          "testOut": "false\nfalse\nfalse\nfalse\ntrue\nfalse\nfalse",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "a b c\nA B C\n5\nA a A\nA b B\nB a B\nB b A\nB c C\nA\nA B\n6\nbc\nbbabc\naaaabababaac\naaaaabaaaabbaa\nabbabacc\nabababababbadabbba",
+          "testOut": "false\nfalse\nfalse\ntrue\nfalse\nfalse",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "a b c\nA B C\n5\nA a A\nA b B\nB a B\nB b A\nB c C\nA\nC\n6\nbc\nbbabc\naaaabababaac\naaaaabaaaabbaa\nabbabacc\nabababababbadabbba",
+          "testOut": "true\ntrue\ntrue\nfalse\nfalse\nfalse",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "[[input]]: always lower case\n\n[[states]]: always upper case\n\n[[numberOfTransitions]] > 0\n\n[[startState]]: there will always be exactly one\n\n[[numberOfEndStates]] > 0\n\nThe [[sourceState]], [[destinationState]], [[startState]] and every state in [[endStates]] are always elements of the [[states]].\n\n0 < [[numberOfWords]] ≤ 10\n\n<<Warning>>: the [[word]] can contain characters which are not in the [[input]]!\n\n<<Warning>>: Not every <<state>> has a subsequent <<state>> for every <<input>>! <<But>> every <<input>> leads to at most one different <<state>> in every state! There is no input that leads to 2 or more other states. <<So if you are in state A, the input a points either to none or one state!>>",
+      "coverBinaryId": 48545903337575,
+      "stubGenerator": "read input:string(256)\nread states:string(256)\nread numberOfTransitions:int\nloop numberOfTransitions read transition:string(256)\nread startState:string(256)\nread endStates:string(256)\nread numberOfWords:int\nloop numberOfWords read word:string(256)\nwrite true or false",
+      "inputDescription": "<<Line 1:>> A string [[input]] for the alphabet which can lead to changes in state, separated with space\n\n<<Line 2:>> A string [[states]] for the possible states, separated with space\n\n<<Line 3:>> An integer [[numberOfTransitions]] for the number of transitions\n\n<<Next [[numberOfTransitions]] lines:>> A string [[transition]] for the transition from one state to the next, in the format of [[sourceState]] [[character]] [[destinationState]]\n\n<<Next line:>> A string [[startState]] for the state in which you start\n\n<<Next line:>> A string [[endStates]] for all allowed final states, separated with space\n\n<<Next line:>> An integer [[numberOfWords]] for the number of words\n\n<<Next [[numberOfWords]] lines:>> A string [[word]] for the word which should be tested",
+      "solutionLanguage": "Java",
+      "outputDescription": "<<[[numberOfWords]] lines:>> {{true}} or {{false}}, depending on whether the tested [[word]] is in the language or not.\n\nIf the [[word]] contains a character that is not in the alphabet, {{false}} is expected.\n\nIf you are in a state and get a character that is in the alphabet but no transition, also return {{false}}."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are an examiner for different languages. Every year you get a lot of texts and should check if the words are in the language. Since you are lazy but highly motivated, you decide to automate this process.<br><br>Fortunately, the languages are pretty simple. So you want to build a state machine for every language, which can tell you quickly whether a word is in the language or not.<br><br>Now you have already built the languages, but you don't want to write code for each language individually. So now you have to come up with a flexible system that accepts your language and uses it to build a functioning machine.<br><br><strong>Tip:</strong> draw the machine to better understand what is meant by status and transitions<br><strong>Hint:</strong> https://en.wikipedia.org/wiki/Deterministic_finite_automaton<br><br><br><strong>The following example refers to the example at the bottom (first test)</strong><br><br>Just the necessary information from the input:<br><var>Word</var>: <const>abc</const><br><var>states</var> : A B<br><var>startState</var> : A<br><var>endState</var> : B<br><var>Transitions</var> :<br>A a B<br>A c B<br>B b A<br><br>You start in <strong>state</strong> A (<var>startState</var>). The first character found is <const>a</const>. According to the corresponding <strong>transition</strong> ( A a B ), you move to <strong>state</strong> B.<br><br>You are now in <strong>state</strong> B. The next character found is <const>b</const>. According to the corresponding <strong>transition</strong> ( B b A ), you move to <strong>state</strong> A.<br><br>Back in <strong>state</strong> A. The last character found is <const>c</const>. According to the corresponding <strong>transition</strong> ( A c B ), you move to <strong>state</strong> B again.<br><br>The word is over, the final <strong>state</strong> is B. This is in the set of the allowed <strong>final states</strong> (<var>endStates</var>), so the <var>word</var> <const>abc</const> is valid, and you print <const>true</const>.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> A string <var>input</var> for the alphabet which can lead to changes in state, separated with space<br><br><strong>Line 2:</strong> A string <var>states</var> for the possible states, separated with space<br><br><strong>Line 3:</strong> An integer <var>numberOfTransitions</var> for the number of transitions<br><br><strong>Next <var>numberOfTransitions</var> lines:</strong> A string <var>transition</var> for the transition from one state to the next, in the format of <var>sourceState</var> <var>character</var> <var>destinationState</var><br><br><strong>Next line:</strong> A string <var>startState</var> for the state in which you start<br><br><strong>Next line:</strong> A string <var>endStates</var> for all allowed final states, separated with space<br><br><strong>Next line:</strong> An integer <var>numberOfWords</var> for the number of words<br><br><strong>Next <var>numberOfWords</var> lines:</strong> A string <var>word</var> for the word which should be tested</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>numberOfWords</var> lines:</strong> <const>true</const> or <const>false</const>, depending on whether the tested <var>word</var> is in the language or not.<br><br>If the <var>word</var> contains a character that is not in the alphabet, <const>false</const> is expected.<br><br>If you are in a state and get a character that is in the alphabet but no transition, also return <const>false</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><var>input</var>: always lower case<br><br><var>states</var>: always upper case<br><br><var>numberOfTransitions</var> &gt; 0<br><br><var>startState</var>: there will always be exactly one<br><br><var>numberOfEndStates</var> &gt; 0<br><br>The <var>sourceState</var>, <var>destinationState</var>, <var>startState</var> and every state in <var>endStates</var> are always elements of the <var>states</var>.<br><br>0 &lt; <var>numberOfWords</var> &le; 10<br><br><strong>Warning</strong>: the <var>word</var> can contain characters which are not in the <var>input</var>!<br><br><strong>Warning</strong>: Not every <strong>state</strong> has a subsequent <strong>state</strong> for every <strong>input</strong>! <strong>But</strong> every <strong>input</strong> leads to at most one different <strong>state</strong> in every state! There is no input that leads to 2 or more other states. <strong>So if you are in state A, the input a points either to none or one state!</strong></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">a b c\nA B\n6\nA a B\nA b B\nA c B\nB a A\nB b A\nB c A\nA\nB\n10\na\nab\nabc\nabcd\nabcde\naabbcc\naabbcca\nabcabcabc\nz\nabcabcabo</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">true\nfalse\ntrue\nfalse\nfalse\nfalse\ntrue\ntrue\nfalse\nfalse</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 170893820932,
+  "avatar": 38192405205039,
+  "commentCount": 56,
+  "upVotes": 42,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 491204,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1599837119591,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

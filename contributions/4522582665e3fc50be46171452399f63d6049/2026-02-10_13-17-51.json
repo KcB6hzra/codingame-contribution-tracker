@@ -1,0 +1,226 @@
+{
+  "id": 45225,
+  "activeVersion": 42,
+  "score": 7,
+  "votableId": 27790058,
+  "codingamerId": 5271799,
+  "views": 238,
+  "commentableId": 27662328,
+  "title": "ASCII Art with Logo Language, Part 2",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Eulero314",
+  "publicHandle": "4522582665e3fc50be46171452399f63d6049",
+  "codingamerHandle": "7ed5fd396d11683394bd215ec8f0faf49971725",
+  "lastVersion": {
+    "version": 42,
+    "autocloseTime": 1678786646295,
+    "data": {
+      "title": "ASCII Art with Logo Language, Part 2",
+      "topics": [
+        {
+          "id": 128,
+          "handle": "ascii-art",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Ascii Art",
+            "2": "Ascii Art"
+          },
+          "puzzleCount": 32,
+          "parentTopicId": 93
+        },
+        {
+          "id": 235,
+          "handle": "interpreter",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "interpreter",
+            "2": "Interpreters"
+          },
+          "puzzleCount": 7,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "from collections import namedtuple\nimport sys\n\nclass ASCII_Logo:\n\n    screen:dict\n    d={0:(1,0),45:(1,1),\n       90:(0,1),135:(-1,1),\n       180:(-1,0),180+45:(-1,-1),\n       270:(0,-1),270+45:(1,-1)}\n\n    def __init__(self):\n        self.t=namedtuple('turtle',['pos','a','penDown','s'])\n        self.t.pos = (0, 0)\n        self.t.a = 90\n        self.t.penDown = True\n        self.t.s = '#'\n        self.setpc_cnt = 0\n        self.setpc_str = '#'\n        self.clear()\n\n    def clear(self,ch=' '):\n        self.screen={}\n        self.fill=ch\n        c=1e38\n        self.mix=c\n        self.miy=c\n        self.max=-c\n        self.may=-c\n\n    def draw(self):\n        if self.t.penDown:\n            self.t.s = self.setpc_str[self.setpc_cnt]\n            self.setpc_cnt = (self.setpc_cnt+1)%len(self.setpc_str)\n            self.screen[self.t.pos]=self.t.s\n            self.mix = min(self.mix, self.t.pos[0])\n            self.max = max(self.max,self.t.pos[0])\n            self.miy = min(self.miy, self.t.pos[1])\n            self.may = max(self.may,self.t.pos[1])\n\n    def move(self):\n        self.draw()\n        self.t.a=self.t.a%360\n        x,y=self.t.pos\n        dx,dy=self.d[self.t.a]\n        self.t.pos=(x+dx,y+dy)\n\n    def drawscreen(self):\n        lx=1+self.max-self.mix\n        ly=1+self.may-self.miy\n        s=[[self.fill]*lx for y in range(ly)]\n        for k,v in self.screen.items():\n            x,y=k\n            s[self.may-y][x-self.mix]=v\n        s=[''.join(x) for x in s]\n        # trim all extra trailing spaces\n        s=list(map(lambda x:x.rstrip(),s))\n        return '\\n'.join(s)\n\n    def preprocess(self,pgm_in:list):\n        pgm = ';'.join(pgm_in)\n        pgm = pgm.replace(';', ' ; ')\n        pgm = pgm.replace('[', ' [ ')\n        pgm = pgm.replace(']', ' ] ')\n        pgm=pgm.split()\n        pgm=list(filter(lambda x:x.strip()!='',pgm))\n        return pgm\n\n    def next_token(self):\n        # ; [ ] seq_lettere seq_numeri oppure carattere (per setpc x cs x)\n        if self.pos<len(self.pgm):\n            istr=self.pgm[self.pos]\n            self.pos+=1\n            return istr\n        else:\n            return None\n\n    def exec_instruction(self,it):\n        if it == 'CS':\n            ch = self.next_token()\n            self.clear(ch)\n        elif it == 'FD':\n            mv = self.next_token()\n            for j in range(int(mv)):\n                self.move()\n        elif it == 'RT':\n            angle = self.next_token()\n            self.t.a -= int(angle)\n        elif it == 'LT':\n            angle = self.next_token()\n            self.t.a += int(angle)\n        elif it == 'PU':\n            self.t.penDown = False\n        elif it == 'PD':\n            self.t.penDown = True\n        elif it == 'SETPC':\n            ch = self.next_token()\n            self.setpc_str=ch\n            self.setpc_cnt=0\n        else:\n            print('error', it, file=sys.stderr)\n\n    def exec_pgm(self):\n        while True:\n            token=self.next_token()\n            if not token:\n                break\n            it = token.upper()\n            if it==';':\n                pass\n            elif it==']':\n                return\n            elif it=='RP':\n                loop=int(self.next_token())\n                sq=self.next_token()\n                assert sq=='['\n                pos=self.pos\n                for i in range(loop):\n                    self.pos=pos\n                    self.exec_pgm()\n                #print(self.pos,self.pgm[self.pos-1],file=sys.stderr)\n                assert self.pgm[self.pos-1]==']'\n            else:\n                self.exec_instruction(it)\n\n    def run(self,pgm_in:list):\n        pgm=self.preprocess(pgm_in)\n        self.pgm=pgm\n        self.pos=0\n        self.exec_pgm()\n        return self.drawscreen()\n\nif __name__ == '__main__':\n    n=int(input())\n    pgm = []\n    for i in range(n):\n        line = input()\n        pgm.append(line)\n    s=ASCII_Logo()\n    print(s.run(pgm))",
+      "statement": "Your job is to extend the Logo language developed in <<ASCII Art with Logo Language>> by giving the Turtle the ability to move diagonally and some new commands (to check your first implementation's resiliency to the never-ending dance of changing requirements).\n\nCommands from part one (not modified):\n{{CS}} [[character]]: CLEARSCREEN. Clears the screen with the specified symbol (only printable ASCII excluding space).\n{{FD}} [[times]]: FORWARD. Moves Turtle forward for number of times specified (only positive integer).\n{{PU}}: PENUP. Sets the Turtle to move without drawing.\n{{PD}}: PENDOWN. Turtle leaves a symbol when moving.\n\nModified commands:\n{{SETPC}} [[pen]]: uses cyclically the characters in [[pen]] as Turtle pen, changing every Turtle's step (of length 1) with pen down. Default value for [[pen]] is {{#}}. {{;}}, {{[}} and {{]}} cannot be used in [[pen]]. The index for cycling characters resets each time you use {{SETPC}}.\n{{RT}} [[angle]]: RIGHT. Turns Turtle right for number of degrees specified (only positive multiples of 45).\n{{LT}} [[angle]]: LEFT. Turns Turtle left for number of degrees specified (only positive multiples of 45).\n\nNew command:\n{{RP}} [[loop]] {{[}}<<[>>[[commands]]<<‎]>>{{]}}: REPEAT. This instruction repeats [[commands]] the number of times indicated by the [[loop]] parameter.\n\nFor example: `RP 2 [FD 2]` is equivalent to `FD 2;FD 2`\nREPEAT can be nested. For example: `RP 2 [RP 2 [RT 90;FD 2]]` is equivalent to `RT 90;FD 2;RT 90;FD 2;RT 90;FD 2;RT 90;FD 2`\n`setpc 12345;rt 90;fd 5`\nproduces\n{{12345}}\n\nAs in part one, Turtle starts heading North, with the pen down and the initial symbol set to {{#}}.\n\nReference Part 1:\nhttps://www.codingame.com/training/medium/ascii-art-with-logo-language",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "2\nrt 45 \nfd 5",
+          "testOut": "    #\n   #\n  #\n #\n#",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "2\nrt 45 \nfd 8",
+          "testOut": "       #\n      #\n     #\n    #\n   #\n  #\n #\n#",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "1\nRP 4 [fd 5;rt 90]",
+          "testOut": "######\n#    #\n#    #\n#    #\n#    #\n######",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "1\nRP 4 [fd 8;rt 90]",
+          "testOut": "#########\n#       #\n#       #\n#       #\n#       #\n#       #\n#       #\n#       #\n#########",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "1\nsetpc +-;RP 2 [Rp 2 [fd 5;rt 90]]",
+          "testOut": "-+-+-+\n+    -\n-    +\n+    -\n-    +\n+-+-+-",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "1\nsetpc +-;RP 2 [Rp 2 [fd 8;rt 90]]",
+          "testOut": "+-+-+-+-+\n-       -\n+       +\n-       -\n+       +\n-       -\n+       +\n-       -\n+-+-+-+-+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "1\nsetpc #;rt 90;fd 5;lt 45;fd 5;rt 90;fd 5;lt 45;fd 5",
+          "testOut": "          #\n         # #\n        #   #\n       #     #\n      #       #\n######         #####",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "1\nsetpc *;rt 90;fd 5;lt 45;fd 5;rt 90;fd 5;lt 45;fd 5",
+          "testOut": "          *\n         * *\n        *   *\n       *     *\n      *       *\n******         *****",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "1\nsetpc HelloWorld!;rp 2 [rt 45;fd 5;pu;fd 1;pd;fd 6;rt 45]",
+          "testOut": "            H\n           ! e\n          d   l\n         l     l\n        r       o\n       o\n      W           W\n                   o\n    o               r\n   l                 l\n  l                   d\n e                     !\nH",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "1\nsetpc HelloWorld?;rp 2 [rt 45;fd 5;pu;fd 1;pd;fd 6;rt 45]",
+          "testOut": "            H\n           ? e\n          d   l\n         l     l\n        r       o\n       o\n      W           W\n                   o\n    o               r\n   l                 l\n  l                   d\n e                     ?\nH",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "1\nRP 2 [setpc Hello];rt 90;fd 5",
+          "testOut": "Hello",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "1\nRP 2 [setpc olleh];rt 90;fd 5",
+          "testOut": "olleh",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 7",
+          "isTest": true,
+          "testIn": "1\nRP 2 [RP 2 [fd 5;rt 90;setpc +];RP 2 [fd 5;rt 90;setpc *]]",
+          "testOut": "++++++\n*    +\n*    +\n*    +\n*    +\n******",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "1\nRP 2 [RP 2 [fd 8;rt 90;setpc +];RP 2 [fd 8;rt 90;setpc *]]",
+          "testOut": "+++++++++\n*       +\n*       +\n*       +\n*       +\n*       +\n*       +\n*       +\n*********",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 8",
+          "isTest": true,
+          "testIn": "1\nrt 90;RP 4 [fd 3;lt 90;rp 2 [fd 3;rt 90];fd 3;lt 90;fd 3;rt 90]",
+          "testOut": "      ####\n      #  #\n      #  #\n   ####  ####\n   #        #\n   #        #\n####        ####\n#              #\n#              #\n####        ####\n   #        #\n   #        #\n   ####  ####\n      #  #\n      #  #\n      ####",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "1\nrt 90;RP 4 [fd 4;lt 90;rp 2 [fd 4;rt 90];fd 4;lt 90;fd 4;rt 90]",
+          "testOut": "        #####\n        #   #\n        #   #\n        #   #\n    #####   #####\n    #           #\n    #           #\n    #           #\n#####           #####\n#                   #\n#                   #\n#                   #\n#####           #####\n    #           #\n    #           #\n    #           #\n    #####   #####\n        #   #\n        #   #\n        #   #\n        #####",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 9",
+          "isTest": true,
+          "testIn": "2\ncs .\nrp 2 [rt 45];RP 4 [fd 3;rp 2 [lt 45];rp 2 [fd 3;rp 2 [rt 45]];fd 3;rp 2 [lt 45];fd 3;rp 2 [lt 45]]",
+          "testOut": "####..####\n#..#..#..#\n#..#..#..#\n##########\n...#..#...\n...#..#...\n##########\n#..#..#..#\n#..#..#..#\n####..####",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "2\ncs .\nrp 2 [rt 45];RP 4 [fd 4;rp 2 [lt 45];rp 2 [fd 4;rp 2 [rt 45]];fd 4;rp 2 [lt 45];fd 4;rp 2 [lt 45]]",
+          "testOut": "#####...#####\n#...#...#...#\n#...#...#...#\n#...#...#...#\n#############\n....#...#....\n....#...#....\n....#...#....\n#############\n#...#...#...#\n#...#...#...#\n#...#...#...#\n#####...#####",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ [[N]] ≤ 10\n[[angle]]: a positive integer multiple of 45.\n[[loop]]: a positive integer from 1 to 100.\n[[pen]]: an ASCII string excluding spaces, {{;}}, {{[}} and {{]}}.",
+      "coverBinaryId": 97915726940060,
+      "stubGenerator": "read n:int\nloop n read line:string(1024)\n\nwrite ASCII Art Image",
+      "inputDescription": "<<Line 1>>: An integer [[N]], indicating the program's number of lines.\n<<Next [[N]] lines>>: lines of text with Logo instructions.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The ASCII Art generated."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Your job is to extend the Logo language developed in <strong>ASCII Art with Logo Language</strong> by giving the Turtle the ability to move diagonally and some new commands (to check your first implementation's resiliency to the never-ending dance of changing requirements).<br><br>Commands from part one (not modified):<br><const>CS</const> <var>character</var>: CLEARSCREEN. Clears the screen with the specified symbol (only printable ASCII excluding space).<br><const>FD</const> <var>times</var>: FORWARD. Moves Turtle forward for number of times specified (only positive integer).<br><const>PU</const>: PENUP. Sets the Turtle to move without drawing.<br><const>PD</const>: PENDOWN. Turtle leaves a symbol when moving.<br><br>Modified commands:<br><const>SETPC</const> <var>pen</var>: uses cyclically the characters in <var>pen</var> as Turtle pen, changing every Turtle's step (of length 1) with pen down. Default value for <var>pen</var> is <const>#</const>. <const>;</const>, <const>[</const> and <const>]</const> cannot be used in <var>pen</var>. The index for cycling characters resets each time you use <const>SETPC</const>.<br><const>RT</const> <var>angle</var>: RIGHT. Turns Turtle right for number of degrees specified (only positive multiples of 45).<br><const>LT</const> <var>angle</var>: LEFT. Turns Turtle left for number of degrees specified (only positive multiples of 45).<br><br>New command:<br><const>RP</const> <var>loop</var> <const>[</const><strong>[</strong><var>commands</var><strong>&lrm;]</strong><const>]</const>: REPEAT. This instruction repeats <var>commands</var> the number of times indicated by the <var>loop</var> parameter.<br><br>For example: <pre style=\"font-family: monospace\">RP 2 [FD 2]</pre> is equivalent to <pre style=\"font-family: monospace\">FD 2;FD 2</pre><br>REPEAT can be nested. For example: <pre style=\"font-family: monospace\">RP 2 [RP 2 [RT 90;FD 2]]</pre> is equivalent to <pre style=\"font-family: monospace\">RT 90;FD 2;RT 90;FD 2;RT 90;FD 2;RT 90;FD 2</pre><br><pre style=\"font-family: monospace\">setpc 12345;rt 90;fd 5</pre><br>produces<br><const>12345</const><br><br>As in part one, Turtle starts heading North, with the pen down and the initial symbol set to <const>#</const>.<br><br>Reference Part 1:<br>https://www.codingame.com/training/medium/ascii-art-with-logo-language</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: An integer <var>N</var>, indicating the program's number of lines.<br><strong>Next <var>N</var> lines</strong>: lines of text with Logo instructions.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The ASCII Art generated.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 10<br><var>angle</var>: a positive integer multiple of 45.<br><var>loop</var>: a positive integer from 1 to 100.<br><var>pen</var>: an ASCII string excluding spaces, <const>;</const>, <const>[</const> and <const>]</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\nrt 45 \nfd 5</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">    #\n   #\n  #\n #\n#</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 94169611209,
+  "avatar": 96314909854613,
+  "commentCount": 36,
+  "upVotes": 8,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 761197,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1676559859306,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

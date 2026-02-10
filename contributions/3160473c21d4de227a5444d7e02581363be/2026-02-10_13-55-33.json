@@ -1,0 +1,137 @@
+{
+  "id": 316,
+  "activeVersion": 5,
+  "score": 3,
+  "votableId": 2434710,
+  "codingamerId": 552776,
+  "views": 144,
+  "commentableId": 2383003,
+  "title": "Anagrams",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "player_one",
+  "publicHandle": "3160473c21d4de227a5444d7e02581363be",
+  "codingamerHandle": "fefb3b0a360d9451bde5553900470e2d677255",
+  "lastVersion": {
+    "version": 5,
+    "data": {
+      "title": "Anagrams",
+      "topics": [
+        {
+          "id": 112,
+          "handle": "string-manipulation",
+          "labelMap": {
+            "1": "String manipulation",
+            "2": "String manipulation"
+          },
+          "puzzleCount": 9,
+          "parentTopicId": 93
+        },
+        {
+          "id": 74,
+          "handle": "cryptology",
+          "labelMap": {
+            "1": "Cryptologie",
+            "2": "Cryptography"
+          },
+          "pageTitle": "Cryptography: exercises and theory",
+          "puzzleCount": 9,
+          "parentTopicId": 43,
+          "contentDetailsId": 105
+        }
+      ],
+      "solution": "using System;\r\nusing System.Linq;\r\nusing System.IO;\r\nusing System.Text;\r\nusing System.Collections;\r\nusing System.Collections.Generic;\r\n\r\nclass Solution {\r\n    static void Main(string[] args) {\r\n        string phrase = Console.ReadLine();\r\n\r\n        var spaceIndices = phrase.ToCharArray()\r\n            .Select((c, i) => new { Chr = c, Idx = i })\r\n            .Where(_ => _.Chr == ' ')\r\n            .Select(_ => _.Idx)\r\n            .ToList();\r\n        spaceIndices.Insert(0, -1);\r\n        spaceIndices.Add(phrase.Length);\r\n        \r\n        var wordLengths = Enumerable.Range(1, spaceIndices.Count-1)\r\n            .Select(i => spaceIndices[i] - spaceIndices[i-1] - 1)\r\n            .Reverse()\r\n            .ToList();\r\n            \r\n        var revised = phrase.Replace(\" \", string.Empty);\r\n        \r\n        var count = 0;\r\n        var added = 0;\r\n        for (var i = 0; added < wordLengths.Count - 1; i++) {\r\n            if (count == wordLengths[added]) {\r\n                added++;\r\n                revised = revised.Insert(i+added-1, \" \");\r\n                count = 0;\r\n            }\r\n            count++;\r\n        }\r\n        \r\n        var fourthLetters = revised.ToCharArray()\r\n            .Select((c, i) => new { Chr = c, Idx = i })\r\n            .Where(_ => ((int)_.Chr) % 4 == 0 && _.Chr != ' ')\r\n            .ToList();\r\n            \r\n        if (fourthLetters.Any()) {\r\n            var tmpList = fourthLetters.ToList();\r\n            var tmp = fourthLetters.Last();\r\n            fourthLetters.Insert(0, tmp);\r\n            fourthLetters.RemoveAt(fourthLetters.Count-1);\r\n            fourthLetters = tmpList\r\n                .Select((_, i) => new { Chr = fourthLetters[i].Chr, Idx = _.Idx })\r\n                .ToList();\r\n        \r\n            fourthLetters = fourthLetters\r\n                .Select((_, i) => new { Chr = fourthLetters[i].Chr, Idx = _.Idx })\r\n                .ToList();\r\n            \r\n            var array = revised.ToCharArray();\r\n            foreach (var letter in fourthLetters) {\r\n                array[letter.Idx] = letter.Chr;\r\n            }\r\n            \r\n            revised = new string(array);\r\n        }\r\n        \r\n        \r\n        var thirdLetters = revised.ToCharArray()\r\n            .Select((c, i) => new { Chr = c, Idx = i })\r\n            .Where(_ => (((int)_.Chr)-1) % 3 == 0)\r\n            .ToList();\r\n            \r\n        if (thirdLetters.Any()) {\r\n            var tmpList = thirdLetters.ToList();\r\n            var tmp = thirdLetters.First();\r\n            thirdLetters.Add(tmp);\r\n            thirdLetters.RemoveAt(0);\r\n            thirdLetters = tmpList\r\n                .Select((_, i) => new { Chr = thirdLetters[i].Chr, Idx = _.Idx })\r\n                .ToList();\r\n\r\n            var array = revised.ToCharArray();\r\n            foreach (var letter in thirdLetters) {\r\n                array[letter.Idx] = letter.Chr;\r\n            }\r\n            \r\n            revised = new string(array);\r\n        }\r\n        \r\n        var secondLetters = revised.ToCharArray()\r\n            .Select((c, i) => new { Chr = c, Idx = i })\r\n            .Where(_ => ((int)_.Chr) % 2 == 0 && _.Chr != ' ')\r\n            .ToList();\r\n            \r\n        if (secondLetters.Any()) {\r\n            secondLetters = secondLetters.AsEnumerable().Reverse()\r\n                .Select((_, i) => new { Chr = secondLetters[i].Chr, Idx = _.Idx })\r\n                .ToList();\r\n        \r\n            var array = revised.ToCharArray();\r\n            foreach (var letter in secondLetters) {\r\n                array[letter.Idx] = letter.Chr;\r\n            }\r\n        \r\n            revised = new string(array);\r\n        }\r\n        \r\n        Console.WriteLine(revised);\r\n    }\r\n}",
+      "statement": "You will be given a scrambled word phrase. You must <<unscramble>> the letters to reveal the original phrase. Each phrase has been scrambled by the following process:\n\n1) Find every 2nd letter of the alphabet in the phrase (B, D, F, etc.) and reverse their order within the phrase.\n\nFor example:\n\nPhrase: <<MOSTLY HARMLESS>>\n2nd letters: <<TLHRL>>\nReversed: <<LRHLT>>\nResult: <<MOSLRY HALMTESS>>\n\n2) Find every 3rd letter of the alphabet in the phrase (C, F, I, etc.) and shift their positions one to the right, with the last letter wrapped around to the first position.\n\nFor example:\n\nPhrase: <<MOSLRY HALMTESS>>\n3rd letters: <<OLRL>>\nShifted: <<LOLR>>\nResult: <<MLSOLY HARMTESS>>\n\n3) Find every 4th letter of the alphabet in the phrase (D, H, L, etc.) and shift their positions one to the left, with the first letter wrapped around to the last position.\n\nFor example:\n\nPhrase: <<MLSOLY HARMTESS>>\n4th letters: <<LLHT>>\nShifted: <<LHTL>>\nResult: <<MLSOHY TARMLESS>>\n\n4) Count the number of letters in each word, and reverse that list of numbers, re-applying the revised word lengths to the letter sequence.\n\nFor example:\n\nPhrase: <<MLSOHY TARMLESS>>\nWord lengths: <<6>>, <<8>>\nReversed: <<8>>, <<6>>\nResult: <<MLSOHYTA RMLESS>>\n\n\n\nTherefore, if your input is scrambled phrase <<MLSOHYTA RMLESS>>, you must return <<MOSTLY HARMLESS>>.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "ENID OL FNE",
+          "testOut": "END OF LINE",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "LELLR WOOHD",
+          "testOut": "HELLO WORLD",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "UK IFWK ONGN U",
+          "testOut": "I KNOW KUNG FU",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "AL NY UOUDCB EAO ELER ROGL TOS",
+          "testOut": "ALL YOUR CODE ARE BELONG TO US",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "RMSI HT YDAT E OMADNA ID IIAC RVFTO AR",
+          "testOut": "IM SORRY DAVE IM AFRAID I CANT DO THAT",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "HAMA I EAH RTDHE WONT WAL IN CFWO S IA O",
+          "testOut": "I AM A LEAF ON THE WIND WATCH HOW I SOAR",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "BWASRHRT HIGAI TDHE SNR VIY BRTESLOIG YRE ALBG HMTDE INI BEWA LEA ND MRMSYW EDE TVEH ITO GOHES AOTDLE MLM ENA OLSTOUG BATE",
+          "testOut": "TWAS BRILLIG AND THE SLITHY TOVES DID GYRE AND GIMBLE IN THE WABE ALL MIMSY WERE THE BOROGOVES AND THE MOME RATHS OUTGRABE",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "RTED ODGN IBONEUHE MAT DR NEL ONG ILOH TTNIE MR BEHO NGI RNTO DGTN EM AILA NFR NIH ETAL KLES ST RHNI NEM",
+          "testOut": "ONE RING TO RULE THEM ALL ONE RING TO FIND THEM ONE RING TO BRING THEM ALL AND IN THE DARKNESS BIND THEM",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "Only upper-case characters [A-Z] are used.\nConsecutive words are delimited by a single space, and there are no leading or trailing spaces.",
+      "coverBinaryId": 135733387298677,
+      "stubGenerator": "read phrase:string(1024)\r\nwrite answer",
+      "inputDescription": "<<Line 1:>> A scrambled word phrase",
+      "solutionLanguage": "C#",
+      "outputDescription": "The unscrambled phrase"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You will be given a scrambled word phrase. You must <strong>unscramble</strong> the letters to reveal the original phrase. Each phrase has been scrambled by the following process:<br><br>1) Find every 2nd letter of the alphabet in the phrase (B, D, F, etc.) and reverse their order within the phrase.<br><br>For example:<br><br>Phrase: <strong>MOSTLY HARMLESS</strong><br>2nd letters: <strong>TLHRL</strong><br>Reversed: <strong>LRHLT</strong><br>Result: <strong>MOSLRY HALMTESS</strong><br><br>2) Find every 3rd letter of the alphabet in the phrase (C, F, I, etc.) and shift their positions one to the right, with the last letter wrapped around to the first position.<br><br>For example:<br><br>Phrase: <strong>MOSLRY HALMTESS</strong><br>3rd letters: <strong>OLRL</strong><br>Shifted: <strong>LOLR</strong><br>Result: <strong>MLSOLY HARMTESS</strong><br><br>3) Find every 4th letter of the alphabet in the phrase (D, H, L, etc.) and shift their positions one to the left, with the first letter wrapped around to the last position.<br><br>For example:<br><br>Phrase: <strong>MLSOLY HARMTESS</strong><br>4th letters: <strong>LLHT</strong><br>Shifted: <strong>LHTL</strong><br>Result: <strong>MLSOHY TARMLESS</strong><br><br>4) Count the number of letters in each word, and reverse that list of numbers, re-applying the revised word lengths to the letter sequence.<br><br>For example:<br><br>Phrase: <strong>MLSOHY TARMLESS</strong><br>Word lengths: <strong>6</strong>, <strong>8</strong><br>Reversed: <strong>8</strong>, <strong>6</strong><br>Result: <strong>MLSOHYTA RMLESS</strong><br><br><br><br>Therefore, if your input is scrambled phrase <strong>MLSOHYTA RMLESS</strong>, you must return <strong>MOSTLY HARMLESS</strong>.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> A scrambled word phrase</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The unscrambled phrase</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Only upper-case characters [A-Z] are used.<br>Consecutive words are delimited by a single space, and there are no leading or trailing spaces.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">ENID OL FNE</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">END OF LINE</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 305322872302,
+  "avatar": 52487021619351,
+  "commentCount": 4,
+  "upVotes": 3,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 639,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

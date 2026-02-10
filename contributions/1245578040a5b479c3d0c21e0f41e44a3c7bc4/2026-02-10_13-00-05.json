@@ -1,0 +1,296 @@
+{
+  "id": 124557,
+  "activeVersion": 65,
+  "score": 4,
+  "votableId": 37185241,
+  "codingamerId": 4687360,
+  "views": 120,
+  "commentableId": 37025080,
+  "title": "The Lord of the Annuli",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "thomas.schuerger",
+  "publicHandle": "1245578040a5b479c3d0c21e0f41e44a3c7bc4",
+  "codingamerHandle": "8f631a6df22c9cd8709f071d9518645f0637864",
+  "lastVersion": {
+    "version": 65,
+    "autocloseTime": 1750929344993,
+    "freezeTime": 1748942144993,
+    "data": {
+      "title": "The Lord of the Annuli",
+      "topics": [
+        {
+          "id": 128,
+          "handle": "ascii-art",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Ascii Art",
+            "2": "Ascii Art"
+          },
+          "puzzleCount": 52,
+          "parentTopicId": 93
+        },
+        {
+          "id": 95,
+          "handle": "geometry",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Geometry",
+            "2": "Geometry"
+          },
+          "puzzleCount": 33,
+          "parentTopicId": 93
+        },
+        {
+          "labelMap": {
+            "2": "Supersampling"
+          }
+        }
+      ],
+      "solution": "use strict;\nbinmode(STDOUT, \":encoding(UTF-8)\");\n\nmy @map=(\" \",\".\",\":\",\"-\",\"=\",\"+\",\"*\",\"#\",\"%\",\"@\",\"@\");\n\nmy($width,$height,$cx,$cy,$ro,$ri,$super)=split(/ /,<STDIN>);\nmy $ro2=$ro*$ro;\nmy $ri2=$ri*$ri;\nmy $step=1/$super;\n\nprint \"+\".(\"-\" x $width).\"+\\n\";\nfor my $y (0..$height-1) {\n    print \"|\";\n    for my $x (0..$width-1) {\n        print $map[10*coverage($x,$y)];\n    }\n    print \"|\\n\";\n}\nprint \"+\".(\"-\" x $width).\"+\\n\";\n\nsub coverage {\n    my($px,$py)=@_;\n    my $in=0;\n    my $y=$py+$step/2;\n    for my $i (1..$super) {\n        my $x=$px+$step/2;\n        for my $j (1..$super) {\n            my $d = (($x-$cx)/2)**2 + ($y-$cy)**2;\n            $in++ if($d<=$ro2 && $d>=$ri2);\n            $x+=$step;\n        }\n        $y+=$step;\n    }\n    return $in/$super/$super;\n}",
+      "statement": "You need to draw a ring (or annulus) using ASCII characters in a rectangular area of width [[width]] and height [[height]]. The ring is defined by a center point ([[cx]], [[cy]]) and two radii, the outer radius [[ro]] and the inner radius [[ri]]. The coordinates are relative to the upper left point of the rectangle, which represents the point (0,0). If [[ri]]=0, then the ring becomes a disc.\n\nNote: [[cx]], [[cy]], [[ro]] and [[ri]] need not be whole numbers.\n\nFor each character in the rectangle, each of which is assumed to be <<half a unit wide>> and <<one unit tall>> (to ensure a proper aspect ratio), determine the coverage of the ring at that position, which is the portion of the area of the character covered by the ring. Map this coverage from 0% to 100% to the character to use, using the following rules:\n\nFrom 0% (inclusive) to 10% (exclusive): use a space (\" \").\nFrom 10% (inclusive) to 20% (exclusive): use a dot ({{.}}).\nFrom 20% (inclusive) to 30% (exclusive): use a colon ({{:}}).\nFrom 30% (inclusive) to 40% (exclusive): use a dash ({{-}}).\nFrom 40% (inclusive) to 50% (exclusive): use an equals sign ({{=}}).\nFrom 50% (inclusive) to 60% (exclusive): use a plus sign ({{+}}).\nFrom 60% (inclusive) to 70% (exclusive): use an asterisk ({{*}}).\nFrom 70% (inclusive) to 80% (exclusive): use a hash sign ({{#}}).\nFrom 80% (inclusive) to 90% (exclusive): use a percent sign ({{%}}).\n90% (inclusive) or more: use an at sign ({{@}}).\n\nThe ring's coverage for each character cannot be calculated using closed-form geometry and must therefore be determined via <<supersampling>>. Supersampling tests a regular grid of [[samples]]*[[samples]] points within the area of each character and determines the ratio of points inside the ring divided by the total number of points, which is the coverage for that area. The supersampling points for the character in column [[x]] and row [[y]] are located at ([[x]] + ([[i]]+0.5)/[[samples]], [[y]] + ([[j]]+0.5)/[[samples]]) for [[i]] and [[j]] from 0 to [[samples]]-1. For example, if [[samples]]=2, the four supersampling points are (x+0.25, y+0.25), (x+0.75, y+0.25), (x+0.25, y+0.75), (x+0.75, y+0.75).\n\nA point ([[x]], [[y]]) is on the ring if and only if [[ri]]² <= ([[x]]-[[cx]])² + ([[y]]-[[cy]])² <= [[ro]]². A point on the edge of the ring is also counted as on the ring.\n\nYou need to draw a simple frame around the rectangle, consisting of {{-}} (for horizontal lines), {{|}} (for vertical lines) and {{+}} (for the 4 corners). The frame does not count towards the drawing area of [[width]] and [[height]] characters and does not influence the coordinate system. The top-left character of the drawing area is still row 0, column 0.\n\nShow your skills by drawing the ring!",
+      "testCases": [
+        {
+          "title": "Plain centered disc, no supersampling",
+          "isTest": true,
+          "testIn": "20 10 10 5 5 0 1",
+          "testOut": "+--------------------+\n|      @@@@@@@@      |\n|   @@@@@@@@@@@@@@   |\n| @@@@@@@@@@@@@@@@@@ |\n|@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@|\n| @@@@@@@@@@@@@@@@@@ |\n|   @@@@@@@@@@@@@@   |\n|      @@@@@@@@      |\n+--------------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "20 10 10 5 4 0 1",
+          "testOut": "+--------------------+\n|                    |\n|      @@@@@@@@      |\n|    @@@@@@@@@@@@    |\n|   @@@@@@@@@@@@@@   |\n|  @@@@@@@@@@@@@@@@  |\n|  @@@@@@@@@@@@@@@@  |\n|   @@@@@@@@@@@@@@   |\n|    @@@@@@@@@@@@    |\n|      @@@@@@@@      |\n|                    |\n+--------------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Plain centered disc with a little supersampling",
+          "isTest": true,
+          "testIn": "20 10 10 5 5 0 2",
+          "testOut": "+--------------------+\n|    :++@@@@@@++:    |\n|  :#@@@@@@@@@@@@#:  |\n| #@@@@@@@@@@@@@@@@# |\n|+@@@@@@@@@@@@@@@@@@+|\n|@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@|\n|+@@@@@@@@@@@@@@@@@@+|\n| #@@@@@@@@@@@@@@@@# |\n|  :#@@@@@@@@@@@@#:  |\n|    :++@@@@@@++:    |\n+--------------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "20 10 10 5 4 0 3",
+          "testOut": "+--------------------+\n|                    |\n|     -*#@@@@#*-     |\n|   -%@@@@@@@@@@%-   |\n|  -@@@@@@@@@@@@@@-  |\n|  %@@@@@@@@@@@@@@%  |\n|  %@@@@@@@@@@@@@@%  |\n|  -@@@@@@@@@@@@@@-  |\n|   -%@@@@@@@@@@%-   |\n|     -*#@@@@#*-     |\n|                    |\n+--------------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Our first ring",
+          "isTest": true,
+          "testIn": "40 20 20 10 8 5 10",
+          "testOut": "+----------------------------------------+\n|                                        |\n|                                        |\n|             -+*%@@@@@@%*+-             |\n|          =#@@@@@@@@@@@@@@@@#=          |\n|        +@@@@@@@@@@@@@@@@@@@@@@+        |\n|      -@@@@@@@%+-.    .-+%@@@@@@@-      |\n|     -@@@@@@#:            :#@@@@@@-     |\n|    :@@@@@@-                -@@@@@@:    |\n|    #@@@@@=                  =@@@@@#    |\n|    @@@@@@                    @@@@@@    |\n|    @@@@@@                    @@@@@@    |\n|    #@@@@@=                  =@@@@@#    |\n|    :@@@@@@-                -@@@@@@:    |\n|     -@@@@@@#:            :#@@@@@@-     |\n|      -@@@@@@@%+-.    .-+%@@@@@@@-      |\n|        +@@@@@@@@@@@@@@@@@@@@@@+        |\n|          =#@@@@@@@@@@@@@@@@#=          |\n|             -+*%@@@@@@%*+-             |\n|                                        |\n|                                        |\n+----------------------------------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "40 20 20 10 9 4 10",
+          "testOut": "+----------------------------------------+\n|                                        |\n|            .-+#%@@@@@@%#+-.            |\n|         -*@@@@@@@@@@@@@@@@@@*-         |\n|       =@@@@@@@@@@@@@@@@@@@@@@@@=       |\n|     -@@@@@@@@@@@@@@@@@@@@@@@@@@@@-     |\n|    +@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@+    |\n|   +@@@@@@@@@@@#=:    :=#@@@@@@@@@@@+   |\n|  :@@@@@@@@@@*.          .*@@@@@@@@@@:  |\n|  #@@@@@@@@@*              *@@@@@@@@@#  |\n|  @@@@@@@@@@                @@@@@@@@@@  |\n|  @@@@@@@@@@                @@@@@@@@@@  |\n|  #@@@@@@@@@*              *@@@@@@@@@#  |\n|  :@@@@@@@@@@*.          .*@@@@@@@@@@:  |\n|   +@@@@@@@@@@@#=:    :=#@@@@@@@@@@@+   |\n|    +@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@+    |\n|     -@@@@@@@@@@@@@@@@@@@@@@@@@@@@-     |\n|       =@@@@@@@@@@@@@@@@@@@@@@@@=       |\n|         -*@@@@@@@@@@@@@@@@@@*-         |\n|            .-+#%@@@@@@%#+-.            |\n|                                        |\n+----------------------------------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A slighty larger slightly shifted ring",
+          "isTest": true,
+          "testIn": "40 20 20.5 10.5 8.5 5.5 10",
+          "testOut": "+----------------------------------------+\n|                                        |\n|                                        |\n|             :=*#%@@@@@%#*=:            |\n|          -#@@@@@@@@@@@@@@@@@#-         |\n|        +@@@@@@@@@@@@@@@@@@@@@@@+       |\n|      -@@@@@@@%*-:.   .:-*%@@@@@@@-     |\n|     =@@@@@@#:             :#@@@@@@=    |\n|    -@@@@@@-                 -@@@@@@-   |\n|    @@@@@@:                   :@@@@@@   |\n|   -@@@@@#                     #@@@@@-  |\n|   +@@@@@+                     +@@@@@+  |\n|   -@@@@@#                     #@@@@@-  |\n|    @@@@@@:                   :@@@@@@   |\n|    -@@@@@@-                 -@@@@@@-   |\n|     =@@@@@@#:             :#@@@@@@=    |\n|      -@@@@@@@%*-:.   .:-*%@@@@@@@-     |\n|        +@@@@@@@@@@@@@@@@@@@@@@@+       |\n|          -#@@@@@@@@@@@@@@@@@#-         |\n|             :=*#%@@@@@%#*=:            |\n|                                        |\n+----------------------------------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "40 20 20.5 10.7 8.5 5.8 10",
+          "testOut": "+----------------------------------------+\n|                                        |\n|                                        |\n|              :=+*#%%%#*+=:             |\n|          .+%@@@@@@@@@@@@@@@%+.         |\n|        -#@@@@@@@@@@@@@@@@@@@@@#-       |\n|      .#@@@@@@#=:.     .:=#@@@@@@#.     |\n|     -@@@@@@+.             .+@@@@@@-    |\n|    :@@@@@#.                 .#@@@@@:   |\n|    %@@@@#                     #@@@@%   |\n|   -@@@@@.                     .@@@@@-  |\n|   +@@@@@                       @@@@@+  |\n|   =@@@@@                       @@@@@=  |\n|   .@@@@@=                     =@@@@@.  |\n|    +@@@@@-                   -@@@@@+   |\n|     *@@@@@*.               .*@@@@@*    |\n|      +@@@@@@*-           -*@@@@@@+     |\n|       .#@@@@@@@%#*+++*#%@@@@@@@#.      |\n|         .+@@@@@@@@@@@@@@@@@@@+.        |\n|            :=*%@@@@@@@@@%*=:           |\n|                  .:::.                 |\n+----------------------------------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A nice rainbow",
+          "isTest": true,
+          "testIn": "40 20 25 26.5 21 17.7 20",
+          "testOut": "+----------------------------------------+\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                 .:--==++++==--:.       |\n|          :-+*%@@@@@@@@@@@@@@@@@@@@%*+-:|\n|     .-+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|  :+%@@@@@@@@@@@@@@@@%%%%%%%%@@@@@@@@@@@|\n|+@@@@@@@@@@@@#+=-:.            .:-=+#@@@|\n|@@@@@@@@%+-.                          .-|\n|@@@@@#=.                                |\n|@@%=                                    |\n|#:                                      |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n+----------------------------------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "40 20 27 26.5 23 18.7 20",
+          "testOut": "+----------------------------------------+\n|                                        |\n|                                        |\n|                                        |\n|                  ..:--==++++==--:..    |\n|           .-=*#%@@@@@@@@@@@@@@@@@@@@%#*|\n|       -+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|   :+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|-*@@@@@@@@@@@@@@@@@@@@@%%%%%%%%@@@@@@@@@|\n|@@@@@@@@@@@@@@%#+=:.              .:=+#%|\n|@@@@@@@@@@#=:                           |\n|@@@@@@%+:                               |\n|@@@@+:                                  |\n|@%-                                     |\n|-                                       |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n+----------------------------------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A thin ring",
+          "isTest": true,
+          "testIn": "40 20 20 10 9 8.5 25",
+          "testOut": "+----------------------------------------+\n|                                        |\n|            .-++++++++++++-.            |\n|         -++-.            .-++-         |\n|       =*-                    -*=       |\n|     -#:                        :#-     |\n|    ++                            ++    |\n|   ++                              ++   |\n|  :#                                #:  |\n|  #:                                :#  |\n|  @                                  @  |\n|  @                                  @  |\n|  #:                                :#  |\n|  :#                                #:  |\n|   ++                              ++   |\n|    ++                            ++    |\n|     -#:                        :#-     |\n|       =*-                    -*=       |\n|         -++-.            .-++-         |\n|            .-++++++++++++-.            |\n|                                        |\n+----------------------------------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "40 20 20 10 9.2 8.7 25",
+          "testOut": "+----------------------------------------+\n|                 ..::..                 |\n|           .-+++=------=+++-.           |\n|        .++=.              .=++.        |\n|      :*=                      =*:      |\n|     *+                          +*     |\n|   .#:                            :#.   |\n|  .%.                              .%.  |\n|  *-                                -*  |\n| .%                                  %. |\n| -*                                  *- |\n| -*                                  *- |\n| .%                                  %. |\n|  *-                                -*  |\n|  .%.                              .%.  |\n|   .#:                            :#.   |\n|     *+                          +*     |\n|      :*=                      =*:      |\n|        .++=.              .=++.        |\n|           .-+++=------=+++-.           |\n|                 ..::..                 |\n+----------------------------------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A quarter of a ring",
+          "isTest": true,
+          "testIn": "40 20 40 0 25 17 25",
+          "testOut": "+----------------------------------------+\n|@@@@@@                                  |\n|@@@@@@.                                 |\n|@@@@@@-                                 |\n|@@@@@@#                                 |\n|@@@@@@@:                                |\n|@@@@@@@%                                |\n|@@@@@@@@+                               |\n|@@@@@@@@@=                              |\n|@@@@@@@@@@+                             |\n|@@@@@@@@@@@#                            |\n|@@@@@@@@@@@@@-                          |\n|@@@@@@@@@@@@@@#:                        |\n|@@@@@@@@@@@@@@@@#:                      |\n|@@@@@@@@@@@@@@@@@@%=                    |\n|@@@@@@@@@@@@@@@@@@@@@#=.                |\n|-%@@@@@@@@@@@@@@@@@@@@@@%*-.            |\n|  +@@@@@@@@@@@@@@@@@@@@@@@@@@%*+=-:.    |\n|   .*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|     .+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|        =%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n+----------------------------------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "40 20 40 0 26 16.5 25",
+          "testOut": "+----------------------------------------+\n|@@@@@@@                                 |\n|@@@@@@@.                                |\n|@@@@@@@-                                |\n|@@@@@@@#                                |\n|@@@@@@@@:                               |\n|@@@@@@@@%                               |\n|@@@@@@@@@*                              |\n|@@@@@@@@@@+                             |\n|@@@@@@@@@@@*                            |\n|@@@@@@@@@@@@%.                          |\n|@@@@@@@@@@@@@@+                         |\n|@@@@@@@@@@@@@@@@=                       |\n|@@@@@@@@@@@@@@@@@@=                     |\n|@@@@@@@@@@@@@@@@@@@@*-                  |\n|@@@@@@@@@@@@@@@@@@@@@@@#=.              |\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@#+-:         |\n|%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%#*++++|\n| =@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|   +@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|     =%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n+----------------------------------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "The edge of a big disc",
+          "isTest": true,
+          "testIn": "40 20 -200 -200 240 0 25",
+          "testOut": "+----------------------------------------+\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%+: |\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*=.    |\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#+:        |\n|@@@@@@@@@@@@@@@@@@@@@@@@@%*-            |\n|@@@@@@@@@@@@@@@@@@@@@@*-.               |\n|@@@@@@@@@@@@@@@@@@*=.                   |\n|@@@@@@@@@@@@@@#=:                       |\n|@@@@@@@@@@*=:                           |\n|@@@@@%*=.                               |\n|@%+-.                                   |\n|                                        |\n|                                        |\n+----------------------------------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "40 20 -210 -190 240 0 25",
+          "testOut": "+----------------------------------------+\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*- |\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%+:    |\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#=.       |\n|@@@@@@@@@@@@@@@@@@@@@@@@@@%+:           |\n|@@@@@@@@@@@@@@@@@@@@@@@*=.              |\n+----------------------------------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "An even thinner ring segment",
+          "isTest": true,
+          "testIn": "30 15 -12.5 16 15 14.9 15",
+          "testOut": "+------------------------------+\n|                              |\n|                              |\n|..                            |\n|   ..                         |\n|      .                       |\n|        ..                    |\n|          .                   |\n|           ..                 |\n|             .                |\n|              .               |\n|               .              |\n|                .             |\n|                :             |\n|                .             |\n|                 :            |\n+------------------------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "30 15 -12.5 16 16 15.9 15",
+          "testOut": "+------------------------------+\n|                              |\n|..                            |\n|   ...                        |\n|      ..                      |\n|         .                    |\n|           .                  |\n|            ..                |\n|              .               |\n|               .              |\n|                :             |\n|                 :            |\n|                  .           |\n|                  :           |\n|                  ..          |\n|                   :          |\n+------------------------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A tiny asymmetric hole",
+          "isTest": true,
+          "testIn": "40 20 30.3 3.6 24 0.6 25",
+          "testOut": "+----------------------------------------+\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@: *@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n+----------------------------------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "40 20 30.3 3.6 24 0.7 25",
+          "testOut": "+----------------------------------------+\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  =@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%#@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n+----------------------------------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A thick ring section",
+          "isTest": true,
+          "testIn": "40 20 60 -10 30 20 2",
+          "testOut": "+----------------------------------------+\n|   :@@@@@@@@@@@@@@@@@@@@@#:             |\n|    :@@@@@@@@@@@@@@@@@@@@@@:            |\n|     #@@@@@@@@@@@@@@@@@@@@@@#           |\n|      #@@@@@@@@@@@@@@@@@@@@@@@+         |\n|       +@@@@@@@@@@@@@@@@@@@@@@@@+       |\n|        :@@@@@@@@@@@@@@@@@@@@@@@@@+:    |\n|         :@@@@@@@@@@@@@@@@@@@@@@@@@@#+  |\n|           #@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|            :@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|              +@@@@@@@@@@@@@@@@@@@@@@@@@|\n|               :#@@@@@@@@@@@@@@@@@@@@@@@|\n|                 :#@@@@@@@@@@@@@@@@@@@@@|\n|                    +@@@@@@@@@@@@@@@@@@@|\n|                      +#@@@@@@@@@@@@@@@@|\n|                        :+@@@@@@@@@@@@@@|\n|                           :+@@@@@@@@@@@|\n|                               ++@@@@@@@|\n|                                   ++@@@|\n|                                        |\n|                                        |\n+----------------------------------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "40 20 61 -11 31 20 2",
+          "testOut": "+----------------------------------------+\n|   #@@@@@@@@@@@@@@@@@@@@@@@@:           |\n|    #@@@@@@@@@@@@@@@@@@@@@@@@#          |\n|     #@@@@@@@@@@@@@@@@@@@@@@@@@+        |\n|      #@@@@@@@@@@@@@@@@@@@@@@@@@@+      |\n|       #@@@@@@@@@@@@@@@@@@@@@@@@@@@+:   |\n|        +@@@@@@@@@@@@@@@@@@@@@@@@@@@@#+ |\n|         :@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|           #@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|            :@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|              +@@@@@@@@@@@@@@@@@@@@@@@@@|\n|                +@@@@@@@@@@@@@@@@@@@@@@@|\n|                  +@@@@@@@@@@@@@@@@@@@@@|\n|                    +@@@@@@@@@@@@@@@@@@@|\n|                      :#@@@@@@@@@@@@@@@@|\n|                         +#@@@@@@@@@@@@@|\n|                            +#@@@@@@@@@@|\n|                               :+#@@@@@@|\n|                                   :++@@|\n|                                        |\n|                                        |\n+----------------------------------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Almost a straight line",
+          "isTest": true,
+          "testIn": "40 20 500 250 339.7 0 25",
+          "testOut": "+----------------------------------------+\n|                                      -#|\n|                                    -%@@|\n|                                  =%@@@@|\n|                                =@@@@@@@|\n|                              +@@@@@@@@@|\n|                           .+@@@@@@@@@@@|\n|                         .*@@@@@@@@@@@@@|\n|                       .*@@@@@@@@@@@@@@@|\n|                     .*@@@@@@@@@@@@@@@@@|\n|                   .*@@@@@@@@@@@@@@@@@@@|\n|                 .*@@@@@@@@@@@@@@@@@@@@@|\n|               .*@@@@@@@@@@@@@@@@@@@@@@@|\n|             .*@@@@@@@@@@@@@@@@@@@@@@@@@|\n|           .*@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|          +@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|        +@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|      =@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|    =@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|  -%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|:#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n+----------------------------------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "40 20 500 250 339.6 0 25",
+          "testOut": "+----------------------------------------+\n|                                      .*|\n|                                    :*@@|\n|                                  :#@@@@|\n|                                -%@@@@@@|\n|                              -%@@@@@@@@|\n|                            =%@@@@@@@@@@|\n|                          =@@@@@@@@@@@@@|\n|                        =@@@@@@@@@@@@@@@|\n|                      +@@@@@@@@@@@@@@@@@|\n|                    +@@@@@@@@@@@@@@@@@@@|\n|                  +@@@@@@@@@@@@@@@@@@@@@|\n|                +@@@@@@@@@@@@@@@@@@@@@@@|\n|              =@@@@@@@@@@@@@@@@@@@@@@@@@|\n|            =@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|          =@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|        -%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|      -%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|    :#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|  :#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n|.*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|\n+----------------------------------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Into the void",
+          "isTest": true,
+          "testIn": "40 20 30 15 50 21 25",
+          "testOut": "+----------------------------------------+\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n+----------------------------------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "40 20 14 9 50 16.9 25",
+          "testOut": "+----------------------------------------+\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n|                                        |\n+----------------------------------------+",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "0 < [[width]] <= 40, [[width]] is an integer\n0 < [[height]] <= 20, [[height]] is an integer\n-500 <= [[cx]]<= 500, [[cx]] is a float\n-500 <= [[cy]]<= 500, [[cy]] is a float\n0 <= [[ri]] < [[ro]] <= 340, [[ri]] and [[ro]] are floats\n1 <= [[samples]] <= 25, [[samples]] is an integer",
+      "coverBinaryId": 144485785033865,
+      "stubGenerator": "read width:int height:int cx:float cy:float ro:float ri:float samples:int\nwrite ASCII art, including frame",
+      "inputDescription": "<<Line 1:>> [[width]] [[height]] [[cx]] [[cy]] [[ro]] [[ri]] [[samples]]\n\n[[width]]: The width of the rectangle in characters (excluding the frame around it)\n[[height]]: The height of the rectangle in characters (excluding the frame around it)\n[[cx]]: The x-position of the center of the ring\n[[cy]]: The y-position of the center of the ring\n[[ro]]: The outer radius\n[[ri]]: The inner radius\n[[samples]]: The number of samples per character per dimension ([[samples]]² per character)",
+      "solutionLanguage": "Perl",
+      "outputDescription": "<<[[height]]+2 lines:>> The rows of the ASCII art, each [[width]]+2 characters long, including the frame around it"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You need to draw a ring (or annulus) using ASCII characters in a rectangular area of width <var>width</var> and height <var>height</var>. The ring is defined by a center point (<var>cx</var>, <var>cy</var>) and two radii, the outer radius <var>ro</var> and the inner radius <var>ri</var>. The coordinates are relative to the upper left point of the rectangle, which represents the point (0,0). If <var>ri</var>=0, then the ring becomes a disc.<br><br>Note: <var>cx</var>, <var>cy</var>, <var>ro</var> and <var>ri</var> need not be whole numbers.<br><br>For each character in the rectangle, each of which is assumed to be <strong>half a unit wide</strong> and <strong>one unit tall</strong> (to ensure a proper aspect ratio), determine the coverage of the ring at that position, which is the portion of the area of the character covered by the ring. Map this coverage from 0% to 100% to the character to use, using the following rules:<br><br>From 0% (inclusive) to 10% (exclusive): use a space (&quot; &quot;).<br>From 10% (inclusive) to 20% (exclusive): use a dot (<const>.</const>).<br>From 20% (inclusive) to 30% (exclusive): use a colon (<const>:</const>).<br>From 30% (inclusive) to 40% (exclusive): use a dash (<const>-</const>).<br>From 40% (inclusive) to 50% (exclusive): use an equals sign (<const>=</const>).<br>From 50% (inclusive) to 60% (exclusive): use a plus sign (<const>+</const>).<br>From 60% (inclusive) to 70% (exclusive): use an asterisk (<const>*</const>).<br>From 70% (inclusive) to 80% (exclusive): use a hash sign (<const>#</const>).<br>From 80% (inclusive) to 90% (exclusive): use a percent sign (<const>%</const>).<br>90% (inclusive) or more: use an at sign (<const>@</const>).<br><br>The ring's coverage for each character cannot be calculated using closed-form geometry and must therefore be determined via <strong>supersampling</strong>. Supersampling tests a regular grid of <var>samples</var>*<var>samples</var> points within the area of each character and determines the ratio of points inside the ring divided by the total number of points, which is the coverage for that area. The supersampling points for the character in column <var>x</var> and row <var>y</var> are located at (<var>x</var> + (<var>i</var>+0.5)/<var>samples</var>, <var>y</var> + (<var>j</var>+0.5)/<var>samples</var>) for <var>i</var> and <var>j</var> from 0 to <var>samples</var>-1. For example, if <var>samples</var>=2, the four supersampling points are (x+0.25, y+0.25), (x+0.75, y+0.25), (x+0.25, y+0.75), (x+0.75, y+0.75).<br><br>A point (<var>x</var>, <var>y</var>) is on the ring if and only if <var>ri</var>&sup2; &lt;= (<var>x</var>-<var>cx</var>)&sup2; + (<var>y</var>-<var>cy</var>)&sup2; &lt;= <var>ro</var>&sup2;. A point on the edge of the ring is also counted as on the ring.<br><br>You need to draw a simple frame around the rectangle, consisting of <const>-</const> (for horizontal lines), <const>|</const> (for vertical lines) and <const>+</const> (for the 4 corners). The frame does not count towards the drawing area of <var>width</var> and <var>height</var> characters and does not influence the coordinate system. The top-left character of the drawing area is still row 0, column 0.<br><br>Show your skills by drawing the ring!</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> <var>width</var> <var>height</var> <var>cx</var> <var>cy</var> <var>ro</var> <var>ri</var> <var>samples</var><br><br><var>width</var>: The width of the rectangle in characters (excluding the frame around it)<br><var>height</var>: The height of the rectangle in characters (excluding the frame around it)<br><var>cx</var>: The x-position of the center of the ring<br><var>cy</var>: The y-position of the center of the ring<br><var>ro</var>: The outer radius<br><var>ri</var>: The inner radius<br><var>samples</var>: The number of samples per character per dimension (<var>samples</var>&sup2; per character)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>height</var>+2 lines:</strong> The rows of the ASCII art, each <var>width</var>+2 characters long, including the frame around it</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt; <var>width</var> &lt;= 40, <var>width</var> is an integer<br>0 &lt; <var>height</var> &lt;= 20, <var>height</var> is an integer<br>-500 &lt;= <var>cx</var>&lt;= 500, <var>cx</var> is a float<br>-500 &lt;= <var>cy</var>&lt;= 500, <var>cy</var> is a float<br>0 &lt;= <var>ri</var> &lt; <var>ro</var> &lt;= 340, <var>ri</var> and <var>ro</var> are floats<br>1 &lt;= <var>samples</var> &lt;= 25, <var>samples</var> is an integer</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">20 10 10 5 5 0 1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">+--------------------+\n|      @@@@@@@@      |\n|   @@@@@@@@@@@@@@   |\n| @@@@@@@@@@@@@@@@@@ |\n|@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@|\n|@@@@@@@@@@@@@@@@@@@@|\n| @@@@@@@@@@@@@@@@@@ |\n|   @@@@@@@@@@@@@@   |\n|      @@@@@@@@      |\n+--------------------+</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 20287321296,
+  "avatar": 77623682146098,
+  "commentCount": 6,
+  "upVotes": 4,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1147737,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1750441082582,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

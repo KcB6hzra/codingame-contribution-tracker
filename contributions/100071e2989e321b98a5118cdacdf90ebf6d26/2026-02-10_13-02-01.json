@@ -1,0 +1,292 @@
+{
+  "id": 100071,
+  "activeVersion": 48,
+  "score": 6,
+  "votableId": 34412124,
+  "codingamerId": 4337092,
+  "views": 276,
+  "commentableId": 34261066,
+  "title": "Equation Search",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Timinator",
+  "publicHandle": "100071e2989e321b98a5118cdacdf90ebf6d26",
+  "codingamerHandle": "2df7157da821f39bbf6b36efae1568142907334",
+  "lastVersion": {
+    "version": 48,
+    "autocloseTime": 1740610504480,
+    "freezeTime": 1738623304480,
+    "data": {
+      "title": "Equation Search",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Exact Cover"
+          }
+        },
+        {
+          "labelMap": {
+            "2": "Algorithm X"
+          }
+        },
+        {
+          "id": 56,
+          "handle": "backtracking",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Retour sur trace",
+            "2": "Backtracking"
+          },
+          "pageTitle": "Backtracking: exercises and theory",
+          "puzzleCount": 26,
+          "parentTopicId": 41,
+          "contentDetailsId": 80
+        }
+      ],
+      "solution": "#  This solution uses Knuth's Algorithm X and his Dancing Links (DLX):\n#  (DLX-Based Algorithm X Solver Last Revised 01 December 2024)\n#\n#  For a detailed explanation and tutorial, please see my Algorithm X\n#  playground on Tech.io by following the link in my CodinGame profile:\n#\n#  https://www.codingame.com/profile/2df7157da821f39bbf6b36efae1568142907334/playgrounds\n#\n\n#  DLXCell is one cell in the Algorithm X matrix. This implementation was mostly\n#  copied from @RoboStac's solution to Constrained Latin Squares on www.codingame.com.\n#\n#  https://www.codingame.com/training/medium/constrained-latin-squares\n#\nclass DLXCell:\n    def __init__(self, title=None):\n        self.prev_x = self\n        self.next_x = self\n        self.prev_y = self\n        self.next_y = self\n\n        self.col_header = None\n        self.row_header = None\n\n        # Only used for column and row headers.\n        self.title = title\n\n        # Size quickly identifies how many rows are in any particular column.\n        self.size = 0\n\n    def remove_x(self):\n        self.prev_x.next_x = self.next_x\n        self.next_x.prev_x = self.prev_x\n\n    def remove_y(self):\n        self.prev_y.next_y = self.next_y\n        self.next_y.prev_y = self.prev_y\n\n    def restore_x(self):\n        self.prev_x.next_x = self\n        self.next_x.prev_x = self\n\n    def restore_y(self):\n        self.prev_y.next_y = self\n        self.next_y.prev_y = self\n\n    def attach_horiz(self, other):\n        n = self.prev_x\n        other.prev_x = n\n        n.next_x = other\n        self.prev_x = other\n        other.next_x = self\n\n    def attach_vert(self, other):\n        n = self.prev_y\n        other.prev_y = n\n        n.next_y = other\n        self.prev_y = other\n        other.next_y = self\n\n    def remove_column(self):\n        self.remove_x()\n        node = self.next_y\n        while node != self:\n            node.remove_row()\n            node = node.next_y\n\n    def restore_column(self):\n        node = self.prev_y\n        while node != self:\n            node.restore_row()\n            node = node.prev_y\n        self.restore_x()\n\n    def remove_row(self):\n        node = self.next_x\n        while node != self:\n            node.col_header.size -= 1\n            node.remove_y()\n            node = node.next_x\n\n    def restore_row(self):\n        node = self.prev_x\n        while node != self:\n            node.col_header.size += 1\n            node.restore_y()\n            node = node.prev_x\n\n    def select(self):\n        node = self\n        while 1:\n            node.remove_y()\n            node.col_header.remove_column()\n            node = node.next_x\n            if node == self:\n                break\n\n    def unselect(self):\n        node = self.prev_x\n        while node != self:\n            node.col_header.restore_column()\n            node.restore_y()\n            node = node.prev_x\n        node.col_header.restore_column()\n        node.restore_y()\n\n\nclass AlgorithmXSolver():\n    # R - a list of requirements. The __init__() method converts R to a dictionary, but R must\n    #     originally be passed in as a simple list of requirements. Each requirement is a tuple\n    #     of values that uniquely identify that requirement from all other requirements.\n    #\n    # A - must be passed in as a dictionary - keys are actions, values are lists of covered requirements\n    #\n    # O - list of optional requirements. They can be covered, but they never cause failure.\n    #     Optional requirements are important because if they get covered, no other action can \n    #     also cover that same requirement. Also referred to as \"at-most-one-time constraints\".\n    #\n    def __init__(self, R: list, A: dict, O: list = []):\n        self.A = A\n        self.R = R + list(O)\n        self.O = set(O)\n\n        # The list of actions (rows) that produce the current path through the matrix.\n        self.solution = []\n        self.solution_count = 0\n        \n        # A history can be added to a subclass to allow Algorithm X to handle \"multiplicity\".\n        # In the basic Solver, nothing is ever put into the history. A subclass can override\n        # the _process_row_selection() method to add history in cases of multiplicity. \n        self.history = [set()]\n\n        # For the basic Algorithm X Solver, all solutions are always valid. However, a subclass\n        # can add functionality to check solutions as they are being built to steer away from\n        # invalid solutions. The basic Algorithm X Solver never modifies this attribute.\n        self.solution_is_valid = True\n\n        # Create a column in the matrix for every requirement.\n        self.matrix_root = DLXCell()\n        self.matrix_root.size = 10000000\n        self.matrix_root.title = 'root'\n        \n        self.col_headers = [DLXCell(requirement) for requirement in self.R]\n\n        # Row headers are never attached to the rest of the DLX matrix. They are only used \n        # currently to keep track of the action associated with each row.\n        self.row_headers = {action:DLXCell(action) for action in self.A}\n\n        self.R = {requirement:self.col_headers[i] for i, requirement in enumerate(self.R)}\n\n        for i in range(len(self.col_headers)):\n            self.matrix_root.attach_horiz(self.col_headers[i])\n\n        # Create a row in the matrix for every action.\n        for action in self.A:\n            previous_cell = None\n            for requirement in A[action]:\n                next_cell = DLXCell()\n                next_cell.col_header = self.R[requirement]\n                next_cell.row_header = self.row_headers[action]\n                next_cell.col_header.attach_vert(next_cell)\n                next_cell.col_header.size += 1\n                \n                if previous_cell:\n                    previous_cell.attach_horiz(next_cell)\n                else:\n                    previous_cell = next_cell\n\n\n    def solve(self):\n        \n        # Algorithm X Step 1:\n        #\n        # Choose the column (requirement) with the best value for \"sort criteria\". For\n        # the basic implementation of sort criteria, Algorithm X always chooses the column\n        # covered by the fewest number of actions. Optional requirements are not eligible \n        # for this step.\n        best_column = self.matrix_root\n        best_value  = 'root'\n        \n        node = self.matrix_root.next_x\n        while node != self.matrix_root:\n            \n            # Optional requirements (at-most-one-time constraints) are never chosen as best.\n            if node.title not in self.O:\n                \n                # Get the sort criteria for this requirement (column).\n                value = self._requirement_sort_criteria(node)\n                if best_column == self.matrix_root or value < best_value:\n                    best_column = node\n                    best_value  = value\n                node = node.next_x\n\n            else:\n\n                # Optional requirements stop the search for the best column.\n                node = self.matrix_root\n            \n        if best_column == self.matrix_root:\n            self._process_solution()\n            if self.solution_is_valid:\n                self.solution_count += 1\n                yield self.solution\n        else:\n\n            # Build a list of all actions (rows) that cover the chosen requirement (column).\n            actions = []\n            node = best_column.next_y\n            while node != best_column:\n                actions.append(node)\n                node = node.next_y\n\n            # The next step is to loop through all possible actions. To prepare for this,\n            # a new level of history is created. The history for this new level starts out\n            # as a complete copy of the most recent history.\n            self.history.append(self.history[-1].copy())    \n                \n            # Loop through the possible actions sorted by the given sort criteria. A basic\n            # Algorithm X implementation does not provide sort criteria. Actions are tried\n            # in the order they happen to occur in the matrix.\n            for node in sorted(actions, key=lambda n:self._action_sort_criteria(n.row_header)):\n                self.select(node=node)\n                if self.solution_is_valid:\n                    for s in self.solve():\n                        yield s\n                self.deselect(node=node)\n\n                # All backtracking results in going back to a solution that is valid.\n                self.solution_is_valid = True\n\n            self.history.pop()\n\n    # Algorithm X Step 4 - Details:\n    #\n    # The select method updates the matrix when a row is selected as part of a solution.\n    # Other rows that satisfy overlapping requirements need to be deleted and in the end,\n    # all columns satisfied by the selected row get removed from the matrix.\n    def select(self, node):\n\n        node.select()\n        self.solution.append(node.row_header.title)\n        self._process_row_selection(node.row_header.title)\n\n\n    # Algorithm X Step 4 - Clean Up:\n    #\n    # The select() method selects a row as part of the solution being explored. Eventually that\n    # exploration ends and it is time to move on to the next row (action). Before moving on,\n    # the matrix and the partial solution need to be restored to their prior states.\n    def deselect(self, node):\n\n        node.unselect()\n        self.solution.pop()\n        self._process_row_deselection(node.row_header.title)\n\n\n    # In cases of multiplicity, this method can be used to ask Algorithm X to remember that\n    # it has already tried certain things. For instance, if Emma wants two music lessons per\n    # week, trying to put her first lesson on Monday at 8am is no different than trying to put\n    # her second lesson on Monday at 8am. See my Algorithm X Playground for more details, \n    # specifically Mrs. Knuth - Part III.\n    def _remember(self, item_to_remember: tuple) -> None:\n        if item_to_remember in self.history[-1]:\n            self.solution_is_valid = False\n        else:\n            self.history[-1].add((item_to_remember))\n\n        \n    # In some cases it may be beneficial to have Algorithm X try certain paths through the matrix.\n    # This can be the case when there is reason to believe certain actions have a better chance than\n    # other actions at producing complete paths through the matrix. The method included here does\n    # nothing, but can be overridden to influence the order in which Algorithm X tries rows (actions) \n    # that cover some particular column.\n    def _action_sort_criteria(self, row_header: DLXCell):\n        return 0\n    \n\n    # In some cases it may be beneficial to have Algorithm X try covering certain requirements\n    # before others as it looks for paths through the matrix. The default is to sort the requirements\n    # by how many actions cover each requirement, but in some cases there might be several \n    # requirements covered by the same number of actions. By overriding this method, the\n    # Algorithm X Solver can be directed to break ties a certain way or consider another way\n    # of prioritizing the requirements.\n    def _requirement_sort_criteria(self, col_header: DLXCell):\n        return col_header.size\n    \n    \n    # The following method can be overridden by a subclass to add logic to perform more detailed solution\n    # checking if invalid paths are possible through the matrix. Some problems have requirements that\n    # cannot be captured in the basic requirements list passed into the __init__() method. For instance,\n    # a solution might only be valid if it fits certain parameters that can only be checked at intermediate\n    # steps. In a case like that, this method can be overridden to add the functionality necessary to \n    # check the solution.\n    #\n    # If the subclass logic results in an invalid solution, the 'solution_is_valid' attribute should be set\n    # to False instructing Algorithm X to stop progressing down this path in the matrix.\n    def _process_row_selection(self, row):\n        pass\n\n\n    # This method can be overridden by a subclass to add logic to perform more detailed solution\n    # checking if invalid paths are possible through the matrix. This method goes hand-in-hand with the\n    # _process_row_selection() method above to \"undo\" what was done above.\n    def _process_row_deselection(self, row):\n        pass\n\n\n    # This method can be overridden to instruct Algorithm X to do something every time a solution is found.\n    # For instance, Algorithm X might be looking for the best solution or maybe each solution must be\n    # validated in some way. In either case, the solution_is_valid attribute can be set to False\n    # if the current solution should not be considered valid and should not be generated.\n    def _process_solution(self):\n        pass\n\n\n\n#------------------------------------------------------------------------------------------------------\n#\n# Everything above this point could easily be put into a package and reused on any exact cover problem.\n#\n# Below here is the only code specific to Equation Search.\n#\n#------------------------------------------------------------------------------------------------------\nimport sys\nimport time\nfrom typing import List\n\n\nclass EquationSearchSolver(AlgorithmXSolver):\n\n    def __init__(self, right_sides: List[int], operand_occurrences: List[int]):\n        \n        requirements = [('Equation Selected', right_side) for right_side in right_sides]\n        \n        for operand in range(1, 10):\n            for occ in range(operand_occurrences[operand]):\n                requirements.append(('Operand Occurrence', operand, occ))\n                \n        actions = dict()\n        for op1 in range(1, 10):\n            for op2 in range(op1, 10):\n                if op1 + op2 in right_sides:\n                    for op1_occ in range(operand_occurrences[op1]):\n                        for op2_occ in range(operand_occurrences[op2]):\n                            if op1 != op2 or op1_occ < op2_occ:\n                                action = ('Select Equation', f'{op1} + {op2} = {op1 + op2}', op1_occ, op2_occ)\n                                actions[action] = [('Equation Selected', op1 + op2),\n                                                   ('Operand Occurrence', op1, op1_occ),\n                                                   ('Operand Occurrence', op2, op2_occ)]\n\n                if op1 * op2 in right_sides:\n                    for op1_occ in range(operand_occurrences[op1]):\n                        for op2_occ in range(operand_occurrences[op2]):\n                            if op1 != op2 or op1_occ < op2_occ:\n                                action = ('Select Equation', f'{op1} x {op2} = {op1 * op2}', op1_occ, op2_occ)\n                                actions[action] = [('Equation Selected', op1 * op2),\n                                                   ('Operand Occurrence', op1, op1_occ),\n                                                   ('Operand Occurrence', op2, op2_occ)]\n\n        super().__init__(requirements, actions)\n\n        \n    def _process_row_selection(self, row):\n        _, equation, _, _ = row\n        self._remember(equation)\n        \n    \n\nstart = time.time()\n\n_ = input()\n\nright_sides = [int(i) for i in input().split()]\noperand_occurrences = [0] + [int(i) for i in input().split()]\n\nsolver = EquationSearchSolver(right_sides, operand_occurrences)\n\nsolution_count = 0\nequations = []\n    \nfor solution in solver.solve():\n    solution_count += 1\n    if solution_count == 1:\n        equations = [equation for _, equation, _, _ in solution]\n        equations.sort(key=lambda e:int(e.split()[-1]))\n\n\nprint(solution_count)\n\nif solution_count == 1:\n    print('\\n'.join(equations))\n\n            \nprint(f'\\n{int((time.time()-start)*1000)}ms', file=sys.stderr, flush=True)",
+      "statement": "This puzzle is a BONUS exercise associated with a multi-part Algorithm X tutorial and is meant to be done per the guidance in the following playground:\n\n{{https://www.algorithm-x.com}}\n\nYou are free to solve this puzzle in any language you choose. While the playground demonstrations are written in Python, a reusable Algorithm X Solver is available in many different languages. By following the guidance in the playground and using the solver as intended, this puzzle should be much easier than attempting it from scratch.\n\n<<Task Overview:>>\n\nYou have to make [[n]] equations.\n\nThe left side of each equation contains 2 operands, chosen from {{1}} to {{9}}. Each operand must occur a number of times as given in [[operandOccurrenceCounts]], a list containing 9 space-separated integers. The first integer indicates how many {{1}}s must appear as operands, the second integer indicates how many {{2}}s must appear as operands, etc.\n\nOperands on the left side of each equation must be in ascending order from left to right and must have either a {{+}} or a {{x}} (i.e. *) operator between them. There is no limitation on how many times each operator can be used in total. The right side of each equation contains a single integer, chosen from the given [[rightSides]] list. Each integer in [[rightSides]] must be used once.\n\nIf [[solutionCount]] = 1, you must print the equations in ascending order of the right side of the equation. All components of the equation (operands, operators, equal sign, constants) must be space separated.\n\nCredit: This puzzle has been inspired by a puzzle found in an adventure game called “Mystery Detective Adventure” made by Five-BN Games.",
+      "testCases": [
+        {
+          "title": "No Duplicate Operands",
+          "isTest": true,
+          "testIn": "3\n5 7 10\n1 1 1 1 1 0 0 1 0",
+          "testOut": "1\n1 x 5 = 5\n3 + 4 = 7\n2 + 8 = 10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3\n6 9 14\n1 1 0 1 1 1 1 0 0",
+          "testOut": "1\n1 x 6 = 6\n4 + 5 = 9\n2 x 7 = 14",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Same Operand Twice",
+          "isTest": true,
+          "testIn": "3\n6 8 9\n1 1 2 0 0 2 0 0 0",
+          "testOut": "1\n1 x 6 = 6\n2 + 6 = 8\n3 x 3 = 9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "3\n6 8 9\n1 1 2 1 0 0 1 0 0",
+          "testOut": "1\n2 + 4 = 6\n1 + 7 = 8\n3 x 3 = 9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Only Same Operands",
+          "isTest": true,
+          "testIn": "2\n16 25\n0 0 0 2 2 0 0 0 0",
+          "testOut": "1\n4 x 4 = 16\n5 x 5 = 25",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "2\n9 16\n0 0 2 2 0 0 0 0 0",
+          "testOut": "1\n3 x 3 = 9\n4 x 4 = 16",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6 Equations, 1 Solution",
+          "isTest": true,
+          "testIn": "6\n4 6 7 8 10 11\n1 2 3 4 1 0 0 0 1",
+          "testOut": "1\n1 x 4 = 4\n3 + 3 = 6\n3 + 4 = 7\n4 + 4 = 8\n2 x 5 = 10\n2 + 9 = 11",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "6\n5 6 7 9 10 11\n2 3 2 2 0 1 0 1 1",
+          "testOut": "1\n1 + 4 = 5\n2 + 4 = 6\n1 + 6 = 7\n3 x 3 = 9\n2 + 8 = 10\n2 + 9 = 11",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6 Equations, Multiple Solutions",
+          "isTest": true,
+          "testIn": "6\n4 5 7 9 12 14\n3 2 1 1 2 0 1 0 2",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "6\n5 7 9 10 12 14\n1 3 2 1 0 2 2 0 1",
+          "testOut": "2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "10 Equations, 1 Solution",
+          "isTest": true,
+          "testIn": "10\n5 7 9 10 11 12 13 16 20 28\n3 1 1 2 4 1 5 1 2",
+          "testOut": "1\n1 x 5 = 5\n1 x 7 = 7\n1 x 9 = 9\n2 x 5 = 10\n3 + 8 = 11\n5 + 7 = 12\n6 + 7 = 13\n7 + 9 = 16\n4 x 5 = 20\n4 x 7 = 28",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "10\n4 5 9 10 11 13 14 15 17 21\n2 2 1 4 1 2 3 2 3",
+          "testOut": "1\n1 x 4 = 4\n1 + 4 = 5\n2 + 7 = 9\n2 x 5 = 10\n4 + 7 = 11\n4 + 9 = 13\n6 + 8 = 14\n6 + 9 = 15\n8 + 9 = 17\n3 x 7 = 21",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "10 Equations, Multiple Solutions",
+          "isTest": true,
+          "testIn": "10\n6 7 8 9 10 12 14 15 24 25\n1 3 2 2 4 3 2 3 0",
+          "testOut": "31",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "10\n4 5 6 7 8 9 10 11 21 24\n4 2 3 2 3 2 1 2 1",
+          "testOut": "35",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "13 Equations",
+          "isTest": true,
+          "testIn": "13\n4 6 7 8 9 10 11 12 13 14 15 17 20\n2 3 3 3 3 2 2 6 2",
+          "testOut": "227",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "13\n4 5 6 7 9 10 11 12 13 14 15 16 17\n4 2 1 3 2 2 5 4 3",
+          "testOut": "130",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "14 Equations",
+          "isTest": true,
+          "testIn": "14\n4 5 6 7 8 9 10 11 12 13 14 15 16 17\n3 2 4 5 2 2 2 3 5",
+          "testOut": "674",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "14\n4 5 6 7 8 9 10 11 12 13 14 15 16 17\n4 2 3 2 2 5 4 2 4",
+          "testOut": "722",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "15 Equations, 1 Solution",
+          "isTest": true,
+          "testIn": "15\n6 7 9 10 11 12 13 14 16 17 18 20 21 24 25\n1 1 2 5 4 5 4 5 3",
+          "testOut": "1\n2 + 4 = 6\n1 x 7 = 7\n4 + 5 = 9\n4 + 6 = 10\n4 + 7 = 11\n6 + 6 = 12\n6 + 7 = 13\n6 + 8 = 14\n8 + 8 = 16\n8 + 9 = 17\n9 + 9 = 18\n4 x 5 = 20\n3 x 7 = 21\n3 x 8 = 24\n5 x 5 = 25",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "15\n4 6 7 8 9 10 11 12 13 15 17 18 20 21 24\n5 1 3 2 5 3 6 1 4",
+          "testOut": "1\n1 + 3 = 4\n1 + 5 = 6\n1 x 7 = 7\n1 + 7 = 8\n2 + 7 = 9\n1 + 9 = 10\n5 + 6 = 11\n5 + 7 = 12\n6 + 7 = 13\n3 x 5 = 15\n8 + 9 = 17\n9 + 9 = 18\n4 x 5 = 20\n3 x 7 = 21\n4 x 6 = 24",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "15 Equations, Multiple Solutions",
+          "isTest": true,
+          "testIn": "15\n4 5 6 7 8 9 10 12 13 14 15 16 17 18 20\n3 4 3 3 4 2 3 5 3",
+          "testOut": "2898",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "15\n4 5 6 7 8 10 11 12 13 14 15 16 17 18 24\n3 3 2 4 5 2 3 4 4",
+          "testOut": "1118",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "So Many Solutions",
+          "isTest": true,
+          "testIn": "15\n4 5 6 7 8 9 10 11 12 13 14 15 16 17 18\n3 3 5 5 2 2 4 2 4",
+          "testOut": "4059",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "15\n4 5 6 7 8 9 10 11 12 13 14 15 16 17 18\n4 4 2 5 2 2 4 4 3",
+          "testOut": "3803",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "• 2 <= [[n]] <= 15.\n\n• 4 <= each value in [[rightSides]] <= 28.\n\n• 0 <= each value in [[operandOccurrenceCounts]] <= 6.",
+      "coverBinaryId": 126546084956939,
+      "stubGenerator": "read n:int\nloopline n rightSide:int\nloopline 9 operandOccurrenceCount:int\n\nwrite solutionCount (plus equations if solutionCount = 0)",
+      "inputDescription": "<<Line 1:>> An integer [[n]], the number of equations in a solution.\n\n<<Line 2:>> [[rightSides]] - [[n]] unique, space-separated integers to be used on the right sides of the solution equations.\n\n<<Line 3:>> [[operandOccurrenceCounts]] - 9 space-separated integers indicating how many times each number from {{1}} to {{9}} must occur as an operand.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> [[solutionCount]] - the number of unique solutions to the given input.\n\nif [[solutionCount]] = 1, output:\n\n<<Next [[n]] Lines:>> The [[equation]]s that make up the solution, sorted per the instructions above."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">This puzzle is a BONUS exercise associated with a multi-part Algorithm X tutorial and is meant to be done per the guidance in the following playground:<br><br><const>https://www.algorithm-x.com</const><br><br>You are free to solve this puzzle in any language you choose. While the playground demonstrations are written in Python, a reusable Algorithm X Solver is available in many different languages. By following the guidance in the playground and using the solver as intended, this puzzle should be much easier than attempting it from scratch.<br><br><strong>Task Overview:</strong><br><br>You have to make <var>n</var> equations.<br><br>The left side of each equation contains 2 operands, chosen from <const>1</const> to <const>9</const>. Each operand must occur a number of times as given in <var>operandOccurrenceCounts</var>, a list containing 9 space-separated integers. The first integer indicates how many <const>1</const>s must appear as operands, the second integer indicates how many <const>2</const>s must appear as operands, etc.<br><br>Operands on the left side of each equation must be in ascending order from left to right and must have either a <const>+</const> or a <const>x</const> (i.e. *) operator between them. There is no limitation on how many times each operator can be used in total. The right side of each equation contains a single integer, chosen from the given <var>rightSides</var> list. Each integer in <var>rightSides</var> must be used once.<br><br>If <var>solutionCount</var> = 1, you must print the equations in ascending order of the right side of the equation. All components of the equation (operands, operators, equal sign, constants) must be space separated.<br><br>Credit: This puzzle has been inspired by a puzzle found in an adventure game called &ldquo;Mystery Detective Adventure&rdquo; made by Five-BN Games.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>n</var>, the number of equations in a solution.<br><br><strong>Line 2:</strong> <var>rightSides</var> - <var>n</var> unique, space-separated integers to be used on the right sides of the solution equations.<br><br><strong>Line 3:</strong> <var>operandOccurrenceCounts</var> - 9 space-separated integers indicating how many times each number from <const>1</const> to <const>9</const> must occur as an operand.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> <var>solutionCount</var> - the number of unique solutions to the given input.<br><br>if <var>solutionCount</var> = 1, output:<br><br><strong>Next <var>n</var> Lines:</strong> The <var>equation</var>s that make up the solution, sorted per the instructions above.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">&bull; 2 &lt;= <var>n</var> &lt;= 15.<br><br>&bull; 4 &lt;= each value in <var>rightSides</var> &lt;= 28.<br><br>&bull; 0 &lt;= each value in <var>operandOccurrenceCounts</var> &lt;= 6.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\n5 7 10\n1 1 1 1 1 0 0 1 0</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1\n1 x 5 = 5\n3 + 4 = 7\n2 + 8 = 10</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 30133175752,
+  "avatar": 87736728529732,
+  "commentCount": 13,
+  "upVotes": 7,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 1087224,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1738004737000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1738018504480,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1740595344173,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

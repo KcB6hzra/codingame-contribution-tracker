@@ -1,0 +1,119 @@
+{
+  "id": 1942,
+  "activeVersion": 6,
+  "score": 6,
+  "votableId": 9859999,
+  "codingamerId": 1733593,
+  "views": 474,
+  "commentableId": 9792421,
+  "title": "Basic Decision Tree - 1",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Wei-1",
+  "publicHandle": "19420098781d02e4df2ddc73089a7910368b",
+  "codingamerHandle": "3f4adfba53d1ae216fb40f9c51b72c843953371",
+  "lastVersion": {
+    "version": 6,
+    "autocloseTime": 1551187711876,
+    "data": {
+      "title": "Basic Decision Tree - 1",
+      "topics": [
+        {
+          "id": 82,
+          "handle": "machine-learning",
+          "labelMap": {
+            "1": "Machine learning",
+            "2": "Machine learning"
+          },
+          "pageTitle": "Machine learning: exercises and theory",
+          "puzzleCount": 1,
+          "parentTopicId": 42,
+          "contentDetailsId": 110
+        }
+      ],
+      "solution": "class Pupa(val i: Int, val h: Int, val s: Int) {}\n\nobject Solution extends App {\n\n    def log2(value: Double): Double =\n        Math.log(value) / Math.log(2)\n\n    def binaryEntropy(pupae: Array[Pupa]): Double = {\n        val count = pupae.size.toDouble\n        pupae.groupBy(_.s).map { case (k, arr) =>\n            val probability = arr.size / count\n            - probability * log2(probability)\n        }.sum\n    }\n\n    def weightedEntropy(pupae: Array[Pupa], pupa: Pupa): Double = {\n        val count = pupae.size.toDouble\n        val smallerPupae = pupae.filter(_.h < pupa.h)\n        val largerPupae = pupae.filter(_.h >= pupa.h)\n        smallerPupae.size / count * binaryEntropy(smallerPupae) +\n            largerPupae.size / count * binaryEntropy(largerPupae)\n    }\n\n    var lastSeparatorID: Int = 0\n\n    class Group(val pupae: Array[Pupa]) {\n        var currentEntropyValue = binaryEntropy(pupae)\n        var separator: Pupa = null\n        for(i <- 1 until pupae.size) {\n            val pupa = pupae(i)\n            val weightedEntropyValue = weightedEntropy(pupae, pupa)\n            if(weightedEntropyValue < currentEntropyValue) {\n                currentEntropyValue = weightedEntropyValue\n                separator = pupa\n            }\n        }\n        if(separator != null) {\n            lastSeparatorID = separator.i\n            new Group(pupae.filter(_.h < separator.h))\n            new Group(pupae.filter(_.h >= separator.h))\n        }\n    }\n\n    val initialPupae = (1 to readInt).map { i =>\n        val Array(index, hornSize, speciesID) = readLine split \" \" map(_.toInt)\n        new Pupa(index, hornSize, speciesID)\n    }.toArray\n\n    new Group(initialPupae)\n\n    println(lastSeparatorID)\n}\n\n",
+      "statement": "You are a beetle scientist and you have to identify the species of a lot of male beetles in your research.\nCurrently, you can easily identify these beetles after they are fully grown up.\nHowever, in your research, you want to identify the species of the male beetles while they are still pupae.\n\nSince beetles' pupae actually show the rough shape of the grown beetles,\nyou are able to measure the shape of their horn while they are still pupae.\nBased on your observation, you found that there is a difference in the horn size of the pupae of different beetle species.\nSo you want to create a decision tree to identify the species of the beetles purely based on pupae horn sizes.\n\nThe tree is created by dividing one group into 2 groups repeatedly.\nWe split the group by a separator, which will be a pupa's horn length.\nThe length is selected to divide the group into 2 groups.\n\nStarting from 1 single group with all beetle pupae,\nstep 1. we choice 1 beetle pupa in the group if there are multiple beetle species in the group\nstep 2. pupae with smaller horn sizes will be separated into a sub-group => step 1\nstep 3. all other pupae in the group will be separated into another sub-group => step 1\n\nWe scan through all pupae in the group and choice one beetle as a separator.\nThe equation of how we choose the pupa to be the separator is {{Binary Entropy}}.\nAnd we find the best separator in the group with the <<smallest>> {{Weighted Entropy}}.\n\nEntropy equations as this picture: https://imgur.com/gBWJ6fB.png\n\nWe keep creating branches for the binary tree until we have 0 entropy. (all pupae in a group is in 1 single species)\n\nIf 2 separators have the same entropy, we will always choose the pupa with a smaller index.\nAfter we separate a group, we breakdown the group with smaller horns until we reach 0 entropy, and then we start working on the other group.\n\nThe output will be the index of the last separator (pupa) in the binary tree.\n\n----\nGiven this input:\n\n4\n0 1 1\n1 2 1\n2 3 2\n3 4 2\n\nIt shows that we have 4 pupae with their corresponding horn lengths from 1 to 4.\nSince their index is from 0 to 3, we will name them pupa-0, pupa-1, pupa-2, and pupa-3.\n--\nIf we select pupa-0 as the separator, nothing will change since there is no pupa have a smaller horn length then pupa-0.\n\nIf we select pupa-1 as the separator, pupa-0 will be separated into one sub-group, pupa-1,2,3 will be in another sub-group.\nPupa-0's group has a binary entropy of 0.\nPupa-1,2,3's group have a binary entropy of 0.9183.\nWeighted entropy will be {{0.6887}}.\n\nIf we select pupa-2 as the separator, pupa-0,1 will be separated into one sub-group, while pupa-2,3 will be in another sub-group.\nPupa-0,1's group has a binary entropy of 0, and pupa-2,3 as well.\nWeighted entropy will be {{0}}.\n\nIf we select pupa-3 as the separator, pupa-0,1,2 will be in one sub-group, and pupa-3 will be in another sub-group.\nThe resulting entropy will be {{0.6887}}.\n--\nSelect pupa-2 will have 0 entropy.\nThe output should be {{2}}.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "2\n0 0 1\n1 2 2",
+          "testOut": "1",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "2\n0 2 1\n1 4 2",
+          "testOut": "1",
+          "isValidator": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "6\n0 0 1\n1 2 2\n2 4 2\n3 6 2\n4 8 1\n5 10 1",
+          "testOut": "1",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "8\n0 0 1\n1 2 2\n2 4 2\n3 6 2\n4 8 2\n5 10 2\n6 12 1\n7 14 1",
+          "testOut": "1",
+          "isValidator": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "6\n0 0 1\n1 1 1\n2 4 2\n3 5 2\n4 8 3\n5 9 3",
+          "testOut": "4",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "3\n0 0 1\n1 1 2\n2 2 3",
+          "testOut": "2",
+          "isValidator": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "4\n0 0 1\n1 1 1\n2 1 2\n3 2 2",
+          "testOut": "3",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "6\n0 0 1\n1 1 1\n2 1 1\n3 1 2\n4 1 2\n5 2 2",
+          "testOut": "5",
+          "isValidator": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "2 <= [[N]] <= 20\n0 <= [[index]] < 20\n0 <= [[hornSize]] <= 100\n1 <= [[speciesID]] <= 4",
+      "stubGenerator": "read N:int\nloop N read dataPoint:string(1024)\nwrite answer",
+      "inputDescription": "<<Line 1:>> An integer [[N]] for the number of beetle pupae sorted by their horn sizes.\n<<Next [[N]] lines:>> 3 space separated integers [[index]], [[hornSize]] and [[speciesID]] for a point.",
+      "solutionLanguage": "Scala",
+      "outputDescription": "<<Line 1:>> Last separator (pupa) index"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are a beetle scientist and you have to identify the species of a lot of male beetles in your research.<br>Currently, you can easily identify these beetles after they are fully grown up.<br>However, in your research, you want to identify the species of the male beetles while they are still pupae.<br><br>Since beetles' pupae actually show the rough shape of the grown beetles,<br>you are able to measure the shape of their horn while they are still pupae.<br>Based on your observation, you found that there is a difference in the horn size of the pupae of different beetle species.<br>So you want to create a decision tree to identify the species of the beetles purely based on pupae horn sizes.<br><br>The tree is created by dividing one group into 2 groups repeatedly.<br>We split the group by a separator, which will be a pupa's horn length.<br>The length is selected to divide the group into 2 groups.<br><br>Starting from 1 single group with all beetle pupae,<br>step 1. we choice 1 beetle pupa in the group if there are multiple beetle species in the group<br>step 2. pupae with smaller horn sizes will be separated into a sub-group =&gt; step 1<br>step 3. all other pupae in the group will be separated into another sub-group =&gt; step 1<br><br>We scan through all pupae in the group and choice one beetle as a separator.<br>The equation of how we choose the pupa to be the separator is <const>Binary Entropy</const>.<br>And we find the best separator in the group with the <strong>smallest</strong> <const>Weighted Entropy</const>.<br><br>Entropy equations as this picture: https://imgur.com/gBWJ6fB.png<br><br>We keep creating branches for the binary tree until we have 0 entropy. (all pupae in a group is in 1 single species)<br><br>If 2 separators have the same entropy, we will always choose the pupa with a smaller index.<br>After we separate a group, we breakdown the group with smaller horns until we reach 0 entropy, and then we start working on the other group.<br><br>The output will be the index of the last separator (pupa) in the binary tree.<br><br>----<br>Given this input:<br><br>4<br>0 1 1<br>1 2 1<br>2 3 2<br>3 4 2<br><br>It shows that we have 4 pupae with their corresponding horn lengths from 1 to 4.<br>Since their index is from 0 to 3, we will name them pupa-0, pupa-1, pupa-2, and pupa-3.<br>--<br>If we select pupa-0 as the separator, nothing will change since there is no pupa have a smaller horn length then pupa-0.<br><br>If we select pupa-1 as the separator, pupa-0 will be separated into one sub-group, pupa-1,2,3 will be in another sub-group.<br>Pupa-0's group has a binary entropy of 0.<br>Pupa-1,2,3's group have a binary entropy of 0.9183.<br>Weighted entropy will be <const>0.6887</const>.<br><br>If we select pupa-2 as the separator, pupa-0,1 will be separated into one sub-group, while pupa-2,3 will be in another sub-group.<br>Pupa-0,1's group has a binary entropy of 0, and pupa-2,3 as well.<br>Weighted entropy will be <const>0</const>.<br><br>If we select pupa-3 as the separator, pupa-0,1,2 will be in one sub-group, and pupa-3 will be in another sub-group.<br>The resulting entropy will be <const>0.6887</const>.<br>--<br>Select pupa-2 will have 0 entropy.<br>The output should be <const>2</const>.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var> for the number of beetle pupae sorted by their horn sizes.<br><strong>Next <var>N</var> lines:</strong> 3 space separated integers <var>index</var>, <var>hornSize</var> and <var>speciesID</var> for a point.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> Last separator (pupa) index</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &lt;= <var>N</var> &lt;= 20<br>0 &lt;= <var>index</var> &lt; 20<br>0 &lt;= <var>hornSize</var> &lt;= 100<br>1 &lt;= <var>speciesID</var> &lt;= 4</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\n0 0 1\n1 2 2</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 220253632445,
+  "avatar": 12250588953001,
+  "commentCount": 24,
+  "upVotes": 7,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 311878,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

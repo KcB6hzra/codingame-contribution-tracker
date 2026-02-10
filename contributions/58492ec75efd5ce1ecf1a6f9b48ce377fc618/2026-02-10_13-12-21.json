@@ -1,0 +1,256 @@
+{
+  "id": 58492,
+  "activeVersion": 11,
+  "score": 5,
+  "votableId": 29355559,
+  "codingamerId": 2672932,
+  "views": 276,
+  "commentableId": 29221935,
+  "title": "Score a Bridge deal",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Lanfeust",
+  "publicHandle": "58492ec75efd5ce1ecf1a6f9b48ce377fc618",
+  "codingamerHandle": "e482c73327d480e394d92bae739774912392762",
+  "lastVersion": {
+    "version": 11,
+    "autocloseTime": 1696763299284,
+    "data": {
+      "title": "Score a Bridge deal",
+      "topics": [
+        {
+          "id": 257,
+          "handle": "reading-the-statement",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Reading the statement",
+            "2": "Reading the statement"
+          },
+          "puzzleCount": 6,
+          "parentTopicId": 39
+        },
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 64,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        },
+        {
+          "id": 133,
+          "handle": "card-games",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Jeu de carte",
+            "2": "Card games"
+          },
+          "pageTitle": "Card games",
+          "puzzleCount": 7,
+          "parentTopicId": 107
+        }
+      ],
+      "solution": "def compute(vulnerable, level, suit, doubled, redoubled, tricks):\n    if tricks < level + 6:\n        undertricks = level + 6 - tricks\n        if not doubled and not redoubled:\n            return undertricks * -50 * (2 if vulnerable else 1)\n        penalty = undertricks * -300\n        if vulnerable:\n            return (penalty + 100) * (2 if redoubled else 1)\n        penalty += 200\n        penalty += 100 * min(undertricks - 1, 2)\n        return penalty * (2 if redoubled else 1)\n    trick_value = 20 if suit in 'CD' else 30\n    contracted = level * trick_value\n    if suit == 'NT':\n        contracted += 10\n    contracted *= 4 if redoubled else (2 if doubled else 1)\n    score = contracted\n    if score >= 100:\n        score += 500 if vulnerable else 300\n    else:\n        score += 50\n    if level == 6:\n        score += 750 if vulnerable else 500\n    elif level == 7:\n        score += 1500 if vulnerable else 1000\n    if not doubled and not redoubled:\n        return score + (tricks - level - 6) * trick_value\n    score += 100 if redoubled else 50\n    overtrick_value = 200 if vulnerable else 100\n    if redoubled:\n        overtrick_value *= 2\n    return score + (tricks - level - 6) * overtrick_value\n\nfor _ in range(int(input())):\n    line = input().split()\n    if line[1] == 'Pass':\n        print(0)\n        continue\n    vulnerable = line[0] == 'V'\n    contract = line[1]\n    tricks = int(line[2])\n    level = int(contract[0])\n    suit = contract[1] if contract[1] in 'CDHS' else 'NT'\n    doubled, redoubled = False, False\n    if contract[-2:] == 'XX':\n        redoubled = True\n    elif contract[-1] == 'X':\n        doubled = True\n    print(compute(vulnerable, level, suit, doubled, redoubled, tricks))\n",
+      "statement": "The game of Bridge (https://en.wikipedia.org/wiki/Contract_bridge) is arguably the richest game of cards widely played nowadays. While difficult to master, the basic rules are relatively simple, except for the scoring part, which is quite convoluted. Scoring is obviously important for the strategy, but the details don't matter that much though, so we can let a program handle that !\n\nThe game involves a <<bidding>> phase, where an auction takes place between the two sides. The bids represent a <<contract>>, which means trying to win a certain number of tricks during the <<card play>> phase, with a given suit as trump (or without trumps at all). The highest bidder will then be the declaring side, and try to succeed in the final contract that was bid.\nWith four player (two versus two) and a deck of 52 cards, there will be 13 tricks to win. A contract is described as the number of tricks over 6 (because you must always aim for more tricks than the opponent !), followed by the suit abbreviation ({{C}} for Clubs, {{D}} for Diamonds, {{H}} for Hearts, {{S}} for Spades), or {{NT}} for No Trump. For example \"2S\" means that you will try to win at least 8 of the 13 tricks, with Spades as trump. When nobody wants to bid, the hand is \"passed out\", a {{Pass}} contract, with a score of 0. Else the card play takes place, and the score depends on the actual number of tricks won, as well as two other factors : the <<vulnerability>> ({{V}} for vulnerable and {{NV}} for non-vulnerable), which is set for each side before the bidding starts, and the fact that the final contract has been <<doubled>> by the non-declaring side (noted {{X}}) or even <<redoubled>> by the declaring side, if they have been doubled (noted {{XX}}).\n\nHere is how the score is computed :\n\n<<If the contract was won>>, meaning that at least the contracted number of tricks has been won by the declaring side, the score is positive\n  - if the trump is a minor suit (Clubs or Diamonds), contracted tricks (over 6 !) are worth 20 points each, for a major suit (Hearts or Spades), it is 30 points each, and for No Trump, the first trick is worth 40 points, and the next ones 30 points. If the contract is doubled, then so is the value of each trick, and if it is redoubled, the value is multiplied by 4.\n  - if the total value of the tricks contracted for reaches 100 points, then there is a <<game bonus>> : 300 points if not vulnerable, and 500 points if vulnerable. Else you get a 50 points bonus for having succeeded.\n  - if the contract is at the 6 level (contracting for all the tricks except one), there is an additional <<small slam bonus>>, worth 500 points if non-vulnerable, and 750 points if vulnerable.\n  - if the contract is at the 7 level (contracting for all the tricks !), there is an additional <<grand slam bonus>>, worth 1000 points if non-vulnerable, and 1500 points if vulnerable.\n  - if there were tricks won in excess of what was contracted, these <<overtricks>> are worth their nominal value for normal contracts, but if the contract was doubled, then overtricks are worth 100 points when non-vulnerable, and 200 points when vulnerable. These numbers are themselves doubled for redoubled contracts.\n  - if the contract was doubled or redoubled, there is an additional bonus for making it, 50 points for doubled contracts, 100 points for redoubled contracts.\n\n<<If the contract was lost>>, the score is negative, and depends on the number of <<undertricks>>\n  - for normal contracts, 50 points per undertrick if non-vulnerable, 100 points if vulnerable\n  - for non-vulnerable doubled contracts, the first undertrick costs 100, the second and third 200 each, then 300 for each additional one.\n  - for vulnerable doubled contracts, the first undertrick costs 200, then 300 for each additional one.\n  - for redoubled contracts, the values are double those of doubled undertricks.",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "1\nV 4S 11",
+          "testOut": "650",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "1\nNV 4H 10",
+          "testOut": "420",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Winning a partial",
+          "isTest": true,
+          "testIn": "5\nV 1NT 7\nNV 3D 10\nV 2H 12\nNV 2NT 9\nV 1C 7",
+          "testOut": "90\n130\n230\n150\n70",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "5\nNV 2S 8\nV 1H 12\nV 2NT 8\nNV 1D 10\nNV 1NT 7",
+          "testOut": "110\n230\n120\n130\n90",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Nobody's interested",
+          "isTest": true,
+          "testIn": "1\nV Pass",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "1\nNV Pass",
+          "testOut": "0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Going Down !",
+          "isTest": true,
+          "testIn": "3\nV 3NT 8\nNV 6H 10\nV 7NT 0",
+          "testOut": "-100\n-100\n-1300",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "3\nNV 3D 8\nV 6NT 10\nNV 7D 0",
+          "testOut": "-50\n-200\n-650",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Bonuses",
+          "isTest": true,
+          "testIn": "5\nNV 4S 11\nV 3NT 9\nNV 5C 13\nV 6NT 13\nNV 7D 13",
+          "testOut": "450\n600\n440\n1470\n1440",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "5\nV 4H 10\nNV 3NT 10\nNV 5D 12\nNV 6H 13\nV 7NT 13",
+          "testOut": "620\n430\n420\n1010\n2220",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Doubling starts",
+          "isTest": true,
+          "testIn": "8\nV 1NTX 5\nNV 2DXX 6\nNV 4HXX 10\nV 3NTXX 10\nNV 7DX 8\nV 3CX 10\nNV 1DXX 9\nNV 4SX 9",
+          "testOut": "-500\n-600\n880\n1400\n-1100\n870\n630\n-100",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "8\nNV 2DX 5\nV 3SXX 6\nV 4HXX 11\nNV 3NTXX 9\nNV 3HX 4\nNV 3DX 10\nV 1CXX 9\nNV 5DX 10",
+          "testOut": "-500\n-1600\n1480\n800\n-1100\n570\n1030\n-100",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Random 1",
+          "isTest": true,
+          "testIn": "20\nV 4NTXX 6\nV 4NT 11\nV 5NTXX 13\nV 6C 6\nNV 2H 9\nNV 6D 10\nNV 5S 9\nV 6S 11\nV 4CX 10\nNV 6HX 10\nNV 7NT 10\nNV 4C 13\nV 5DX 11\nNV 4S 13\nV 6NTX 12\nV 6NT 8\nV 3NTX 9\nNV 6D 10\nV 7SX 6\nV 5H 9",
+          "testOut": "-2200\n660\n2040\n-600\n140\n-100\n-100\n-100\n710\n-300\n-150\n190\n750\n510\n1680\n-400\n750\n-100\n-2000\n-200",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "20\nV 2S 6\nV 6S 9\nV 3CXX 9\nV 1NT 12\nV 7NT 5\nNV 3SX 8\nNV 1C 5\nNV 1D 11\nV 2D 10\nNV 6D 11\nV 6NTX 5\nNV 7NTX 11\nNV 3CX 8\nNV 2S 12\nV 1NT 8\nV 3HX 6\nV 4C 11\nNV 4CX 10\nV 5D 5\nV 3C 12",
+          "testOut": "-200\n-300\n840\n240\n-800\n-100\n-100\n150\n130\n-50\n-2000\n-300\n-100\n230\n120\n-800\n150\n510\n-600\n170",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Random 2",
+          "isTest": true,
+          "testIn": "20\nV 6SXX 11\nV 7DX 6\nNV 5C 6\nV 3NT 12\nNV 3H 13\nNV 5H 12\nNV 5S 8\nNV 7D 13\nNV 7H 5\nV 2CXX 6\nV 4DX 11\nV 1NTX 7\nNV 1NTXX 10\nV 2DX 9\nNV 3NT 7\nNV 2C 9\nNV 1DX 13\nV 4NT 7\nV 5SX 8\nV 5SX 6",
+          "testOut": "-400\n-2000\n-250\n690\n260\n480\n-150\n1440\n-400\n-1000\n910\n180\n1160\n380\n-100\n110\n740\n-300\n-800\n-1400",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "20\nV 6HX 13\nV 1DX 9\nNV 7DX 13\nNV 4CX 8\nV 5H 13\nNV 2C 12\nNV 7H 13\nNV 4DXX 9\nNV 2C 10\nV 2D 5\nNV 5NT 11\nNV 5NTXX 10\nV 5S 6\nNV 2NT 6\nNV 5S 8\nV 3NT 7\nNV 2NT 6\nNV 3DXX 8\nV 1S 8\nV 7D 5",
+          "testOut": "1860\n540\n1630\n-300\n710\n170\n1510\n-200\n130\n-300\n460\n-200\n-500\n-100\n-150\n-200\n-100\n-200\n110\n-800",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "1 <= [[nbTests]] <= 20",
+      "coverBinaryId": 105168928141012,
+      "stubGenerator": "read nbTests:int\nloop nbTests read deal:string(32)\nloop nbTests write 0\n",
+      "inputDescription": "<<Line 1:>> An integer [[nbTests]] for the number of test cases\n<<Next [[nbTests]] lines:>> one line describing a deal : the [[vulnerability]], either {{V}} or {{NV}}, a space, then the [[contract]], either {{Pass}} or a number in the range 1-7 followed by {{C}}, {{D}}, {{H}}, {{S}} or {{NT}}, followed by {{X}} if the contract is doubled, or {{XX}} if it is redoubled, then (if not passed out) a space followed by the number of tricks won.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "One line per test case: the score achieved by the declaring side (either positive or negative)"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">The game of Bridge (https://en.wikipedia.org/wiki/Contract_bridge) is arguably the richest game of cards widely played nowadays. While difficult to master, the basic rules are relatively simple, except for the scoring part, which is quite convoluted. Scoring is obviously important for the strategy, but the details don't matter that much though, so we can let a program handle that !<br><br>The game involves a <strong>bidding</strong> phase, where an auction takes place between the two sides. The bids represent a <strong>contract</strong>, which means trying to win a certain number of tricks during the <strong>card play</strong> phase, with a given suit as trump (or without trumps at all). The highest bidder will then be the declaring side, and try to succeed in the final contract that was bid.<br>With four player (two versus two) and a deck of 52 cards, there will be 13 tricks to win. A contract is described as the number of tricks over 6 (because you must always aim for more tricks than the opponent !), followed by the suit abbreviation (<const>C</const> for Clubs, <const>D</const> for Diamonds, <const>H</const> for Hearts, <const>S</const> for Spades), or <const>NT</const> for No Trump. For example &quot;2S&quot; means that you will try to win at least 8 of the 13 tricks, with Spades as trump. When nobody wants to bid, the hand is &quot;passed out&quot;, a <const>Pass</const> contract, with a score of 0. Else the card play takes place, and the score depends on the actual number of tricks won, as well as two other factors : the <strong>vulnerability</strong> (<const>V</const> for vulnerable and <const>NV</const> for non-vulnerable), which is set for each side before the bidding starts, and the fact that the final contract has been <strong>doubled</strong> by the non-declaring side (noted <const>X</const>) or even <strong>redoubled</strong> by the declaring side, if they have been doubled (noted <const>XX</const>).<br><br>Here is how the score is computed :<br><br><strong>If the contract was won</strong>, meaning that at least the contracted number of tricks has been won by the declaring side, the score is positive<br>  - if the trump is a minor suit (Clubs or Diamonds), contracted tricks (over 6 !) are worth 20 points each, for a major suit (Hearts or Spades), it is 30 points each, and for No Trump, the first trick is worth 40 points, and the next ones 30 points. If the contract is doubled, then so is the value of each trick, and if it is redoubled, the value is multiplied by 4.<br>  - if the total value of the tricks contracted for reaches 100 points, then there is a <strong>game bonus</strong> : 300 points if not vulnerable, and 500 points if vulnerable. Else you get a 50 points bonus for having succeeded.<br>  - if the contract is at the 6 level (contracting for all the tricks except one), there is an additional <strong>small slam bonus</strong>, worth 500 points if non-vulnerable, and 750 points if vulnerable.<br>  - if the contract is at the 7 level (contracting for all the tricks !), there is an additional <strong>grand slam bonus</strong>, worth 1000 points if non-vulnerable, and 1500 points if vulnerable.<br>  - if there were tricks won in excess of what was contracted, these <strong>overtricks</strong> are worth their nominal value for normal contracts, but if the contract was doubled, then overtricks are worth 100 points when non-vulnerable, and 200 points when vulnerable. These numbers are themselves doubled for redoubled contracts.<br>  - if the contract was doubled or redoubled, there is an additional bonus for making it, 50 points for doubled contracts, 100 points for redoubled contracts.<br><br><strong>If the contract was lost</strong>, the score is negative, and depends on the number of <strong>undertricks</strong><br>  - for normal contracts, 50 points per undertrick if non-vulnerable, 100 points if vulnerable<br>  - for non-vulnerable doubled contracts, the first undertrick costs 100, the second and third 200 each, then 300 for each additional one.<br>  - for vulnerable doubled contracts, the first undertrick costs 200, then 300 for each additional one.<br>  - for redoubled contracts, the values are double those of doubled undertricks.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>nbTests</var> for the number of test cases<br><strong>Next <var>nbTests</var> lines:</strong> one line describing a deal : the <var>vulnerability</var>, either <const>V</const> or <const>NV</const>, a space, then the <var>contract</var>, either <const>Pass</const> or a number in the range 1-7 followed by <const>C</const>, <const>D</const>, <const>H</const>, <const>S</const> or <const>NT</const>, followed by <const>X</const> if the contract is doubled, or <const>XX</const> if it is redoubled, then (if not passed out) a space followed by the number of tricks won.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">One line per test case: the score achieved by the declaring side (either positive or negative)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt;= <var>nbTests</var> &lt;= 20</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1\nV 4S 11</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">650</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 75956728691,
+  "avatar": 19353303424539,
+  "commentCount": 14,
+  "upVotes": 8,
+  "downVotes": 3,
+  "validateAction": {
+    "actionId": 855594,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1688285137001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1689843052232,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1692435937001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1694094395241,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1694772411433,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

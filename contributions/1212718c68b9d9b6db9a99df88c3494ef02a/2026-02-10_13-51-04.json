@@ -1,0 +1,113 @@
+{
+  "id": 1212,
+  "activeVersion": 15,
+  "score": 6,
+  "votableId": 7267048,
+  "codingamerId": 155774,
+  "views": 314,
+  "commentableId": 7204886,
+  "title": "High-rise buildings",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "dwarfie",
+  "publicHandle": "1212718c68b9d9b6db9a99df88c3494ef02a",
+  "codingamerHandle": "2ad5cc4919ed368f16de4aecd570e21e477551",
+  "lastVersion": {
+    "version": 15,
+    "data": {
+      "title": "High-rise buildings",
+      "topics": [],
+      "solution": "<?php\n\nfunction buildhash (&$hash,$n,$t=\"\") {\n        if($n == strlen($t))\n                $hash[] = [$t,check($t),check($t,2)];\n        else\n                for($i=1;$i<=$n;$i++)\n                        if(strpos($t,\"$i\")===false)\n                                buildhash($hash,$n,\"$t$i\");\n}\n\nfunction check($s,$d=1) {\n        $l = strlen($s);\n        $m = $c = 0;\n        for($i=0;$i<$l;$i++) {\n                $t = $s[ $d == 1 ? $i : $l - $i - 1 ];\n                if($t > $m) { $m = $t; $c ++; }\n        }\n        return $c;\n}\n\nfunction cleanposs() {\n\tglobal $grid,$vpos,$hpos,$n,$hash;\n\tfor($i = 0; $i < $n; $i++) {\n\t\tforeach($vpos[$i] as $k => $v) {\n\t\t\tfor($j = 0; $j < $n; $j++) {\n\t\t\t\tif($grid[$i][$j] != 0 && $grid[$i][$j] != $hash[$v][0][$j]) {\n\t\t\t\t\tunset($vpos[$i][$k]);\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\tforeach($hpos[$i] as $k => $v) {\n\t\t\tfor($j = 0; $j < $n; $j++) {\n\t\t\t\tif($grid[$j][$i] != 0 && $grid[$j][$i] != $hash[$v][0][$j]) {\n\t\t\t\t\tunset($hpos[$i][$k]);\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}\n\nfunction finduniquechoice() {\n\tglobal $grid,$vpos,$hpos,$n,$hash;\n\tfor($i = 0; $i < $n; $i++) {\n\t\t$possible = [];\n\t\tforeach($hpos[$i] as $v) {\n\t\t\tfor($j = 0; $j < $n; $j++) {\n\t\t\t\t$possible[$j][] = $hash[$v][0][$j];\n\t\t\t}\n\t\t}\n\t\tforeach($possible as $j => $v) {\n\t\t\t$t = array_unique($v);\n\t\t\tif(count($t) == 1)\n\t\t\t\t$grid[$j][$i] = $t[0];\n\t\t}\n\t}\n\n\tfor($i = 0; $i < $n; $i++) {\n\t\t$possible = [];\n\t\tforeach($vpos[$i] as $v) {\n\t\t\tfor($j = 0; $j < $n; $j++) {\n\t\t\t\t$possible[$j][] = $hash[$v][0][$j];\n\t\t\t}\n\t\t}\n\t\tforeach($possible as $j => $v) {\n\t\t\t$t = array_unique($v);\n\t\t\tif(count($t) == 1)\n\t\t\t\t$grid[$i][$j] = $t[0];\n\t\t}\n\t}\n}\n\nfunction crosscheck() {\n\tglobal $grid,$vpos,$hpos,$n,$hash;\n\tfor($i=0;$i<$n;$i++) {\n\t\tforeach($vpos[$i] as $k => $v) {\n\t\t\tfor($j=0;$j<$n;$j++) {\n\t\t\t\t$possible = false;\n\t\t\t\tforeach($hpos[$j] as $h)\n\t\t\t\t\t$possible |= $hash[$v][0][$j] == $hash[$h][0][$i];\n\t\t\t\tif(!$possible) {\n\t\t\t\t\tunset($vpos[$i][$k]);\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\n\tfor($i=0;$i<$n;$i++) {\n\t\tforeach($hpos[$i] as $k => $h) {\n\t\t\tfor($j=0;$j<$n;$j++) {\n\t\t\t\t$possible = false;\n\t\t\t\tforeach($vpos[$j] as $v)\n\t\t\t\t\t$possible |= $hash[$h][0][$j] == $hash[$v][0][$i];\n\t\t\t\tif(!$possible) {\n\t\t\t\t\tunset($hpos[$i][$k]);\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}\n\n$n = fgets(STDIN);\n\n$hash = [];\nbuildhash($hash,$n);\n\n$indices[0] = explode(\" \",trim(fgets(STDIN)));\n$indices[1] = explode(\" \",trim(fgets(STDIN)));\n$indices[2] = explode(\" \",trim(fgets(STDIN)));\n$indices[3] = explode(\" \",trim(fgets(STDIN)));\n\n$grid = $grid2  = [];\nfor($i=0;$i<$n;$i++) {\n        $l = explode(\" \",trim(fgets(STDIN)));\n        $grid[] = $l;\n        for($j=0;$j<$n;$j++)\n                $grid2[$j][$i] = $l[$j];\n}\n\n$tosolve = true;\n\n$vpos = [];\n$hpos = [];\nfor($i = 0; $i < $n; $i++) {\n\t$b = $indices[1][$i];\n\t$c = $indices[2][$i];\n\t$vpos[$i] = array_keys(array_filter($hash,function ($a) use ($b,$c) { return $a[1]==$b && $a[2]==$c; }));\n\t$b = $indices[0][$i];\n\t$c = $indices[3][$i];\n\t$hpos[$i] = array_keys(array_filter($hash,function ($a) use ($b,$c) { return $a[1]==$b && $a[2]==$c; }));\n}\n\n$turn = 0;\nwhile ($tosolve) {\n\t$tosolve = false;\n\n\tcleanposs();\n\tfinduniquechoice();\n\tcrosscheck();\n\n\t$tosolve = $turn++ < 10;\n}\n\nforeach($grid as $l) echo implode(\" \",$l),\"\\n\";",
+      "statement": "Given a grid of dimension NxN, you must build towers on each square in such a way that:\n- The heights of the towers range from 1 to N;\n- Each row contains every possible height of tower exactly once;\n- Each column contains every possible height of tower exactly once;\n- Each numeric clue describes the number of towers that can be seen if you look into the square from that position. Taller towers block your view of shorter towers behind them.\n\nClues are given in this order North, West, East and South. \n\n`   a  b  c                  2  1  2\nd  .  .  .  g            2  .  3  .  2\ne  .  .  .  h            1  .  .  .  3\nf  .  .  .  i            2  .  .  .  1\n   j  k  l                  2  3  1\n`\n\nHere we must put a building of height 3 because we can see only one tower from position b.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "5\n2 2 4 2 1\n3 4 2 1 2\n1 2 4 3 2\n2 2 1 3 4\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0",
+          "testOut": "3 4 1 2 5\n1 2 3 5 4\n2 5 4 3 1\n5 1 2 4 3\n4 3 5 1 2",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "5\n2 5 2 1 3\n2 3 1 3 2\n2 3 4 1 2\n2 1 3 4 2\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0",
+          "testOut": "4 1 3 5 2\n1 2 5 4 3\n5 3 4 2 1\n2 4 1 3 5\n3 5 2 1 4",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "6\n4 2 2 3 2 1\n3 4 2 2 2 1\n1 2 3 2 3 4\n1 3 2 2 3 4\n0 5 0 0 0 0\n0 0 0 0 0 0\n0 6 0 0 0 0\n0 0 0 0 2 0\n0 0 2 0 0 4\n0 0 0 4 0 0",
+          "testOut": "1 5 4 2 3 6\n2 4 3 5 6 1\n5 6 1 3 4 2\n4 3 6 1 2 5\n3 1 2 6 5 4\n6 2 5 4 1 3",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "6\n2 1 3 4 2 2\n2 4 3 2 3 1\n4 1 2 3 3 3\n1 3 2 2 2 3\n0 0 0 0 3 0\n0 0 0 0 0 0\n0 4 0 0 0 0\n0 0 0 0 0 0\n3 5 0 0 0 0\n0 0 2 0 0 4",
+          "testOut": "5 6 4 2 3 1\n1 3 5 4 2 6\n2 4 3 1 6 5\n4 2 6 5 1 3\n3 5 1 6 4 2\n6 1 2 3 5 4",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "7\n2 2 3 1 2 3 5\n3 1 2 2 3 4 3\n4 3 2 2 2 2 1\n4 4 2 3 2 4 1\n2 0 0 0 0 0 0\n0 3 0 0 0 0 0\n0 0 0 0 0 0 0\n0 0 0 0 1 5 0\n0 6 0 0 0 2 0\n0 0 0 0 0 0 0\n4 0 0 0 0 0 0",
+          "testOut": "2 5 3 7 6 4 1\n7 3 1 5 4 6 2\n6 1 5 4 2 7 3\n3 7 4 2 1 5 6\n5 6 7 1 3 2 4\n1 4 2 6 7 3 5\n4 2 6 3 5 1 7",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "7\n2 3 4 2 2 5 1\n4 3 1 2 2 2 4\n1 2 3 2 3 2 3\n3 2 2 1 5 2 4\n0 0 1 0 0 0 0\n0 0 0 2 0 0 0\n0 0 0 4 0 0 0\n0 0 0 0 5 0 0\n0 0 7 0 2 0 4\n0 0 0 0 0 0 0\n0 0 0 0 0 0 2",
+          "testOut": "4 5 1 6 3 2 7\n1 6 4 2 7 3 5\n7 2 5 4 6 1 3\n2 7 3 1 5 4 6\n5 1 7 3 2 6 4\n6 3 2 5 4 7 1\n3 4 6 7 1 5 2",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "8\n2 1 2 3 2 3 4 2\n2 1 6 3 3 3 3 2\n3 3 1 2 3 4 3 2\n2 3 3 3 3 2 1 6\n0 0 0 0 0 0 0 0\n0 0 6 0 2 0 0 0\n0 0 0 0 3 0 0 0\n0 0 0 2 8 1 0 0\n5 0 0 0 0 0 0 0\n0 7 0 4 0 0 0 0\n0 1 4 7 0 0 0 2\n0 4 0 0 0 0 0 0",
+          "testOut": "3 8 7 5 4 2 1 6\n8 3 6 1 2 7 4 5\n1 2 5 6 3 4 7 8\n4 5 3 2 8 1 6 7\n5 6 1 8 7 3 2 4\n2 7 8 4 1 6 5 3\n6 1 4 7 5 8 3 2\n7 4 2 3 6 5 8 1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "8\n3 3 3 4 2 2 3 1\n4 2 3 2 2 4 3 1\n1 3 2 2 3 4 3 4\n1 3 2 3 2 3 4 3\n0 0 4 0 0 0 1 0\n0 4 0 0 0 0 0 0\n0 0 0 0 5 0 8 0\n4 0 5 0 6 0 0 0\n0 0 0 0 0 5 7 2\n1 0 0 0 0 0 0 0\n0 0 0 0 8 3 5 0\n0 0 0 4 0 0 0 0",
+          "testOut": "5 6 4 3 7 2 1 8\n7 4 2 5 3 8 6 1\n2 7 3 1 5 4 8 6\n4 8 5 2 6 1 3 7\n3 1 8 6 4 5 7 2\n1 5 6 8 2 7 4 3\n6 2 1 7 8 3 5 4\n8 3 7 4 1 6 2 5",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "5 ≤ [[N]] ≤ 8",
+      "stubGenerator": "read N:int\nloopline N canSeeFromNorth:int\nloopline N canSeeFromWest:int\nloopline N canSeeFromEast:int\nloopline N canSeeFromSouth:int\nloop N loopline N cell:int\n\nwrite ",
+      "inputDescription": "<<Line 1>>: One integer [[N]] for the size of the grid.\n<<Line 2>>: [[N]] integers for the numbers of visible towers from the North, given from left to right.\n<<Line 3>>: [[N]] integers for the numbers of visible towers from the West, given from top to bottom.\n<<Line 4>>: [[N]] integers for the numbers of visible towers from the East, given from top to bottom.\n<<Line 5>>: [[N]] integers for the numbers of visible towers from the South, given from left to right.\n<<Next [[N]] lines:>> A string containing [[N]] digits indicating the heights of the towers (0 means unknown)",
+      "solutionLanguage": "PHP",
+      "outputDescription": "Grid with the buildings heights\n<<[[N]] lines>> [[N]] space-separated digits"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Given a grid of dimension NxN, you must build towers on each square in such a way that:<br>- The heights of the towers range from 1 to N;<br>- Each row contains every possible height of tower exactly once;<br>- Each column contains every possible height of tower exactly once;<br>- Each numeric clue describes the number of towers that can be seen if you look into the square from that position. Taller towers block your view of shorter towers behind them.<br><br>Clues are given in this order North, West, East and South. <br><br><pre style=\"font-family: monospace\">   a  b  c                  2  1  2<br>d  .  .  .  g            2  .  3  .  2<br>e  .  .  .  h            1  .  .  .  3<br>f  .  .  .  i            2  .  .  .  1<br>   j  k  l                  2  3  1<br></pre><br><br>Here we must put a building of height 3 because we can see only one tower from position b.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: One integer <var>N</var> for the size of the grid.<br><strong>Line 2</strong>: <var>N</var> integers for the numbers of visible towers from the North, given from left to right.<br><strong>Line 3</strong>: <var>N</var> integers for the numbers of visible towers from the West, given from top to bottom.<br><strong>Line 4</strong>: <var>N</var> integers for the numbers of visible towers from the East, given from top to bottom.<br><strong>Line 5</strong>: <var>N</var> integers for the numbers of visible towers from the South, given from left to right.<br><strong>Next <var>N</var> lines:</strong> A string containing <var>N</var> digits indicating the heights of the towers (0 means unknown)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Grid with the buildings heights<br><strong><var>N</var> lines</strong> <var>N</var> space-separated digits</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">5 &le; <var>N</var> &le; 8</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5\n2 2 4 2 1\n3 4 2 1 2\n1 2 4 3 2\n2 2 1 3 4\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">3 4 1 2 5\n1 2 3 5 4\n2 5 4 3 1\n5 1 2 4 3\n4 3 5 1 2</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 243371472818,
+  "avatar": 17785582865119,
+  "commentCount": 7,
+  "upVotes": 6,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 222375,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

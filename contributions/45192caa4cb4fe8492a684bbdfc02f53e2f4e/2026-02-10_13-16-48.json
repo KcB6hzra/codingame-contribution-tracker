@@ -1,0 +1,151 @@
+{
+  "id": 45192,
+  "activeVersion": 26,
+  "score": 6,
+  "votableId": 27779527,
+  "codingamerId": 5271799,
+  "views": 218,
+  "commentableId": 27651826,
+  "title": "ASCII Art The Drunken Bishop Algorithm",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Eulero314",
+  "publicHandle": "45192caa4cb4fe8492a684bbdfc02f53e2f4e",
+  "codingamerHandle": "7ed5fd396d11683394bd215ec8f0faf49971725",
+  "lastVersion": {
+    "version": 26,
+    "autocloseTime": 1679904805926,
+    "data": {
+      "title": "ASCII Art The Drunken Bishop Algorithm",
+      "topics": [
+        {
+          "id": 128,
+          "handle": "ascii-art",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Ascii Art",
+            "2": "Ascii Art"
+          },
+          "puzzleCount": 37,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "from collections import namedtuple\nimport sys\n\nimport hashlib\n\nclass Bishop:\n    scr:list\n\n    def __init__(self,w=17,h=9,fill=' ',black_char='@',resize=True):\n        #self.bishop=ASCII_Bishop()\n        self.w=w\n        self.h=h\n        self.fill=fill\n        self.black_char=black_char\n        assert black_char!=' '\n        self.resize=resize\n        self.initscr()\n\n    def initscr(self):\n        self.scr=[[self.fill]*self.w for _ in range(self.h)]\n\n    def printat(self,x,y,c):\n        self.scr[y][x]=c[0]\n\n    def get_at(self,x,y):\n        return self.scr[y][x]\n\n    def draw(self):\n        s=[''.join(x) for x in self.scr]\n        return '\\n'.join(s)\n\n    def draw_with_frame(self):\n        top='---[CODINGAME]---'\n        bottom='-' * self.w\n        s = ['|'+''.join(x)+'|' for x in self.scr]\n        e=[f\"+{top}+\"]+s+[f\"+{bottom}+\"]\n        return '\\n'.join(e)\n\n    def movemap(self):\n        w=self.w\n        h=self.h\n        mm={}\n        for y in range(h):\n            if y==0:\n                l=f'a{\"T\"*(w-2)}b'\n            elif y==8:\n                l = f'c{\"B\" * (w - 2)}d'\n            else:\n                l=f'L{\"M\"*(w-2)}R'\n            for x in range(w):\n                mm[(x,y)]=l[x]\n        M={'00':-18,'01':-16,'10':16,'11':18}\n        T=M.copy()\n        T['00']=-1\n        T['01']=1\n        B=M.copy()\n        B['10']=-1\n        B['11']=1\n        L=M.copy()\n        L['00']=-17\n        L['10']=17\n        R=M.copy()\n        R['01']=-17\n        R['11']=17\n        a=L.copy()\n        a['00']=0\n        a['01']=1\n        b=R.copy()\n        b['00']=-1\n        b['01']=0\n        c=L.copy()\n        c['10']=0\n        c['11']=1\n        d=R.copy()\n        d['10']=-1\n        d['11']=0\n        mp={'M':M,'T':T,'B':B,'L':L,'R':R,\n            'a':a,'b':b,'c':c,'d':d}\n        return mm,mp\n\n    def to_md5(self,txt):\n        result = hashlib.md5(txt.encode())\n        r=result.hexdigest()\n        e = [r[i:i + 2] for i in range(0, len(r), 2)]\n        r=':'.join(e)\n        return r\n\n    def walk(self,md5):\n        #md5=self.to_md5(txt)\n        alfa=[' ', '.', 'o', '+', '=', '*', 'B', 'O', 'X', '@', '%', '&', '#', '/', '^']\n        mm,mp=self.movemap()\n        e=md5.split(':')\n        #assert len(e)==16\n        self.pos={}\n        xo,yo=(self.w-1)//2,(self.h-1)//2\n        x,y=xo,yo\n        for i in range(len(e)):\n            c=e.pop(0) # 2 hex digit\n            c=int(c,16)\n            c=f\"{c:08b}\"\n            for j in range(6,-1,-2): # 6 4 2 0\n                move=c[j:j+2]\n                r=x+y*self.w\n                pos=mm[(x,y)] # da x,y a MTB...\n                delta=mp[pos][move] # da MTB..+2bit a delta\n                next_pos=r+delta\n                x=next_pos%self.w\n                y=next_pos//self.w\n                # value\n                char=self.get_at(x,y)\n                value=alfa.index(char)\n                value=(value+1)%len(alfa)\n                newchar=alfa[value]\n                self.printat(x,y,newchar)\n        self.printat(xo,yo,'S')\n        self.printat(x,y,'E')\n\n\nclass ASCII_Bishop:\n\n    def run(self,txt):\n        s = Bishop()\n        s.walk(txt)\n        d=s.draw_with_frame()\n        return d\n\nif __name__ == '__main__':\n    txt=input()\n    s=ASCII_Bishop()\n    print(s.run(txt))",
+      "statement": "Have you ever wondered how the OpenSSH Random Art is produced?\nThey used 'The Drunken Bishop algorithm', designed by Alexander von Gernler.\n\n\"Bishop Peter finds himself in the middle of an ambient atrium. There are walls on all four sides and apparently there is no exit. The floor is paved with square tiles, strictly alternating between black and white. His head heavily aching—probably from too much wine he had before—he starts wandering around randomly. Well, to be exact, he only makes diagonal steps—just like a bishop on a chess board. When he hits a wall, he moves to the side, which takes him from the black tiles to the white tiles (or vice versa). And after each move, he places a coin on the floor, to remember that he has been there before. After 64 steps, just when no coins are left, Peter suddenly wakes up. What a strange dream!\"\n\nThe algorithm is well described in the document \"The drunken bishop: An analysis of the OpenSSH fingerprint visualization algorithm\" (link in reference).\nTo summarize, OpenSSH uses MD5 to generate a 128 bits fingerprint for the server's key, for example in hexadecimal `fc:94:b0:c1:e5:b0:98:7c:58:43:99:76:97:ee:9f:b7`\nYou should create a chess board 17x9 (origin 0,0 at top left corner) and place a Bishop (the letter {{S}}) at the center (position 8,4).\n`            1111111\n  01234567890123456\n +---[CODINGAME]---+ x\n0|                 |\n1|                 |\n2|                 |\n3|                 |\n4|        S        |\n5|                 |\n6|                 |\n7|                 |\n8|                 |\n +-----------------+\n y`\nThen, break the 128 bit fingerprint in input into pairs of bits that define 4 possible moves:\n00: up-left (↖ North West )\n01: up-right (↗ North East)\n10: down-left(↙ South West)\n11: down-right (↘ South East)\nDuring the 64 steps of the algorithm, the bit pairs are processed byte-wise, from left to right and least significant bits first.\nExample: The fingerprint {{FC:94}}\n`       F     C       9     4   ...\n     11 11 11 00 : 10 01 01 00 ...\n      |  |  |  |    |  |  |  |\nStep  4  3  2  1    8  7  6  5`\nFor each pair of bits in the input we move the bishop one space on the board and increment a counter recording how many times we visit each square. Instead of moving off the board at the edges, the bishop slides along the sides as if they were walls. For example, if the bishop is on the right edge of the board and the next move is 01, we simply slide the bishop one space vertically up, incrementing the counter on the new square as normal. If the Bishop ends up at a corner and he cannot slide, he simply does not move (and we should increment counter for that corner cell). Here the four cases:\n`   Position  | bit pair | action\n-------------+----------+--------\ntop left     |    00    | no move\ntop right    |    01    | no move\nbottom left  |    10    | no move\nbottom right |    11    | no move`\nAt the end of the 64 steps, the board is drawn assigning a symbol to each position on the board according to how many times it was visited. OpenSSH uses these symbols:\n\n`0  1  2  3  4  5  6  7  8  9  10 11 12 13 14\n   .  o  +  =  *  B  O  X  @  %  &  #  /  ^`\nWe apply the wrap-around logic if the number of times visited is greater than 14, e.g. we use {{o}} if a position is visited for 17 times.\nThe special values {{S}} and the end value {{E}} mark the start and end position of the walk and overwrite the real value of the respective position. Surround the chessboard with {{+}} for corners, {{-}} for top and bottom edges and {{|}} for left and right edges. Put {{[CODINGAME]}} at center in the top edge.\n\nReferences:\nhttp://www.dirk-loss.de/sshvis/drunken_bishop.pdf\nhttps://www.jfurness.uk/the-drunken-bishop-algorithm/\nhttps://dev.to/krofdrakula/improving-security-by-drawing-identicons-for-ssh-keys-24mc",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "fc:94:b0:c1:e5:b0:98:7c:58:43:99:76:97:ee:9f:b7",
+          "testOut": "+---[CODINGAME]---+\n|       .=o.  .   |\n|     . *+*. o    |\n|      =.*..o     |\n|       o + ..    |\n|        S o.     |\n|         o  .    |\n|          .  . . |\n|              o .|\n|               E.|\n+-----------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "fc:94:b0:c1:e5:b0:93:7c:58:43:99:76:97:ee:9f:b7",
+          "testOut": "+---[CODINGAME]---+\n|        ..=o   . |\n|       o O+.. o  |\n|        X.o. o   |\n|       . * .  .  |\n|        S o  .   |\n|         o    .  |\n|          .    ..|\n|               .o|\n|               Eo|\n+-----------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "51:8e:d2:95:25:73:8c:eb:da:c4:9c:49:e6:0e:a9:d3",
+          "testOut": "+---[CODINGAME]---+\n|          ==o    |\n|       . =o+.    |\n|      . + ..     |\n|       . .+      |\n|        SO o     |\n|        o O      |\n|       o *       |\n|      o E o      |\n|       .         |\n+-----------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "33:89:da:e3:61:af:79:b0:4c:9c:8e:70:57:f6:0c:c6",
+          "testOut": "+---[CODINGAME]---+\n|                 |\n|                 |\n|       .         |\n|       .E.       |\n|     ..=S+       |\n|  . .o*  oo      |\n|   o.*=o         |\n|    .o+=.        |\n|      +o.        |\n+-----------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "02:64:d6:eb:fd:ca:bc:10:79:92:6e:91:d8:b5:f3:fd",
+          "testOut": "+---[CODINGAME]---+\n|    +.           |\n|   +  .          |\n|    .  ..        |\n|     +.= .       |\n|    ..X.S        |\n|     ..*.o .     |\n|      +  .. .    |\n|     . +  .  .   |\n|        =o    E  |\n+-----------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "8c:28:92:a4:41:f7:c3:7a:03:1d:29:d5:77:ba:e5:e8",
+          "testOut": "+---[CODINGAME]---+\n| . ..oo          |\n|. ..+... . .     |\n|.. ..=  . o      |\n|oo  o..o . .     |\n|+ ...o. S =      |\n| . .. .  o .     |\n|        .        |\n|         E       |\n|                 |\n+-----------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "a8:6c:78:04:a2:23:00:45:58:f7:1b:bc:dc:11:0a:71",
+          "testOut": "+---[CODINGAME]---+\n|.=+ +.E .        |\n|o  . = . .       |\n|o .   = .        |\n|o. . . * .       |\n|+   . = S        |\n|.. + .           |\n|  . =            |\n|   o             |\n|                 |\n+-----------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "68:f6:9b:f1:fb:9f:be:63:dc:fa:5a:2d:c0:3b:04:56",
+          "testOut": "+---[CODINGAME]---+\n|            E    |\n|           .     |\n|          o      |\n|       . . o     |\n|      + S   +    |\n|     o .   . o  .|\n|        o   o...o|\n|         =   .++.|\n|        o oo.+B*.|\n+-----------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "00:00:00:00:00:00:00:00:ff:ff:ff:ff:ff:ff:ff:ff",
+          "testOut": "+---[CODINGAME]---+\n|%....            |\n| .   .           |\n|  .   .          |\n|   .   .         |\n|    .   S        |\n|     .           |\n|      .          |\n|       .         |\n|        ........E|\n+-----------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "ff:ff:ff:ff:ff:ff:ff:ff:00:00:00:00:00:00:00:00",
+          "testOut": "+---[CODINGAME]---+\n|E........        |\n|         .       |\n|          .      |\n|           .     |\n|        S   .    |\n|         .   .   |\n|          .   .  |\n|           .   . |\n|            ....%|\n+-----------------+",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "The input string is always 16 bytes (separated by {{:}}), so there are exactly 64 steps that can be produced by the input string.",
+      "coverBinaryId": 97833481703707,
+      "stubGenerator": "read fingerprint:string(128)\n\nwrite ASCII Art Image",
+      "inputDescription": "<<Line 1>>: Server fingerprint string format as group of 2 hexadecimal digit separated by {{:}}.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<11 lines:>> Random ASCII Art"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Have you ever wondered how the OpenSSH Random Art is produced?<br>They used 'The Drunken Bishop algorithm', designed by Alexander von Gernler.<br><br>&quot;Bishop Peter finds himself in the middle of an ambient atrium. There are walls on all four sides and apparently there is no exit. The floor is paved with square tiles, strictly alternating between black and white. His head heavily aching&mdash;probably from too much wine he had before&mdash;he starts wandering around randomly. Well, to be exact, he only makes diagonal steps&mdash;just like a bishop on a chess board. When he hits a wall, he moves to the side, which takes him from the black tiles to the white tiles (or vice versa). And after each move, he places a coin on the floor, to remember that he has been there before. After 64 steps, just when no coins are left, Peter suddenly wakes up. What a strange dream!&quot;<br><br>The algorithm is well described in the document &quot;The drunken bishop: An analysis of the OpenSSH fingerprint visualization algorithm&quot; (link in reference).<br>To summarize, OpenSSH uses MD5 to generate a 128 bits fingerprint for the server's key, for example in hexadecimal <pre style=\"font-family: monospace\">fc:94:b0:c1:e5:b0:98:7c:58:43:99:76:97:ee:9f:b7</pre><br>You should create a chess board 17x9 (origin 0,0 at top left corner) and place a Bishop (the letter <const>S</const>) at the center (position 8,4).<br><pre style=\"font-family: monospace\">            1111111<br>  01234567890123456<br> +---[CODINGAME]---+ x<br>0|                 |<br>1|                 |<br>2|                 |<br>3|                 |<br>4|        S        |<br>5|                 |<br>6|                 |<br>7|                 |<br>8|                 |<br> +-----------------+<br> y</pre><br>Then, break the 128 bit fingerprint in input into pairs of bits that define 4 possible moves:<br>00: up-left (↖ North West )<br>01: up-right (↗ North East)<br>10: down-left(↙ South West)<br>11: down-right (↘ South East)<br>During the 64 steps of the algorithm, the bit pairs are processed byte-wise, from left to right and least significant bits first.<br>Example: The fingerprint <const>FC:94</const><br><pre style=\"font-family: monospace\">       F     C       9     4   ...<br>     11 11 11 00 : 10 01 01 00 ...<br>      |  |  |  |    |  |  |  |<br>Step  4  3  2  1    8  7  6  5</pre><br>For each pair of bits in the input we move the bishop one space on the board and increment a counter recording how many times we visit each square. Instead of moving off the board at the edges, the bishop slides along the sides as if they were walls. For example, if the bishop is on the right edge of the board and the next move is 01, we simply slide the bishop one space vertically up, incrementing the counter on the new square as normal. If the Bishop ends up at a corner and he cannot slide, he simply does not move (and we should increment counter for that corner cell). Here the four cases:<br><pre style=\"font-family: monospace\">   Position  | bit pair | action<br>-------------+----------+--------<br>top left     |    00    | no move<br>top right    |    01    | no move<br>bottom left  |    10    | no move<br>bottom right |    11    | no move</pre><br>At the end of the 64 steps, the board is drawn assigning a symbol to each position on the board according to how many times it was visited. OpenSSH uses these symbols:<br><br><pre style=\"font-family: monospace\">0  1  2  3  4  5  6  7  8  9  10 11 12 13 14<br>   .  o  +  =  *  B  O  X  @  %  &amp;  #  /  ^</pre><br>We apply the wrap-around logic if the number of times visited is greater than 14, e.g. we use <const>o</const> if a position is visited for 17 times.<br>The special values <const>S</const> and the end value <const>E</const> mark the start and end position of the walk and overwrite the real value of the respective position. Surround the chessboard with <const>+</const> for corners, <const>-</const> for top and bottom edges and <const>|</const> for left and right edges. Put <const>[CODINGAME]</const> at center in the top edge.<br><br>References:<br>http://www.dirk-loss.de/sshvis/drunken_bishop.pdf<br>https://www.jfurness.uk/the-drunken-bishop-algorithm/<br>https://dev.to/krofdrakula/improving-security-by-drawing-identicons-for-ssh-keys-24mc</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: Server fingerprint string format as group of 2 hexadecimal digit separated by <const>:</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>11 lines:</strong> Random ASCII Art</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">The input string is always 16 bytes (separated by <const>:</const>), so there are exactly 64 steps that can be produced by the input string.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">fc:94:b0:c1:e5:b0:98:7c:58:43:99:76:97:ee:9f:b7</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">+---[CODINGAME]---+\n|       .=o.  .   |\n|     . *+*. o    |\n|      =.*..o     |\n|       o + ..    |\n|        S o.     |\n|         o  .    |\n|          .  . . |\n|              o .|\n|               E.|\n+-----------------+</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 91294186463,
+  "avatar": 96314909854613,
+  "commentCount": 16,
+  "upVotes": 7,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 765388,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1679435220255,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

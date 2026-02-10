@@ -1,0 +1,307 @@
+{
+  "id": 19353,
+  "activeVersion": 14,
+  "score": 24,
+  "votableId": 23945245,
+  "codingamerId": 792813,
+  "views": 327,
+  "commentableId": 23829551,
+  "title": "Tennis score",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "VilBoub",
+  "publicHandle": "193537ebfe75de14ff28b7ea53d2e1e072df9",
+  "codingamerHandle": "bd6706892e49290fb119aa5ddae4238a318297",
+  "lastVersion": {
+    "version": 14,
+    "autocloseTime": 1656609998910,
+    "data": {
+      "title": "Tennis score",
+      "topics": [
+        {
+          "id": 47,
+          "handle": "arrays",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Tableaux",
+            "2": "Arrays"
+          },
+          "pageTitle": "Arrays: exercises and theory",
+          "puzzleCount": 26,
+          "parentTopicId": 40,
+          "contentDetailsId": 78
+        },
+        {
+          "id": 46,
+          "handle": "loops",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 73,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        },
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 53,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        }
+      ],
+      "solution": "import sys\nimport math\n\ndef hex2bin(hex_points) :\n    h = hex_points.replace(\" \", \"\")\n    b = bin(int(h, 16))[2:]\n    z = 4*len(h) - len(b)\n    return b.zfill(len(b)+z)\n\ndef game(bin_points, maxi=4) :\n    # normal :      maxi = 4\n    # tie-break :   maxi = 7\n    pts = [0, 0]\n    for i, p in enumerate(bin_points) :\n        pts[int(p)] += 1\n        if max(pts) >= maxi :\n            if abs(pts[1] - pts[0]) > 1 :\n                break\n            elif pts[1] == pts[0] == maxi :\n                pts[0] -= 1\n                pts[1] -= 1\n    return pts, bin_points[i+1:]\n\n# --------------------------------------------------\n# Input...\njoueurs = input().split()\nbof = int(input())\nhex_points = input()\n# --------------------------------------------------\n\nscore = (0, 15, 30, 40, \"AV\", \"-\")\nwinner = -1\nsets = [0, 0]\njeux = [[0], [0]]\npts = [0, 0]\nbin_points = hex2bin(hex_points)\nmaxi = 4\ntie_break = False\n\nwhile bin_points :\n    pts, bin_points = game(bin_points, maxi)\n    #print(jeux, pts, file=sys.stderr, flush=True)\n    if max(pts) >= maxi and abs(pts[1] - pts[0]) > 1 :\n        j = pts[1] > pts[0]\n        jeux[j][-1] += 1\n        pts = [0, 0]\n        if jeux[j][-1] >= 6 :\n            if abs(jeux[1][-1] - jeux[0][-1]) > 1 or jeux[j][-1] == 7 :\n                sets[j] += 1\n                tie_break = False\n                maxi = 4\n                if max(sets) == (bof + 1)//2 :\n                    winner = j\n                    bin_points = \"\"\n                else :\n                    jeux[0] += [0]\n                    jeux[1] += [0]\n            elif jeux[0][-1] == jeux[1][-1] == 6 :\n                tie_break = True\n                if sum(sets) == bof - 1 :\n                    maxi = 10\n                else :\n                    maxi = 7\n\nfor j in range(2) :\n    print(joueurs[j].ljust(15,\".\"), *jeux[j], end=\"\")\n    if winner == -1 :\n        if tie_break :\n            print(\" |\",pts[j])\n        else :\n            print(\" |\", score[pts[j] + 2*(pts[1-j] == 4)])\n    else :\n        print()\nif winner == -1 :\n    print(\"Game in progress\")\nelse :\n    print(joueurs[winner], \"wins\")",
+      "statement": "https://en.wikipedia.org/wiki/Tennis_scoring_system\n\nGiven a record of points scored in a tennis match, determine the current score, whether the match is complete, and who won.\n\n<<* \"Normal\" match :>>\nThe maximum number of sets in a match is either 3 or 5. The player who wins a majority of the sets wins the match.\n\n<<* \"Normal\" set :>>\nTo win a normal tennis set, you must win 6 games with a difference greater than or equal to 2.\nAfter the score reaches 6-5 the next score is either 7-5 (first player wins the set) or 6-6 ( (see below for tie-breaks)). When one player wins the tie-break the set score is either 6-7 or 7-6. \n\n<<* \"Normal\" game :>>\nTo win a normal tennis game (see below for tie-breaks), you must score at least 4 points, with at least 2 points more than your opponent. The score being noted: 0, 15, 30, 40.\nIf the score comes to 3-3, 4-4, 5-5... note: 40 40 (there is equality)\nIf the score comes to 4-3, 5-4, 6-5... note: AV - (the first player has the advantage)\nIf the score comes to 3-4, 4-5, 5-6... note: - AV (the second player has the advantage)\n\n<<* Tie-break rules:>>\nwhen we arrive at the score 6 6 in a set, then a \"tie-break\" is played. it no longer takes 4 points but 7 points to win the game (always with a difference of at least two points, the score in the tie-break is unlimited !) unless it is the last game (the 3rd for women, the 5th for men), in this case there it takes at least 10 points to win the game.\nThe winner of the game then wins the set on the score 7 6.\nNote: game points are counted normally and no longer with 0, 15, 30, 40 but 0, 1, 2, 3, 4, 5, ...\n\n<<* Example :>>\n\n=> <<Entry>>\n\nSerena Venus\n3\n1A\n\n=> <<Analysis>>\n\n1A -> 0001 1010\n\n0 : Serena scores 1 point\n`Serena......... 0 | 15\nVenus.......... 0 | 0`\n0 : Serena scores 1 point\n`Serena......... 0 | 30\nVenus.......... 0 | 0`\n0 : Serena scores 1 point\n`Serena......... 0 | 40\nVenus.......... 0 | 0`\n1 : Venus scores 1 point\n`Serena......... 0 | 40\nVenus.......... 0 | 15`\n1 : Venus scores 1 point\n`Serena......... 0 | 40\nVenus.......... 0 | 30`\n0 : Serena scores 1 point and wins the first game\n`Serena......... 1 | 0\nVenus.......... 0 | 0`\n1 : Venus scores 1 point\n`Serena......... 1 | 0\nVenus.......... 0 | 15`\n0 : Serena scores 1 point\n`Serena......... 1 | 15\nVenus.......... 0 | 15`\n=> <<Exit>>\n\n`Serena......... 1 | 15\nVenus.......... 0 | 15\nGame in progress`",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "Serena Venus\n3\n1A",
+          "testOut": "Serena......... 1 | 15\nVenus.......... 0 | 15\nGame in progress",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Example",
+          "isTest": false,
+          "testIn": "Serena Venus\n3\n2B",
+          "testOut": "Serena......... 1 | 0\nVenus.......... 0 | 30\nGame in progress",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Advantage",
+          "isTest": true,
+          "testIn": "Mats Yannick\n5\n12 AB",
+          "testOut": "Mats........... 1 | -\nYannick........ 0 | AV\nGame in progress",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Advantage",
+          "isTest": false,
+          "testIn": "Mats Yannick\n5\n0E 8E",
+          "testOut": "Mats........... 1 | AV\nYannick........ 1 | -\nGame in progress",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Deuce",
+          "isTest": true,
+          "testIn": "John Jimmy\n5\nBC 23",
+          "testOut": "John........... 1 | 40\nJimmy.......... 1 | 40\nGame in progress",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Deuce",
+          "isTest": false,
+          "testIn": "John Jimmy\n5\n17 4B",
+          "testOut": "John........... 1 | 40\nJimmy.......... 1 | 40\nGame in progress",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "2nd set",
+          "isTest": true,
+          "testIn": "Henri Guy\n5\n1A E6 9D 0D 02 28 97",
+          "testOut": "Henri.......... 6 1 | 0\nGuy............ 2 0 | 40\nGame in progress",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "2nd set",
+          "isTest": false,
+          "testIn": "Henri Guy\n5\n47 9B ED 59 EF E5 25",
+          "testOut": "Henri.......... 1 2 | 0\nGuy............ 6 0 | 15\nGame in progress",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "7-5",
+          "isTest": true,
+          "testIn": "Chris Martina\n3\n0F 0F 0F 0F 0F 00 FF",
+          "testOut": "Chris.......... 7 0 | 0\nMartina........ 5 2 | 0\nGame in progress",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5-7",
+          "isTest": false,
+          "testIn": "Chris Martina\n3\n0F 0F 0F 0F 0F FF 00",
+          "testOut": "Chris.......... 5 2 | 0\nMartina........ 7 0 | 0\nGame in progress",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "2 winning sets",
+          "isTest": true,
+          "testIn": "I.Swiatek L.Tsurenko\n3\n10 13 A0 0E 82 88 04 8C 55 80",
+          "testOut": "I.Swiatek...... 6 6\nL.Tsurenko..... 2 0\nI.Swiatek wins",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "2 winning sets",
+          "isTest": false,
+          "testIn": "I.Swiatek A.Riske\n3\n84 84 81 20 54 19 0D 79 1B 06 90",
+          "testOut": "I.Swiatek...... 6 6\nA.Riske........ 0 2\nI.Swiatek wins",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Best of 3",
+          "isTest": true,
+          "testIn": "D.Parry B.Krejcikova\n3\n7F FF 4B 35 CA EE 75 8B 11 02 01 96 B6 A5 75 00 1E 12 60",
+          "testOut": "D.Parry........ 1 6 6\nB.Krejcikova... 6 2 3\nD.Parry wins",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Best of 3",
+          "isTest": false,
+          "testIn": "A.Cornet J.Ostapenko\n3\n1B 00 0A 80 97 3A FA D8 7C B8 8E 6A 24 D7 35 38 D3 08",
+          "testOut": "A.Cornet....... 6 1 6\nJ.Ostapenko.... 0 6 3\nA.Cornet wins",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3 winning sets",
+          "isTest": true,
+          "testIn": "N.Djokovic A.Bedene\n5\n12 AE 03 B9 2C 03 D1 38 4C 0B C3 61 03 8D 88 10 F5 0A",
+          "testOut": "N.Djokovic..... 6 6 6\nA.Bedene....... 3 3 2\nN.Djokovic wins",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3 winning sets",
+          "isTest": false,
+          "testIn": "D.Medvedev L.Djere\n5\n67 9D 08 C9 26 1C 1F 90 63 FC 33 44 EB 10 64 A4 DA B2 19 92 E1 36 98 C0",
+          "testOut": "D.Medvedev..... 6 6 6\nL.Djere........ 3 4 3\nD.Medvedev wins",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Best of 5",
+          "isTest": true,
+          "testIn": "A.Zverev S.Baez\n5\n2F B9 33 AE 74 3D 7E FE F4 8A 09 66 47 32 20 C7 E3 02 38 88 3A 82 C2 6E 58 D9 1B 46 9D 39 04 F5 83 20",
+          "testOut": "A.Zverev....... 2 4 6 6 7\nS.Baez......... 6 6 1 2 5\nA.Zverev wins",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Best of 5",
+          "isTest": false,
+          "testIn": "F.Auger J.Varillas\n5\n7B 60 F1 FB D4 66 4E FF 78 3A FD A3 C7 10 A5 14 84 16 D0 B9 17 51 40 6C 2E 8E 88 78 00",
+          "testOut": "F.Auger........ 2 2 6 6 6\nJ.Varillas..... 6 6 1 3 3\nF.Auger wins",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Tie-break in progress",
+          "isTest": true,
+          "testIn": "Mary Steffi\n3\n0F 0F 0F 0F 0F 0F AB",
+          "testOut": "Mary........... 6 | 3\nSteffi......... 6 | 5\nGame in progress",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Tie-break in progress",
+          "isTest": false,
+          "testIn": "Mary Steffi\n3\nF0 F0 F0 F0 F0 F0 52",
+          "testOut": "Mary........... 6 | 5\nSteffi......... 6 | 3\nGame in progress",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Tie-break",
+          "isTest": true,
+          "testIn": "M.Trevisan A.Sasnovich\n3\n09 33 17 4B B0 1D C3 3C B3 41 E5 59 39 0C 3E E5 77 C0 48 60",
+          "testOut": "M.Trevisan..... 7 7\nA.Sasnovich.... 6 5\nM.Trevisan wins",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Tie-break",
+          "isTest": false,
+          "testIn": "J.Pegula T.Zidansek\n3\n50 81 05 6A 07 C8 2B 03 17 5E CC 4C D6 97 86 A3 00",
+          "testOut": "J.Pegula....... 6 7\nT.Zidansek..... 1 6\nJ.Pegula wins",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Long game",
+          "isTest": true,
+          "testIn": "C.Ugo_Carabelli A.Karatsev\n5\nAC 94 21 F0 7B 03 94 5D 4F 04 FE EC 67 62 BE 7B 00 2D 5C 92 03 21 F5 0B EF 3F 0A FE CE F1 21 95 F2 B3 22 4A 72 12 94",
+          "testOut": "C.Ugo_Carabelli 6 4 6 3 7\nA.Karatsev..... 3 6 4 6 6\nC.Ugo_Carabelli wins",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Long game",
+          "isTest": false,
+          "testIn": "J.Isner Q.Halys\n5\n53 DA 91 AC 1E 8F 17 76 24 61 E8 D8 5D 86 E2 C6 B9 DE 1F C0 C2 33 5A FB 0B 90 40 57 15 5A 36 36 C3 D9 86 C9 9C",
+          "testOut": "J.Isner........ 7 4 7 7\nQ.Halys........ 6 6 6 6\nJ.Isner wins",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "It's not finish!",
+          "isTest": true,
+          "testIn": "I.Begu J.Paolini\n3\nE0 A5 31 C4 F4 8D E7 9F 7F 13 24 20 A0 21 C2 17 E7 DD 6E 82 20 F7 0C",
+          "testOut": "I.Begu......... 4 6 6 | 7\nJ.Paolini...... 6 1 6 | 5\nGame in progress",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Match point!",
+          "isTest": false,
+          "testIn": "V.Azarenka J.Teichmann\n3\n9D FA 86 94 61 6A 18 C3 1B 82 92 4E 9A 5A 6B 5B 2C BD 0E BA CB F3 12 72 79 39 A0 4F DB 17 3D",
+          "testOut": "V.Azarenka..... 6 5 6 | 4\nJ.Teichmann.... 4 7 6 | 9\nGame in progress",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "2 <= length(points) <= 111",
+      "coverBinaryId": 84742840462490,
+      "stubGenerator": "read names:string(31)\nread n:int\nread points:string(255)\nwrite Joueur_1....... 6 2 | 30\nJoueur_2....... 3 4 | 15\nGame in progress",
+      "inputDescription": "<<Line 1>>: [[names]] of the two players separated by a space\n\n<<Line 2>>: maximum number [[n]] of sets to play.\n(\"Best of {{3}}\" for women and \"Best of {{5}}\" for men)\n\n<<Line 3>>:  each [[point]] in the match is represented by a sequence of binary digits: {{0}} if the first player won the point, or {{1}} if the second player won the point, written in hexadecimal (possibly completed by {{0}} for the last byte), pairs of hex digits separated by spaces.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1>>:  the current score of the first player:\nplayer name (completed with \".\" up to 15 characters), the games won, and if the match is not over, the character \"|\" and the score of the current game, separated by spaces.\n\n<<Line 2>>:  the current score of the second player:\nplayer name (completed with \".\" up to 15 characters), the games won, and if the match is not over, the character \"|\" and the score of the current game, separated by spaces.\n\n<<Line 3>>:  \"Game in progress\" or \"[Player_name] wins\""
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">https://en.wikipedia.org/wiki/Tennis_scoring_system<br><br>Given a record of points scored in a tennis match, determine the current score, whether the match is complete, and who won.<br><br><strong>* &quot;Normal&quot; match :</strong><br>The maximum number of sets in a match is either 3 or 5. The player who wins a majority of the sets wins the match.<br><br><strong>* &quot;Normal&quot; set :</strong><br>To win a normal tennis set, you must win 6 games with a difference greater than or equal to 2.<br>After the score reaches 6-5 the next score is either 7-5 (first player wins the set) or 6-6 ( (see below for tie-breaks)). When one player wins the tie-break the set score is either 6-7 or 7-6. <br><br><strong>* &quot;Normal&quot; game :</strong><br>To win a normal tennis game (see below for tie-breaks), you must score at least 4 points, with at least 2 points more than your opponent. The score being noted: 0, 15, 30, 40.<br>If the score comes to 3-3, 4-4, 5-5... note: 40 40 (there is equality)<br>If the score comes to 4-3, 5-4, 6-5... note: AV - (the first player has the advantage)<br>If the score comes to 3-4, 4-5, 5-6... note: - AV (the second player has the advantage)<br><br><strong>* Tie-break rules:</strong><br>when we arrive at the score 6 6 in a set, then a &quot;tie-break&quot; is played. it no longer takes 4 points but 7 points to win the game (always with a difference of at least two points, the score in the tie-break is unlimited !) unless it is the last game (the 3rd for women, the 5th for men), in this case there it takes at least 10 points to win the game.<br>The winner of the game then wins the set on the score 7 6.<br>Note: game points are counted normally and no longer with 0, 15, 30, 40 but 0, 1, 2, 3, 4, 5, ...<br><br><strong>* Example :</strong><br><br>=&gt; <strong>Entry</strong><br><br>Serena Venus<br>3<br>1A<br><br>=&gt; <strong>Analysis</strong><br><br>1A -&gt; 0001 1010<br><br>0 : Serena scores 1 point<br><pre style=\"font-family: monospace\">Serena......... 0 | 15<br>Venus.......... 0 | 0</pre><br>0 : Serena scores 1 point<br><pre style=\"font-family: monospace\">Serena......... 0 | 30<br>Venus.......... 0 | 0</pre><br>0 : Serena scores 1 point<br><pre style=\"font-family: monospace\">Serena......... 0 | 40<br>Venus.......... 0 | 0</pre><br>1 : Venus scores 1 point<br><pre style=\"font-family: monospace\">Serena......... 0 | 40<br>Venus.......... 0 | 15</pre><br>1 : Venus scores 1 point<br><pre style=\"font-family: monospace\">Serena......... 0 | 40<br>Venus.......... 0 | 30</pre><br>0 : Serena scores 1 point and wins the first game<br><pre style=\"font-family: monospace\">Serena......... 1 | 0<br>Venus.......... 0 | 0</pre><br>1 : Venus scores 1 point<br><pre style=\"font-family: monospace\">Serena......... 1 | 0<br>Venus.......... 0 | 15</pre><br>0 : Serena scores 1 point<br><pre style=\"font-family: monospace\">Serena......... 1 | 15<br>Venus.......... 0 | 15</pre><br>=&gt; <strong>Exit</strong><br><br><pre style=\"font-family: monospace\">Serena......... 1 | 15<br>Venus.......... 0 | 15<br>Game in progress</pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: <var>names</var> of the two players separated by a space<br><br><strong>Line 2</strong>: maximum number <var>n</var> of sets to play.<br>(&quot;Best of <const>3</const>&quot; for women and &quot;Best of <const>5</const>&quot; for men)<br><br><strong>Line 3</strong>:  each <var>point</var> in the match is represented by a sequence of binary digits: <const>0</const> if the first player won the point, or <const>1</const> if the second player won the point, written in hexadecimal (possibly completed by <const>0</const> for the last byte), pairs of hex digits separated by spaces.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1</strong>:  the current score of the first player:<br>player name (completed with &quot;.&quot; up to 15 characters), the games won, and if the match is not over, the character &quot;|&quot; and the score of the current game, separated by spaces.<br><br><strong>Line 2</strong>:  the current score of the second player:<br>player name (completed with &quot;.&quot; up to 15 characters), the games won, and if the match is not over, the character &quot;|&quot; and the score of the current game, separated by spaces.<br><br><strong>Line 3</strong>:  &quot;Game in progress&quot; or &quot;[Player_name] wins&quot;</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &lt;= length(points) &lt;= 111</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">Serena Venus\n3\n1A</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Serena......... 1 | 15\nVenus.......... 0 | 15\nGame in progress</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 114226630106,
+  "avatar": 72010225615995,
+  "commentCount": 20,
+  "upVotes": 26,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 677159,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1656503239364,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

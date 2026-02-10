@@ -1,0 +1,194 @@
+{
+  "id": 1717,
+  "activeVersion": 19,
+  "score": 6,
+  "votableId": 9185708,
+  "codingamerId": 1481565,
+  "views": 389,
+  "commentableId": 9120021,
+  "title": "Darts",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "WilliamMorrison",
+  "publicHandle": "1717295caebfdd0c43c379711e070ce6cad6",
+  "codingamerHandle": "bcae57b39ca2fa35cf164f593cbec48c5651841",
+  "lastVersion": {
+    "version": 19,
+    "autocloseTime": 1543452662463,
+    "data": {
+      "title": "Darts",
+      "topics": [
+        {
+          "id": 95,
+          "handle": "geometry",
+          "labelMap": {
+            "1": "Geometry",
+            "2": "Geometry"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        },
+        {
+          "labelMap": {
+            "2": "Collision Detection"
+          }
+        }
+      ],
+      "solution": "using System;\nusing System.Linq;\nusing System.IO;\nusing System.Text;\nusing System.Collections;\nusing System.Collections.Generic;\n\nclass Solution\n{\n    static void Main(string[] args)\n    {\n        int SIZE = int.Parse(Console.ReadLine());\n        int numCompetitors = int.Parse(Console.ReadLine());\n        var competitors = Enumerable.Range(0, numCompetitors)\n            .Select((s, i) => new Competitor(Console.ReadLine(), i))\n            .ToList();\n        int numThrows = int.Parse(Console.ReadLine());\n        for (int i = 0; i < numThrows; i++)\n        {\n            var throwData = Console.ReadLine().Split(' ');\n            var competitor = competitors.First(s => s.Name == throwData[0]);\n            int x = int.Parse(throwData[1]);\n            int y = int.Parse(throwData[2]);\n            int points = GetPoints(x, y, SIZE);\n            competitor.Score += points;\n        }\n        var answer = competitors\n            .OrderByDescending(s => s.Score)\n            .ThenBy(s => s.ListOrder);\n        answer.ToList().ForEach(s => Console.WriteLine($\"{s.Name} {s.Score}\"));\n    }\n\n    static int GetPoints(int x, int y, int size)\n    {\n        double s2 = ((double) size) / 2;\n        if (InDiamond(x, y, s2))\n        {\n            return 15;\n        }\n        if (InCircle(x, y, s2))\n        {\n            return 10;\n        }\n        if (InSquare(x, y, s2))\n        {\n            return 5;\n        }\n        return 0;\n    }\n    static bool InDiamond(int x, int y, double size)\n    {\n        int dist = Math.Abs(x) + Math.Abs(y);\n        return dist <= size;\n    }\n    static bool InCircle(int x, int y, double radius)\n    {\n        x *= x;\n        y *= y;\n        radius *= radius;\n        return x + y <= radius;\n    }\n    static bool InSquare(int x, int y, double size)\n    {\n        return x >= -size && x <= size && y >= -size && y <= size;\n    }\n}\npublic class Competitor\n{\n    public int ListOrder { get; set; }\n    public int Score { get; set; } = 0;\n    public string Name { get; }\n    public Competitor(string name, int listOrder)\n    {\n        Name = name;\n        ListOrder = listOrder;\n    }\n}",
+      "statement": "A group of your friends want to have a dart throwing competition with a unique target. They've asked you, their tech savvy friend, to automate the scoring as they often squabble over scoring, and have trouble keeping track of who's turn it is to throw.\n\nThe target is a square. The square has a circle inscribed within whose diameter matches the width of the square. The circle, in turn, encompasses a diamond whose width from corner to corner matches the circle's diameter. The diamond can be thought of as a square rotated by 1/4 PI so that the corners of the square are on the x and y axes.\n\nDarts landing within the square but not within the circle or diamond are worth 5 points. Darts landing within the circle but not within the diamond are worth 10 points. Darts landing within the diamond are worth 15 points.\n\nIn the event of a tie, competitors should be ordered as they were in the name list, so competitors appearing earlier in the name list are listed earlier in ties.\n\nNote: Darts landing on the edge of a shape are considered within the shape.\nNote: The center of the square, circle and diamond is at (0,0).",
+      "testCases": [
+        {
+          "title": "Hit and Miss Duos",
+          "isTest": true,
+          "testIn": "20\n2\nWill\nJill\n4\nWill 0 0\nJill 0 0\nWill 20 20\nJill 0 0",
+          "testOut": "Jill 30\nWill 15",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Hit and Miss Duos Validator",
+          "isTest": false,
+          "testIn": "20\n2\nJoe\nMolly\n8\nJoe 0 0\nMolly -100 100\nJoe 100 200\nMolly 0 0\nJoe 100 100\nMolly 0 0\nJoe 0 0\nMolly 0 0",
+          "testOut": "Molly 45\nJoe 30",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Solo Play",
+          "isTest": true,
+          "testIn": "20\n1\nWill\n3\nWill -10 10\nWill -5 7\nWill 0 0",
+          "testOut": "Will 30",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Solo Play Validator",
+          "isTest": false,
+          "testIn": "20\n1\nRoy\n7\nRoy -10 10\nRoy 2 3\nRoy 5 7\nRoy 20 21\nRoy 4 -1\nRoy 100 -6\nRoy 0 0",
+          "testOut": "Roy 60",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Chaotic Ties",
+          "isTest": true,
+          "testIn": "20\n5\nEric\nJoe\nMolly\nLouis\nBrandon\n10\nJoe 0 0\nMolly 0 0\nBrandon 0 0\nEric -50 50\nLouis 50 -50\nJoe 10 10\nMolly -10 10\nBrandon -10 -10\nEric 5 5\nLouis 0 0",
+          "testOut": "Joe 20\nMolly 20\nBrandon 20\nEric 15\nLouis 15",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Chaotic Ties Validator",
+          "isTest": false,
+          "testIn": "100\n5\nJason\nJerry\nJalapeno\nJohn\nJake\n10\nJason 0 0\nJason 10 10\nJake 0 0\nJalapeno 0 0\nJerry -50 50\nJohn 50 -50\nJalapeno -10 10\nJohn -10 -10\nJerry 5 5\nJake 0 0",
+          "testOut": "Jason 30\nJalapeno 30\nJake 30\nJerry 20\nJohn 20",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Circles",
+          "isTest": true,
+          "testIn": "100\n4\nWill\nBill\nJill\nRekt\n8\nWill -51 0\nBill 51 0\nJill 49 2\nRekt 0 0\nWill 35 35\nBill -20 -21\nJill 1 50\nRekt -13 39",
+          "testOut": "Rekt 25\nBill 15\nJill 15\nWill 10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Circles Validator",
+          "isTest": false,
+          "testIn": "100\n4\nWill\nBill\nJill\nRekt\n12\nWill -51 0\nBill 51 0\nJill 50 10\nRekt 0 0\nJill -50 -10\nWill 45 45\nBill 30 30\nRekt 45 10\nRekt 0 0\nJill 10 45\nBill -25 30\nWill 45 50",
+          "testOut": "Rekt 40\nBill 20\nJill 20\nWill 10",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Odd size",
+          "isTest": true,
+          "testIn": "63\n2\nAda\nBob\n8\nAda 7 31\nBob 108 -300\nAda -266 30\nBob 24 20\nAda 201 -34\nBob -210 -281\nAda 83 -287\nBob 121 -278",
+          "testOut": "Bob 10\nAda 5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "75\n2\nRyan\nEmily\n4\nRyan -9 32\nEmily -36 -10\nRyan 93 -175\nEmily -110 93",
+          "testOut": "Ryan 10\nEmily 10",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Random 1",
+          "isTest": true,
+          "testIn": "71\n2\nTed\nFiona\n8\nTed 23 -93\nFiona -241 64\nTed -218 113\nFiona 70 -294\nTed 113 -156\nFiona 0 -31\nTed -28 25\nFiona -164 -121",
+          "testOut": "Fiona 15\nTed 5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "65\n2\nBob\nAda\n8\nBob 90 190\nAda 119 -231\nBob 193 221\nAda -10 5\nBob 14 16\nAda 71 182\nBob 63 -74\nAda 10 -108",
+          "testOut": "Bob 15\nAda 15",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Random 2",
+          "isTest": true,
+          "testIn": "70\n2\nLily\nSamuel\n8\nLily 132 213\nSamuel 33 -13\nLily -182 -147\nSamuel 173 -24\nLily -13 13\nSamuel 105 -68\nLily 260 -255\nSamuel 185 -66",
+          "testOut": "Lily 15\nSamuel 5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "96\n2\nVivian\nRyan\n8\nVivian -164 128\nRyan 76 -148\nVivian 224 -44\nRyan -291 243\nVivian 200 -272\nRyan -29 -27\nVivian -35 -38\nRyan 137 208",
+          "testOut": "Ryan 10\nVivian 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Random 3",
+          "isTest": true,
+          "testIn": "67\n3\nGeorge\nAda\nDavid\n12\nGeorge -8 -176\nAda -144 -23\nDavid 23 -24\nGeorge -214 -35\nAda 28 -63\nDavid 289 250\nGeorge 82 9\nAda 262 -201\nDavid 54 -77\nGeorge -20 15\nAda -19 27\nDavid -259 138",
+          "testOut": "George 10\nAda 10\nDavid 10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "81\n3\nChloe\nGeorge\nAda\n12\nChloe -264 -205\nGeorge -108 -106\nAda -125 -245\nChloe 40 -5\nGeorge -34 -251\nAda 72 94\nChloe -100 101\nGeorge -221 38\nAda 29 5\nChloe 245 12\nGeorge 28 33\nAda 65 -221",
+          "testOut": "Ada 15\nChloe 10\nGeorge 5",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "10 ≤ [[SIZE]] ≤ 100\n1 ≤ [[N]] ≤ 10\n1 ≤ [[T]] ≤ 50\n-300 ≤ [[X]] ≤ 300\n-300 ≤ [[Y]] ≤ 300",
+      "stubGenerator": "read SIZE:int\nread N:int\nloop N read name:string(100)\nread T:int\nloop T read throwName:word(100) throwX:int throwY:int\nwrite answer\n",
+      "inputDescription": "<<Line 1:>> [[SIZE]] (length of a side) of square as integer.\n<<Line 2:>> The number of competitors in name list, [[N]].\n<<Next [[N]] lines:>> [[name]] of a single competitor in name list.\n<<Next line:>> Number of throws, [[T]].\n<<Next [[T]] lines:>> Name of competitor, integer x-coordinate and integer y-coordinate of throw, each separated by a space, [[name]] [[X]] [[Y]].",
+      "solutionLanguage": "C#",
+      "outputDescription": "<<[[N]] lines:>> Competitor's name, a space, and that competitor's score, in descending order by score, and in order of appearance in the input list in case of a tie."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A group of your friends want to have a dart throwing competition with a unique target. They've asked you, their tech savvy friend, to automate the scoring as they often squabble over scoring, and have trouble keeping track of who's turn it is to throw.<br><br>The target is a square. The square has a circle inscribed within whose diameter matches the width of the square. The circle, in turn, encompasses a diamond whose width from corner to corner matches the circle's diameter. The diamond can be thought of as a square rotated by 1/4 PI so that the corners of the square are on the x and y axes.<br><br>Darts landing within the square but not within the circle or diamond are worth 5 points. Darts landing within the circle but not within the diamond are worth 10 points. Darts landing within the diamond are worth 15 points.<br><br>In the event of a tie, competitors should be ordered as they were in the name list, so competitors appearing earlier in the name list are listed earlier in ties.<br><br>Note: Darts landing on the edge of a shape are considered within the shape.<br>Note: The center of the square, circle and diamond is at (0,0).</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> <var>SIZE</var> (length of a side) of square as integer.<br><strong>Line 2:</strong> The number of competitors in name list, <var>N</var>.<br><strong>Next <var>N</var> lines:</strong> <var>name</var> of a single competitor in name list.<br><strong>Next line:</strong> Number of throws, <var>T</var>.<br><strong>Next <var>T</var> lines:</strong> Name of competitor, integer x-coordinate and integer y-coordinate of throw, each separated by a space, <var>name</var> <var>X</var> <var>Y</var>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>N</var> lines:</strong> Competitor's name, a space, and that competitor's score, in descending order by score, and in order of appearance in the input list in case of a tie.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">10 &le; <var>SIZE</var> &le; 100<br>1 &le; <var>N</var> &le; 10<br>1 &le; <var>T</var> &le; 50<br>-300 &le; <var>X</var> &le; 300<br>-300 &le; <var>Y</var> &le; 300</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">20\n2\nWill\nJill\n4\nWill 0 0\nJill 0 0\nWill 20 20\nJill 0 0</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Jill 30\nWill 15</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 229738246731,
+  "avatar": 22722418380787,
+  "commentCount": 21,
+  "upVotes": 7,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 278615,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

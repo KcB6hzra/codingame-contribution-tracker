@@ -1,0 +1,103 @@
+{
+  "id": 630,
+  "activeVersion": 12,
+  "score": 11,
+  "votableId": 4452796,
+  "codingamerId": 1528929,
+  "views": 314,
+  "commentableId": 4396345,
+  "title": "Syllogisms",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Blackfich",
+  "publicHandle": "6309f1a7a55453e9b29b84869e8e9efd728",
+  "codingamerHandle": "5e8ab57ca4a5a21586b680a4603d41929298251",
+  "lastVersion": {
+    "version": 12,
+    "data": {
+      "title": "Syllogisms",
+      "solution": "import java.io.*;\nimport java.util.*;\n\npublic class Solution {\n\n\tstatic boolean DEBUG = false;\n\n\tstatic final List<String> VALID_SYLLOGIMS = Arrays.asList( //\n\t\t\t\"AAA-1\", \"EAE-1\", \"AII-1\", \"EIO-1\", \"AAI-1\", \"EAO-1\", //\n\t\t\t\"EAE-2\", \"AEE-2\", \"EIO-2\", \"AOO-2\", \"EAO-2\", \"AEO-2\", //\n\t\t\t\"AII-3\", \"IAI-3\", \"EIO-3\", \"OAO-3\", \"EAO-3\", \"AAI-3\", //\n\t\t\t\"AEE-4\", \"IAI-4\", \"EIO-4\", \"AEO-4\", \"EAO-4\", \"AAI-4\" //\n\t);\n\n\tstatic class Premise {\n\t\tfinal char type;\n\t\tfinal String subject;\n\t\tfinal String predicate;\n\n\t\tPremise(String[] words) {\n\t\t\tsubject = words[1];\n\t\t\tpredicate = words[3].equals(\"not\") ? words[4] : words[3];\n\t\t\tif (\"all\".equals(words[0])) {\n\t\t\t\tif (words[3].equals(\"not\")) {\n\t\t\t\t\ttype = 'E';\n\t\t\t\t} else {\n\t\t\t\t\ttype = 'A';\n\t\t\t\t}\n\t\t\t} else if (\"no\".equals(words[0])) {\n\t\t\t\tif (words[3].equals(\"not\")) {\n\t\t\t\t\ttype = 'A';\n\t\t\t\t} else {\n\t\t\t\t\ttype = 'E';\n\t\t\t\t}\n\t\t\t} else {\n\t\t\t\tif (\"not\".equals(words[3])) {\n\t\t\t\t\ttype = 'O';\n\t\t\t\t} else {\n\t\t\t\t\ttype = 'I';\n\t\t\t\t}\n\t\t\t}\n\n\t\t}\n\n\t}\n\n\tstatic class Conclusion extends Premise {\n\t\tConclusion(String[] words) {\n\t\t\tsuper(words);\n\t\t}\n\t}\n\n\tstatic class Syllogism {\n\t\tfinal Premise majorPremise;\n\t\tfinal Premise minorPremise;\n\t\tfinal Conclusion conclusion;\n\n\t\tSyllogism(String line) {\n\t\t\tString[] words = line.split(\" \");\n\t\t\tList<String> majorPremiseWords = new ArrayList<>();\n\t\t\tList<String> minorPremiseWords = new ArrayList<>();\n\t\t\tList<String> conclusionWords = new ArrayList<>();\n\t\t\tList<String> current = majorPremiseWords;\n\t\t\tfor (String word : words) {\n\t\t\t\tif (\"and\".equals(word)) {\n\t\t\t\t\tcurrent = minorPremiseWords;\n\t\t\t\t} else if (\"therefore\".equals(word)) {\n\t\t\t\t\tcurrent = conclusionWords;\n\t\t\t\t} else {\n\t\t\t\t\tcurrent.add(word);\n\t\t\t\t}\n\t\t\t}\n\t\t\tmajorPremise = new Premise(majorPremiseWords.toArray(new String[0]));\n\t\t\tminorPremise = new Premise(minorPremiseWords.toArray(new String[0]));\n\t\t\tconclusion = new Conclusion(conclusionWords.toArray(new String[0]));\n\t\t}\n\n\t\tboolean isValid() {\n\t\t\t// identify the major, minor and middle terms\n\t\t\tString majorTerm = conclusion.predicate;\n\t\t\tString minorTerm = conclusion.subject;\n\t\t\tString middleTerm = majorPremise.subject.equals(majorTerm) || majorPremise.subject.equals(minorTerm) ? majorPremise.predicate : majorPremise.subject;\n            debug(\"major: %s, minor : %s, middle : %s \", majorTerm, minorTerm, middleTerm);\n\t\t\t// find out the figure of the syllogism\n\t\t\tint figure = 0;\n\t\t\tif (middleTerm.equals(majorPremise.subject) && middleTerm.equals(minorPremise.predicate) && majorTerm.equals(majorPremise.predicate) && minorTerm.equals(minorPremise.subject) ) {\n\t\t\t\tfigure = 1;\n\t\t\t} else if (middleTerm.equals(majorPremise.predicate) && middleTerm.equals(minorPremise.predicate) && majorTerm.equals(majorPremise.subject) && minorTerm.equals(minorPremise.subject) ) {\n\t\t\t\tfigure = 2;\n\t\t\t} else if (middleTerm.equals(majorPremise.subject) && middleTerm.equals(minorPremise.subject) && majorTerm.equals(majorPremise.predicate) && minorTerm.equals(minorPremise.predicate)  ) {\n\t\t\t\tfigure = 3;\n\t\t\t} else if (middleTerm.equals(majorPremise.predicate) && middleTerm.equals(minorPremise.subject) && majorTerm.equals(majorPremise.subject) && minorTerm.equals(minorPremise.predicate)  ) {\n\t\t\t\tfigure = 4;\n\t\t\t} else {\n\t\t\t    figure = 0;\n\t\t\t}\n\t\t\tString syllogismMoodAndFigure = majorPremise.type + \"\" + minorPremise.type + \"\" + conclusion.type + \"-\" + figure;\n\n\t\t\tdebug(\" -> %s -> \", syllogismMoodAndFigure);\n\n\t\t\treturn VALID_SYLLOGIMS.contains(syllogismMoodAndFigure);\n\t\t}\n\t}\n\n\tstatic void run(InputStream inputStream) {\n\t\ttry (Scanner in = new Scanner(inputStream)) {\n\t\t\tint nbSyllogyms = in.nextInt();\n\t\t\tin.nextLine();\n\t\t\tfor (int i = 0; i < nbSyllogyms; i++) {\n\t\t\t\tString line = in.nextLine();\n\t\t\t\tdebug(\"%s\\n\", line);\n\t\t\t\tSyllogism syllogism = new Syllogism(line);\n\t\t\t\tSystem.out.println(syllogism.isValid() ? \"VALID\" : \"INVALID\");\n\t\t\t}\n\t\t} catch (Exception e) {\n\t\t\te.printStackTrace();\n\t\t}\n\t}\n\n\tpublic static void main(String[] args) {\n\t\trun(System.in);\n\t}\n\n\tprivate static void debug(String msg, Object... args) {\n\t\tif (DEBUG) {\n\t\t\tSystem.err.print(String.format(msg, args));\n\t\t}\n\t}\n\n}\n",
+      "statement": "A syllogism (Greek: συλλογισμός syllogismos, \"conclusion, inference\") is a kind of logical argument that applies deductive reasoning to arrive at a conclusion based on two (in this case) or more propositions (ie premises) that are asserted or assumed to be true. Here is a typical syllogism:\n\nall men are mortal\nall Greeks are men\ntherefore, all Greeks are mortal\n\nIn this puzzle you will deal only with categorical syllogisms. \n\nA valid syllogism is one whose conclusion logically follows from its premises. A syllogism can be valid but not sound (ie does not make sense to people) as in :\n\nSome bears are venusians.\nAll venusians are arachnids.\nTherefore some arachnids are bears.\n\nYour goal is to:\n1 - Read a syllogism\n3 - Parse it\n3 - Evaluate it \n\nIdentifying the type of the premises and conclusions and the relation between the various [[subjects]] and [[predicates]] will let you decide wether the syllogism is {{VALID}} or {{INVALID}}.\n\nAll provided syllogism are syntaxically correct (ie the {{and}} and {{therefore}} keywords are well placed, the {{not}} keyword will not appear with a {{all}} or {{no}} keyword, etc ...)\n\n\nEach syllogysm is structured as follows:\n[[majorPremise]] {{and}} [[minorPremise]] {{therefore}} [[conclusion]]\n\n[[majorPremise]], [[minorPremise]] and [[conclusion]] are structured as follow:\n{{all|no|some}} [[subject]] [[verb]] [{{not}}] [[predicate]]\n\n[[subject]] and [[predicate]] are single different words on a given premise/conclusion. You do not have to care for singular or plural : matching terms will always be provided with the same form. Also as a hint, the [[verb]] does not have any importance in this exercise, only the opening word ({{all}}, {{no}}, {{some}}), [[subject]] and [[predicate]] and when applicable the {{not}}. \n\nThe {{not}} keyword may only appear with a {{some}} keyword (ie : \"some boat have sails\", \"some apples are not green\")\n\nThe {{and}} and {{therefore}} keywords (surrounded by spaces) will not appear in the premises.",
+      "testCases": [
+        {
+          "title": "xxx-1",
+          "isTest": true,
+          "testIn": "4\nall humans are mortal and all greeks are humans therefore all greeks are mortal\nall humans are mortal and all greeks are humans therefore no greeks are mortal\nno mortals are gods and all greeks are mortals therefore all greeks are gods\nno mortals are gods and all greeks are mortals therefore no greeks are gods\n",
+          "testOut": "VALID\nINVALID\nINVALID\nVALID",
+          "isValidator": false
+        },
+        {
+          "title": "Validate xxx-1",
+          "isTest": false,
+          "testIn": "6\nall m are p and all s are m therefore no s are p\nall m are p and all s are m therefore all s are p\nall p are m and all m are s therefore all s are p\nall m are p and no s are m therefore no s are p\nall m are p and no s are m therefore all s are p\nall m are p and no s are m therefore all p are s\n",
+          "testOut": "INVALID\nVALID\nINVALID\nINVALID\nINVALID\nINVALID",
+          "isValidator": true
+        },
+        {
+          "title": "xxx-2",
+          "isTest": true,
+          "testIn": "4\nall horses have hooves and no humans have hooves therefore some humans are not horses\nall horses have hooves and no humans have hooves therefore no humans are horses\nno fun doing homework and some reading is homework therefore some reading is not fun\nno fun doing homework and some reading is homework therefore no reading is fun\n",
+          "testOut": "VALID\nVALID\nVALID\nINVALID",
+          "isValidator": false
+        },
+        {
+          "title": "Validate xxx-2",
+          "isTest": false,
+          "testIn": "6\nno P are M and all S are M therefore no S are P\nno P are M and all S are M therefore some S are P\nall P are M and some S are not M therefore some S are P\nall P are M and some S are not M therefore some P are M\nall P are M and some S are not M therefore some S are not P\nall P are M and some S are not M therefore no P are S\n",
+          "testOut": "VALID\nINVALID\nINVALID\nINVALID\nVALID\nINVALID",
+          "isValidator": true
+        },
+        {
+          "title": "xxx-3",
+          "isTest": true,
+          "testIn": "5\nno flowers are animals and all flowers are plants therefore some plants are not animals\nno flowers are animals and all flowers are plants therefore no plants are animals\nall squares are rectangles and all squares are rhombuses therefore some rhombuses are rectangles\nall squares are rectangles and all squares are rhombuses therefore some rectangles are rhombuses\nall squares are rectangles and all squares are rhombuses therefore all rectangles are rhombuses\n",
+          "testOut": "VALID\nINVALID\nVALID\nINVALID\nINVALID",
+          "isValidator": false
+        },
+        {
+          "title": "Validate xxx-3",
+          "isTest": false,
+          "testIn": "7\nall M are P and all M are S therefore some S are P\nall M are P and all M are S therefore no S are P\nall M are P and all M are S therefore some P are S\nno M are P and all M are S therefore some S are P\nno M are P and all M are S therefore no S are P\nno M are P and all M are S therefore some P are S\nno M are P and all M are S therefore some S are not P\n",
+          "testOut": "VALID\nINVALID\nINVALID\nINVALID\nINVALID\nINVALID\nVALID",
+          "isValidator": true
+        },
+        {
+          "title": "xxx-4",
+          "isTest": true,
+          "testIn": "7\nsome vehicles are ferraris and all ferraris are cars therefore all cars are vehicles\nsome vehicles are ferraris and all ferraris are cars therefore some cars are vehicles\nall cars are vehicules and no vehicules are flowers therefore all flowers are cars\nall cars are vehicules and no vehicules are flowers therefore no flowers are cars\nall patatoes are vegetables and all vegetables are plants therefore no plants are patatoes\nall patatoes are vegetables and all vegetables are plants therefore some plants are patatoes\nall patatoes are vegetables and all vegetables are plants therefore all plants are patatoes\n",
+          "testOut": "INVALID\nVALID\nINVALID\nVALID\nINVALID\nVALID\nINVALID",
+          "isValidator": false
+        },
+        {
+          "title": "validate xxx-4",
+          "isTest": false,
+          "testIn": "6\nno P are M and some M are S therefore no S are P\nno P are M and some M are S therefore some S are not P\nall P are M and no M are S therefore no S are P\nall P are M and no M are S therefore some S are not P\nall P are M and all M are S therefore some S are P\nall P are M and all M are S therefore no S are P\n",
+          "testOut": "INVALID\nVALID\nVALID\nVALID\nVALID\nINVALID",
+          "isValidator": true
+        }
+      ],
+      "constraints": "1 <= [[nbSyllogisms]] < 100\n1 <= [[any line's length]] < 256",
+      "stubGenerator": "read nbSyllogisms:int\nloop nbSyllogisms read syllogism:string(255) \nloop nbSyllogisms write VALID",
+      "inputDescription": "Line 1 : [[nbSyllogisms]]\nnext [[nbSyllogisms]] lines : [[syllogism]]\n\nwhere :\n - [[syllogism]] : [[majorPremise]] {{and}} [[minorPremise]] {{therefore}} [[conclusion]]\n - [[premise]]/[[conclusion]] : {{all|no|some}} [[subject]] [[verb]] [{{not}}] [[predicate]]",
+      "solutionLanguage": "Java",
+      "outputDescription": "either {{VALID}} or {{INVALID}} for each conclusion, each on a line with no empty lines at all."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h1><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h1>\n   <span class=\"question-statement\">A syllogism (Greek: &sigma;&upsilon;&lambda;&lambda;&omicron;&gamma;&iota;&sigma;&mu;ό&sigmaf; syllogismos, &quot;conclusion, inference&quot;) is a kind of logical argument that applies deductive reasoning to arrive at a conclusion based on two (in this case) or more propositions (ie premises) that are asserted or assumed to be true. Here is a typical syllogism:<br><br>all men are mortal<br>all Greeks are men<br>therefore, all Greeks are mortal<br><br>In this puzzle you will deal only with categorical syllogisms. <br><br>A valid syllogism is one whose conclusion logically follows from its premises. A syllogism can be valid but not sound (ie does not make sense to people) as in :<br><br>Some bears are venusians.<br>All venusians are arachnids.<br>Therefore some arachnids are bears.<br><br>Your goal is to:<br>1 - Read a syllogism<br>3 - Parse it<br>3 - Evaluate it <br><br>Identifying the type of the premises and conclusions and the relation between the various <var>subjects</var> and <var>predicates</var> will let you decide wether the syllogism is <const>VALID</const> or <const>INVALID</const>.<br><br>All provided syllogism are syntaxically correct (ie the <const>and</const> and <const>therefore</const> keywords are well placed, the <const>not</const> keyword will not appear with a <const>all</const> or <const>no</const> keyword, etc ...)<br><br><br>Each syllogysm is structured as follows:<br><var>majorPremise</var> <const>and</const> <var>minorPremise</var> <const>therefore</const> <var>conclusion</var><br><br><var>majorPremise</var>, <var>minorPremise</var> and <var>conclusion</var> are structured as follow:<br><const>all|no|some</const> <var>subject</var> <var>verb</var> [<const>not</const>] <var>predicate</var><br><br><var>subject</var> and <var>predicate</var> are single different words on a given premise/conclusion. You do not have to care for singular or plural : matching terms will always be provided with the same form. Also as a hint, the <var>verb</var> does not have any importance in this exercise, only the opening word (<const>all</const>, <const>no</const>, <const>some</const>), <var>subject</var> and <var>predicate</var> and when applicable the <const>not</const>. <br><br>The <const>not</const> keyword may only appear with a <const>some</const> keyword (ie : &quot;some boat have sails&quot;, &quot;some apples are not green&quot;)<br><br>The <const>and</const> and <const>therefore</const> keywords (surrounded by spaces) will not appear in the premises.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">Line 1 : <var>nbSyllogisms</var><br>next <var>nbSyllogisms</var> lines : <var>syllogism</var><br><br>where :<br> - <var>syllogism</var> : <var>majorPremise</var> <const>and</const> <var>minorPremise</var> <const>therefore</const> <var>conclusion</var><br> - <var>premise</var>/<var>conclusion</var> : <const>all|no|some</const> <var>subject</var> <var>verb</var> [<const>not</const>] <var>predicate</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">either <const>VALID</const> or <const>INVALID</const> for each conclusion, each on a line with no empty lines at all.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt;= <var>nbSyllogisms</var> &lt; 100<br>1 &lt;= <var>any line's length</var> &lt; 256</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4\nall humans are mortal and all greeks are humans therefore all greeks are mortal\nall humans are mortal and all greeks are humans therefore no greeks are mortal\nno mortals are gods and all greeks are mortals therefore all greeks are gods\nno mortals are gods and all greeks are mortals therefore no greeks are gods\n</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">VALID\nINVALID\nINVALID\nVALID</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 281156840666,
+  "avatar": 95780209684968,
+  "commentCount": 24,
+  "upVotes": 11,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 97676,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

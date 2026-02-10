@@ -1,0 +1,429 @@
+{
+  "id": 5566,
+  "activeVersion": 81,
+  "score": 101,
+  "votableId": 15368693,
+  "codingamerId": 1983963,
+  "views": 1777,
+  "commentableId": 15284700,
+  "title": "Derivative time !!! - part1",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "pluieciel",
+  "publicHandle": "5566fb4fc8a91875f9bd7623a08b431b5a84",
+  "codingamerHandle": "3ae5608cc0aec3a2d51efd34cade51cb3693891",
+  "lastVersion": {
+    "version": 81,
+    "autocloseTime": 1655141297481,
+    "data": {
+      "title": "Derivative time !!! - part1",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Abstraction"
+          }
+        },
+        {
+          "id": 71,
+          "handle": "recursion",
+          "labelMap": {
+            "1": "Récursion",
+            "2": "Recursion"
+          },
+          "pageTitle": "Recursion: exercises and theory",
+          "puzzleCount": 13,
+          "parentTopicId": 41,
+          "contentDetailsId": 77
+        }
+      ],
+      "solution": "(ns Solution\n  (:require [clojure.string :as S])\n  (:gen-class))\n\n(defn make-sum [a1 a2] (list a1 '+ a2))\n(defn make-product [m1 m2] (list m1 '* m2))\n(defn make-pow [p1 p2] (list p1 'Math/pow p2))\n\n(defmulti deriv (fn [exp _] (if (list? exp) (second exp) (type exp))))\n(defmethod deriv java.lang.Long [_ _] 0)\n(defmethod deriv clojure.lang.Symbol [exp var] (if (= exp var) 1 0))\n(defmethod deriv 'Math/pow [[a _ b] var]\n  (if (not= a var)\n    0\n    (make-product \n      b\n      (make-pow a (make-sum b -1)))))\n(defmethod deriv '+ [[a _ b] var]\n  (make-sum (deriv a var) (deriv b var)))\n(defmethod deriv '* [[a _ b] var]\n  (make-sum\n    (make-product a (deriv b var))\n    (make-product (deriv a var) b)))\n\n(defmacro prefix [exp]\n  (if (or (number? exp) (symbol? exp)) \n    exp\n    (list (second exp) `(prefix ~(first exp)) `(prefix ~(last exp)))))\n\n(defmacro defs\n  [bindings]\n  `(do\n     ~@(for [[sym n] (partition 2 bindings)]\n         `(def ~(read-string sym) ~(read-string n)))))\n\n(defn -main [& args]\n  (let [F (read-line)\n        Vs (as-> (read-line) I (S/split I #\" \") (map symbol I))\n        Dict (S/split (read-line) #\" \")]\n\n    (as-> F I\n      (S/replace I #\"[+*\\^]\" {\"+\" \" + \" \"*\" \" * \" \"^\" \" Math/pow \"})\n      (read-string I)\n      (reduce deriv I Vs)\n      (eval `(do (defs ~Dict) (prefix ~I)))\n      (println (int I)))))\n\n\n;;;; for Python\n\n;import sys\n;import math, re\n\n;formula = input()\n;vs = input().split()\n;dd = input().split()\n;D = {k: v for k, v in zip(dd[::2], dd[1::2])}\n\n;def split_exp(exp):\n;    if \"(\" in exp:\n;        count = 0\n;        result = []\n;        s = \"\"\n;        for i in exp[1:-1]:\n;            s+=i\n;            if i==\"(\":count+=1\n;            elif i==\")\":count-=1\n;            if count == 0 and i in \"+*^\":\n;                result.append(s[:-1])\n;                result.append(i)\n;                s=\"\"\n;        result.append(s)\n;        return result\n;    elif \"+\" in exp:\n;        a, b = exp[1:-1].split(\"+\")\n;        return [a, \"+\", b]\n;    elif \"*\" in exp:\n;        a, b = exp[1:-1].split(\"*\")\n;        return [a, \"*\", b]\n;    elif \"^\" in exp:\n;        a, b = exp[1:-1].split(\"^\")\n;        return [a, \"^\", b]\n\n;def is_sum(exp): return split_exp(exp)[1] == \"+\"\n;def make_sum(a, b): return \"(\" + a + \"+\" + b + \")\"\n;def is_multi(exp): return split_exp(exp)[1] == \"*\"\n;def make_multi(a, b): return \"(\" + a + \"*\" + b + \")\"\n;def is_pow(exp): return split_exp(exp)[1] == \"^\"\n;def make_pow(a, b): return \"(\" + a + \"^\" + b + \")\"\n\n;def deriv(exp, var):\n;    if not re.search(r'[^0-9\\+\\-]',exp): return \"0\"\n;    elif not re.search(r'\\(',exp): return \"1\" if exp == var else \"0\"\n;    elif is_pow(exp):\n;        if split_exp(exp)[0] == var:\n;            return make_multi(split_exp(exp)[2], \n;                              make_pow(split_exp(exp)[0], \n;                                       make_sum(split_exp(exp)[2], \"(-1+0)\")))\n;        else:\n;            return \"0\"\n;    elif is_sum(exp):\n;        return make_sum(deriv(split_exp(exp)[0], var),\n;                        deriv(split_exp(exp)[2], var))\n;    elif is_multi(exp):\n;        return make_sum(make_multi(split_exp(exp)[0],\n;                                   deriv(split_exp(exp)[2], var)),\n;                        make_multi(split_exp(exp)[2],\n;                                   deriv(split_exp(exp)[0], var)))\n\n\n\n;result = formula\n;for v in vs:\n;    result = deriv(result, v)\n\n;for var, val in D.items():\n;    result = result.replace(var, val)\n;result = result.replace(\"^\", \"**\")\n\n;print(round(eval(result)))\n",
+      "statement": "Story:\nLouise is learning calculus in her maths courses and she likes the idea. When doing her homework, she is not sure and she wants to check her answers with yours. Could you create a program so that we can check the answers?\n\nCalculate, evaluate the partial derivative of a given formula.\n\nFor instance, \ngiven the function formula \"(5*(x*(y^2)))\"                              \nand \"y x\", the variables in respect with you must derive it\nSo here f(x,y) = 5xy²\nand you have to calculate:\n```    d²f(x,y)\n   ----------\n     dxdy```\nit gives you the formula 10*y,\nAt last \"x 2 y 6\" means x=2, y=6,\ngives you the values with which you must evaluate the obtained derivative\nSo the answer should be 60\n\nNote:\n\nTo simplify the task, only consider {{+}}, {{*}} and {{^}}. And assume that {{+}}, {{*}} and {{^}} always take two arguments and that expressions are fully parenthesized. \n\nNegative power has no parenthesis. \ne.g. (((18*(x^{{-1}}))+y)+z)\n\n[[var]]s may be in other forms other than x, y, and z. Similar to identifiers in many programming languages, the [[var]] would be some letter followed by letters, numbers or underscore.\n\nlink about calculus rules: <<https://en.wikipedia.org/wiki/Differentiation_rules>>\nThe rules needed here:\na'=0\n(a*x)'=a\n(x^a)'=a*x^(a-1)  (when a is not 0)\n(u+v)'=u'+v'\n(u*v)'=u'*v+v'*u",
+      "testCases": [
+        {
+          "title": "easy multiply",
+          "isTest": true,
+          "testIn": "(5*(x*y))\nx\nx 2 y 6",
+          "testOut": "30",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "(7*(x*y))\ny\nx 3 y 4",
+          "testOut": "21",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "second derivative",
+          "isTest": true,
+          "testIn": "(5*((x^4)*(y^2)))\nx x\nx 2 y 6",
+          "testOut": "8640",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "(2*((x^3)*(y^2)))\nx x\nx 1 y 2",
+          "testOut": "48",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "second derivative mix",
+          "isTest": true,
+          "testIn": "(5*(x*(y^2)))\ny x\nx 2 y 6",
+          "testOut": "60",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "(2*(x*(y^4)))\ny x\nx 3 y 2",
+          "testOut": "64",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "power with number",
+          "isTest": true,
+          "testIn": "((x^2)+(9*(x+y)))\nx\nx 1 y 2",
+          "testOut": "11",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "((y^3)+(3*(x+y)))\ny\nx 3 y 2",
+          "testOut": "15",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "power with variable",
+          "isTest": true,
+          "testIn": "(8*(y^x))\ny y\nx -1 y 2",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "(x^y)\nx x\nx 2 y 3",
+          "testOut": "12",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "3 variables",
+          "isTest": true,
+          "testIn": "(((x^2)+(2*(z^5)))+((x+y)+z))\nz\nx 2 y 3 z 4",
+          "testOut": "2561",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "(((y^3)+(5*(z^2)))+((x+y)+(2*z)))\nz\nx 1 y 2 z 3",
+          "testOut": "32",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "fraction",
+          "isTest": true,
+          "testIn": "(((x^2)+(2*(z^5)))+(((18*(x^-1))+y)+z))\nx\nx 3 y 4 z 1",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "(((x^3)+(2*(z^5)))+(((4*(x^-2))+y)+z))\nx\nx 2 y 1 z 7",
+          "testOut": "11",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "longer multiply",
+          "isTest": true,
+          "testIn": "(((x^2)*(2*(z^5)))*((x+y)+z))\nz\nx 1 y 1 z 1",
+          "testOut": "32",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "(((y^6)*(z^5))*(((3*x)+y)+z))\ny\nx 1 y 1 z 1",
+          "testOut": "31",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "3rd derivative",
+          "isTest": true,
+          "testIn": "(((y^6)*(z^5))*(((3*(x^4))+y)+z))\ny y z\nx 1 y 1 z 2",
+          "testOut": "16320",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "(((y^6)*(z^5))*(((3*(x^2))+y)+z))\ny y z\nx 1 y 1 z 1",
+          "testOut": "840",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "some Greek ;)",
+          "isTest": true,
+          "testIn": "(((Beta^6)*(Gamma^5))*(((3*(Alpha^4))+Beta)+Gamma))\nBeta Beta Gamma\nAlpha 1 Beta 1 Gamma 2",
+          "testOut": "16320",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "(((Beta^6)*(Gamma^5))*(((3*(Alpha^2))+Beta)+Gamma))\nBeta Beta Gamma\nAlpha 1 Beta 1 Gamma 1",
+          "testOut": "840",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "maybe not xyz ;)",
+          "isTest": true,
+          "testIn": "(((x2^6)*(x3^5))*(((3*(x1^4))+x2)+x3))\nx2 x2 x3\nx1 1 x2 1 x3 2",
+          "testOut": "16320",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "(((x2^6)*(x3^5))*(((3*(x1^2))+x2)+x3))\nx2 x2 x3\nx1 1 x2 1 x3 1",
+          "testOut": "840",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "some Vars ;)))",
+          "isTest": true,
+          "testIn": "(((Var_2^6)*(Var_3^5))*(((3*(Var_1^4))+Var_2)+Var_3))\nVar_2 Var_2 Var_3\nVar_1 1 Var_2 1 Var_3 2",
+          "testOut": "16320",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "(((Var_2^6)*(Var_3^5))*(((3*(Var_1^2))+Var_2)+Var_3))\nVar_2 Var_2 Var_3\nVar_1 1 Var_2 1 Var_3 1",
+          "testOut": "840",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "bigger constants",
+          "isTest": true,
+          "testIn": "(50*((x^40)*(y^20)))\nx x\nx 1 y 1",
+          "testOut": "78000",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "(21*((x^19)*(y^12)))\ny x\nx 1 y 1",
+          "testOut": "4788",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "bigger power",
+          "isTest": true,
+          "testIn": "(x^(y^10))\nx x\nx 1 y 2",
+          "testOut": "1047552",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 14",
+          "isTest": false,
+          "testIn": "(x^(y^11))\nx x\nx 1 y 2",
+          "testOut": "4192256",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "cannot find",
+          "isTest": true,
+          "testIn": "(5*(x*(y^2)))\nz\nx 2 y 6",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 15",
+          "isTest": false,
+          "testIn": "(50*((x^40)*(y^20)))\nz\nx 1 y 2",
+          "testOut": "0",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "All numbers are integers.\n\n<<Line 2>> would give a list from 1 to 3 different/same [[var]]s to do partial derivative.\n\nYou can assume that the second argument of ^ is constant, to be simple and avoid \"ln\" or \"e^x\".\ne.g.:\nwill appear:\n(x^y)\nx\nx 1 y 1\nwon't appear (this could be too complex):\n(x^y)\ny\nx 1 y 1",
+      "coverBinaryId": 51782280805967,
+      "stubGenerator": "read F:string(256)\nread Vs:string(256)\nread Dict:string(256)\nwrite answer\n",
+      "inputDescription": "<<Line 1>>: [[formula]]\n<<Line 2>>: list of [[var]]s for partial derivative, separated by space, length of the list will be 1, 2 or 3.\n<<Line 3>>: [[var]]s' values, paired and separated by space",
+      "solutionLanguage": "Clojure",
+      "outputDescription": "The result (always an [[integer]])."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Story:<br>Louise is learning calculus in her maths courses and she likes the idea. When doing her homework, she is not sure and she wants to check her answers with yours. Could you create a program so that we can check the answers?<br><br>Calculate, evaluate the partial derivative of a given formula.<br><br>For instance, <br>given the function formula &quot;(5*(x*(y^2)))&quot;                              <br>and &quot;y x&quot;, the variables in respect with you must derive it<br>So here f(x,y) = 5xy&sup2;<br>and you have to calculate:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">    d&sup2;f(x,y)<br>   ----------<br>     dxdy</pre><pre style=\"font-family: monospace\"></pre><br>it gives you the formula 10*y,<br>At last &quot;x 2 y 6&quot; means x=2, y=6,<br>gives you the values with which you must evaluate the obtained derivative<br>So the answer should be 60<br><br>Note:<br><br>To simplify the task, only consider <const>+</const>, <const>*</const> and <const>^</const>. And assume that <const>+</const>, <const>*</const> and <const>^</const> always take two arguments and that expressions are fully parenthesized. <br><br>Negative power has no parenthesis. <br>e.g. (((18*(x^<const>-1</const>))+y)+z)<br><br><var>var</var>s may be in other forms other than x, y, and z. Similar to identifiers in many programming languages, the <var>var</var> would be some letter followed by letters, numbers or underscore.<br><br>link about calculus rules: <strong>https://en.wikipedia.org/wiki/Differentiation_rules</strong><br>The rules needed here:<br>a'=0<br>(a*x)'=a<br>(x^a)'=a*x^(a-1)  (when a is not 0)<br>(u+v)'=u'+v'<br>(u*v)'=u'*v+v'*u</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: <var>formula</var><br><strong>Line 2</strong>: list of <var>var</var>s for partial derivative, separated by space, length of the list will be 1, 2 or 3.<br><strong>Line 3</strong>: <var>var</var>s' values, paired and separated by space</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The result (always an <var>integer</var>).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">All numbers are integers.<br><br><strong>Line 2</strong> would give a list from 1 to 3 different/same <var>var</var>s to do partial derivative.<br><br>You can assume that the second argument of ^ is constant, to be simple and avoid &quot;ln&quot; or &quot;e^x&quot;.<br>e.g.:<br>will appear:<br>(x^y)<br>x<br>x 1 y 1<br>won't appear (this could be too complex):<br>(x^y)<br>y<br>x 1 y 1</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">(5*(x*y))\nx\nx 2 y 6</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">30</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 118091167484,
+  "avatar": 12585096610807,
+  "commentCount": 76,
+  "upVotes": 109,
+  "downVotes": 8,
+  "validateAction": {
+    "actionId": 664508,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1605441937001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1605445753547,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1608041137000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1608063721294,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1610658337001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1610816440818,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1613408737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1613480650741,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1616072737000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1635280424523,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1637874337011,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1637874627848,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1640469936999,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1652549297481,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1652638788041,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

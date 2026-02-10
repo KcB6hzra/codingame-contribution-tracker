@@ -1,0 +1,209 @@
+{
+  "id": 6389,
+  "activeVersion": 23,
+  "score": 19,
+  "votableId": 17380308,
+  "codingamerId": 935734,
+  "views": 504,
+  "commentableId": 17287853,
+  "title": "Kids Blocks",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "MNada",
+  "publicHandle": "6389c362746c6b48c2a33246022ff51541ac",
+  "codingamerHandle": "5a84959d6054e83c292367110d1e56d1437539",
+  "lastVersion": {
+    "version": 23,
+    "autocloseTime": 1620898270058,
+    "data": {
+      "title": "Kids Blocks",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Tiling"
+          }
+        }
+      ],
+      "solution": "\nimport java.util.ArrayList;\nimport java.util.List;\nimport java.util.Scanner;\n\nclass Solution {\n\n\tstatic int onesCount;\n\tstatic int twosCount;\n\tstatic int threesCount;\n\n\tstatic int totalLength;\n\n\tpublic static void main(String[] args) {\n\t\tScanner in = new Scanner(System.in);\n\t\tonesCount = in.nextInt(); // count of pieces of width equals One block\n\t\ttwosCount = in.nextInt(); // count of pieces of width equals two blocks\n\t\tthreesCount = in.nextInt(); // count of pieces of width equals three blocks\n\n\t\ttotalLength = onesCount + 2 * twosCount + 3 * threesCount;\n\t\tint biggestSize = (threesCount != 0 ? 3 : (twosCount != 0 ? 2 : 1));\n\n\t\tfor (int rowSize = biggestSize; rowSize <= totalLength / 2; rowSize++) {\n\t\t\tif (totalLength % rowSize != 0)\n\t\t\t\tcontinue;\n\n\t\t\tList<BlockOfPieces> possiblePiecesForRowSize = possibleCombinationsForRowSize(rowSize);\n\t\t\tif (combinationWithRepetition(possiblePiecesForRowSize, possiblePiecesForRowSize.size(), totalLength / rowSize)) {\n\t\t\t\tSystem.out.println(\"POSSIBLE\");\n\t\t\t\treturn;\n\t\t\t}\n\t\t}\n\n\t\tSystem.out.println(\"NOT POSSIBLE\");\n\t}\n\n\tprivate static boolean combinationWithRepetition(List<BlockOfPieces> possiblePiecesForRowSize, int n, int r) {\n\t\tint chosen[] = new int[r + 1];\n\t\treturn combinationRecursive(chosen, possiblePiecesForRowSize, 0, r, 0, n - 1);\n\t}\n\n\tprivate static boolean combinationRecursive(int chosen[], List<BlockOfPieces> possiblePiecesForRowSize, int index, int r, int start, int end) {\n\t\tList<BlockOfPieces> rectangular = new ArrayList<>();\n\t\tif (index == r) {\n\t\t\tfor (int i = 0; i < r; i++) {\n\t\t\t\trectangular.add(possiblePiecesForRowSize.get(chosen[i]));\n\t\t\t}\n\t\t\treturn totalsCorrectUsedAllPieces(rectangular);\n\t\t}\n\n\t\tfor (int i = start; i <= end; i++) {\n\t\t\tchosen[index] = i;\n\t\t\tboolean found = combinationRecursive(chosen, possiblePiecesForRowSize, index + 1, r, i, end);\n\t\t\tif (found) {\n\t\t\t\treturn true;\n\t\t\t}\n\t\t}\n\t\treturn false;\n\t}\n\n\tprivate static boolean totalsCorrectUsedAllPieces(List<BlockOfPieces> rectangular) {\n\t\tint builtCountOfOnes = 0;\n\t\tint builtCountOfTwos = 0;\n\t\tint builtCountOfThrees = 0;\n\t\tfor (BlockOfPieces s : rectangular) {\n\t\t\tbuiltCountOfOnes += s.countOfOnes();\n\t\t\tbuiltCountOfTwos += s.countOfTwos();\n\t\t\tbuiltCountOfThrees += s.countOfThrees();\n\t\t}\n\n\t\tboolean usedAllPieces = builtCountOfOnes == onesCount && builtCountOfTwos == twosCount && builtCountOfThrees == threesCount;\n\t\tif (usedAllPieces) {\n\t\t\tSystem.err.println(\"Found some Solution consists of (\" + rectangular.size() + \") Rows each of Size (\" + rectangular.get(0).length() + \")\");\n\t\t\trectangular.forEach(x -> x.print());\n\t\t}\n\t\treturn usedAllPieces;\n\t}\n\n\tprivate static List<BlockOfPieces> possibleCombinationsForRowSize(int rowSize) {\n\t\tList<BlockOfPieces> possiblePiecesForRowSize = new ArrayList<>();\n\t\tcombinationTwoPieces(rowSize, 1, possiblePiecesForRowSize);\n\t\tcombinationTwoPieces(rowSize, 2, possiblePiecesForRowSize);\n\t\tcombinationTwoPieces(rowSize, 3, possiblePiecesForRowSize);\n\t\tcombinationThreePieces(rowSize, possiblePiecesForRowSize);\n\t\treturn possiblePiecesForRowSize;\n\t}\n\n\tprivate static void combinationTwoPieces(int rowSize, int pieceSize, List<BlockOfPieces> possiblePieces) {\n\t\tif (pieceSize == 1) {\n\t\t\tBlockOfPieces e = new BlockOfPieces();\n\t\t\te.addPiece(new Pieces(rowSize, PieceSize.ONE));\n\n\t\t\tif (e.countOfOnes() <= onesCount && e.countOfTwos() <= twosCount && e.countOfThrees() <= threesCount)\n\t\t\t\tpossiblePieces.add(e);\n\n\t\t\treturn;\n\t\t}\n\n\t\tfor (int pieceCount = 1; pieceSize * pieceCount <= rowSize; pieceCount++) {\n\t\t\tBlockOfPieces e = new BlockOfPieces();\n\n\t\t\tint pieceSizeOneCount = rowSize - (pieceCount * pieceSize);\n\t\t\te.addPiece(new Pieces(pieceCount, PieceSize.values()[pieceSize]));\n\t\t\te.addPiece(new Pieces(pieceSizeOneCount, PieceSize.ONE));\n\n\t\t\tif (e.countOfOnes() <= onesCount && e.countOfTwos() <= twosCount && e.countOfThrees() <= threesCount)\n\t\t\t\tpossiblePieces.add(e);\n\t\t}\n\t}\n\n\tprivate static void combinationThreePieces(int rowSize, List<BlockOfPieces> possiblePieces) {\n\t\tint pieceSizeThree = 3, pieceSizeTwo = 2;\n\t\tfor (int pieceSizeThreeCount = 1; pieceSizeThree * pieceSizeThreeCount <= rowSize; pieceSizeThreeCount++) {\n\t\t\tfor (int pieceSizeTwoCount = 1; pieceSizeTwo * pieceSizeTwoCount <= rowSize; pieceSizeTwoCount++) {\n\t\t\t\tif ((pieceSizeThreeCount * pieceSizeThree + pieceSizeTwoCount * pieceSizeTwo) > rowSize)\n\t\t\t\t\tcontinue;\n\t\t\t\tBlockOfPieces e = new BlockOfPieces();\n\n\t\t\t\tint pieceSizeOneCount = rowSize - (pieceSizeThreeCount * pieceSizeThree + pieceSizeTwoCount * pieceSizeTwo);\n\t\t\t\te.addPiece(new Pieces(pieceSizeThreeCount, PieceSize.values()[pieceSizeThree]));\n\t\t\t\te.addPiece(new Pieces(pieceSizeTwoCount, PieceSize.values()[pieceSizeTwo]));\n\t\t\t\te.addPiece(new Pieces(pieceSizeOneCount, PieceSize.ONE));\n\n\t\t\t\tif (e.countOfOnes() <= onesCount && e.countOfTwos() <= twosCount && e.countOfThrees() <= threesCount)\n\t\t\t\t\tpossiblePieces.add(e);\n\t\t\t}\n\t\t}\n\t}\n\n}\n\nclass BlockOfPieces {\n\tList<Pieces> arr = new ArrayList<>();\n\n\tvoid addPiece(Pieces p) {\n\t\tarr.add(p);\n\t}\n\n\tpublic void print() {\n\t\tString s = \"\";\n\t\tfor (Pieces p : arr) {\n\t\t\ts += p + \" + \";\n\t\t}\n\n\t\tSystem.err.println(s.substring(0, s.length() - 2));\n\t}\n\n\tpublic int countOfOnes() {\n\t\tfor (Pieces s : arr)\n\t\t\tif (s.size == PieceSize.ONE)\n\t\t\t\treturn s.count;\n\n\t\treturn 0;\n\t}\n\n\tpublic int countOfTwos() {\n\t\tfor (Pieces s : arr)\n\t\t\tif (s.size == PieceSize.TWO)\n\t\t\t\treturn s.count;\n\n\t\treturn 0;\n\t}\n\n\tpublic int countOfThrees() {\n\t\tfor (Pieces s : arr)\n\t\t\tif (s.size == PieceSize.THREE)\n\t\t\t\treturn s.count;\n\n\t\treturn 0;\n\t}\n\n\tpublic int length() {\n\t\tint length = 0;\n\n\t\tfor (Pieces s : arr)\n\t\t\tlength += s.count * s.size.ordinal();\n\n\t\treturn length;\n\t}\n}\n\nclass Pieces {\n\n\tpublic PieceSize size;\n\tpublic int count;\n\n\tpublic Pieces(int count, PieceSize size) {\n\t\tthis.size = size;\n\t\tthis.count = count;\n\t}\n\n\t@Override\n\tpublic String toString() {\n\t\treturn count + \" X \" + size.name() + \"'s\";\n\t}\n\n}\n\nenum PieceSize {\n\tNONE, ONE, TWO, THREE\n}",
+      "statement": "Given a set of <<KIDS BLOCKS>>,\n\nThe blocks pieces can be categorized into exactly {{<<THREE>> SUBSETS}} based on their widths:\n- One inch pieces.\n- Two inches pieces.\n- and Three inches pieces.\nAll have the same height (One inch).\n\n\nThe <<problem>> is to determine if it is feasible to build a perfect rectangular wall (or square), with below conditions:\n- Must use all pieces.\n- The wall height must be two inches or more (two rows of blocks pieces at minimum).\n\nThe program takes three integers as inputs which are: \n[[x1]] , [[x2]], and [[x3]] --> the count of pieces in each subset respectively.\n\nThe program should print either \"{{POSSIBLE}}\" or \"{{NOT POSSIBLE}}\" to indicate if a rectangular wall is buildable based on above rules.\n\n<<Note 1:>> If all available pieces were of the same size, It is considered a correct solution to stack them vertically, but not a solution to just queue them horizontally. \n\n<<Note 2:>> The given set of pieces might produce several solutions (different possible walls with different dimensions), so you can simply consider the wall is buildable once <<ANY>> solution found.\n\n\n<<Example:>>\nPieces:\n` 5 × [_\"_]\n 2 × [_\"____\"_]\n 1 × [_\"____\"____\"_]`\nExamples of wall:\n6×2\n`[_\"_][_\"_][_\"____\"____\"_][_\"_]\n[_\"____\"_][_\"_][_\"____\"_][_\"_]`\n3×4\n`[_\"_][_\"_][_\"_]\n[_\"_][_\"____\"_]\n[_\"____\"_][_\"_]\n[_\"____\"____\"_]`",
+      "testCases": [
+        {
+          "title": "Few pieces",
+          "isTest": true,
+          "testIn": "1\n1\n1",
+          "testOut": "POSSIBLE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "2\n1\n1",
+          "testOut": "NOT POSSIBLE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Too few",
+          "isTest": true,
+          "testIn": "0\n1\n1",
+          "testOut": "NOT POSSIBLE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "2\n0\n0",
+          "testOut": "POSSIBLE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Sufficient blocks",
+          "isTest": true,
+          "testIn": "0\n8\n6",
+          "testOut": "POSSIBLE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "1\n8\n6",
+          "testOut": "POSSIBLE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "More Blocks",
+          "isTest": true,
+          "testIn": "11\n14\n28",
+          "testOut": "POSSIBLE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "11\n16\n28",
+          "testOut": "NOT POSSIBLE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "One inch wall",
+          "isTest": true,
+          "testIn": "10\n0\n0",
+          "testOut": "POSSIBLE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "0\n10\n0",
+          "testOut": "POSSIBLE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "15 inches samples",
+          "isTest": true,
+          "testIn": "0\n6\n1",
+          "testOut": "NOT POSSIBLE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "0\n3\n3",
+          "testOut": "POSSIBLE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "25 inches samples",
+          "isTest": true,
+          "testIn": "4\n0\n7",
+          "testOut": "NOT POSSIBLE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "4\n3\n5",
+          "testOut": "POSSIBLE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Another  25 inches samples",
+          "isTest": true,
+          "testIn": "5\n1\n6",
+          "testOut": "NOT POSSIBLE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "5\n4\n4",
+          "testOut": "POSSIBLE",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "0 ≤ [[x1]], [[x2]], [[x3]] ≤ 30",
+      "coverBinaryId": 60262660779230,
+      "stubGenerator": "read x1:int\nread x2:int\nread x3:int\nwrite POSSIBLE",
+      "inputDescription": "<<Line 1:>> An integer [[x1]] for the count of one-inch pieces (can be zero).\n<<Line 2:>> An integer [[x2]] for the count of two-inch pieces (can be zero).\n<<Line 3:>> An integer [[x3]] for the count of three-inch pieces (can be zero).",
+      "solutionLanguage": "Java",
+      "outputDescription": "A single line contains one string \"{{POSSIBLE}}\" or \"{{NOT POSSIBLE}}\"."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Given a set of <strong>KIDS BLOCKS</strong>,<br><br>The blocks pieces can be categorized into exactly <const><strong>THREE</strong> SUBSETS</const> based on their widths:<br>- One inch pieces.<br>- Two inches pieces.<br>- and Three inches pieces.<br>All have the same height (One inch).<br><br><br>The <strong>problem</strong> is to determine if it is feasible to build a perfect rectangular wall (or square), with below conditions:<br>- Must use all pieces.<br>- The wall height must be two inches or more (two rows of blocks pieces at minimum).<br><br>The program takes three integers as inputs which are: <br><var>x1</var> , <var>x2</var>, and <var>x3</var> --&gt; the count of pieces in each subset respectively.<br><br>The program should print either &quot;<const>POSSIBLE</const>&quot; or &quot;<const>NOT POSSIBLE</const>&quot; to indicate if a rectangular wall is buildable based on above rules.<br><br><strong>Note 1:</strong> If all available pieces were of the same size, It is considered a correct solution to stack them vertically, but not a solution to just queue them horizontally. <br><br><strong>Note 2:</strong> The given set of pieces might produce several solutions (different possible walls with different dimensions), so you can simply consider the wall is buildable once <strong>ANY</strong> solution found.<br><br><br><strong>Example:</strong><br>Pieces:<br><pre style=\"font-family: monospace\"> 5 &times; [_&quot;_]<br> 2 &times; [_&quot;____&quot;_]<br> 1 &times; [_&quot;____&quot;____&quot;_]</pre><br>Examples of wall:<br>6&times;2<br><pre style=\"font-family: monospace\">[_&quot;_][_&quot;_][_&quot;____&quot;____&quot;_][_&quot;_]<br>[_&quot;____&quot;_][_&quot;_][_&quot;____&quot;_][_&quot;_]</pre><br>3&times;4<br><pre style=\"font-family: monospace\">[_&quot;_][_&quot;_][_&quot;_]<br>[_&quot;_][_&quot;____&quot;_]<br>[_&quot;____&quot;_][_&quot;_]<br>[_&quot;____&quot;____&quot;_]</pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>x1</var> for the count of one-inch pieces (can be zero).<br><strong>Line 2:</strong> An integer <var>x2</var> for the count of two-inch pieces (can be zero).<br><strong>Line 3:</strong> An integer <var>x3</var> for the count of three-inch pieces (can be zero).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">A single line contains one string &quot;<const>POSSIBLE</const>&quot; or &quot;<const>NOT POSSIBLE</const>&quot;.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &le; <var>x1</var>, <var>x2</var>, <var>x3</var> &le; 30</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1\n1\n1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">POSSIBLE</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 150270773882,
+  "avatar": 54971783493918,
+  "commentCount": 26,
+  "upVotes": 20,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 546177,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1618171537000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1618305541166,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1620459778226,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

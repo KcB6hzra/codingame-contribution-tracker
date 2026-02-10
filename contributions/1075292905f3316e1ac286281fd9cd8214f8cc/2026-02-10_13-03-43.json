@@ -1,0 +1,192 @@
+{
+  "id": 107529,
+  "activeVersion": 94,
+  "score": 5,
+  "votableId": 35141301,
+  "codingamerId": 4238671,
+  "views": 138,
+  "commentableId": 34987609,
+  "title": "Sparse MatMul",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "DavidAugustoVilla",
+  "publicHandle": "1075292905f3316e1ac286281fd9cd8214f8cc",
+  "codingamerHandle": "455d71552aef838a0c75b7617e2d22d41768324",
+  "lastVersion": {
+    "version": 94,
+    "autocloseTime": 1731744006092,
+    "freezeTime": 1729756806092,
+    "data": {
+      "title": "Sparse MatMul",
+      "topics": [
+        {
+          "id": 217,
+          "handle": "matrix-product",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Matrix product",
+            "2": "Matrix product"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        },
+        {
+          "id": 195,
+          "handle": "data-types",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Data Types",
+            "2": "Data Types"
+          },
+          "puzzleCount": 5,
+          "parentTopicId": 93
+        },
+        {
+          "id": 66,
+          "handle": "optimization",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Optimisation",
+            "2": "Optimization"
+          },
+          "pageTitle": "Optimization: exercises and theory",
+          "puzzleCount": 22,
+          "parentTopicId": 41,
+          "contentDetailsId": 87
+        }
+      ],
+      "solution": "import collections\nimport numpy\n\ndef read_matrix(entries, row_wise, num_rows, num_cols):\n    M = collections.defaultdict(dict)\n    for _ in range(entries):\n        r, c, v = input().split()\n        r, c, v = int(r), int(c), (numpy.float32(v), float(v))\n        assert 0 <= r < num_rows and 0 <= c < num_cols\n        if row_wise:\n            M[r][c] = v\n        else:\n            M[c][r] = v\n    return M\n\ndef read_inputs():\n    dim_m, dim_n, dim_p = [int(i) for i in input().split()]\n    a_entries, b_entries = [int(i) for i in input().split()]\n    A = read_matrix(a_entries, True, dim_m, dim_n)\n    B = read_matrix(b_entries, False, dim_n, dim_p)\n    return A, B\n\ndef main():\n    A, B = read_inputs()\n    for i in A:\n        for k in B:\n            dot_prod_32 = numpy.float32(0)\n            dot_prod_64 = 0.0\n            for j in set(A[i]) & set(B[k]):\n                dot_prod_32 += A[i][j][0] * B[k][j][0]\n                dot_prod_64 += A[i][j][1] * B[k][j][1]\n                assert dot_prod_32 == dot_prod_64\n            if dot_prod_64 != 0.0:\n                assert str(dot_prod_32) == str(dot_prod_64)\n                print(i, k, dot_prod_64)\n\nmain()\n",
+      "statement": "A long-running process at the national laboratory is hogging up resources on a supercomputer. You discover that the algorithm is spending most of its time multiplying zero by zero. This knowledge can be exploited to optimize the code, saving million of dollars annually and freeing up the supercomputer to play CodinGame!\n\nThe task is to find the product of two sparse matrices <<A>> and <<B>>, where <<A>> is [[M]] × [[N]] and <<B>> is [[N]] × [[P]]. Each entry of the resulting [[M]] × [[P]] matrix is computed as the dot product (or \"sum-product\") of a row of <<A>> and a column of <<B>>.\n`\nMatrix A      Matrix B              Product\n┌───┬───┬───┐ ┌───┬───┬───┲━━━┱───┐ ┌───┬───┬───┬───┬───┐\n│   │   │   │ │   │   │   ┃ 5 ┃   │ │   │   │   │   │   │\n┢━━━┿━━━┿━━━┪ ├───┼───┼───╂───╂───┤ ├───┼───┼───╆━━━╅───┤\n┃ 1 │ 2 │ 3 ┃ │   │   │   ┃ 0 ┃   │ │   │   │   ┃ 8 ┃   │\n┡━━━┿━━━┿━━━┩ ├───┼───┼───╂───╂───┤ ├───┼───┼───╄━━━╃───┤\n│   │   │   │ │   │   │   ┃ 1 ┃   │ │   │   │   │   │   │\n├───┼───┼───┤ └───┴───┴───┺━━━┹───┘ ├───┼───┼───┼───┼───┤\n│   │   │   │                 (3×5) │   │   │   │   │   │\n└───┴───┴───┘(4×3)                  └───┴───┴───┴───┴───┘(4×5)`\nBecause sparse matrices are typically enormous with mostly zero-valued entries, they are not efficiently treated as sequential row and column data. Instead, you decide to use a different representation. Each of [[countA]] elements of matrix <<A>> and [[countB]] elements of matrix <<B>> are of the form:\n\n[[row]] [[column]] [[value]]\n\nFor matrix <<A>>, the [[row]] and [[column]] indicate the entry at <<i>>, <<j>>  with the given [[value]] ≠ {{0.0}}, while many more entries which will not be listed all have values equal to zero. For matrix <<B>>, the [[row]] and [[column]] indicate the entry at <<j>>, <<k>> with nonzero [[value]].\n\nFor a particular row <<i>> of <<A>> and a particular column <<k>> of <<B>>, the dot product iterates over <<j>> to produce the resulting entry at <<i>>, <<k>>. In this way, each value in the final matrix is the sum of pairwise multiplications… or equivalently, the sum of pairwise multiplications of nonzero entries.\n\nProvide this product matrix reduced in the same sparse format, ordering elements first by [[row]] and then by [[column]], and leaving the [[value]] unrounded with all significant digits shown. When you receive a thank you call from the president, it will be time to celebrate your success!",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "4 3 5\n3 2\n1 0 1.0\n1 1 2.0\n1 2 3.0\n0 3 5.0\n2 3 1.0",
+          "testOut": "1 3 8.0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "5 3 4\n2 3\n3 0 2.0\n3 2 9.0\n0 1 5.0\n1 1 7.0\n2 1 1.0",
+          "testOut": "3 1 19.0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Corners",
+          "isTest": true,
+          "testIn": "400001 300001 500001\n4 4\n0 0 1.0\n0 300000 5.0\n400000 0 3.0\n400000 300000 1.0\n0 0 3.0\n0 500000 1.0\n300000 0 2.0\n300000 500000 4.0",
+          "testOut": "0 0 13.0\n0 500000 21.0\n400000 0 11.0\n400000 500000 7.0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "400001 300001 500001\n4 4\n0 0 2.0\n0 300000 5.0\n400000 0 3.0\n400000 300000 1.0\n0 0 3.0\n0 500000 5.0\n300000 0 2.0\n300000 500000 4.0",
+          "testOut": "0 0 16.0\n0 500000 30.0\n400000 0 11.0\n400000 500000 19.0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Dense",
+          "isTest": true,
+          "testIn": "10 1 10\n9 9\n1 0 1.25\n2 0 2.5\n3 0 3.75\n4 0 5.0\n5 0 6.25\n6 0 7.5\n7 0 8.75\n8 0 10.0\n9 0 11.25\n0 1 1.25\n0 2 2.5\n0 3 3.75\n0 4 5.0\n0 5 6.25\n0 6 7.5\n0 7 8.75\n0 8 10.0\n0 9 11.25",
+          "testOut": "1 1 1.5625\n1 2 3.125\n1 3 4.6875\n1 4 6.25\n1 5 7.8125\n1 6 9.375\n1 7 10.9375\n1 8 12.5\n1 9 14.0625\n2 1 3.125\n2 2 6.25\n2 3 9.375\n2 4 12.5\n2 5 15.625\n2 6 18.75\n2 7 21.875\n2 8 25.0\n2 9 28.125\n3 1 4.6875\n3 2 9.375\n3 3 14.0625\n3 4 18.75\n3 5 23.4375\n3 6 28.125\n3 7 32.8125\n3 8 37.5\n3 9 42.1875\n4 1 6.25\n4 2 12.5\n4 3 18.75\n4 4 25.0\n4 5 31.25\n4 6 37.5\n4 7 43.75\n4 8 50.0\n4 9 56.25\n5 1 7.8125\n5 2 15.625\n5 3 23.4375\n5 4 31.25\n5 5 39.0625\n5 6 46.875\n5 7 54.6875\n5 8 62.5\n5 9 70.3125\n6 1 9.375\n6 2 18.75\n6 3 28.125\n6 4 37.5\n6 5 46.875\n6 6 56.25\n6 7 65.625\n6 8 75.0\n6 9 84.375\n7 1 10.9375\n7 2 21.875\n7 3 32.8125\n7 4 43.75\n7 5 54.6875\n7 6 65.625\n7 7 76.5625\n7 8 87.5\n7 9 98.4375\n8 1 12.5\n8 2 25.0\n8 3 37.5\n8 4 50.0\n8 5 62.5\n8 6 75.0\n8 7 87.5\n8 8 100.0\n8 9 112.5\n9 1 14.0625\n9 2 28.125\n9 3 42.1875\n9 4 56.25\n9 5 70.3125\n9 6 84.375\n9 7 98.4375\n9 8 112.5\n9 9 126.5625",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "10 1 10\n9 9\n0 0 1.0\n1 0 1.125\n2 0 1.25\n3 0 1.375\n4 0 1.5\n5 0 0.5\n6 0 0.625\n7 0 0.75\n8 0 0.875\n0 0 12.5\n0 1 25.0\n0 2 37.5\n0 3 50.0\n0 4 62.5\n0 5 75.0\n0 6 87.5\n0 7 100.0\n0 8 112.5",
+          "testOut": "0 0 12.5\n0 1 25.0\n0 2 37.5\n0 3 50.0\n0 4 62.5\n0 5 75.0\n0 6 87.5\n0 7 100.0\n0 8 112.5\n1 0 14.0625\n1 1 28.125\n1 2 42.1875\n1 3 56.25\n1 4 70.3125\n1 5 84.375\n1 6 98.4375\n1 7 112.5\n1 8 126.5625\n2 0 15.625\n2 1 31.25\n2 2 46.875\n2 3 62.5\n2 4 78.125\n2 5 93.75\n2 6 109.375\n2 7 125.0\n2 8 140.625\n3 0 17.1875\n3 1 34.375\n3 2 51.5625\n3 3 68.75\n3 4 85.9375\n3 5 103.125\n3 6 120.3125\n3 7 137.5\n3 8 154.6875\n4 0 18.75\n4 1 37.5\n4 2 56.25\n4 3 75.0\n4 4 93.75\n4 5 112.5\n4 6 131.25\n4 7 150.0\n4 8 168.75\n5 0 6.25\n5 1 12.5\n5 2 18.75\n5 3 25.0\n5 4 31.25\n5 5 37.5\n5 6 43.75\n5 7 50.0\n5 8 56.25\n6 0 7.8125\n6 1 15.625\n6 2 23.4375\n6 3 31.25\n6 4 39.0625\n6 5 46.875\n6 6 54.6875\n6 7 62.5\n6 8 70.3125\n7 0 9.375\n7 1 18.75\n7 2 28.125\n7 3 37.5\n7 4 46.875\n7 5 56.25\n7 6 65.625\n7 7 75.0\n7 8 84.375\n8 0 10.9375\n8 1 21.875\n8 2 32.8125\n8 3 43.75\n8 4 54.6875\n8 5 65.625\n8 6 76.5625\n8 7 87.5\n8 8 98.4375",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Cancellation",
+          "isTest": true,
+          "testIn": "10 10 10\n5 5\n0 0 2.0\n0 7 -1.0\n2 2 2.25\n7 0 1.0\n7 7 -2.0\n0 0 0.5\n0 7 -1.0\n5 5 5.5\n7 0 1.0\n7 7 -0.5",
+          "testOut": "0 7 -1.5\n7 0 -1.5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "10 10 10\n5 5\n0 0 -1.0\n0 8 0.5\n1 1 1.125\n8 0 -0.5\n8 8 1.0\n0 0 2.0\n0 8 -1.0\n7 7 7.75\n8 0 1.0\n8 8 -2.0",
+          "testOut": "0 0 -1.5\n8 8 -1.5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Banded",
+          "isTest": true,
+          "testIn": "10 10 10\n27 27\n0 0 6.125\n0 1 9.875\n1 0 -0.875\n1 1 1.25\n1 2 3.0\n2 1 -0.25\n2 2 6.0\n2 3 -1.25\n3 2 6.25\n3 3 7.125\n3 4 7.0\n4 3 6.625\n4 5 -5.0\n5 4 3.5\n5 5 9.0\n5 6 3.875\n6 5 -7.5\n6 6 -8.0\n6 7 6.25\n7 6 -8.75\n7 7 6.125\n7 8 3.125\n8 7 -5.0\n8 8 2.25\n8 9 8.75\n9 8 6.25\n9 9 -7.0\n0 0 -5.75\n0 1 -8.875\n1 0 5.0\n1 1 2.5\n1 2 -5.5\n2 1 9.25\n2 2 10.0\n2 3 1.25\n3 2 9.25\n3 3 6.0\n3 4 6.125\n4 3 4.125\n4 5 6.5\n5 4 9.0\n5 5 -1.0\n5 6 9.5\n6 5 2.375\n6 6 3.25\n6 7 -0.5\n7 6 7.5\n7 7 0.5\n7 8 8.5\n8 7 2.5\n8 8 5.75\n8 9 9.0\n9 8 -3.375\n9 9 8.625",
+          "testOut": "0 0 14.15625\n0 1 -29.671875\n0 2 -54.3125\n1 0 11.28125\n1 1 38.640625\n1 2 23.125\n1 3 3.75\n2 0 -1.25\n2 1 54.875\n2 2 49.8125\n2 4 -7.65625\n3 1 57.8125\n3 2 128.40625\n3 3 79.4375\n3 4 43.640625\n3 5 45.5\n4 2 61.28125\n4 3 39.75\n4 4 -4.421875\n4 5 5.0\n4 6 -47.5\n5 3 14.4375\n5 4 81.0\n5 5 22.953125\n5 6 98.09375\n5 7 -1.9375\n6 4 -67.5\n6 5 -11.5\n6 6 -50.375\n6 7 7.125\n6 8 53.125\n7 5 -20.78125\n7 6 17.5\n7 7 15.25\n7 8 70.03125\n7 9 28.125\n8 6 -37.5\n8 7 3.125\n8 8 -59.09375\n8 9 95.71875\n9 7 15.625\n9 8 59.5625\n9 9 -4.125",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "10 10 10\n27 27\n0 0 -5.75\n0 1 -8.875\n1 0 5.0\n1 1 2.375\n1 2 -5.5\n2 1 9.25\n2 2 10.0\n2 3 1.25\n3 2 -6.25\n3 3 6.0\n3 4 6.125\n4 3 4.125\n4 5 6.5\n5 4 9.0\n5 5 -1.0\n5 6 9.5\n6 5 2.375\n6 6 3.25\n6 7 -0.5\n7 6 7.5\n7 7 0.375\n7 8 8.5\n8 7 2.5\n8 8 5.75\n8 9 9.0\n9 8 -3.375\n9 9 8.625\n0 0 6.125\n0 1 9.875\n1 0 -0.875\n1 1 1.25\n1 2 3.0\n2 1 -0.25\n2 2 6.0\n2 3 -1.25\n3 2 6.25\n3 3 7.125\n3 4 7.0\n4 3 6.625\n4 5 -5.0\n5 4 3.5\n5 5 9.0\n5 6 3.875\n6 5 -7.5\n6 6 -8.0\n6 7 6.25\n7 6 -8.75\n7 7 6.125\n7 8 3.125\n8 7 -5.0\n8 8 2.25\n8 9 8.75\n9 8 6.25\n9 9 -7.0",
+          "testOut": "0 0 -27.453125\n0 1 -67.875\n0 2 -26.625\n1 0 28.546875\n1 1 53.71875\n1 2 -25.875\n1 3 6.875\n2 0 -8.09375\n2 1 9.0625\n2 2 95.5625\n2 3 -3.59375\n2 4 8.75\n3 1 1.5625\n3 3 91.140625\n3 4 42.0\n3 5 -30.625\n4 2 25.78125\n4 3 29.390625\n4 4 51.625\n4 5 58.5\n4 6 25.1875\n5 3 59.625\n5 4 -3.5\n5 5 -125.25\n5 6 -79.875\n5 7 59.375\n6 4 8.3125\n6 5 -3.0\n6 6 -12.421875\n6 7 17.25\n6 8 -1.5625\n7 5 -56.25\n7 6 -63.28125\n7 7 6.671875\n7 8 20.296875\n7 9 74.375\n8 6 -21.875\n8 7 -13.4375\n8 8 77.0\n8 9 -12.6875\n9 7 16.875\n9 8 46.3125\n9 9 -89.90625",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Supertask",
+          "isTest": true,
+          "testIn": "999999 999999 999999\n19 42\n32015 637228 -8.75\n66238 637228 4.75\n176689 576751 -7.5\n184860 728927 2.0\n193653 637228 4.5\n251533 747153 -2.75\n257676 665614 6.625\n290436 251019 1.875\n363175 975558 4.5\n456601 115685 4.625\n538719 221698 -6.375\n823185 518010 1.25\n829589 866115 3.25\n908296 728927 4.75\n948050 612857 4.75\n951147 637228 3.5\n966481 104709 2.0\n973240 612857 -8.5\n989830 975558 -2.375\n74359 62355 -5.875\n74359 797746 6.0\n104709 123929 2.5\n115685 71392 7.0\n115685 167214 5.125\n115685 256194 4.5\n115685 297754 -2.375\n115685 877173 -3.875\n221698 274902 6.5\n221698 359612 4.125\n221698 549877 -2.75\n251019 260934 4.5\n251019 422195 -6.625\n251019 592711 -1.0\n251019 758740 7.0\n251019 908624 6.125\n378372 884363 -4.25\n383965 198264 -0.5\n383965 247456 1.5\n383965 658497 7.5\n383965 728534 9.75\n518010 139533 6.5\n518010 654555 -4.0\n518010 878634 -1.5\n549575 221900 -7.5\n576751 369129 1.0\n612857 387980 -4.625\n612857 433496 -4.5\n612857 604133 6.25\n637228 367280 2.375\n657081 635525 -4.625\n665614 909517 2.75\n665614 962318 8.875\n679367 842107 6.25\n728927 379413 8.0\n728927 572572 1.875\n747153 180415 -6.0\n747153 708847 5.25\n813725 697486 0.125\n866115 465921 -2.25\n975558 653211 2.75\n975558 772471 2.875",
+          "testOut": "32015 367280 -20.78125\n66238 367280 11.28125\n176689 369129 -7.5\n184860 379413 16.0\n184860 572572 3.75\n193653 367280 10.6875\n251533 180415 16.5\n251533 708847 -14.4375\n257676 909517 18.21875\n257676 962318 58.796875\n290436 260934 8.4375\n290436 422195 -12.421875\n290436 592711 -1.875\n290436 758740 13.125\n290436 908624 11.484375\n363175 653211 12.375\n363175 772471 12.9375\n456601 71392 32.375\n456601 167214 23.703125\n456601 256194 20.8125\n456601 297754 -10.984375\n456601 877173 -17.921875\n538719 274902 -41.4375\n538719 359612 -26.296875\n538719 549877 17.53125\n823185 139533 8.125\n823185 654555 -5.0\n823185 878634 -1.875\n829589 465921 -7.3125\n908296 379413 38.0\n908296 572572 8.90625\n948050 387980 -21.96875\n948050 433496 -21.375\n948050 604133 29.6875\n951147 367280 8.3125\n966481 123929 5.0\n973240 387980 39.3125\n973240 433496 38.25\n973240 604133 -53.125\n989830 653211 -6.53125\n989830 772471 -6.828125",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "999999 999999 999999\n21 33\n23790 282252 6.125\n38960 55015 9.875\n59455 940306 -0.875\n229801 147839 1.25\n404094 726321 3.0\n458776 913130 -0.25\n521793 55015 6.0\n527642 282252 -1.25\n531065 913130 6.25\n633567 311166 7.125\n651405 433973 7.0\n657818 147839 6.625\n705285 188386 -5.0\n733989 922916 3.5\n741090 740434 9.0\n741172 726321 3.875\n803945 768632 -7.5\n856037 726321 -8.0\n865008 311166 6.25\n904014 311166 -8.75\n994558 922916 6.125\n3058 453077 3.125\n55015 122793 -5.0\n55015 670529 2.875\n74554 69946 8.75\n74554 245640 6.125\n74554 635610 -7.0\n74554 918846 -5.75\n188386 460929 -8.875\n282252 201676 5.0\n282252 492146 2.375\n311166 539238 -5.5\n433973 20284 9.25\n433973 364483 10.0\n433973 472511 0.25\n558061 67713 9.25\n644949 286122 6.0\n644949 837444 6.625\n726321 200935 4.125\n726321 572900 6.5\n726321 857971 9.0\n726321 899904 -1.0\n734142 484427 9.5\n734142 756573 2.375\n768632 614145 3.25\n768632 714149 -0.5\n817322 663759 7.5\n817322 985923 4.375\n903753 301691 8.5\n903753 658869 2.5\n913130 376819 5.75\n913130 544116 9.0\n922916 772101 -3.375\n940306 631454 8.625",
+          "testOut": "23790 201676 30.625\n23790 492146 14.546875\n38960 122793 -49.375\n38960 670529 28.390625\n59455 631454 -7.546875\n404094 200935 12.375\n404094 572900 19.5\n404094 857971 27.0\n404094 899904 -3.0\n458776 376819 -1.4375\n458776 544116 -2.25\n521793 122793 -30.0\n521793 670529 17.25\n527642 201676 -6.25\n527642 492146 -2.96875\n531065 376819 35.9375\n531065 544116 56.25\n633567 539238 -39.1875\n651405 20284 64.75\n651405 364483 70.0\n651405 472511 1.75\n705285 460929 44.375\n733989 772101 -11.8125\n741172 200935 15.984375\n741172 572900 25.1875\n741172 857971 34.875\n741172 899904 -3.875\n803945 614145 -24.375\n803945 714149 3.75\n856037 200935 -33.0\n856037 572900 -52.0\n856037 857971 -72.0\n856037 899904 8.0\n865008 539238 -34.375\n904014 539238 48.125\n994558 772101 -20.671875",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "0 ≤ <<i>> < [[N]] < 1,000,000\n0 ≤ <<j>> < [[M]] < 1,000,000\n0 ≤ <<k>> < [[P]] < 1,000,000\n\nAll sparse matrices are necessarily sorted by [[row]] first, then by [[column]].",
+      "coverBinaryId": 130805861534487,
+      "stubGenerator": "read m:int n:int p:int\nread countA:int countB:int\nloop countA read row:int column:int value:float\nloop countB read row:int column:int value:float\nwrite row column value",
+      "inputDescription": "<<Line 1:>> Three space-separated integers [[M]], [[N]], and [[P]] for the matrix dimensions\n<<Line 2:>> Two space-separated integers [[countA]] and [[countB]] for the number of nonzero entries of <<A>> and <<B>>\n<<Next [[countA]] lines:>> Integers [[row]] and [[column]] as indices <<i>>, <<j>> into <<A>>, and the decimal [[value]] for that entry, separated by spaces\n<<Next [[countB]] lines:>> Integers [[row]] and [[column]] as indices <<j>>, <<k>> into <<B>>, and the decimal [[value]] for that entry, separated by spaces",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<For every nonzero entry in the result:>> Integers [[row]] and [[column]] as indices <<i>>, <<k>> into the product matrix, and the decimal [[value]] for that entry (e.g. {{8.0}}), separated by spaces"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A long-running process at the national laboratory is hogging up resources on a supercomputer. You discover that the algorithm is spending most of its time multiplying zero by zero. This knowledge can be exploited to optimize the code, saving million of dollars annually and freeing up the supercomputer to play CodinGame!<br><br>The task is to find the product of two sparse matrices <strong>A</strong> and <strong>B</strong>, where <strong>A</strong> is <var>M</var> &times; <var>N</var> and <strong>B</strong> is <var>N</var> &times; <var>P</var>. Each entry of the resulting <var>M</var> &times; <var>P</var> matrix is computed as the dot product (or &quot;sum-product&quot;) of a row of <strong>A</strong> and a column of <strong>B</strong>.<br><pre style=\"font-family: monospace\"><br>Matrix A      Matrix B              Product<br>┌───┬───┬───┐ ┌───┬───┬───┲━━━┱───┐ ┌───┬───┬───┬───┬───┐<br>│   │   │   │ │   │   │   ┃ 5 ┃   │ │   │   │   │   │   │<br>┢━━━┿━━━┿━━━┪ ├───┼───┼───╂───╂───┤ ├───┼───┼───╆━━━╅───┤<br>┃ 1 │ 2 │ 3 ┃ │   │   │   ┃ 0 ┃   │ │   │   │   ┃ 8 ┃   │<br>┡━━━┿━━━┿━━━┩ ├───┼───┼───╂───╂───┤ ├───┼───┼───╄━━━╃───┤<br>│   │   │   │ │   │   │   ┃ 1 ┃   │ │   │   │   │   │   │<br>├───┼───┼───┤ └───┴───┴───┺━━━┹───┘ ├───┼───┼───┼───┼───┤<br>│   │   │   │                 (3&times;5) │   │   │   │   │   │<br>└───┴───┴───┘(4&times;3)                  └───┴───┴───┴───┴───┘(4&times;5)</pre><br>Because sparse matrices are typically enormous with mostly zero-valued entries, they are not efficiently treated as sequential row and column data. Instead, you decide to use a different representation. Each of <var>countA</var> elements of matrix <strong>A</strong> and <var>countB</var> elements of matrix <strong>B</strong> are of the form:<br><br><var>row</var> <var>column</var> <var>value</var><br><br>For matrix <strong>A</strong>, the <var>row</var> and <var>column</var> indicate the entry at <strong>i</strong>, <strong>j</strong>  with the given <var>value</var> &ne; <const>0.0</const>, while many more entries which will not be listed all have values equal to zero. For matrix <strong>B</strong>, the <var>row</var> and <var>column</var> indicate the entry at <strong>j</strong>, <strong>k</strong> with nonzero <var>value</var>.<br><br>For a particular row <strong>i</strong> of <strong>A</strong> and a particular column <strong>k</strong> of <strong>B</strong>, the dot product iterates over <strong>j</strong> to produce the resulting entry at <strong>i</strong>, <strong>k</strong>. In this way, each value in the final matrix is the sum of pairwise multiplications&hellip; or equivalently, the sum of pairwise multiplications of nonzero entries.<br><br>Provide this product matrix reduced in the same sparse format, ordering elements first by <var>row</var> and then by <var>column</var>, and leaving the <var>value</var> unrounded with all significant digits shown. When you receive a thank you call from the president, it will be time to celebrate your success!</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Three space-separated integers <var>M</var>, <var>N</var>, and <var>P</var> for the matrix dimensions<br><strong>Line 2:</strong> Two space-separated integers <var>countA</var> and <var>countB</var> for the number of nonzero entries of <strong>A</strong> and <strong>B</strong><br><strong>Next <var>countA</var> lines:</strong> Integers <var>row</var> and <var>column</var> as indices <strong>i</strong>, <strong>j</strong> into <strong>A</strong>, and the decimal <var>value</var> for that entry, separated by spaces<br><strong>Next <var>countB</var> lines:</strong> Integers <var>row</var> and <var>column</var> as indices <strong>j</strong>, <strong>k</strong> into <strong>B</strong>, and the decimal <var>value</var> for that entry, separated by spaces</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>For every nonzero entry in the result:</strong> Integers <var>row</var> and <var>column</var> as indices <strong>i</strong>, <strong>k</strong> into the product matrix, and the decimal <var>value</var> for that entry (e.g. <const>8.0</const>), separated by spaces</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &le; <strong>i</strong> &lt; <var>N</var> &lt; 1,000,000<br>0 &le; <strong>j</strong> &lt; <var>M</var> &lt; 1,000,000<br>0 &le; <strong>k</strong> &lt; <var>P</var> &lt; 1,000,000<br><br>All sparse matrices are necessarily sorted by <var>row</var> first, then by <var>column</var>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4 3 5\n3 2\n1 0 1.0\n1 1 2.0\n1 2 3.0\n0 3 5.0\n2 3 1.0</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1 3 8.0</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 40093839404,
+  "avatar": 132419401284681,
+  "commentCount": 17,
+  "upVotes": 5,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1019694,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1730634782689,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

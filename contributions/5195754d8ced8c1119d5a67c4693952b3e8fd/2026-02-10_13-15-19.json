@@ -1,0 +1,498 @@
+{
+  "id": 51957,
+  "activeVersion": 32,
+  "score": 7,
+  "votableId": 28771943,
+  "codingamerId": 4433844,
+  "views": 352,
+  "commentableId": 28640907,
+  "title": "Tile a Floor Differently",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Lisa-Has-Ideas",
+  "publicHandle": "5195754d8ced8c1119d5a67c4693952b3e8fd",
+  "codingamerHandle": "6057618d773e6e27a20abefa031c4e674483344",
+  "lastVersion": {
+    "version": 32,
+    "autocloseTime": 1684123851867,
+    "data": {
+      "title": "Tile a Floor Differently",
+      "topics": [
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 46,
+          "parentTopicId": 93
+        },
+        {
+          "id": 117,
+          "handle": "logic",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Logic",
+            "2": "Logic"
+          },
+          "puzzleCount": 21,
+          "parentTopicId": 93
+        },
+        {
+          "id": 128,
+          "handle": "ascii-art",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Ascii Art",
+            "2": "Ascii Art"
+          },
+          "puzzleCount": 40,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "using System; using System.Linq; using System.IO; using System.Text; using System.Collections; using System.Collections.Generic;\n/*\nGiven the upper right quadrant of a tile pattern, create the entire tile pattern. \nAnd print 4 of that full-tile pattern in a 2x2 square\n\nRULES:\n~Each tile is square; therefore each quarter-tile is square;\n~The input square shows the top left quadrant\n~if the input has a side-size z, the output will have a side-size of (2z) \n~ultimate Output needs to have a top (-) and a side (|) border added to it and t (+) for the 4 corners\n~Show a 2 x 2 square, separating them by same characters as shown above\n*/\n\npublic class Program\n{\n\tpublic static string flipPatternBOOK = \"bd qp\".Replace(\" \",\"\");  // bookFlip\n\tpublic static string flipPatternDOWN = \"bp dq\".Replace(\" \",\"\");  // downFlip\n\tpublic static string flipPatternDIAG = \"bq dp\".Replace(\" \",\"\");  // diag     \n\tpublic static char[,] FINALRAY;\n\t\n\tpublic static void Main()\n\t{\n        int quarterSize = int.Parse(Console.ReadLine());\n        int sz = quarterSize;\n\n\t\tList<String> aQtr = new List<String>();\n\n        for (int i = 0 ; i < sz ; i++)\n        {\n            string ROW = Console.ReadLine();\n            aQtr.Add(ROW);\n        }\n\n\t\tSquareModel aTile = new SquareModel(aQtr);\n\t\tTileFloor tf = new TileFloor(aTile);\n\t\ttf.PrintTileFloor();\n\t}\n\t\n\tpublic class SquareModel\n\t{\n\t\tpublic List<string> Lines;\n\t\tpublic char[,] TopLeftQtr;\n\t\tpublic char[,] FullSquare;\n\t\tpublic int QtrSize;\n\t\tpublic int FullSize;\n\t\t\n\t\tpublic SquareModel(List<string> lines)\n\t\t{\n\t\t\tLines = lines;\n\t\t\tQtrSize = lines[0].Length;\n\t\t\tFullSize = 2 * QtrSize;\n\t\t\t\n\t\t\tTopLeftQtr = new char[QtrSize, QtrSize];\t\n\t\t\tFullSquare = new char[FullSize, FullSize];\n\t\t\t\n\t\t\tPopulateQtrSquare();\n\t\t\tInitializeFullSquare();\n\t\t\tPopulateFullSquare();\n\t\t}\n\t\t\n\t\tpublic void PopulateQtrSquare()\n\t\t{\n\t\t\tfor (int lin = 0 ; lin < QtrSize ; lin++)\n\t\t\t{\n\t\t\t\tfor (int pos = 0 ; pos < QtrSize ; pos++)\n\t\t\t\t{\n\t\t\t\t\tTopLeftQtr[lin,pos] = Lines[lin][pos];\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\n\t\tpublic void InitializeFullSquare()\n\t\t{\n\t\t\tfor (int lin = 0 ; lin < FullSize; lin++)\n\t\t\t{\n\t\t\t\tfor (int pos = 0 ; pos < FullSize ; pos++)\n\t\t\t\t{\n\t\t\t\t\tFullSquare[lin, pos] =  ' ';\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\t\n\t\tpublic void PopulateSingleQtr(int whichQtr)\n\t\t{\n\t\t\tint biFull = FullSize - 1;                 //biggest Index Of Full\n\t\t\tfor (int lin = 0 ; lin < QtrSize ; lin++)\n\t\t\t{\n\t\t\t\tfor (int pos = 0 ; pos < QtrSize ; pos++)\n\t\t\t\t{\n\t\t\t\t\tchar ch1 = TopLeftQtr[lin,pos];\n\t\t\t\t\t\n\t\t\t\t\tif (whichQtr == 1)\n\t\t\t\t\t{\n\t\t\t\t\t\tFullSquare[lin, pos] = ch1;\n\t\t\t\t\t}\n\t\t\t\t\t\n\t\t\t\t\tif (whichQtr == 2) // bookFlip\n\t\t\t\t\t{\n\t\t\t\t\t\tchar ch2 = FindMirror(ch1, flipPatternBOOK);\n\t\t\t\t\t\tch2 = SwapSlashes(ch2);\n\t\t\t\t\t\tFullSquare[lin, biFull - pos] = ch2;\t\n\t\t\t\t\t}\n\t\t\t\t\t\n\t\t\t\t\tif (whichQtr == 3) // downFlip\n\t\t\t\t\t{\n\t\t\t\t\t\tchar ch2 = FindMirror(ch1, flipPatternDOWN);\n\t\t\t\t\t\tch2 = SwapSlashes(ch2);\n\t\t\t\t\t\tFullSquare[biFull - lin, pos] = ch2;\n\t\t\t\t\t}\n\t\t\t\t\t\n\t\t\t\t\tif (whichQtr == 4) //diag\n\t\t\t\t\t{\n\t\t\t\t\t\tchar ch2 = FindMirror(ch1, flipPatternDIAG);\n\t\t\t\t\t\tFullSquare[biFull - lin, biFull-pos] = ch2;\n\t\t\t\t\t}\n\t\t\t\t\t/*\n\t\t\t\t\tassumes quardrants are like\n\t\t\t\t\t12\n\t\t\t\t\t34\n\t\t\t\t\t*/\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\t\n\t\tpublic static char SwapSlashes(char ch)\n\t\t{\n\t\t\tif (ch == '\\\\') return '/';\t\n\t\t\tif (ch == '/') return '\\\\';\t\n\t\t\treturn ch;\n\t\t}\n\t\t\n\t\tpublic void PopulateFullSquare()             \n\t\t{\n\t\t\tPopulateSingleQtr(1); PopulateSingleQtr(2); PopulateSingleQtr(3); PopulateSingleQtr(4);\n\t\t}\n\n\t\tpublic char FindMirror(char ch1, string strOptions)\n\t\t{\n\t\t\tchar[] OptionsRay = strOptions.ToCharArray();\t\n\t\t\tchar ch2 = ch1;\n\t\t\t\n\t\t\tint index = Array.IndexOf(OptionsRay, ch1);\n\t\t\tif (index != -1)\n\t\t\t{\n\t\t\t\tif (index % 2 == 0) ch2 = OptionsRay[index+1];\n\t\t\t\tif (index % 2 == 1) ch2 = OptionsRay[index-1];\n\t\t\t}\n\t\t\treturn ch2;\n\t\t}\n\t}\n\t\n\tpublic class TileFloor\n\t{\n\t\tpublic SquareModel Tile;\n\t\tpublic int TileSiz;\n\t\tpublic int TileSizPLUS;\n\t\tpublic int FloorSiz;\n\t\t\t\t\t\n\t\tpublic TileFloor(SquareModel aTile)\n\t\t{\n\t\t\tTile = aTile;\n\t\t\tTileSiz = Tile.FullSize;\n\t\t\tTileSizPLUS = TileSiz + 1; //allows for a left and top border\n\t\t\tFloorSiz = 2 * TileSizPLUS + 1;\n\t\t\tFINALRAY = new char[FloorSiz,FloorSiz];\n\t\t\tInitializeTileFloor();\n\t\t\t\n\t\t\tfor (int lin = 0 ; lin < FloorSiz; lin++)\n\t\t\t{\n\t\t\t\tfor (int pos = 0 ; pos < FloorSiz ; pos++)\n\t\t\t\t{\n\t\t\t\t\tint remLin = lin % TileSizPLUS;\n\t\t\t\t\tint remPos = pos % TileSizPLUS;\n\n\t\t\t\t\tif (remLin == 0)\n\t\t\t\t\t{\n\t\t\t\t\t\tFINALRAY[lin,pos] = '-';\n\t\t\t\t\t}\n\t\t\t\t\tif (remPos == 0)\n\t\t\t\t\t{\n\t\t\t\t\t\tFINALRAY[lin,pos] = '|';\n\t\t\t\t\t}\n\n\t\t\t\t\tif (remLin + remPos == 0)\n\t\t\t\t\t{\n\t\t\t\t\t\tFINALRAY[lin,pos] = '+';\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tPopulateFloor(0,0);\n\t\t\tPopulateFloor(0,1);\n\t\t\tPopulateFloor(1,0);\n\t\t\tPopulateFloor(1,1);\n\t\t}\n\t\t\n\t\tpublic void InitializeTileFloor()\n\t\t{\n\t\t\tfor (int lin = 0 ; lin < FloorSiz; lin++)\n\t\t\t{\n\t\t\t\tfor (int pos = 0 ; pos < FloorSiz ; pos++)\n\t\t\t\t{\n\t\t\t\t\tFINALRAY[lin, pos] =  ' ';\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\t\n\t\tpublic void PrintTileFloor()\n\t\t{\n\t\t\tfor (int lin = 0 ; lin < FloorSiz ; lin++)\n\t\t\t{\n\t\t\t\tfor (int pos = 0 ; pos < FloorSiz  ; pos++)\n\t\t\t\t{\n\t\t\t\t\tchar ch = FINALRAY[lin,pos];\n\t\t\t\t\tConsole.Write(ch);\n\t\t\t\t}\n\t\t\t\tConsole.WriteLine();\n\t\t\t}\n\t\t}\n\t\tpublic void PopulateFloor(int offsetLin, int offsetPos)\n\t\t{\n\t\t\tfor (int lin = 0 ; lin < TileSiz; lin++)\n\t\t\t{\n\t\t\t\tfor (int pos = 0 ; pos < TileSiz ; pos++)\n\t\t\t\t{\n\t\t\t\t\tint LIN = lin + 1 + (offsetLin * TileSizPLUS);\n\t\t\t\t\tint POS = pos + 1 + (offsetPos * TileSizPLUS);\n\t\t\t\t\tFINALRAY[LIN, POS] = Tile.FullSquare[lin, pos]; \n\t\t\t\t}\n\t\t\t}\n\t\t}\t\n\t}\n}\n",
+      "statement": "You saw the success your brother had as a manufacturer and installer of Floor-Tiles in the original “Tile a Floor” puzzle.  So you start a rival business doing something similar but different, specializing in what you call the {{bdpq}}-effect.\n\nThe beauty of Tiles comes from their symmetry, in that the quadrants of a Tile are mirror/reflections of each other.\n\nSo, when you get an order for a Tile, only the pattern of the top left quadrant is the input. \nGraphically explained here:`\n☑☑☑☐☐☐\n☑☑☑☐☐☐\n☑☑☑☐☐☐\n☐☐☐☐☐☐\n☐☐☐☐☐☐\n☐☐☐☐☐☐` From that limited input, your task is to:\nCreate a full Tile\nAnd display a 2x2 floor (i.e., a floor consisting of 4 of those Tiles)\n\n<<Flip/Mirror patterns:>>\nGenerally, a character appearing in the first quadrant just replicates in the other quadrants.\nHowever, your beautiful Tiles exploit the particular symmetry of:`{{b}} {{d}}\n{{p}} {{q}}`and`{{\\}}{{/}}\n{{/}}{{\\}}`For those, you'll want to put the proper reflected/flipped version in each quadrant.\n\n<<Details:>>\n➤ You only make square Tiles, where the side-length is an even number\n➤ Each Tile is a square; the input therefore is also a square\n➤ The input has a side-length of [[quarterSize]]; therefore the full Tile has a side-length of 2*[[quarterSize]]\n➤ The full floor needs a grout border, and grout separating the individual Tiles. Grout is represented by {{-}} on top/bottom, {{|}} on left/right, and {{+}} on corners\n\n\n\n\nHappy trowelling",
+      "testCases": [
+        {
+          "title": "Slash and b - Test 1",
+          "isTest": true,
+          "testIn": "3\n  /\n/b \nb  ",
+          "testOut": "+------+------+\n|  /\\  |  /\\  |\n|/b  d\\|/b  d\\|\n|b    d|b    d|\n|p    q|p    q|\n|\\p  q/|\\p  q/|\n|  \\/  |  \\/  |\n+------+------+\n|  /\\  |  /\\  |\n|/b  d\\|/b  d\\|\n|b    d|b    d|\n|p    q|p    q|\n|\\p  q/|\\p  q/|\n|  \\/  |  \\/  |\n+------+------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3\n / \n   \n  b",
+          "testOut": "+------+------+\n| /  \\ | /  \\ |\n|      |      |\n|  bd  |  bd  |\n|  pq  |  pq  |\n|      |      |\n| \\  / | \\  / |\n+------+------+\n| /  \\ | /  \\ |\n|      |      |\n|  bd  |  bd  |\n|  pq  |  pq  |\n|      |      |\n| \\  / | \\  / |\n+------+------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Both slashes and b - Test 2",
+          "isTest": true,
+          "testIn": "4\n   /\n   b\n\\b\\ \n    ",
+          "testOut": "+--------+--------+\n|   /\\   |   /\\   |\n|   bd   |   bd   |\n|\\b\\  /d/|\\b\\  /d/|\n|        |        |\n|        |        |\n|/p/  \\q\\|/p/  \\q\\|\n|   pq   |   pq   |\n|   \\/   |   \\/   |\n+--------+--------+\n|   /\\   |   /\\   |\n|   bd   |   bd   |\n|\\b\\  /d/|\\b\\  /d/|\n|        |        |\n|        |        |\n|/p/  \\q\\|/p/  \\q\\|\n|   pq   |   pq   |\n|   \\/   |   \\/   |\n+--------+--------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "4\n  b \n   /\n   \\\n    ",
+          "testOut": "+--------+--------+\n|  b  d  |  b  d  |\n|   /\\   |   /\\   |\n|   \\/   |   \\/   |\n|        |        |\n|        |        |\n|   /\\   |   /\\   |\n|   \\/   |   \\/   |\n|  p  q  |  p  q  |\n+--------+--------+\n|  b  d  |  b  d  |\n|   /\\   |   /\\   |\n|   \\/   |   \\/   |\n|        |        |\n|        |        |\n|   /\\   |   /\\   |\n|   \\/   |   \\/   |\n|  p  q  |  p  q  |\n+--------+--------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Slash and d - Test 3",
+          "isTest": true,
+          "testIn": "4\n  / \n    \n // \nd   ",
+          "testOut": "+--------+--------+\n|  /  \\  |  /  \\  |\n|        |        |\n| //  \\\\ | //  \\\\ |\n|d      b|d      b|\n|q      p|q      p|\n| \\\\  // | \\\\  // |\n|        |        |\n|  \\  /  |  \\  /  |\n+--------+--------+\n|  /  \\  |  /  \\  |\n|        |        |\n| //  \\\\ | //  \\\\ |\n|d      b|d      b|\n|q      p|q      p|\n| \\\\  // | \\\\  // |\n|        |        |\n|  \\  /  |  \\  /  |\n+--------+--------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "4\n    \n  \\ \n \\  \nd   ",
+          "testOut": "+--------+--------+\n|        |        |\n|  \\  /  |  \\  /  |\n| \\    / | \\    / |\n|d      b|d      b|\n|q      p|q      p|\n| /    \\ | /    \\ |\n|  /  \\  |  /  \\  |\n|        |        |\n+--------+--------+\n|        |        |\n|  \\  /  |  \\  /  |\n| \\    / | \\    / |\n|d      b|d      b|\n|q      p|q      p|\n| /    \\ | /    \\ |\n|  /  \\  |  /  \\  |\n|        |        |\n+--------+--------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Slashes and d - Test 4",
+          "isTest": true,
+          "testIn": "4\n/   \n \\d \n    \n   /",
+          "testOut": "+--------+--------+\n|/      \\|/      \\|\n| \\d  b/ | \\d  b/ |\n|        |        |\n|   /\\   |   /\\   |\n|   \\/   |   \\/   |\n|        |        |\n| /q  p\\ | /q  p\\ |\n|\\      /|\\      /|\n+--------+--------+\n|/      \\|/      \\|\n| \\d  b/ | \\d  b/ |\n|        |        |\n|   /\\   |   /\\   |\n|   \\/   |   \\/   |\n|        |        |\n| /q  p\\ | /q  p\\ |\n|\\      /|\\      /|\n+--------+--------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "4\n\\ \\\\\n  \\ \n  / \nd   ",
+          "testOut": "+--------+--------+\n|\\ \\\\// /|\\ \\\\// /|\n|  \\  /  |  \\  /  |\n|  /  \\  |  /  \\  |\n|d      b|d      b|\n|q      p|q      p|\n|  \\  /  |  \\  /  |\n|  /  \\  |  /  \\  |\n|/ //\\\\ \\|/ //\\\\ \\|\n+--------+--------+\n|\\ \\\\// /|\\ \\\\// /|\n|  \\  /  |  \\  /  |\n|  /  \\  |  /  \\  |\n|d      b|d      b|\n|q      p|q      p|\n|  \\  /  |  \\  /  |\n|  /  \\  |  /  \\  |\n|/ //\\\\ \\|/ //\\\\ \\|\n+--------+--------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Slashes and p -Test 5",
+          "isTest": true,
+          "testIn": "4\n\\/  \n    \n pp \n /\\ ",
+          "testOut": "+--------+--------+\n|\\/    \\/|\\/    \\/|\n|        |        |\n| pp  qq | pp  qq |\n| /\\  /\\ | /\\  /\\ |\n| \\/  \\/ | \\/  \\/ |\n| bb  dd | bb  dd |\n|        |        |\n|/\\    /\\|/\\    /\\|\n+--------+--------+\n|\\/    \\/|\\/    \\/|\n|        |        |\n| pp  qq | pp  qq |\n| /\\  /\\ | /\\  /\\ |\n| \\/  \\/ | \\/  \\/ |\n| bb  dd | bb  dd |\n|        |        |\n|/\\    /\\|/\\    /\\|\n+--------+--------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "4\n    \n \\  \n /p \n /  ",
+          "testOut": "+--------+--------+\n|        |        |\n| \\    / | \\    / |\n| /p  q\\ | /p  q\\ |\n| /    \\ | /    \\ |\n| \\    / | \\    / |\n| \\b  d/ | \\b  d/ |\n| /    \\ | /    \\ |\n|        |        |\n+--------+--------+\n|        |        |\n| \\    / | \\    / |\n| /p  q\\ | /p  q\\ |\n| /    \\ | /    \\ |\n| \\    / | \\    / |\n| \\b  d/ | \\b  d/ |\n| /    \\ | /    \\ |\n|        |        |\n+--------+--------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Slashes and q - Test 6",
+          "isTest": true,
+          "testIn": "4\n /  \n \\qq\n    \n    ",
+          "testOut": "+--------+--------+\n| /    \\ | /    \\ |\n| \\qqpp/ | \\qqpp/ |\n|        |        |\n|        |        |\n|        |        |\n|        |        |\n| /ddbb\\ | /ddbb\\ |\n| \\    / | \\    / |\n+--------+--------+\n| /    \\ | /    \\ |\n| \\qqpp/ | \\qqpp/ |\n|        |        |\n|        |        |\n|        |        |\n|        |        |\n| /ddbb\\ | /ddbb\\ |\n| \\    / | \\    / |\n+--------+--------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "4\n    \nq   \nq\\  \n\\q  ",
+          "testOut": "+--------+--------+\n|        |        |\n|q      p|q      p|\n|q\\    /p|q\\    /p|\n|\\q    p/|\\q    p/|\n|/d    b\\|/d    b\\|\n|d/    \\b|d/    \\b|\n|d      b|d      b|\n|        |        |\n+--------+--------+\n|        |        |\n|q      p|q      p|\n|q\\    /p|q\\    /p|\n|\\q    p/|\\q    p/|\n|/d    b\\|/d    b\\|\n|d/    \\b|d/    \\b|\n|d      b|d      b|\n|        |        |\n+--------+--------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Letter combos b d - Test 7",
+          "isTest": true,
+          "testIn": "5\n   bb\n d\\ d\nd    \n     \n  bd ",
+          "testOut": "+----------+----------+\n|   bbdd   |   bbdd   |\n| d\\ db /b | d\\ db /b |\n|d        b|d        b|\n|          |          |\n|  bd  bd  |  bd  bd  |\n|  pq  pq  |  pq  pq  |\n|          |          |\n|q        p|q        p|\n| q/ qp \\p | q/ qp \\p |\n|   ppqq   |   ppqq   |\n+----------+----------+\n|   bbdd   |   bbdd   |\n| d\\ db /b | d\\ db /b |\n|d        b|d        b|\n|          |          |\n|  bd  bd  |  bd  bd  |\n|  pq  pq  |  pq  pq  |\n|          |          |\n|q        p|q        p|\n| q/ qp \\p | q/ qp \\p |\n|   ppqq   |   ppqq   |\n+----------+----------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "5\n  d  \n   / \n     \n /  b\n d d ",
+          "testOut": "+----------+----------+\n|  d    b  |  d    b  |\n|   /  \\   |   /  \\   |\n|          |          |\n| /  bd  \\ | /  bd  \\ |\n| d d  b b | d d  b b |\n| q q  p p | q q  p p |\n| \\  pq  / | \\  pq  / |\n|          |          |\n|   \\  /   |   \\  /   |\n|  q    p  |  q    p  |\n+----------+----------+\n|  d    b  |  d    b  |\n|   /  \\   |   /  \\   |\n|          |          |\n| /  bd  \\ | /  bd  \\ |\n| d d  b b | d d  b b |\n| q q  p p | q q  p p |\n| \\  pq  / | \\  pq  / |\n|          |          |\n|   \\  /   |   \\  /   |\n|  q    p  |  q    p  |\n+----------+----------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Letter combos d p - Test 8",
+          "isTest": true,
+          "testIn": "5\n   d \n/    \n \\   \n    d\n p   ",
+          "testOut": "+----------+----------+\n|   d  b   |   d  b   |\n|/        \\|/        \\|\n| \\      / | \\      / |\n|    db    |    db    |\n| p      q | p      q |\n| b      d | b      d |\n|    qp    |    qp    |\n| /      \\ | /      \\ |\n|\\        /|\\        /|\n|   q  p   |   q  p   |\n+----------+----------+\n|   d  b   |   d  b   |\n|/        \\|/        \\|\n| \\      / | \\      / |\n|    db    |    db    |\n| p      q | p      q |\n| b      d | b      d |\n|    qp    |    qp    |\n| /      \\ | /      \\ |\n|\\        /|\\        /|\n|   q  p   |   q  p   |\n+----------+----------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "5\n     \n     \n   p \n d /p\n p\\ p",
+          "testOut": "+----------+----------+\n|          |          |\n|          |          |\n|   p  q   |   p  q   |\n| d /pq\\ b | d /pq\\ b |\n| p\\ pq /q | p\\ pq /q |\n| b/ bd \\d | b/ bd \\d |\n| q \\bd/ p | q \\bd/ p |\n|   b  d   |   b  d   |\n|          |          |\n|          |          |\n+----------+----------+\n|          |          |\n|          |          |\n|   p  q   |   p  q   |\n| d /pq\\ b | d /pq\\ b |\n| p\\ pq /q | p\\ pq /q |\n| b/ bd \\d | b/ bd \\d |\n| q \\bd/ p | q \\bd/ p |\n|   b  d   |   b  d   |\n|          |          |\n|          |          |\n+----------+----------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Letter combos p q Test 9",
+          "isTest": true,
+          "testIn": "5\n  p  \n q   \n q   \n    p\n   p ",
+          "testOut": "+----------+----------+\n|  p    q  |  p    q  |\n| q      p | q      p |\n| q      p | q      p |\n|    pq    |    pq    |\n|   p  q   |   p  q   |\n|   b  d   |   b  d   |\n|    bd    |    bd    |\n| d      b | d      b |\n| d      b | d      b |\n|  b    d  |  b    d  |\n+----------+----------+\n|  p    q  |  p    q  |\n| q      p | q      p |\n| q      p | q      p |\n|    pq    |    pq    |\n|   p  q   |   p  q   |\n|   b  d   |   b  d   |\n|    bd    |    bd    |\n| d      b | d      b |\n| d      b | d      b |\n|  b    d  |  b    d  |\n+----------+----------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "5\n  q p\n p   \n\\  q\\\n  p  \n qp p",
+          "testOut": "+----------+----------+\n|  q pq p  |  q pq p  |\n| p      q | p      q |\n|\\  q\\/p  /|\\  q\\/p  /|\n|  p    q  |  p    q  |\n| qp pq qp | qp pq qp |\n| db bd db | db bd db |\n|  b    d  |  b    d  |\n|/  d/\\b  \\|/  d/\\b  \\|\n| b      d | b      d |\n|  d bd b  |  d bd b  |\n+----------+----------+\n|  q pq p  |  q pq p  |\n| p      q | p      q |\n|\\  q\\/p  /|\\  q\\/p  /|\n|  p    q  |  p    q  |\n| qp pq qp | qp pq qp |\n| db bd db | db bd db |\n|  b    d  |  b    d  |\n|/  d/\\b  \\|/  d/\\b  \\|\n| b      d | b      d |\n|  d bd b  |  d bd b  |\n+----------+----------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Letter combos b q - Test 10",
+          "isTest": true,
+          "testIn": "5\nqq   \n  q  \n/  / \n /b  \n  b  ",
+          "testOut": "+----------+----------+\n|qq      pp|qq      pp|\n|  q    p  |  q    p  |\n|/  /  \\  \\|/  /  \\  \\|\n| /b    d\\ | /b    d\\ |\n|  b    d  |  b    d  |\n|  p    q  |  p    q  |\n| \\p    q/ | \\p    q/ |\n|\\  \\  /  /|\\  \\  /  /|\n|  d    b  |  d    b  |\n|dd      bb|dd      bb|\n+----------+----------+\n|qq      pp|qq      pp|\n|  q    p  |  q    p  |\n|/  /  \\  \\|/  /  \\  \\|\n| /b    d\\ | /b    d\\ |\n|  b    d  |  b    d  |\n|  p    q  |  p    q  |\n| \\p    q/ | \\p    q/ |\n|\\  \\  /  /|\\  \\  /  /|\n|  d    b  |  d    b  |\n|dd      bb|dd      bb|\n+----------+----------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "5\n/ bq \n  q  \n    b\n   q \nb   \\",
+          "testOut": "+----------+----------+\n|/ bq  pd \\|/ bq  pd \\|\n|  q    p  |  q    p  |\n|    bd    |    bd    |\n|   q  p   |   q  p   |\n|b   \\/   d|b   \\/   d|\n|p   /\\   q|p   /\\   q|\n|   d  b   |   d  b   |\n|    pq    |    pq    |\n|  d    b  |  d    b  |\n|\\ pd  bq /|\\ pd  bq /|\n+----------+----------+\n|/ bq  pd \\|/ bq  pd \\|\n|  q    p  |  q    p  |\n|    bd    |    bd    |\n|   q  p   |   q  p   |\n|b   \\/   d|b   \\/   d|\n|p   /\\   q|p   /\\   q|\n|   d  b   |   d  b   |\n|    pq    |    pq    |\n|  d    b  |  d    b  |\n|\\ pd  bq /|\\ pd  bq /|\n+----------+----------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple Letters > 2 - Test 11",
+          "isTest": true,
+          "testIn": "6\n  b   \nq  bp \n  q b\\\n/  q b\n qd \\b\n   \\ \\",
+          "testOut": "+------------+------------+\n|  b      d  |  b      d  |\n|q  bp  qd  p|q  bp  qd  p|\n|  q b\\/d p  |  q b\\/d p  |\n|/  q bd p  \\|/  q bd p  \\|\n| qd \\bd/ bp | qd \\bd/ bp |\n|   \\ \\/ /   |   \\ \\/ /   |\n|   / /\\ \\   |   / /\\ \\   |\n| dq /pq\\ pb | dq /pq\\ pb |\n|\\  d pq b  /|\\  d pq b  /|\n|  d p/\\q b  |  d p/\\q b  |\n|d  pb  dq  b|d  pb  dq  b|\n|  p      q  |  p      q  |\n+------------+------------+\n|  b      d  |  b      d  |\n|q  bp  qd  p|q  bp  qd  p|\n|  q b\\/d p  |  q b\\/d p  |\n|/  q bd p  \\|/  q bd p  \\|\n| qd \\bd/ bp | qd \\bd/ bp |\n|   \\ \\/ /   |   \\ \\/ /   |\n|   / /\\ \\   |   / /\\ \\   |\n| dq /pq\\ pb | dq /pq\\ pb |\n|\\  d pq b  /|\\  d pq b  /|\n|  d p/\\q b  |  d p/\\q b  |\n|d  pb  dq  b|d  pb  dq  b|\n|  p      q  |  p      q  |\n+------------+------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "6\n\\/    \n qp   \ndppp /\n p    \n   b  \n dp   ",
+          "testOut": "+------------+------------+\n|\\/        \\/|\\/        \\/|\n| qp      qp | qp      qp |\n|dppp /\\ qqqb|dppp /\\ qqqb|\n| p        q | p        q |\n|   b    d   |   b    d   |\n| dp      qb | dp      qb |\n| qb      dp | qb      dp |\n|   p    q   |   p    q   |\n| b        d | b        d |\n|qbbb \\/ dddp|qbbb \\/ dddp|\n| db      db | db      db |\n|/\\        /\\|/\\        /\\|\n+------------+------------+\n|\\/        \\/|\\/        \\/|\n| qp      qp | qp      qp |\n|dppp /\\ qqqb|dppp /\\ qqqb|\n| p        q | p        q |\n|   b    d   |   b    d   |\n| dp      qb | dp      qb |\n| qb      dp | qb      dp |\n|   p    q   |   p    q   |\n| b        d | b        d |\n|qbbb \\/ dddp|qbbb \\/ dddp|\n| db      db | db      db |\n|/\\        /\\|/\\        /\\|\n+------------+------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Extra characters - Test 12",
+          "isTest": true,
+          "testIn": "7\n      |\n q q   \n    q  \n      |\n|    | \n       \n     q ",
+          "testOut": "+--------------+--------------+\n|      ||      |      ||      |\n| q q      p p | q q      p p |\n|    q    p    |    q    p    |\n|      ||      |      ||      |\n||    |  |    |||    |  |    ||\n|              |              |\n|     q  p     |     q  p     |\n|     d  b     |     d  b     |\n|              |              |\n||    |  |    |||    |  |    ||\n|      ||      |      ||      |\n|    d    b    |    d    b    |\n| d d      b b | d d      b b |\n|      ||      |      ||      |\n+--------------+--------------+\n|      ||      |      ||      |\n| q q      p p | q q      p p |\n|    q    p    |    q    p    |\n|      ||      |      ||      |\n||    |  |    |||    |  |    ||\n|              |              |\n|     q  p     |     q  p     |\n|     d  b     |     d  b     |\n|              |              |\n||    |  |    |||    |  |    ||\n|      ||      |      ||      |\n|    d    b    |    d    b    |\n| d d      b b | d d      b b |\n|      ||      |      ||      |\n+--------------+--------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "5\n \\   \nd    \n : / \n:    \n  / d",
+          "testOut": "+----------+----------+\n| \\      / | \\      / |\n|d        b|d        b|\n| : /  \\ : | : /  \\ : |\n|:        :|:        :|\n|  / db \\  |  / db \\  |\n|  \\ qp /  |  \\ qp /  |\n|:        :|:        :|\n| : \\  / : | : \\  / : |\n|q        p|q        p|\n| /      \\ | /      \\ |\n+----------+----------+\n| \\      / | \\      / |\n|d        b|d        b|\n| : /  \\ : | : /  \\ : |\n|:        :|:        :|\n|  / db \\  |  / db \\  |\n|  \\ qp /  |  \\ qp /  |\n|:        :|:        :|\n| : \\  / : | : \\  / : |\n|q        p|q        p|\n| /      \\ | /      \\ |\n+----------+----------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 13",
+          "isTest": true,
+          "testIn": "5\n/|/  \n    q\n/    \nq| | \n |/ |",
+          "testOut": "+----------+----------+\n|/|/    \\|\\|/|/    \\|\\|\n|    qp    |    qp    |\n|/        \\|/        \\|\n|q| |  | |p|q| |  | |p|\n| |/ || \\| | |/ || \\| |\n| |\\ || /| | |\\ || /| |\n|d| |  | |b|d| |  | |b|\n|\\        /|\\        /|\n|    db    |    db    |\n|\\|\\    /|/|\\|\\    /|/|\n+----------+----------+\n|/|/    \\|\\|/|/    \\|\\|\n|    qp    |    qp    |\n|/        \\|/        \\|\n|q| |  | |p|q| |  | |p|\n| |/ || \\| | |/ || \\| |\n| |\\ || /| | |\\ || /| |\n|d| |  | |b|d| |  | |b|\n|\\        /|\\        /|\n|    db    |    db    |\n|\\|\\    /|/|\\|\\    /|/|\n+----------+----------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "3\n\\X\\\n Ob\n\\ X",
+          "testOut": "+------+------+\n|\\X\\/X/|\\X\\/X/|\n| ObdO | ObdO |\n|\\ XX /|\\ XX /|\n|/ XX \\|/ XX \\|\n| OpqO | OpqO |\n|/X/\\X\\|/X/\\X\\|\n+------+------+\n|\\X\\/X/|\\X\\/X/|\n| ObdO | ObdO |\n|\\ XX /|\\ XX /|\n|/ XX \\|/ XX \\|\n| OpqO | OpqO |\n|/X/\\X\\|/X/\\X\\|\n+------+------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 14",
+          "isTest": true,
+          "testIn": "7\n   \\ | \n|  \\   \nb\\b\\   \n||\\ \\ \\\n | \\ \\ \n  | |b\\\n |    |",
+          "testOut": "+--------------+--------------+\n|   \\ |  | /   |   \\ |  | /   |\n||  \\      /  |||  \\      /  ||\n|b\\b\\      /d/d|b\\b\\      /d/d|\n|||\\ \\ \\/ / /|||||\\ \\ \\/ / /|||\n| | \\ \\  / / | | | \\ \\  / / | |\n|  | |b\\/d| |  |  | |b\\/d| |  |\n| |    ||    | | |    ||    | |\n| |    ||    | | |    ||    | |\n|  | |p/\\q| |  |  | |p/\\q| |  |\n| | / /  \\ \\ | | | / /  \\ \\ | |\n|||/ / /\\ \\ \\|||||/ / /\\ \\ \\|||\n|p/p/      \\q\\q|p/p/      \\q\\q|\n||  /      \\  |||  /      \\  ||\n|   / |  | \\   |   / |  | \\   |\n+--------------+--------------+\n|   \\ |  | /   |   \\ |  | /   |\n||  \\      /  |||  \\      /  ||\n|b\\b\\      /d/d|b\\b\\      /d/d|\n|||\\ \\ \\/ / /|||||\\ \\ \\/ / /|||\n| | \\ \\  / / | | | \\ \\  / / | |\n|  | |b\\/d| |  |  | |b\\/d| |  |\n| |    ||    | | |    ||    | |\n| |    ||    | | |    ||    | |\n|  | |p/\\q| |  |  | |p/\\q| |  |\n| | / /  \\ \\ | | | / /  \\ \\ | |\n|||/ / /\\ \\ \\|||||/ / /\\ \\ \\|||\n|p/p/      \\q\\q|p/p/      \\q\\q|\n||  /      \\  |||  /      \\  ||\n|   / |  | \\   |   / |  | \\   |\n+--------------+--------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 14",
+          "isTest": false,
+          "testIn": "4\n   b\nO  d\ndb d\nbdbb",
+          "testOut": "+--------+--------+\n|   bd   |   bd   |\n|O  db  O|O  db  O|\n|db db db|db db db|\n|bdbbddbd|bdbbddbd|\n|pqppqqpq|pqppqqpq|\n|qp qp qp|qp qp qp|\n|O  qp  O|O  qp  O|\n|   pq   |   pq   |\n+--------+--------+\n|   bd   |   bd   |\n|O  db  O|O  db  O|\n|db db db|db db db|\n|bdbbddbd|bdbbddbd|\n|pqppqqpq|pqppqqpq|\n|qp qp qp|qp qp qp|\n|O  qp  O|O  qp  O|\n|   pq   |   pq   |\n+--------+--------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 15",
+          "isTest": true,
+          "testIn": "5\n  q\\ \nqq  \\\n  \\ \\\n: \\\\\\\n \\  :",
+          "testOut": "+----------+----------+\n|  q\\  /p  |  q\\  /p  |\n|qq  \\/  pp|qq  \\/  pp|\n|  \\ \\/ /  |  \\ \\/ /  |\n|: \\\\\\/// :|: \\\\\\/// :|\n| \\  ::  / | \\  ::  / |\n| /  ::  \\ | /  ::  \\ |\n|: ///\\\\\\ :|: ///\\\\\\ :|\n|  / /\\ \\  |  / /\\ \\  |\n|dd  /\\  bb|dd  /\\  bb|\n|  d/  \\b  |  d/  \\b  |\n+----------+----------+\n|  q\\  /p  |  q\\  /p  |\n|qq  \\/  pp|qq  \\/  pp|\n|  \\ \\/ /  |  \\ \\/ /  |\n|: \\\\\\/// :|: \\\\\\/// :|\n| \\  ::  / | \\  ::  / |\n| /  ::  \\ | /  ::  \\ |\n|: ///\\\\\\ :|: ///\\\\\\ :|\n|  / /\\ \\  |  / /\\ \\  |\n|dd  /\\  bb|dd  /\\  bb|\n|  d/  \\b  |  d/  \\b  |\n+----------+----------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 15",
+          "isTest": false,
+          "testIn": "4\n \\bb\nbq b\n\\ b\\\nb\\  ",
+          "testOut": "+--------+--------+\n| \\bbdd/ | \\bbdd/ |\n|bq bd pd|bq bd pd|\n|\\ b\\/d /|\\ b\\/d /|\n|b\\    /d|b\\    /d|\n|p/    \\q|p/    \\q|\n|/ p/\\q \\|/ p/\\q \\|\n|pd pq bq|pd pq bq|\n| /ppqq\\ | /ppqq\\ |\n+--------+--------+\n| \\bbdd/ | \\bbdd/ |\n|bq bd pd|bq bd pd|\n|\\ b\\/d /|\\ b\\/d /|\n|b\\    /d|b\\    /d|\n|p/    \\q|p/    \\q|\n|/ p/\\q \\|/ p/\\q \\|\n|pd pq bq|pd pq bq|\n| /ppqq\\ | /ppqq\\ |\n+--------+--------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 16",
+          "isTest": true,
+          "testIn": "7\n///|~//\n// |  |\n / /|~/\n //||/ \n  /|~/~\n~  /~~/\n ~  |//",
+          "testOut": "+--------------+--------------+\n|///|~//\\\\~|\\\\\\|///|~//\\\\~|\\\\\\|\n|// |  ||  | \\\\|// |  ||  | \\\\|\n| / /|~/\\~|\\ \\ | / /|~/\\~|\\ \\ |\n| //||/  \\||\\\\ | //||/  \\||\\\\ |\n|  /|~/~~\\~|\\  |  /|~/~~\\~|\\  |\n|~  /~~/\\~~\\  ~|~  /~~/\\~~\\  ~|\n| ~  |//\\\\|  ~ | ~  |//\\\\|  ~ |\n| ~  |\\\\//|  ~ | ~  |\\\\//|  ~ |\n|~  \\~~\\/~~/  ~|~  \\~~\\/~~/  ~|\n|  \\|~\\~~/~|/  |  \\|~\\~~/~|/  |\n| \\\\||\\  /||// | \\\\||\\  /||// |\n| \\ \\|~\\/~|/ / | \\ \\|~\\/~|/ / |\n|\\\\ |  ||  | //|\\\\ |  ||  | //|\n|\\\\\\|~\\\\//~|///|\\\\\\|~\\\\//~|///|\n+--------------+--------------+\n|///|~//\\\\~|\\\\\\|///|~//\\\\~|\\\\\\|\n|// |  ||  | \\\\|// |  ||  | \\\\|\n| / /|~/\\~|\\ \\ | / /|~/\\~|\\ \\ |\n| //||/  \\||\\\\ | //||/  \\||\\\\ |\n|  /|~/~~\\~|\\  |  /|~/~~\\~|\\  |\n|~  /~~/\\~~\\  ~|~  /~~/\\~~\\  ~|\n| ~  |//\\\\|  ~ | ~  |//\\\\|  ~ |\n| ~  |\\\\//|  ~ | ~  |\\\\//|  ~ |\n|~  \\~~\\/~~/  ~|~  \\~~\\/~~/  ~|\n|  \\|~\\~~/~|/  |  \\|~\\~~/~|/  |\n| \\\\||\\  /||// | \\\\||\\  /||// |\n| \\ \\|~\\/~|/ / | \\ \\|~\\/~|/ / |\n|\\\\ |  ||  | //|\\\\ |  ||  | //|\n|\\\\\\|~\\\\//~|///|\\\\\\|~\\\\//~|///|\n+--------------+--------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 16",
+          "isTest": false,
+          "testIn": "7\nq pp   \n q q pp\n  q q  \n  p    \n   p p \n     qq\n   pp  ",
+          "testOut": "+--------------+--------------+\n|q pp      qq p|q pp      qq p|\n| q q ppqq p p | q q ppqq p p |\n|  q q    p p  |  q q    p p  |\n|  p        q  |  p        q  |\n|   p p  q q   |   p p  q q   |\n|     qqpp     |     qqpp     |\n|   pp    qq   |   pp    qq   |\n|   bb    dd   |   bb    dd   |\n|     ddbb     |     ddbb     |\n|   b b  d d   |   b b  d d   |\n|  b        d  |  b        d  |\n|  d d    b b  |  d d    b b  |\n| d d bbdd b b | d d bbdd b b |\n|d bb      dd b|d bb      dd b|\n+--------------+--------------+\n|q pp      qq p|q pp      qq p|\n| q q ppqq p p | q q ppqq p p |\n|  q q    p p  |  q q    p p  |\n|  p        q  |  p        q  |\n|   p p  q q   |   p p  q q   |\n|     qqpp     |     qqpp     |\n|   pp    qq   |   pp    qq   |\n|   bb    dd   |   bb    dd   |\n|     ddbb     |     ddbb     |\n|   b b  d d   |   b b  d d   |\n|  b        d  |  b        d  |\n|  d d    b b  |  d d    b b  |\n| d d bbdd b b | d d bbdd b b |\n|d bb      dd b|d bb      dd b|\n+--------------+--------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 17",
+          "isTest": true,
+          "testIn": "3\n\\\\ \nqq8\n  \\",
+          "testOut": "+------+------+\n|\\\\  //|\\\\  //|\n|qq88pp|qq88pp|\n|  \\/  |  \\/  |\n|  /\\  |  /\\  |\n|dd88bb|dd88bb|\n|//  \\\\|//  \\\\|\n+------+------+\n|\\\\  //|\\\\  //|\n|qq88pp|qq88pp|\n|  \\/  |  \\/  |\n|  /\\  |  /\\  |\n|dd88bb|dd88bb|\n|//  \\\\|//  \\\\|\n+------+------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 17",
+          "isTest": false,
+          "testIn": "5\n|pp/ \n p||p\n/ppp/\n |pp|\n||p|/",
+          "testOut": "+----------+----------+\n||pp/  \\qq|||pp/  \\qq||\n| p||pq||q | p||pq||q |\n|/ppp/\\qqq\\|/ppp/\\qqq\\|\n| |pp||qq| | |pp||qq| |\n|||p|/\\|q|||||p|/\\|q|||\n|||b|\\/|d|||||b|\\/|d|||\n| |bb||dd| | |bb||dd| |\n|\\bbb\\/ddd/|\\bbb\\/ddd/|\n| b||bd||d | b||bd||d |\n||bb\\  /dd|||bb\\  /dd||\n+----------+----------+\n||pp/  \\qq|||pp/  \\qq||\n| p||pq||q | p||pq||q |\n|/ppp/\\qqq\\|/ppp/\\qqq\\|\n| |pp||qq| | |pp||qq| |\n|||p|/\\|q|||||p|/\\|q|||\n|||b|\\/|d|||||b|\\/|d|||\n| |bb||dd| | |bb||dd| |\n|\\bbb\\/ddd/|\\bbb\\/ddd/|\n| b||bd||d | b||bd||d |\n||bb\\  /dd|||bb\\  /dd||\n+----------+----------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 18",
+          "isTest": true,
+          "testIn": "6\n|||d  \n   |dd\n  d  |\n|||||d\n  dd| \n d|   ",
+          "testOut": "+------------+------------+\n||||d    b|||||||d    b||||\n|   |ddbb|   |   |ddbb|   |\n|  d  ||  b  |  d  ||  b  |\n||||||db|||||||||||db||||||\n|  dd|  |bb  |  dd|  |bb  |\n| d|      |b | d|      |b |\n| q|      |p | q|      |p |\n|  qq|  |pp  |  qq|  |pp  |\n||||||qp|||||||||||qp||||||\n|  q  ||  p  |  q  ||  p  |\n|   |qqpp|   |   |qqpp|   |\n||||q    p|||||||q    p||||\n+------------+------------+\n||||d    b|||||||d    b||||\n|   |ddbb|   |   |ddbb|   |\n|  d  ||  b  |  d  ||  b  |\n||||||db|||||||||||db||||||\n|  dd|  |bb  |  dd|  |bb  |\n| d|      |b | d|      |b |\n| q|      |p | q|      |p |\n|  qq|  |pp  |  qq|  |pp  |\n||||||qp|||||||||||qp||||||\n|  q  ||  p  |  q  ||  p  |\n|   |qqpp|   |   |qqpp|   |\n||||q    p|||||||q    p||||\n+------------+------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 18",
+          "isTest": false,
+          "testIn": "6\n\\~ \\\\\\\n~\\ \\~\\\n\\\\\\ ||\nO|\\d\\~\n\\d| |\\\n~~\\~\\\\",
+          "testOut": "+------------+------------+\n|\\~ \\\\\\/// ~/|\\~ \\\\\\/// ~/|\n|~\\ \\~\\/~/ /~|~\\ \\~\\/~/ /~|\n|\\\\\\ |||| ///|\\\\\\ |||| ///|\n|O|\\d\\~~/b/|O|O|\\d\\~~/b/|O|\n|\\d| |\\/| |b/|\\d| |\\/| |b/|\n|~~\\~\\\\//~/~~|~~\\~\\\\//~/~~|\n|~~/~//\\\\~\\~~|~~/~//\\\\~\\~~|\n|/q| |/\\| |p\\|/q| |/\\| |p\\|\n|O|/q/~~\\p\\|O|O|/q/~~\\p\\|O|\n|/// |||| \\\\\\|/// |||| \\\\\\|\n|~/ /~/\\~\\ \\~|~/ /~/\\~\\ \\~|\n|/~ ///\\\\\\ ~\\|/~ ///\\\\\\ ~\\|\n+------------+------------+\n|\\~ \\\\\\/// ~/|\\~ \\\\\\/// ~/|\n|~\\ \\~\\/~/ /~|~\\ \\~\\/~/ /~|\n|\\\\\\ |||| ///|\\\\\\ |||| ///|\n|O|\\d\\~~/b/|O|O|\\d\\~~/b/|O|\n|\\d| |\\/| |b/|\\d| |\\/| |b/|\n|~~\\~\\\\//~/~~|~~\\~\\\\//~/~~|\n|~~/~//\\\\~\\~~|~~/~//\\\\~\\~~|\n|/q| |/\\| |p\\|/q| |/\\| |p\\|\n|O|/q/~~\\p\\|O|O|/q/~~\\p\\|O|\n|/// |||| \\\\\\|/// |||| \\\\\\|\n|~/ /~/\\~\\ \\~|~/ /~/\\~\\ \\~|\n|/~ ///\\\\\\ ~\\|/~ ///\\\\\\ ~\\|\n+------------+------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 19",
+          "isTest": true,
+          "testIn": "3\n /b\n|p \n  @",
+          "testOut": "+------+------+\n| /bd\\ | /bd\\ |\n||p  q|||p  q||\n|  @@  |  @@  |\n|  @@  |  @@  |\n||b  d|||b  d||\n| \\pq/ | \\pq/ |\n+------+------+\n| /bd\\ | /bd\\ |\n||p  q|||p  q||\n|  @@  |  @@  |\n|  @@  |  @@  |\n||b  d|||b  d||\n| \\pq/ | \\pq/ |\n+------+------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 19",
+          "isTest": false,
+          "testIn": "6\n  \\|\\\\\n-  ||\\\n    \\|\n- |   \n|\\ \\\\ \n|-\\  \\",
+          "testOut": "+------------+------------+\n|  \\|\\\\//|/  |  \\|\\\\//|/  |\n|-  ||\\/||  -|-  ||\\/||  -|\n|    \\||/    |    \\||/    |\n|- |      | -|- |      | -|\n||\\ \\\\  // /|||\\ \\\\  // /||\n||-\\  \\/  /-|||-\\  \\/  /-||\n||-/  /\\  \\-|||-/  /\\  \\-||\n||/ //  \\\\ \\|||/ //  \\\\ \\||\n|- |      | -|- |      | -|\n|    /||\\    |    /||\\    |\n|-  ||/\\||  -|-  ||/\\||  -|\n|  /|//\\\\|\\  |  /|//\\\\|\\  |\n+------------+------------+\n|  \\|\\\\//|/  |  \\|\\\\//|/  |\n|-  ||\\/||  -|-  ||\\/||  -|\n|    \\||/    |    \\||/    |\n|- |      | -|- |      | -|\n||\\ \\\\  // /|||\\ \\\\  // /||\n||-\\  \\/  /-|||-\\  \\/  /-||\n||-/  /\\  \\-|||-/  /\\  \\-||\n||/ //  \\\\ \\|||/ //  \\\\ \\||\n|- |      | -|- |      | -|\n|    /||\\    |    /||\\    |\n|-  ||/\\||  -|-  ||/\\||  -|\n|  /|//\\\\|\\  |  /|//\\\\|\\  |\n+------------+------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 20",
+          "isTest": true,
+          "testIn": "3\nq\\|\nq\\|\n\\|\\",
+          "testOut": "+------+------+\n|q\\||/p|q\\||/p|\n|q\\||/p|q\\||/p|\n|\\|\\/|/|\\|\\/|/|\n|/|/\\|\\|/|/\\|\\|\n|d/||\\b|d/||\\b|\n|d/||\\b|d/||\\b|\n+------+------+\n|q\\||/p|q\\||/p|\n|q\\||/p|q\\||/p|\n|\\|\\/|/|\\|\\/|/|\n|/|/\\|\\|/|/\\|\\|\n|d/||\\b|d/||\\b|\n|d/||\\b|d/||\\b|\n+------+------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 20",
+          "isTest": false,
+          "testIn": "4\n|  |\n   \\\n \\  \n  \\ ",
+          "testOut": "+--------+--------+\n||  ||  |||  ||  ||\n|   \\/   |   \\/   |\n| \\    / | \\    / |\n|  \\  /  |  \\  /  |\n|  /  \\  |  /  \\  |\n| /    \\ | /    \\ |\n|   /\\   |   /\\   |\n||  ||  |||  ||  ||\n+--------+--------+\n||  ||  |||  ||  ||\n|   \\/   |   \\/   |\n| \\    / | \\    / |\n|  \\  /  |  \\  /  |\n|  /  \\  |  /  \\  |\n| /    \\ | /    \\ |\n|   /\\   |   /\\   |\n||  ||  |||  ||  ||\n+--------+--------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 21",
+          "isTest": true,
+          "testIn": "6\n//p   \n ::// \n  /ppp\nbp:  :\n/::: p\n  : :/",
+          "testOut": "+------------+------------+\n|//p      q\\\\|//p      q\\\\|\n| :://  \\\\:: | :://  \\\\:: |\n|  /pppqqq\\  |  /pppqqq\\  |\n|bp:  ::  :qd|bp:  ::  :qd|\n|/::: pq :::\\|/::: pq :::\\|\n|  : :/\\: :  |  : :/\\: :  |\n|  : :\\/: :  |  : :\\/: :  |\n|\\::: bd :::/|\\::: bd :::/|\n|pb:  ::  :dq|pb:  ::  :dq|\n|  \\bbbddd/  |  \\bbbddd/  |\n| ::\\\\  //:: | ::\\\\  //:: |\n|\\\\b      d//|\\\\b      d//|\n+------------+------------+\n|//p      q\\\\|//p      q\\\\|\n| :://  \\\\:: | :://  \\\\:: |\n|  /pppqqq\\  |  /pppqqq\\  |\n|bp:  ::  :qd|bp:  ::  :qd|\n|/::: pq :::\\|/::: pq :::\\|\n|  : :/\\: :  |  : :/\\: :  |\n|  : :\\/: :  |  : :\\/: :  |\n|\\::: bd :::/|\\::: bd :::/|\n|pb:  ::  :dq|pb:  ::  :dq|\n|  \\bbbddd/  |  \\bbbddd/  |\n| ::\\\\  //:: | ::\\\\  //:: |\n|\\\\b      d//|\\\\b      d//|\n+------------+------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 21",
+          "isTest": false,
+          "testIn": "3\nd/ \nqq \n / ",
+          "testOut": "+------+------+\n|d/  \\b|d/  \\b|\n|qq  pp|qq  pp|\n| /  \\ | /  \\ |\n| \\  / | \\  / |\n|dd  bb|dd  bb|\n|q\\  /p|q\\  /p|\n+------+------+\n|d/  \\b|d/  \\b|\n|qq  pp|qq  pp|\n| /  \\ | /  \\ |\n| \\  / | \\  / |\n|dd  bb|dd  bb|\n|q\\  /p|q\\  /p|\n+------+------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 22",
+          "isTest": true,
+          "testIn": "6\nb bpXq\n b \\bb\npp   \\\n    X \n  \\   \n p  pq",
+          "testOut": "+------------+------------+\n|b bpXqpXqd d|b bpXqpXqd d|\n| b \\bbdd/ d | b \\bbdd/ d |\n|pp   \\/   qq|pp   \\/   qq|\n|    X  X    |    X  X    |\n|  \\      /  |  \\      /  |\n| p  pqpq  q | p  pqpq  q |\n| b  bdbd  d | b  bdbd  d |\n|  /      \\  |  /      \\  |\n|    X  X    |    X  X    |\n|bb   /\\   dd|bb   /\\   dd|\n| p /ppqq\\ q | p /ppqq\\ q |\n|p pbXdbXdq q|p pbXdbXdq q|\n+------------+------------+\n|b bpXqpXqd d|b bpXqpXqd d|\n| b \\bbdd/ d | b \\bbdd/ d |\n|pp   \\/   qq|pp   \\/   qq|\n|    X  X    |    X  X    |\n|  \\      /  |  \\      /  |\n| p  pqpq  q | p  pqpq  q |\n| b  bdbd  d | b  bdbd  d |\n|  /      \\  |  /      \\  |\n|    X  X    |    X  X    |\n|bb   /\\   dd|bb   /\\   dd|\n| p /ppqq\\ q | p /ppqq\\ q |\n|p pbXdbXdq q|p pbXdbXdq q|\n+------------+------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 22",
+          "isTest": false,
+          "testIn": "3\n \\ \n**\\\npp ",
+          "testOut": "+------+------+\n| \\  / | \\  / |\n|**\\/**|**\\/**|\n|pp  qq|pp  qq|\n|bb  dd|bb  dd|\n|**/\\**|**/\\**|\n| /  \\ | /  \\ |\n+------+------+\n| \\  / | \\  / |\n|**\\/**|**\\/**|\n|pp  qq|pp  qq|\n|bb  dd|bb  dd|\n|**/\\**|**/\\**|\n| /  \\ | /  \\ |\n+------+------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 23",
+          "isTest": true,
+          "testIn": "4\n   \\\n q  \nd   \n    ",
+          "testOut": "+--------+--------+\n|   \\/   |   \\/   |\n| q    p | q    p |\n|d      b|d      b|\n|        |        |\n|        |        |\n|q      p|q      p|\n| d    b | d    b |\n|   /\\   |   /\\   |\n+--------+--------+\n|   \\/   |   \\/   |\n| q    p | q    p |\n|d      b|d      b|\n|        |        |\n|        |        |\n|q      p|q      p|\n| d    b | d    b |\n|   /\\   |   /\\   |\n+--------+--------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 23",
+          "isTest": false,
+          "testIn": "3\ndqb\n d \nq\\#",
+          "testOut": "+------+------+\n|dqbdpb|dqbdpb|\n| d  b | d  b |\n|q\\##/p|q\\##/p|\n|d/##\\b|d/##\\b|\n| q  p | q  p |\n|qdpqbp|qdpqbp|\n+------+------+\n|dqbdpb|dqbdpb|\n| d  b | d  b |\n|q\\##/p|q\\##/p|\n|d/##\\b|d/##\\b|\n| q  p | q  p |\n|qdpqbp|qdpqbp|\n+------+------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 24",
+          "isTest": true,
+          "testIn": "6\n    / \n      \n\\    /\n\\ /q  \n  \\   \n // / ",
+          "testOut": "+------------+------------+\n|    /  \\    |    /  \\    |\n|            |            |\n|\\    /\\    /|\\    /\\    /|\n|\\ /q    p\\ /|\\ /q    p\\ /|\n|  \\      /  |  \\      /  |\n| // /  \\ \\\\ | // /  \\ \\\\ |\n| \\\\ \\  / // | \\\\ \\  / // |\n|  /      \\  |  /      \\  |\n|/ \\d    b/ \\|/ \\d    b/ \\|\n|/    \\/    \\|/    \\/    \\|\n|            |            |\n|    \\  /    |    \\  /    |\n+------------+------------+\n|    /  \\    |    /  \\    |\n|            |            |\n|\\    /\\    /|\\    /\\    /|\n|\\ /q    p\\ /|\\ /q    p\\ /|\n|  \\      /  |  \\      /  |\n| // /  \\ \\\\ | // /  \\ \\\\ |\n| \\\\ \\  / // | \\\\ \\  / // |\n|  /      \\  |  /      \\  |\n|/ \\d    b/ \\|/ \\d    b/ \\|\n|/    \\/    \\|/    \\/    \\|\n|            |            |\n|    \\  /    |    \\  /    |\n+------------+------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 24",
+          "isTest": false,
+          "testIn": "5\n / p\\\n\\\\   \nb    \n  \\\\ \n  p  ",
+          "testOut": "+----------+----------+\n| / p\\/q \\ | / p\\/q \\ |\n|\\\\      //|\\\\      //|\n|b        d|b        d|\n|  \\\\  //  |  \\\\  //  |\n|  p    q  |  p    q  |\n|  b    d  |  b    d  |\n|  //  \\\\  |  //  \\\\  |\n|p        q|p        q|\n|//      \\\\|//      \\\\|\n| \\ b/\\d / | \\ b/\\d / |\n+----------+----------+\n| / p\\/q \\ | / p\\/q \\ |\n|\\\\      //|\\\\      //|\n|b        d|b        d|\n|  \\\\  //  |  \\\\  //  |\n|  p    q  |  p    q  |\n|  b    d  |  b    d  |\n|  //  \\\\  |  //  \\\\  |\n|p        q|p        q|\n|//      \\\\|//      \\\\|\n| \\ b/\\d / | \\ b/\\d / |\n+----------+----------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 25",
+          "isTest": true,
+          "testIn": "5\n/|X/|\n|/  q\n|qX||\n /  |\nX  /|",
+          "testOut": "+----------+----------+\n|/|X/||\\X|\\|/|X/||\\X|\\|\n||/  qp  \\|||/  qp  \\||\n||qX||||Xp|||qX||||Xp||\n| /  ||  \\ | /  ||  \\ |\n|X  /||\\  X|X  /||\\  X|\n|X  \\||/  X|X  \\||/  X|\n| \\  ||  / | \\  ||  / |\n||dX||||Xb|||dX||||Xb||\n||\\  db  /|||\\  db  /||\n|\\|X\\||/X|/|\\|X\\||/X|/|\n+----------+----------+\n|/|X/||\\X|\\|/|X/||\\X|\\|\n||/  qp  \\|||/  qp  \\||\n||qX||||Xp|||qX||||Xp||\n| /  ||  \\ | /  ||  \\ |\n|X  /||\\  X|X  /||\\  X|\n|X  \\||/  X|X  \\||/  X|\n| \\  ||  / | \\  ||  / |\n||dX||||Xb|||dX||||Xb||\n||\\  db  /|||\\  db  /||\n|\\|X\\||/X|/|\\|X\\||/X|/|\n+----------+----------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 25",
+          "isTest": false,
+          "testIn": "4\n /  \n/ pb\n p p\nb / ",
+          "testOut": "+--------+--------+\n| /    \\ | /    \\ |\n|/ pbdq \\|/ pbdq \\|\n| p pq q | p pq q |\n|b /  \\ d|b /  \\ d|\n|p \\  / q|p \\  / q|\n| b bd d | b bd d |\n|\\ bpqd /|\\ bpqd /|\n| \\    / | \\    / |\n+--------+--------+\n| /    \\ | /    \\ |\n|/ pbdq \\|/ pbdq \\|\n| p pq q | p pq q |\n|b /  \\ d|b /  \\ d|\n|p \\  / q|p \\  / q|\n| b bd d | b bd d |\n|\\ bpqd /|\\ bpqd /|\n| \\    / | \\    / |\n+--------+--------+",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "3 ≤ [[quarterSize]] ≤ 7",
+      "coverBinaryId": 101583923830862,
+      "stubGenerator": "read quarterSize:int\nloop quarterSize read ROW:string(10)\nwrite Tile Floor",
+      "inputDescription": "<<Line 1>>: An integer [[quarterSize]], denoting the number of rows of Tile pattern in the top left quadrant\n<<Next [[quarterSize]] lines:>> row of Tile pattern in the top left quadrant",
+      "solutionLanguage": "C#",
+      "outputDescription": "The entire floor"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You saw the success your brother had as a manufacturer and installer of Floor-Tiles in the original &ldquo;Tile a Floor&rdquo; puzzle.  So you start a rival business doing something similar but different, specializing in what you call the <const>bdpq</const>-effect.<br><br>The beauty of Tiles comes from their symmetry, in that the quadrants of a Tile are mirror/reflections of each other.<br><br>So, when you get an order for a Tile, only the pattern of the top left quadrant is the input. <br>Graphically explained here:<pre style=\"font-family: monospace\"><br>☑☑☑☐☐☐<br>☑☑☑☐☐☐<br>☑☑☑☐☐☐<br>☐☐☐☐☐☐<br>☐☐☐☐☐☐<br>☐☐☐☐☐☐</pre> From that limited input, your task is to:<br>Create a full Tile<br>And display a 2x2 floor (i.e., a floor consisting of 4 of those Tiles)<br><br><strong>Flip/Mirror patterns:</strong><br>Generally, a character appearing in the first quadrant just replicates in the other quadrants.<br>However, your beautiful Tiles exploit the particular symmetry of:<pre style=\"font-family: monospace\"><const>b</const> <const>d</const><br><const>p</const> <const>q</const></pre>and<pre style=\"font-family: monospace\"><const>\\</const><const>/</const><br><const>/</const><const>\\</const></pre>For those, you'll want to put the proper reflected/flipped version in each quadrant.<br><br><strong>Details:</strong><br>➤ You only make square Tiles, where the side-length is an even number<br>➤ Each Tile is a square; the input therefore is also a square<br>➤ The input has a side-length of <var>quarterSize</var>; therefore the full Tile has a side-length of 2*<var>quarterSize</var><br>➤ The full floor needs a grout border, and grout separating the individual Tiles. Grout is represented by <const>-</const> on top/bottom, <const>|</const> on left/right, and <const>+</const> on corners<br><br><br><br><br>Happy trowelling</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: An integer <var>quarterSize</var>, denoting the number of rows of Tile pattern in the top left quadrant<br><strong>Next <var>quarterSize</var> lines:</strong> row of Tile pattern in the top left quadrant</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The entire floor</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">3 &le; <var>quarterSize</var> &le; 7</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\n  /\n/b \nb  </pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">+------+------+\n|  /\\  |  /\\  |\n|/b  d\\|/b  d\\|\n|b    d|b    d|\n|p    q|p    q|\n|\\p  q/|\\p  q/|\n|  \\/  |  \\/  |\n+------+------+\n|  /\\  |  /\\  |\n|/b  d\\|/b  d\\|\n|b    d|b    d|\n|p    q|p    q|\n|\\p  q/|\\p  q/|\n|  \\/  |  \\/  |\n+------+------+</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 86604571967,
+  "avatar": 94714081045618,
+  "commentCount": 22,
+  "upVotes": 11,
+  "downVotes": 4,
+  "validateAction": {
+    "actionId": 802711,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "denyAction": {
+    "actionId": 792164,
+    "progress": 0.3333333333333333,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1684124746273,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

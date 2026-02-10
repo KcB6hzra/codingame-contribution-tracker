@@ -1,0 +1,166 @@
+{
+  "id": 8267,
+  "activeVersion": 33,
+  "score": 5,
+  "votableId": 22112980,
+  "codingamerId": 4471038,
+  "views": 321,
+  "commentableId": 22002598,
+  "title": "the voucher",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "nguyen.lam",
+  "publicHandle": "8267edd6987c0f3053f5e43e58d6ec37b908",
+  "codingamerHandle": "a9fd64833d93b2840c44b26d9d84493e8301744",
+  "lastVersion": {
+    "version": 33,
+    "autocloseTime": 1657033469426,
+    "data": {
+      "title": "the voucher",
+      "topics": [
+        {
+          "id": 71,
+          "handle": "recursion",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Récursion",
+            "2": "Recursion"
+          },
+          "pageTitle": "Recursion: exercises and theory",
+          "puzzleCount": 21,
+          "parentTopicId": 41,
+          "contentDetailsId": 77
+        },
+        {
+          "id": 56,
+          "handle": "backtracking",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Retour sur trace",
+            "2": "Backtracking"
+          },
+          "pageTitle": "Backtracking: exercises and theory",
+          "puzzleCount": 12,
+          "parentTopicId": 41,
+          "contentDetailsId": 80
+        }
+      ],
+      "solution": "import java.io.File;\nimport java.io.FileNotFoundException;\nimport java.util.ArrayList;\nimport java.util.Collections;\nimport java.util.HashMap;\nimport java.util.Scanner;\nimport java.util.stream.Collectors;\n\nclass Product implements Comparable{\n\tString name;\n\tint price;\n\tint nbItem;\n\tpublic Product(String name, int price,int nbItem) {\n\t\tsuper();\n\t\tthis.name = name;\n\t\tthis.price = price;\n\t\tthis.nbItem = nbItem;\n\t}\n\t@Override\n\tpublic String toString() {return \"[\" + name + \"\\t\\t: \" + price +\"*\"+nbItem+ \"]\";}\n\t@Override\n\tpublic int compareTo(Object o) {return this.name.compareTo(((Product)o).name);}\t\t\n}\n\nclass ListeProduit extends ArrayList<Product>{\t\n\tpublic int montantTotal() {\n\t\tint result = 0;\n\t\tfor(Product p: this) {\tresult += p.price * p.nbItem;}\t\t\n\t\treturn result;\n\t}\n\t\n\tpublic double getLessExpensivePrice() {\n\t\tdouble result = 100;\n\t\tfor(Product p: this) {if ( p.price < result) result = p.price;\t}\n\t\treturn result;\n\t}\n\t\n\tpublic Product getProductByName(String productName) {\n\t\tfor(Product p: this) {if ( p.name.compareTo(productName)==0) return p;}\n\t\treturn null;\n\t}\n\n\tpublic int maxNbDuplicated() {\n\t\tint result = 0;\n\t\tfor(Product p: this) {\n\t\t\tif ( p.nbItem> result) result = p.nbItem;\n\t\t}\n\t\treturn result;\n\t}\n\t\n\tpublic int getNbProduct() {\n\t\tint result = 0;\n\t\tfor(Product p: this) {\n\t\t\tresult += p.nbItem;\n\t\t}\n\t\treturn result;\n\t}\t\n\t\n\tpublic int getNbProductDiff() {\n\t\tint result = 0;\n\t\tfor(Product p: this) {\n\t\t\tresult += 1;\n\t\t}\n\t\treturn result;\n\t}\n}\n\npublic class Solution {\n    public static void main(String args[]) throws FileNotFoundException {\n    \t\n    \tScanner in = new Scanner(System.in);\n    \tString money = in.nextLine();    \t   \t\n    \t\n    \tint H = in.nextInt();\n        if (in.hasNextLine())in.nextLine();\n        ListeProduit listProducts = new ListeProduit();\n        \n        for (int i = 0; i < H; i++) {\n        \tString ROW = in.nextLine();\n        \tString[] p = ROW.split(\" \");\n        \tint ans = Integer.parseInt(p[p.length-1]);\n        \tlistProducts.add(new Product(ROW.substring(0, ROW.length()-p[p.length-1].length()),ans,1));\n        }     \n\n        ArrayList<ListeProduit> resultat = new ArrayList<>();\n        ListeProduit liste = new ListeProduit();\n        calculBestCombinaisonStack(resultat,liste,listProducts, Integer.parseInt(money));\n        \n\n        resultat = consolidate(resultat);\n        int nbResult = 0;\n        for(ListeProduit l:resultat) {\n        \tif (l.montantTotal() ==  Integer.parseInt(money)) {\n        \t\t//System.err.println(l.montantTotal() + \"\\t\"+l.toString());\n        \t\tnbResult++;\n        \t}        \t\n        }\n        \n      //  System.out.println(\"nombre de solutions : \"+nbResult);\n        System.out.println(nbResult);\n     }\n\n\tprivate static void calculBestCombinaisonStack(ArrayList<ListeProduit> resultat, ListeProduit liste,ListeProduit produit_ref, int montantMax) {\n\t\tfor(Product p: produit_ref) {\t\n\t\t\tListeProduit lp = clone(liste);\t\t\t\t\n\t\t\tProduct pr = lp.getProductByName(p.name);\n\t\t\tif(pr == null) lp.add(p);\n\t\t\telse pr.nbItem++;\t\t\t\t\t\t\n\t\t\tresultat.add(lp);\n\t\t}\n\t\tArrayList<ListeProduit> res = new ArrayList<>();\n\t\tfor(ListeProduit lp : resultat) {\n\t\t\tif( lp.montantTotal() < montantMax && lp.maxNbDuplicated() <= 3 ) {//&& lp.getNbProduct() < 10) {\n\t\t\t\tArrayList<ListeProduit> res1 = new ArrayList<>();\t\t\t\t\n\t\t\t\tcalculBestCombinaisonStack(res1,lp, produit_ref, montantMax);\n\t\t\t\tres.addAll(res1);\n\t\t\t}\n\t\t}\t\t\t\n\t\tresultat.addAll(res);\n\t}\n\t\n\t\n\tprivate static ListeProduit clone(ListeProduit liste){\n\t\tListeProduit p = new ListeProduit();\n\t\tfor(Product pr:liste) p.add(new Product(pr.name,pr.price,pr.nbItem));\t\t\n\t\treturn p;\n\t}\t\n\t\n\tprivate static ArrayList<ListeProduit> consolidate(ArrayList<ListeProduit> liste) {\n\t\tHashMap<String, ListeProduit> res = new HashMap<>();\t\t\n\t\tfor(ListeProduit p:liste) Collections.sort(p);\t\t\n\t\tfor(ListeProduit p:liste) if(res.get(p.toString()) == null) res.put(p.toString(), p);\n\t\tArrayList<ListeProduit> ress = new ArrayList<>();\n\t\tfor(ListeProduit lp:res.values()) if(lp.maxNbDuplicated() <=3)ress.add(lp);\n\t\treturn ress;\n\t}\n}\n",
+      "statement": "Given a voucher and a list of products, find the number of combinations of products that match with the exact amount of money available on the voucher.\n\nRule : product can be picked 0, 1, 2 or 3 times.\n\nOutput : print the number of different combinations of products.\n\nExample:\nGiven the list of products:\n- bread 90\n- green salad 115\n- sugar 750g 95\n- rice 500g 299\n\nIf I have an amount of 300 cents  on my voucher, I can only buy:\n1 bread + 1 green salad + 1 bag of sugar => 90 + 115 + 95 = 300 cents \nSo the answer is 1 combination of products.\n\nAll prices are in cents .",
+      "testCases": [
+        {
+          "title": "1) Example",
+          "isTest": true,
+          "testIn": "300\n4\nbread 90\ngreen salad 115\nsugar 750g 95\nrice 500g 299",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "1) Example",
+          "isTest": false,
+          "testIn": "300\n4\nbread 95\ngreen salad 110\nsugar 850g 95\nrice 500g 278",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "2) 3 copies of each",
+          "isTest": true,
+          "testIn": "900\n4\nbread 90\ngreen salad 115\nsugar 750g 95\nrice 500g 299",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "2) 3 copies of each",
+          "isTest": false,
+          "testIn": "900\n4\nbread 89\ngreen salad 120\nsugar 750g 91\nrice 500g 297",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3) many solutions",
+          "isTest": true,
+          "testIn": "900\n4\nbread 89\ngreen salad 120\nsugar 750g 91\nrice 500g 299",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3) many solutions",
+          "isTest": false,
+          "testIn": "900\n5\nbread 89\ngreen salad 120\npasta 500g 190\nrice 500g 299\nsugar 750g 91",
+          "testOut": "2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4) different products with same price",
+          "isTest": true,
+          "testIn": "500\n4\ncucumber 100\npepper 100\nzucchini 100\nonion 100",
+          "testOut": "40",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4) different products with same price",
+          "isTest": false,
+          "testIn": "400\n5\ncucumber 100\npepper 100\nzucchini 100\nonion 100\npotato 100",
+          "testOut": "65",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5) more money",
+          "isTest": true,
+          "testIn": "800\n16\npack of 6 eggs 155\nNutri-Grain Breakfast Bar 900\nSalted Kaju 175 gms 456\nsoya milk vanilla 1LTR 780\nlow-fat cheese 760\ndark chocolate bar 230\nmilk chocolate bar 180\npepper 100\ntomato sauce 250ml 220\nmustard 200g 250\npasta 500g 190\nquinoa 500g 350\nsteak 200g 850\nlamb 250g 530\nham 100g 380\npork 200g 650",
+          "testOut": "13",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5) more money",
+          "isTest": false,
+          "testIn": "1000\n10\npack of 6 eggs 155\nNutri-Grain Breakfast Bar 1000\nSalted Kaju 175 gms 456\nsoya milk vanilla 1LTR 780\nlow-fat cheese 760\ndark chocolate bar 230\nmilk chocolate bar 180\npepper 100\ntomato sauce 250ml 220\nmustard 200g 250",
+          "testOut": "10",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 <= [[n]] <= 16",
+      "coverBinaryId": 85086441814300,
+      "stubGenerator": "read V:int\nread N:int\nloop N read FNAME:string(500)\nwrite answer",
+      "inputDescription": "<<Line 1:>> An integer [[v]] for the voucher value in cents\n<<Line 2:>> An integer [[n]] for the number of products\n<<Next [[n]] lines:>> string [[l]] and [[p]] for the label and price of each product in cents",
+      "solutionLanguage": "Java",
+      "outputDescription": "[[c]] Number of different combinations of products that you can buy."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Given a voucher and a list of products, find the number of combinations of products that match with the exact amount of money available on the voucher.<br><br>Rule : product can be picked 0, 1, 2 or 3 times.<br><br>Output : print the number of different combinations of products.<br><br>Example:<br>Given the list of products:<br>- bread 90<br>- green salad 115<br>- sugar 750g 95<br>- rice 500g 299<br><br>If I have an amount of 300 cents  on my voucher, I can only buy:<br>1 bread + 1 green salad + 1 bag of sugar =&gt; 90 + 115 + 95 = 300 cents <br>So the answer is 1 combination of products.<br><br>All prices are in cents .</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>v</var> for the voucher value in cents<br><strong>Line 2:</strong> An integer <var>n</var> for the number of products<br><strong>Next <var>n</var> lines:</strong> string <var>l</var> and <var>p</var> for the label and price of each product in cents</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><var>c</var> Number of different combinations of products that you can buy.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt;= <var>n</var> &lt;= 16</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">300\n4\nbread 90\ngreen salad 115\nsugar 750g 95\nrice 500g 299</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 115233425428,
+  "avatar": 115730569738380,
+  "commentCount": 27,
+  "upVotes": 5,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 670427,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1655496464838,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,212 @@
+{
+  "id": 45126,
+  "activeVersion": 32,
+  "score": 3,
+  "votableId": 27765503,
+  "codingamerId": 5271799,
+  "views": 231,
+  "commentableId": 27637854,
+  "title": "ASCII Art QR code",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Eulero314",
+  "publicHandle": "45126be5da32c003fd4e32514f447a6be3bd2",
+  "codingamerHandle": "7ed5fd396d11683394bd215ec8f0faf49971725",
+  "lastVersion": {
+    "version": 32,
+    "autocloseTime": 1678091873928,
+    "data": {
+      "title": "ASCII Art QR code",
+      "topics": [
+        {
+          "id": 128,
+          "handle": "ascii-art",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Ascii Art",
+            "2": "Ascii Art"
+          },
+          "puzzleCount": 32,
+          "parentTopicId": 93
+        },
+        {
+          "id": 74,
+          "handle": "cryptology",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Cryptologie",
+            "2": "Cryptography"
+          },
+          "pageTitle": "Cryptography: exercises and theory",
+          "puzzleCount": 18,
+          "parentTopicId": 43,
+          "contentDetailsId": 105
+        }
+      ],
+      "solution": "from collections import namedtuple\nimport sys\n\nclass ASCII_QRcode:\n\n    def pattern_bit(self,x,y,w,h):\n        # il pattern non evita le zone riservate\n        s=[[' ']*w for _ in range(h)]\n        bitrow=True\n        for yi in range(h-1,-1,-1):\n            bit=bitrow\n            for xi in range(w-1,-1,-1):\n                s[yi][xi]='1' if bit else '0'\n                bit=not bit\n            bitrow=not bitrow\n        return s[y][x]\n\n    def dataarea(self,x,y,w,h):\n        ok = True\n        if x <= 5 and y <= 3:\n            ok = False\n        if x >= w - 6 and y <= 3:\n            ok = False\n        if x <= 5 and y >= h - 4:\n            ok = False\n        if x >= (w - 6) and x < (w - 6 + 3) and y >= (h - 4) and y < (h - 4 + 3):\n            ok = False\n        return ok\n\n    def crypt(self, msg:list, key):\n        if key[0]=='1':\n            return msg\n        key=key[1:]\n        xor=lambda x,y:'1' if x!=y else '0'\n        e=len(msg)//len(key)\n        m=[xor(x,y) for x,y in zip (msg,key*e)]\n        return m\n\n    def decrypt(self,msg:list,key):\n        return self.crypt(msg,key)\n\n    def read_qr(self, asciiqr, w, h):\n        ln=0\n        bin_msg=[]\n        up=True\n        asciiqr=asciiqr.split('\\n')\n        for x in range(w-1,-1,-1):\n            if up:\n                ry=range(h-1,-1,-1)\n            else:\n                ry = range(0,h,1)\n            up = not up\n            for y in ry:\n                if self.dataarea(x,y,w,h):\n                    ln+=1\n                    q=asciiqr[y][x]\n                    pb=self.pattern_bit(x,y,w,h)\n                    if pb=='0':\n                        bit = '0' if q == ' ' else '1'\n                    else:\n                        bit = '1' if q == ' ' else '0'\n                    bin_msg.append(bit)\n        return self.decode(bin_msg)\n\n    def decode(self, bin_msg):\n        BOM = bin_msg[:8]\n        msg = bin_msg[8:]\n        msg=list(msg)\n        msg=self.decrypt(msg,BOM)\n        c = ''\n        for w in range(0,len(msg),7):\n            e=msg[w:w+7]\n            e=int(''.join(e),2)\n            if e==0:\n                break\n            c+=chr(e)\n        return c\n\n    def run(self,qr,w,h):\n        return self.read_qr(qr, w, h)\n\nif __name__ == '__main__':\n    w=int(input())\n    h=int(input())\n    txt=[]\n    for i in range(h):\n        txt.append(input())\n    txt='\\n'.join(txt)\n    s=ASCII_QRcode()\n    print(s.run(txt,w,h))",
+      "statement": "Your task is to implement a simplified <<QR code reader for ASCII Art>>, decoding the information that is stored inside the data area.\n\n<<Structure>>\nData are encoded in binary format (0,1).\n-\t[[W]], [[H]]: Width and Height in characters\n-\t3 Position detection markers located at the three corners (top left and right, bottom left), surrounded by no data zone (spaces of 1 character thick). Each position detection marker is indicated by a 5x3 rectangle made up of {{+}}, {{-}} and {{|}} with an {{@}} character in the centre\n-\t1 alignment marker near the bottom right corner (3 characters from right border, 1 character from bottom), without surrounding no data zone. The alignment marker is indicated by a 3x3 square made up of {{+}}, {{-}} and {{|}} with an {{X}} character in the centre.\n-\tData area: all the remaining positions inside the rectangle [[W]] x [[H]]. A space is a 0, every ASCII which is not space character is a 1 \n-\tMask pattern: a checkerboard pattern rectangle [[W]] x [[H]] of 0s and 1s.\nThe Mask pattern starts from the bit in the lower right corner set to 1 and does not stop at restricted areas.  For example:\n`101010\n010101\n101010\n010101`\n<<Layout>>\nThe raw data (as bitstream) starts from the lower right corner, then it goes upwards (as happens in real QR codes). Every time the bitstream comes across the no data zone (or the borders), it moves left and changes direction (downwards, etc.). If it hits the alignment marker, the bitstream just crosses the marker straight.\nBelow is an example of a 20x10 ([[W]]x[[H]]) QR code using the letters to simulate the sequence. The data starts from the lower right corner (uppercase {{A}}) and goes upwards. The case of the letters indicate the mask pattern (1 for uppercase, 0 for lowercase).  The {{.}} character indicates the no data zone around the position detection markers.\n`+---+.TsZyFeLk.+---+\n| @ |.uRaXgDmJ.| @ |\n+---+.VqBwHcNi.+---+\n......wPcViBoH......\nNmJiFeXoDuJaPgYxSrGf\noLkHgDyNeTkZqFzWtQhE\n......ZmFsLyRe+-+pId\n+---+.aLgRmXsD|X|OjC\n| @ |.BkHqNwTc+-+nKb\n+---+.cJiPoVuBaVuMlA`\n<<Data Encoding>>\nRaw data are encoded in binary where a {{space}} is a 0 and every other character is a 1. \nEvery bit of the raw data is XORed with the mask pattern.\n`data|pattern|  result\n----+-------+----------\n  0 |   0   | 0\n  0 |   1   | 1 \n  1 |   0   | 1\n  1 |   1   | 0`\nThe raw data are repeated until all the space available in QR code is filled. There is always room for a full copy of the raw data, subsequent copies may be truncated.\nInside one copy of the raw data (bitstream) the structure is:\n<<BOM>> + <<Text>> + <<EOM>>\n<<BOM>> (8 bit) \n<<Text>> (sequence of 7 bit ASCII chars) \n<<EOM>> (7 bit)\n<<BOM>>: Begin of message, 8 bits. \nValue=0b1xxxxxxx means Text is not encrypted, \nValue=0b0xxxxxxx means that the Text is encrypted. The encryption KEY is the 7 bits (least significant bits) of <<BOM>>.\n<<EOM>>: End of message. Value=0b0000000 7 bits.\n\n<<Encryption algorithm>>\nOnly when the first bit of the <<BOM>> is 0, the Text is encrypted.\nThe KEY is XORed with all the bits of the remaining data (Text+EOM).\n\nReferences: https://en.wikipedia.org/wiki/QR_code",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "17\n13\n+---+ #  #  +---+\n| @ |   ### | @ |\n+---+    #  +---+\n      ##         \n##   #   ####    \n#### #  #   #####\n#   ## # ### ####\n # # ##   #   ## \n ## ##### # #   #\n      # ## +-+###\n+---+   ###|X|## \n| @ | #### +-+# #\n+---+ #   ## ##  ",
+          "testOut": "Hello CodinGame!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "17\n13\n+---+ @ @@  +---+\n| @ |    @@ | @ |\n+---+  @@ @ +---+\n      @@         \n@@  @@@@    @  @@\n @@@ @   @    @@@\n@   @@ @ @ @ @@ @\n@@ @@ @ @ @ @ @@ \n@@@ @ @@@ @@@   @\n      @   @+-+@ @\n+---+   @@ |X|@@ \n| @ |     @+-+@ @\n+---+ @@ @@@@ @  ",
+          "testOut": "!emaGnidoC olleH",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "29\n25\n+---+  ###    ### #  ## +---+\n| @ | ### #  # #  # ##  | @ |\n+---+ #  # ####    ## # +---+\n       #  #   # #    #       \n # #    # #  #### ###  # #  #\n  # #  #########     ## #    \n   ##  #   ## ###  ### # ### \n ### ## ## # ##  #  # #### # \n ####   ## ######   #  ###   \n# ##     ##     ### # # ### #\n## # #### # ## ## ##   # #  #\n #  ##   #  # # #  #  #      \n##### ##   ## # ## ## ##  #  \n###     ### #  # #  # ##  #  \n ##    # ###  ## #   # ## #  \n#  ##   #     # # ###   #### \n # ## # # ## ###   ##  #     \n #### # #     #### #  #######\n# ##  ##  #    ###### # # # #\n # # # #  # #  ##       # #  \n# # #  #  ##  ### ## #  #####\n      # #   ### ##  # #+-+# #\n+---+    # #####      #|X|   \n| @ | ##  #   #### ##  +-+###\n+---+ ##    #### ###### #    ",
+          "testOut": "The quick brown fox jumps over the lazy dog.The quick brown fox jumps over the lazy dog.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "29\n25\n+---+  @   @@   @ @  @  +---+\n| @ | @   @ @@ @ @@ @   | @ |\n+---+  @@  @@ @  @ @@ @ +---+\n      @@ @@@  @  @   @       \n @ @ @  @ @@   @   @@@@ @@@@ \n@  @@@@@ @@@@@@@    @       @\n@  @  @@    @   @ @@ @   @@@@\n@  @  @    @ @@  @@@@  @ @ @ \n@ @ @   @@ @@        @   @ @ \n@@@   @ @ @     @@@  @@@@ @ @\n@  @ @ @@ @@@@ @   @@     @@@\n    @@@ @@@@@ @ @ @@ @@  @@ @\n@ @@  @@@@ @@@  @@  @ @@@ @@ \n@  @@@@ @ @@ @@ @@@   @   @ @\n  @@@@ @ @  @   @@@  @      @\n@  @@@@@@  @@  @@@@@ @ @ @@@@\n   @@ @ @@ @ @@  @  @@ @   @@\n @  @ @ @@ @  @ @ @@@ @@@@@@@\n@  @   @@ @  @   @  @ @@  @ @\n @   @@@@@@@@     @ @ @    @ \n@ @ @ @         @ @@@@   @ @@\n      @ @  @  @ @@@@@ @+-+@@@\n+---+    @ @@   @  @ @ |X|   \n| @ |  @ @     @@ @ @@ +-+@@@\n+---+ @  @@@@@   @@@@@  @ @  ",
+          "testOut": ".god yzal eht revo spmuj xof nworb kciuq ehT.god yzal eht revo spmuj xof nworb kciuq ehT",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "30\n26\n+---+ L  L!   WO   E W   +---+\n| @ |    RHDL OL !    RO | @ |\n+---+ OL    LER  DL OOL  +---+\n      W  OE OHL HL H LD       \nOL WOW EDWLLW D  R   L!  LLR! \nWLO R O !O RO    O !R H   DOH \nO     RH LL R! LEWLD  EWO ! E \n ER L   H OOLD!ELOOLL LOW  W D\nRH ODOL ELW  L    WRDE LO   L \n    ! D L OW R H   O!   R   L \n !LL L !LE O   !LLO H         \n  DLHL!DOH  DO DOLRWEHLLL     \n   E E LW RL W LW L  !OE L    \n D!HEH  O      R  D LD   E   L\nL  ! !HR ! L  H    O L   H OO \n LH L EO DL ! EOOE LL WHD!  WR\n  EDLDLW L E OL RH! ORO!! H OO\n RL  LL   DH  L L! L ORD DEL W\nD  LO  O  !!HLO      W  HLLLRO\n!OLRW OLRR DELW  DHEWOL   LELL\nHW    WL O LLEOWDLEH  DLE O D \n  O O   L   LHR !RL!O !RL W  L\n        DWHR ! O  L  L O+-+H E\n+---+ O !OE OD  H  DR HW|X|!  \n| @ |  E L  WL  EOO   E +-+  H\n+---+ RH L  O  LL WL L OLRO   ",
+          "testOut": "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "30\n26\n+---+  O   LE   H.  E  L +---+\n| @ | WLL     E ED HLH   | @ |\n+---+  LLELE  LHLL . . E +---+\n       EO O    .  E L  H      \n .O          H    LD   .L  W L\nHDWL E H  W L.L   LL D DOL  LE\n  OL H  WH HL O    ROL L E O H\nEL E .O.O.   D    O  RL W O O \n RR  D D   .OL DL W   O  HRL .\nL L  L   D  W   O O   WR .LL  \nLO  L R    DORW    O OOOOD EWD\nO     L   OL  OLW   W    LD OL\n    L D  L    RROR  O   R .H R\nWW  O .L  RR OL RO    R L H.R \n  D W     L R  OLW  R  W RE  O\nOO H    R  O  D  O   W    LD  \nR  .   RL D L .W L W O   O L W\nLL DO  ODR.WDW O  R L   D L L \n  .  R  .O O     LLO  LO   R O\nD H  O    H .      L   L.W  DL\n  EL W  HWE H      LDL L O O  \n.L R OHWEOLL O L  D  LD H  W.L\n      EO    EL  D .E. . +-+ HE\n+---+      L   L  H     |X| E \n| @ | L L     HE   H E E+-+OLH\n+---+ L L L  LEH.E    H     L ",
+          "testOut": "~}|{zyxwvutsrqponmlkjihgfedcba`_^]\\[ZYXWVUTSRQPONMLKJIHGFEDCBA@?>=<;:9876543210/.-,+*)('&%$#\"!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "18\n14\n+---+ ! ! !! +---+\n| @ |  !! !! | @ |\n+---+ !!  !  +---+\n      !!!! !      \n!!! ! !   !!! ! ! \n     !    !!!  ! !\n!!  ! ! ! !  !!!!!\n!! !   !   ! !!!!!\n!    !!    !! ! ! \n!!   !   ! ! !   !\n      ! ! !!+-+ !!\n+---+ !!! !!|X|!! \n| @ |       +-+ !!\n+---+  ! ! ! ! !!!",
+          "testOut": "security by obscurity!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "18\n14\n+---+ . . .  +---+\n| @ | . .... | @ |\n+---+   . .. +---+\n         . .      \n..... .  .  . .   \n   . . .....  . . \n.... ..   . ..   .\n.. . . . . ...  ..\n... . .  .  . .   \n.. ... . ..  . . .\n      . .   +-+ ..\n+---+ .  ...|X|.  \n| @ |    ...+-+  .\n+---+  . ... . . .",
+          "testOut": ".ytirucsbo yb ytiruces",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "30\n26\n+---+  111 111  11  1 1  +---+\n| @ | 111     1 1 1111   | @ |\n+---+   11 1   111 1   1 +---+\n      1 1  1   1  1  1 1      \n11    1    1 1 1  111  11   11\n   111 1  1 111 1 1  1 111 1 1\n 11111     1  1    1111 11 1 1\n1  1 111          1  1 1 11 1 \n 11    1   111 111    1   11 1\n1 11   1 11 1 1 1 1  111 1 1 1\n1  11  1  1 111    11 1111111 \n 11       1   1 1        111 1\n111   1  1    11 1 11   1 1 11\n1     111111111 11     1  111 \n 11 1   111 11 111  1 1 1 1  1\n1  1 1  1  1  1   1  1   111  \n11   1  1   1  1 1 1     111  \n1   1 1 11  11 1  1  1  1   11\n1    11 11 1   1 1111 11    11\n    11    1 1   1      111 1  \n  1111    1        1111 11 1 1\n11 1 111  11   1  1  1 1 1 11 \n      11    11  11 11 1 +-+ 11\n+---+  1  11  11  1  1  |X| 1 \n| @ |  11 11  11   1   1+-+11 \n+---+   1 1  11 11  1 1  1 1 1",
+          "testOut": "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "30\n26\n+---+ 0 0 0  000   0 000 +---+\n| @ |    0000 00  0   00 | @ |\n+---+ 0   0 00   00 0 0  +---+\n       0 0 0000 00 00 0       \n 0000000000 0 00 0  000  00   \n      0 00 00   00  0 0   0   \n00  0 000 0  0 00000      0 0 \n  0 0    0000 0000000    0 0 0\n00 00 0 000  0   0 000 000  0 \n   000000  0 000   000  0 0 00\n  0  00 000    0000  0    0  0\n00 000 000 000  0000 0000  00 \n000000 00 00 0 0  00 000 0 00 \n  00 0   0  0  0  0 000000   0\n00 0 0000  0 00    0 0000  00 \n  0 0000 00 0 000 000 000   00\n 00 0 0  000 0  000 0 000   0 \n  00 0 0      0 00 00 00 0 0  \n  000 00  000000    00  000  0\n 0 0  0000 0000 000 000   0   \n00  0 000  0 0000000      0 00\n  0 0    0  0 0 00000    00   \n        0000 0 0 0   0 0+-+0 0\n+---+ 0000  000 0  00000|X|0  \n| @ | 0  00000  000  00 +-+   \n+---+  0 0  0   0 0000 00 0000",
+          "testOut": "~}|{zyxwvutsrqponmlkjihgfedcba`_^]\\[ZYXWVUTSRQPONMLKJIHGFEDCBA@?>=<;:9876543210/.-,+*)('&%$#\"!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "12\n12\n+---+  +---+\n| @ |  | @ |\n+---+  +---+\n            \n.. ...  .  .\n.     . .   \n ... ..   ..\n .. . ..  . \n      +-+ ..\n+---+ |X| . \n| @ | +-+.  \n+---+ .  ...",
+          "testOut": "test",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "12\n12\n+---+  +---+\n| @ |  | @ |\n+---+  +---+\n            \n.. ... .   .\n.      .    \n  .. .... ..\n... . ... . \n      +-+...\n+---+ |X|   \n| @ | +-+.  \n+---+ . ....",
+          "testOut": "vali",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 7",
+          "isTest": true,
+          "testIn": "16\n16\n+---+      +---+\n| @ |   .. | @ |\n+---+ .... +---+\n       ..       \n.....         ..\n   .. .   .... .\n  .  ...... ....\n ... . ..   . . \n     .          \n.  ..  .  ...  .\n  .    .  .  ...\n  .......... .. \n         .+-+ . \n+---+  .. |X| ..\n| @ |   . +-+.  \n+---+ .. . . .. ",
+          "testOut": "hello",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "16\n16\n+---+ .    +---+\n| @ |   .. | @ |\n+---+ .... +---+\n      ...       \n....    .    .. \n.  ....   .... .\n ..  ... ..    .\n .........    . \n.   ..      .   \n.. .   .. ...  .\n  .   .....  . .\n  ...... . . .. \n         .+-+ . \n+---+  .. |X|  .\n| @ |   ..+-+.  \n+---+ .. . . .. ",
+          "testOut": "allis",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 8",
+          "isTest": true,
+          "testIn": "30\n26\n+---+  101 110  11  0 1  +---+\n| @ | 011     1 0 1111   | @ |\n+---+   11 1   111 0   1 +---+\n      1 1  1   1  1  1 1      \n10    1    0 1 0  011  01   01\n   111 1  0 110 1 1  1 111 0 1\n 11001     1  1    1100 00 1 1\n1  1 010          1  1 1 11 1 \n 11    1   111 110    1   11 0\n1 01   1 11 0 1 0 1  111 1 1 1\n0  11  1  1 101    10 1011101 \n 11       1   0 1        001 1\n101   0  0    11 1 01   1 1 11\n1     100101111 11     1  110 \n 11 1   111 11 111  1 0 1 1  0\n1  0 1  1  0  1   0  1   101  \n01   1  1   0  0 0 1     110  \n1   1 1 01  11 1  1  0  0   11\n1    11 10 1   1 1111 11    11\n    00    1 1   0      111 1  \n  0111    1        1011 10 1 1\n11 1 101  01   1  1  1 0 1 11 \n      11    10  11 01 1 +-+ 00\n+---+  1  11  00  0  1  |X| 1 \n| @ |  01 10  11   1   1+-+01 \n+---+   1 1  11 11  1 0  1 1 1",
+          "testOut": "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "30\n26\n+---+ 0 0 0  100   0 100 +---+\n| @ |    1000 10  1   01 | @ |\n+---+ 0   1 00   00 0 1  +---+\n       1 0 1000 00 00 0       \n 0100000000 1 01 1  000  00   \n      1 00 00   10  1 0   0   \n00  0 001 0  0 00000      1 1 \n  0 1    1000 0000010    0 0 0\n11 00 0 001  1   1 000 010  0 \n   001000  0 010   000  0 0 00\n  0  01 000    1001  1    0  0\n00 100 110 100  1000 0100  10 \n000010 00 00 0 0  01 000 1 01 \n  10 1   1  1  0  0 100100   1\n00 0 0000  0 10    0 1001  00 \n  0 0000 00 0 000 100 100   00\n 10 0 0  010 0  000 0 000   0 \n  01 0 1      0 01 00 01 0 0  \n  100 10  010011    10  000  0\n 0 0  0000 0000 100 000   1   \n10  1 001  0 1000001      0 10\n  0 0    1  1 0 00100    10   \n        0000 0 0 1   0 0+-+1 1\n+---+ 0100  001 0  00110|X|0  \n| @ | 1  00100  100  00 +-+   \n+---+  0 1  0   0 0010 01 0000",
+          "testOut": "~}|{zyxwvutsrqponmlkjihgfedcba`_^]\\[ZYXWVUTSRQPONMLKJIHGFEDCBA@?>=<;:9876543210/.-,+*)('&%$#\"!",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "12 ≤ [[W]] ≤ 100\n8 ≤ [[H]] ≤ 100\nThe output message consists of ASCII characters only.",
+      "coverBinaryId": 97803603972642,
+      "stubGenerator": "read W:int\nread H:int\n\nloop H read ROW:string(1024)\nwrite answer",
+      "inputDescription": "<<Line 1:>> integer [[W]] for the width of the QR code\n<<Line 2:>> integer [[H]] for the height of the QR code\n<<Next [[H]] lines:>> The ASCII QR code.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The message encoded in the QR code (only the first copy)."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Your task is to implement a simplified <strong>QR code reader for ASCII Art</strong>, decoding the information that is stored inside the data area.<br><br><strong>Structure</strong><br>Data are encoded in binary format (0,1).<br>-\t<var>W</var>, <var>H</var>: Width and Height in characters<br>-\t3 Position detection markers located at the three corners (top left and right, bottom left), surrounded by no data zone (spaces of 1 character thick). Each position detection marker is indicated by a 5x3 rectangle made up of <const>+</const>, <const>-</const> and <const>|</const> with an <const>@</const> character in the centre<br>-\t1 alignment marker near the bottom right corner (3 characters from right border, 1 character from bottom), without surrounding no data zone. The alignment marker is indicated by a 3x3 square made up of <const>+</const>, <const>-</const> and <const>|</const> with an <const>X</const> character in the centre.<br>-\tData area: all the remaining positions inside the rectangle <var>W</var> x <var>H</var>. A space is a 0, every ASCII which is not space character is a 1 <br>-\tMask pattern: a checkerboard pattern rectangle <var>W</var> x <var>H</var> of 0s and 1s.<br>The Mask pattern starts from the bit in the lower right corner set to 1 and does not stop at restricted areas.  For example:<br><pre style=\"font-family: monospace\">101010<br>010101<br>101010<br>010101</pre><br><strong>Layout</strong><br>The raw data (as bitstream) starts from the lower right corner, then it goes upwards (as happens in real QR codes). Every time the bitstream comes across the no data zone (or the borders), it moves left and changes direction (downwards, etc.). If it hits the alignment marker, the bitstream just crosses the marker straight.<br>Below is an example of a 20x10 (<var>W</var>x<var>H</var>) QR code using the letters to simulate the sequence. The data starts from the lower right corner (uppercase <const>A</const>) and goes upwards. The case of the letters indicate the mask pattern (1 for uppercase, 0 for lowercase).  The <const>.</const> character indicates the no data zone around the position detection markers.<br><pre style=\"font-family: monospace\">+---+.TsZyFeLk.+---+<br>| @ |.uRaXgDmJ.| @ |<br>+---+.VqBwHcNi.+---+<br>......wPcViBoH......<br>NmJiFeXoDuJaPgYxSrGf<br>oLkHgDyNeTkZqFzWtQhE<br>......ZmFsLyRe+-+pId<br>+---+.aLgRmXsD|X|OjC<br>| @ |.BkHqNwTc+-+nKb<br>+---+.cJiPoVuBaVuMlA</pre><br><strong>Data Encoding</strong><br>Raw data are encoded in binary where a <const>space</const> is a 0 and every other character is a 1. <br>Every bit of the raw data is XORed with the mask pattern.<br><pre style=\"font-family: monospace\">data|pattern|  result<br>----+-------+----------<br>  0 |   0   | 0<br>  0 |   1   | 1 <br>  1 |   0   | 1<br>  1 |   1   | 0</pre><br>The raw data are repeated until all the space available in QR code is filled. There is always room for a full copy of the raw data, subsequent copies may be truncated.<br>Inside one copy of the raw data (bitstream) the structure is:<br><strong>BOM</strong> + <strong>Text</strong> + <strong>EOM</strong><br><strong>BOM</strong> (8 bit) <br><strong>Text</strong> (sequence of 7 bit ASCII chars) <br><strong>EOM</strong> (7 bit)<br><strong>BOM</strong>: Begin of message, 8 bits. <br>Value=0b1xxxxxxx means Text is not encrypted, <br>Value=0b0xxxxxxx means that the Text is encrypted. The encryption KEY is the 7 bits (least significant bits) of <strong>BOM</strong>.<br><strong>EOM</strong>: End of message. Value=0b0000000 7 bits.<br><br><strong>Encryption algorithm</strong><br>Only when the first bit of the <strong>BOM</strong> is 0, the Text is encrypted.<br>The KEY is XORed with all the bits of the remaining data (Text+EOM).<br><br>References: https://en.wikipedia.org/wiki/QR_code</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> integer <var>W</var> for the width of the QR code<br><strong>Line 2:</strong> integer <var>H</var> for the height of the QR code<br><strong>Next <var>H</var> lines:</strong> The ASCII QR code.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The message encoded in the QR code (only the first copy).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">12 &le; <var>W</var> &le; 100<br>8 &le; <var>H</var> &le; 100<br>The output message consists of ASCII characters only.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">17\n13\n+---+ #  #  +---+\n| @ |   ### | @ |\n+---+    #  +---+\n      ##         \n##   #   ####    \n#### #  #   #####\n#   ## # ### ####\n # # ##   #   ## \n ## ##### # #   #\n      # ## +-+###\n+---+   ###|X|## \n| @ | #### +-+# #\n+---+ #   ## ##  </pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Hello CodinGame!</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 94244095644,
+  "avatar": 96314909854613,
+  "commentCount": 24,
+  "upVotes": 3,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 760746,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1676485377938,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

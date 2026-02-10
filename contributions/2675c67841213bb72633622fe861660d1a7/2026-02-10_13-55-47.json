@@ -1,0 +1,117 @@
+{
+  "id": 267,
+  "activeVersion": 7,
+  "score": 8,
+  "votableId": 2178986,
+  "codingamerId": 606225,
+  "views": 256,
+  "commentableId": 2128162,
+  "title": "Universe Conquest",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Enygma",
+  "publicHandle": "2675c67841213bb72633622fe861660d1a7",
+  "codingamerHandle": "7a37f368e2d15fcb19df78326ed2074c522606",
+  "lastVersion": {
+    "version": 7,
+    "data": {
+      "title": "Universe Conquest",
+      "solution": "using System;\nusing System.Collections.Generic;\nusing System.Linq;\nusing System.Threading;\n\npublic class Planet\n{\n\tpublic int  Cost { get; set; }\n\tpublic char Army { get; set; }\n}\n\npublic class HyperspaceRoad\n{\n\tpublic Planet From { get; set; }\n\tpublic Planet To   { get; set; }\n}\n\npublic class Game\n{\n\tpublic static void GetSubject()\n    {\n        string s;\n        while ((s = Console.ReadLine()) != null)\n        {\n            Console.WriteLine(s);\n        }\n    }\n\n    public static void Main()\n    {\n        int planetsCount;\n        int hyperspaceRoadsCount;\n        FillTwoInt(out planetsCount, out hyperspaceRoadsCount);\n\n        var planets = GetPlanets(planetsCount);\n        var hyperspaceRoads = GetHyperspaceRoads(planets, hyperspaceRoadsCount);\n\n        Console.WriteLine(ComputeBest(hyperspaceRoads));\n    }\n\n    public static void FillTwoInt(out int a, out int b)\n    {\n        var str = Console.ReadLine();\n        a = 0;\n        b = 0;\n        if (str != null)\n        {\n\t        var tab = str.Split(new [] { ' ' });\n\t        a = int.Parse(tab[0]);\n\t        b = int.Parse(tab[1]);\n        }\n    }\n\n    public static void FillOneCharAndOneInt(out char a, out int b)\n    {\n        string str = Console.ReadLine();\n        a = '\\0';\n        b = 0;\n\t\tif (str != null)\n        {\n\t        var tab = str.Split(new [] { ' ' });\n\t        a = tab[0][0];\n\t        b = int.Parse(tab[1]);\n        }\n    }\n\n    private static int ComputeBest(List<HyperspaceRoad> hyperspaceRoads)\n    {\n        var result = GetBestCost(hyperspaceRoads, null, 0);\n        if (result == null)\n            return 0;\n        return result.Min();\n    }\n\n    public static List<int> GetBestCost(List<HyperspaceRoad> hyperspaceRoads, List<int> costs, int cost)\n    {\n        bool isFirst = false;\n        if (costs == null)\n        {\n            costs = new List<int>();\n            isFirst = true;\n        }\n        if (YouDominate(hyperspaceRoads))\n        {\n            costs.Add(cost);\n            return null;\n        }\n\n        foreach (var r in hyperspaceRoads)\n        {\n\t        if (r.From.Army != r.To.Army)\n\t        {\n\t\t        var newHyperspaceRoadsListFrom = new List<HyperspaceRoad>(hyperspaceRoads);\n\t\t        var newHyperspaceRoadsListTo   = new List<HyperspaceRoad>(hyperspaceRoads);\n\n\t\t        int moreCost = DestroyPlanetAndAddToCost(ref newHyperspaceRoadsListFrom, r.From);\n\t\t        GetBestCost(newHyperspaceRoadsListFrom, costs, cost + moreCost);\n\n\t\t        moreCost = DestroyPlanetAndAddToCost(ref newHyperspaceRoadsListTo, r.To);\n\t\t        GetBestCost(newHyperspaceRoadsListTo, costs, cost + moreCost);\n\t        }\n        }\n\n        if (isFirst)\n            return costs;\n        return null;\n    }\n\n    public static List<Planet> GetPlanets(int planetsCount)\n    {\n        var planets = new List<Planet>();\n        while (planetsCount-- > 0)\n        {\n            char army;\n            int cost;\n            FillOneCharAndOneInt(out army, out cost);\n            var planet = new Planet { Army = army, Cost = cost };\n            planets.Add(planet);\n        }\n        return planets;\n    }\n\n    public static List<HyperspaceRoad> GetHyperspaceRoads(List<Planet> planets, int hyperspaceRoadsCount)\n    {\n        var hyperspaceRoads = new List<HyperspaceRoad>();\n\n        while (hyperspaceRoadsCount-- > 0)\n        {\n            var HyperspaceRoad = new HyperspaceRoad();\n\n            int from;\n            int to;\n            FillTwoInt(out from, out to);\n            HyperspaceRoad.From = planets[from - 1];\n            HyperspaceRoad.To = planets[to - 1];\n\n            hyperspaceRoads.Add(HyperspaceRoad);\n        }\n\n        return hyperspaceRoads;\n    }\n\n    public static int DestroyPlanetAndAddToCost(ref List<HyperspaceRoad> hyperspaceRoads, Planet planet)\n    {\n        hyperspaceRoads.RemoveAll(r => r.From == planet || r.To == planet);\n        return planet.Cost;\n    }\n\n    public static bool YouDominate(List<HyperspaceRoad> hyperspaceRoads)\n    {\n        return hyperspaceRoads.All(r => r.From.Army == r.To.Army);\n    }\n}\n",
+      "statement": "The universe is made up of [[P]] planets numbered from 1 to [[P]].\nThere are [[H]] hyperspace roads, linking those planets.\nTwo different space factions own and defend the planets : {{E}}, the empire and {{R}} the republic.\n\nIn order to conquer this universe, you have come up with a plan : you need to destroy those hyperspace roads. The problem is that if you attack any hyperspace road, the armies from both planets will come to defend it. You realize now that if both the empire {{E}} and  the republic {{R}} defend the hyperspace road, your attack will fail... miserably.\n\nYou decide that, before attacking the hyperspace roads, you will attack some planets first to destroy the armies defending it. This way, you will be able to carry on with your plan. It will be difficult. You estimate that, in order to destroy the armies protecting each planet, you will need a certain number of your best ships : [[S]].\n\nYour goal is to determine which planet(s) to attack, using as few ships as possible.\nYou must make sure that no hyperspace road stands connecting a planet defended by the empire {{E}} and one defended by the republic {{R}}.",
+      "testCases": [
+        {
+          "title": "Head shot!",
+          "isTest": true,
+          "testIn": "3 3\nE 1\nE 1\nR 1\n1 2\n1 3\n2 3",
+          "testOut": "1",
+          "isValidator": false
+        },
+        {
+          "title": "Head shot!",
+          "isTest": false,
+          "testIn": "5 5\nR 3\nR 2\nE 4\nE 2\nR 1\n1 2\n1 3\n2 3\n3 4\n3 5",
+          "testOut": "4",
+          "isValidator": true
+        },
+        {
+          "title": "Aim good!",
+          "isTest": true,
+          "testIn": "3 3\nE 1\nE 1\nR 10\n1 2\n1 3\n2 3",
+          "testOut": "2",
+          "isValidator": false
+        },
+        {
+          "title": "Aim good!",
+          "isTest": false,
+          "testIn": "4 3\nR 1\nR 2\nE 9\nR 5\n1 3\n2 3\n3 4",
+          "testOut": "8",
+          "isValidator": true
+        },
+        {
+          "title": "So many ships!",
+          "isTest": true,
+          "testIn": "6 4\nE 7\nE 5\nE 10\nR 2\nR 9\nR 4\n1 2\n2 3\n4 5\n5 6",
+          "testOut": "0",
+          "isValidator": false
+        },
+        {
+          "title": "So many ships!",
+          "isTest": false,
+          "testIn": "7 7\nR 10\nR 4\nR 7\nE 8\nE 5\nE 7\nE 3\n1 2\n1 3\n2 3\n4 5\n5 6\n5 7\n6 7",
+          "testOut": "0",
+          "isValidator": true
+        },
+        {
+          "title": "With ease",
+          "isTest": true,
+          "testIn": "1 0\nR 8",
+          "testOut": "0",
+          "isValidator": false
+        },
+        {
+          "title": "With ease",
+          "isTest": false,
+          "testIn": "1 0\nE 17",
+          "testOut": "0",
+          "isValidator": true
+        },
+        {
+          "title": "Web",
+          "isTest": true,
+          "testIn": "5 5\nE 1\nE 1\nE 3\nR 1\nR 2\n1 4\n1 5\n2 4\n2 5\n3 5",
+          "testOut": "3",
+          "isValidator": false
+        },
+        {
+          "title": "Web",
+          "isTest": false,
+          "testIn": "6 4\nE 2\nR 1\nR 2\nE 2\nR 2\nE 1\n1 2\n2 4\n3 6\n5 6",
+          "testOut": "2",
+          "isValidator": true
+        }
+      ],
+      "constraints": "1 < [[P]] <= 30\n0 <= [[H]] <= 200\n1 <= [[S]] <= 100",
+      "stubGenerator": "read planets:int hyperspaceRoads:int\nloop planets read faction:word(1) ships:int\nloop hyperspaceRoads read planet1:int planet2:int\nwrite answer\n",
+      "inputDescription": "<<Line 1 :>> An integer [[P]] and an integer [[H]] defining the number of planets and hyperspace roads.\n<<[[P]] next lines :>> The planets. Each line has a character [[A]] defining the faction (either {{'E'}} or {{'R'}}) and an integer [[S]] defining the number of ships to wipe out the defending army.\n<<[[H]] next lines :>> The hyperspace roads. Each line has 2 integers [[P1]]and [[P2]] defining the planets linked by this hyperspace road.",
+      "solutionLanguage": "C#",
+      "outputDescription": "<<Line 1 :>> An integer [[T]] stating the minimum total ships required to conquer the universe."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h1><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h1>\n   <span class=\"question-statement\">The universe is made up of <var>P</var> planets numbered from 1 to <var>P</var>.<br>There are <var>H</var> hyperspace roads, linking those planets.<br>Two different space factions own and defend the planets : <const>E</const>, the empire and <const>R</const> the republic.<br><br>In order to conquer this universe, you have come up with a plan : you need to destroy those hyperspace roads. The problem is that if you attack any hyperspace road, the armies from both planets will come to defend it. You realize now that if both the empire <const>E</const> and  the republic <const>R</const> defend the hyperspace road, your attack will fail... miserably.<br><br>You decide that, before attacking the hyperspace roads, you will attack some planets first to destroy the armies defending it. This way, you will be able to carry on with your plan. It will be difficult. You estimate that, in order to destroy the armies protecting each planet, you will need a certain number of your best ships : <var>S</var>.<br><br>Your goal is to determine which planet(s) to attack, using as few ships as possible.<br>You must make sure that no hyperspace road stands connecting a planet defended by the empire <const>E</const> and one defended by the republic <const>R</const>.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1 :</strong> An integer <var>P</var> and an integer <var>H</var> defining the number of planets and hyperspace roads.<br><strong><var>P</var> next lines :</strong> The planets. Each line has a character <var>A</var> defining the faction (either <const>'E'</const> or <const>'R'</const>) and an integer <var>S</var> defining the number of ships to wipe out the defending army.<br><strong><var>H</var> next lines :</strong> The hyperspace roads. Each line has 2 integers <var>P1</var>and <var>P2</var> defining the planets linked by this hyperspace road.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1 :</strong> An integer <var>T</var> stating the minimum total ships required to conquer the universe.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt; <var>P</var> &lt;= 30<br>0 &lt;= <var>H</var> &lt;= 200<br>1 &lt;= <var>S</var> &lt;= 100</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3 3\nE 1\nE 1\nR 1\n1 2\n1 3\n2 3</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 310301598098,
+  "avatar": 1810683948117,
+  "commentCount": 9,
+  "upVotes": 8,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 52,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

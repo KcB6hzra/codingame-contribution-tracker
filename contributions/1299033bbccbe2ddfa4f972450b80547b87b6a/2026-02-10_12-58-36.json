@@ -1,0 +1,227 @@
+{
+  "id": 129903,
+  "activeVersion": 12,
+  "score": 8,
+  "votableId": 37563870,
+  "codingamerId": 4394399,
+  "views": 201,
+  "commentableId": 37401881,
+  "title": "Wesnoth fight death probabilities",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "manolinux2",
+  "publicHandle": "1299033bbccbe2ddfa4f972450b80547b87b6a",
+  "codingamerHandle": "4b63320c179289aa0828d2ba6fbac1399934934",
+  "lastVersion": {
+    "version": 12,
+    "autocloseTime": 1758320078483,
+    "freezeTime": 1753098147893,
+    "data": {
+      "title": "Wesnoth fight death probabilities",
+      "topics": [
+        {
+          "id": 110,
+          "handle": "probability",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Probability",
+            "2": "Probability"
+          },
+          "puzzleCount": 11,
+          "parentTopicId": 93
+        },
+        {
+          "id": 215,
+          "handle": "binary-tree",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Binary Tree",
+            "2": "Binary Tree"
+          },
+          "puzzleCount": 5,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "/*\n * The approach is to generate a tree with the different possibilties, then sum the cases where death happened.\n */\n\n\nclass Unit {\n    /**\n     * @param name name of the unit (aestetic)\n     * @param hp hitpoints\n     * @param blows number of blows (attacks)\n     * @param toHit probability as percentage\n     * @param damage damage\n     */\n    constructor(name, hp, blows, toHit, damage) {\n        this.name = name;\n        this.hp = hp;\n        this.blows = blows;\n        this.toHit = toHit / 100.0;\n        this.damage = damage;\n    }\n}\n\n\n/**\n * Each node respresents a posibility during the fight.\n *\n * The root is when nohting happened yet.\n *\n * Then, each node will have two children: one where blow was successful, another where it missed.\n * Except when one unit died, then the combat stops and the node is added to the tree death accounts.\n */\nclass Node {\n    /**\n     * @param tree Respresents the tree, used to get unit stats and to notify of deaths\n     * @param probability total probability of this scenario, from 0 to 1\n     * @param blows how many blows each unit used, 0 is when the unit didn't attack yet\n     * @param hp remaining hitpoints of each unit, if <=0 one unit is dead and tree will be notified\n     */\n    constructor(tree, probability = 1.0, blows = [0, 0], hp = [tree.units[0].hp, tree.units[1].hp]) {\n        this.tree = tree;\n        this.probability = probability;\n        this.blows = blows;\n        this.hp = hp;\n\n        this.children = [];\n\n        this.death = (hp[0] <=0 || hp[1] <= 0);\n\n        if (this.death) {\n            this.tree.deaths.push(this);\n        } else {\n            this.spawn();\n        }\n    }\n\n    /**\n     * Determine which unit should try to hit now. They alternate until one gets out of blows.\n     *\n     * @return 0 for the attacker, 1 for the defender, -1 if neither unit can hit\n     */\n    whoseTurn() {\n        let turns = this.blows[0] + this.blows[1];\n\n        // whose turn should be?\n        let first = turns % 2;\n        let second = (first + 1) % 2;\n\n        // but have the unit enough hits?\n        if (this.blows[first] < this.tree.units[first].blows) {\n            return first;\n        }\n        if (this.blows[second] < this.tree.units[second].blows) {\n            return second;\n        }\n\n        // nobody can hit\n        return -1;\n    }\n\n    /**\n     * Creates the children, one child the blow hit, the other child it missed\n     */\n    spawn() {\n        const whoHits = this.whoseTurn();\n\n        if (whoHits >= 0) {\n            // blow hits\n            this.children[0] = new Node(\n                this.tree,\n                this.probability * this.tree.units[whoHits].toHit,\n                [\n                    this.blows[0] + ((whoHits === 0) ? 1 : 0),\n                    this.blows[1] + ((whoHits === 1) ? 1 : 0)\n                ],\n                [\n                    this.hp[0] - ((whoHits === 1) ? this.tree.units[1].damage : 0),\n                    this.hp[1] - ((whoHits === 0) ? this.tree.units[0].damage : 0)\n                ],\n            );\n            // blow miss\n            this.children[1] = new Node(\n                this.tree,\n                this.probability * (1 - this.tree.units[whoHits].toHit),\n                [\n                    this.blows[0] + ((whoHits === 0) ? 1 : 0),\n                    this.blows[1] + ((whoHits === 1) ? 1 : 0)\n                ],\n                [\n                    this.hp[0],\n                    this.hp[1],\n                ],\n            );                              \n        }\n    }\n}\n\n/**\n * This is the tree that represents the battle.\n */\nclass BattleTree {\n    /**\n     * @param attacker Unit\n     * @param defender Unit\n     */\n    constructor(attacker, defender) {\n        this.units = [attacker, defender];\n\n        this.calculateProbabilities();\n    }\n\n    /**\n     * Makes the nodes spawn, the count the death scenarios and sum the probabilities\n     */\n    calculateProbabilities() {\n        this.deaths = [];\n        this.root = new Node(this);\n        this.deathProbabilities = [0.0, 0.0];\n\n        for (let deathNode of this.deaths) {\n            this.deathProbabilities[\n                deathNode.hp[0] <= 0 ? 0 : 1\n            ] += deathNode.probability;\n        }\n    }\n\n    getDeathProbabilities() {\n        return this.deathProbabilities;\n    }\n\n    /**\n     * This gets the death probabilities as in the codingame required output\n     * @return a string '<death prob of attacker> <death prob of defender>', with probabilities as percentage integers\n     */\n    formatDeathProbabilities() {\n        return this.getDeathProbabilities().map(prob => (prob*100).toFixed(0)).join(' ');\n    }\n}\n\n/**\n * Auto-generated code below aims at helping you parse\n * the standard input according to the problem statement.\n **/\n\nvar inputs = readline().split(' ');\nconst name0 = inputs[0];\nconst hp0 = parseInt(inputs[1]);\nconst blows0 = parseInt(inputs[2]);\nconst toHit0 = parseInt(inputs[3]);\nconst damage0 = parseInt(inputs[4]);\nvar inputs = readline().split(' ');\nconst name1 = inputs[0];\nconst hp1 = parseInt(inputs[1]);\nconst blows1 = parseInt(inputs[2]);\nconst toHit1 = parseInt(inputs[3]);\nconst damage1 = parseInt(inputs[4]);\n\n/**\n * Use the classes\n */\n\nconst attacker = new Unit(name0, hp0, blows0, toHit0, damage0);\nconst defender = new Unit(name1, hp1, blows1, toHit1, damage1);\n\nconst battle = new BattleTree(attacker, defender);\nconst answer = battle.formatDeathProbabilities();\n\n// Write an answer using console.log()\n// To debug: console.error('Debug messages...');\n\nconsole.log(answer);\n",
+      "statement": "Battle for Wesnoth is a turn based strategy game.\n\nA fight happens when an unit attacks another unit. In each fight, units exchange blows according to their stats.\n\nThe stats of each unit relevant for the fight are:\n\n* [[blows]] Number of blows.\n\n* [[damage]] Damage of each successful blow.\n\n* [[toHit]] Chance to hit as percentage.\n\n* [[hp]] Remaining hit points.\n\nA fight proceeds as follows:\n\n* The attacker launches a blow first. It can hit or not depending on the chance to hit.\n\n* Then the defender launches a blow (if the unit has at least one blow, some units have 0 blows).\n\n* They continue exchanging blows until one of them dies or both run out of blows.\n\n* If one of them exhausts all of its blows, the opponent continues hitting until it also runs out of blows.\n\n<<Example:>>\n\nThe attacker has 2 blows and the defender 4. First goes the attacker, then the defender, then again the attacker and then the defender does its other 3 blows, as the attacker is out of them. The sequence goes like this:\n\n* Attacker tries to hit (remaining blows: 1)\n* Defender tries to hit (remaining blows: 3)\n* Attacker tries to hit (remaining blows: 0)\n* Defender tries to hit (remaining blows: 2)\n* Defender tries to hit (remaining blows: 1)\n* Defender tries to hit (remaining blows: 0)\n\n\nBe aware that while the defender can have no blows (e.g. they have no weapons), the attacker has at least 1 blow (if not they would not be able to attack).\n\nIn each blow, there is a [[toHit]] probability of successfully hitting the opponent. If a hit is successful, [[damage]] is subtracted from the opponent's [[hp]]. A unit dies if its hit points get reduced to 0 or less.\n\nYour task is to determine the probability of the death of each unit.",
+      "testCases": [
+        {
+          "title": "Rifleman vs Shaman",
+          "isTest": true,
+          "testIn": "rifleman 20 1 50 20\nshaman 15 2 60 10",
+          "testOut": "18 50",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Rifleman vs Shaman v",
+          "isTest": false,
+          "testIn": "rifleman 30 1 30 40\nshaman 20 2 70 15",
+          "testOut": "34 30",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Shaman vs Rifleman",
+          "isTest": true,
+          "testIn": "shaman 15 2 60 10\nrifleman 20 1 50 20",
+          "testOut": "50 18",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Shaman vs Rifleman v",
+          "isTest": false,
+          "testIn": "shaman 20 2 30 15\nrifleman 30 1 60 40",
+          "testOut": "60 4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Rifleman vs Rifleman",
+          "isTest": true,
+          "testIn": "rifleman 20 1 30 20\nrifleman 20 1 30 20",
+          "testOut": "21 30",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Rifleman vs Rifleman v",
+          "isTest": false,
+          "testIn": "rifleman 20 1 40 20\nrifleman 20 1 40 20",
+          "testOut": "24 40",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Archer vs Swordsman",
+          "isTest": true,
+          "testIn": "archer 20 3 60 6\nswordsman 15 0 60 10",
+          "testOut": "0 22",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Archer vs Swordsman v",
+          "isTest": false,
+          "testIn": "archer 20 3 50 7\nswordsman 14 0 50 11",
+          "testOut": "0 50",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Light infantry vs Heavy infantry",
+          "isTest": true,
+          "testIn": "light 40 3 60 11\nheavy 30 2 40 22",
+          "testOut": "16 18",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Light infantry vs Heavy infantry v",
+          "isTest": false,
+          "testIn": "light 41 3 40 12\nheavy 31 2 30 23",
+          "testOut": "9 6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Light infantry vs wounded Heavy infantry",
+          "isTest": true,
+          "testIn": "light 40 3 60 11\nwoundedheavy 20 2 40 22",
+          "testOut": "10 60",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Light infantry vs wounded Heavy infantry v",
+          "isTest": false,
+          "testIn": "light 41 3 40 12\nwoundedheavy 21 2 30 22",
+          "testOut": "8 33",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Wounded Heavy infantry vs  Light infantry",
+          "isTest": true,
+          "testIn": "woundedheavy 20 2 40 22\nlight 40 3 60 11",
+          "testOut": "54 16",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Wounded Heavy infantry vs  Light infantry v",
+          "isTest": false,
+          "testIn": "woundedheavy 21 2 30 22\nlight 41 3 40 12",
+          "testOut": "32 9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A harmless fight",
+          "isTest": true,
+          "testIn": "spearman 30 3 60 6\ngorilla 50 2 40 10",
+          "testOut": "0 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "A harmless fight v",
+          "isTest": false,
+          "testIn": "spearman 50 3 60 7\ngorilla 60 2 40 11",
+          "testOut": "0 0",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 <= [[hp0]],[[hp1]] <= 100\n1 <= [[blows0]] <= 10\n0 <= [[blows1]] <= 10\n10 <= [[toHit0]],[[toHit1]] <= 90\n1 <= [[damage0]], [[damage1]] <= 100",
+      "coverBinaryId": 147119665271468,
+      "stubGenerator": "read name0:word(100) hp0:int blows0:int toHit0:int damage0:int\nread name1:word(100) hp1:int blows1:int toHit1:int damage1:int\nwrite 50 50",
+      "inputDescription": "<<Line 1:>> Space separated for the stats of the attacker unit: [[name0]] [[hp0]] [[blows0]] [[toHit0]] [[damage0]]\n<<Line 2:>> Space separated for the stats of the defender unit: [[name1]] [[hp1]] [[blows1]] [[toHit1]] [[damage1]]",
+      "solutionLanguage": "Javascript",
+      "outputDescription": "<<Line 1 :>> Space separated probabilities, first the attacker, then the defender, in percentage rounded to the nearest integer."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Battle for Wesnoth is a turn based strategy game.<br><br>A fight happens when an unit attacks another unit. In each fight, units exchange blows according to their stats.<br><br>The stats of each unit relevant for the fight are:<br><br>* <var>blows</var> Number of blows.<br><br>* <var>damage</var> Damage of each successful blow.<br><br>* <var>toHit</var> Chance to hit as percentage.<br><br>* <var>hp</var> Remaining hit points.<br><br>A fight proceeds as follows:<br><br>* The attacker launches a blow first. It can hit or not depending on the chance to hit.<br><br>* Then the defender launches a blow (if the unit has at least one blow, some units have 0 blows).<br><br>* They continue exchanging blows until one of them dies or both run out of blows.<br><br>* If one of them exhausts all of its blows, the opponent continues hitting until it also runs out of blows.<br><br><strong>Example:</strong><br><br>The attacker has 2 blows and the defender 4. First goes the attacker, then the defender, then again the attacker and then the defender does its other 3 blows, as the attacker is out of them. The sequence goes like this:<br><br>* Attacker tries to hit (remaining blows: 1)<br>* Defender tries to hit (remaining blows: 3)<br>* Attacker tries to hit (remaining blows: 0)<br>* Defender tries to hit (remaining blows: 2)<br>* Defender tries to hit (remaining blows: 1)<br>* Defender tries to hit (remaining blows: 0)<br><br><br>Be aware that while the defender can have no blows (e.g. they have no weapons), the attacker has at least 1 blow (if not they would not be able to attack).<br><br>In each blow, there is a <var>toHit</var> probability of successfully hitting the opponent. If a hit is successful, <var>damage</var> is subtracted from the opponent's <var>hp</var>. A unit dies if its hit points get reduced to 0 or less.<br><br>Your task is to determine the probability of the death of each unit.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Space separated for the stats of the attacker unit: <var>name0</var> <var>hp0</var> <var>blows0</var> <var>toHit0</var> <var>damage0</var><br><strong>Line 2:</strong> Space separated for the stats of the defender unit: <var>name1</var> <var>hp1</var> <var>blows1</var> <var>toHit1</var> <var>damage1</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1 :</strong> Space separated probabilities, first the attacker, then the defender, in percentage rounded to the nearest integer.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt;= <var>hp0</var>,<var>hp1</var> &lt;= 100<br>1 &lt;= <var>blows0</var> &lt;= 10<br>0 &lt;= <var>blows1</var> &lt;= 10<br>10 &lt;= <var>toHit0</var>,<var>toHit1</var> &lt;= 90<br>1 &lt;= <var>damage0</var>, <var>damage1</var> &lt;= 100</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">rifleman 20 1 50 20\nshaman 15 2 60 10</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">18 50</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 12711177278,
+  "avatar": 66724700708963,
+  "commentCount": 19,
+  "upVotes": 8,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1211858,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1755086737009,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1755728078483,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1758017138212,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

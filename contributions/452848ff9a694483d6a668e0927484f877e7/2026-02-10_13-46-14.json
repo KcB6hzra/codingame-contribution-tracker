@@ -1,0 +1,175 @@
+{
+  "id": 4528,
+  "activeVersion": 35,
+  "score": 2,
+  "votableId": 11305613,
+  "codingamerId": 3305510,
+  "views": 262,
+  "commentableId": 11233050,
+  "title": "Hello, World!",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "TBali",
+  "publicHandle": "452848ff9a694483d6a668e0927484f877e7",
+  "codingamerHandle": "08e6e13d9f7cad047d86ec4d10c777500155033",
+  "lastVersion": {
+    "version": 35,
+    "autocloseTime": 1569267914644,
+    "data": {
+      "title": "Hello, World!",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Geolocation"
+          }
+        },
+        {
+          "labelMap": {
+            "2": "Great-circle distance"
+          }
+        },
+        {
+          "labelMap": {
+            "2": "Sexagesimal system"
+          }
+        },
+        {
+          "id": 81,
+          "handle": "trigonometry",
+          "labelMap": {
+            "1": "Trigonométrie",
+            "2": "Trigonometry"
+          },
+          "pageTitle": "Trigonometry: exercises and theory",
+          "puzzleCount": 8,
+          "parentTopicId": 43,
+          "contentDetailsId": 74
+        }
+      ],
+      "solution": "<?php\n// Hello, World! sample solution\n\nclass GeoLocation\n{\n    public $lat = 0;    // internal stored in decimal deg\n    public $long = 0;\n    public $name = '';\n    \n    const Radius = 6371.0;\n    \n    public function __construct(string $_dms = 'N000000 E0000000', string $_name = '')\n    {\n        $this->name = $_name;\n        // assuming valid input, no error handling\n        $this->lat = floatval(substr($_dms, 1, 2)) + floatval(substr($_dms, 3, 2)) / 60 + floatval(substr($_dms, 5, 2)) / 3600;\n        if ($_dms[0] == 'S')\n            $this->lat = -1 * $this->lat;\n        $this->long = floatval(substr($_dms, 9, 3)) + floatval(substr($_dms, 12, 2)) / 60 + floatval(substr($_dms, 14, 2)) / 3600;\n        if ($_dms[8] == 'W')\n            $this->long = -1 * $this->long;\n    }\n\n    public function getDistance(GeoLocation $otherLoc): int\n    {\n        $lat1rad = deg2rad($this->lat);\n        $lat2rad = deg2rad($otherLoc->lat);\n        $long1rad = deg2rad($this->long);\n        $long2rad = deg2rad($otherLoc->long);\n        $delta = acos(sin($lat1rad) * sin($lat2rad) + cos($lat1rad) * cos($lat2rad) * cos(abs($long1rad - $long2rad)));\n        return intval(round($delta * self::Radius));\n    }\n\n    // reverse conversion, not needed for puzzle, used only for some test case generation\n    public function toString(): string\n    {\n        $latVal = abs($this->lat);\n    \t$latDeg = floor($latVal);\n    \t$latMin = floor(($latVal - $latDeg) * 60);\n    \t$latSec = round(($latVal - $latDeg - $latMin / 60) * 3600);\n    \t$ans = (($this->lat >= 0) ? 'N' : 'S');\n    \t$ans .= str_pad(strval(intval($latDeg)), 2, '0', STR_PAD_LEFT);\n    \t$ans .= str_pad(strval(intval($latMin)), 2, '0', STR_PAD_LEFT);\n    \t$ans .= str_pad(strval(intval($latSec)), 2, '0', STR_PAD_LEFT);\n    \t$ans .= ' ';\n        $longVal = abs($this->long);\n    \t$longDeg = floor($longVal);\n    \t$longMin = floor(($longVal - $longDeg) * 60);\n    \t$longSec = round(($longVal - $longDeg - $longMin / 60) * 3600);\n    \t$ans .= (($this->long >= 0) ? 'E' : 'W');\n    \t$ans .= str_pad(strval(intval($longDeg)), 3, '0', STR_PAD_LEFT);\n    \t$ans .= str_pad(strval(intval($longMin)), 2, '0', STR_PAD_LEFT);\n    \t$ans .= str_pad(strval(intval($longSec)), 2, '0', STR_PAD_LEFT);\n    \treturn $ans;\n    } // function toString\n\n    // getting an equidistance point, not needed for puzzle, used only for some test case generation\n    public function getMidPoint(GeoLocation $otherLoc): GeoLocation\n    {  \n        $lat1rad = deg2rad($this->lat);\n        $long1rad = deg2rad($this->long);\n        $lat2rad = deg2rad($otherLoc->lat);\n        $long2rad = deg2rad($otherLoc->long);\n        $Bx = cos($lat2rad) * cos($long2rad - $long1rad);\n        $By = cos($lat2rad) * sin($long2rad - $long1rad);\n        $p = new Geolocation();\n        $p->lat = rad2deg(atan2(sin($lat1rad) + sin($lat2rad), sqrt((cos($lat1rad) + $Bx) * (cos($lat1rad) + $Bx) + $By * $By)));\n        $p->long = rad2deg($long1rad + atan2($By, cos($lat1rad) + $Bx));\n        return $p;    \n    } // function getMidPoint\n    \n} // class GeoLocation\n\n// --- main program\nfscanf(STDIN, \"%d\",\n    $n // number of capitals\n);\nfscanf(STDIN, \"%d\",\n    $m // number of geolocations for which to find the closest capita\n);\nfor ($i = 0; $i < $n; $i++)\n{\n    $line = explode(' ', stream_get_line(STDIN, 48 + 1, \"\\n\"));\n    $capitals[] = new GeoLocation($line[1] . ' ' . $line[2], $line[0]);\n}\nfor ($i = 0; $i < $n; $i++)\n    $message[$i] = stream_get_line(STDIN, 128 + 1, \"\\n\");\nfor ($i = 0; $i < $m; $i++)\n{\n    $line = stream_get_line(STDIN, 16 + 1, \"\\n\");\n    $travels[] = new GeoLocation($line);\n}\nforeach ($travels as $idxTravel => $travel)\n{\n    $closestDistance = PHP_INT_MAX;\n    $closestIdx = array();\n    foreach ($capitals as $idxCapital => $capital)\n    {\n        $distance = $travel->getDistance($capital);\n        if ($distance < $closestDistance)\n        {\n            $closestDistance = $distance;\n            $closestIdx = [$idxCapital];\n        }\n        elseif ($distance == $closestDistance)\n            $closestIdx[] = $idxCapital;\n    }\n    $answer = '';\n    for ($i = 0; $i < count($closestIdx); $i++)\n    {\n        if ($i > 0)\n            $answer .= ' ';\n        $answer .= $message[$closestIdx[$i]];\n    }\n    // Write an action using echo(). DON'T FORGET THE TRAILING \\n\n    // To debug (equivalent to var_dump): error_log(var_export($var, true));\n    echo $answer . \"\\n\";\n}\n?>",
+      "statement": "Write {{Hello, World!}} to the standard output.\n\n... Wait, that would be too easy. \n\n\nYou are given geolocation coordinates of [[N]] capital cities (or other places of interest). You are also given [[N]] {{Hello World!}} messages in a language that corresponds to each of these places. You are given [[M]] geolocations of your travel, and for each of these points, you have to find the closest capital and print the corresponding {{Hello, World!}} message. If there are multiple capitals which are closest with the same distances rounded to integer kilometers using 'half up' rounding, (e.g. positive x.5 goes up), then print all eligible messages separated by a space in the order they were given in the input.\n\nDistance shall be not Eucledian, but orthodromic , e.g. measured along the surface of the Earth. For this puzzle Earth is treated as a perfect sphere with a radius of 6371 km.\n\nA geocoordinate is given as a space separated [[latitude]] [[longitude]] pair.\n[[latitude]] is in the format \"Nddmmss\" where first letter is N (North) or S (South), next two digits are the degrees (00 to 90, padded with zeros to 2 digits), then arcminutes (00 to 59), then arcseconds (00 to 59).\nSimilarly, [[longitude]] is in format \"Edddmmss\" where first letter is E (East) or W (West), followed by degrees, arcminutes and arcseconds, but here degrees are padded to 3 digits (000 to 180)\nThis is the sexagesimal DMS system, not a decimal one, but with the ° ' '' symbols omitted.\nExample: geolocation of Rupelmonde, birthplace of 16th century cartographer Mercator is {{N510734 E0041727}}\n\nHints:\nFor distance formula, see  https://en.wikipedia.org/wiki/Great-circle_distance\nUse the 1st (arccos) formula from the above wikipedia page.\nUse 64-bit precision float to avoid errors due to loss of precision.\nDon't forget to convert degrees, arcminutes, arcseconds to decimal degrees.\nDon't forget to handle North/South and East/West as the sign of decimal degrees.\nDon't forget to convert decimal degrees to radians  (distance formula is in radian!)\n\nDisclaimer: Sorry, if the message is not linguistically correct in some of the languages used in the test cases. This is a simple coding puzzle, not a linguistic puzzle.",
+      "testCases": [
+        {
+          "title": "Dualism",
+          "isTest": true,
+          "testIn": "2\n2\nWien N481200 E0162100\nBudapest N472933 E0190305\nServus, Welt!\nSzia, Vilag!\nN472059 E0183005\nN481330 E0172100",
+          "testOut": "Szia, Vilag!\nServus, Welt!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "2\n2\nLondon N513000 W0000700\nParis N485124 E0022103\nHello, World!\nSalut, Le Monde!\nN504005 E0003000\nN491524 E0013059",
+          "testOut": "Hello, World!\nSalut, Le Monde!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Border travels in TriTheatreLand",
+          "isTest": true,
+          "testIn": "3\n9\nEpidaurus N373800 E0230800\nThe_Globe_Theatre N513025 W0000542\nBroadway N404532 W0735906\nChairete!\nHaile to thee, Noble Master!\nHello, Dolly!\nN373800 E0230800\nN513025 W0000542\nN404532 W0735906\nN450915 E0125549\nN505540 W0235856\nN522335 W0411458\nN450815 E0125649\nN451015 E0125449\nN512335 W0511458",
+          "testOut": "Chairete!\nHaile to thee, Noble Master!\nHello, Dolly!\nChairete! Haile to thee, Noble Master!\nHaile to thee, Noble Master!\nHaile to thee, Noble Master! Hello, Dolly!\nChairete!\nHaile to thee, Noble Master!\nHello, Dolly!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "3\n8\nHelsinki_Finland N601000 E0245600\nRiga_Latvia N565656 E0240623\nAthens_Greece N375800 E0244300\nTerve, Maailman!\nSveiks, Pasaule!\nYassou, Kosmos!\nN583330 E0243010\nN490400 E0244802\nN472729 E0242802\nN601000 E0245600\nN565656 E0240623\nN375800 E0244300\nN462729 E0242802\nN482729 E0242802",
+          "testOut": "Terve, Maailman! Sveiks, Pasaule!\nSveiks, Pasaule!\nSveiks, Pasaule! Yassou, Kosmos!\nTerve, Maailman!\nSveiks, Pasaule!\nYassou, Kosmos!\nYassou, Kosmos!\nSveiks, Pasaule!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "CodinGame World",
+          "isTest": true,
+          "testIn": "28\n7\nBash_land N000000 E0000000\nBefunge_land N010000 E0000000\nC#_land N020000 E0000000\nC_land N030000 E0000000\nC++_land N040000 E0000000\nC64_Assembly_land N050000 E0000000\nC64_BASIC_land N060000 E0000000\nClojure_land N070000 E0000000\nCSS_land N080000 E0000000\nDart_land N090000 E0000000\nF#_land N100000 E0000000\nGo_land N110000 E0000000\nGroovy_land N120000 E0000000\nHaskell_land N130000 E0000000\nJava_land N140000 E0000000\nJavascript_land N150000 E0000000\nKotlin_land N160000 E0000000\nLua_land N170000 E0000000\nOCaml_land N180000 E0000000\nPascal_land N190000 E0000000\nPerl_land N200000 E0000000\nPHP_land N210000 E0000000\nPowerShell_land N220000 E0000000\nPython_land N230000 E0000000\nRuby_land N240000 E0000000\nRust_land N250000 E0000000\nScala_land N260000 E0000000\nSwift_land N270000 E0000000\necho Hello World\n>\"dlroW olleH\",,,,,,,,,,,@\nclass HelloWorld { static void Main() System.Console.WriteLine(\"Hello, World!\"); } }\n#include <stdio.h> main( ) { printf(\"Hello, World!\\n\"); }\n#include <iostream.h> main() { cout << \"Hello, World!\" << endl; return 0; }\nLDY #0 ; BEQ in; loop: JSR $FFD2 ; INY ; in: LDA hello,Y; BNE loop ; RTS ; hello: .TXT \"Hello, World!\" ;  .BYTE 13,10,0\n10 PRINT \"Hello, World!\"\n(defn hello [] (println \"Hello, World!\")) (hello)\nbody:before { content: \"Hello, World!\"; }\nmain() { print('Hello, World!'); }\nprintf \"Hello, World!\\n\"\npackage main import \"fmt\" func main() { fmt.Printf(\"Hello, World!\\n\") }\nprintln \"Hello, World!\"\nmain = putStrLn \"Hello, World!\"\nclass HelloWorld { static public void main( String args[] ) { System.out.println( \"Hello, World!\" ); } }\nconsole.log(\"Hello, World!\");\nfun main(args : Array<String>) { println(\"Hello, World!\") }\nprint \"Hello, World!\"\nprint_string \"Hello, World!\\n\";;\nprogram HelloWorld(output); begin WriteLn('Hello, World!'); end.\nprint \"Hello, World!\\n\";\n<?php echo \"Hello, World!\\n\"; ?>\n'Hello, World!'\nprint(\"Hello, World!\")\nputs \"Hello, World!\"\nfn main() { println!(\"Hello, World!\"); }\nobject HelloWorld extends App { println(\"Hello, World!\") }\nprintln(\"Hello, World!\")\nN210000 E0000000\nN040000 E0000000\nN140000 E0000000\nN230000 E0000000\nN020000 E0000000\nN050000 E0000000\nN010000 E0000000",
+          "testOut": "<?php echo \"Hello, World!\\n\"; ?>\n#include <iostream.h> main() { cout << \"Hello, World!\" << endl; return 0; }\nclass HelloWorld { static public void main( String args[] ) { System.out.println( \"Hello, World!\" ); } }\nprint(\"Hello, World!\")\nclass HelloWorld { static void Main() System.Console.WriteLine(\"Hello, World!\"); } }\nLDY #0 ; BEQ in; loop: JSR $FFD2 ; INY ; in: LDA hello,Y; BNE loop ; RTS ; hello: .TXT \"Hello, World!\" ;  .BYTE 13,10,0\n>\"dlroW olleH\",,,,,,,,,,,@",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "28\n6\nSwift_land N270000 E0000000\nScala_land N260000 E0000000\nRust_land N250000 E0000000\nRuby_land N240000 E0000000\nPython_land N230000 E0000000\nPowerShell_land N220000 E0000000\nPHP_land N210000 E0000000\nPerl_land N200000 E0000000\nPascal_land N190000 E0000000\nOCaml_land N180000 E0000000\nLua_land N170000 E0000000\nKotlin_land N160000 E0000000\nJavascript_land N150000 E0000000\nJava_land N140000 E0000000\nHaskell_land N130000 E0000000\nGroovy_land N120000 E0000000\nGo_land N110000 E0000000\nF#_land N100000 E0000000\nDart_land N090000 E0000000\nCSS_land N080000 E0000000\nClojure_land N070000 E0000000\nC64_BASIC_land N060000 E0000000\nC64_Assembly_land N050000 E0000000\nC++_land N040000 E0000000\nC_land N030000 E0000000\nC#_land N020000 E0000000\nBefunge_land N010000 E0000000\nBash_land N000000 E0000000\nprintln(\"Hello, World!\")\nobject HelloWorld extends App { println(\"Hello, World!\") }\nfn main() { println!(\"Hello, World!\"); }\nputs \"Hello, World!\"\nprint(\"Hello, World!\")\n'Hello, World!'\n<?php echo \"Hello, World!\\n\"; ?>\nprint \"Hello, World!\\n\";\nprogram HelloWorld(output); begin WriteLn('Hello, World!'); end.\nprint_string \"Hello, World!\\n\";;\nprint \"Hello, World!\"\nfun main(args : Array<String>) { println(\"Hello, World!\") }\nconsole.log(\"Hello, World!\");\nclass HelloWorld { static public void main( String args[] ) { System.out.println( \"Hello, World!\" ); } }\nmain = putStrLn \"Hello, World!\"\nprintln \"Hello, World!\"\npackage main import \"fmt\" func main() { fmt.Printf(\"Hello, World!\\n\") }\nprintf \"Hello, World!\\n\"\nmain() { print('Hello, World!'); }\nbody:before { content: \"Hello, World!\"; }\n(defn hello [] (println \"Hello, World!\")) (hello)\n10 PRINT \"Hello, World!\"\nLDY #0 ; BEQ in; loop: JSR $FFD2 ; INY ; in: LDA hello,Y; BNE loop ; RTS ; hello: .TXT \"Hello, World!\" ;  .BYTE 13,10,0\n#include <iostream.h> main() { cout << \"Hello, World!\" << endl; return 0; }\n#include <stdio.h> main( ) { printf(\"Hello, World!\\n\"); }\nclass HelloWorld { static void Main() System.Console.WriteLine(\"Hello, World!\"); } }\n>\"dlroW olleH\",,,,,,,,,,,@\necho Hello World\nN180000 E0000000\nN100000 E0000000\nN130000 E0000000\nN070000 E0000000\nN260000 E0000000\nN190000 E0000000",
+          "testOut": "print_string \"Hello, World!\\n\";;\nprintf \"Hello, World!\\n\"\nmain = putStrLn \"Hello, World!\"\n(defn hello [] (println \"Hello, World!\")) (hello)\nobject HelloWorld extends App { println(\"Hello, World!\") }\nprogram HelloWorld(output); begin WriteLn('Hello, World!'); end.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Lonely Planet",
+          "isTest": true,
+          "testIn": "1\n1\nEarth N000000 E1800000\nHello, Earth!\nN000000 E0000000",
+          "testOut": "Hello, Earth!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "1\n1\nGaia N000000 E1795959\nHello, Gaia!\nN000000 W1800000",
+          "testOut": "Hello, Gaia!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Roundtrip in Europe",
+          "isTest": true,
+          "testIn": "38\n5\nAndorra_La_Vella_Andorra N423000 E0013100\nTirana_Albania N411900 E0194900\nVienna_Austria N481200 E0162100\nSarajevo_Bosnia_and_Herzegovina N435200 E0182500\nSofia_Bulgaria N424100 E0231900\nMinsk_Belarus N535500 E0273300\nPrague_Czech_Republic N500500 E0142800\nBerlin_Germany N523100 E0132300\nCopenhagen_Denmark N554300 E0123400\nTallin_Estonia N592500 E0244500\nMadrid_Spain N402600 W0034200\nHelsinki_Finland N601000 E0245600\nParis_France N485124 E0022103\nLondon_United_Kingdom N513000 W0000700\nAthens_Greece N375800 E0234300\nZagreb_Croatia N454900 E0155900\nBudapest_Hungary N472933 E0190305\nDublin_Ireland N532039 W0061603\nReykjavik_Iceland N640800 W0215600\nRome_Italy N415400 E0123000\nVilnius_Lithuania N544100 E0251900\nLuxembourg_City_Luxembourg N493636 E0060800\nRiga_Latvia N565656 E0240623\nPodgorica_Montenegro N422627 E0191548\nSkopje_North_Macedonia N420000 E0212600\nValletta_Malta N355352 E0143045\nAmsterdam_Netherlands N522200 E0045400\nOslo_Norway N595700 E0104500\nWarsaw_Poland N521400 E0210100\nLisbon_Portugal N384250 W0090822\nBucharest_Romania N442557 E0260614\nBelgrade_Serbia N444900 E0202800\nMoscow_Russia N554500 E0373700\nStockholm_Sweden N591946 E0180407\nLjubljana_Slovenia N460320 E0143030\nBratislava_Slovakia N480838 E0170635\nKyiv_Ukraine N502700 E0303124\nVatican_City_Holy_See N415412 E0122712\nHola, Mon!\nTjeta, Bote!\nServus, Welt!\nZdravo, Svijet!\nZdravej, Svjet!\nVitaju, Svet!\nAhoj, Svet!\nHallo, Welt!\nHej, Verden!\nTere, Maailm!\nHola, Mundo!\nTerve, Maailman!\nSalut, Le Monde!\nHello, World!\nYassou, Kosmos!\nBok, Svijet!\nSzia, Vilag!\nDia duit, Domhan!\nHallo, Heimurinn!\nCiao, Mondo!\nLabas, Pasaulis!\nMoien, Welt!\nSveiks, Pasaule!\nZdravo, Svet!\nZdravo, Svetot!\nBongu, Dinja!\nHallo, Wereld!\nHei, Verden!\nCzesc, Swiat!\nOla, Mundo!\nSalut, Lume!\nZdravo, Svet!\nPrivet, Mir!\nHej, Varld!\nZdravo, Svet!\nAhoj, Svet!\nPryvit, Svit!\nSalve, Mundus!\nN485124 E0023103\nN375800 E0244300\nN472933 E0190405\nN523100 E0132400\nN415512 E0122712",
+          "testOut": "Salut, Le Monde!\nYassou, Kosmos!\nSzia, Vilag!\nHallo, Welt!\nSalve, Mundus!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "38\n5\nAndorra_La_Vella_Andorra N423000 E0013100\nTirana_Albania N411900 E0194900\nVienna_Austria N481200 E0162100\nSarajevo_Bosnia_and_Herzegovina N435200 E0182500\nSofia_Bulgaria N424100 E0231900\nMinsk_Belarus N535500 E0273300\nPrague_Czech_Republic N500500 E0142800\nBerlin_Germany N523100 E0132300\nCopenhagen_Denmark N554300 E0123400\nTallin_Estonia N592500 E0244500\nMadrid_Spain N402600 W0034200\nHelsinki_Finland N601000 E0245600\nParis_France N485124 E0022103\nLondon_United_Kingdom N513000 W0000700\nAthens_Greece N375800 E0234300\nZagreb_Croatia N454900 E0155900\nBudapest_Hungary N472933 E0190305\nDublin_Ireland N532039 W0061603\nReykjavik_Iceland N640800 W0215600\nRome_Italy N415400 E0123000\nVilnius_Lithuania N544100 E0251900\nLuxembourg_City_Luxembourg N493636 E0060800\nRiga_Latvia N565656 E0240623\nPodgorica_Montenegro N422627 E0191548\nSkopje_North_Macedonia N420000 E0212600\nValletta_Malta N355352 E0143045\nAmsterdam_Netherlands N522200 E0045400\nOslo_Norway N595700 E0104500\nWarsaw_Poland N521400 E0210100\nLisbon_Portugal N384250 W0090822\nBucharest_Romania N442557 E0260614\nBelgrade_Serbia N444900 E0202800\nMoscow_Russia N554500 E0373700\nStockholm_Sweden N591946 E0180407\nLjubljana_Slovenia N460320 E0143030\nBratislava_Slovakia N480838 E0170635\nKyiv_Ukraine N502700 E0303124\nVatican_City_Holy_See N415412 E0122712\nHola, Mon!\nTjeta, Bote!\nServus, Welt!\nZdravo, Svijet!\nZdravej, Svjet!\nVitaju, Svet!\nAhoj, Svet!\nHallo, Welt!\nHej, Verden!\nTere, Maailm!\nHola, Mundo!\nTerve, Maailman!\nSalut, Le Monde!\nHello, World!\nYassou, Kosmos!\nBok, Svijet!\nSzia, Vilag!\nDia duit, Domhan!\nHallo, Heimurinn!\nCiao, Mondo!\nLabas, Pasaulis!\nMoien, Welt!\nSveiks, Pasaule!\nZdravo, Svet!\nZdravo, Svetot!\nBongu, Dinja!\nHallo, Wereld!\nHei, Verden!\nCzesc, Swiat!\nOla, Mundo!\nSalut, Lume!\nZdravo, Svet!\nPrivet, Mir!\nHej, Varld!\nZdravo, Svet!\nAhoj, Svet!\nPryvit, Svit!\nSalve, Mundus!\nN415200 E0123000\nN522300 E0045400\nN502800 E0303124\nN423100 E0013100\nN472833 E0190305",
+          "testOut": "Ciao, Mondo!\nHallo, Wereld!\nPryvit, Svit!\nHola, Mon!\nSzia, Vilag!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Pole to Pole with Michael Palin",
+          "isTest": true,
+          "testIn": "3\n7\nJoe_s_Place S000000 E1790000\nJack_s_Place S000000 W1700000\nLaplace N000000 E1790000\nHello, I am Joe!\nHello, I am Jack!\nHello, I am Sorry!\nN000000 W1753000\nN900000 E1790000\nN900000 W1700000\nS900000 W0123456\nN000000 E0043000\nN123456 E0043000\nS123456 E0123456",
+          "testOut": "Hello, I am Joe! Hello, I am Jack! Hello, I am Sorry!\nHello, I am Joe! Hello, I am Jack! Hello, I am Sorry!\nHello, I am Joe! Hello, I am Jack! Hello, I am Sorry!\nHello, I am Joe! Hello, I am Jack! Hello, I am Sorry!\nHello, I am Joe! Hello, I am Jack! Hello, I am Sorry!\nHello, I am Joe! Hello, I am Jack! Hello, I am Sorry!\nHello, I am Joe! Hello, I am Sorry!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "3\n5\nJoe_s_Place N000000 E1600000\nJack_s_Place S000000 W1700000\nLaplace S000000 W1700000\nHello, I am Joe Black!\nHello, I am Jack Ripper!\nHello, I am Not So Sorry!\nN900000 W1000000\nS900000 W1000000\nS654321 E0654321\nN000000 E1750000\nS000000 E0050000",
+          "testOut": "Hello, I am Joe Black! Hello, I am Jack Ripper! Hello, I am Not So Sorry!\nHello, I am Joe Black! Hello, I am Jack Ripper! Hello, I am Not So Sorry!\nHello, I am Joe Black!\nHello, I am Joe Black! Hello, I am Jack Ripper! Hello, I am Not So Sorry!\nHello, I am Joe Black!",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "1 ≤ [[N]] ≤ 250\n1 ≤ [[M]] ≤ 20\nS900000 ≤ [[latitude]] ≤ N900000\nW1800000 ≤ [[longitude]] ≤ E1800000\nYou can assume that all provided geocoordinates are valid.\nAs Unicode support might be limited in some languages, in this puzzle all [[messages]] contain only characters with ASCII codes 32 to 126 (E.g. English uppercase and lowercase letters, most punctuations, space).",
+      "coverBinaryId": 33020687202874,
+      "stubGenerator": "read n:int\nread m:int\nloop n read capitalNameGeoloc:string(48)\nloop n read message:string(128)\nloop m read travelGeoloc:string(16)\nloop m write Hello, World!\n\nINPUT\nn: number of capitals\nm: number of geolocations for which to find the closest capital\n",
+      "inputDescription": "<<Line 1:>> An integer [[N]] for the number of capitals.\n<<Line 2:>> An integer [[M]] for the number of geocoordinates of your travel, for which to print a message.\n<<Next [[N]] lines:>> Space separated [[name]] and geocoordinates ([[latitude]] and [[longitude]]) for the capitals. Note: [[name]] is not really used in the puzzle, but you still have to read them.\n<<Next [[N]] lines:>> The {{Hello, World!}} message for each of the capitals (might contain spaces).\n<<Next [[M]] lines:>> Geocoordinates [[latitude]] and [[longitude]] of your travel locations, for which you need to find the closest capitals.",
+      "solutionLanguage": "PHP",
+      "outputDescription": "<<[[M]] lines:>> The string {{\"Hello World!\"}} message(s) corresponding to the closest capital(s) to the given travel geolocation (in order of input).\nIn case multiple capitals have the same distance (rounded to kilometers), than all corresponding messages shall be printed on the same line, separated by a space (in the order the input was given)"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Write <const>Hello, World!</const> to the standard output.<br><br>... Wait, that would be too easy. <br><br><br>You are given geolocation coordinates of <var>N</var> capital cities (or other places of interest). You are also given <var>N</var> <const>Hello World!</const> messages in a language that corresponds to each of these places. You are given <var>M</var> geolocations of your travel, and for each of these points, you have to find the closest capital and print the corresponding <const>Hello, World!</const> message. If there are multiple capitals which are closest with the same distances rounded to integer kilometers using 'half up' rounding, (e.g. positive x.5 goes up), then print all eligible messages separated by a space in the order they were given in the input.<br><br>Distance shall be not Eucledian, but orthodromic , e.g. measured along the surface of the Earth. For this puzzle Earth is treated as a perfect sphere with a radius of 6371 km.<br><br>A geocoordinate is given as a space separated <var>latitude</var> <var>longitude</var> pair.<br><var>latitude</var> is in the format &quot;Nddmmss&quot; where first letter is N (North) or S (South), next two digits are the degrees (00 to 90, padded with zeros to 2 digits), then arcminutes (00 to 59), then arcseconds (00 to 59).<br>Similarly, <var>longitude</var> is in format &quot;Edddmmss&quot; where first letter is E (East) or W (West), followed by degrees, arcminutes and arcseconds, but here degrees are padded to 3 digits (000 to 180)<br>This is the sexagesimal DMS system, not a decimal one, but with the &deg; ' '' symbols omitted.<br>Example: geolocation of Rupelmonde, birthplace of 16th century cartographer Mercator is <const>N510734 E0041727</const><br><br>Hints:<br>For distance formula, see  https://en.wikipedia.org/wiki/Great-circle_distance<br>Use the 1st (arccos) formula from the above wikipedia page.<br>Use 64-bit precision float to avoid errors due to loss of precision.<br>Don't forget to convert degrees, arcminutes, arcseconds to decimal degrees.<br>Don't forget to handle North/South and East/West as the sign of decimal degrees.<br>Don't forget to convert decimal degrees to radians  (distance formula is in radian!)<br><br>Disclaimer: Sorry, if the message is not linguistically correct in some of the languages used in the test cases. This is a simple coding puzzle, not a linguistic puzzle.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var> for the number of capitals.<br><strong>Line 2:</strong> An integer <var>M</var> for the number of geocoordinates of your travel, for which to print a message.<br><strong>Next <var>N</var> lines:</strong> Space separated <var>name</var> and geocoordinates (<var>latitude</var> and <var>longitude</var>) for the capitals. Note: <var>name</var> is not really used in the puzzle, but you still have to read them.<br><strong>Next <var>N</var> lines:</strong> The <const>Hello, World!</const> message for each of the capitals (might contain spaces).<br><strong>Next <var>M</var> lines:</strong> Geocoordinates <var>latitude</var> and <var>longitude</var> of your travel locations, for which you need to find the closest capitals.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>M</var> lines:</strong> The string <const>&quot;Hello World!&quot;</const> message(s) corresponding to the closest capital(s) to the given travel geolocation (in order of input).<br>In case multiple capitals have the same distance (rounded to kilometers), than all corresponding messages shall be printed on the same line, separated by a space (in the order the input was given)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 250<br>1 &le; <var>M</var> &le; 20<br>S900000 &le; <var>latitude</var> &le; N900000<br>W1800000 &le; <var>longitude</var> &le; E1800000<br>You can assume that all provided geocoordinates are valid.<br>As Unicode support might be limited in some languages, in this puzzle all <var>messages</var> contain only characters with ASCII codes 32 to 126 (E.g. English uppercase and lowercase letters, most punctuations, space).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\n2\nWien N481200 E0162100\nBudapest N472933 E0190305\nServus, Welt!\nSzia, Vilag!\nN472059 E0183005\nN481330 E0172100</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Szia, Vilag!\nServus, Welt!</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 204020904633,
+  "avatar": 26750785092441,
+  "commentCount": 17,
+  "upVotes": 5,
+  "downVotes": 3,
+  "validateAction": {
+    "actionId": 375454,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

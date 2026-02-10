@@ -1,0 +1,544 @@
+{
+  "id": 49581,
+  "activeVersion": 73,
+  "score": 24,
+  "votableId": 28524528,
+  "codingamerId": 5300766,
+  "views": 882,
+  "commentableId": 28394505,
+  "title": "Advertisements",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "jddingemanse",
+  "publicHandle": "49581b7436e122eb89be60a2a87449fb25e55",
+  "codingamerHandle": "d95f1456c7409de3e7dcc202f89a3d646670035",
+  "lastVersion": {
+    "version": 73,
+    "autocloseTime": 1700825269541,
+    "data": {
+      "title": "Advertisements",
+      "topics": [
+        {
+          "id": 46,
+          "handle": "loops",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 90,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        },
+        {
+          "id": 73,
+          "handle": "strings",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Chaînes de caractères",
+            "2": "Strings"
+          },
+          "pageTitle": "Strings: exercises and theory",
+          "puzzleCount": 43,
+          "parentTopicId": 41,
+          "contentDetailsId": 73
+        },
+        {
+          "id": 47,
+          "handle": "arrays",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Tableaux",
+            "2": "Arrays"
+          },
+          "pageTitle": "Arrays: exercises and theory",
+          "puzzleCount": 33,
+          "parentTopicId": 40,
+          "contentDetailsId": 78
+        },
+        {
+          "id": 70,
+          "handle": "permutations",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Permutations",
+            "2": "Permutations"
+          },
+          "pageTitle": "Permutations: exercises and theory",
+          "puzzleCount": 10,
+          "parentTopicId": 41,
+          "contentDetailsId": 103
+        }
+      ],
+      "solution": "import sys\nfrom itertools import permutations\n\nclass Advert():\n    def __init__(self, id, subject, X, Y):\n        self.id = id\n        self.subject = subject\n        self.X = X\n        self.Y = Y\n        self.items = []\n\nclass Item():\n    def __init__(self, id, product, group, brand, price):\n        self.id = id\n        self.product = product\n        self.group = group\n        self.brand = brand\n        self.price = price\n        self.categories = [product, group, brand]\n        self.adverts = []\n\nclass itemGroups():\n    # A class to store used items in either primary or secondary used collections\n    def __init__(self, used_main, used_secc):\n        self.used_main = used_main\n        self.used_secc = used_secc\n\n    def exchange(self, advert, items, adverts):\n        X = advert.X\n        Y = advert.Y\n\n        # Find available items that can be exchanged for secondary used items, and exchange them\n        if X >= Y: to_exchange = self.exchange_A(advert, items, adverts)\n        else: to_exchange = self.exchange_B(advert, items, adverts)\n        for ii_available, ii_used in to_exchange.items():\n            self.used_secc += [ii_available]\n            self.used_secc.remove(ii_used)\n            items[ii_available].used_by = items[ii_used].used_by\n            items[ii_used].used_by = -1\n\n    def exchange_A(self, advert, items, adverts):\n        # Sort the secondary used items\n        self.used_secc.sort(key = lambda x: items[x].price, reverse = True)\n        \n        # Per secondary used item, check for possible available items to change\n        to_exchange = {}\n        for ii_used in self.used_secc:\n            item = items[ii_used]\n            if advert.id not in item.adverts: continue\n\n            used_by = item.used_by\n            used_by_items = adverts[used_by].items            \n            available = [iia for iia in used_by_items if (items[iia].used_by==-1) and (iia not in to_exchange) and (iia not in advert.items)]\n            available += sorted([iia for iia in used_by_items if (items[iia].used_by==-1) and (iia not in to_exchange) and (iia in advert.items)], key = lambda x: items[x].price)\n                \n            for ii_available in available:\n                if ii_available not in advert.items or items[ii_available].price<items[ii_used].price:\n                    to_exchange[ii_available] = ii_used\n                    break\n        return to_exchange\n\n    def exchange_B(self, advert, items, adverts):\n        # Sort the secondary used items\n        used_secA = [ii for ii in self.used_secc if ii not in advert.items]\n        used_secB = sorted([ii for ii in self.used_secc if ii in advert.items],key = lambda x: items[x].price)\n        self.used_secc = used_secA + used_secB\n        \n        # Per secondary used item, check for possible available items to change\n        to_exchange = {}\n        for ii_used in self.used_secc:\n            item = items[ii_used]\n            used_by = item.used_by\n            used_by_items = adverts[used_by].items\n            available = sorted([iia for iia in used_by_items if (items[iia].used_by==-1) and (iia not in to_exchange) and (iia in advert.items)], key = lambda x: items[x].price, reverse = True)\n                \n            for ii_available in available:\n                if advert.id not in items[ii_used].adverts or (ii_available in advert.items and items[ii_available].price>items[ii_used].price):\n                    to_exchange[ii_available] = ii_used\n                    break\n        return to_exchange\n\nclass advertOrder():\n    def __init__(self, order, adverts, items):\n        self.order = order\n        self.discount = 0\n        self.groups = itemGroups([],[])\n        self.getDiscount(adverts, items)\n\n    def getDiscount(self, adverts, items):\n        for item in items: item.used_by = -1\n        for ai in self.order: self.applyAdvert(ai, adverts, items)\n\n    def applyAdvert(self, ai, adverts, items):\n        advert = adverts[ai]\n        X = advert.X\n        Y = advert.Y\n\n        self.groups.exchange(advert, items, adverts) #Exchange possible secondary used for available items\n        \n        advert_ix = sorted([items[ii] for ii in advert.items if items[ii].used_by==-1], key = lambda x: x.price, reverse = True)\n        adnum = len(advert_ix) // X\n        if not adnum: return\n        \n        if X >= Y:\n            diff = X - Y\n            main_use = advert_ix[:adnum*diff]\n            secc_use = advert_ix[-(Y*adnum):] if Y > 0 else []\n            for item in main_use: self.discount += item.price\n        else:\n            diff = Y - X\n            main_use = advert_ix[-adnum:]\n            secc_use = advert_ix[:(X-1)*adnum]\n            for item in main_use: self.discount -= item.price*diff\n        \n        for item in main_use:\n            self.groups.used_main += [item.id]\n            item.used_by = advert.id  \n        for item in secc_use:\n            self.groups.used_secc += [item.id]\n            item.used_by = advert.id            \n\n# Create adverts and items\nna = int(input())\nadverts = []\nfor i in range(na):\n    advertisement = input().split()\n    subject = advertisement[1][:-1]\n    X = int(advertisement[2])\n    Y = int(advertisement[-1])\n    adverts.append(Advert(i,subject, X, Y))\n\nni = int(input())\nitems = []\naddsConflict = []\nfor i in range(ni):\n    product, group, brand, price = input().split()\n    item = Item(i,product,group,brand,float(price))\n    for advert in adverts:\n        if advert.subject in item.categories:\n            item.adverts += [advert.id]\n            advert.items += [item.id]\n    items.append(item)\n    if len(item.adverts) > 1: addsConflict += item.adverts\n\naddsConflict = set(addsConflict)\naddsNoConflict = [advert.id for advert in adverts if advert.id not in addsConflict]\n\n# Per distinct (relevant) order of adverts, get discount, and save the best\nbest_discount = -100000\nfor per in permutations(addsConflict):\n    order = advertOrder(list(per) + addsNoConflict, adverts, items)\n    discount = order.discount\n    if discount > best_discount: best_discount = discount\n\ntotal = sum(item.price for item in items) - best_discount\n\nprint('{:0.02f}'.format(total))\nprint('{:0.02f}'.format(best_discount))",
+      "statement": "Higher management of your local supermarket has implemented a variety of advertisements: X for the price of Y, for groups of products, product groups or brands. Nice and all - but as their neighborhood IT specialist it falls to you to upgrade their check-out system. During evaluating their advertisements, it seems some shady deals are going on ('2 apples for the price of 3?!') - but you are only the IT specialist, so you simply follow the assignment to the letter.\n\nBased on scanning the advertisement(s) and a list of items, your program must output the total price to be paid for those items (after all price changes due to the advertisements), and the discount. Output the total price and discount as floats with two decimal places (cents).\n\n<<Advertisement and shopping list formats>>\nAll advertisements are in the following format: {{All}} <<S>>: <<X>> {{for the price of}} <<Y>>\n<<X>> and <<Y>> can be any integer, and <<S>> can be either a product, group or brand name. <<For example:>> `All deodorant: 3 for the price of 2`\nItems in the item list are in the following format:\n[[product]] [[group]] [[brand]] [[price]]. <<For example:>> `deodorant hygiene aks 4.95`\n- <<product>>: the type of item\n- <<group>>: the product group an item belongs to, like hygiene, food, drinks, etcetera\n- <<brand>>: a brand name\n\n<<Rules>>\n1. An advertisement always concerns either a <<product>>, a <<group>> or a <<brand>>. \n2. There will never be multiple advertisements for an identical product, group or brand.\n3. All names (product, group and brand) are unique single words. \n4. When the application of a single advert has multiple options, calculations are applied as follows:\n-- If of X items, Y need to be paid, and X>Y, the X-Y highest prices are waived. \n-- If X<Y, the lowest price is added Y-X times (for example: {{All seafood: 2 for the price of 3}})\n-- For any remaining options, items are chosen such that the final discount is highest.\n\n<<Specifics regarding qualifying for multiple advertisements>>\n5. In none of the tests and validation cases an item will qualify for more than two advertisements.\n6. If an item qualifies for multiple advertisements, maximum one of the advertisements is applied to that item: the one that results in the highest discount.\n7. In case of multiple advertisements, one advertisement is applied to the fullest, and only after that the next advertisement is applied. The order of advertisements needs to be such that it leads to the best result for the customer.\n<<For example>>, 10 items qualify for both advertisement A: {{3}} for {{2}}, and B: {{4}} for {{1}}. If advertisements are considered in order A -> B, then first A will be applied fully (3 * 3 for 2), leaving only 1 item (not enough for B). If instead the order of B -> A is considered, then first B will be applied (2 * 4 for 1), leaving only 2 items (not enough for A).",
+      "testCases": [
+        {
+          "title": "1 Product advertisement",
+          "isTest": true,
+          "testIn": "1\nAll deodorant: 2 for the price of 1\n5\ndeodorant hygiene aks 3.00\nchips snacks loys 2.00\ndeodorant hygiene dover 4.50\nchips snacks loys 2.00\nolives food olia 2.50",
+          "testOut": "9.50\n4.50",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Product advertisement: validator",
+          "isTest": false,
+          "testIn": "1\nAll chips: 2 for the price of 1\n5\ndeodorant hygiene aks 3.00\nchips snacks loys 2.00\ndeodorant hygiene dover 4.50\nchips snacks loys 2.00\nolives food olia 2.50",
+          "testOut": "12.00\n2.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "2 Brand advertisement",
+          "isTest": true,
+          "testIn": "1\nAll loys: 3 for the price of 2\n6\ndeodorant hygiene aks 3.00\nchips snacks loys 2.00\ndeodorant hygiene dover 4.50\nchips snacks loys 2.00\nolives food olia 2.50\nnuts snacks loys 3.50",
+          "testOut": "14.00\n3.50",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Brand advertisement: validator",
+          "isTest": false,
+          "testIn": "1\nAll olia: 3 for the price of 2\n7\ndeodorant hygiene aks 3.00\nchips snacks loys 2.00\ndeodorant hygiene dover 4.50\noliveoil baking olia 5.00\nolives food olia 2.50\nolives food olia 2.50\nnuts snacks loys 3.50",
+          "testOut": "18.00\n5.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3 It's not all about the advertisement",
+          "isTest": true,
+          "testIn": "1\nAll milk: 2 for the price of 1\n14\npineapple fruit solerita 2.49\npotatoes veggies farmerarmour 7.50\nstrawberry fruit frafre 5.60\npotatoes veggies farmerarmour 7.50\nvitaminC supplements health2go 8.95\nvitaminD supplements cheapass 4.95\ntomatoes veggies farmerarmour 4.45\ncornflakes cereals fatandfun 7.80\nmilk dairy holland 2.00\nmilk dairy holland 2.00\nmilk dairy holland 2.00\nyoghurt dairy cowdy 2.50\nbrownbread bread wholepain 3.95\nbrownbread bread wholepain 3.95",
+          "testOut": "63.64\n2.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "It's not all about the advertisement validator",
+          "isTest": false,
+          "testIn": "1\nAll potatoes: 3 for the price of 2\n17\npineapple fruit solerita 2.49\npotatoes veggies farmerarmour 7.50\nstrawberry fruit frafre 5.60\npotatoes veggies farmerarmour 7.50\nvitaminC supplements health2go 8.95\nvitaminD supplements cheapass 4.95\ntomatoes veggies farmerarmour 4.45\ncornflakes cereals fatandfun 7.80\nmilk dairy holland 2.00\npotatoes veggies farmerarmour 7.50\npotatoes veggies farmerarmour 7.50\nmilk dairy holland 2.00\nmilk dairy holland 2.00\nyoghurt dairy cowdy 2.50\nbrownbread bread wholepain 3.95\nbrownbread bread wholepain 3.95\npotatoes veggies farmerarmour 7.50",
+          "testOut": "80.64\n7.50",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4 Smart customer",
+          "isTest": true,
+          "testIn": "1\nAll supplements: 5 for the price of 1\n20\nvitaminC supplements healyou 6.00\nvitaminC supplements healyou 6.00\nvitaminD supplements healyou 7.00\nvitaminD supplements healyou 7.00\nvitaminD supplements healyou 7.00\nvitaminZ supplements healyou 12.00\nvitaminX supplements cheapass 0.10\nvitaminX supplements cheapass 0.10\nvitaminX supplements cheapass 0.10\nvitaminX supplements cheapass 0.10\nvitaminZ supplements healyou 12.00\nvitaminC supplements healyou 6.00\nvitaminD supplements healyou 7.00\nvitaminD supplements healyou 7.00\nvitaminD supplements healyou 7.00\nvitaminZ supplements healyou 12.00\nvitaminZ supplements healyou 12.00\nvitaminZ supplements healyou 12.00\nvitaminZ supplements healyou 12.00\nvitaminZ supplements healyou 12.00",
+          "testOut": "0.40\n144.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Smart customer: validator",
+          "isTest": false,
+          "testIn": "1\nAll supplements: 4 for the price of 1\n20\nvitaminC supplements healyou 6.00\nvitaminC supplements healyou 6.00\nvitaminD supplements healyou 7.00\nvitaminD supplements healyou 7.00\nvitaminD supplements healyou 7.00\nvitaminZ supplements healyou 12.00\nvitaminX supplements cheapass 0.10\nvitaminX supplements cheapass 0.10\nvitaminX supplements cheapass 0.10\nvitaminX supplements cheapass 0.10\nvitaminX supplements cheapass 0.10\nvitaminZ supplements healyou 12.00\nvitaminC supplements healyou 6.00\nvitaminD supplements healyou 7.00\nvitaminD supplements healyou 7.00\nvitaminD supplements healyou 7.00\nvitaminZ supplements healyou 12.00\nvitaminZ supplements healyou 12.00\nvitaminZ supplements healyou 12.00\nvitaminZ supplements healyou 12.00",
+          "testOut": "0.50\n132.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5 Stupid customer",
+          "isTest": true,
+          "testIn": "1\nAll snacks: 6 for the price of 2\n10\nnewspaper reading tines 5.00\nchips snacks sunchips 2.00\nchips snacks sunchips 2.00\nnuts snacks loys 4.00\nnuts snacks loys 4.00\nnuts snacks loys 4.00\nolives food olia 2.50\ncroissant bakery heinn 1.50\napplepie bakery heinn 10.00\nmilk dairy holland 2.00",
+          "testOut": "37.00\n0.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Stupid customer: validator",
+          "isTest": false,
+          "testIn": "1\nAll dairy: 7 for the price of 2\n11\nnuts snacks duyv 3.50\nnewspaper reading tines 5.00\nchips snacks sunchips 2.00\ndeodorant hygiene dover 4.50\nchips snacks sunchips 2.00\nnuts snacks loys 4.00\nnuts snacks loys 4.00\nnuts snacks loys 4.00\nolives food olia 2.50\ncroissant bakery heinn 1.50\napplepie bakery heinn 10.00",
+          "testOut": "43.00\n0.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6 A good textile deal",
+          "isTest": true,
+          "testIn": "1\nAll textile: 6 for the price of 2\n6\ntshirt textile byuuti 10\ntshirt textile byuuti 10\npants textile byuuti 30\npants textile byuuti 30\nsocks textile byuuty 5\nsocks textile byuuty 5",
+          "testOut": "10.00\n80.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "A good textile deal validator",
+          "isTest": false,
+          "testIn": "1\nAll textile: 7 for the price of 2\n7\ntshirt textile byuuti 10\ntshirt textile byuuti 10\npants textile byuuti 30\npants textile byuuti 30\npants textile byuuti 30\nsocks textile byuuty 5\nsocks textile byuuty 5",
+          "testOut": "10.00\n110.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "7 A bad textile deal",
+          "isTest": true,
+          "testIn": "1\nAll textile: 2 for the price of 6\n6\ntshirt textile byuuti 10\ntshirt textile byuuti 10\npants textile byuuti 30\npants textile byuuti 30\nsocks textile byuuty 5\nsocks textile byuuty 5",
+          "testOut": "170.00\n-80.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "A bad textile deal validator",
+          "isTest": false,
+          "testIn": "1\nAll textile: 2 for the price of 6\n6\ntshirt textile byuuti 10\ntshirt textile byuuti 10\npants textile byuuti 40\npants textile byuuti 40\nsocks textile byuuty 5\nsocks textile byuuty 5",
+          "testOut": "190.00\n-80.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "8 Good for business",
+          "isTest": true,
+          "testIn": "1\nAll alcohol: 2 for the price of 4\n8\nbeer alcohol alcoly 5.95\nredwine alcohol vino 12.95\nredwine alcohol vino 12.95\nredwine alcohol expenso 50.00\nredwine alcohol expenso 50.00\nredwine alcohol expenso 50.00\nredwine alcohol expenso 50.00\nredwine alcohol expenso 50.00",
+          "testOut": "445.55\n-163.70",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Good for business 1: validator",
+          "isTest": false,
+          "testIn": "1\nAll alcohol: 2 for the price of 3\n8\nbeer alcohol alcoly 5.95\nredwine alcohol vino 12.95\nredwine alcohol vino 12.95\nredwine alcohol expenso 50.00\nredwine alcohol expenso 50.00\nredwine alcohol expenso 50.00\nredwine alcohol expenso 50.00\nredwine alcohol expenso 50.00",
+          "testOut": "363.70\n-81.85",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "9 For free!",
+          "isTest": true,
+          "testIn": "1\nAll vegetables: 2 for the price of 0\n6\npotatoes vegetables farmo 3\npotatoes vegetables farmo 3\npotatoes vegetables farmo 3\npotatoes vegetables farmo 3\npotatoes vegetables farmo 3\npotatoes vegetables farmo 3",
+          "testOut": "0.00\n18.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "For free! Validator",
+          "isTest": false,
+          "testIn": "1\nAll vegetables: 3 for the price of 0\n6\npotatoes vegetables farmo 2\npotatoes vegetables farmo 2\npotatoes vegetables farmo 2\npotatoes vegetables farmo 2\npotatoes vegetables farmo 2\npotatoes vegetables farmo 2",
+          "testOut": "0.00\n12.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "10 Multiple advertisements",
+          "isTest": true,
+          "testIn": "3\nAll milk: 2 for the price of 1\nAll farmo: 5 for the price of 4\nAll supplements: 2 for the price of 1\n20\npineapple fruits farmo 5.00\npotatoes vegetables farmo 2.00\nstrawberry fruits farmo 3.00\npotatoes vegetables farmo 2.00\nvitaminC supplements healyou 6.00\nvitaminD supplements healyou 7.00\ntomatoes vegetables farmo 1.50\ntomatoes vegetables farmo 1.50\nmilk dairy holland 2.00\nmilk dairy holland 2.00\nyoghurt dairy cowdy 2.50\nbrownbread bakery back 1.50\nbrownbread bakery back 1.50\ncroissant bakery heinn 1.50\ncroissant bakery heinn 1.50\noranges fruits farmo 3.00\noranges fruits farmo 3.00\nfruitjuice drinks juime 4.00\nwatermelon fruits farmo 6.00\npotatoes vegetables farmo 2.00",
+          "testOut": "38.50\n20.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple advertisements validator",
+          "isTest": false,
+          "testIn": "3\nAll holland: 2 for the price of 1\nAll vegetables: 4 for the price of 3\nAll bakery: 3 for the price of 2\n18\npineapple fruits farmo 5.00\npotatoes vegetables farmo 2.00\nstrawberry fruits farmo 3.00\npotatoes vegetables farmo 2.00\nvitaminC supplements healyou 6.00\nvitaminD supplements healyou 7.00\ntomatoes vegetables farmo 1.50\ntomatoes vegetables farmo 1.50\nmilk dairy holland 2.00\nmilk dairy holland 2.00\nyoghurt dairy cowdy 2.50\nbrownbread bakery back 1.50\nbrownbread bakery back 1.50\ncroissant bakery heinn 1.50\ncroissant bakery heinn 1.50\noranges fruits farmo 3.00\noranges fruits farmo 3.00\nfruitjuice drinks juime 4.00",
+          "testOut": "45.00\n5.50",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "11 A lot of advertisements",
+          "isTest": true,
+          "testIn": "12\nAll bread: 2 for the price of 1\nAll bacon: 2 for the price of 1\nAll wheat: 2 for the price of 1\nAll milk: 2 for the price of 1\nAll carrot: 2 for the price of 1\nAll potato: 2 for the price of 1\nAll chips: 2 for the price of 1\nAll yoghurt: 2 for the price of 1\nAll tablesalt: 2 for the price of 1\nAll nuts: 2 for the price of 1\nAll mushroom: 2 for the price of 1\nAll cakemix: 2 for the price of 1\n50\nbread bonus ownbrand 1.00\nbread bonus ownbrand 1.00\nbread bonus ownbrand 1.00\nbread bonus ownbrand 1.00\nbread bonus ownbrand 1.00\nbacon bonus ownbrand 1.00\nbacon bonus ownbrand 1.00\nbacon bonus ownbrand 1.00\nbacon bonus ownbrand 1.00\nbacon bonus ownbrand 1.00\nwheat bonus ownbrand 1.00\nwheat bonus ownbrand 1.00\nwheat bonus ownbrand 1.00\nwheat bonus ownbrand 1.00\nwheat bonus ownbrand 1.00\nmilk bonus ownbrand 1.00\nmilk bonus ownbrand 1.00\nmilk bonus ownbrand 1.00\nmilk bonus ownbrand 1.00\nmilk bonus ownbrand 1.00\ncarrot bonus ownbrand 1.00\ncarrot bonus ownbrand 1.00\ncarrot bonus ownbrand 1.00\ncarrot bonus ownbrand 1.00\ncarrot bonus ownbrand 1.00\npotato bonus ownbrand 1.00\npotato bonus ownbrand 1.00\npotato bonus ownbrand 1.00\npotato bonus ownbrand 1.00\npotato bonus ownbrand 1.00\nchips bonus ownbrand 1.00\nchips bonus ownbrand 1.00\nchips bonus ownbrand 1.00\nchips bonus ownbrand 1.00\nchips bonus ownbrand 1.00\nyoghurt bonus ownbrand 1.00\nyoghurt bonus ownbrand 1.00\nyoghurt bonus ownbrand 1.00\nyoghurt bonus ownbrand 1.00\nyoghurt bonus ownbrand 1.00\ntablesalt bonus ownbrand 1.00\ntablesalt bonus ownbrand 1.00\ntablesalt bonus ownbrand 1.00\ntablesalt bonus ownbrand 1.00\nnuts bonus ownbrand 1.00\nnuts bonus ownbrand 1.00\nmushroom bonus ownbrand 1.00\nmushroom bonus ownbrand 1.00\ncakemix bonus ownbrand 1.00\ncakemix bonus ownbrand 1.00",
+          "testOut": "29.00\n21.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "A lot of advertisements: validator",
+          "isTest": false,
+          "testIn": "12\nAll bread: 5 for the price of 1\nAll bacon: 5 for the price of 1\nAll wheat: 5 for the price of 1\nAll milk: 5 for the price of 1\nAll carrot: 5 for the price of 1\nAll potato: 5 for the price of 1\nAll chips: 5 for the price of 1\nAll yoghurt: 5 for the price of 1\nAll tablesalt: 4 for the price of 1\nAll nuts: 2 for the price of 1\nAll mushroom: 2 for the price of 1\nAll cakemix: 2 for the price of 1\n50\nbread bonus ownbrand 1.00\nbread bonus ownbrand 1.00\nbread bonus ownbrand 1.00\nbread bonus ownbrand 1.00\nbread bonus ownbrand 1.00\nbacon bonus ownbrand 1.00\nbacon bonus ownbrand 1.00\nbacon bonus ownbrand 1.00\nbacon bonus ownbrand 1.00\nbacon bonus ownbrand 1.00\nwheat bonus ownbrand 1.00\nwheat bonus ownbrand 1.00\nwheat bonus ownbrand 1.00\nwheat bonus ownbrand 1.00\nwheat bonus ownbrand 1.00\nmilk bonus ownbrand 1.00\nmilk bonus ownbrand 1.00\nmilk bonus ownbrand 1.00\nmilk bonus ownbrand 1.00\nmilk bonus ownbrand 1.00\ncarrot bonus ownbrand 1.00\ncarrot bonus ownbrand 1.00\ncarrot bonus ownbrand 1.00\ncarrot bonus ownbrand 1.00\ncarrot bonus ownbrand 1.00\npotato bonus ownbrand 1.00\npotato bonus ownbrand 1.00\npotato bonus ownbrand 1.00\npotato bonus ownbrand 1.00\npotato bonus ownbrand 1.00\nchips bonus ownbrand 1.00\nchips bonus ownbrand 1.00\nchips bonus ownbrand 1.00\nchips bonus ownbrand 1.00\nchips bonus ownbrand 1.00\nyoghurt bonus ownbrand 1.00\nyoghurt bonus ownbrand 1.00\nyoghurt bonus ownbrand 1.00\nyoghurt bonus ownbrand 1.00\nyoghurt bonus ownbrand 1.00\ntablesalt bonus ownbrand 1.00\ntablesalt bonus ownbrand 1.00\ntablesalt bonus ownbrand 1.00\ntablesalt bonus ownbrand 1.00\nnuts bonus ownbrand 1.00\nnuts bonus ownbrand 1.00\nmushroom bonus ownbrand 1.00\nmushroom bonus ownbrand 1.00\ncakemix bonus ownbrand 1.00\ncakemix bonus ownbrand 1.00",
+          "testOut": "12.00\n38.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "12 Which of the two?",
+          "isTest": true,
+          "testIn": "2\nAll arial: 3 for the price of 2\nAll handsoap: 3 for the price of 1\n6\nhandsoap cleaning arial 1.50\nhandsoap cleaning arial 1.50\nhandsoap cleaning arial 1.50\nhandsoap cleaning arial 1.50\nhandsoap cleaning arial 1.50\nhandsoap cleaning arial 1.50",
+          "testOut": "3.00\n6.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Which of the two? Validator",
+          "isTest": false,
+          "testIn": "2\nAll arial5D: 4 for the price of 1\nAll handsoap: 4 for the price of 3\n8\nhandsoap cleaning arial5D 1.50\nhandsoap cleaning arial5D 1.50\nhandsoap cleaning arial5D 1.50\nhandsoap cleaning arial5D 1.50\nhandsoap cleaning arial5D 1.50\nhandsoap cleaning arial5D 1.50\nhandsoap cleaning arial5D 1.50\nhandsoap cleaning arial5D 1.50",
+          "testOut": "3.00\n9.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "13 Mix and match",
+          "isTest": true,
+          "testIn": "4\nAll nuut: 4 for the price of 3\nAll cheeseplatter: 3 for the price of 1\nAll snacks: 3 for the price of 2\nAll desserts: 10 for the price of 6\n20\nicecream desserts brainfreeze 4.05\nbonbons desserts chocoholic 4.25\nyoghurt desserts holland 2.00\ncustard desserts holland 3.40\ncheeseplatter desserts gauda 10.95\ncheeseplatter desserts gauda 10.95\ncheeseplatter desserts gauda 10.95\ncheeseplatter desserts gauda 10.95\nmousse desserts cats 3.89\nicecake desserts brainfreeze 5.90\nminiyoghurt desserts supermarche 2.50\ncream desserts fatboy 3.25\nicecream desserts brainfreeze 4.05\nnuts snacks nuut 3.50\nnuts snacks nuut 3.50\nnuts snacks nuut 3.50\nchips snacks sunchips 2.50\nborrelnuts snacks nuut 2.95\npotatoes veggies farmo 1.50\ntomatoes veggies farmo 1.95",
+          "testOut": "45.94\n50.55",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Mix and match: validator",
+          "isTest": false,
+          "testIn": "4\nAll snacks: 4 for the price of 3\nAll nuts: 3 for the price of 2\nAll icecream: 2 for the price of 1\nAll desserts: 10 for the price of 6\n15\nicecream desserts brainfreeze 4.05\nbonbons desserts chocoholic 4.25\nyoghurt desserts holland 2.00\ncustard desserts holland 3.40\ncheeseplatter desserts gauda 10.95\nmousse desserts cats 3.89\nicecake desserts brainfreeze 5.90\nminiyoghurt desserts supermarche 2.50\ncream desserts fatboy 3.25\nicecream desserts brainfreeze 4.05\nnuts snacks nuut 3.50\nnuts snacks nuut 3.50\nnuts snacks nuut 3.50\nchips snacks sunchips 2.50\nborrelnuts snacks nuut 2.95",
+          "testOut": "31.54\n28.65",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "14 Leave some for the other one",
+          "isTest": true,
+          "testIn": "2\nAll water: 2 for the price of 1\nAll drinks: 5 for the price of 2\n13\nwater drinks sourced 3.00\nwater drinks sourced 3.00\nwater drinks sourced 3.00\nwater drinks medio 1.50\nwater drinks basic 1.00\nwater drinks basic 1.00\nwater drinks basic 1.00\nwater drinks basic 1.00\nwater drinks sourced 3.00\nwater drinks sourced 3.00\nwater drinks sourced 3.00\nwater drinks basic 1.00\nwater drinks basic 1.00",
+          "testOut": "6.00\n19.50",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Leave some for the other one: validator",
+          "isTest": false,
+          "testIn": "2\nAll water: 2 for the price of 1\nAll drinks: 5 for the price of 2\n13\nwater drinks sourced 2.00\nwater drinks sourced 2.00\nwater drinks sourced 2.00\nwater drinks medio 1.50\nwater drinks basic 1.00\nwater drinks basic 1.00\nwater drinks basic 1.00\nwater drinks basic 1.00\nwater drinks sourced 2.00\nwater drinks sourced 2.00\nwater drinks sourced 2.00\nwater drinks basic 1.00\nwater drinks basic 1.00",
+          "testOut": "6.00\n13.50",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "15 Leave the best to the next 1",
+          "isTest": true,
+          "testIn": "2\nAll bakery: 2 for the price of 1\nAll delicio: 2 for the price of 1\n7\napplepie bakery hein 15.00\ncarrotpie bakery hein 10.00\nsnacktomatoes snackfood delicio 1.00\ngarlicbread bakery delicio 5.00\nbread bakery delicio 2.00\nolives snackfood delicio 1.00\napplepie bakery hein 15.00",
+          "testOut": "14.00\n35.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Leave the best to the next 1 validator",
+          "isTest": false,
+          "testIn": "2\nAll bakery: 2 for the price of 1\nAll delicio: 2 for the price of 1\n7\nsnacktomatoes snackfood delicio 1.00\napplepie bakery hein 8.00\ncroissant bakery hein 4.00\ngarlicbread bakery delicio 3.00\nbread bakery delicio 2.00\nolives snackfood delicio 1.00\napplepie bakery hein 8.00",
+          "testOut": "8.00\n19.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "16 Leave the best to the next 2",
+          "isTest": true,
+          "testIn": "2\nAll alcohol: 5 for the price of 4\nAll cubi: 2 for the price of 1\n9\nchampagne alcohol franc 50.00\nwine alcohol franc 19.00\nwine alcohol franz 17.00\nwine alcohol cubi 15.00\nwine alcohol cubi 15.00\nbeer alcohol cubi 8.00\nbeer alcohol cubi 8.00\ncar toys cubi 1.00\ncar toys cubi 1.00",
+          "testOut": "54.00\n80.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Leave the best to the next 2 validator",
+          "isTest": false,
+          "testIn": "2\nAll alcohol: 5 for the price of 4\nAll cubi: 2 for the price of 1\n9\nchampagne alcohol franc 60.00\nwine alcohol franc 19.00\nwine alcohol franc 17.00\nwine alcohol cubi 15.00\nwine alcohol cubi 15.00\nbeer alcohol cubi 8.00\nbeer alcohol cubi 8.00\ncar toys cubi 1.00\ncar toys cubi 1.00",
+          "testOut": "54.00\n90.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "17 Leave the best to the next 3",
+          "isTest": true,
+          "testIn": "3\nAll powder: 2 for the price of 1\nAll milk: 2 for the price of 1\nAll delicio: 2 for the price of 1\n11\nchocolate powder hein 8.00\nchocolate powder hein 8.00\nmilk powder hein 4.00\nprotein powder delicio 3.00\nbaking powder delicio 2.00\nmilk drinks hein 8.00\nmilk drinks hein 8.00\nmilk drinks delicio 3.50\nmilk drinks delicio 2.00\nolives snackfood delicio 1.00\nsnacktomatoes snackfood delicio 1.00",
+          "testOut": "13.00\n35.50",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Leave the best to the next 3 validator",
+          "isTest": false,
+          "testIn": "3\nAll powder: 2 for the price of 1\nAll milk: 2 for the price of 1\nAll delicio: 2 for the price of 1\n11\nchocolate powder hein 10.00\nchocolate powder hein 10.00\nmilk powder hein 4.00\nprotein powder delicio 3.00\nbaking powder delicio 2.00\nmilk drinks hein 8.00\nmilk drinks hein 8.00\nmilk drinks delicio 3.50\nmilk drinks delicio 2.00\nolives snackfood delicio 1.00\nsnacktomatoes snackfood delicio 1.00",
+          "testOut": "13.00\n39.50",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "18 Leave the worst to the next 1",
+          "isTest": true,
+          "testIn": "2\nAll bakery: 2 for the price of 1\nAll delicio: 2 for the price of 3\n6\napplepie bakery hein 10.00\napplepie bakery hein 10.00\ncarrotcake bakery delicio 5.00\ncarrotcake bakery hein 4.00\nbread bakery hein 2.00\nolives snackfood delicio 5.00",
+          "testOut": "16.00\n20.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Leave the worst to the next 1 validator",
+          "isTest": false,
+          "testIn": "2\nAll bakery: 2 for the price of 1\nAll delicio: 2 for the price of 3\n6\napplepie bakery hein 8.00\napplepie bakery hein 8.00\ncarrotcake bakery delicio 5.00\ncarrotcake bakery hein 4.00\nbread bakery hein 2.00\nolives snackfood delicio 5.00",
+          "testOut": "16.00\n16.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "19 Leave the worst to the next 2",
+          "isTest": true,
+          "testIn": "2\nAll sharkfins: 2 for the price of 3\nAll biohazard: 2 for the price of 3\n6\nsharkfins seafood chio 18.00\nsharkfins seafood jappo 11.00\nsharkfins seafood biohazard 15.00\nsharkfins seafood finny 22.00\nsharkfins seafood yappo 9.00\nwhaleoil seafood biohazard 20.00",
+          "testOut": "115.00\n-20.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Leave the worst to the next 2 validator",
+          "isTest": false,
+          "testIn": "2\nAll sharkfins: 2 for the price of 3\nAll biohazard: 2 for the price of 3\n6\nsharkfins seafood chio 18.00\nsharkfins seafood jappo 6.00\nsharkfins seafood finny 22.00\nsharkfins seafood biohazard 15.00\nwhaleoil seafood biohazard 20.00\nsharkfins seafood yappo 4.00",
+          "testOut": "95.00\n-10.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "20 The absolute best is against rule 4",
+          "isTest": true,
+          "testIn": "2\nAll seafood: 4 for the price of 2\nAll biohazard: 2 for the price of 3\n8\nsalmon seafood seamo 20.00\nsalmon seafood seamo 20.00\nperch seafood biohazard 18.00\ntuna seafood biohazard 8.00\ntilapia seafood biohazard 6.00\ntilapia seafood seamo 4.00\ntilapia seafood seamo 5.00\nmercury skincare biohazard 9.00",
+          "testOut": "56.00\n34.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "20 The absolute best is against rule 4 Validator",
+          "isTest": false,
+          "testIn": "2\nAll seafood: 4 for the price of 2\nAll biohazard: 2 for the price of 3\n8\nsalmon seafood seamo 22.00\nsalmon seafood seamo 22.00\nperch seafood biohazard 18.00\ntuna seafood biohazard 8.00\ntilapia seafood biohazard 6.00\ntilapia seafood seamo 4.00\ntilapia seafood seamo 5.00\nmercury skincare biohazard 9.00",
+          "testOut": "56.00\n38.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "21 Dessert and clothing day",
+          "isTest": true,
+          "testIn": "4\nAll textile: 5 for the price of 4\nAll yoghurt: 2 for the price of 1\nAll seaman: 2 for the price of 1\nAll holdaria: 2 for the price of 1\n16\ncheeseplatter desserts holdaria 10.95\ncheeseplatter desserts holdaria 10.95\npants textile byuuti 60.00\nyoghurt desserts holdaria 2.00\nyoghurt desserts holdaria 2.00\nyoghurt desserts farmero 1.00\nyoghurt desserts farmero 1.00\nsocks footwear seaman 1.00\nsocks footwear seaman 1.00\nboxershort textile seaman 6.00\nboxershort textile seaman 6.00\ntshirt textile byuuti 10.00\ntshirt textile byuuti 10.00\ntshirt textile seaman 8.00\ntshirt textile seaman 8.00\ncustard desserts holdaria 3.40",
+          "testOut": "41.40\n99.90",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Dessert and clothing day: validator",
+          "isTest": false,
+          "testIn": "4\nAll textile: 5 for the price of 4\nAll yoghurt: 2 for the price of 1\nAll seaman: 2 for the price of 1\nAll holdaria: 2 for the price of 1\n16\ncheeseplatter desserts holdaria 10.95\ncheeseplatter desserts holdaria 10.95\npants textile byuuti 70.00\nyoghurt desserts holdaria 2.00\nyoghurt desserts holdaria 2.00\nyoghurt desserts farmero 1.00\nyoghurt desserts farmero 1.00\nsocks footwear seaman 1.00\nsocks footwear seaman 1.00\nboxershort textile seaman 6.00\nboxershort textile seaman 6.00\ntshirt textile byuuti 10.00\ntshirt textile byuuti 10.00\ntshirt textile seaman 8.00\ntshirt textile seaman 8.00\ncustard desserts holdaria 3.40",
+          "testOut": "41.40\n109.90",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "22 Action Action!",
+          "isTest": true,
+          "testIn": "12\nAll healu: 5 for the price of 3\nAll dirzy: 2 for the price of 3\nAll cleen: 2 for the price of 1\nAll biohazard: 2 for the price of 4\nAll farmo: 4 for the price of 2\nAll carrot: 3 for the price of 2\nAll fruit: 2 for the price of 1\nAll sigarettes: 2 for the price of 3\nAll eggplant: 2 for the price of 1\nAll healthcare: 5 for the price of 4\nAll seafood: 4 for the price of 2\nAll pepper: 5 for the price of 4\n50\npotato vegetables agrio 0.75\nzucchini vegetables farmo 1.25\npowerjuice drinks cleen 2.00\ntilapia seafood seamo 6.00\npear fruit agrio 0.35\nmercury skincare biohazard 12.00\nshampoo healthcare cleen 7.50\ntilapia seafood seamo 6.00\nzucchini vegetables farmo 1.25\nperch seafood biohazard 12.00\ncarrot vegetables agrio 0.50\npepper vegetables agrio 0.50\ntilapia seafood biohazard 8.00\napple fruit agrio 0.20\nsalad meals healu 2.25\npotato vegetables agrio 0.75\ncarrot vegetables agrio 0.50\ncarrot vegetables agrio 0.50\nsoap healthcare cleen 4.00\nshampoo healthcare cleen 7.50\nsalmon seafood seamo 22.00\ncarrot vegetables agrio 0.50\nzucchini vegetables farmo 1.25\nbanana fruit agrio 0.10\nzucchini vegetables farmo 1.25\nshampoo healthcare franc 9.00\nshampoo healthcare franc 9.00\nsigarettes smokeware dirzy 3.00\nbanana fruit agrio 0.10\nsmoothie drinks healu 1.50\nzucchini vegetables farmo 1.25\nsigarettes smokeware fireme 2.00\ncarrot vegetables agrio 0.50\napple fruit agrio 0.20\nsigarettes smokeware molbarrow 4.00\nsigarettes smokeware fireme 2.00\nlighter smokeware dirzy 4.00\npepper vegetables agrio 0.50\nperfume healthcare franc 30.00\npotato vegetables agrio 0.75\npowerjuice drinks cleen 2.00\npepper vegetables agrio 0.50\npepper vegetables agrio 0.50\npepper vegetables agrio 0.50\ntuna seafood biohazard 10.00\nsmoothie drinks healu 1.50\nsigarettes smokeware molbarrow 4.00\nsalad meals healu 2.25\nsalmon seafood seamo 22.00\nsoap healthcare cleen 4.00",
+          "testOut": "140.90\n73.05",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Action action! Validator",
+          "isTest": false,
+          "testIn": "12\nAll healu: 5 for the price of 3\nAll dirzy: 2 for the price of 3\nAll cleen: 2 for the price of 1\nAll biohazard: 2 for the price of 4\nAll farmo: 4 for the price of 2\nAll carrot: 3 for the price of 2\nAll fruit: 2 for the price of 1\nAll sigarettes: 2 for the price of 3\nAll eggplant: 2 for the price of 1\nAll healthcare: 5 for the price of 4\nAll seafood: 4 for the price of 2\nAll pepper: 5 for the price of 4\n50\npotato vegetables agrio 0.75\nzucchini vegetables farmo 1.25\npowerjuice drinks cleen 2.00\ntilapia seafood seamo 6.00\npear fruit agrio 0.35\nmercury skincare biohazard 12.00\nshampoo healthcare cleen 7.50\ntilapia seafood seamo 6.00\nzucchini vegetables farmo 1.25\nperch seafood biohazard 12.00\ncarrot vegetables agrio 0.50\npepper vegetables agrio 0.50\ntilapia seafood biohazard 8.00\napple fruit agrio 0.20\nsalad meals healu 2.25\npotato vegetables agrio 0.75\ncarrot vegetables agrio 0.50\ncarrot vegetables agrio 0.50\nsoap healthcare cleen 4.00\nshampoo healthcare cleen 7.50\nsalmon seafood seamo 22.00\ncarrot vegetables agrio 0.50\nzucchini vegetables farmo 1.25\nbanana fruit agrio 0.10\nzucchini vegetables farmo 1.25\nshampoo healthcare franc 9.00\nshampoo healthcare franc 9.00\nsigarettes smokeware dirzy 3.00\nbanana fruit agrio 0.10\nsmoothie drinks healu 1.50\nzucchini vegetables farmo 1.25\nsigarettes smokeware fireme 2.50\ncarrot vegetables agrio 0.50\napple fruit agrio 0.20\nsigarettes smokeware molbarrow 4.00\nsigarettes smokeware fireme 2.50\nlighter smokeware dirzy 4.00\npepper vegetables agrio 0.50\nperfume healthcare franc 40.00\npotato vegetables agrio 0.75\npowerjuice drinks cleen 2.00\npepper vegetables agrio 0.50\npepper vegetables agrio 0.50\npepper vegetables agrio 0.50\ntuna seafood biohazard 10.00\nsmoothie drinks healu 1.50\nsigarettes smokeware molbarrow 4.00\nsalad meals healu 2.25\nsalmon seafood seamo 22.00\nsoap healthcare cleen 4.00",
+          "testOut": "142.90\n82.05",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "1<=[[na]]<=12\n1<=[[ni]]<=50\n0<=[[Y]]<=10\n1<=[[X]]<=10\n0.10<=[[price]]<=50.00",
+      "coverBinaryId": 100431340249945,
+      "stubGenerator": "read na:int\nloop na read advertisement:string(50)\nread ni:int\nloop ni read product:word(20) group:word(20) brand:word(20) price:float\nwrite answer",
+      "inputDescription": "<<Line 1:>> integer [[na]]: number of advertisements\n<<Next [[na]] lines:>> string [[advertisement]], '{{All}} <<S>>{{:}} [[X]] {{for the price of }} [[Y]]'. <<S>> can refer to an item's product, group or brand.\n<<Next line:>> integer [[ni]]: number of items on shopping list\n<<Next [[ni]] lines:>> four space separated strings: per item the [[product]], [[group]], [[brand]] and [[price]]. [[price]] is always a float.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> float with two decimal places: price after discount\n<<Line 2:>> float with two decimal places: discount given"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Higher management of your local supermarket has implemented a variety of advertisements: X for the price of Y, for groups of products, product groups or brands. Nice and all - but as their neighborhood IT specialist it falls to you to upgrade their check-out system. During evaluating their advertisements, it seems some shady deals are going on ('2 apples for the price of 3?!') - but you are only the IT specialist, so you simply follow the assignment to the letter.<br><br>Based on scanning the advertisement(s) and a list of items, your program must output the total price to be paid for those items (after all price changes due to the advertisements), and the discount. Output the total price and discount as floats with two decimal places (cents).<br><br><strong>Advertisement and shopping list formats</strong><br>All advertisements are in the following format: <const>All</const> <strong>S</strong>: <strong>X</strong> <const>for the price of</const> <strong>Y</strong><br><strong>X</strong> and <strong>Y</strong> can be any integer, and <strong>S</strong> can be either a product, group or brand name. <strong>For example:</strong> <pre style=\"font-family: monospace\">All deodorant: 3 for the price of 2</pre><br>Items in the item list are in the following format:<br><var>product</var> <var>group</var> <var>brand</var> <var>price</var>. <strong>For example:</strong> <pre style=\"font-family: monospace\">deodorant hygiene aks 4.95</pre><br>- <strong>product</strong>: the type of item<br>- <strong>group</strong>: the product group an item belongs to, like hygiene, food, drinks, etcetera<br>- <strong>brand</strong>: a brand name<br><br><strong>Rules</strong><br>1. An advertisement always concerns either a <strong>product</strong>, a <strong>group</strong> or a <strong>brand</strong>. <br>2. There will never be multiple advertisements for an identical product, group or brand.<br>3. All names (product, group and brand) are unique single words. <br>4. When the application of a single advert has multiple options, calculations are applied as follows:<br>-- If of X items, Y need to be paid, and X&gt;Y, the X-Y highest prices are waived. <br>-- If X&lt;Y, the lowest price is added Y-X times (for example: <const>All seafood: 2 for the price of 3</const>)<br>-- For any remaining options, items are chosen such that the final discount is highest.<br><br><strong>Specifics regarding qualifying for multiple advertisements</strong><br>5. In none of the tests and validation cases an item will qualify for more than two advertisements.<br>6. If an item qualifies for multiple advertisements, maximum one of the advertisements is applied to that item: the one that results in the highest discount.<br>7. In case of multiple advertisements, one advertisement is applied to the fullest, and only after that the next advertisement is applied. The order of advertisements needs to be such that it leads to the best result for the customer.<br><strong>For example</strong>, 10 items qualify for both advertisement A: <const>3</const> for <const>2</const>, and B: <const>4</const> for <const>1</const>. If advertisements are considered in order A -&gt; B, then first A will be applied fully (3 * 3 for 2), leaving only 1 item (not enough for B). If instead the order of B -&gt; A is considered, then first B will be applied (2 * 4 for 1), leaving only 2 items (not enough for A).</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> integer <var>na</var>: number of advertisements<br><strong>Next <var>na</var> lines:</strong> string <var>advertisement</var>, '<const>All</const> <strong>S</strong><const>:</const> <var>X</var> <const>for the price of </const> <var>Y</var>'. <strong>S</strong> can refer to an item's product, group or brand.<br><strong>Next line:</strong> integer <var>ni</var>: number of items on shopping list<br><strong>Next <var>ni</var> lines:</strong> four space separated strings: per item the <var>product</var>, <var>group</var>, <var>brand</var> and <var>price</var>. <var>price</var> is always a float.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> float with two decimal places: price after discount<br><strong>Line 2:</strong> float with two decimal places: discount given</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1&lt;=<var>na</var>&lt;=12<br>1&lt;=<var>ni</var>&lt;=50<br>0&lt;=<var>Y</var>&lt;=10<br>1&lt;=<var>X</var>&lt;=10<br>0.10&lt;=<var>price</var>&lt;=50.00</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1\nAll deodorant: 2 for the price of 1\n5\ndeodorant hygiene aks 3.00\nchips snacks loys 2.00\ndeodorant hygiene dover 4.50\nchips snacks loys 2.00\nolives food olia 2.50</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">9.50\n4.50</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 71459187483,
+  "avatar": 98376709796567,
+  "commentCount": 69,
+  "upVotes": 24,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 865426,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1682057137000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1682058600369,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1684652737000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1684653724194,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1687248337001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1687265801616,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1689858337000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1689937256057,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1692536737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1696062707110,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1699269900866,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

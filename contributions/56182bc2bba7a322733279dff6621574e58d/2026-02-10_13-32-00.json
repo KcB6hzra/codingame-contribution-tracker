@@ -1,0 +1,184 @@
+{
+  "id": 5618,
+  "activeVersion": 15,
+  "score": 36,
+  "votableId": 15488103,
+  "codingamerId": 3293190,
+  "views": 620,
+  "commentableId": 15403423,
+  "title": "Treasure hunt",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "lhm",
+  "publicHandle": "56182bc2bba7a322733279dff6621574e58d",
+  "codingamerHandle": "36481b0e11f9a85fe9f5229dde04b17c0913923",
+  "lastVersion": {
+    "version": 15,
+    "autocloseTime": 1632062933614,
+    "data": {
+      "title": "Treasure hunt",
+      "topics": [
+        {
+          "id": 47,
+          "handle": "arrays",
+          "labelMap": {
+            "1": "Tableaux",
+            "2": "Arrays"
+          },
+          "pageTitle": "Arrays: exercises and theory",
+          "puzzleCount": 9,
+          "parentTopicId": 40,
+          "contentDetailsId": 78
+        }
+      ],
+      "solution": "#include <bits/stdc++.h>\n\ntypedef std::vector<std::string>       TREASURE_MAP;\ntypedef std::vector<std::vector<bool>> VISITED_MAP;\n\nstd::vector< std::pair<int, int> > dirs = { {-1,0}, {1,0}, {0,-1}, {0,1} };\n\nbool inRange  (const TREASURE_MAP& m, int i, int j) {\n    return (i >= 0 && i < (int)m.size()) && (j >= 0 && j < (int)m[0].size());\n}\n\nbool isCandidate(const TREASURE_MAP& m, const VISITED_MAP& v, int i, int j) {\n    return inRange(m, i, j) && (m.at(i).at(j)!='#') && !v.at(i).at(j);\n}\n\nvoid getStartingPos(TREASURE_MAP& m, int& i, int& j) {\n    for ( int row = 0; row < (int)m.size(); row++ )\n        for ( int col = 0; col < (int)m.at(0).size(); col++ )\n            if ( m.at(row).at(col) == 'X' ) { i = row; j = col; m[i][j] = ' '; break; }\n}\n\nint backtrack( const TREASURE_MAP& m, VISITED_MAP& v, int i, int j, int curSum ) {\n    if ( m[i][j] != ' ' ) { curSum += m[i][j] - '0'; }\n    v[i][j] = true;\n\n    std::vector<int> tmp;\n    for ( auto& d: dirs )\n    {\n        int nxt_i(i + d.first), nxt_j(j + d.second);\n        if ( isCandidate(m, v, nxt_i, nxt_j) ) { tmp.push_back(backtrack(m, v, nxt_i, nxt_j, curSum) ); }\n    }\n\n    v[i][j] = false;\n    return tmp.empty() ? curSum : *std::max_element(std::begin(tmp), std::end(tmp));\n}\n\nint  maxSum(TREASURE_MAP& m) {\n    int i(0), j(0);\n    getStartingPos(m, i, j);\n\n    VISITED_MAP v(m.size(), std::vector<bool>(m.at(0).size(), false));\n    return backtrack(m, v, i, j, 0);\n}\n\nint main()\n{\n    int H, W; std::cin >> H >> W; std::cin.ignore();\n    TREASURE_MAP m(H, std::string());\n\n    for (int i = 0; i < H; i++) { getline(std::cin, m[i]); }\n\n    std::cout << maxSum(m) << std::endl;\n}",
+      "statement": "You are a treasure hunter.\nYour goal is simple: move on the map to collect the maximum amount of gold.\n\nGiven a map of height [[H]], width [[W]] and a starting position, you can move on 4 directions (North, South, East, West).\nEach time you visit a cell, you collect the amount of gold indicated on it.\nYou cannot visit a cell more than once!\n\nThe possible values for a cell are:\n        - {{X}}: Your starting position.\n        - '{{ }}': Nothing - you can go through that cell, but there is no gold on it.\n        - {{#}}: A wall - you cannot go through that cell.\n        - [{{1}} - {{9}}]: The amount of gold on that cell.",
+      "testCases": [
+        {
+          "title": "Small map",
+          "isTest": true,
+          "testIn": "3 3\nX##\n1 5\n3#4",
+          "testOut": "10",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3 3\nX##\n 3#\n1 2",
+          "testOut": "5",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Bigger map",
+          "isTest": true,
+          "testIn": "7 12\n############\n#9 2 #4#4  #\n####1# ###1#\n#3 1 #3 2 1#\n###1######1#\n#3 1 1 1 1X#\n############",
+          "testOut": "18",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "7 12\n############\n#9 1 2 3 4 #\n#9# ######5#\n#9# 1#X 1#6#\n#### ### #7#\n#1  1 1 1#8#\n############",
+          "testOut": "41",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "I want to cry",
+          "isTest": true,
+          "testIn": "7 12\n############\n#9   66   9#\n# ######## #\n# #1# X#1# #\n# ######## #\n#9   66   9#\n############",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "7 12\n############\n# # 9 9 9  #\n# # 9 9 9  #\n# # 9 9 9  #\n# ##########\n#X         #\n############",
+          "testOut": "0",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Easy life",
+          "isTest": true,
+          "testIn": "3 56\n########################################################\nX 1 1 1 2 2 2 3 3 3 4 4 4 5 5 5 6 6 6 7 7 7 8 8 8 9 9 9#\n########################################################",
+          "testOut": "135",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "29 3\n#X#\n#1#\n#1#\n#1#\n#2#\n#2#\n#2#\n#3#\n#3#\n#3#\n#4#\n#4#\n#4#\n#5#\n#5#\n#5#\n#6#\n#6#\n#6#\n#7#\n#7#\n#7#\n#8#\n#8#\n#8#\n#9#\n#9#\n#9#\n###",
+          "testOut": "135",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Am I going in circles ?",
+          "isTest": true,
+          "testIn": "5 5\n#####\n#123#\n#4X5#\n#678#\n#####",
+          "testOut": "36",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "5 5\n#####\n#X12#\n#3#4#\n#567#\n#####",
+          "testOut": "28",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "That's a maze !",
+          "isTest": true,
+          "testIn": "21 21\n#####################\nX       #5  #3  # #5#\n####### # # ### # #6#\n#7#   #   # #  9#   #\n# ### # ##### ##### #\n#52    3  # #7#   # #\n# ### ### # # # ### #\n#9#2  #    6  #     #\n###1# ###9####### ###\n#6#6#5  #     #    5#\n# ##### ### # ### ###\n# #   # # # # #   #2#\n#5### #3# ### ### # #\n#     #3# #     #   #\n### #7# # ##### ### #\n#3# #1 6#   # # # # #\n# # ### ### # # # # #\n# 2 # # #  5#    23 #\n### # # # ### ### # #\n#6  #   #4   4  #6#9#\n#####################",
+          "testOut": "39",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "23 23\n#######################\n#6    1   3     #2    #\n# ####### # ### # ###3#\n#9#       #4# # # #6  #\n############# # # #####\n#8#     #5    #   #X#9#\n# # ### # #1# # ### # #\n# # #  4# # #3     2# #\n# ### # ### # ####### #\n# #9# #9# # # #     # #\n# # # ### # # # ##### #\n# # #3  #   #2  #    2#\n# # # ##### ### ### ###\n#6 7    #   #   #4   6#\n##### ### # ### ##### #\n#8   1  # #   # #4  # #\n### # ##### ####### # #\n# 3 #   #   #   #5   1#\n# ##### # # # # # #####\n# 4   #   #   # # #7#5#\n# ######### ### # # # #\n#  5     2#   # 2  6  #\n#######################",
+          "testOut": "31",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "1 <= [[H]] <= 100\n1 <= [[W]] <= 100",
+      "coverBinaryId": 52377841973319,
+      "stubGenerator": "read H:int W:int\nloop H read row:string(W)\nwrite answer",
+      "inputDescription": "<<Line 1:>> Two space-separated positive integers [[H]] and [[W]] for the height and the width of the map.\n<<[[H]] next lines:>> A string (of size [[W]]) representing each row of the map.",
+      "solutionLanguage": "C++",
+      "outputDescription": "A non-negative integer for the <<maximum amount of gold>> obtained by summing the amount of gold on each visited cell."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are a treasure hunter.<br>Your goal is simple: move on the map to collect the maximum amount of gold.<br><br>Given a map of height <var>H</var>, width <var>W</var> and a starting position, you can move on 4 directions (North, South, East, West).<br>Each time you visit a cell, you collect the amount of gold indicated on it.<br>You cannot visit a cell more than once!<br><br>The possible values for a cell are:<br>        - <const>X</const>: Your starting position.<br>        - '<const> </const>': Nothing - you can go through that cell, but there is no gold on it.<br>        - <const>#</const>: A wall - you cannot go through that cell.<br>        - [<const>1</const> - <const>9</const>]: The amount of gold on that cell.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Two space-separated positive integers <var>H</var> and <var>W</var> for the height and the width of the map.<br><strong><var>H</var> next lines:</strong> A string (of size <var>W</var>) representing each row of the map.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">A non-negative integer for the <strong>maximum amount of gold</strong> obtained by summing the amount of gold on each visited cell.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt;= <var>H</var> &lt;= 100<br>1 &lt;= <var>W</var> &lt;= 100</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3 3\nX##\n1 5\n3#4</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">10</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 138941549185,
+  "avatar": 26610668117960,
+  "commentCount": 26,
+  "upVotes": 41,
+  "downVotes": 5,
+  "validateAction": {
+    "actionId": 590799,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1607508337001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1629470771374,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1631788769818,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

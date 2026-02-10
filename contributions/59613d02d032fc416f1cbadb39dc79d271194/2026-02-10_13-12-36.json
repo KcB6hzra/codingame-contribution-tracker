@@ -1,0 +1,188 @@
+{
+  "id": 59613,
+  "activeVersion": 44,
+  "score": 33,
+  "votableId": 29459699,
+  "codingamerId": 4806550,
+  "views": 405,
+  "commentableId": 29325681,
+  "title": "Poll",
+  "status": "ACCEPTED",
+  "type": "CLASHOFCODE",
+  "nickname": "Rafarafa",
+  "publicHandle": "59613d02d032fc416f1cbadb39dc79d271194",
+  "codingamerHandle": "68977779383d7e4ea558c7a5446487f40556084",
+  "lastVersion": {
+    "version": 44,
+    "autocloseTime": 1694848641162,
+    "data": {
+      "title": "Poll",
+      "topics": [],
+      "fastest": true,
+      "reverse": false,
+      "shortest": true,
+      "solution": "INPUT = true\n\nEntry = Struct.new(:id, :vote, :time) do\n  def to_s\n    \"#{id} #{vote} #{time}\"\n  end\nend\n\nunless INPUT\n  TIMEOUT = 10\n  AMT_VOTERS = 3\n  N_ENTRIES = 5\n\n  entries = N_ENTRIES.times.map do\n    id = rand(AMT_VOTERS)\n    vote = rand(2)\n    time = rand(1..TIMEOUT * 4) * TIMEOUT / 4\n    Entry.new(id, vote, time)\n  end.sort_by { [_1.time, _1.id] }\n\n  # Reorders the ids by first appearance\n  reindexing = Hash.new\n  cnt = -1\n  entries.each do |e|\n    reindexing[e.id] = (cnt += 1) unless reindexing[e.id]\n    e.id = reindexing[e.id]\n  end\n\n  puts TIMEOUT\n  puts entries.size # Paranoia check, should be N_ENTRIES\n  puts entries\nelse\n  TIMEOUT = gets.to_i\n  puts \"Error\" unless 0 < TIMEOUT && TIMEOUT <= 100\n  gets\n  entries = $<.map {\n    id, vote, time = _1.split.map &:to_i\n    puts \"Error\" unless 0 <= vote && vote <= 1 && 0 <= time && time <= 200\n    Entry.new(id, vote, time)\n  }\nend\n\nrec = Hash.new\nans = [0, 0]\nentries.each do |e|\n  next if x = rec[e.id] and e.time - x < TIMEOUT\n\n  ans[e.vote] += 1\n  rec[e.id] = e.time\nend\n\nputs ans * \" \"\n",
+      "statement": "You've established an online voting system for two candidates, labeled as {{0}} and {{1}}. Currently, this system lacks restrictions and permits users to cast an unlimited number of votes. To counter potential misuse, you've opted to disregard additional votes from the same user if they were submitted within a timeframe of [[timeout]] seconds since their last <<valid>> vote. After the passage of [[timeout]] seconds from their last <<valid>> vote, users are eligible to vote again.\n\nFind the final results for the two candidates and print them on the same line.\n\n```Example\n30\n7\n0 1 0  <- First vote of user 0, ok. The vote goes to 1.\n0 1 15 <- Less than 30s have elapsed, ignored.\n1 0 15 <- First vote by user 1, ok.\n2 0 15 <- First vote by user 2, ok.\n0 1 30 <- At least 30s since last vote of user 0, ok.\n0 1 35 <- Less than 30s have elapsed, ignored.\n1 0 50 <- At least 30s since last vote of user 1, ok.\n\n>>> Votes of candidate 0, votes of candidate 1\n>>> 3 2\n```",
+      "testCases": [
+        {
+          "title": "1. Example",
+          "isTest": true,
+          "testIn": "30\n7\n0 1 0\n0 1 15\n1 0 15\n2 0 15\n0 1 30\n0 1 35\n1 0 50",
+          "testOut": "3 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "1. Example val",
+          "isTest": false,
+          "testIn": "30\n5\n0 0 0\n0 0 15\n1 1 15\n2 1 30\n0 0 45",
+          "testOut": "2 2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "2. Timeout",
+          "isTest": true,
+          "testIn": "10\n4\n0 0 0\n0 0 5\n0 1 9\n0 0 10",
+          "testOut": "2 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "2. Timeout val",
+          "isTest": false,
+          "testIn": "10\n4\n0 1 0\n0 1 7\n0 0 9\n0 1 10",
+          "testOut": "0 2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3. Different ids",
+          "isTest": true,
+          "testIn": "30\n5\n0 0 0\n0 0 15\n1 1 15\n2 1 15\n3 1 15",
+          "testOut": "1 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3. Different ids val",
+          "isTest": false,
+          "testIn": "30\n5\n0 0 0\n0 0 15\n1 1 45\n2 0 45\n3 1 45",
+          "testOut": "2 2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4. Random 1",
+          "isTest": true,
+          "testIn": "60\n10\n0 0 30\n1 1 30\n0 0 45\n2 0 45\n2 0 45\n1 0 60\n1 0 75\n1 1 120\n0 1 135\n2 0 135",
+          "testOut": "3 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4. Random 1 val",
+          "isTest": false,
+          "testIn": "60\n10\n0 1 15\n1 1 15\n0 1 60\n2 1 60\n0 1 90\n2 1 90\n0 0 105\n0 1 150\n0 1 150\n2 1 150",
+          "testOut": "0 6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5. Random 2",
+          "isTest": true,
+          "testIn": "10\n100\n0 1 2\n1 1 5\n2 1 7\n3 1 7\n1 0 7\n4 1 7\n5 1 10\n6 0 12\n7 1 12\n8 0 15\n9 0 15\n10 0 17\n11 1 17\n12 1 20\n10 1 20\n13 0 20\n14 0 20\n14 0 20\n15 1 20\n16 1 20\n11 0 22\n17 1 27\n18 0 30\n19 0 32\n20 1 32\n21 0 32\n22 1 35\n14 1 35\n20 0 37\n23 0 37\n11 1 37\n16 1 37\n20 1 40\n24 0 42\n24 0 45\n13 1 45\n25 0 45\n21 1 45\n26 1 45\n27 0 47\n16 0 47\n20 1 50\n20 0 50\n6 1 52\n28 0 52\n28 1 52\n25 0 52\n26 0 52\n12 0 55\n29 1 55\n9 0 55\n30 0 57\n25 0 57\n31 1 57\n32 1 60\n28 1 62\n22 1 65\n25 0 65\n32 0 65\n21 0 65\n16 1 65\n33 0 67\n3 1 70\n17 1 70\n4 1 70\n32 0 70\n34 0 72\n12 0 72\n35 1 72\n10 0 72\n29 0 72\n36 0 72\n21 1 72\n19 0 75\n37 1 75\n11 1 75\n17 0 77\n38 1 80\n9 1 80\n5 1 82\n32 1 82\n39 0 82\n22 1 85\n6 0 85\n6 1 87\n29 0 87\n29 1 87\n5 0 87\n40 1 87\n40 0 90\n27 1 92\n3 1 95\n41 0 95\n23 1 95\n42 1 97\n41 1 97\n43 1 97\n30 1 100\n33 1 100\n25 1 100",
+          "testOut": "32 48",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5. Random 2 val",
+          "isTest": false,
+          "testIn": "10\n100\n0 0 2\n1 0 5\n2 1 7\n3 0 7\n4 1 7\n5 1 7\n6 0 7\n7 1 10\n8 1 10\n9 0 10\n10 1 12\n6 0 12\n6 1 12\n9 1 12\n0 1 17\n11 1 17\n9 1 17\n12 1 22\n13 0 25\n14 1 25\n15 1 27\n16 1 27\n17 0 27\n7 1 30\n13 1 32\n18 0 32\n11 0 32\n19 0 35\n20 1 35\n12 1 35\n21 1 37\n22 1 37\n23 1 37\n13 0 37\n24 1 37\n7 1 40\n24 0 40\n11 0 40\n25 1 40\n15 1 42\n26 1 42\n6 1 42\n25 0 42\n10 1 45\n10 1 45\n27 1 45\n17 1 45\n22 0 47\n24 1 50\n28 1 50\n21 1 52\n8 0 52\n29 0 52\n30 1 52\n21 0 55\n13 1 55\n14 0 55\n29 1 57\n31 1 57\n8 0 60\n32 1 60\n19 0 62\n10 1 62\n18 0 62\n11 0 62\n28 1 62\n33 0 65\n16 0 65\n0 1 65\n34 0 65\n12 0 65\n35 0 67\n36 0 67\n37 0 70\n0 0 70\n38 1 72\n31 1 75\n31 1 75\n31 0 75\n17 1 75\n39 0 77\n35 1 80\n27 1 80\n40 0 82\n29 0 82\n41 1 82\n9 1 82\n42 1 85\n16 1 87\n38 0 87\n17 1 87\n21 0 90\n20 0 90\n28 1 90\n9 0 90\n23 1 95\n0 1 95\n43 1 97\n30 1 97\n29 1 100",
+          "testOut": "31 53",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6. Random draw",
+          "isTest": true,
+          "testIn": "10\n100\n0 0 5\n1 0 5\n2 0 7\n3 0 10\n4 1 10\n5 0 12\n6 0 12\n7 0 12\n8 0 12\n9 1 12\n10 0 12\n4 1 12\n11 1 17\n12 0 17\n13 1 17\n11 0 20\n13 0 20\n13 1 20\n7 1 22\n14 1 22\n15 1 25\n2 1 25\n16 1 30\n17 0 30\n18 1 30\n19 0 32\n12 0 32\n14 0 32\n13 0 32\n20 0 35\n21 0 35\n22 1 35\n8 0 35\n9 1 37\n23 1 37\n24 1 37\n15 0 40\n19 1 42\n7 0 42\n25 1 45\n26 1 47\n19 0 50\n14 0 50\n9 1 50\n11 1 52\n5 1 52\n5 0 55\n27 1 55\n9 0 57\n4 1 57\n25 1 57\n28 1 57\n29 1 60\n30 1 60\n31 1 60\n32 0 60\n32 0 60\n7 0 62\n33 0 65\n11 0 65\n34 0 65\n4 0 65\n35 0 65\n3 1 67\n1 0 67\n29 1 70\n17 0 70\n18 1 70\n36 0 72\n24 1 72\n13 0 72\n21 0 75\n24 0 75\n25 1 75\n16 1 77\n20 1 77\n21 0 77\n37 1 77\n23 1 77\n38 0 80\n39 0 80\n9 1 80\n28 1 80\n18 1 85\n14 0 85\n2 0 85\n9 0 85\n23 1 85\n40 0 87\n18 1 87\n20 1 90\n37 1 90\n18 0 90\n15 1 92\n34 0 95\n19 0 97\n10 0 97\n26 0 100\n26 1 100\n37 0 100",
+          "testOut": "42 42",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "6. Random draw val",
+          "isTest": false,
+          "testIn": "10\n100\n0 0 2\n1 1 2\n1 0 2\n2 0 5\n3 1 5\n4 1 5\n5 0 5\n6 1 7\n7 1 7\n8 0 10\n9 1 10\n10 0 10\n7 1 10\n11 1 12\n12 1 12\n13 0 12\n8 0 15\n6 1 15\n14 0 15\n15 1 15\n16 1 15\n17 1 15\n17 0 17\n18 1 20\n19 0 20\n20 1 22\n21 0 25\n16 0 25\n17 1 25\n18 1 27\n15 1 27\n22 0 27\n23 0 30\n24 0 30\n11 1 32\n25 1 32\n19 1 32\n26 1 32\n27 0 35\n28 0 35\n29 0 35\n30 1 35\n5 0 35\n31 0 37\n32 0 40\n33 0 40\n26 0 40\n8 1 45\n23 1 45\n26 1 45\n34 0 47\n22 0 50\n34 1 52\n35 0 55\n8 0 55\n34 0 55\n0 0 55\n14 1 55\n21 0 55\n7 0 60\n35 0 62\n27 1 62\n23 1 62\n36 1 62\n33 1 62\n35 0 65\n32 0 65\n37 1 65\n38 0 67\n2 0 67\n10 0 67\n20 0 67\n20 1 67\n27 0 70\n32 0 72\n3 0 72\n12 1 72\n29 1 72\n5 1 72\n32 1 75\n12 1 75\n39 0 75\n40 1 77\n15 1 77\n41 0 77\n4 1 80\n7 0 80\n36 0 80\n31 0 80\n9 0 82\n9 1 85\n24 1 85\n5 1 85\n11 1 87\n9 0 90\n18 1 92\n33 1 95\n40 0 97\n7 0 97\n31 1 100",
+          "testOut": "42 42",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "constraints": "0 < [[timeout]] <= 100\n0 < [[n_entries]] <= 100\n[[vote]] is {{0}} or {{1}}\n0 <= [[time]] <= 200",
+      "stubGenerator": "read timeout:int\nread nEntries:int\nloop nEntries read userId:int vote:int time:int\nwrite votes of each of the two candidates",
+      "inputDescription": "<<Line 1 :>> The [[timeout]] that you have decided upon, in seconds.\n<<Line 2 :>> The number of entries in your database, [[n_entries]].\n<<Next [[n_entries]] lines:>> An entry, that is, three space-separated integers: \n- [[user_id]], the id of the user\n- [[vote]], the candidate that was voted\n- [[time]], the time in seconds elapsed since the system started to work.\n\n<<Notes:>> \n<<(1)>> The data is already sorted in ascending order by [[time]].\n<<(2)>> The [[user_id]]s start at {{0}} and they increment by one for each new user.",
+      "solutionLanguage": "Ruby",
+      "outputDescription": "A line containing the number of votes of candidate {{0}}, then those of candidate {{1}}, separated with a space."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You've established an online voting system for two candidates, labeled as <const>0</const> and <const>1</const>. Currently, this system lacks restrictions and permits users to cast an unlimited number of votes. To counter potential misuse, you've opted to disregard additional votes from the same user if they were submitted within a timeframe of <var>timeout</var> seconds since their last <strong>valid</strong> vote. After the passage of <var>timeout</var> seconds from their last <strong>valid</strong> vote, users are eligible to vote again.<br><br>Find the final results for the two candidates and print them on the same line.<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">Example<br>30<br>7<br>0 1 0  &lt;- First vote of user 0, ok. The vote goes to 1.<br>0 1 15 &lt;- Less than 30s have elapsed, ignored.<br>1 0 15 &lt;- First vote by user 1, ok.<br>2 0 15 &lt;- First vote by user 2, ok.<br>0 1 30 &lt;- At least 30s since last vote of user 0, ok.<br>0 1 35 &lt;- Less than 30s have elapsed, ignored.<br>1 0 50 &lt;- At least 30s since last vote of user 1, ok.<br><br>&gt;&gt;&gt; Votes of candidate 0, votes of candidate 1<br>&gt;&gt;&gt; 3 2<br></pre><pre style=\"font-family: monospace\"></pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1 :</strong> The <var>timeout</var> that you have decided upon, in seconds.<br><strong>Line 2 :</strong> The number of entries in your database, <var>n_entries</var>.<br><strong>Next <var>n_entries</var> lines:</strong> An entry, that is, three space-separated integers: <br>- <var>user_id</var>, the id of the user<br>- <var>vote</var>, the candidate that was voted<br>- <var>time</var>, the time in seconds elapsed since the system started to work.<br><br><strong>Notes:</strong> <br><strong>(1)</strong> The data is already sorted in ascending order by <var>time</var>.<br><strong>(2)</strong> The <var>user_id</var>s start at <const>0</const> and they increment by one for each new user.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">A line containing the number of votes of candidate <const>0</const>, then those of candidate <const>1</const>, separated with a space.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt; <var>timeout</var> &lt;= 100<br>0 &lt; <var>n_entries</var> &lt;= 100<br><var>vote</var> is <const>0</const> or <const>1</const><br>0 &lt;= <var>time</var> &lt;= 200</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">30\n7\n0 1 0\n0 1 15\n1 0 15\n2 0 15\n0 1 30\n0 1 35\n1 0 50</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">3 2</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 76616155091,
+  "avatar": 80946308795008,
+  "commentCount": 23,
+  "upVotes": 35,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 843558,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1687503937001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1687760748171,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1690355137000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1691598581184,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1694112999431,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

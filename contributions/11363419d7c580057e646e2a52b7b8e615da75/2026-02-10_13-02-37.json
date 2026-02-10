@@ -1,0 +1,141 @@
+{
+  "id": 113634,
+  "activeVersion": 27,
+  "score": 6,
+  "votableId": 35749754,
+  "codingamerId": 5192217,
+  "views": 114,
+  "commentableId": 35593957,
+  "title": "Formula 1 Championship",
+  "status": "ACCEPTED",
+  "type": "CLASHOFCODE",
+  "nickname": "Harry.B.",
+  "publicHandle": "11363419d7c580057e646e2a52b7b8e615da75",
+  "codingamerHandle": "d926a93cb394ded661b204822965c5fa7122915",
+  "lastVersion": {
+    "version": 27,
+    "autocloseTime": 1736590068650,
+    "freezeTime": 1734602868650,
+    "data": {
+      "title": "Formula 1 Championship",
+      "topics": [],
+      "fastest": true,
+      "reverse": false,
+      "shortest": true,
+      "solution": "\"\"\"\n# Solution without comments.\npoints = [25,18,15,12,10,8,6,4,2,1]\ndrivers = []\nn = int(input())\nfor _ in range(n):\n    name,results = input().split(\":\")\n    total = 0\n    for i in results.split(\" \"):\n        res = \"\".join([j for j in i if j.isnumeric()])\n        res = int(res if res else 11)\n        if res<=10:\n            total += points[res-1] + (\"F\" in i)\n    drivers += [(total , name)]\ndrivers.sort(key = lambda driver : driver[0] , reverse = True)\nfor _,name in drivers:\n    print(name)\n\"\"\"\n\n#Solution with comments.\n# Arrays for position and points.\npoints = [25,18,15,12,10,8,6,4,2,1]\ndrivers = []\n\nresults_test = []\nlength = -1\n\nn = int(input())\nfor _ in range(n):\n    # Split name and results.\n    name,results = input().split(\":\")\n    \n    # TESTING ENSURE all contain same number of results\n    if length == -1:\n        length = len(results.split(\" \"))\n    else:\n        assert length == len(results.split(\" \")), \"Missing results: {results}\"\n    \n    # Drivers points total.\n    total = 0\n    idx = 0\n    for i in results.split(\" \"):\n        # Get position in race.\n        res = \"\".join([j for j in i if j.isnumeric()])\n        \n        # Get int of position - 99 if DNF.\n        res = int(res if res else 99)\n\n        if len(results_test) <= idx:\n            results_test.append([])\n            results_test[idx].append(i)\n        else:\n            results_test[idx].append(i)\n        idx+=1\n\n        # If points scoring position, update total score.\n        # Ensuring +1 for fastest lap, if applicable.\n        if res<=10:\n            total += points[res-1] + (\"F\" in i)\n    \n    # Add drivers points and name to drivers array.\n    drivers.append((total , name))\n\n# Sort.\ndrivers.sort(key = lambda driver : driver[0] , reverse = True)\n\n# Output name of driver in order.\nfor score,name in drivers:\n    print(name)# , score)\n\n# TESTING\nfor idx,i in enumerate(results_test):\n    test_dnf_removed = [int(\"\".join([c for c in j if c.isnumeric()])) for j in i if \"DNF\" not in j and j!=99]\n    s = sum(str(j).count(\"F\") if \"DNF\" not in j else str(j).count(\"F\")-1 for j in i )\n    assert s == 1, f\"No Fastest lap at race :{idx+1} sum={s}\"\n    assert len(set(test_dnf_removed)) == len(test_dnf_removed), f\"DUPLICATE: {sorted(test_dnf_removed)} in race: {idx+1}\"\n    assert sorted(test_dnf_removed) == list(range(1,len(test_dnf_removed)+1)), f\"Race {idx+1}: Order wrong: {sorted(test_dnf_removed)} , Expected: {list(range(1,len(test_dnf_removed)+1))}\" ",
+      "statement": "The Formula 1 season has concluded and the each driver has accumulated points throughout the season. The goal is to output the final standings, one [[driver's name]] per line, from highest points achieved to lowest.\n\n<<Points:>>\nDrivers get a variable amount of points depending on their finishing position in a race. Points are <<ONLY>> allocated to the <<TOP 10>>.\n\nPoints for position 1 to 10: {{25, 18, 15, 12, 10, 8, 6, 4, 2, 1}}\nSprint races have been omitted, results reflect Grand Prix results only.\n\n <<Fastest Lap:>>\nA driver that claims the fastest lap ({{F}}) in a race will claim an <<ADDITIONAL POINT>> if they finish within the <<TOP 10>>. In the event a driver outside the top 10 claims the fastest lap, they get nothing.\n\n<<Equal Points:>>\nIf two or more drivers have equal points, order based on their original positions.\n\n<<DNF:>>\nA driver may not have finished a race due to crashing, illness, injury or other factors. These races are marked with {{DNF}} and provide a driver with {{0}} points. A driver that receives a {{DNF}} <<CAN>> still achieve the fastest lap ({{DNFF}}) but does not gain a point for doing so.",
+      "testCases": [
+        {
+          "title": "Small Season",
+          "isTest": true,
+          "testIn": "4\nLando Norris:1F 1 1 2 1\nCharles Leclerc:4 3F 4F 3F 4\nLewis Hamilton:3 4 3 4 3\nGeorge Russell:2 2 2 1 2F",
+          "testOut": "Lando Norris\nGeorge Russell\nCharles Leclerc\nLewis Hamilton",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "4\nA A:2 1 4 3\nB B:1F 3F 3F 4F\nC C:4 4 2 2\nD D:3 2 1 1",
+          "testOut": "D D\nB B\nA A\nC C",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Small Season with Equal Points",
+          "isTest": true,
+          "testIn": "5\nLogan Sargeant:3F 4F 2F 2\nNicolas Latifi:2 2 3 3\nNikita Mazespin:5 1 1 1\nLance Strulovitch:1 5 5 5\nMax Verstappen:4 3 4 4F",
+          "testOut": "Nikita Mazespin\nLogan Sargeant\nNicolas Latifi\nLance Strulovitch\nMax Verstappen",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "5\nB B:2 4F 2 4\nC C:3 3 3F 3\nD D:4 2 4 2F\nE E:5 1 5 1\nA A:1F 5 1 5",
+          "testOut": "A A\nE E\nB B\nC C\nD D",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Full Season",
+          "isTest": true,
+          "testIn": "20\nAdrian Sutil:DNF DNF 17 DNF 16 DNF DNF 19 DNF 15 DNF DNF 13 19 DNF DNF DNF 10F\nJenson Button:DNF 10 DNF 6 11 11 11 DNF DNF 17 12 13 15 15 9 14 16 13\nDavid Coulthard:DNF 9 16 12 9 DNF 3 9 DNF 13 11 17 11 16 7 DNF 10 DNF\nHeikki Kovalainen:5F 3 5F DNF 12 8 9 4 5 5 1 4 10 2 10 DNF DNF 7\nKimi Räikkönen:8 1 2 1F 3F 9F DNF 2F 4F 6 3F DNF 18F 9F 15F 3 3 3\nRubens Barrichello:DNF 13 11 DNF 14 6 7 14 3 DNF 16 16 DNF 17 DNF 13 11 15\nGiancarlo Fisichella:DNF 12 12 9 DNF DNF DNF 18 DNF 16 15 14 17 DNF 14 DNF 17 18\nKazuki Nakajima:6 15 14 7 DNF 7 DNF 15 8 14 13 15 14 12 8 15 12 17\nTimo Glock:DNF DNF 9 11 13 12 4 11 12 DNF 2 7 9 11 4 DNF 7 6\nNico Rosberg:3 14 8 DNF 8 DNF 10 16 9 10 14 8 12 14 2 11 15 12\nMark Webber:DNF 7 7 5 7 4 12 6 10 DNF 9 12 8 8 DNF 8 14 9\nRobert Kubica:DNF 2 3 4 4 2 1 5 DNF 7 8 3 6 3 11 2 6 11\nLewis Hamilton:1 5 13 3 2 1 DNF 10 1 1 5 2 3 7 3 12 1F 5\nNelson Piquet Jr.:DNF 11 DNF DNF 15 DNF DNF 7 DNF 2 6 11 DNF 10 DNF 4 8 DNF\nJarno Trulli:DNF 4 6 8 10 13 6 3 7 9 7 5 16 13 DNF 5 DNF 8\nSébastien Bourdais:7 DNF 15 DNF DNF DNF 13 17 11 12 18 10 7 18 12 10 13 14\nFernando Alonso:4 8 10 DNF 6 10 DNF 8 6 11 4 DNF 4 4 1 1 4 2\nSebastian Vettel:DNF DNF DNF DNF 17 5 8 12 DNF 8 DNF 6 5 1 5 6 9 4\nFelipe Massa:DNF DNF 1 2 1 3 5F 1 13 3 17 1F 1 6 13 7F 2 1\nNick Heidfeld:2 6F 4 10 5 14 2 13 2 4F 10 9 2 5 6 9 5 16",
+          "testOut": "Lewis Hamilton\nFelipe Massa\nKimi Räikkönen\nRobert Kubica\nFernando Alonso\nNick Heidfeld\nHeikki Kovalainen\nSebastian Vettel\nJarno Trulli\nTimo Glock\nMark Webber\nNico Rosberg\nNelson Piquet Jr.\nRubens Barrichello\nDavid Coulthard\nKazuki Nakajima\nSébastien Bourdais\nJenson Button\nAdrian Sutil\nGiancarlo Fisichella",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "16\nJarno Trulli:9 2 2 4 3 10 8 DNF DNF 5 9 14 4 6 5 DNF 10 DNF 13\nFelipe Massa:10 10 7 8 11 9 12 4 DNF DNF 10 8 12 DNF 9 10 11 9 6\nJenson Button:11 DNF DNF DNF DNF DNF 10 DNF DNF 4 5 3 5 5 8 3 7 5 8\nChristian Klien:7 8 DNF DNF DNF DNF DNF 8 DNF DNF 15 9 DNF 8 13 9 9 10F 5\nTiago Monteiro:14 11 10 10 12 13 9 10 3 13 16 12 8 9 7 8 DNF 13 11\nKimi Räikkönen:8 9F 3 DNF 1 1 11 1F DNF 2F 3F DNF 1F 1 4F 1 2F 1 2F\nFernando Alonso:3F 1 1F 1 2 4 1F DNF DNF 1 2 1F 11 2 2 2 3 3 1\nJuan Pablo Montoya:6 4 5 DNF 7 5 7 DNF DNF DNF 1 2 DNF 3F 1 11 1 DNF DNF\nMichael Schumacher:DNF 7 DNF 2F DNF 7F 5 2 1F 3 6 5 2 DNF 10 DNF 4 7 DNF\nNick Heidfeld:DNF 3 DNF 5 10 2 2 DNF DNF 11 12 11 6 DNF DNF DNF DNF DNF DNF\nJacques Villeneuve:13 DNF 11 3 DNF 11 13 9 DNF 8 14 13 DNF 11 11 6 12 12 10\nRubens Barrichello:2 DNF 9 DNF 9 8 3 3 2 9 7 10 10 10 12 5 6 11 12\nMark Webber:5 DNF 6 6 6 3 DNF 5 DNF 12 11 DNF 7 DNF 14 4 DNF 4 7\nDavid Coulthard:4 6 8 9 8 DNF 4 7 DNF 10 13 7 DNF 7 15 DNF DNF 6 9\nRalf Schumacher:12 5 4 7 4 6 DNF 6 DNF 7 8 6 3 12 6 7F 8 8 3\nGiancarlo Fisichella:1 DNF DNF DNF 5F 12 6 DNF DNF 6 4 4 9 4 3 DNF 5 2 4",
+          "testOut": "Fernando Alonso\nKimi Räikkönen\nJuan Pablo Montoya\nMichael Schumacher\nGiancarlo Fisichella\nRalf Schumacher\nJarno Trulli\nRubens Barrichello\nJenson Button\nMark Webber\nDavid Coulthard\nNick Heidfeld\nFelipe Massa\nChristian Klien\nTiago Monteiro\nJacques Villeneuve",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Full Season 2",
+          "isTest": true,
+          "testIn": "24\nFernando Alonso:5 1 9 7 2 3 5 1 2 1 5 DNF 3 3 DNF 3 2 2 3 2\nCharles Pic:15 20 20 DNF DNF DNF 20 15 19 20 20 16 16 16 DNF 19 19 DNF 20 12\nKamui Kobayashi:6 DNF 10F 13 5 DNF 9 DNF 11 4 18 13 9 13 3 DNF 14 6 14 9\nVitaly Petrov:DNF 16 18 16 17 DNF 19 13 DNF 16 19 14 15 19 17 16 17 16 17 11\nSergio Pérez:8 2 11 11 DNF 11F 3 9 DNF 6 14 DNF 2 10 DNF 11 DNF 15 11 DNF\nNico Hülkenberg:DNF 9 15 12 10 8 12 5 12 9 11 4 21 14F 7 6 8 DNF 8 5\nTimo Glock:14 17 19 19 18 14 DNF DNF 18 22 21 15 17 12 16 18 20 14 19 16\nPedro de la Rosa:DNF 21 21 20 19 DNF DNF 17 20 21 22 18 18 17 18 DNF DNF 17 21 17\nJean-Éric Vergne:11 8 16 14 12 12 15 DNF 14 14 16 8 DNF DNF 13 8 15 12 DNF 8\nMark Webber:4 4 4 4 11 1 7 4 1 8 8 6 20 11 9 2F 3 DNF DNF 4\nRomain Grosjean:DNF DNF 6 3 4F DNF 2 DNF 6 18 3 DNF DNF 7 19 7 9 DNF 7 DNF\nPastor Maldonado:13 19 8 DNF 1 DNF 13 12 16 15 13 DNF 11 DNF 8 14 16 5 9 DNF\nFelipe Massa:DNF 15 13 9 15 6 10 16 4 12 9 5 4 8 2 4 6 7 4 3\nPaul di Resta:10 7 12 6 14 7 11 7 DNF 11 12 10 8 4 12 12 12 9 15 19\nKimi Räikkönen:7 5F 14 2 3 9 8 2 5F 3 2 3 5 6 6 5 7 1 6 10\nJenson Button:1F 14 2 18 9 16 16 8 10 2 6 1 DNF 2 4 DNF 5F 4 5 1\nLewis Hamilton:3 3 3 8 8 5 1 19 8 DNF 1 DNF 1 DNF 5 10 4 DNF 1 DNF\nBruno Senna:16 6 7 22 DNF 10 17 10 9 17 7 12F 10 18 14 15 10 8 10 DNF\nNarain Karthikeyan:DNF 22 22 21 DNF 15 DNF 18 21 23 DNF DNF 19 DNF DNF 20 21 DNF 22 18\nNico Rosberg:12 13 1 5 7 2 6 6F 15 10 10 11 7F 5 DNF DNF 11 DNF 13 15\nHeikki Kovalainen:DNF 18 23 17 16 13 18 14 17 19 17 17 14 15 15 17 18 13 18 14\nDaniel Ricciardo:9 12 17 15 13 DNF 14 11 13 13 15 9 12 9 10 9 13 10 12 13\nMichael Schumacher:DNF 10 DNF 10 DNF DNF DNF 3 7 7F DNF 7 6 DNF 11 13 22 11 16 7\nSebastian Vettel:2 11 5 1F 6 4 4F DNF 3 5 4F 2 13 1 1F 1 1 3F 2F 6F",
+          "testOut": "Sebastian Vettel\nFernando Alonso\nKimi Räikkönen\nJenson Button\nLewis Hamilton\nMark Webber\nFelipe Massa\nRomain Grosjean\nNico Rosberg\nSergio Pérez\nNico Hülkenberg\nKamui Kobayashi\nMichael Schumacher\nPaul di Resta\nPastor Maldonado\nBruno Senna\nJean-Éric Vergne\nDaniel Ricciardo\nCharles Pic\nVitaly Petrov\nTimo Glock\nPedro de la Rosa\nNarain Karthikeyan\nHeikki Kovalainen",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "17\nVitaly Petrov:3 15 9 8 11 DNF 5 15 12 10 12 9 DNF 11 9 DNF 11 13 10\nMichael Schumacher:DNF 9 8 12 6 DNF 4 17 9 8 DNF 5 5 DNF 6 DNF 5 7 15\nKamui Kobayashi:DNF 7 10 10 10 5 7 16 DNF 9 11 12 DNF 14 13 15 DNF 10 9\nNico Rosberg:DNF 12 5 5 7 11 11 7 6 7 9 6 DNF 7 10 8 6 6 7\nSebastian Vettel:1 1 2 1 1 1 2 1F 2 4 2 1 1 1 3 1F 1 DNF 2\nJenson Button:6 2 4 6 3 3 1F 6 DNF DNF 1 3 2 2F 1F 4 2 3 3\nAdrian Sutil:9 11 15 13 13 7 DNF 9 11 6 14 7 DNF 8 11 11 9 8 6\nLewis Hamilton:2 8 1 4 2F 6 DNF 4 4 1F 4 DNF 4F 5 5 2 7 1 DNF\nFernando Alonso:4 6 7 3 5 2 DNF 2 1F 2 3 4 3 4 2 5 3 2 4\nNick Heidfeld:12 3 12 7 8 8 DNF 10 8 DNF DNF 10 11 15 16 13 12 14 16\nSergio Pérez:DNF DNF 16 14 9 DNF DNF 11 7 11 15 DNF DNF 10 8 14 10F 11 13\nPaul di Resta:10 10 11 DNF 12 12 12 14 14 13 7 11 8 6 12 10 13 9 8\nMark Webber:5 4F 3F 2F 4 4F 3 3 3 3 5 2F DNF 3 4 3 4 4F 1F\nRubens Barrichello:DNF DNF 13 15 15 9 9 12 13 DNF 13 13 9 13 14 12 14 12 14\nJaime Alguersuari:11 14 DNF 16 16 DNF 8 8 10 12 10 DNF 7 16 15 7 8 15 11\nSébastien Buemi:8 13 14 9 14 10 10 13 DNF 14 8 DNF 10 12 DNF 9 DNF DNF 12\nFelipe Massa:7F 5 6 11 DNF DNF 6 5 5 5 6F 8 6 9 7 6 DNF 5 5",
+          "testOut": "Sebastian Vettel\nJenson Button\nMark Webber\nFernando Alonso\nLewis Hamilton\nFelipe Massa\nNico Rosberg\nMichael Schumacher\nAdrian Sutil\nVitaly Petrov\nNick Heidfeld\nKamui Kobayashi\nPaul di Resta\nJaime Alguersuari\nSergio Pérez\nSébastien Buemi\nRubens Barrichello",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "An Unfortunate Season",
+          "isTest": true,
+          "testIn": "5\nKarun Chandhok:DNFF DNF DNF DNF DNF DNF DNF DNF DNF DNFF DNFF DNF DNF DNF DNF\nNarain Karthikeyan:DNF DNFF DNF DNF DNF DNF DNF DNF DNFF DNF DNF DNFF DNF DNF DNF\nTimo Glock:DNF DNF DNFF DNF DNF DNF DNF DNFF DNF DNF DNF DNF DNFF DNF DNF\nAnthony Davidson:DNF DNF DNF DNFF DNF DNF DNFF DNF DNF DNF DNF DNF DNF DNFF DNF\nMartin Brundle:DNF DNF DNF DNF DNFF DNFF DNF DNF DNF DNF DNF DNF DNF DNF DNFF",
+          "testOut": "Karun Chandhok\nNarain Karthikeyan\nTimo Glock\nAnthony Davidson\nMartin Brundle",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "10\nA A A:DNF DNF DNF DNF DNF DNF DNF DNF DNF DNFF\nB B B:DNF DNFF DNF DNF DNF DNF DNF DNF DNF DNF\nC C C:DNF DNF DNFF DNF DNF DNF DNF DNF DNF DNF\nD D D:DNF DNF DNF DNFF DNF DNF DNF DNF DNF DNF\nE E E:DNF DNF DNF DNF DNFF DNF DNF DNF DNF DNF\nF F F:DNF DNF DNF DNF DNF DNFF DNF DNF DNF DNF\nG G G:DNF DNF DNF DNF DNF DNF DNFF DNF DNF DNF\nH H H:DNF DNF DNF DNF DNF DNF DNF DNFF DNF DNF\nI I I:DNF DNF DNF DNF DNF DNF DNF DNF DNFF DNF\nJ J J:DNFF DNF DNF DNF DNF DNF DNF DNF DNF DNF",
+          "testOut": "A A A\nB B B\nC C C\nD D D\nE E E\nF F F\nG G G\nH H H\nI I I\nJ J J",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "constraints": "1 ≤ [[n]] ≤ 24",
+      "stubGenerator": "read n:int\nloop n read driver:string(256)\nwrite driver",
+      "inputDescription": "<<Line 1:>> Integer [[n]] representing the number of drivers.\n<<Next [[n]] lines:>> String representing a driver's results in the form - [[driver's name]] {{:}} space separated finishing positions.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[n]] lines:>> String of [[driver's name]]."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">The Formula 1 season has concluded and the each driver has accumulated points throughout the season. The goal is to output the final standings, one <var>driver's name</var> per line, from highest points achieved to lowest.<br><br><strong>Points:</strong><br>Drivers get a variable amount of points depending on their finishing position in a race. Points are <strong>ONLY</strong> allocated to the <strong>TOP 10</strong>.<br><br>Points for position 1 to 10: <const>25, 18, 15, 12, 10, 8, 6, 4, 2, 1</const><br>Sprint races have been omitted, results reflect Grand Prix results only.<br><br> <strong>Fastest Lap:</strong><br>A driver that claims the fastest lap (<const>F</const>) in a race will claim an <strong>ADDITIONAL POINT</strong> if they finish within the <strong>TOP 10</strong>. In the event a driver outside the top 10 claims the fastest lap, they get nothing.<br><br><strong>Equal Points:</strong><br>If two or more drivers have equal points, order based on their original positions.<br><br><strong>DNF:</strong><br>A driver may not have finished a race due to crashing, illness, injury or other factors. These races are marked with <const>DNF</const> and provide a driver with <const>0</const> points. A driver that receives a <const>DNF</const> <strong>CAN</strong> still achieve the fastest lap (<const>DNFF</const>) but does not gain a point for doing so.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Integer <var>n</var> representing the number of drivers.<br><strong>Next <var>n</var> lines:</strong> String representing a driver's results in the form - <var>driver's name</var> <const>:</const> space separated finishing positions.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>n</var> lines:</strong> String of <var>driver's name</var>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>n</var> &le; 24</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4\nLando Norris:1F 1 1 2 1\nCharles Leclerc:4 3F 4F 3F 4\nLewis Hamilton:3 4 3 4 3\nGeorge Russell:2 2 2 1 2F</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Lando Norris\nGeorge Russell\nCharles Leclerc\nLewis Hamilton</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 34481334092,
+  "avatar": 130769403588418,
+  "commentCount": 9,
+  "upVotes": 6,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1062438,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1736247221741,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

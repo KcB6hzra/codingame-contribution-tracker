@@ -1,0 +1,226 @@
+{
+  "id": 7547,
+  "activeVersion": 52,
+  "score": 22,
+  "votableId": 20579476,
+  "codingamerId": 4081634,
+  "views": 606,
+  "commentableId": 20475007,
+  "title": "Wave Function Collapse (sans Shannon)",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Wontonimo",
+  "publicHandle": "75474b51e6b3186ea493a8467395fbbefad7",
+  "codingamerHandle": "d0699d9a8e4995e142b0a5cf6a16e1934361804",
+  "lastVersion": {
+    "version": 52,
+    "autocloseTime": 1642535792046,
+    "data": {
+      "title": "Wave Function Collapse (sans Shannon)",
+      "topics": [
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 26,
+          "parentTopicId": 93
+        },
+        {
+          "id": 257,
+          "handle": "reading-the-statement",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Reading the statement",
+            "2": "Reading the statement"
+          },
+          "puzzleCount": 4,
+          "parentTopicId": 39
+        },
+        {
+          "id": 182,
+          "handle": "combinatorics",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Combinatoire",
+            "2": "Combinatorics"
+          },
+          "puzzleCount": 7,
+          "parentTopicId": 93
+        },
+        {
+          "labelMap": {
+            "2": "Constraint Propagation"
+          }
+        }
+      ],
+      "solution": "import numpy as np\n\n\nclass WF:\n\n\tdef extract_cards(self,image):\n\t\tfor h in range(image.shape[0]-2):\n\t\t\tfor w in range(image.shape[1]-2):\n\t\t\t\tyield image[h:h+3,w:w+3]\n\n\tdef __init__(self, prototype, image):\n\t\tself.all_cards = tuple(self.extract_cards(prototype))\n\t\tself.all_letters = tuple(set(prototype.flatten()))\n\t\tself.populate(image)\n\n\tdef populate(self, image):\n\t\tself.cards = {}  \t\t# location : list of cards\n\t\tself.letters = {}\t\t# location : list of letters\n\t\tself.h, self.w = image.shape\n\n\t\t# Initialize wf (wave function) lists\n\t\tfor h in range(self.h):\n\t\t\tfor w in range(self.w):\n\t\t\t\tif image[h,w] == '?':\n\t\t\t\t\tself.cards[(h,w)] = list(self.all_cards)\n\t\t\t\t\tself.letters[(h,w)] = list(self.all_letters)\n\t\t\t\telse:\n\t\t\t\t\tself.cards[(h,w)] = list(self.all_cards)\n\t\t\t\t\tself.letters[(h,w)] = [image[h,w]]\n\n\tdef constrain_cards(self,h,w, debug=False):\n\t\tvalid_cards = list(self.cards[(h,w)])\n\t\tfor dh in [-1,0,1]:\n\t\t\tfor dw in [-1,0,1]:\n\t\t\t\tletters = self.letters[(h+dh,w+dw)]\n\t\t\t\tvalid_cards = [x for x in valid_cards if x[dh+1,dw+1] in letters]\n\t\t\t\tif debug : print(f\"{h+dh} {w+dw} letters = {letters} len(valid_cards) = {len(valid_cards)}\")\n\t\t\t\tif debug : print( \", \".join(['\"' + \"\".join(x.flatten()) + '\"' for x in valid_cards]))\n\t\tif len(valid_cards) != len(self.cards[(h,w)]):\n\t\t\tself.cards[(h,w)] = valid_cards\n\t\t\t# constrain the letters to be what matches the cards\n\t\t\tfor dh in [-1,0,1]:\n\t\t\t\tfor dw in [-1,0,1]:\n\t\t\t\t\tletters = list(set([x[dh+1,dw+1] for x in valid_cards]))\n\t\t\t\t\tif len(letters) > 0 and len(letters) < len(self.letters[(h+dh,w+dw)]):\n\t\t\t\t\t\tself.letters[(h+dh,w+dw)] = letters\n\n\t\t\treturn True\n\t\telse:\n\t\t\treturn False\n\n\tdef constrain(self):\n\t\tmodified = False\n\t\tfor h in range(1,self.h-1):\n\t\t\tfor w in range(1,self.w-1):\n\t\t\t\tmodified = self.constrain_cards(h,w) or modified\n\t\treturn modified\n\t\n\tdef to_text(self):\n\t\tresult = []\n\t\tfor h in range(self.h):\n\t\t\tfor w in range(self.w):\n\t\t\t\tletters = self.letters[(h,w)]\n\t\t\t\tif len(letters) == 1:\n\t\t\t\t\tresult.append( letters[0] )\n\t\t\t\telse:\n\t\t\t\t\tresult.append( str(len(letters)) )\n\t\t\tresult.append('\\n')\n\t\treturn \"\".join(result)[:-1]\n\nw,h = map(int,input().split())\nprototype = np.array([list(input()) for x in range(h)])\nassert(w == prototype.shape[1])\nw,h = map(int,input().split())\ngiven = np.array([list(input()) for x in range(h)])\nassert(w == given.shape[1])\n\nwf = WF(prototype, given)\nwhile wf.constrain():\n\tpass\nprint(wf.to_text())\n",
+      "statement": "<<This is not ASCII art!>>  For this in/out puzzle pixels are not available, so instead we will use characters to represent colours.  Imagine each character as a pixel of a specific colour.\n\nProcedural generation via wave function collapse (WFC) is a way of generating content based off of a few \"prototypical\" examples\".  Given an image prototype of something as small as 16x16 pixels, WFC can make a 30x300 image with very similar structures drawn from the single prototype.  This is not limited to flowers  or maps but anything with small repeating patterns.  After completing this puzzle you will be able to use this same code to generate a wide variety of content, from dungeon maps, to pixel art.\n\nSee cover art and\nhttps://github.com/mxgmn/WaveFunctionCollapse/blob/master/images/wfc.gif\n\nThe task is to read in a prototype image as well as a partially filled solution.  Use the prototype image and WFC (kernel size of 3) to fill in the missing parts of the solution.  The prototype and partial solution will both be printable characters.  The missing parts are designated with the [[?]] character.\n\nExample\n\n`Prototype\n12 x 8\n+----------+\n|          |\n|  *       |\n| \\|    *  |\n|  |/   |/ |\n|  |    |  |\n| \\|    |  |\n+----------+`\n`Partial          Expected\nSolution          Output\n+----------+    +----------+\n|??????????|    |          |\n|??????????|    |  *       |\n|??????????|    | \\|       |\n|?????  ?  |    |  |/   *  |\n|? ? ??\\| ?|    |  |   \\|  |\n| ??    ?? |    | \\|    |/ |\n|  ?/   ?  |    |  |/   |  |\n|??????\\???|    |  |   \\|  |\n+----------+    +----------+`\n`Partial                     Expected\nSolution                     Output\n+--------------------+   +--------------------+\n|     ???????????????|   |                    |\n|  *         *       |   |  *         *       |\n| \\|        \\|   ????|   | \\|        \\|    *  |\n|  |/  ????  ?/   ?/ |   |  |/        |/   |/ |\n|  |  ?????? ?    ?  |   |  |         |    |  |\n|  |         ?    ?  |   |  |         |    |  |\n|  |  ?????  ?    ?  |   |  |    *    |    |  |\n|  |   ?|??  ?    ?  |   |  |    |/   |    |  |\n| \\??   |?  \\|?   ?? |   | \\|    |   \\|    |  |\n+--------------------+   +--------------------+`\n\n<<NOTE>> There are three features to this puzzle that make this easier than a full WFC implementation.  First, the border will always be included in the partial solution and it will be identical to the prototypes border.  Second, the procedure outlined by mxgmn (link below) includes using Shannon Entropy.  Skip that step for this puzzle and only collapse states that are certain.  Third, no reflection or rotation is used in this puzzle.\n\n<<RESOURCES>> \nGithub repo https://github.com/mxgmn/WaveFunctionCollapse\nyoutube video https://www.youtube.com/watch?v=fnFj3dOKcIQ\nand https://www.youtube.com/watch?v=t1O0_yHe-6Y\nand suggested by ninjadip https://www.youtube.com/watch?v=2SuvO4Gi7uY\n\n<<REPRODUCIBILITY>> In order to achieve full reproducibility of the test and validation output, process the image in these steps.  These steps will make more sense once you've read the background resources.\n1 * Calculate possible 3x3 patches.  A 5x6 prototype would generate 12 patches\n2 * Constrain patches from left to right, then from top to bottom\n3 * After a patch has been constrained, constrain all symbols that are covered by the 3x3 patch\n4 * If there are still uncertain symbols goto step 2\n\n<<A symbol>> is something like \"#\" or \"|\".\n\n<<Constraining in step 2 means>> reduce the list of possible patches to only those patches that are possible given the symbols in the blocks they cover.  For example, if all the blocks are unknown (can be any symbol) except the centre block is known to be either '#' or \"|\" and the lower right is known to be '*' or '/', then reduce the possible patches to be only patches that have the centre as either '#' or '|' and the lower right to be '*' or '/'.\n\n<<Constraining in step 3 means>> if, for example, all remaining possible overlapping 3x3 patches are the following 2\n```Patch   Patch\n#..    .*.\n#..    .|.\n###    ###\n```\nthen the blocks are reduced to these lists\n```[#.] [.*] [.]\n[#.] [.|] [.]\n[#]  [#]  [#]```\nWe now know for certain that the bottom is all '#' and the right side is '.'\nAnd the other positions are constrained to [#.] [.*] and [.|]\n\n<<HINT>> The hint is ROT13 encoded so it won't spoil your fun.  This site can decode them for you https://rot13.com\n\nHint 1 : \"Xrrc gjb 2q qngnfrgf, bar sbe gur erznvavat yrtny flzobyf sbe rnpu fdhner, bar sbe gur erznvavat yrtny 3k3 cngpurf pragrerq ng rnpu fdhner.\"\n\nHint 2 : \"Sbe qrohttvat vg vf urycshy gb ercynpr gur \"?\" jvgu gur ahzore bs cbffvoyr flzobyf (be cbffvoyr cngpurf).  Rnpu vgrengvba bs gur pbafgenvagf fubhyq erfhygf va n erqhpgvba fbzr bs gur ahzore bs cbffvoyr flzobyf naq cngpurf.\"\n\nHint 3 : \"Gur svefg grfg pnfr unf 47 havdhr cngpurf\"\n\nHint 4 : \"Gur rqtrf ner vzcbegnag.  Vapyhqr gur rqtrf va gur perngvba bs naq hfr bs cngpurf\"",
+      "testCases": [
+        {
+          "title": "First Example - Restore it",
+          "isTest": true,
+          "testIn": "12 8\n+----------+\n|          |\n|  *       |\n| \\|    *  |\n|  |/   |/ |\n|  |    |  |\n| \\|    |  |\n+----------+\n12 8\n+----------+\n|??????????|\n|  *       |\n| \\|   ????|\n|  ?/   ?/ |\n|  ?    ?  |\n| \\|   ????|\n+----------+",
+          "testOut": "+----------+\n|          |\n|  *       |\n| \\|    *  |\n|  |/   |/ |\n|  |    |  |\n| \\|    |  |\n+----------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "First Example - Restore It",
+          "isTest": false,
+          "testIn": "12 8\n+----------+\n|          |\n|  O       |\n| \\|    O  |\n|  |/   |/ |\n|  |    |  |\n| \\|    |  |\n+----------+\n12 8\n+----------+\n|??????????|\n|  O     ? |\n| \\|    ???|\n|  ?/   ?/ |\n|  ?    ?  |\n| \\|   ??? |\n+----------+",
+          "testOut": "+----------+\n|          |\n|  O       |\n| \\|    O  |\n|  |/   |/ |\n|  |    |  |\n| \\|    |  |\n+----------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Second Example - Grow it",
+          "isTest": true,
+          "testIn": "12 8\n+----------+\n|          |\n|  *       |\n| \\|    *  |\n|  |/   |/ |\n|  |    |  |\n| \\|    |  |\n+----------+\n12 10\n+----------+\n|??????????|\n|??????????|\n|??????????|\n|?????  ?  |\n|? ? ??\\| ?|\n| ??    ?? |\n|  ?/   ?  |\n|??????\\???|\n+----------+",
+          "testOut": "+----------+\n|          |\n|  *       |\n| \\|       |\n|  |/   *  |\n|  |   \\|  |\n| \\|    |/ |\n|  |/   |  |\n|  |   \\|  |\n+----------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Second Example - Grow it",
+          "isTest": false,
+          "testIn": "12 8\n+----------+\n|          |\n|  V       |\n| \\|    V  |\n|  |/   |/ |\n|  |    |  |\n| \\|    |  |\n+----------+\n12 10\n+----------+\n|??????????|\n|??????????|\n|??????????|\n|?????  ?  |\n|? ? ??\\| ?|\n| ??    ?? |\n|  ?/   ?  |\n|??????\\???|\n+----------+",
+          "testOut": "+----------+\n|          |\n|  V       |\n| \\|       |\n|  |/   V  |\n|  |   \\|  |\n| \\|    |/ |\n|  |/   |  |\n|  |   \\|  |\n+----------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Body Swap",
+          "isTest": true,
+          "testIn": "14 8\n##############\n#            #\n#   *        #\n#  \\|    *   #\n#   |/   |/  #\n#   |    |   #\n#  \\|    |   #\n##############\n12 8\n############\n#          #\n#??  ?  ?  #\n#? ? ??\\| ?#\n#  ?/   ?? #\n#  ?    ?  #\n#? ????\\???#\n############",
+          "testOut": "############\n#          #\n#       *  #\n#  *   \\|  #\n#  |/   |/ #\n#  |    |  #\n#  |   \\|  #\n############",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Body Swap",
+          "isTest": false,
+          "testIn": "14 8\n##############\n#            #\n#   *        #\n#  \\|    *   #\n#   |/   |/  #\n#   |    |   #\n#   |/   |   #\n##############\n12 8\n############\n#          #\n#??  ?  ?  #\n#? ? ??\\| ?#\n#  ?/   ?? #\n#  ?    ?  #\n#??? ????/?#\n############",
+          "testOut": "############\n#          #\n#       *  #\n#  *   \\|  #\n#  |/   |/ #\n#  |    |  #\n#  |    |/ #\n############",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Widen The Picture",
+          "isTest": true,
+          "testIn": "17 8\n#################\n#               #\n#   *           #\n#  \\|    *   *  #\n#   |/   |/  |  #\n#   |    |   |  #\n#  \\|    |   |  #\n#################\n22 11\n######################\n#????????????????????#\n#? ????????  *???   ?#\n#?\\|   ???  \\?   ????#\n#? |/  ????  ?/   ?/?#\n#? ?  ?????? ? ?? ? ?#\n#? ?  ? ? ?? ? ?? ? ?#\n#? ?  ? ?/?  ? ?? | ?#\n#? ? ?? ???  ? ?? ? ?#\n#?\\??   |? ?\\??   |??#\n######################",
+          "testOut": "######################\n#                    #\n#  *         *       #\n# \\|        \\|    *  #\n#  |/        |/   |/ #\n#  |         |    |  #\n#  |    *    |    |  #\n#  |    |/   |    |  #\n#  |    |    |    |  #\n# \\|    |   \\|    |  #\n######################",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Widen The Picture",
+          "isTest": false,
+          "testIn": "17 8\n#################\n#               #\n#   *           #\n#  \\|    *   *  #\n#   |/   |/  |  #\n#   |    |   |  #\n#  \\|    |   |  #\n#################\n22 11\n######################\n#????????????????????#\n#? ????????  *???   ?#\n#???   ???  \\?   ????#\n#? ??  ????  ?/   ?/?#\n#? ?  ?????? ? ?? ? ?#\n#? ?  ? ? ?? ? ?? ? ?#\n#? ?  ? ?/?  ? ?? | ?#\n#?   ?? ???  ? ?? ? ?#\n#????   |? ?\\??   |??#\n######################",
+          "testOut": "######################\n#                    #\n#            *       #\n#           \\|    *  #\n#            |/   |/ #\n#            |    |  #\n#       *    |    |  #\n#       |/   |    |  #\n#       |    |    |  #\n#       |   \\|    |  #\n######################",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Grill",
+          "isTest": true,
+          "testIn": "7 7\n+-----+\n| XXXX|\n| X X |\n| X X |\n| X X |\n|XXXX |\n+-----+\n11 9\n+---------+\n|?????????|\n|?????????|\n|???X?????|\n|???X?????|\n|???X?????|\n|?????????|\n|?????????|\n+---------+",
+          "testOut": "+---------+\n| XXXXXXXX|\n| X X X X |\n| X X X X |\n| X X X X |\n| X X X X |\n| X X X X |\n|XXXXXXXX |\n+---------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Grill",
+          "isTest": false,
+          "testIn": "7 7\n+-----+\n|~~~~ |\n| ~ ~ |\n| ~ ~ |\n| ~ ~ |\n| ~~~~|\n+-----+\n11 9\n+---------+\n|?????????|\n|?????????|\n|?????????|\n|?????????|\n|?????????|\n|?????????|\n|?????????|\n+---------+",
+          "testOut": "+---------+\n|~~~~~~~~ |\n| ~ ~ ~ ~ |\n| ~ ~ ~ ~ |\n| ~ ~ ~ ~ |\n| ~ ~ ~ ~ |\n| ~ ~ ~ ~ |\n| ~~~~~~~~|\n+---------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Resize",
+          "isTest": true,
+          "testIn": "17 8\n#################\n#               #\n#   *           #\n#  \\|    *   *  #\n#   |/   |/  |  #\n#   |    |   |  #\n#  \\|    |   |  #\n#################\n11 11\n###########\n#?????????#\n#?????????#\n#    \\?   #\n#     ????#\n#?????????#\n#?????? ??#\n#?????? ??#\n#?????| ??#\n#?  ?\\|? ?#\n###########",
+          "testOut": "###########\n#         #\n#     *   #\n#    \\|   #\n#     |/  #\n#     |   #\n#     |   #\n#     |   #\n#     |   #\n#    \\|   #\n###########",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Resize",
+          "isTest": false,
+          "testIn": "17 8\n#################\n#               #\n#   *           #\n#  \\|    *   *  #\n#   |/   |/  |  #\n#   |    |   |  #\n#  \\|    |   |  #\n#################\n22 11\n######################\n#????????????????????#\n#????????????????????#\n#    \\?   ??    \\?   #\n#     ??????     ????#\n#????????????????????#\n#?????? ?????????? ??#\n#?????? ??*??????? ??#\n#?????| ?????????| ??#\n#?  ?\\|? ????  ?\\|? ?#\n######################",
+          "testOut": "######################\n#                    #\n#     *          *   #\n#    \\|         \\|   #\n#     |/         |/  #\n#     |          |   #\n#     |          |   #\n#     |   *      |   #\n#     |   |      |   #\n#    \\|   |     \\|   #\n######################",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Bob Was Here",
+          "isTest": true,
+          "testIn": "15 10\n+-------------+\n|             |\n|  +-------+  |\n|  |       |  |\n|  |       |  |\n|  +--+    |  |\n|  |  |    |  |\n|  |  *    *  |\n|  ^          |\n+-------------+\n30 18\n+----------------------------+\n|?????????????????????       |\n|?????????????????????  BOB  |\n|?????????????????????       |\n|????????????????????????????|\n|?????????????????????+??????|\n|??+???????????|?????????????|\n|????????????????????????????|\n|????? ????????*?????????????|\n|???????????????????????-????|\n|????????????????????????????|\n|?????|??????????????????????|\n|??????-?????????????????????|\n|??????????????????*?????????|\n|??????????????     ??*??????|\n|?????*???????  WAS   ????*??|\n|??^?????        HERE        |\n+----------------------------+",
+          "testOut": "+----------------------------+\n|                            |\n|  +-----------+        BOB  |\n|  |           |             |\n|  |           |             |\n|  |           +------+      |\n|  +--------+  |      |      |\n|  |        |  |      |      |\n|  |        |  *      |      |\n|  +--+     |         +---+  |\n|  |  |     +------+  |   |  |\n|  |  |     |      |  |   |  |\n|  |  +--+  |      |  |   |  |\n|  |  |  |  |      *  |   |  |\n|  |  |  |  |         *   |  |\n|  |  *  *  *   WAS       *  |\n|  ^             HERE        |\n+----------------------------+",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Bob Was Here",
+          "isTest": false,
+          "testIn": "15 10\n+-------------+\n|             |\n|  +-------+  |\n|  |       |  |\n|  |       |  |\n|  +--+    |  |\n|  |  |    |  |\n|  |  *    *  |\n|  ^          |\n+-------------+\n30 18\n+----------------------------+\n|?????????????????????       |\n|?????????????????????  BOB  |\n|?????????????????????       |\n|????????????????????????????|\n|?????????????????????+??????|\n|??+???????????|?????????????|\n|????????????????????????????|\n|????? ????????*?????????????|\n|????????????????????????????|\n|?????|?????????????????-????|\n|????????????????????????????|\n|?????+??????????????????????|\n|??????????????????*?????????|\n|???????????*??     ??*??????|\n|?????*???????  WAS   ????*??|\n|??^?????        HERE        |\n+----------------------------+",
+          "testOut": "+----------------------------+\n|                            |\n|  +-----------+        BOB  |\n|  |           |             |\n|  |           |             |\n|  |           +------+      |\n|  +--------+  |      |      |\n|  |        |  |      |      |\n|  |        |  *      |      |\n|  +--+     |         |      |\n|  |  |     +------+  +---+  |\n|  |  |     |      |  |   |  |\n|  |  +--+  |      |  |   |  |\n|  |  |  |  |      *  |   |  |\n|  |  |  |  *         *   |  |\n|  |  *  *      WAS       *  |\n|  ^             HERE        |\n+----------------------------+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "aMAZEing",
+          "isTest": true,
+          "testIn": "12 9\n############\n#E#     #  #\n# # ### ## #\n#   #S#    #\n# ### # ## #\n#     # #  #\n### ### # ##\n#       #  #\n############\n40 20\n########################################\n# ?????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#???????????????????????????E??????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#?????????E????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n##?????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n########################################",
+          "testOut": "########################################\n#    ##             #    #       #     #\n# ##  ## ### ### ## # ## ### ### # ### #\n# # ###  #S# #      #    #   #   # #   #\n#   # #### # # #### # ## ### # ### ### #\n# ### #    #   #    # #      #     #   #\n#     # ###### # ## # #### ####### #####\n### ### #  #   #    # #    #E#     #   #\n#       ## # ### ## # # ## # # ### ## ##\n# ### #    #     #  # #    #   #S#     #\n#      ######### #### # ## # ### # #####\n### #### #E#     #    #    #     #     #\n#        # # ### ## ### #### ### # ### #\n# ###### #   #S#        #    #S# # #   #\n#   #  # # ### # ## ### ## ### # # ### #\n### #### #     #    # #    #   # # #   #\n#   #    # ### # ## # # ## # ### #  ## #\n### ## ### # # # ##  ###   # ### ## #  #\n#          #   #    ##   ###        # ##\n########################################",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "aMAZEing",
+          "isTest": false,
+          "testIn": "12 9\n############\n#E#     #  #\n# # ### ## #\n#   #S#    #\n# ### # ## #\n# #   # #  #\n### ### # ##\n#       #  #\n############\n40 20\n########################################\n# ?????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#???????????????????????????E??????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n##?????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n#??????????????????????????????????????#\n########################################",
+          "testOut": "########################################\n#      #     #  #      #      #     #  #\n# #### # ### ## ## ### ## ### # ### ## #\n# #S#  # #S#    #  #S#    #S#   #S#    #\n### # #### # ## # ## # #### # ### # ## #\n#   #  #   # #  #    # #    #     # #  #\n# ###### ##### ## ## # # ######## # # ##\n# #        #    # #  #   #S#E#    #    #\n# # ## ### # ###### ## ### # # ## # ####\n# # #  #S# #    #    # #   #   #       #\n# # # ## # # ## # #### # ### ### ## ## #\n# # #    # # #  # #S#  #     #   #  #  #\n# # # ######## #### # #### ### ### ## ##\n# # #     #     #   #   #  #   #    #  #\n# # # ### # ### ### # # # ## ### #######\n### # #   # #S#     #   # #            #\n#   # # ##### # ### # # # # ### ### ## #\n# ### #   #   #     #   # #   #   # #  #\n#     # # ### # ### # # # # # # # # # ##\n########################################",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "input\n5 < W,H < 20\n\noutput\nkernel size < W,H < 200",
+      "coverBinaryId": 72497208856573,
+      "stubGenerator": "read W1:int H1:int\nloop H1 read ROW:string(100)\nread W2:int H2:int\nloop H2 read ROW:string(100)\nwrite +----------+\n|          |\n|  *       |\n| \\|    *  |\n|  |/   |/ |\n|  |    |  |\n| \\|    |  |\n+----------+",
+      "inputDescription": "Line 1 : width and height of the prototype\nNext height lines : text of prototype\nNext Line : height and width of partial solution\nNext height lines : text of partial solution\nLine H+4 : height of output\nLines : height lines of output",
+      "solutionLanguage": "Python3",
+      "outputDescription": "Lines of output"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><strong>This is not ASCII art!</strong>  For this in/out puzzle pixels are not available, so instead we will use characters to represent colours.  Imagine each character as a pixel of a specific colour.<br><br>Procedural generation via wave function collapse (WFC) is a way of generating content based off of a few &quot;prototypical&quot; examples&quot;.  Given an image prototype of something as small as 16x16 pixels, WFC can make a 30x300 image with very similar structures drawn from the single prototype.  This is not limited to flowers  or maps but anything with small repeating patterns.  After completing this puzzle you will be able to use this same code to generate a wide variety of content, from dungeon maps, to pixel art.<br><br>See cover art and<br>https://github.com/mxgmn/WaveFunctionCollapse/blob/master/images/wfc.gif<br><br>The task is to read in a prototype image as well as a partially filled solution.  Use the prototype image and WFC (kernel size of 3) to fill in the missing parts of the solution.  The prototype and partial solution will both be printable characters.  The missing parts are designated with the <var>?</var> character.<br><br>Example<br><br><pre style=\"font-family: monospace\">Prototype<br>12 x 8<br>+----------+<br>|          |<br>|  *       |<br>| \\|    *  |<br>|  |/   |/ |<br>|  |    |  |<br>| \\|    |  |<br>+----------+</pre><br><pre style=\"font-family: monospace\">Partial          Expected<br>Solution          Output<br>+----------+    +----------+<br>|??????????|    |          |<br>|??????????|    |  *       |<br>|??????????|    | \\|       |<br>|?????  ?  |    |  |/   *  |<br>|? ? ??\\| ?|    |  |   \\|  |<br>| ??    ?? |    | \\|    |/ |<br>|  ?/   ?  |    |  |/   |  |<br>|??????\\???|    |  |   \\|  |<br>+----------+    +----------+</pre><br><pre style=\"font-family: monospace\">Partial                     Expected<br>Solution                     Output<br>+--------------------+   +--------------------+<br>|     ???????????????|   |                    |<br>|  *         *       |   |  *         *       |<br>| \\|        \\|   ????|   | \\|        \\|    *  |<br>|  |/  ????  ?/   ?/ |   |  |/        |/   |/ |<br>|  |  ?????? ?    ?  |   |  |         |    |  |<br>|  |         ?    ?  |   |  |         |    |  |<br>|  |  ?????  ?    ?  |   |  |    *    |    |  |<br>|  |   ?|??  ?    ?  |   |  |    |/   |    |  |<br>| \\??   |?  \\|?   ?? |   | \\|    |   \\|    |  |<br>+--------------------+   +--------------------+</pre><br><br><strong>NOTE</strong> There are three features to this puzzle that make this easier than a full WFC implementation.  First, the border will always be included in the partial solution and it will be identical to the prototypes border.  Second, the procedure outlined by mxgmn (link below) includes using Shannon Entropy.  Skip that step for this puzzle and only collapse states that are certain.  Third, no reflection or rotation is used in this puzzle.<br><br><strong>RESOURCES</strong> <br>Github repo https://github.com/mxgmn/WaveFunctionCollapse<br>youtube video https://www.youtube.com/watch?v=fnFj3dOKcIQ<br>and https://www.youtube.com/watch?v=t1O0_yHe-6Y<br>and suggested by ninjadip https://www.youtube.com/watch?v=2SuvO4Gi7uY<br><br><strong>REPRODUCIBILITY</strong> In order to achieve full reproducibility of the test and validation output, process the image in these steps.  These steps will make more sense once you've read the background resources.<br>1 * Calculate possible 3x3 patches.  A 5x6 prototype would generate 12 patches<br>2 * Constrain patches from left to right, then from top to bottom<br>3 * After a patch has been constrained, constrain all symbols that are covered by the 3x3 patch<br>4 * If there are still uncertain symbols goto step 2<br><br><strong>A symbol</strong> is something like &quot;#&quot; or &quot;|&quot;.<br><br><strong>Constraining in step 2 means</strong> reduce the list of possible patches to only those patches that are possible given the symbols in the blocks they cover.  For example, if all the blocks are unknown (can be any symbol) except the centre block is known to be either '#' or &quot;|&quot; and the lower right is known to be '*' or '/', then reduce the possible patches to be only patches that have the centre as either '#' or '|' and the lower right to be '*' or '/'.<br><br><strong>Constraining in step 3 means</strong> if, for example, all remaining possible overlapping 3x3 patches are the following 2<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">Patch   Patch<br>#..    .*.<br>#..    .|.<br>###    ###<br></pre><pre style=\"font-family: monospace\"></pre><br>then the blocks are reduced to these lists<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">[#.] [.*] [.]<br>[#.] [.|] [.]<br>[#]  [#]  [#]</pre><pre style=\"font-family: monospace\"></pre><br>We now know for certain that the bottom is all '#' and the right side is '.'<br>And the other positions are constrained to [#.] [.*] and [.|]<br><br><strong>HINT</strong> The hint is ROT13 encoded so it won't spoil your fun.  This site can decode them for you https://rot13.com<br><br>Hint 1 : &quot;Xrrc gjb 2q qngnfrgf, bar sbe gur erznvavat yrtny flzobyf sbe rnpu fdhner, bar sbe gur erznvavat yrtny 3k3 cngpurf pragrerq ng rnpu fdhner.&quot;<br><br>Hint 2 : &quot;Sbe qrohttvat vg vf urycshy gb ercynpr gur &quot;?&quot; jvgu gur ahzore bs cbffvoyr flzobyf (be cbffvoyr cngpurf).  Rnpu vgrengvba bs gur pbafgenvagf fubhyq erfhygf va n erqhpgvba fbzr bs gur ahzore bs cbffvoyr flzobyf naq cngpurf.&quot;<br><br>Hint 3 : &quot;Gur svefg grfg pnfr unf 47 havdhr cngpurf&quot;<br><br>Hint 4 : &quot;Gur rqtrf ner vzcbegnag.  Vapyhqr gur rqtrf va gur perngvba bs naq hfr bs cngpurf&quot;</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">Line 1 : width and height of the prototype<br>Next height lines : text of prototype<br>Next Line : height and width of partial solution<br>Next height lines : text of partial solution<br>Line H+4 : height of output<br>Lines : height lines of output</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Lines of output</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">input<br>5 &lt; W,H &lt; 20<br><br>output<br>kernel size &lt; W,H &lt; 200</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">12 8\n+----------+\n|          |\n|  *       |\n| \\|    *  |\n|  |/   |/ |\n|  |    |  |\n| \\|    |  |\n+----------+\n12 8\n+----------+\n|??????????|\n|  *       |\n| \\|   ????|\n|  ?/   ?/ |\n|  ?    ?  |\n| \\|   ????|\n+----------+</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">+----------+\n|          |\n|  *       |\n| \\|    *  |\n|  |/   |/ |\n|  |    |  |\n| \\|    |  |\n+----------+</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 128367051483,
+  "avatar": 54970169109216,
+  "commentCount": 19,
+  "upVotes": 23,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 620542,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1642363114643,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

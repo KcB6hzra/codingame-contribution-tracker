@@ -1,0 +1,157 @@
+{
+  "id": 4784,
+  "activeVersion": 9,
+  "score": 5,
+  "votableId": 12267912,
+  "codingamerId": 1962352,
+  "views": 172,
+  "commentableId": 12192990,
+  "title": "Chained Matrix Products",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "DPAmar",
+  "publicHandle": "47841f4651e9e5c392bd65e943fc2b15f623",
+  "codingamerHandle": "1aa3b57d313d36f2b421bf8a30a7dfef2532691",
+  "lastVersion": {
+    "version": 9,
+    "autocloseTime": 1580418493193,
+    "data": {
+      "title": "Chained Matrix Products",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Matrix product"
+          }
+        },
+        {
+          "id": 66,
+          "handle": "optimization",
+          "labelMap": {
+            "1": "Optimisation",
+            "2": "Optimization"
+          },
+          "pageTitle": "Optimization: exercises and theory",
+          "puzzleCount": 9,
+          "parentTopicId": 41,
+          "contentDetailsId": 87
+        },
+        {
+          "labelMap": {
+            "2": "Complexity"
+          }
+        },
+        {
+          "id": 60,
+          "handle": "dynamic-programming",
+          "labelMap": {
+            "1": "Programmation dynamique",
+            "2": "Dynamic programming"
+          },
+          "pageTitle": "Dynamic programming: exercises and theory",
+          "puzzleCount": 12,
+          "parentTopicId": 41,
+          "contentDetailsId": 85
+        }
+      ],
+      "solution": "const N = parseInt(readline());\nvar dimensions = [];\n\nvar minDp = [];\n\nfor (let i = 0; i < N; i++) {\n    var inputs = readline().split(' ');\n    const row = parseInt(inputs[0]);\n    const col = parseInt(inputs[1]);\n    \n    //row == col from previous line, no need to store (except first line)\n    if(i == 0) dimensions.push(row);\n    dimensions.push(col);\n    \n    //initialize minDp array ( 0 on diagonal, or null)\n    minDp.push([]);\n    for(let j=0; j < N; j++) {\n        minDp[i].push(i == j ? 0 : null);\n    }\n}\n\n// DP based on recursion + memoization (better for a quick and dirty implementation)\nfunction computeMin(i,j) {\n    // Below diagonal : null - should never happen anyway\n    if(i > j) return null;\n    if(minDp[i][j] == null) {\n        // To compute M(i) * M(i+1) * ... * M(j)\n        //     we consider all possible ways to split this chain in two and take the min\n        var min=+Infinity;\n        for(let k = i; k < j; k++) {\n            var current = computeMin(i,k) + computeMin(k+1,j) + dimensions[i] * dimensions[k+1] * dimensions[j+1];\n            if(min > current) min = current;\n        }\n        minDp[i][j] = min;\n    }\n    return minDp[i][j];\n}\n\nprint(computeMin(0,N-1));",
+      "statement": "The matrix product is an operation that, given matrices A[i,k] (i rows and k columns) and B[k,j], produces matrix C[i,j] where C_x,y is, for each x in 1..i and y = 1..j, the sum of A_x,z*B_z,y for all z in 1..k\nOne can see that i*j*k multiplications are needed to compute C.\n\nMatrix product is an associative operation. This means that given matrices A, B and C with consistent dimensions, then (A.B).C = A.(B.C) = A.B.C; in other words the result remains the same whatever the product order.\n\n<<But complexity is not associative!>> Given A[3,1000], B[1000,5] and C[5,2000] for example:\n- (A.B).C requires 3x1000x5 + 3x5x2000 = 45.000 multiplications\n- A.(B.C) requires 1000x5x2000 + 3x1000x2000 = 16.000.000 multiplications!!!\nAnd this is a (bit extreme) case for 2 products, but the longer the product chain, the more important the difference can be.\n\nThe goal is, given [[N]] pairs of dimensions, to compute the least number of multiplications needed.\n\nNote 1: Actually, there are more efficient algorithms for matrix product that use for example divide and conquer to reduce complexity. But we will only consider the common way described above.\nFor more information, you can have a look at Strassen or Coppersmith–Winograd algorithms.\nNote 2: This product ordering optimization works anyway for different matrix product algorithms.",
+      "testCases": [
+        {
+          "title": "N = 3",
+          "isTest": true,
+          "testIn": "3\n3 1000\n1000 5\n5 2000",
+          "testOut": "45000",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3\n10 30\n30 5\n5 60",
+          "testOut": "4500",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "N = 6",
+          "isTest": true,
+          "testIn": "6\n5 10\n10 6\n6 30\n30 4\n4 12\n12 16",
+          "testOut": "2228",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "6\n10 8\n8 14\n14 22\n22 7\n7 15\n15 12",
+          "testOut": "5600",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "N = 20",
+          "isTest": true,
+          "testIn": "20\n49 11\n11 48\n48 21\n21 49\n49 30\n30 41\n41 18\n18 2\n2 8\n8 1\n1 30\n30 18\n18 21\n21 49\n49 5\n5 28\n28 33\n33 8\n8 9\n9 40",
+          "testOut": "12506",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "20\n29 20\n20 14\n14 40\n40 42\n42 32\n32 47\n47 37\n37 45\n45 47\n47 47\n47 26\n26 20\n20 47\n47 7\n7 3\n3 43\n43 35\n35 10\n10 48\n48 24",
+          "testOut": "62610",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "N = 100",
+          "isTest": true,
+          "testIn": "100\n7 12\n12 23\n23 44\n44 14\n14 17\n17 8\n8 22\n22 27\n27 6\n6 50\n50 47\n47 49\n49 46\n46 25\n25 27\n27 27\n27 46\n46 16\n16 29\n29 17\n17 10\n10 2\n2 34\n34 9\n9 35\n35 41\n41 9\n9 29\n29 39\n39 5\n5 30\n30 24\n24 17\n17 50\n50 37\n37 18\n18 22\n22 10\n10 39\n39 44\n44 23\n23 6\n6 35\n35 46\n46 39\n39 44\n44 29\n29 4\n4 15\n15 10\n10 4\n4 33\n33 43\n43 45\n45 46\n46 24\n24 6\n6 2\n2 22\n22 29\n29 8\n8 46\n46 15\n15 47\n47 14\n14 45\n45 20\n20 27\n27 17\n17 32\n32 15\n15 47\n47 42\n42 9\n9 8\n8 29\n29 49\n49 18\n18 18\n18 32\n32 31\n31 26\n26 6\n6 32\n32 8\n8 30\n30 48\n48 43\n43 45\n45 14\n14 22\n22 39\n39 18\n18 32\n32 15\n15 32\n32 33\n33 32\n32 39\n39 12",
+          "testOut": "143838",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "100\n159 236\n236 156\n156 277\n277 356\n356 356\n356 97\n97 32\n32 366\n366 491\n491 330\n330 390\n390 27\n27 398\n398 123\n123 366\n366 186\n186 464\n464 432\n432 359\n359 299\n299 231\n231 484\n484 48\n48 481\n481 197\n197 227\n227 185\n185 135\n135 407\n407 444\n444 300\n300 15\n15 7\n7 369\n369 169\n169 441\n441 14\n14 193\n193 364\n364 150\n150 252\n252 241\n241 59\n59 221\n221 141\n141 345\n345 187\n187 425\n425 288\n288 76\n76 351\n351 3\n3 72\n72 470\n470 240\n240 126\n126 394\n394 122\n122 176\n176 90\n90 264\n264 24\n24 450\n450 136\n136 275\n275 477\n477 442\n442 176\n176 12\n12 438\n438 224\n224 37\n37 27\n27 220\n220 488\n488 397\n397 299\n299 338\n338 261\n261 308\n308 160\n160 350\n350 44\n44 441\n441 472\n472 382\n382 377\n377 186\n186 99\n99 267\n267 442\n442 400\n400 440\n440 95\n95 231\n231 180\n180 175\n175 236\n236 225\n225 479",
+          "testOut": "19652730",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "3 ≤ [[N]] ≤ 100\n0 < [[row]],[[col]] ≤ 2000\nDimensions are product-compatible (<<id est>> each [[col]] is equal to next line's [[row]])",
+      "stubGenerator": "read N:int\nloop N read row:int col:int\nwrite answer",
+      "inputDescription": "<<Line 1:>> The number [[N]] of matrices to multiply.\n<<Next [[N]] lines:>> Two space-separated integers [[row]] and [[col]], dimensions of the [[N]] matrices.",
+      "solutionLanguage": "Javascript",
+      "outputDescription": "The least number of multiplications needed to compute product."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">The matrix product is an operation that, given matrices A[i,k] (i rows and k columns) and B[k,j], produces matrix C[i,j] where C_x,y is, for each x in 1..i and y = 1..j, the sum of A_x,z*B_z,y for all z in 1..k<br>One can see that i*j*k multiplications are needed to compute C.<br><br>Matrix product is an associative operation. This means that given matrices A, B and C with consistent dimensions, then (A.B).C = A.(B.C) = A.B.C; in other words the result remains the same whatever the product order.<br><br><strong>But complexity is not associative!</strong> Given A[3,1000], B[1000,5] and C[5,2000] for example:<br>- (A.B).C requires 3x1000x5 + 3x5x2000 = 45.000 multiplications<br>- A.(B.C) requires 1000x5x2000 + 3x1000x2000 = 16.000.000 multiplications!!!<br>And this is a (bit extreme) case for 2 products, but the longer the product chain, the more important the difference can be.<br><br>The goal is, given <var>N</var> pairs of dimensions, to compute the least number of multiplications needed.<br><br>Note 1: Actually, there are more efficient algorithms for matrix product that use for example divide and conquer to reduce complexity. But we will only consider the common way described above.<br>For more information, you can have a look at Strassen or Coppersmith&ndash;Winograd algorithms.<br>Note 2: This product ordering optimization works anyway for different matrix product algorithms.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> The number <var>N</var> of matrices to multiply.<br><strong>Next <var>N</var> lines:</strong> Two space-separated integers <var>row</var> and <var>col</var>, dimensions of the <var>N</var> matrices.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The least number of multiplications needed to compute product.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">3 &le; <var>N</var> &le; 100<br>0 &lt; <var>row</var>,<var>col</var> &le; 2000<br>Dimensions are product-compatible (<strong>id est</strong> each <var>col</var> is equal to next line's <var>row</var>)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\n3 1000\n1000 5\n5 2000</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">45000</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 192495545397,
+  "avatar": 56994389567033,
+  "commentCount": 6,
+  "upVotes": 5,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 417889,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1578235578868,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

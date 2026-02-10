@@ -1,0 +1,158 @@
+{
+  "id": 7675,
+  "activeVersion": 23,
+  "score": 29,
+  "votableId": 20906860,
+  "codingamerId": 4081634,
+  "views": 425,
+  "commentableId": 20801132,
+  "title": "River Crossing",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Wontonimo",
+  "publicHandle": "76758846c9b198dbc42714ff228933a2363a",
+  "codingamerHandle": "d0699d9a8e4995e142b0a5cf6a16e1934361804",
+  "lastVersion": {
+    "version": 23,
+    "autocloseTime": 1641087186468,
+    "data": {
+      "title": "River Crossing",
+      "topics": [
+        {
+          "id": 54,
+          "handle": "BFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en largeur",
+            "2": "BFS"
+          },
+          "pageTitle": "BFS: exercises and theory",
+          "puzzleCount": 16,
+          "parentTopicId": 41,
+          "contentDetailsId": 84
+        },
+        {
+          "labelMap": {
+            "2": "Constraint Propagation"
+          }
+        }
+      ],
+      "solution": "from copy import copy\n\nFARMER = 0\nWOLF = 1\nGOAT = 2\nCABBAGE = 3\n\nSTART_STATE = ['L','L','L','L']\nEND_STATE = ['R','R','R','R']\n\ndef wolfRule(state):\n    return state[FARMER] == state[WOLF] or state[WOLF] != state[GOAT]\n\nassert( wolfRule(['L','L','L','L']) == True)\nassert( wolfRule(['R','L','L','L']) == False)\nassert( wolfRule(['R','L','R','L']) == True)\n\ndef goatRule(state):\n    return state[FARMER] == state[GOAT] or state[GOAT] != state[CABBAGE]\n\nassert( goatRule(['L','L','L','L']) == True)\nassert( goatRule(['R','L','L','L']) == False)\nassert( goatRule(['R','L','L','R']) == True)\n\ndef validRule(state):\n    return wolfRule(state) and goatRule(state)\n\ndef winRule(state, target=END_STATE):\n    return state == target\n\nassert( winRule(['L','L','L','L']) == False)\nassert( winRule(['R','L','L','L']) == False)\nassert( winRule(['R','R','R','R']) == True)\n\n# Generating moves\n# Part of the recursive search is to generate the next valid move. We will do this in two parts. The first just generates all possible moves, and the second part will filter out only the valid moves\n\ndef generateMoves(state):\n    # The farmer moves to the other side and can bring 0 or 1 other things so long as it is on the same starting side\n    for other in [FARMER, CABBAGE, GOAT, WOLF]:\n        if state[FARMER] == state[other]:\n            move = copy(state)\n            move[FARMER] = 'L' if state[FARMER] == 'R' else 'R'\n            move[other] = 'L' if state[other] == 'R' else 'R'\n            yield move\n\nassert( list(generateMoves(START_STATE)) == [['R','L','L','L'],['R','L','L','R'],['R','L','R','L'],['R','R','L','L']]  )\n# Again, we add a test to make sure it is doing what we expect when we generate some moves\n\ndef validMoves(state_list):\n    return [ state for state in state_list if validRule(state)]\n\nassert( list(validMoves(generateMoves(START_STATE))) == [['R','L','R','L']]  )\n# Indeed the only first valid move is for the farmer to move the goat!\n\n# Breath First Expand\ndef breathFirstExpand(queue):\n\tresults = []\n\tfor previous_states in queue:\n\t\tfor move in validMoves(generateMoves(previous_states[-1])):\n\t\t\tif move not in previous_states:\n\t\t\t\tresult = previous_states + [move]\n\t\t\t\tresults.append(previous_states + [move])\n\treturn results\n\n# Breath First Search\ndef breathFirstSearch(start, target):\n\tqueue = [ [start] ]\n\n\twhile target not in [ x[-1] for x in queue ]:\n\t\tqueue = breathFirstExpand(queue)\n\t\n    # return only items that contain the solution\n\treturn [x for x in queue if x[-1] == target]\n\ndef convertMovesToText(moves):\n\treturn \"\\n\".join([\" \".join([str(m) for m in move]) for move in moves])\n\ninitial = input().split()\ntarget = input().split()\n\nsolutions = [convertMovesToText(solution) for solution in breathFirstSearch(initial, target)]\n\n# sort the solutions by alphabetical order\nsolutions = sorted(solutions)\nprint(solutions[0])\n",
+      "statement": "There is a farmer, a wolf, a goat and a cabbage.\nThey need to cross a river with the following restrictions:\n\n* The farmer can move from one side to the other freely, and can optionally carry one other entity\n* The wolf can’t be on the same side with the goat without the farmer\n* The goat can’t stay at the same side with the cabbage without the farmer\n\nThe river has two sides <<L>> for Left and <<R>> for Right.\n\nYou are given the initial positions and the target positions, in the following order <<Farmer, Wolf, Goat, Cabbage>>.  For example you may be given the positions like so\n\n<<L L L R>> which would mean that the farmer, wolf, and goat are on the left side and the cabbage is on the right side.\n\nWithout breaking the restrictions, print out the minimum legal states starting at the initial state to get to the target state and including the target state.\n\n<<FOR MULTIPLE SOLUTIONS>>\nIf there are multiple solutions with the same length, <<return the one that is alphabetically first>>.\n\n<<Example Input>>\n`L L L R\nL L L L`\n<<Desired Output>>\n`L L L R\nR L R R\nL L R L\nR L R L\nL L L L`\n<<Explanation>>\n`L L L R // Starting State\nR L R R // Farmer takes goat to right\nL L R L // Farmer takes cabbage left\nR L R L // Farmer returns to goat\nL L L L // Farmer takes goat to left`",
+      "testCases": [
+        {
+          "title": "The question is the solution",
+          "isTest": true,
+          "testIn": "L L L L\nR L R L",
+          "testOut": "L L L L\nR L R L",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "The question is the solution",
+          "isTest": false,
+          "testIn": "R R R R\nL R L R",
+          "testOut": "R R R R\nL R L R",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "The start is the solution",
+          "isTest": true,
+          "testIn": "L L L R\nL L L R",
+          "testOut": "L L L R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "The start is the solution",
+          "isTest": false,
+          "testIn": "R L R L\nR L R L",
+          "testOut": "R L R L",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "From one side to the other",
+          "isTest": true,
+          "testIn": "L L L L\nR R R R",
+          "testOut": "L L L L\nR L R L\nL L R L\nR L R R\nL L L R\nR R L R\nL R L R\nR R R R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "From one side to the other",
+          "isTest": false,
+          "testIn": "R R R R\nL L L L",
+          "testOut": "R R R R\nL R L R\nR R L R\nL L L R\nR L R R\nL L R L\nR L R L\nL L L L",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Mix it Up",
+          "isTest": true,
+          "testIn": "R L R L\nL R L R",
+          "testOut": "R L R L\nL L R L\nR L R R\nL L L R\nR R L R\nL R L R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Mix it Up",
+          "isTest": false,
+          "testIn": "R L R L\nR R L R",
+          "testOut": "R L R L\nL L R L\nR L R R\nL L L R\nR R L R",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Rescue One",
+          "isTest": true,
+          "testIn": "L L L R\nL L L L",
+          "testOut": "L L L R\nR L R R\nL L R L\nR L R L\nL L L L",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Rescue One",
+          "isTest": false,
+          "testIn": "L R L L\nL L L L",
+          "testOut": "L R L L\nR R R L\nL L R L\nR L R L\nL L L L",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "All problems have a solution, and each solution has fewer than 20 transition states",
+      "coverBinaryId": 73761302496073,
+      "stubGenerator": "read INITIAL:string(10)\nread TARGET:string(10)\nwrite L L L L\nR L R L",
+      "inputDescription": "<<Line 1:>> 4 letters representing the initial state\n<<Line 2:>> 4 letters representing the target state",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Lines:>> Solution states, starting with the initial state and ending in the target state"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">There is a farmer, a wolf, a goat and a cabbage.<br>They need to cross a river with the following restrictions:<br><br>* The farmer can move from one side to the other freely, and can optionally carry one other entity<br>* The wolf can&rsquo;t be on the same side with the goat without the farmer<br>* The goat can&rsquo;t stay at the same side with the cabbage without the farmer<br><br>The river has two sides <strong>L</strong> for Left and <strong>R</strong> for Right.<br><br>You are given the initial positions and the target positions, in the following order <strong>Farmer, Wolf, Goat, Cabbage</strong>.  For example you may be given the positions like so<br><br><strong>L L L R</strong> which would mean that the farmer, wolf, and goat are on the left side and the cabbage is on the right side.<br><br>Without breaking the restrictions, print out the minimum legal states starting at the initial state to get to the target state and including the target state.<br><br><strong>FOR MULTIPLE SOLUTIONS</strong><br>If there are multiple solutions with the same length, <strong>return the one that is alphabetically first</strong>.<br><br><strong>Example Input</strong><br><pre style=\"font-family: monospace\">L L L R<br>L L L L</pre><br><strong>Desired Output</strong><br><pre style=\"font-family: monospace\">L L L R<br>R L R R<br>L L R L<br>R L R L<br>L L L L</pre><br><strong>Explanation</strong><br><pre style=\"font-family: monospace\">L L L R // Starting State<br>R L R R // Farmer takes goat to right<br>L L R L // Farmer takes cabbage left<br>R L R L // Farmer returns to goat<br>L L L L // Farmer takes goat to left</pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> 4 letters representing the initial state<br><strong>Line 2:</strong> 4 letters representing the target state</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Lines:</strong> Solution states, starting with the initial state and ending in the target state</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">All problems have a solution, and each solution has fewer than 20 transition states</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">L L L L\nR L R L</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">L L L L\nR L R L</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 130191975703,
+  "avatar": 54970169109216,
+  "commentCount": 22,
+  "upVotes": 30,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 613504,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1640538212684,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

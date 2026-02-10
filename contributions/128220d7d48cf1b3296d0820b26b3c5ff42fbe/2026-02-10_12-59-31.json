@@ -1,0 +1,205 @@
+{
+  "id": 128220,
+  "activeVersion": 11,
+  "score": 1,
+  "votableId": 37433076,
+  "codingamerId": 6098116,
+  "views": 144,
+  "commentableId": 37271729,
+  "title": "Mirror Rotation",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Delicious31415",
+  "publicHandle": "128220d7d48cf1b3296d0820b26b3c5ff42fbe",
+  "codingamerHandle": "6fc5bad6d87584d4100190a570f4e37c6118906",
+  "lastVersion": {
+    "version": 11,
+    "autocloseTime": 1753279316033,
+    "freezeTime": 1751292116033,
+    "data": {
+      "title": "Mirror Rotation",
+      "topics": [
+        {
+          "id": 200,
+          "handle": "priority-queue",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Priority Queue",
+            "2": "Priority Queue"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        },
+        {
+          "id": 86,
+          "handle": "simulation",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Simulation",
+            "2": "Simulation"
+          },
+          "pageTitle": "Simulation: exercises and theory",
+          "puzzleCount": 49,
+          "parentTopicId": 42,
+          "contentDetailsId": 72
+        },
+        {
+          "id": 55,
+          "handle": "DFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en profondeur",
+            "2": "DFS"
+          },
+          "pageTitle": "DFS: exercises and theory",
+          "puzzleCount": 24,
+          "parentTopicId": 41,
+          "contentDetailsId": 79
+        },
+        {
+          "id": 199,
+          "handle": "stack",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Stack",
+            "2": "Stack"
+          },
+          "puzzleCount": 9,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import sys\nimport heapq\n\nl, w = map(int, input().split())\ngrid = [list(input().strip()) for _ in range(w)]\nstart_dir = input().strip()\n\nDIRS = {'N': (0, -1), 'E': (1, 0), 'S': (0, 1), 'W': (-1, 0)}\nREFLECT = {\n    '/': {'N': 'E', 'E': 'N', 'S': 'W', 'W': 'S'},\n    '\\\\': {'N': 'W', 'W': 'N', 'S': 'E', 'E': 'S'}\n}\n\nfor y in range(w):\n    for x in range(l):\n        if grid[y][x] == 'L':\n            start = (x, y)\n        elif grid[y][x] == 'T':\n            target = (x, y)\n\nheap = [(0, start[0], start[1], start_dir, tuple())]\nvisited = set()\n\nwhile heap:\n    flips, x, y, d, flipped = heapq.heappop(heap)\n    state = (x, y, d, flipped)\n    if state in visited:\n        continue\n    visited.add(state)\n\n    dx, dy = DIRS[d]\n    nx, ny = x + dx, y + dy\n\n    while 0 <= nx < l and 0 <= ny < w:\n        cell = grid[ny][nx]\n\n        if (nx, ny) == target:\n            for fx, fy in sorted(flipped, key=lambda p: (p[1], p[0])):\n                print(fx, fy)\n            sys.exit(0)\n\n        if cell == '#':\n            break\n\n        if cell in '/\\\\':\n            new_dir = REFLECT[cell][d]\n            heapq.heappush(heap, (flips, nx, ny, new_dir, flipped))\n\n            flipped_mirror = '/' if cell == '\\\\' else '\\\\'\n            new_dir_flipped = REFLECT[flipped_mirror][d]\n            new_flipped = flipped + ((nx, ny),)\n            heapq.heappush(heap, (flips + 1, nx, ny, new_dir_flipped, new_flipped))\n            break\n\n        nx += dx\n        ny += dy",
+      "statement": "You’re trapped in a room and need to escape by hitting a target with a laser. The laser can’t reach the target directly—you must use mirrors to reflect the beam toward the target.\n\nYou are given:\n- [[l]]: the room's <<length>> (left to right)  \n- [[w]]: the room's <<width>> (top to bottom)  \n- A <<map>> of the room, like this:\n```\n //#\\\\  \n ..#..  \n .T#..  \n \\../L\n```\nEach character in the map represents:\n- {{L}}: the laser’s starting position  \n- {{T}}: the target  \n- {{.}}: empty space  \n- {{#}}: wall (blocks beam)  \n- {{/}}: a mirror from top-right to bottom-left  \n- {{\\}}: a mirror from top-left to bottom-right  \n\nThe top-left corner is coordinate (0, 0).  \nYou are also given the laser’s initial direction:  \n- {{N}} (north = up)  \n- {{E}} (east = right)  \n- {{S}} (south = down)  \n- {{W}} (west = left)\n \nWhen the beam hits a mirror, it reflects at a <<90-degree angle>>:\n- {{/}} turns {{N ↔ E}} and {{S ↔ W}}  \n- {{\\}} turns {{N ↔ W}} and {{S ↔ E}}\nThe beam can pass through the laser.\n\nFind the <<minimum>> number of mirrors to flip (change {{/}} to {{\\}} or {{\\}} to {{/}}) so that the laser beam reaches the target {{T}}.\n  \nPrint the coordinates of the mirrors you need to flip, one per line, in <<reading order>> (top to bottom, left to right).\n\nThe solution for the given example is:\n1 0\n3 0\n(The direction is North for that one).",
+      "testCases": [
+        {
+          "title": "1 Flip",
+          "isTest": true,
+          "testIn": "5 4\n/\\#\\\\\n..#..\n.T#..\n\\../L\nN",
+          "testOut": "3 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "1 Flip.1",
+          "isTest": false,
+          "testIn": "4 4\n#T.\\\n/.L.\n.##.\n/../\nW",
+          "testOut": "0 3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple",
+          "isTest": true,
+          "testIn": "4 5\n/\\.T\n....\n....\n.\\./\n\\..L\nN",
+          "testOut": "1 0\n3 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple.1",
+          "isTest": false,
+          "testIn": "5 4\n\\...\\\n/.T#.\n##.#.\nL...\\\nE",
+          "testOut": "0 0\n0 1\n4 3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Shortest Path",
+          "isTest": true,
+          "testIn": "6 6\n##T..\\\n\\....\\\n../..\\\n/./...\n/..../\n\\...L#\nW",
+          "testOut": "2 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Shortest Path.1",
+          "isTest": false,
+          "testIn": "6 7\n###L##\n\\../.\\\n..#\\.\\\n.#T...\n/...\\.\n\\.//./\n/...\\#\nS",
+          "testOut": "3 1\n3 2\n5 2\n2 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Swirl",
+          "isTest": true,
+          "testIn": "9 9\nL/......\\\n..\\....\\.\n.../../..\n..../\\...\n....T....\n...\\.\\...\n../.../..\n.\\.....\\.\n/......./\nS",
+          "testOut": "2 1\n6 2\n5 5\n2 6\n7 7\n0 8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Swirl.1",
+          "isTest": false,
+          "testIn": "8 8\n\\....../\n./..../.\n..\\..\\..\n...T\\...\n..\\.\\...\n./.../..\n\\...../.\nL....../\nE",
+          "testOut": "0 0\n7 0\n6 1\n2 2\n4 4\n1 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Loop",
+          "isTest": true,
+          "testIn": "7 5\n./...\\\\\n./...\\.\n.......\n.\\.L./.\n...T..\\\nW",
+          "testOut": "5 0\n5 1\n6 4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Loop.1",
+          "isTest": false,
+          "testIn": "6 7\n../.\\.\n/..T./\n......\n....L.\n......\n/.\\./.\n..././\nN",
+          "testOut": "0 5\n2 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Confusing",
+          "isTest": true,
+          "testIn": "7 10\n/../###\n..././#\n......#\n...L./#\n.....##\n./././/\n...T./#\n.....//\n./.../.\n/./####\nE",
+          "testOut": "5 1\n3 5\n5 5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Confusing.1",
+          "isTest": false,
+          "testIn": "8 9\n##\\.\\###\n#\\...\\##\n\\.L./.\\#\n..#....#\n\\....\\\\#\n\\\\##\\..#\n##.....#\n\\\\...\\##\n#T######\nN",
+          "testOut": "2 0\n0 2\n1 7\n5 7",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "2 ≤ [[l]], [[w]] ≤ 10\n1 ≤ number of mirrors ≤ 16\nThe beam will always be able to reach the target after flipping at least one mirror.",
+      "coverBinaryId": 146218148137144,
+      "stubGenerator": "read l:int w:int\nloop w read s:string(l)\nread dir:word(1)\nwrite coords of the mirrors",
+      "inputDescription": "<<Line 1:>> 2 space-separated integers [[l]] and [[w]].\n<<Next [[w]] lines:>> A string [[s]] representing a line of the map.\n<<Next line:>> A string [[dir]] representing the direction the laser is facing ({{N}}, {{E}}, {{S}}, {{W}})",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Minimum number of mirrors needed to flip lines:>> 2 space-separated integers - the coordinates (column, row) of the mirror needed to flip. The mirrors should be listed in reading order."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You&rsquo;re trapped in a room and need to escape by hitting a target with a laser. The laser can&rsquo;t reach the target directly&mdash;you must use mirrors to reflect the beam toward the target.<br><br>You are given:<br>- <var>l</var>: the room's <strong>length</strong> (left to right)  <br>- <var>w</var>: the room's <strong>width</strong> (top to bottom)  <br>- A <strong>map</strong> of the room, like this:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br> //#\\\\  <br> ..#..  <br> .T#..  <br> \\../L<br></pre><pre style=\"font-family: monospace\"></pre><br>Each character in the map represents:<br>- <const>L</const>: the laser&rsquo;s starting position  <br>- <const>T</const>: the target  <br>- <const>.</const>: empty space  <br>- <const>#</const>: wall (blocks beam)  <br>- <const>/</const>: a mirror from top-right to bottom-left  <br>- <const>\\</const>: a mirror from top-left to bottom-right  <br><br>The top-left corner is coordinate (0, 0).  <br>You are also given the laser&rsquo;s initial direction:  <br>- <const>N</const> (north = up)  <br>- <const>E</const> (east = right)  <br>- <const>S</const> (south = down)  <br>- <const>W</const> (west = left)<br> <br>When the beam hits a mirror, it reflects at a <strong>90-degree angle</strong>:<br>- <const>/</const> turns <const>N &harr; E</const> and <const>S &harr; W</const>  <br>- <const>\\</const> turns <const>N &harr; W</const> and <const>S &harr; E</const><br>The beam can pass through the laser.<br><br>Find the <strong>minimum</strong> number of mirrors to flip (change <const>/</const> to <const>\\</const> or <const>\\</const> to <const>/</const>) so that the laser beam reaches the target <const>T</const>.<br>  <br>Print the coordinates of the mirrors you need to flip, one per line, in <strong>reading order</strong> (top to bottom, left to right).<br><br>The solution for the given example is:<br>1 0<br>3 0<br>(The direction is North for that one).</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> 2 space-separated integers <var>l</var> and <var>w</var>.<br><strong>Next <var>w</var> lines:</strong> A string <var>s</var> representing a line of the map.<br><strong>Next line:</strong> A string <var>dir</var> representing the direction the laser is facing (<const>N</const>, <const>E</const>, <const>S</const>, <const>W</const>)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Minimum number of mirrors needed to flip lines:</strong> 2 space-separated integers - the coordinates (column, row) of the mirror needed to flip. The mirrors should be listed in reading order.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &le; <var>l</var>, <var>w</var> &le; 10<br>1 &le; number of mirrors &le; 16<br>The beam will always be able to reach the target after flipping at least one mirror.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5 4\n/\\#\\\\\n..#..\n.T#..\n\\../L\nN</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">3 0</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 17871989803,
+  "avatar": 154204769409682,
+  "commentCount": 18,
+  "upVotes": 2,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 1166277,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1752856380450,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

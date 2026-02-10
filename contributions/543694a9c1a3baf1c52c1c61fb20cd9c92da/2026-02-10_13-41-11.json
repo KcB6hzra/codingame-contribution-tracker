@@ -1,0 +1,174 @@
+{
+  "id": 5436,
+  "activeVersion": 30,
+  "score": 30,
+  "votableId": 14982320,
+  "codingamerId": 668954,
+  "views": 755,
+  "commentableId": 14900082,
+  "title": "The lost files",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Fluxor",
+  "publicHandle": "543694a9c1a3baf1c52c1c61fb20cd9c92da",
+  "codingamerHandle": "ee22a3a22d16d638aa7e4190bfeda486459866",
+  "lastVersion": {
+    "version": 30,
+    "autocloseTime": 1604911800068,
+    "data": {
+      "title": "The lost files",
+      "topics": [
+        {
+          "id": 100,
+          "handle": "graph-theory",
+          "labelMap": {
+            "1": "Graph theory",
+            "2": "Graph theory"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        },
+        {
+          "id": 150,
+          "handle": "graph-traversal",
+          "labelMap": {
+            "1": "graph traversal",
+            "2": "graph traversal"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        },
+        {
+          "id": 95,
+          "handle": "geometry",
+          "labelMap": {
+            "1": "Geometry",
+            "2": "Geometry"
+          },
+          "puzzleCount": 7,
+          "parentTopicId": 93
+        },
+        {
+          "id": 132,
+          "handle": "topology",
+          "labelMap": {
+            "1": "Topology",
+            "2": "Topology"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        },
+        {
+          "labelMap": {
+            "2": "Connected components"
+          }
+        }
+      ],
+      "solution": "#include <vector>\n#include <iostream>\n\nusing namespace std;\n\nvoid dfs(const vector<vector<unsigned>>& iGraph, vector<bool>& ioVisited, unsigned iNodeIndex, unsigned& ioNodeCount, unsigned& ioEdgeCount)\n{\n    if(!ioVisited[iNodeIndex])\n    {\n        ++ioNodeCount;       \n        ioEdgeCount += iGraph[iNodeIndex].size();\n        ioVisited[iNodeIndex] = true;\n    }\n\n    for(int childIndex : iGraph[iNodeIndex])\n    {\n        if(!ioVisited[childIndex]) \n            dfs(iGraph, ioVisited, childIndex, ioNodeCount, ioEdgeCount);\n    }\n}\n\nint main()\n{\n    // read graph\n    unsigned E;\n    cin >> E;\n    \n    vector<vector<unsigned>> graph(E); \n    unsigned hightestNodeIndex = 0;\n    for(unsigned i=0; i<E; i++)\n    {\n        unsigned n1, n2;\n        cin >> n1 >> n2;\n        graph[n1].push_back(n2);\n        graph[n2].push_back(n1);\n        hightestNodeIndex = max(hightestNodeIndex, max(n1, n2));\n    }\n    graph.resize(hightestNodeIndex+1);\n\n    // solve\n    unsigned nbContinents = 0;\n    unsigned nbTiles = 0;\n    \n    vector<bool> visited(graph.size(), false);\n    for(unsigned n=0; n<graph.size(); n++)\n    {\n        if(!visited[n])\n        {\n            nbContinents += 1;\n\n            unsigned nodeCount = 0;\n            unsigned edgeCount = 0;\n            dfs(graph, visited, n, nodeCount, edgeCount);\n            const int faces = 2 + edgeCount/2 - nodeCount; // Euler's formula (N-E+F=2)\n            nbTiles += faces - 1; // do not count ocean\n        }\n    }\n\n    cout <<  nbContinents << \" \" << nbTiles << endl;\n}",
+      "statement": "You work in CG, where you wrote a bleeding-edge map generator for the next multi-player contest.\nYour map generator takes 2 parameters: [[C]] the number of continents and [[T]] the total number of tiles to generate.\nGenerated tiles have <<polygonal shape>> and 2 tiles belong to the same continent if they share <<at least one>> vertex.\n\nYour generator generates 2 files {{vertices.txt}} and {{edges.txt}}.\nThe first one contains coordinates of tile vertices sorted by their index, the second one describes edges between vertices. \nYou spent days to generate random maps and carefully saved the output files of the nicest ones for the contest... <<but you just accidentally erased all the {{vertices.txt}} files!>>\n\nWith the right values of [[C]] and [[T]], you could easily re-generate the erased files because you always hard-code random seeds to 42, but you cannot remember these damn parameters and the contest is in 24h.\nNo choice, you will have to cancel the contest... unless you can write a program to recover the [[C]] and [[T]] parameters from the leftover {{edges.txt}} files.\n\n<<Your task>>\nFind the generator parameters [[C]] and [[T]] from the generated list of edges.\n\n<<Example>>\nHere is a possible planar representation of the edges in the first test:\n`\n                 1 --- 4 -- 10 -- 5\n                 |     |     \\   /\n                 |     |      \\ /\n                 2 --- 7       8\n                        \\     /\n      3 --- 6            \\   /\n       \\   /              \\ /\n        \\ /                0\n         9\n`\nThe edges form [[C]]=2 continents with 1 and 3 tiles for a total of [[T]]=4 tiles.\nThe output should be:\n`2 4`",
+      "testCases": [
+        {
+          "title": "Small example",
+          "isTest": true,
+          "testIn": "13\n4 10\n7 2\n2 1\n4 1\n8 10\n3 9\n6 3\n8 0\n7 4\n5 10\n9 6\n7 0\n8 5",
+          "testOut": "2 4",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Small example",
+          "isTest": false,
+          "testIn": "16\n0 4\n6 2\n12 6\n7 8\n5 10\n3 8\n4 5\n9 2\n12 2\n7 0\n3 11\n1 9\n0 10\n12 1\n5 11\n0 3",
+          "testOut": "2 5",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Single continent with big tiles",
+          "isTest": true,
+          "testIn": "101\n57 8\n4 11\n51 34\n16 55\n17 61\n60 25\n84 45\n75 20\n15 19\n77 52\n74 51\n20 62\n50 84\n28 39\n65 33\n52 79\n56 64\n42 60\n5 34\n24 28\n11 47\n74 31\n14 84\n17 9\n67 10\n73 80\n30 38\n29 59\n7 15\n2 37\n8 23\n36 85\n32 66\n71 18\n27 71\n16 69\n49 47\n14 54\n37 69\n64 85\n48 43\n35 21\n22 33\n22 19\n44 40\n81 17\n53 50\n80 63\n72 32\n75 83\n41 29\n82 10\n41 68\n58 71\n52 63\n40 60\n85 70\n11 71\n6 62\n65 27\n1 44\n21 7\n82 12\n3 9\n15 39\n43 81\n67 85\n46 68\n24 15\n0 48\n1 85\n61 44\n13 32\n30 20\n18 54\n48 26\n31 54\n65 13\n55 53\n4 73\n24 14\n76 8\n72 49\n35 66\n76 80\n67 46\n45 6\n36 41\n25 78\n68 0\n56 42\n12 3\n59 79\n70 58\n79 61\n77 78\n57 30\n5 23\n26 68\n2 38\n83 66",
+          "testOut": "1 16",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Single continent with big tiles",
+          "isTest": false,
+          "testIn": "80\n45 6\n7 19\n12 8\n26 46\n57 8\n38 67\n47 20\n70 1\n60 25\n15 39\n33 65\n69 16\n51 37\n50 57\n36 41\n33 22\n5 3\n23 31\n13 32\n31 4\n0 11\n62 6\n46 43\n63 48\n48 23\n4 38\n59 34\n43 10\n50 53\n68 64\n30 9\n21 7\n37 65\n50 67\n32 72\n36 1\n52 63\n15 14\n55 53\n27 65\n59 29\n37 69\n28 35\n21 65\n5 12\n40 22\n40 11\n69 27\n52 34\n36 64\n4 56\n61 63\n26 68\n49 0\n60 38\n39 24\n20 62\n45 44\n17 10\n56 42\n42 60\n72 49\n54 14\n18 71\n24 28\n27 2\n38 25\n53 58\n30 44\n58 70\n51 3\n13 66\n55 16\n29 41\n54 18\n66 35\n71 27\n61 17\n2 9\n19 47",
+          "testOut": "1 8",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Many islands",
+          "isTest": true,
+          "testIn": "100\n26 48\n43 56\n12 3\n0 46\n14 15\n76 10\n30 84\n38 30\n37 6\n34 53\n36 85\n21 35\n7 21\n2 37\n51 82\n60 42\n63 65\n77 78\n3 67\n18 87\n55 53\n4 79\n49 33\n59 58\n11 19\n66 75\n5 53\n2 38\n56 64\n35 13\n19 22\n39 28\n63 31\n33 72\n11 47\n12 25\n29 59\n70 58\n20 21\n47 49\n16 86\n61 17\n83 7\n17 58\n71 14\n40 44\n1 34\n8 23\n72 32\n32 49\n66 13\n89 86\n74 31\n65 80\n70 85\n27 15\n24 18\n22 88\n39 15\n41 29\n31 52\n16 82\n43 81\n45 6\n83 75\n54 45\n51 76\n26 68\n9 67\n59 61\n84 69\n4 74\n33 88\n67 46\n64 68\n48 81\n50 57\n73 80\n5 23\n35 62\n57 8\n1 5\n56 60\n27 71\n87 14\n69 54\n10 40\n77 0\n44 89\n84 45\n82 10\n24 28\n43 42\n52 79\n9 25\n50 55\n20 62\n41 36\n25 78\n73 4",
+          "testOut": "10 20",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Many islands",
+          "isTest": false,
+          "testIn": "117\n65 35\n2 30\n42 56\n29 36\n44 89\n64 56\n5 76\n83 7\n92 46\n91 23\n33 50\n61 17\n92 31\n66 49\n30 83\n35 73\n94 0\n39 15\n77 0\n68 64\n5 9\n4 27\n81 41\n46 80\n19 22\n18 87\n54 55\n69 54\n59 52\n60 25\n74 59\n87 14\n50 27\n5 24\n22 11\n72 32\n79 52\n0 56\n14 15\n78 30\n29 41\n95 66\n49 47\n9 51\n74 31\n71 18\n49 72\n2 83\n82 12\n6 62\n55 53\n16 44\n1 63\n47 11\n83 75\n37 23\n51 65\n63 97\n8 57\n39 28\n58 61\n60 42\n21 89\n88 76\n24 90\n88 90\n98 53\n70 85\n37 8\n95 11\n71 4\n77 42\n67 44\n91 8\n93 49\n37 69\n16 40\n73 86\n93 66\n21 40\n27 33\n75 20\n4 28\n40 10\n45 84\n57 98\n20 62\n82 10\n79 1\n26 68\n67 38\n17 43\n37 34\n19 13\n76 90\n94 77\n81 43\n52 74\n48 41\n96 26\n84 7\n32 13\n45 6\n78 7\n24 86\n44 40\n34 91\n3 38\n71 50\n58 70\n96 25\n43 48\n74 1\n80 97\n85 36\n41 17\n12 3",
+          "testOut": "9 27",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Complex map",
+          "isTest": true,
+          "testIn": "502\n53 311\n108 52\n276 41\n16 202\n235 64\n252 341\n214 262\n289 137\n308 347\n150 235\n36 235\n230 7\n120 287\n351 93\n334 263\n129 87\n209 142\n353 42\n327 277\n238 1\n258 228\n47 206\n264 238\n310 168\n114 133\n22 14\n38 77\n329 57\n176 259\n283 244\n305 125\n8 249\n236 99\n235 121\n201 280\n101 191\n6 224\n357 86\n360 15\n169 296\n180 331\n315 134\n245 138\n270 328\n145 276\n248 342\n103 160\n292 312\n245 289\n258 230\n343 24\n223 113\n69 293\n279 241\n155 193\n187 204\n169 30\n183 13\n128 84\n151 283\n76 291\n288 252\n180 372\n57 133\n102 117\n229 38\n351 254\n29 22\n39 139\n17 293\n332 157\n263 127\n343 267\n154 181\n222 148\n316 229\n246 366\n73 167\n327 241\n278 289\n84 261\n373 261\n33 53\n64 144\n150 294\n88 107\n215 219\n61 127\n320 346\n336 77\n297 151\n234 333\n229 342\n320 123\n254 191\n4 332\n20 39\n74 263\n310 354\n17 164\n11 69\n194 351\n160 198\n133 27\n364 174\n299 15\n56 321\n363 192\n101 52\n113 151\n343 21\n12 187\n200 263\n360 284\n243 158\n242 346\n25 311\n126 287\n317 146\n55 39\n98 369\n212 82\n361 69\n323 130\n309 297\n307 313\n12 154\n113 159\n105 149\n83 45\n338 223\n271 330\n46 154\n261 186\n5 265\n241 26\n149 318\n259 163\n25 33\n76 367\n347 315\n143 329\n232 180\n180 339\n309 301\n119 103\n184 197\n370 13\n78 221\n32 210\n91 319\n90 30\n177 371\n314 54\n208 97\n348 343\n178 236\n263 151\n230 95\n56 146\n136 56\n98 303\n236 172\n320 268\n248 362\n366 15\n374 253\n285 267\n288 133\n141 237\n332 44\n82 31\n308 313\n274 24\n23 122\n247 31\n226 227\n237 53\n49 226\n188 286\n275 27\n216 298\n273 352\n324 140\n244 170\n218 238\n73 174\n133 363\n144 320\n222 47\n306 35\n164 209\n318 171\n344 93\n103 219\n28 211\n96 273\n3 21\n59 166\n272 207\n260 267\n226 79\n152 173\n240 99\n49 171\n182 165\n252 273\n115 2\n107 349\n176 106\n145 356\n7 271\n352 213\n136 183\n86 285\n20 54\n186 6\n124 355\n156 135\n133 226\n37 41\n166 153\n203 220\n227 252\n226 249\n110 69\n103 367\n186 60\n256 73\n62 203\n178 221\n194 231\n58 308\n10 248\n323 197\n225 5\n8 53\n196 53\n147 240\n117 68\n78 85\n299 260\n268 195\n216 336\n272 186\n353 58\n120 44\n67 263\n43 16\n369 71\n63 282\n168 33\n44 122\n313 317\n275 104\n188 93\n157 265\n84 162\n236 266\n229 71\n365 200\n108 18\n211 85\n267 177\n151 365\n41 185\n152 55\n152 132\n141 354\n331 339\n19 126\n181 50\n331 251\n197 206\n187 50\n68 349\n232 5\n85 135\n223 158\n17 142\n53 354\n370 230\n81 371\n152 333\n32 99\n275 96\n192 143\n125 301\n70 208\n290 110\n250 22\n57 352\n236 356\n116 143\n359 45\n314 98\n74 337\n2 281\n341 326\n217 242\n3 333\n234 146\n197 347\n134 7\n79 259\n243 355\n190 223\n330 308\n139 299\n141 249\n205 204\n111 148\n295 248\n90 216\n51 107\n222 184\n213 104\n307 239\n189 234\n292 323\n121 335\n177 284\n53 122\n244 46\n281 59\n250 195\n44 1\n261 26\n231 302\n261 359\n40 101\n135 145\n114 326\n162 175\n257 56\n207 123\n257 102\n42 91\n308 136\n305 263\n49 16\n75 350\n43 163\n368 305\n298 38\n77 342\n114 352\n79 53\n112 214\n308 35\n319 347\n113 92\n60 175\n138 72\n320 97\n287 23\n304 83\n25 247\n202 328\n251 338\n9 70\n161 156\n330 253\n88 343\n109 366\n165 226\n248 357\n140 300\n269 267\n18 302\n172 233\n1 5\n278 272\n267 303\n111 347\n157 179\n350 115\n62 98\n306 197\n14 36\n345 196\n92 48\n29 34\n5 157\n204 297\n73 119\n182 270\n124 127\n127 190\n155 179\n222 262\n101 169\n94 235\n290 11\n361 322\n98 325\n199 40\n36 320\n147 233\n228 146\n101 90\n251 61\n114 66\n34 185\n358 345\n9 224\n118 205\n159 124\n193 225\n128 129\n236 156\n131 120\n299 65\n249 79\n161 210\n75 2\n256 197\n220 295\n67 113\n215 291\n245 279\n130 100\n50 368\n10 325\n68 89\n73 103\n15 234\n308 95\n199 344\n362 54\n230 239\n214 364\n337 113\n360 81\n316 248\n112 206\n100 340\n80 286\n212 25\n118 170\n230 374\n153 329\n189 109\n373 304\n251 372\n106 227\n358 25\n80 300\n14 250\n350 110\n331 157\n0 259\n52 63\n72 45\n201 341\n66 280\n308 68\n218 332\n312 308\n89 366\n70 84\n84 121\n234 348\n294 278\n19 122\n94 278\n269 246\n196 31\n115 116\n173 274\n85 14\n266 99\n87 137\n76 198\n335 217\n131 332\n334 151\n264 4\n194 324\n371 65\n79 105\n14 37\n132 98\n322 115\n138 304\n340 308\n234 51\n167 76\n255 358\n115 153\n80 199\n222 103\n245 277\n258 321\n48 331\n110 209\n145 28\n282 296\n40 231\n0 328\n336 101\n287 255",
+          "testOut": "3 130",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Complex map",
+          "isTest": false,
+          "testIn": "501\n46 204\n110 293\n140 324\n387 168\n379 243\n40 52\n53 354\n21 267\n157 218\n300 80\n386 344\n186 6\n152 246\n32 46\n244 170\n301 125\n274 24\n205 181\n337 294\n51 107\n6 224\n17 293\n238 264\n341 114\n316 188\n79 176\n250 172\n76 367\n41 356\n198 224\n110 290\n162 128\n129 128\n356 211\n43 163\n1 332\n110 352\n299 81\n172 185\n141 389\n373 197\n272 261\n75 281\n183 13\n221 78\n126 44\n265 232\n272 97\n312 292\n122 311\n5 225\n256 373\n272 45\n10 342\n210 32\n175 137\n159 379\n365 200\n95 384\n360 274\n346 235\n322 115\n235 64\n72 137\n376 264\n188 286\n357 139\n105 49\n123 150\n16 43\n28 211\n243 147\n23 358\n195 301\n242 346\n174 184\n205 118\n255 287\n4 166\n308 340\n67 124\n117 51\n96 290\n168 247\n227 66\n40 282\n328 270\n371 360\n361 293\n351 383\n91 111\n218 238\n237 202\n202 377\n181 12\n301 309\n37 123\n283 355\n226 324\n139 20\n253 315\n345 19\n225 265\n172 22\n310 324\n279 245\n117 173\n319 353\n24 15\n389 387\n82 212\n213 104\n362 20\n65 98\n11 290\n86 325\n223 113\n323 130\n174 214\n301 233\n145 250\n127 61\n108 249\n378 10\n71 369\n355 124\n320 268\n7 183\n19 126\n164 350\n182 318\n89 366\n272 278\n53 79\n93 177\n85 78\n40 194\n327 359\n131 311\n308 148\n11 69\n121 335\n146 313\n347 262\n12 46\n25 385\n63 296\n319 330\n237 141\n127 265\n345 155\n375 59\n185 46\n259 66\n358 82\n179 345\n370 13\n213 352\n374 253\n305 125\n15 390\n81 65\n39 139\n41 37\n36 297\n52 63\n10 388\n26 297\n34 29\n270 182\n324 93\n138 373\n8 53\n134 7\n251 223\n143 116\n219 119\n202 16\n48 61\n31 82\n140 199\n227 201\n295 220\n347 323\n208 70\n273 96\n240 236\n379 337\n57 133\n60 335\n378 38\n9 297\n278 94\n105 149\n76 73\n254 191\n63 286\n303 139\n170 118\n290 2\n90 101\n104 201\n120 44\n232 251\n296 282\n85 135\n357 203\n324 177\n272 207\n148 306\n345 332\n111 315\n209 142\n350 153\n184 222\n27 322\n299 132\n7 271\n147 240\n48 263\n325 108\n239 258\n291 138\n350 115\n74 48\n8 33\n204 266\n103 83\n390 284\n67 263\n171 380\n295 20\n6 277\n194 383\n232 180\n363 133\n292 42\n245 72\n334 337\n352 280\n306 58\n242 217\n307 313\n281 27\n254 351\n337 217\n64 382\n167 73\n287 311\n345 31\n181 154\n234 68\n342 71\n86 144\n256 119\n224 9\n117 89\n207 37\n252 116\n179 225\n47 262\n318 149\n269 246\n243 355\n151 365\n84 70\n267 117\n36 320\n302 18\n315 134\n226 158\n261 138\n290 164\n304 373\n21 3\n0 106\n115 192\n269 89\n193 155\n341 326\n243 154\n285 260\n374 136\n117 68\n378 77\n156 161\n336 77\n102 257\n322 361\n382 37\n338 265\n111 148\n251 372\n20 303\n72 83\n347 47\n53 25\n228 56\n61 305\n100 340\n347 100\n364 222\n184 112\n216 336\n104 275\n94 87\n221 178\n318 354\n0 49\n383 18\n262 111\n331 179\n1 238\n2 75\n333 102\n279 241\n168 33\n343 102\n228 307\n99 46\n311 376\n130 308\n349 107\n137 289\n171 93\n369 38\n335 36\n101 169\n314 54\n255 358\n143 329\n108 324\n90 369\n172 276\n20 388\n60 175\n249 380\n223 92\n29 32\n321 307\n348 349\n386 188\n330 271\n331 180\n67 190\n374 384\n220 362\n39 55\n172 233\n50 244\n288 273\n160 373\n30 169\n176 106\n260 314\n102 88\n266 172\n186 84\n303 81\n30 298\n224 83\n378 369\n227 377\n37 14\n309 297\n252 288\n91 319\n196 311\n5 157\n335 245\n47 112\n50 187\n55 65\n153 192\n193 225\n200 74\n140 18\n63 231\n342 229\n113 265\n152 173\n102 117\n56 313\n135 34\n62 362\n94 121\n87 129\n116 361\n312 148\n360 284\n357 381\n138 137\n353 58\n294 150\n329 57\n326 201\n372 338\n151 337\n300 282\n301 356\n265 339\n317 257\n143 275\n111 35\n109 366\n135 145\n97 208\n3 366\n321 258\n158 144\n316 158\n224 197\n122 23\n324 286\n259 79\n103 215\n375 153\n276 28\n229 220\n368 283\n178 32\n289 261\n165 387\n226 4\n175 162\n389 385\n191 199\n313 317\n163 165\n112 214\n45 359\n156 243\n311 387\n248 381\n377 79\n159 74\n302 231\n281 59\n31 196\n310 108\n334 297\n166 344\n89 274\n325 188\n92 48\n247 212\n142 17\n248 314\n182 165\n117 88\n239 313\n35 292\n241 26\n298 216\n274 371\n189 333\n13 136\n324 230\n131 120\n50 368\n132 98\n91 95\n0 328\n22 14\n363 110\n206 184\n99 236\n198 160\n270 66\n103 367\n219 215\n206 262\n69 209\n203 62\n234 307\n277 327\n353 42\n6 304\n210 161\n232 339\n80 199\n381 285\n127 190\n186 123\n96 114\n117 24\n109 189\n305 204\n298 90\n298 169\n187 204\n108 230\n54 20\n167 291\n379 145\n307 146\n364 174\n348 343\n66 280\n268 195\n91 370",
+          "testOut": "5 115",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "[[E]], [[C]], [[T]] < 1000",
+      "coverBinaryId": 50188524639169,
+      "stubGenerator": "read E:int\nloop E read n1:int n2:int\nwrite 0 0",
+      "inputDescription": "<<Line 1:>> one integer [[E]] the number of edges\n<< Next [[E]] lines:>> two integers [[n1]] and [[n2]] representing an edge between vertex [[n1]] and vertex [[n2]]",
+      "solutionLanguage": "C++",
+      "outputDescription": "2 integers [[C]] and [[T]] for the number of continents and the total number of tiles"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You work in CG, where you wrote a bleeding-edge map generator for the next multi-player contest.<br>Your map generator takes 2 parameters: <var>C</var> the number of continents and <var>T</var> the total number of tiles to generate.<br>Generated tiles have <strong>polygonal shape</strong> and 2 tiles belong to the same continent if they share <strong>at least one</strong> vertex.<br><br>Your generator generates 2 files <const>vertices.txt</const> and <const>edges.txt</const>.<br>The first one contains coordinates of tile vertices sorted by their index, the second one describes edges between vertices. <br>You spent days to generate random maps and carefully saved the output files of the nicest ones for the contest... <strong>but you just accidentally erased all the <const>vertices.txt</const> files!</strong><br><br>With the right values of <var>C</var> and <var>T</var>, you could easily re-generate the erased files because you always hard-code random seeds to 42, but you cannot remember these damn parameters and the contest is in 24h.<br>No choice, you will have to cancel the contest... unless you can write a program to recover the <var>C</var> and <var>T</var> parameters from the leftover <const>edges.txt</const> files.<br><br><strong>Your task</strong><br>Find the generator parameters <var>C</var> and <var>T</var> from the generated list of edges.<br><br><strong>Example</strong><br>Here is a possible planar representation of the edges in the first test:<br><pre style=\"font-family: monospace\"><br>                 1 --- 4 -- 10 -- 5<br>                 |     |     \\   /<br>                 |     |      \\ /<br>                 2 --- 7       8<br>                        \\     /<br>      3 --- 6            \\   /<br>       \\   /              \\ /<br>        \\ /                0<br>         9<br></pre><br>The edges form <var>C</var>=2 continents with 1 and 3 tiles for a total of <var>T</var>=4 tiles.<br>The output should be:<br><pre style=\"font-family: monospace\">2 4</pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> one integer <var>E</var> the number of edges<br><strong> Next <var>E</var> lines:</strong> two integers <var>n1</var> and <var>n2</var> representing an edge between vertex <var>n1</var> and vertex <var>n2</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">2 integers <var>C</var> and <var>T</var> for the number of continents and the total number of tiles</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><var>E</var>, <var>C</var>, <var>T</var> &lt; 1000</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">13\n4 10\n7 2\n2 1\n4 1\n8 10\n3 9\n6 3\n8 0\n7 4\n5 10\n9 6\n7 0\n8 5</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">2 4</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 166336527059,
+  "avatar": 1832090086325,
+  "commentCount": 27,
+  "upVotes": 30,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 499077,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "denyAction": {
+    "actionId": 500530,
+    "progress": 0,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1604394342468,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

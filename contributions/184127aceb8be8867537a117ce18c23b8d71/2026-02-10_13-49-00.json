@@ -1,0 +1,151 @@
+{
+  "id": 1841,
+  "activeVersion": 8,
+  "score": 5,
+  "votableId": 9600740,
+  "codingamerId": 333444,
+  "views": 354,
+  "commentableId": 9533905,
+  "title": "Dynamic sorting",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Davidl.mkh",
+  "publicHandle": "184127aceb8be8867537a117ce18c23b8d71",
+  "codingamerHandle": "013b2c24a4fd8f599b8c43f5d0663158444333",
+  "lastVersion": {
+    "version": 8,
+    "autocloseTime": 1547720308087,
+    "data": {
+      "title": "Dynamic sorting",
+      "topics": [
+        {
+          "id": 112,
+          "handle": "string-manipulation",
+          "labelMap": {
+            "1": "String manipulation",
+            "2": "String manipulation"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        },
+        {
+          "labelMap": {
+            "2": "Sorting"
+          }
+        }
+      ],
+      "solution": "using System;\nusing System.Linq;\nusing System.IO;\nusing System.Text;\nusing System.Collections;\nusing System.Collections.Generic;\n\n/**\n * Auto-generated code below aims at helping you parse\n * the standard input according to the problem statement.\n **/\nclass Solution\n{\n    static void Main(string[] args)\n    {\n        string expression = Console.ReadLine();\n        string types = Console.ReadLine();\n\n        int N = int.Parse(Console.ReadLine());\n\n        var dexp = DeserializeExp(expression, types);\n\n        var items = new List<Dictionary<string, dynamic>>();\n\n        for (int i = 0; i < N; i++)\n        {\n            string ROW = Console.ReadLine();\n\n            Dictionary<string, dynamic> item = new Dictionary<string, dynamic>();\n\n            foreach (string block in ROW.Split(','))\n            {\n                var o = block.Split(':');\n                item.Add(o[0], o[1]);\n            }\n\n            items.Add(item);\n        }\n\n        IOrderedEnumerable<Dictionary<string, dynamic>> sorted = null;\n\n        for (int i = 0; i < dexp.Count(); i++)\n        {\n            var sortparam = dexp.ElementAt(i);\n            if (i == 0)\n            {\n                if (sortparam.IsDescending)\n                    sorted = items.OrderByDescending(a => DynamicKeySelector(a, sortparam));\n                else\n                    sorted = items.OrderBy(a => DynamicKeySelector(a, sortparam));\n            }\n            else\n            {\n                if (sortparam.IsDescending)\n                    sorted = sorted.ThenByDescending(a => DynamicKeySelector(a, sortparam));\n                else\n                    sorted = sorted.ThenBy(a => DynamicKeySelector(a, sortparam));\n            }\n        }\n\n        foreach (var s in sorted)\n            Console.WriteLine(s.FirstOrDefault(o => o.Key == \"id\").Value);\n\n    }\n\n    static dynamic DynamicKeySelector(Dictionary<string, dynamic> a, SortingParameter sortparam)\n    {\n        var value = a.FirstOrDefault(o => o.Key == sortparam.PropName).Value;\n        if (sortparam.TypeName.Equals(\"string\"))\n            return Convert.ToString(value);\n        else if (sortparam.TypeName.Equals(\"int\"))\n            return Convert.ToInt32(value);\n        else\n            throw new ApplicationException($\"type {sortparam.TypeName} not recognized\");\n    }\n\n    static IEnumerable<SortingParameter> DeserializeExp(string source, string t)\n    {\n        string[] types = t.Split(',');\n        List<SortingParameter> res = new List<SortingParameter>();\n\n        while (true)\n        {\n            int next = source.IndexOfAny(new char[] { '+', '-' }, 1);\n\n            string arg = source.Substring(0, next == -1 ? source.Length : next);\n\n            res.Add(new SortingParameter(arg.Substring(1), types[res.Count], arg[0].Equals('-')));\n\n            if (next == -1)\n                break;\n\n            source = source.Substring(next);\n        }\n\n        return res;\n    }\n\n    public class SortingParameter\n    {\n        public SortingParameter(string propName, string typeName, bool isDescending)\n        {\n            PropName = propName;\n            IsDescending = isDescending;\n            TypeName = typeName;\n        }\n\n        public string PropName { get; private set; }\n\n        public bool IsDescending { get; private set; }\n\n        public string TypeName { get; private set; }\n    }\n\n}",
+      "statement": "Sorting in a webApi should be tricky as you have to pass all your parameters in a single URL in a GET request, your team decided to do use this convention to order the result by prop1 ascending, <<then>> by prop2 descending, <<then>> by prop3 ascending.\n<<+prop1-prop2+prop3>>\n\nYou have to read the given items and print their Ids ordered by the given sorting expression.",
+      "testCases": [
+        {
+          "title": "Simple name sorting",
+          "isTest": true,
+          "testIn": "+name\nstring\n3\nid:1,name:maria\nid:2,name:jason\nid:3,name:robert",
+          "testOut": "2\n1\n3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple surname sorting",
+          "isTest": false,
+          "testIn": "+surname\nstring\n3\nid:1,surname:hugo\nid:2,surname:david\nid:3,surname:ludovic",
+          "testOut": "2\n1\n3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "ThenBy",
+          "isTest": true,
+          "testIn": "+age-name\nint,string\n6\nid:1,name:hugo,age:1\nid:2,name:maria,age:12\nid:3,name:jason,age:2\nid:4,name:amit,age:15\nid:5,name:maria,age:6\nid:6,name:robert,age:12",
+          "testOut": "1\n3\n5\n6\n2\n4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "ThenBy",
+          "isTest": false,
+          "testIn": "+name-age\nstring,int\n6\nid:1,name:hugo,age:15\nid:2,name:maria,age:2\nid:3,name:jason,age:12\nid:4,name:amit,age:5\nid:5,name:maria,age:16\nid:6,name:robert,age:12",
+          "testOut": "4\n1\n3\n5\n2\n6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Large dataset",
+          "isTest": true,
+          "testIn": "+age+name\nint,string\n33\nid:1,name:hugo,age:10\nid:2,name:maria,age:2\nid:3,name:jason,age:15\nid:4,name:amit,age:8\nid:5,name:maria,age:5\nid:6,name:david,age:20\nid:7,name:theo,age:22\nid:8,name:fabien,age:13\nid:9,name:michael,age:100\nid:10,name:jordan,age:21\nid:11,name:jean,age:7\nid:12,name:yoan,age:19\nid:13,name:marie,age:8\nid:14,name:justin,age:19\nid:15,name:aria,age:21\nid:16,name:stark,age:2\nid:17,name:julia,age:18\nid:18,name:eva,age:18\nid:19,name:angelina,age:8\nid:20,name:tori,age:22\nid:21,name:ariana,age:21\nid:22,name:sasha,age:2\nid:23,name:caprice,age:2\nid:24,name:clara,age:18\nid:25,name:maurice,age:15\nid:26,name:johny,age:17\nid:27,name:brigitte,age:51\nid:28,name:sophie,age:22\nid:29,name:sophia,age:21\nid:30,name:aurore,age:22\nid:31,name:david,age:9\nid:32,name:damien,age:19\nid:33,name:jason,age:19",
+          "testOut": "23\n2\n22\n16\n5\n11\n4\n19\n13\n31\n1\n8\n3\n25\n26\n24\n18\n17\n32\n33\n14\n12\n6\n15\n21\n10\n29\n30\n28\n7\n20\n27\n9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Another large",
+          "isTest": false,
+          "testIn": "+age-name\nint,string\n35\nid:1,name:hugo,age:10\nid:2,name:maria,age:12\nid:3,name:jason,age:15\nid:4,name:amit,age:8\nid:5,name:maria,age:5\nid:6,name:david,age:20\nid:7,name:theo,age:22\nid:8,name:fabien,age:13\nid:9,name:michael,age:15\nid:10,name:jordan,age:21\nid:11,name:jean,age:1\nid:12,name:yoan,age:19\nid:13,name:marie,age:18\nid:14,name:justin,age:19\nid:15,name:aria,age:21\nid:16,name:stark,age:20\nid:17,name:julia,age:18\nid:18,name:eva,age:18\nid:19,name:angelina,age:18\nid:20,name:tori,age:22\nid:21,name:ariana,age:21\nid:22,name:sasha,age:2\nid:23,name:caprice,age:2\nid:24,name:clara,age:18\nid:25,name:maurice,age:15\nid:26,name:johny,age:17\nid:27,name:brigitte,age:18\nid:28,name:sophie,age:22\nid:29,name:sophia,age:2\nid:30,name:aurore,age:22\nid:31,name:david,age:19\nid:32,name:damien,age:9\nid:33,name:jason,age:17\nid:34,name:malena,age:4\nid:35,name:morgan,age:85",
+          "testOut": "11\n29\n22\n23\n34\n5\n4\n32\n1\n2\n8\n9\n25\n3\n26\n33\n13\n17\n18\n24\n27\n19\n12\n14\n31\n16\n6\n10\n21\n15\n20\n7\n28\n30\n35",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3 sorting parameters",
+          "isTest": true,
+          "testIn": "+age-name+size\nint,string,int\n62\nid:1,name:hugo,age:10,size:165\nid:2,name:maria,age:12,size:85\nid:3,name:jason,age:15,size:190\nid:4,name:amit,age:18,size:60\nid:5,name:maria,age:15,size:155\nid:6,name:david,age:20,size:160\nid:7,name:theo,age:22,size:190\nid:8,name:fabien,age:13,size:180\nid:9,name:michael,age:15,size:80\nid:10,name:jordan,age:21,size:185\nid:11,name:jean,age:17,size:190\nid:12,name:yoan,age:19,size:165\nid:13,name:marie,age:18,size:170\nid:14,name:justin,age:19,size:170\nid:15,name:aria,age:21,size:170\nid:16,name:stark,age:20,size:185\nid:17,name:julia,age:18,size:175\nid:18,name:eva,age:18,size:185\nid:19,name:angelina,age:18,size:65\nid:20,name:tori,age:22,size:155\nid:21,name:ariana,age:21,size:160\nid:22,name:sasha,age:20,size:160\nid:23,name:caprice,age:22,size:180\nid:24,name:clara,age:18,size:185\nid:25,name:maurice,age:15,size:190\nid:26,name:johny,age:17,size:195\nid:27,name:brigitte,age:18,size:175\nid:28,name:eva,age:18,size:170\nid:29,name:sophia,age:21,size:80\nid:30,name:aurore,age:22,size:190\nid:31,name:david,age:19,size:195\nid:32,name:damien,age:19,size:185\nid:33,name:jason,age:17,size:180\nid:34,name:malena,age:24,size:170\nid:35,name:morgan,age:75,size:75\nid:36,name:alina,age:15,size:160\nid:37,name:pierre,age:18,size:190\nid:38,name:yan,age:22,size:180\nid:39,name:ryan,age:23,size:165\nid:40,name:thomas,age:22,size:185\nid:41,name:alain,age:15,size:175\nid:42,name:ariana,age:21,size:165\nid:43,name:ayana,age:20,size:170\nid:44,name:arwen,age:20,size:175\nid:45,name:daniel,age:17,size:190\nid:46,name:joseph,age:18,size:180\nid:47,name:charlie,age:19,size:180\nid:48,name:ariel,age:24,size:190\nid:49,name:georges,age:18,size:170\nid:50,name:ariana,age:21,size:175\nid:51,name:leonard,age:26,size:165\nid:52,name:melissa,age:22,size:180\nid:53,name:amine,age:17,size:170\nid:54,name:coraline,age:18,size:65\nid:55,name:erika,age:15,size:175\nid:56,name:eva,age:18,size:185\nid:57,name:clara,age:20,size:160\nid:58,name:clara,age:20,size:175\nid:59,name:melissa,age:21,size:165\nid:60,name:mathieu,age:15,size:65\nid:61,name:alain,age:15,size:190\nid:62,name:morgan,age:17,size:180",
+          "testOut": "1\n2\n8\n9\n25\n60\n5\n3\n55\n36\n41\n61\n62\n26\n11\n33\n45\n53\n37\n13\n17\n46\n49\n28\n18\n56\n54\n24\n27\n19\n4\n12\n14\n31\n32\n47\n16\n22\n6\n57\n58\n43\n44\n29\n59\n10\n21\n42\n50\n15\n38\n20\n40\n7\n52\n23\n30\n39\n34\n48\n51\n35",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3 sorting parameters",
+          "isTest": false,
+          "testIn": "+age-name+size\nint,string,int\n62\nid:1,name:hugo,age:10,size:165\nid:2,name:maria,age:12,size:185\nid:3,name:jason,age:15,size:90\nid:4,name:amit,age:18,size:160\nid:5,name:maria,age:15,size:155\nid:6,name:david,age:20,size:160\nid:7,name:theo,age:22,size:190\nid:8,name:fabien,age:13,size:180\nid:9,name:michael,age:15,size:180\nid:10,name:jordan,age:21,size:85\nid:11,name:jean,age:17,size:90\nid:12,name:yoan,age:19,size:165\nid:13,name:marie,age:18,size:170\nid:14,name:justin,age:19,size:170\nid:15,name:aria,age:21,size:170\nid:16,name:stark,age:20,size:185\nid:17,name:julia,age:18,size:175\nid:18,name:eva,age:18,size:185\nid:19,name:angelina,age:18,size:165\nid:20,name:tori,age:22,size:155\nid:21,name:ariana,age:21,size:160\nid:22,name:sasha,age:20,size:160\nid:23,name:caprice,age:22,size:180\nid:24,name:clara,age:18,size:185\nid:25,name:maurice,age:15,size:90\nid:26,name:johny,age:17,size:195\nid:27,name:brigitte,age:18,size:175\nid:28,name:eva,age:18,size:170\nid:29,name:sophia,age:21,size:180\nid:30,name:aurore,age:22,size:190\nid:31,name:david,age:19,size:195\nid:32,name:damien,age:19,size:185\nid:33,name:jason,age:17,size:180\nid:34,name:malena,age:24,size:170\nid:35,name:morgan,age:75,size:175\nid:36,name:alina,age:15,size:160\nid:37,name:pierre,age:18,size:190\nid:38,name:yan,age:22,size:180\nid:39,name:ryan,age:23,size:16\nid:40,name:thomas,age:22,size:185\nid:41,name:alain,age:15,size:175\nid:42,name:ariana,age:21,size:165\nid:43,name:ayana,age:20,size:10\nid:44,name:arwen,age:20,size:75\nid:45,name:daniel,age:17,size:90\nid:46,name:joseph,age:18,size:180\nid:47,name:charlie,age:19,size:180\nid:48,name:ariel,age:24,size:190\nid:49,name:georges,age:18,size:170\nid:50,name:ariana,age:21,size:175\nid:51,name:leonard,age:26,size:165\nid:52,name:melissa,age:22,size:180\nid:53,name:amine,age:17,size:170\nid:54,name:coraline,age:18,size:165\nid:55,name:erika,age:15,size:75\nid:56,name:eva,age:18,size:85\nid:57,name:clara,age:20,size:60\nid:58,name:clara,age:20,size:175\nid:59,name:melissa,age:21,size:65\nid:60,name:mathieu,age:15,size:65\nid:61,name:alain,age:15,size:190\nid:62,name:morgan,age:17,size:180",
+          "testOut": "1\n2\n8\n9\n25\n60\n5\n3\n55\n36\n41\n61\n62\n26\n11\n33\n45\n53\n37\n13\n17\n46\n49\n56\n28\n18\n54\n24\n27\n19\n4\n12\n14\n31\n32\n47\n16\n22\n6\n57\n58\n43\n44\n29\n59\n10\n21\n42\n50\n15\n38\n20\n40\n7\n52\n23\n30\n39\n34\n48\n51\n35",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4 sorting parameters",
+          "isTest": true,
+          "testIn": "-age+name+sex+surname\nint,string,string,string\n7\nid:1,name:maria,surname:aa,age:1,sex:male\nid:2,name:jason,surname:tt,age:12,sex:male\nid:3,name:jason,surname:pp,age:14,sex:male\nid:4,name:hugo,surname:dd,age:9,sex:female\nid:5,name:amit,surname:rr,age:2,sex:female\nid:6,name:maria,surname:tt,age:21,sex:male\nid:7,name:maria,surname:zz,age:21,sex:female",
+          "testOut": "7\n6\n3\n2\n4\n5\n1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4 sorting parameters",
+          "isTest": false,
+          "testIn": "-age+name+sex+surname\nint,string,string,string\n7\nid:1,name:maria,surname:aa,age:10,sex:male\nid:2,name:jason,surname:tt,age:12,sex:male\nid:3,name:jason,surname:pp,age:14,sex:male\nid:4,name:hugo,surname:dd,age:9,sex:female\nid:5,name:amit,surname:rr,age:2,sex:female\nid:6,name:maria,surname:tt,age:21,sex:male\nid:7,name:maria,surname:zz,age:21,sex:female",
+          "testOut": "7\n6\n3\n2\n1\n4\n5",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "Types can be \"int\" or \"string\"",
+      "stubGenerator": "read expression:string(256)\nread types:string(256)\nread N:int\nloop N read ROW:string(256)\nwrite answer",
+      "inputDescription": "<<Line 1 :>> The sorting expression\n<<Line 2:>> The associated types of previously given properties separated by \",\"\n<<Line 3 :>> An integer N of the next input lines\n<<N next lines>> an object formatted like this :\nprop1:value1,prop2:value2,prop3:value3",
+      "solutionLanguage": "C#",
+      "outputDescription": "The sorted objects ids (there will always be an id property which is an integer). \nIn case all property fields have the same values, sort it by the id acsendingly."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Sorting in a webApi should be tricky as you have to pass all your parameters in a single URL in a GET request, your team decided to do use this convention to order the result by prop1 ascending, <strong>then</strong> by prop2 descending, <strong>then</strong> by prop3 ascending.<br><strong>+prop1-prop2+prop3</strong><br><br>You have to read the given items and print their Ids ordered by the given sorting expression.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1 :</strong> The sorting expression<br><strong>Line 2:</strong> The associated types of previously given properties separated by &quot;,&quot;<br><strong>Line 3 :</strong> An integer N of the next input lines<br><strong>N next lines</strong> an object formatted like this :<br>prop1:value1,prop2:value2,prop3:value3</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The sorted objects ids (there will always be an id property which is an integer). <br>In case all property fields have the same values, sort it by the id acsendingly.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Types can be &quot;int&quot; or &quot;string&quot;</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">+name\nstring\n3\nid:1,name:maria\nid:2,name:jason\nid:3,name:robert</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">2\n1\n3</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 225321419859,
+  "avatar": 9548796732874,
+  "commentCount": 16,
+  "upVotes": 7,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 296088,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "denyAction": {
+    "actionId": 296121,
+    "progress": 0.3333333333333333,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

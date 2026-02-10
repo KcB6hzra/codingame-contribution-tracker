@@ -1,0 +1,345 @@
+{
+  "id": 78259,
+  "activeVersion": 29,
+  "score": 7,
+  "votableId": 31831652,
+  "codingamerId": 4341304,
+  "views": 281,
+  "commentableId": 31690175,
+  "title": "Scrabble score",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Remi.",
+  "publicHandle": "782593a90df79da5f0d30900aec1cdbdbe36a",
+  "codingamerHandle": "6337619f5905111901909c0bdfdb053c4031434",
+  "lastVersion": {
+    "version": 29,
+    "autocloseTime": 1713479053974,
+    "data": {
+      "title": "Scrabble score",
+      "topics": [
+        {
+          "id": 46,
+          "handle": "loops",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 103,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        },
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 68,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        },
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 57,
+          "parentTopicId": 93
+        },
+        {
+          "id": 142,
+          "handle": "sorting",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Sorting",
+            "2": "Sorting"
+          },
+          "puzzleCount": 11,
+          "parentTopicId": 93
+        },
+        {
+          "id": 73,
+          "handle": "strings",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Chaînes de caractères",
+            "2": "Strings"
+          },
+          "pageTitle": "Strings: exercises and theory",
+          "puzzleCount": 54,
+          "parentTopicId": 41,
+          "contentDetailsId": 73
+        }
+      ],
+      "solution": "#include <bits/stdc++.h>\nusing namespace std;\n\nstruct coord { int x, y; };\n\nint N, W, H;\nstring *pCells, *pPrev, *pPlayed;\nvector<coord> tiles;\nmap<char, int> pts;\nmap<string, int> words;\n\n#define _L (pPrev[y][x]=='.' ? pCells[y][x]=='l' ? 2 : pCells[y][x]=='L' ? 3 : 1 : 1)\n#define _W (pPrev[y][x]=='.' ? pCells[y][x]=='w' ? 2 : pCells[y][x]=='W' ? 3 : 1 : 1)\n\nvoid compH(const coord& c) {\n    int xMin=c.x, xMax=c.x, y=c.y, k=1, score=0;\n    while (xMin>0   && pPlayed[y][xMin-1]!='.') --xMin;\n    while (xMax<W-1 && pPlayed[y][xMax+1]!='.') ++xMax;\n    if (xMin != xMax) {\n        string word;\n        for (int x=xMin; x<=xMax; ++x) word+=pPlayed[y][x], score+=_L*pts[pPlayed[y][x]], k*=_W;\n        words[word] = k * score;\n    }\n}\nvoid compV(const coord& c) {\n    int yMin=c.y, yMax=c.y, x=c.x, k=1, score=0;\n    while (yMin>0   && pPlayed[yMin-1][x]!='.') --yMin;\n    while (yMax<H-1 && pPlayed[yMax+1][x]!='.') ++yMax;\n    if (yMin != yMax) {\n        string word;\n        for (int y=yMin; y<=yMax; ++y) word+=pPlayed[y][x], score+=_L*pts[pPlayed[y][x]], k*=_W;\n        words[word] = k * score;\n    }\n}\nint main()\n{\n    // Read tiles\n    cin >> N;\n    for (int i=0; i<N; ++i) { string s; cin >> s >> pts[s[0]]; }\n    // Read boards\n    cin >> W >> H;\n    string cells [H]; for (string& s : cells ) cin >> s; pCells=cells;\n    string prev  [H]; for (string& s : prev  ) cin >> s; pPrev=prev;\n    string played[H]; for (string& s : played) cin >> s; pPlayed=played;\n    // Check new tiles\n    for (int y=0; y<H; ++y) for (int x=0; x<W; ++x)\n        if (prev[y][x] != played[y][x]) tiles.push_back({x, y});\n    // Compute scores\n    if      (tiles.size()==1)        { compH(tiles[0]); compV(tiles[0]); }\n    else if (tiles[0].y==tiles[1].y) { compH(tiles[0]); for (coord c : tiles) compV(c); }\n    else                             { compV(tiles[0]); for (coord c : tiles) compH(c); }\n    // Print output\n    int score = 0;\n    for (auto [s, n] : words) score+=n, cout << s << \" \" << n << endl;\n    if (tiles.size() == 7) score+=50, cout << \"Bonus 50\" << endl;\n    cout << \"Total \" << score << endl;\n}",
+      "statement": "Given the tile set, with the tile scores,\ngiven the board, with double/triple letter/word score cells,\ngiven the board with words already played,\nand given the updated board with the word you have just played,\nyou have to compute how many points you scored by playing this word.\n\n<<How to compute your score>>\n\nThere are 4 kinds of special cells :\n{{l}} (lower L) : multiply by 2 the score of the tile\n{{L}} : multiply by 3 the score of the tile\n{{w}} : multiply by 2 the score of the entire word\n{{W}} : multiply by 3 the score of the entire word.\n\nThe score is calculated by first summing up the scores of the tiles. If any tile just played falls on {{l}}/{{L}}, the score of that tile is doubled/tripled before summing up. After the sum is found, apply the {{w}}/{{W}} multipliers to the sum if any tile just played falls on those cells, and you get the final score.\nIf you play on several {{w}}  or {{W}}, the multipliers are applied successively.\n\nThere are enough test cases to illustrate how scoring works in practice.\n\n\nMore details about the real scrabble game here :\nhttps://en.wikipedia.org/wiki/Scrabble\nhttps://fr.wikipedia.org/wiki/Scrabble",
+      "testCases": [
+        {
+          "title": "Easy",
+          "isTest": true,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 5\nL 1\nM 3\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 4\nX 8\nY 4\nZ 10\n_ 0\n4 4\nW..w\n....\n....\nl..L\n....\n.OR.\n....\n....\n....\n.OR.\n.F..\n....",
+          "testOut": "OF 5\nTotal 5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Easy",
+          "isTest": false,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 5\nL 1\nM 3\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 4\nX 8\nY 4\nZ 10\n_ 0\n4 4\nW..L\n....\n....\nl..w\n....\n.ME.\n....\n....\n....\n.ME.\n.Y..\n....",
+          "testOut": "MY 7\nTotal 7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Double letter score",
+          "isTest": true,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 5\nL 1\nM 3\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 4\nX 8\nY 4\nZ 10\n_ 0\n4 4\nW..w\n....\n....\nl..L\n....\n.O..\n.U..\n.T..\n....\n.O..\n.U..\nIT..",
+          "testOut": "IT 3\nTotal 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Double letter score",
+          "isTest": false,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 5\nL 1\nM 3\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 4\nX 8\nY 4\nZ 10\n_ 0\n4 4\nW..L\n....\n....\nl..w\n....\n.W..\n.H..\n.Y..\n....\n.W..\n.H..\nBYE.",
+          "testOut": "BYE 11\nTotal 11",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Triple letter score",
+          "isTest": true,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 5\nL 1\nM 3\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 4\nX 8\nY 4\nZ 10\n_ 0\n4 4\nW..w\n....\n....\nl..L\n....\n..S.\n..O.\n..N.\n....\n..S.\n..O.\n.ANY",
+          "testOut": "ANY 14\nTotal 14",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Triple letter score",
+          "isTest": false,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 5\nL 1\nM 3\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 4\nX 8\nY 4\nZ 10\n_ 0\n4 4\nW..L\n....\n....\nl..w\n....\nTELL\n....\n....\n...A\nTELL\n...L\n....",
+          "testOut": "ALL 5\nTotal 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Double word score",
+          "isTest": true,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 10\nL 1\nM 2\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 10\nX 10\nY 10\nZ 10\n_ 0\n4 4\nW..w\n....\n....\nl..L\n....\n....\n.ROI\n....\n...Q\n...U\n.ROI\n....",
+          "testOut": "QUI 20\nTotal 20",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Double word score",
+          "isTest": false,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 10\nL 1\nM 2\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 10\nX 10\nY 10\nZ 10\n_ 0\n4 4\nW..L\n....\n....\nl..w\n....\nALLO\n....\n....\n....\nALLO\n...U\n...I",
+          "testOut": "OUI 6\nTotal 6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Triple word score",
+          "isTest": true,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 10\nL 1\nM 2\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 10\nX 10\nY 10\nZ 10\n_ 0\n10 8\nl........w\n..........\n..........\n..........\n..........\n..........\n..........\nW........L\n..........\n....F.....\n....R.....\n....O.....\n....M.....\n....A.....\n....G.....\n....E.....\n..........\n....F.....\n....R.....\n....O.....\n....M.....\n....A.....\n....G.....\nOMELETTE..",
+          "testOut": "OMELETTE 27\nBonus 50\nTotal 77",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Triple word score",
+          "isTest": false,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 10\nL 1\nM 2\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 10\nX 10\nY 10\nZ 10\n_ 0\n10 8\nW........L\n..........\n..........\n..........\n..........\n..........\n..........\nl........w\n..G.......\n..A.......\n..T.......\n..E.......\n..A.......\n..U.......\n..........\n..........\nBAGUETTE..\n..A.......\n..T.......\n..E.......\n..A.......\n..U.......\n..........\n..........",
+          "testOut": "BAGUETTE 33\nBonus 50\nTotal 83",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple multiplicator",
+          "isTest": true,
+          "testIn": "26\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nL 1\nM 3\nN 1\n~ 8\nO 1\nP 3\nQ 5\nR 1\nS 1\nT 1\nU 1\nV 4\nX 8\nY 4\nZ 10\n_ 0\n7 7\nW..w..W\n.w...w.\n..w.w..\nw..W..w\n..w.w..\n.w...w.\nW..w..W\n.......\n...T...\n...I...\n...E...\n.CAMINO\n...P...\n...O...\n.......\n...T...\n...I...\n...E..C\n.CAMINO\n...P..S\n...O..A",
+          "testOut": "COSA 36\nTotal 36",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple multiplicator",
+          "isTest": false,
+          "testIn": "26\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nL 1\nM 3\nN 1\n~ 8\nO 1\nP 3\nQ 5\nR 1\nS 1\nT 1\nU 1\nV 4\nX 8\nY 4\nZ 10\n_ 0\n7 7\nW..w..W\n.w...w.\n..w.w..\nw..W..w\n..w.w..\n.w...w.\nW..w..W\n.......\n.......\n.......\n.......\n.......\n.......\n.......\n.......\n.......\n.......\nVIDA...\n.......\n.......\n.......",
+          "testOut": "VIDA 48\nTotal 48",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Count the 2 words",
+          "isTest": true,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 5\nL 1\nM 3\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 4\nX 8\nY 4\nZ 10\n_ 0\n7 7\nW..L..W\n.w...w.\n..l.l..\nL..w..L\n..l.l..\n.w...w.\nW..L..W\n.TEST..\n..A....\n..S....\n..T....\n.......\n.......\n.......\n.TESTS.\n..A..I.\n..S..C.\n..T..K.\n.......\n.......\n.......",
+          "testOut": "SICK 20\nTESTS 5\nTotal 25",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Count the 2 words",
+          "isTest": false,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 5\nL 1\nM 3\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 4\nX 8\nY 4\nZ 10\n_ 0\n7 7\nW..L..W\n.w...w.\n..l.l..\nL..w..L\n..l.l..\n.w...w.\nW..L..W\n.WAIT..\n.I.....\n.N.....\n.......\n.......\n.......\n.......\n.WAIT..\n.I.....\n.N.....\nAGO....\n.......\n.......\n.......",
+          "testOut": "AGO 6\nWING 8\nTotal 14",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Special cell on 2 words",
+          "isTest": true,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 5\nL 1\nM 3\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 4\nX 8\nY 4\nZ 10\n_ 0\n15 15\nW..l...W...l..W\n.w...L...L...w.\n..w...l.l...w..\nl..w...l...w..l\n....w.....w....\n.L...L...L...L.\n..l...l.l...l..\nW......w......W\n..l...l.l...l..\n.L...L...L...L.\n....w.....w....\nl..w...l...w..l\n..w...l.l...w..\n.w...L...L...w.\nW..l...W...l..W\n........BURGER.\n..........O....\n..........L....\n.........PLANTS\n..........I....\n..........N....\n.......GANG....\n.......O.......\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n........BURGERS\n..........O...C\n..........L...I\n.........PLANTS\n..........I...S\n..........N...O\n.......GANG...R\n.......O.......\n...............\n...............\n...............\n...............\n...............\n...............\n...............",
+          "testOut": "BURGERS 30\nSCISSOR 27\nTotal 57",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Special cell on 2 words",
+          "isTest": false,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 5\nL 1\nM 3\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 4\nX 8\nY 4\nZ 10\n_ 0\n15 15\nW..l...W...l..W\n.w...L...L...w.\n..w...l.l...w..\nl..w...l...w..l\n....w.....w....\n.L...L...L...L.\n..l...l.l...l..\nW......w......W\n..l...l.l...l..\n.L...L...L...L.\n....w.....w....\nl..w...l...w..l\n..w...l.l...w..\n.w...L...L...w.\nW..l...W...l..W\n........BURGER.\n..........O....\n..........L....\n.........PLANTS\n..........I....\n..........N....\n.......GANG....\n.......O.......\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n........BURGERS\n..........O...A\n..........L...L\n.........PLANTS\n..........I...I\n..........N...F\n.......GANG...Y\n.......O.......\n...............\n...............\n...............\n...............\n...............\n...............\n...............",
+          "testOut": "BURGERS 30\nSALSIFY 39\nTotal 69",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Complete previous word",
+          "isTest": true,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 10\nL 1\nM 2\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 10\nX 10\nY 10\nZ 10\n_ 0\n15 15\nW..l...W...l..W\n.w...L...L...w.\n..w...l.l...w..\nl..w...l...w..l\n....w.....w....\n.L...L...L...L.\n..l...l.l...l..\nW......w......W\n..l...l.l...l..\n.L...L...L...L.\n....w.....w....\nl..w...l...w..l\n..w...l.l...w..\n.w...L...L...w.\nW..l...W...l..W\n........C......\n........A......\n........R......\n.....VERTE.....\n.....I..E......\n.....A.........\n.....N.........\n.....D.Q.B.....\n....RECULE.....\n.......I.LYNX..\n......W..L.....\n.....TOMBEZ....\n......K.O......\n........U......\n........CLE....\n........C......\n........A......\n........R......\n.....VERTE.....\n.....I..E......\n.....A.........\n.....N.........\n.....D.Q.B.....\n....RECULE.....\n.......I.LYNX..\n......W..L.....\n.....TOMBEZ....\n......K.O......\n........U......\n......RACLETTE.",
+          "testOut": "RACLETTE 33\nTotal 33",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Complete previous word",
+          "isTest": false,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 10\nL 1\nM 2\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 10\nX 10\nY 10\nZ 10\n_ 0\n15 15\nW..l...W...l..W\n.w...L...L...w.\n..w...l.l...w..\nl..w...l...w..l\n....w.....w....\n.L...L...L...L.\n..l...l.l...l..\nW......w......W\n..l...l.l...l..\n.L...L...L...L.\n....w.....w....\nl..w...l...w..l\n..w...l.l...w..\n.w...L...L...w.\nW..l...W...l..W\n...............\n..........COQ..\n..........H....\n.....A....A....\n.....VIOLON.B..\n.....E....T.L..\n......T...E.E..\n....K.REGARDS..\n...MISO.....S..\n....W.M.....E..\n....I.BIDE.....\n......E.E......\n........U......\n......TAXE.....\n...............\n...............\n..........COQ..\n..........H....\n.....A....A....\n.....VIOLON.B..\n.....E....T.L..\n......T...E.E..\n....K.REGARDS..\n...MISO.....S..\n....W.M.....E..\n....I.BIDE.....\n......E.E......\n........U......\n....DETAXERAIT.\n...............",
+          "testOut": "DETAXERAIT 44\nTotal 44",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Combo",
+          "isTest": true,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 5\nL 1\nM 3\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 4\nX 8\nY 4\nZ 10\n_ 0\n15 15\nW..l...W...l..W\n.w...L...L...w.\n..w...l.l...w..\nl..w...l...w..l\n....w.....w....\n.L...L...L...L.\n..l...l.l...l..\nW......w......W\n..l...l.l...l..\n.L...L...L...L.\n....w.....w....\nl..w...l...w..l\n..w...l.l...w..\n.w...L...L...w.\nW..l...W...l..W\n........BURGER.\n..........O....\n..........L....\n.........PLANT.\n..........I....\n..........N....\n.......GANG....\n.......O.......\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n........BURGERS\n..........O...A\n..........L...L\n.........PLANTS\n..........I...I\n..........N...F\n.......GANG...Y\n.......O.......\n...............\n...............\n...............\n...............\n...............\n...............\n...............",
+          "testOut": "BURGERS 30\nPLANTS 9\nSALSIFY 42\nBonus 50\nTotal 131",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Combo",
+          "isTest": false,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 5\nL 1\nM 3\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 4\nX 8\nY 4\nZ 10\n_ 0\n15 15\nW..l...W...l..W\n.w...L...L...w.\n..w...l.l...w..\nl..w...l...w..l\n....w.....w....\n.L...L...L...L.\n..l...l.l...l..\nW......w......W\n..l...l.l...l..\n.L...L...L...L.\n....w.....w....\nl..w...l...w..l\n..w...l.l...w..\n.w...L...L...w.\nW..l...W...l..W\n........BURGER.\n..........O....\n..........L....\n.........PLANT.\n..........I....\n..........N....\n.......GANG....\n.......O.......\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n........BURGERS\n..........O...C\n..........L...I\n.........PLANTS\n..........I...S\n..........N...O\n.......GANG...R\n.......O.......\n...............\n...............\n...............\n...............\n...............\n...............\n...............",
+          "testOut": "BURGERS 30\nPLANTS 9\nSCISSOR 30\nBonus 50\nTotal 119",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Blank is important",
+          "isTest": true,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 10\nL 1\nM 2\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 10\nX 10\nY 10\nZ 10\n_ 0\n15 15\nW..l...W...l..W\n.w...L...L...w.\n..w...l.l...w..\nl..w...l...w..l\n....w.....w....\n.L...L...L...L.\n..l...l.l...l..\nW......w......W\n..l...l.l...l..\n.L...L...L...L.\n....w.....w....\nl..w...l...w..l\n..w...l.l...w..\n.w...L...L...w.\nW..l...W...l..W\n...............\n...............\n...............\n.......S.......\n....JUDO.......\n.......L...P...\n.......D..KA...\n.......EWE.R...\n........O..T...\n......MANQUE...\n......I..A.ZOOS\n......S..T....E\n......S.......X\n..............Y\n...............\n...............\n...............\n...............\n.......S.......\n....JUDO.......\n.......L...P...\n.......D..KA...\n.......EWE.R...\n........O..T...\n......MANQUE...\n......I..A.ZOOS\n......S..T....E\n......S.......X\n..............Y\n.............._",
+          "testOut": "SEXY_ 66\nTotal 66",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Blank is important",
+          "isTest": false,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 10\nL 1\nM 2\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 10\nX 10\nY 10\nZ 10\n_ 0\n15 15\nW..l...W...l..W\n.w...L...L...w.\n..w...l.l...w..\nl..w...l...w..l\n....w.....w....\n.L...L...L...L.\n..l...l.l...l..\nW......w......W\n..l...l.l...l..\n.L...L...L...L.\n....w.....w....\nl..w...l...w..l\n..w...l.l...w..\n.w...L...L...w.\nW..l...W...l..W\n...............\n..............A\n............V.X\n.......S...MINE\n....JUDO....S.R\n.......L...PARE\n.......D..KA..Z\n.......EWE.R...\n........O..T...\n......MANQUE...\n......I..A.....\n......S..T.....\n..RAYES........\n...............\n...............\n.............._\n..............A\n............V.X\n.......S...MINE\n....JUDO....S.R\n.......L...PARE\n.......D..KA..Z\n.......EWE.R...\n........O..T...\n......MANQUE...\n......I..A.....\n......S..T.....\n..RAYES........\n...............\n...............",
+          "testOut": "_AXEREZ 72\nTotal 72",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple multiplicator 2",
+          "isTest": true,
+          "testIn": "26\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nL 1\nM 3\nN 1\n~ 8\nO 1\nP 3\nQ 5\nR 1\nS 1\nT 1\nU 1\nV 4\nX 8\nY 4\nZ 10\n_ 0\n15 15\nW..l...W...l..W\n.w...L...L...w.\n..w...l.l...w..\nl..w...l...w..l\n....w.....w....\n.L...L...L...L.\n..l...l.l...l..\nW......w......W\n..l...l.l...l..\n.L...L...L...L.\n....w.....w....\nl..w...l...w..l\n..w...l.l...w..\n.w...L...L...w.\nW..l...W...l..W\n.........M.....\n.........A.....\n.......NI~O....\n.........A.....\n.......D.N.....\n....P.VIDA.....\n....A..N.......\n....L..E.......\n....A..R.......\n.TRABAJO.......\n....R..........\n....AMIGO......\n...............\n...............\n...............\n.......FAMILIAS\n.........A.....\n.......NI~O....\n.........A.....\n.......D.N.....\n....P.VIDA.....\n....A..N.......\n....L..E.......\n....A..R.......\n.TRABAJO.......\n....R..........\n....AMIGO......\n...............\n...............\n...............",
+          "testOut": "FAMILIAS 126\nBonus 50\nTotal 176",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple multiplicator 2",
+          "isTest": false,
+          "testIn": "26\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nL 1\nM 3\nN 1\n~ 8\nO 1\nP 3\nQ 5\nR 1\nS 1\nT 1\nU 1\nV 4\nX 8\nY 4\nZ 10\n_ 0\n15 15\nW..l...W...l..W\n.w...L...L...w.\n..w...l.l...w..\nl..w...l...w..l\n....w.....w....\n.L...L...L...L.\n..l...l.l...l..\nW......w......W\n..l...l.l...l..\n.L...L...L...L.\n....w.....w....\nl..w...l...w..l\n..w...l.l...w..\n.w...L...L...w.\nW..l...W...l..W\n...............\n.............A.\n.........M...~.\n..H..M..PUEBLO.\n.COCHE...S.....\n..M..D..VIDEO..\n..B..I...C.....\n..R..CHICA.....\n..E..O..A......\n........S......\n........A......\n...............\n...............\n...............\n...............\n...............\n.............A.\n.........M...~.\n..H..M..PUEBLO.\n.COCHE...S.....\n..M..D..VIDEO..\n..B..I...C.....\n..R..CHICA.....\n..E..O..A......\n........S......\n....CAMPA~AS...\n...............\n...............\n...............\n...............",
+          "testOut": "CAMPA~AS 84\nBonus 50\nTotal 134",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "First word",
+          "isTest": true,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 10\nL 1\nM 2\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 10\nX 10\nY 10\nZ 10\n_ 0\n15 15\nW..l...W...l..W\n.w...L...L...w.\n..w...l.l...w..\nl..w...l...w..l\n....w.....w....\n.L...L...L...L.\n..l...l.l...l..\nW......w......W\n..l...l.l...l..\n.L...L...L...L.\n....w.....w....\nl..w...l...w..l\n..w...l.l...w..\n.w...L...L...w.\nW..l...W...l..W\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n....PREMIER....\n...............\n...............\n...............\n...............\n...............\n...............\n...............",
+          "testOut": "PREMIER 20\nBonus 50\nTotal 70",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "First word",
+          "isTest": false,
+          "testIn": "27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 10\nL 1\nM 2\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 10\nX 10\nY 10\nZ 10\n_ 0\n15 15\nW..l...W...l..W\n.w...L...L...w.\n..w...l.l...w..\nl..w...l...w..l\n....w.....w....\n.L...L...L...L.\n..l...l.l...l..\nW......w......W\n..l...l.l...l..\n.L...L...L...L.\n....w.....w....\nl..w...l...w..l\n..w...l.l...w..\n.w...L...L...w.\nW..l...W...l..W\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n....DIXIEME....\n...............\n...............\n...............\n...............\n...............\n...............\n...............",
+          "testOut": "DIXIEME 36\nBonus 50\nTotal 86",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Just for fun",
+          "isTest": true,
+          "testIn": "2\n0 1\n1 2\n15 15\nW..l...W...l..W\n.w...L...L...w.\n..w...l.l...w..\nl..w...l...w..l\n....w.....w....\n.L...L...L...L.\n..l...l.l...l..\nW......w......W\n..l...l.l...l..\n.L...L...L...L.\n....w.....w....\nl..w...l...w..l\n..w...l.l...w..\n.w...L...L...w.\nW..l...W...l..W\n...............\n...............\n...............\n...............\n........0......\n........1......\n........1......\n.....01010.....\n......0.1......\n......0........\n......1........\n...0001011.....\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n........0......\n........1......\n........1......\n.....01010.....\n......0.1......\n......0........\n......1........\n...0001011.....\n......0110001..\n...............\n...............",
+          "testOut": "01 3\n0110001 26\n10 3\n100110 10\n11 6\nBonus 50\nTotal 98",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Just for fun",
+          "isTest": false,
+          "testIn": "2\n0 1\n1 2\n15 15\nW..l...W...l..W\n.w...L...L...w.\n..w...l.l...w..\nl..w...l...w..l\n....w.....w....\n.L...L...L...L.\n..l...l.l...l..\nW......w......W\n..l...l.l...l..\n.L...L...L...L.\n....w.....w....\nl..w...l...w..l\n..w...l.l...w..\n.w...L...L...w.\nW..l...W...l..W\n...............\n...............\n...............\n...............\n........0......\n........1......\n........1......\n.....01010.....\n......0.1......\n......0........\n......1........\n...0001011.....\n...............\n...............\n...............\n...............\n...............\n...............\n...............\n........0......\n........1......\n........1......\n.....01010.....\n......0.1......\n......0........\n......1........\n...0001011.....\n......0101001..\n...............\n...............",
+          "testOut": "01 3\n0101001 24\n10 4\n100110 10\n11 4\nBonus 50\nTotal 95",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "2 <= [[nbTiles]] <= 30\n4 <= [[width]], [[height]] <= 15\nThere are at least 1 and at most 7 new tiles played.\nAll new tiles are lined up.\nAt least 1 new tile is near a previously played tile.\nThere won't be two identical new words.",
+      "coverBinaryId": 120557141822045,
+      "stubGenerator": "read nbTiles:int\nloop nbTiles read character:word(1) score:int\nread width:int height:int\nloop height read emptyBoardRow:string(15)\nloop height read previousWordBoardRow:string(15)\nloop height read playedWordBoardRow:string(15)\n\nSTATEMENT\nCompute how many points you scored with your new words !\n\nINPUT\nnbTiles: Number of tiles in the tile set\nemptyBoardRow: Empty board with special cells\npreviousWordBoardRow: Words already played\nplayedWordBoardRow: Words after you play\n\nwrite OF 5\nTotal 5\n",
+      "inputDescription": "<<First line:>> the number of characters [[nbTiles]] in the tile set.\n<<[[nbTiles]] following lines:>> a character and an integer, which is the associated score, space separated. The character may or may not be a letter.\n<< Next line:>> [[width]] and [[height]] of the board, space separated.\n<<[[height]] following lines:>> the empty board with double letter score {{l}}, triple letter score {{L}}, double word score {{w}}, triple word score {{W}}, or normal cell {{.}} .\n<<[[height]] following lines:>> the board with words already played (characters in the tile set, or {{.}} for empty cell).\n<<[[height]] following lines:>> the board with words already played and the word you've just played (characters in the tile set, or {{.}} for empty cell).",
+      "solutionLanguage": "C++",
+      "outputDescription": "<<As many lines as necessary, in lexicographical order:>> Each new word with associated score, space separated.\n<<One more line:>> {{Bonus 50}} if 7 new tiles are played.\n<<Last line:>> {{Total}} followed by a space and the total points scored."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Given the tile set, with the tile scores,<br>given the board, with double/triple letter/word score cells,<br>given the board with words already played,<br>and given the updated board with the word you have just played,<br>you have to compute how many points you scored by playing this word.<br><br><strong>How to compute your score</strong><br><br>There are 4 kinds of special cells :<br><const>l</const> (lower L) : multiply by 2 the score of the tile<br><const>L</const> : multiply by 3 the score of the tile<br><const>w</const> : multiply by 2 the score of the entire word<br><const>W</const> : multiply by 3 the score of the entire word.<br><br>The score is calculated by first summing up the scores of the tiles. If any tile just played falls on <const>l</const>/<const>L</const>, the score of that tile is doubled/tripled before summing up. After the sum is found, apply the <const>w</const>/<const>W</const> multipliers to the sum if any tile just played falls on those cells, and you get the final score.<br>If you play on several <const>w</const>  or <const>W</const>, the multipliers are applied successively.<br><br>There are enough test cases to illustrate how scoring works in practice.<br><br><br>More details about the real scrabble game here :<br>https://en.wikipedia.org/wiki/Scrabble<br>https://fr.wikipedia.org/wiki/Scrabble</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>First line:</strong> the number of characters <var>nbTiles</var> in the tile set.<br><strong><var>nbTiles</var> following lines:</strong> a character and an integer, which is the associated score, space separated. The character may or may not be a letter.<br><strong> Next line:</strong> <var>width</var> and <var>height</var> of the board, space separated.<br><strong><var>height</var> following lines:</strong> the empty board with double letter score <const>l</const>, triple letter score <const>L</const>, double word score <const>w</const>, triple word score <const>W</const>, or normal cell <const>.</const> .<br><strong><var>height</var> following lines:</strong> the board with words already played (characters in the tile set, or <const>.</const> for empty cell).<br><strong><var>height</var> following lines:</strong> the board with words already played and the word you've just played (characters in the tile set, or <const>.</const> for empty cell).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>As many lines as necessary, in lexicographical order:</strong> Each new word with associated score, space separated.<br><strong>One more line:</strong> <const>Bonus 50</const> if 7 new tiles are played.<br><strong>Last line:</strong> <const>Total</const> followed by a space and the total points scored.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &lt;= <var>nbTiles</var> &lt;= 30<br>4 &lt;= <var>width</var>, <var>height</var> &lt;= 15<br>There are at least 1 and at most 7 new tiles played.<br>All new tiles are lined up.<br>At least 1 new tile is near a previously played tile.<br>There won't be two identical new words.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">27\nA 1\nB 3\nC 3\nD 2\nE 1\nF 4\nG 2\nH 4\nI 1\nJ 8\nK 5\nL 1\nM 3\nN 1\nO 1\nP 3\nQ 8\nR 1\nS 1\nT 1\nU 1\nV 4\nW 4\nX 8\nY 4\nZ 10\n_ 0\n4 4\nW..w\n....\n....\nl..L\n....\n.OR.\n....\n....\n....\n.OR.\n.F..\n....</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">OF 5\nTotal 5</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 59498726474,
+  "avatar": 97662026388574,
+  "commentCount": 39,
+  "upVotes": 7,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 934672,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1711230201640,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

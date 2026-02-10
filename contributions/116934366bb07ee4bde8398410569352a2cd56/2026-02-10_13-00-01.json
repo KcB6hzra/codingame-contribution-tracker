@@ -1,0 +1,210 @@
+{
+  "id": 116934,
+  "activeVersion": 21,
+  "score": 31,
+  "votableId": 36251244,
+  "codingamerId": 1983963,
+  "views": 484,
+  "commentableId": 36094173,
+  "title": "3D Duck Hunt",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "pluieciel",
+  "publicHandle": "116934366bb07ee4bde8398410569352a2cd56",
+  "codingamerHandle": "3ae5608cc0aec3a2d51efd34cade51cb3693891",
+  "lastVersion": {
+    "version": 21,
+    "autocloseTime": 1750700773821,
+    "freezeTime": 1738571367129,
+    "data": {
+      "title": "3D Duck Hunt",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Linear Algebra"
+          }
+        }
+      ],
+      "solution": "(ns Solution\n  (:gen-class))\n\n(defn debug [& msg] (binding [*out* *err*] (println msg) (flush)))\n\n(defn cross [[x1 y1 z1] [x2 y2 z2]]\n  [(- (*' y1 z2) (*' z1 y2))    ; x-component: y1*z2 - z1*y2\n   (- (*' z1 x2) (*' x1 z2))    ; y-component: z1*x2 - x1*z2\n   (- (*' x1 y2) (*' y1 x2))])  ; z-component: x1*y2 - y1*x2\n\n(defn calculR [a x v]\n  (when\n    (and (zero? v) (not (zero? a))) (/ x a)))\n\n(defn -main [& _]\n  (let [[duck0 _ _ :as three] (repeatedly 3 #(->> (read-line) (re-seq #\"-?\\d+\") (map read-string)))]\n    (->> three\n        (map #(map - % duck0)) ;; shift system relative to duck0\n        ((fn [[_ \n               [x1 y1 z1 vx1 vy1 vz1]\n               [x2 y2 z2 vx2 vy2 vz2]]]\n            (let [[a b c :as bulletdir] (->> (cross (cross [x1 y1 z1] [vx1 vy1 vz1])\n                                                  (cross [x2 y2 z2] [vx2 vy2 vz2]))) ;; get bullet direction (must go through origin)\n                  nl (keep identity (map calculR [a b c] [x1 y1 z1] [vx1 vy1 vz1]))\n                  r1 (if (not-empty nl)\n                        (first nl) \n                        (let [[[a x1 vx1] [b y1 vy1]] (take 2 (remove #(and (zero? (first %)) (zero? (last %))) (map vector [a b c] [x1 y1 z1] [vx1 vy1 vz1])))]\n                          (/ (- (*' vx1 y1) (*' vy1 x1)) (- (*' vx1 b) (*' vy1 a)))))\n                  hit1 (map *' bulletdir (repeat r1))\n                  dif1 (map vector (map - hit1 [x1 y1 z1]) [vx1 vy1 vz1])\n                  t1 (first (map #(apply / %) (remove #(zero? (first %)) dif1)))\n                  nl (keep identity (map calculR [a b c] [x2 y2 z2] [vx2 vy2 vz2]))\n                  r2 (if (not-empty nl)\n                        (first nl)\n                        (let [[[a x2 vx2] [b y2 vy2]] (take 2 (remove #(and (zero? (first %)) (zero? (last %))) (map vector [a b c] [x2 y2 z2] [vx2 vy2 vz2])))]\n                          (/ (- (*' vx2 y2) (*' vy2 x2)) (- (*' vx2 b) (*' vy2 a)))))\n                  hit2 (map *' bulletdir (repeat r2))\n                  dif2 (map vector (map - hit2 [x2 y2 z2]) [vx2 vy2 vz2])\n                  t2 (first (map #(apply / %) (remove #(zero? (first %)) dif2)))\n                  bulletspeed (map / (map - hit2 hit1) (repeat (- t2 t1)))\n                  bulletpos (mapv - hit2 (map *' bulletspeed (repeat t2)))]\n              (->> (into bulletpos bulletspeed)\n                   (map + duck0)\n                   (map #(re-find #\"-?\\d+\" (str %)))\n                   (apply println))))))))",
+      "statement": "You’ve Got One Shot!\nAs an elite hunter, you’ve tracked three rogue ducks fleeing through 3D space.\nYour final bullet is special: it can be fired at any speed from any position.\nCan you calculate a position and a single speed vector to hit all three ducks in one shot?\n\n<<Duck Trajectories>>\nEach duck’s position and velocity are given in the format:\n[[x]] [[y]] [[z]] {{@}} [[vx]] [[vy]] [[vz]]\n    [[Position]]: Starting coordinates ([[x]], [[y]], [[z]])\n    [[Velocity]]: Speed per second in each direction ([[vx]], [[vy]], [[vz]])\n<<Duck 1>>: {{2 4 3 @ -1 2 0}}\nExample: After 1 second, it moves to {{[1, 6, 3]}}.\n<<Duck 2>>: {{-8 7 0 @ 2 1 1}}\n<<Duck 3>>: {{-4 13 -18 @ 1 0 4}}\n\n<<Rules>>\nYour bullet starts at a position and travels at constant speed.\nA duck is hit if the bullet’s position matches its position at the same time.\n\n<<Example Solution>>\nIf you fire a bullet at {{[-4, 7, 0]}} with speed {{[1, 1, 1]}}:\n    Hits Duck 1 at {{[-1, 10, 3]}} after 3 seconds.\n    Hits Duck 2 at {{[0, 11, 4]}} after 4 seconds.\n    Hits Duck 3 at {{[2, 13, 6]}} after 6 seconds.\n    Boom! All ducks down with one bullet.\n\n<<Your Task>>\nFind position and speed vector for your bullet that intersects all three ducks at some point in time.",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "2 4 3 @ -1 2 0\n-8 7 0 @ 2 1 1\n-4 13 -18 @ 1 0 4",
+          "testOut": "-4 7 0 1 1 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "2 -6 3 @ 2 1 1\n-3 -20 -12 @ 3 2 4\n20 -6 -3 @ -1 -1 2",
+          "testOut": "2 0 3 2 -2 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "careful about zeros",
+          "isTest": true,
+          "testIn": "0 -3 6 @ 0 1 0\n0 0 4 @ 0 0 1\n-5 0 10 @ 1 0 0",
+          "testOut": "0 0 0 0 0 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "0 -12 -4 @ 0 1 1\n-6 -12 -6 @ 1 0 1\n-8 -24 0 @ 1 1 0",
+          "testOut": "0 0 0 0 -2 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "more zeros",
+          "isTest": true,
+          "testIn": "0 -3 6 @ 0 1 0\n0 -4 4 @ 0 1 1\n-5 -5 10 @ 1 1 0",
+          "testOut": "0 0 0 0 0 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "-4 -4 12 @ 1 1 0\n-6 -6 12 @ 1 1 1\n-8 0 24 @ 1 0 0",
+          "testOut": "0 0 0 0 0 3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "a little faster",
+          "isTest": true,
+          "testIn": "-996 -1416 1366 @ -19 34 -25\n-2451 -938 -140 @ 38 12 31\n-492 -1483 1254 @ -19 17 -21",
+          "testOut": "-2046 34 1291 23 -24 -22",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "664 -2794 910 @ 16 24 32\n1936 -2228 2792 @ -35 2 -46\n1353 -1838 618 @ -18 -13 25",
+          "testOut": "1324 -2534 2010 -17 11 -23",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "a bit large",
+          "isTest": true,
+          "testIn": "91057915 -36791586 -98282567 @ -2876 2036 -2235\n90987748 -36738726 -98468669 @ 3081 -3152 9031\n91009748 -36938792 -98052441 @ 2196 2157 -6201",
+          "testOut": "90998768 -36728732 -98321001 2501 -3678 1259",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "90467878 65774620 -45188459 @ 1755 -3333 2411\n90504053 65972027 -45446494 @ 3113 -4111 9444\n90701968 65889456 -45010367 @ -2222 -2421 -1555",
+          "testOut": "90438248 65721230 -45198239 4718 2006 3389",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "super large",
+          "isTest": true,
+          "testIn": "216689910450927 176014643802839 302037819963048 @ -52 45 -48\n216689910591320 176014643956561 302037820092505 @ -115 -137 -115\n216689910484878 176014643874645 302037819984585 @ 23 -49 39",
+          "testOut": "216689910377710 176014643762749 302037819898693 295 235 257",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "336426609891513 385743548107098 217242942730619 @ 162 -176 -209\n336426609975456 385743548007465 217242942574685 @ -96 -46 74\n336426609922575 385743547960218 217242942554927 @ 22 70 123",
+          "testOut": "336426609877986 385743547933251 217242942544247 189 171 163",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "All coordinates and velocities are integers.\nThe ducks’ velocity vectors are linearly independent in 3D space. (i.e.: the 3 vectors don't share a same plane, https://en.wikipedia.org/wiki/Linear_independence)\n\nevery number is within range (-2^49, 2^49)",
+      "coverBinaryId": 137742680827404,
+      "stubGenerator": "loop 3 read line:string(100)\nwrite answer",
+      "inputDescription": "<<line 1:>> Duck 1 data, formatted as [[x]] [[y]] [[z]] {{@}} [[vx]] [[vy]] [[vz]], separated by space.\n<<line 2:>> Duck 2 data, same format.\n<<line 3:>> Duck 3 data, same format.",
+      "solutionLanguage": "Clojure",
+      "outputDescription": "<<line 1:>> [[x]] [[y]] [[z]] [[vx]] [[vy]] [[vz]] for your bullet. 6 numbers separated by space."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You&rsquo;ve Got One Shot!<br>As an elite hunter, you&rsquo;ve tracked three rogue ducks fleeing through 3D space.<br>Your final bullet is special: it can be fired at any speed from any position.<br>Can you calculate a position and a single speed vector to hit all three ducks in one shot?<br><br><strong>Duck Trajectories</strong><br>Each duck&rsquo;s position and velocity are given in the format:<br><var>x</var> <var>y</var> <var>z</var> <const>@</const> <var>vx</var> <var>vy</var> <var>vz</var><br>    <var>Position</var>: Starting coordinates (<var>x</var>, <var>y</var>, <var>z</var>)<br>    <var>Velocity</var>: Speed per second in each direction (<var>vx</var>, <var>vy</var>, <var>vz</var>)<br><strong>Duck 1</strong>: <const>2 4 3 @ -1 2 0</const><br>Example: After 1 second, it moves to <const>[1, 6, 3]</const>.<br><strong>Duck 2</strong>: <const>-8 7 0 @ 2 1 1</const><br><strong>Duck 3</strong>: <const>-4 13 -18 @ 1 0 4</const><br><br><strong>Rules</strong><br>Your bullet starts at a position and travels at constant speed.<br>A duck is hit if the bullet&rsquo;s position matches its position at the same time.<br><br><strong>Example Solution</strong><br>If you fire a bullet at <const>[-4, 7, 0]</const> with speed <const>[1, 1, 1]</const>:<br>    Hits Duck 1 at <const>[-1, 10, 3]</const> after 3 seconds.<br>    Hits Duck 2 at <const>[0, 11, 4]</const> after 4 seconds.<br>    Hits Duck 3 at <const>[2, 13, 6]</const> after 6 seconds.<br>    Boom! All ducks down with one bullet.<br><br><strong>Your Task</strong><br>Find position and speed vector for your bullet that intersects all three ducks at some point in time.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>line 1:</strong> Duck 1 data, formatted as <var>x</var> <var>y</var> <var>z</var> <const>@</const> <var>vx</var> <var>vy</var> <var>vz</var>, separated by space.<br><strong>line 2:</strong> Duck 2 data, same format.<br><strong>line 3:</strong> Duck 3 data, same format.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>line 1:</strong> <var>x</var> <var>y</var> <var>z</var> <var>vx</var> <var>vy</var> <var>vz</var> for your bullet. 6 numbers separated by space.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">All coordinates and velocities are integers.<br>The ducks&rsquo; velocity vectors are linearly independent in 3D space. (i.e.: the 3 vectors don't share a same plane, https://en.wikipedia.org/wiki/Linear_independence)<br><br>every number is within range (-2^49, 2^49)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2 4 3 @ -1 2 0\n-8 7 0 @ 2 1 1\n-4 13 -18 @ 1 0 4</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">-4 7 0 1 1 1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 20061955090,
+  "avatar": 12585096610807,
+  "commentCount": 31,
+  "upVotes": 32,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 1164313,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1740560737000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1740686091310,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1743278737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1744056593495,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1746651937009,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1748108773821,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1750666445301,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

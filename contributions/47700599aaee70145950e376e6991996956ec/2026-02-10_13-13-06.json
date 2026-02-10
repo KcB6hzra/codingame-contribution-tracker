@@ -1,0 +1,212 @@
+{
+  "id": 47700,
+  "activeVersion": 15,
+  "score": 37,
+  "votableId": 28324185,
+  "codingamerId": 4608041,
+  "views": 556,
+  "commentableId": 28195062,
+  "title": "Count your coins",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "superzero4",
+  "publicHandle": "47700599aaee70145950e376e6991996956ec",
+  "codingamerHandle": "a1c538e3504d3e30790a938e0a27d1841408064",
+  "lastVersion": {
+    "version": 15,
+    "autocloseTime": 1692432769083,
+    "data": {
+      "title": "Count your coins",
+      "topics": [
+        {
+          "id": 47,
+          "handle": "arrays",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Tableaux",
+            "2": "Arrays"
+          },
+          "pageTitle": "Arrays: exercises and theory",
+          "puzzleCount": 33,
+          "parentTopicId": 40,
+          "contentDetailsId": 78
+        },
+        {
+          "id": 94,
+          "handle": "mathematics",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Mathematics",
+            "2": "Mathematics"
+          },
+          "puzzleCount": 56,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "using System.Text;\nusing System;\nusing System.Collections.Generic;\nusing System.Linq;\n    public interface IConsole\n    {\n        string ReadLine();\n    }\n    public class ConsoleFacade : IConsole\n    {\n        public string ReadLine() => Console.ReadLine();\n    }\n    public class Program\n    {\n        private const char separator = ' ';\n        public static void Main(string[] args)\n        {            \n                Solve(args);\n        }\n\n        private static void Solve(string[] args)\n        {\n            IConsole entry= new ConsoleFacade();\n            var valueToReach = int.Parse(entry.ReadLine());\n            var N = int.Parse(entry.ReadLine());\n            var nbOfCoins = entry.ReadLine().Split(separator).Select(x => int.Parse(x)).ToArray();\n            var values = new int[N];\n            var splitted = entry.ReadLine().Split(separator);\n            for (int i = 0; i < N; i++)\n            {\n                values[i] = int.Parse(splitted[i]);\n            }\n            System.Console.Write(new Processers.SortedArrayProcessor().Process(valueToReach, N, nbOfCoins, values));\n        }\n        public class Sorts : IComparer<(int, int)>\n        {\n            //static Func<(int, int,int)> comparison = (kv1, kv2) => -kv1.Item2.CompareTo(kv2.Item2);\n            public static IEnumerable<(int, int)> Sort(IEnumerable<(int, int)> enumerable)\n            {\n                var tmp = enumerable.ToList();\n                tmp.Sort(new Sorts());\n                return tmp;\n            }\n            public static (int n, int v)[] ZipArrays(int[] nbOfCoins, int[] values)\n            {\n                var couples = new (int, int)[nbOfCoins.Length];\n                for (int i = 0; i < nbOfCoins.Length; i++)\n                {\n                    couples[i] = (nbOfCoins[i], values[i]);\n                }\n                return couples;\n            }\n            public static (int n, int v)[] CreateSortedCouples(int[] nbOfCoins, int[] values)\n            {\n                var couples = ZipArrays(nbOfCoins, values);\n                Array.Sort(couples, new Sorts());\n                return couples;\n            }\n            public static IEnumerable<(int n, int v)> ZipThenOrder(int[] nbOfCoins, int[] values)\n            {\n                return nbOfCoins.Zip(values, (n, v) => (n, v)).OrderBy(selector);\n            }\n            public static Func<(int n, int v), int> selector => (kv) => kv.v;\n            public int Compare((int, int) kv1, (int, int) kv2) => selector(kv1).CompareTo(selector(kv2));\n        }\n        public class Processers\n        {\n            public interface IProcesser\n            {\n                public int Process(int valueToReach, int N, int[] nbOfCoins, int[] values);\n            }\n            public interface IProcesser<T> : IProcesser where T : IEnumerable<(int n, int v)>\n            {\n                public T CreateStructure(int[] nbOfCoins, int[] values);\n            }\n\n            public abstract class BaseProcesser<T> : IProcesser<T> where T : IEnumerable<(int n, int v)>\n            {\n                public abstract T CreateStructure(int[] nbOfCoins, int[] values);\n                public int Process(int valueToReach, int N, int[] nbOfCoins, int[] values)\n                {\n                    //If total ponderated sum if < goal, we return -1 meaning we can't get the value\n                    if (nbOfCoins.Zip(values, (n, v) => n * v).Sum() < valueToReach)\n                        return -1;\n                    return Process(valueToReach, CreateStructure(nbOfCoins, values));\n                }\n                public abstract int Process(int valueToReach, T structure);\n            }\n            public class StackProcesser : BaseProcesser<Stack<(int n, int v)>>\n            {\n                public override Stack<(int n, int v)> CreateStructure(int[] nbOfCoins, int[] values)\n                {\n                    var stack = new Stack<(int, int)>();\n                    for (int i = 0; i < nbOfCoins.Length; i++)\n                    {\n                        int secondValue = values[i];\n                        var tuple = (nbOfCoins[i], secondValue);\n                        if (stack.Count == 0 || secondValue <= stack.Peek().Item2)\n                            stack.Push(tuple);\n                        else\n                        {\n                            var toReorder = new List<(int, int)>();\n                            while (stack.Count > 0 && secondValue > stack.Peek().Item2)\n                                toReorder.Add(stack.Pop());\n                            stack.Push(tuple);\n                            foreach (var item in toReorder.AsEnumerable().Reverse())\n                                stack.Push(item);\n                        }\n                    }\n                    //less optimized would be \n                    //stack = new Stack<(int, int)>(Program.Sorts.ZipThenOrder(nbOfCoins, values));\n\n                    return stack;\n                }\n\n                public override int Process(int valueToReach, Stack<(int n, int v)> stack)\n                {\n                    int sum = 0;\n                    int result = 0;\n                    for (; sum < valueToReach; result++)\n                    {\n                        /*                        if (stack.Count == 0)\n                                                    return -1;*/\n                        var couple = stack.Pop();\n                        if (couple.n > 0)\n                        {\n                            couple.n--;\n                            sum += couple.v;\n                            if (couple.n > 0)\n                                stack.Push(couple);\n                            /*else\n                                Console.Error.WriteLine(\"Out of coins for : \" + couple);*/\n                        }\n                    }\n                    return result;\n                }\n            }\n            public class SortedArrayProcessor : BaseProcesser<(int n, int v)[]>\n            {\n                public override (int, int)[] CreateStructure(int[] nbOfCoins, int[] values) => Program.Sorts.CreateSortedCouples(nbOfCoins, values);\n\n                public override int Process(int valueToReach, (int n, int v)[] array)\n                {\n                    int sum = 0;\n                    int result = 0;\n                    int skipped = 0;\n                    for (; sum < valueToReach; result++)\n                    {\n                        if (array[skipped].n > 0)\n                        {\n                            array[skipped].n--;\n                            sum += array[skipped].v;\n                            if (array[skipped].n == 0)\n                                skipped++;\n                        }\n                    }\n                    return result;\n                }\n            }\n            public class MinArrayProcessor : BaseProcesser<(int n, int v)[]>\n            {\n                public override (int n, int v)[] CreateStructure(int[] nbOfCoins, int[] values) => Sorts.ZipArrays(nbOfCoins, values);\n\n                public override int Process(int valueToReach, (int n, int v)[] array)\n                {\n                    int sum = 0;\n                    int result = 0;\n                    int index = 0;\n                    while (sum < valueToReach)\n                    {\n                        int min = 1000 * 2;\n                        for (int i = 0; i < array.Length; i++)\n                        {\n                            if (array[i].n > 0 && array[i].v < min)\n                            {\n                                min = array[i].v;\n                                index = i;\n                            }\n                        }\n                        var couple = array[index];\n                        //(index,var couple) = array.Where(nv => nv.n > 0).Select((nv,i)=>(i,nv)).MinBy(inv => inv.nv.v);\n                        for (; couple.n > 0 && sum < valueToReach; result++, couple.n--)\n                        {\n                            sum += couple.v;\n                            //Update modified value\n                        }\n                        array[index] = couple;\n                    }\n                    return result;\n                }\n            }\n        }\n    }\n\n",
+      "statement": "You live in a world where all coins have the same shape, weight and feel. You can't distinguish them in your pocket. Knowing how many coins of each value you have in your pocket, how many should you grab, without looking, to be sure to have enough money to pay?",
+      "testCases": [
+        {
+          "title": "Easy !",
+          "isTest": true,
+          "testIn": "8\n1\n5\n6",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "139\n1\n54\n8",
+          "testOut": "18",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "It's obviously way too much !",
+          "isTest": true,
+          "testIn": "29\n1\n2\n2",
+          "testOut": "-1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "188\n1\n3\n8",
+          "testOut": "-1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "It's way too much.. But less obvious",
+          "isTest": true,
+          "testIn": "246\n3\n12 7 26\n7 8 1",
+          "testOut": "-1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "2856\n3\n5 23 23\n14 4 2",
+          "testOut": "-1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two coin types",
+          "isTest": true,
+          "testIn": "154\n2\n66 76\n8 7",
+          "testOut": "22",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "86\n2\n59 87\n9 7",
+          "testOut": "13",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "That's hard to evaluate...",
+          "isTest": true,
+          "testIn": "134\n4\n54 94 44 44\n9 3 6 8",
+          "testOut": "45",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "130\n4\n98 19 23 75\n5 7 8 9",
+          "testOut": "26",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Why do I have so many different coins ?",
+          "isTest": true,
+          "testIn": "366\n5\n94 90 71 23 82\n6 2 8 7 9",
+          "testOut": "121",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "7\n5\n4 92 18 96 94\n8 2 9 3 1",
+          "testOut": "7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "How does this even fit in my pocket ???",
+          "isTest": true,
+          "testIn": "2589\n1000\n589 705 989 251 701 57 961 500 564 355 149 779 672 733 357 905 991 16 523 799 542 516 856 219 851 742 704 894 68 694 56 256 101 481 900 353 366 121 602 237 87 857 310 841 801 102 138 516 544 435 859 253 250 750 203 912 197 596 949 854 232 55 179 610 634 106 887 138 427 686 816 830 922 626 852 385 890 800 479 715 605 89 412 816 356 177 493 530 406 238 91 796 511 66 662 321 891 857 158 829 248 725 767 135 325 24 151 121 628 935 53 582 668 774 995 508 792 752 499 180 376 526 865 210 160 113 91 116 815 694 877 63 370 887 489 876 399 20 868 315 905 144 141 251 486 823 534 546 643 880 272 77 449 484 503 808 598 941 813 944 249 225 74 690 946 853 37 131 551 785 18 150 865 346 314 228 119 999 751 954 555 761 826 768 715 719 678 928 579 52 780 553 434 986 250 900 386 177 506 623 582 318 381 671 193 505 597 128 708 409 273 787 590 454 461 416 98 479 363 608 948 551 102 619 154 603 483 928 688 498 607 112 531 158 440 322 248 575 70 927 291 398 830 738 154 483 160 93 819 327 344 303 564 30 4 286 430 348 744 112 446 888 613 890 672 971 488 648 824 552 297 691 7 566 454 403 390 664 634 183 483 560 28 592 511 135 757 892 525 654 340 431 837 976 131 32 531 76 202 871 788 592 160 264 455 6 336 435 122 807 619 144 267 766 217 828 426 135 505 753 553 981 869 683 6 266 378 317 430 438 179 654 606 842 47 625 867 423 91 519 738 380 976 602 620 691 275 323 963 605 27 146 978 245 41 519 235 275 567 467 253 862 15 891 719 207 475 271 200 71 46 290 588 624 619 831 826 328 711 361 886 784 863 645 568 978 271 756 140 711 894 869 603 349 85 383 422 178 852 148 566 509 894 741 826 20 171 264 676 333 979 85 228 566 54 927 963 662 927 992 540 659 371 755 140 123 675 349 902 402 104 945 995 996 598 776 91 566 486 518 396 946 118 157 107 807 723 642 914 115 865 732 701 326 80 114 105 30 104 367 574 715 255 921 390 956 488 202 589 334 251 726 742 876 162 861 61 642 831 993 56 840 903 126 898 970 950 684 457 392 146 454 89 607 198 914 467 424 478 970 463 986 886 149 522 802 81 983 518 361 188 8 797 760 774 790 931 275 200 267 741 646 416 355 150 822 366 908 862 300 99 842 266 564 484 891 148 550 958 28 895 993 520 168 341 300 482 824 718 655 309 457 477 479 379 613 550 741 438 343 874 197 443 902 598 119 912 931 62 852 528 138 636 390 593 951 62 991 950 302 789 493 351 583 760 193 136 36 960 832 322 803 862 377 144 296 457 12 715 693 266 184 571 279 790 152 708 7 501 159 52 228 730 815 120 183 888 845 425 399 606 78 302 401 413 914 134 642 272 269 687 287 339 168 285 372 358 726 25 856 793 773 317 794 626 658 369 229 621 54 114 695 749 91 997 467 687 657 415 39 649 181 117 666 210 645 347 396 245 849 28 998 317 372 44 649 185 935 148 764 466 643 41 386 498 619 929 315 512 676 457 437 814 662 376 961 474 113 393 280 339 72 453 237 593 816 26 155 984 672 19 756 257 677 18 711 765 945 635 288 744 394 553 781 909 124 280 372 595 330 51 968 513 764 942 192 124 764 200 703 348 125 863 973 294 22 35 371 513 154 621 643 746 386 98 45 346 67 977 275 735 93 1 858 861 160 775 675 871 172 467 623 487 101 914 381 791 704 503 526 309 526 688 676 191 899 31 946 617 581 917 671 443 278 98 987 3 858 347 818 114 852 214 495 523 501 908 706 563 192 570 514 402 102 996 957 335 17 711 860 784 631 103 582 173 396 785 801 510 787 460 435 592 80 514 54 789 936 380 770 533 639 143 960 125 614 116 555 676 651 138 272 691 428 809 780 293 376 460 408 158 902 179 283 287 907 452 387 764 808 161 795 191 727 99 662 856 588 202 99 59 633 611 263 655 952 774 470 677 785 639 108 326 465 752 740 281 280 667 732 834 16 596 441 387 711 337 570 575 13 352 493 273 888 862 93 507 965 667 252 359 679 450 156 321 577 729 312 728 744 284 98 263 570 754 351 681 628 239 369 37 868 24 843 712 941 110 271 880 623 19 942 362 882 958 939 594 507 569 177 77 502 954 14 898 369 73 884 516 931 992 713 575 92 381 795 472 704 489 446 863 211 320 457 969 546 306 822 38 238 690 484 846 261 290 821 116 357 693 405\n396 114 983 495 167 781 600 853 830 993 691 489 384 786 223 450 769 54 439 108 911 899 931 139 448 159 868 713 276 944 345 337 734 165 860 87 286 116 402 283 888 90 498 916 53 611 771 653 864 146 8 951 170 372 563 284 13 40 602 567 829 96 158 582 407 222 282 523 917 5 245 955 780 45 891 514 316 844 297 329 538 307 428 880 217 704 251 591 901 566 722 872 843 478 343 33 619 421 19 84 392 725 762 144 650 913 349 625 790 435 480 366 214 666 974 23 157 724 568 953 328 797 274 879 112 686 641 93 826 128 340 760 546 125 996 141 520 924 796 51 380 426 103 398 984 28 590 663 406 687 778 258 693 102 477 623 134 859 43 783 765 70 288 936 975 876 6 695 122 598 646 927 816 77 772 989 423 15 400 768 79 229 542 184 2 586 246 746 577 870 553 115 39 142 359 136 789 468 381 499 557 849 492 190 527 682 513 425 232 550 442 626 236 956 20 215 718 886 459 831 788 417 580 292 662 206 172 153 196 934 603 680 526 543 464 399 840 963 37 429 436 266 109 753 610 959 912 482 865 596 185 748 378 618 280 569 990 511 581 194 592 640 369 952 969 101 622 177 305 806 719 293 752 260 506 649 982 819 987 485 270 164 308 803 393 915 565 707 326 878 845 94 558 593 767 518 504 496 304 644 639 697 201 294 319 630 967 787 616 837 871 199 674 530 220 69 354 617 228 947 263 348 373 327 397 81 575 132 352 754 243 445 479 238 601 250 368 827 95 86 432 360 169 427 651 133 516 906 846 954 281 58 237 279 182 802 763 855 437 323 377 205 88 571 42 836 324 124 61 191 758 73 705 257 733 383 17 363 269 655 856 55 664 689 584 633 743 929 46 841 889 180 202 620 977 332 408 588 342 991 968 494 621 668 160 824 16 121 129 493 712 1000 884 200 458 918 792 755 902 710 683 938 988 27 572 539 92 509 490 923 862 604 823 460 595 976 854 867 883 726 171 208 648 219 940 143 851 466 914 531 660 50 104 756 187 795 654 893 298 76 852 300 614 255 701 941 638 961 973 677 937 979 728 410 334 609 60 784 420 64 1 303 209 605 744 791 447 741 404 72 794 578 470 898 554 715 127 659 268 173 473 335 148 151 476 904 388 994 850 502 389 932 919 793 62 318 367 461 97 32 672 652 555 515 866 997 82 179 52 341 732 178 123 111 690 168 438 730 749 587 449 613 244 782 964 702 999 585 905 848 22 355 547 188 484 118 234 551 357 273 154 570 675 597 140 903 825 739 634 456 233 49 896 832 351 162 711 212 7 358 385 833 972 475 532 113 211 267 679 382 105 63 137 38 126 629 949 665 556 842 910 424 599 166 131 56 897 430 41 353 254 808 454 247 926 99 25 231 606 176 422 895 302 529 805 636 30 278 737 252 216 10 692 474 779 966 149 336 481 483 869 673 776 100 371 262 395 242 416 145 948 4 451 887 706 391 317 364 291 287 716 512 676 290 908 248 559 958 574 524 431 907 995 942 83 536 289 858 678 218 120 775 362 729 688 813 986 235 742 440 684 635 306 681 544 374 817 822 239 535 950 545 560 814 505 834 759 21 533 26 540 225 138 387 119 875 939 894 946 656 497 376 331 921 800 221 589 628 709 462 576 339 370 204 573 564 66 213 379 750 798 799 175 241 847 325 519 960 667 594 699 957 413 240 549 985 735 818 925 312 259 65 486 181 163 503 452 415 740 67 892 14 548 224 275 117 747 313 632 645 156 106 522 838 74 48 930 541 347 346 562 85 253 501 71 75 443 657 207 467 757 721 386 935 24 183 147 356 863 928 890 150 227 314 696 607 738 700 736 44 945 330 390 31 89 35 161 528 57 661 295 285 265 472 694 277 433 68 882 970 981 874 311 488 203 192 708 751 583 978 507 537 920 322 777 195 770 685 310 272 773 230 615 309 835 815 810 900 612 642 727 414 3 18 720 261 91 861 301 29 922 264 579 98 998 36 670 807 745 463 971 193 980 419 637 723 820 453 418 365 469 441 152 457 809 135 812 315 801 444 107 446 962 409 12 943 210 857 333 226 500 78 130 11 643 299 828 517 717 411 933 764 821 671 510 658 731 491 698 881 624 256 471 405 47 350 766 647 59 34 877 965 909 631 873 465 455 774 627 80 198 249 412 155 403 992 361 375 197 534 174 703 186 320 344 552 296 669 839 9 110 761 885 508 525 561 714 338 189 401 434 487 394 608 785 271 521 321 804 811",
+          "testOut": "1095",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "4540\n1000\n656 593 4 636 646 634 27 419 701 529 756 52 161 462 453 52 21 945 776 527 765 430 125 332 124 246 985 962 440 101 289 644 147 688 347 37 113 833 58 273 332 654 438 4 565 719 726 724 649 230 579 29 448 815 836 723 980 686 506 82 162 498 704 194 711 71 433 965 316 181 635 240 709 767 606 542 946 112 961 409 576 43 905 34 379 336 906 130 394 223 632 674 883 476 801 335 554 55 930 122 15 383 498 894 835 652 795 728 482 694 74 214 926 663 498 454 578 204 961 352 688 843 842 580 700 156 581 613 855 298 155 512 892 51 317 59 265 715 162 73 436 216 824 740 631 659 258 649 648 258 686 444 278 859 5 338 461 370 774 348 528 738 166 202 73 944 696 572 451 472 871 406 180 6 299 371 499 186 498 490 57 287 7 899 284 944 26 571 8 724 784 131 685 655 78 575 369 92 477 719 146 511 48 82 447 533 748 938 847 770 881 258 430 780 74 147 515 979 341 518 562 478 193 862 395 572 424 9 463 254 549 478 86 976 295 913 725 602 795 216 162 379 564 303 357 936 737 202 371 476 220 360 698 585 112 847 279 19 861 382 349 911 723 757 203 125 109 465 10 267 418 753 137 734 72 559 195 361 41 845 750 571 677 840 168 435 782 239 755 563 932 523 935 667 699 471 148 512 496 355 256 686 248 674 139 849 1 609 636 749 323 907 405 687 430 330 361 767 725 245 84 95 136 474 617 56 377 101 774 421 168 639 556 185 633 379 35 749 537 547 125 747 444 752 757 38 28 475 247 981 50 501 3 803 423 433 330 754 386 563 309 306 661 113 45 771 121 735 194 918 429 794 378 42 546 986 686 219 381 886 571 918 216 589 943 721 824 281 854 473 934 792 806 589 330 714 430 832 738 630 852 322 461 828 990 215 102 830 991 670 851 565 901 39 487 843 469 509 304 565 208 160 268 484 174 19 210 427 233 776 172 641 672 816 854 547 722 378 608 630 781 636 561 731 119 40 836 894 924 816 173 717 206 433 10 990 337 408 608 73 837 563 562 136 881 43 227 692 751 559 942 438 782 446 14 830 764 804 834 549 789 673 552 694 133 867 87 427 888 118 989 469 747 404 418 568 461 944 266 15 303 508 854 690 195 799 490 247 286 605 88 629 353 596 803 391 820 193 19 35 364 363 348 901 6 209 184 851 7 997 280 467 680 644 276 501 202 178 440 756 499 604 183 713 225 177 702 454 843 294 111 639 371 71 166 216 427 373 791 90 660 868 112 444 228 796 480 305 911 737 521 849 659 385 317 136 336 382 187 425 935 70 691 388 270 998 813 478 745 631 8 991 916 127 535 382 702 407 458 267 724 573 909 454 859 165 845 393 394 954 63 603 633 382 505 505 190 15 889 141 411 721 98 751 904 59 641 452 352 821 765 996 96 164 628 461 188 592 626 118 7 851 684 426 327 331 311 692 428 930 878 35 795 852 615 711 120 307 537 457 994 525 250 127 159 169 669 29 710 523 108 649 373 310 610 289 461 188 408 346 476 676 120 3 246 6 774 452 970 493 988 693 182 81 469 565 751 898 698 201 669 291 968 26 989 596 972 57 83 159 851 461 336 968 602 316 750 708 807 212 826 638 176 895 774 313 324 727 318 579 767 956 20 941 519 571 660 825 518 408 924 989 915 985 399 474 884 996 388 462 465 274 629 438 426 667 570 607 267 571 201 676 967 624 417 759 805 464 84 271 107 678 429 965 437 151 669 864 806 889 135 943 488 556 758 971 978 41 342 943 351 786 51 664 192 163 77 819 388 46 68 951 581 848 533 929 396 416 204 123 165 727 56 976 687 593 521 841 987 453 169 717 993 509 105 784 347 846 575 878 97 46 877 247 236 91 66 755 524 851 210 129 624 977 794 189 750 3 728 162 496 664 382 532 554 748 619 391 158 471 770 822 2 351 608 946 732 837 390 905 204 880 946 782 336 636 860 523 480 260 619 209 498 840 212 124 223 820 874 926 358 672 727 926 158 166 212 231 965 56 304 362 147 692 556 245 970 350 113 488 274 773 817 828 147 209 972 944 914 613 210 947 644 995 681 713 324 902 217 180 199 286 906 843 808 184 731 152 286 441 789 418 759 33 569 696 984 593 852 871 348 426 401 942 342 186 125 604 290 353 209 86 281 955 519 686 20 348 16 219 11 65 305 466 404 456 878 985 169 245 483 777 770 912 343 805 894 514 615 192 65 63 62 353 680 192 62 270 487 279\n212 920 376 656 523 811 632 822 680 378 607 971 678 268 174 358 67 79 317 815 66 879 189 498 260 59 689 449 892 967 322 152 187 663 737 672 26 396 68 20 69 735 700 456 508 461 872 658 363 210 475 999 41 352 928 201 241 435 691 458 208 783 295 565 70 643 324 665 592 223 863 576 836 848 516 60 724 142 275 540 833 345 357 759 786 186 80 150 533 13 158 956 91 593 503 628 42 711 858 228 242 310 82 696 72 776 804 831 912 781 832 230 4 118 570 222 428 966 422 388 44 876 983 981 382 289 714 698 307 725 627 579 78 951 893 704 366 400 263 801 199 637 838 481 192 974 917 639 155 855 477 1000 922 763 423 720 949 43 279 384 616 520 668 309 916 472 191 806 214 798 861 17 392 104 173 344 418 506 882 789 49 347 182 695 669 851 978 473 867 102 968 746 961 496 482 900 54 687 705 846 419 22 881 21 874 554 683 18 11 483 12 878 491 630 53 247 913 424 712 414 277 6 792 499 650 408 774 23 325 667 810 765 439 164 713 567 990 736 313 585 271 377 826 943 794 518 38 590 626 818 600 25 887 200 561 609 532 828 899 293 3 644 232 387 773 581 910 121 918 556 649 666 599 785 864 248 19 490 457 354 50 219 161 237 370 399 519 745 844 188 843 298 265 1 803 84 485 622 513 468 95 857 300 220 973 185 614 638 55 854 119 180 515 550 143 160 880 455 123 227 964 302 397 740 816 98 569 332 360 631 64 177 445 35 562 829 906 587 226 272 99 434 194 427 207 633 741 110 898 890 661 407 127 487 348 636 280 685 510 176 431 235 952 421 779 425 274 618 715 642 116 436 517 895 545 175 757 147 595 509 111 294 573 305 141 156 894 39 229 574 306 988 670 336 578 132 657 591 662 429 686 862 131 256 286 438 15 362 239 462 813 359 48 970 512 708 957 129 710 842 924 580 856 805 733 184 463 149 849 433 109 610 834 553 764 702 374 136 257 58 45 839 181 148 46 420 775 389 246 845 522 623 190 63 915 602 330 611 731 5 47 430 385 750 613 582 502 258 315 571 365 871 608 87 945 790 29 105 89 985 835 8 723 320 107 543 170 604 706 75 972 159 27 179 264 674 551 807 284 800 412 982 416 539 594 965 340 742 476 375 732 717 269 2 659 984 744 549 671 373 236 528 249 76 645 371 465 415 335 987 413 112 926 986 318 369 991 527 133 646 486 209 501 738 34 251 998 690 547 860 466 891 911 165 729 572 531 555 267 124 619 216 904 784 281 903 558 484 353 947 865 560 709 932 997 621 652 589 196 81 153 586 975 505 534 617 287 824 261 564 954 231 30 654 71 393 722 701 296 225 442 721 128 333 356 113 36 753 778 250 337 304 655 541 719 908 787 808 521 10 821 507 716 299 198 51 372 948 914 950 380 603 168 909 383 402 254 314 341 827 404 122 450 88 777 469 901 276 544 688 16 140 94 451 869 290 221 936 308 480 919 327 859 992 597 342 303 772 634 752 252 583 601 467 403 693 291 664 682 195 495 134 946 747 823 381 889 262 343 976 426 52 273 83 62 703 169 615 888 61 769 907 707 100 454 202 151 504 288 432 868 896 398 139 877 749 941 493 923 676 167 440 825 234 885 32 817 33 575 980 331 137 138 74 931 963 108 77 205 837 624 270 135 927 405 684 144 193 283 653 368 660 962 647 386 240 727 819 492 548 339 452 641 312 883 566 437 754 960 925 730 850 394 125 349 563 338 390 259 793 96 86 886 552 479 117 211 814 282 464 178 311 799 233 944 529 726 546 500 213 795 766 770 97 511 90 448 768 316 409 292 809 379 934 459 993 940 364 958 410 145 788 524 756 203 351 204 841 334 780 126 791 244 762 921 101 14 367 197 873 635 625 933 37 255 395 606 588 245 497 92 584 938 748 120 526 577 162 447 31 215 535 525 40 328 651 321 797 840 929 154 183 897 443 319 536 157 406 285 955 935 361 640 417 802 820 679 441 830 224 905 7 568 989 297 172 796 760 718 106 852 350 146 130 996 959 979 9 697 329 238 474 755 605 812 629 478 56 977 538 767 453 65 728 488 995 326 620 411 93 866 612 743 355 28 739 681 401 489 853 677 115 847 217 444 969 537 206 557 875 782 751 171 692 460 391 870 694 953 542 114 323 266 166 939 902 301 514 163 675 218 559 761 530 24 884 278 253 85 598 470 596 734 699 471 930 243 673 346 73 57 648 771 994 494 758 942 937 103 446",
+          "testOut": "2021",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "1<= [[ number of coins ]] <=1000\n1<= [[ coin values ]] <=1000\n1<= [[ N ]] <=1000",
+      "coverBinaryId": 99330262023753,
+      "stubGenerator": "read valueToReach:int\nread N:int\nloopline N count:int\nloopline N value:int\n\n\nwrite -1\n",
+      "inputDescription": "<<Line 1 :>> An integer [[valueToReach]] representing the price you want to be able to pay\n<<Line 2 :>> An integer [[N]] representing the number of different coin types you have\n<<Line 3 :>> [[N]] integers separated by space representing the number of coins of each type\n<<Line 4 :>> [[N]] integers separated by space representing the value of each type",
+      "solutionLanguage": "C#",
+      "outputDescription": "<<Line 1 :>> A line containing a single integer representing the minimum number of coins you need to grab to be sure to have enough money to pay. {{-1}} if there's not enough money in your pocket"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You live in a world where all coins have the same shape, weight and feel. You can't distinguish them in your pocket. Knowing how many coins of each value you have in your pocket, how many should you grab, without looking, to be sure to have enough money to pay?</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1 :</strong> An integer <var>valueToReach</var> representing the price you want to be able to pay<br><strong>Line 2 :</strong> An integer <var>N</var> representing the number of different coin types you have<br><strong>Line 3 :</strong> <var>N</var> integers separated by space representing the number of coins of each type<br><strong>Line 4 :</strong> <var>N</var> integers separated by space representing the value of each type</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1 :</strong> A line containing a single integer representing the minimum number of coins you need to grab to be sure to have enough money to pay. <const>-1</const> if there's not enough money in your pocket</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1&lt;= <var> number of coins </var> &lt;=1000<br>1&lt;= <var> coin values </var> &lt;=1000<br>1&lt;= <var> N </var> &lt;=1000</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">8\n1\n5\n6</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">2</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 78624548890,
+  "avatar": 109775423519832,
+  "commentCount": 33,
+  "upVotes": 38,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 841969,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1679922337001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1687365346109,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1692104636502,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

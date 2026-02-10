@@ -1,0 +1,169 @@
+{
+  "id": 37404,
+  "activeVersion": 20,
+  "score": 11,
+  "votableId": 26017440,
+  "codingamerId": 4067707,
+  "views": 320,
+  "commentableId": 25894174,
+  "title": "Breaking Bifid",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "therealbeef",
+  "publicHandle": "37404d6efdc52a303032914e591efcaa10467",
+  "codingamerHandle": "ecad91b9a50d51a3d9515d303487dd7c7077604",
+  "lastVersion": {
+    "version": 20,
+    "autocloseTime": 1672844843473,
+    "data": {
+      "title": "Breaking Bifid",
+      "topics": [
+        {
+          "id": 74,
+          "handle": "cryptology",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Cryptologie",
+            "2": "Cryptography"
+          },
+          "pageTitle": "Cryptography: exercises and theory",
+          "puzzleCount": 17,
+          "parentTopicId": 43,
+          "contentDetailsId": 105
+        }
+      ],
+      "solution": "\n#include <array>\n#include <iostream>\n#include <stdexcept>\n#include <algorithm>\n\nusing namespace std;\n\nenum class Same { UNKNOWN, TRUE, FALSE };\n\nconstexpr int NR_LETTERS = 25;\nconstexpr int NR_VARIABLES = 2 * NR_LETTERS;\n\nusing Row = array< Same, NR_VARIABLES >;\nusing Matrix = array< Row, NR_VARIABLES >;\n\nvoid row_equals_row( Matrix& mat, int a, int b )\n{\n    mat[a][b] = Same::TRUE;\n    mat[b][a] = Same::TRUE;\n}\n\nvoid row_equals_col( Matrix& mat, int a, int b )\n{\n    mat[a][b+NR_LETTERS] = Same::TRUE;\n    mat[b+NR_LETTERS][a] = Same::TRUE;\n}\n\nvoid col_equals_row( Matrix& mat, int a, int b )\n{\n    mat[a+NR_LETTERS][b] = Same::TRUE;\n    mat[b][a+NR_LETTERS] = Same::TRUE;\n}\n\nvoid col_equals_col( Matrix& mat, int a, int b )\n{\n    mat[a+NR_LETTERS][b+NR_LETTERS] = Same::TRUE;\n    mat[b+NR_LETTERS][a+NR_LETTERS] = Same::TRUE;\n}\n\nvoid print( const Matrix& mat )\n{\n    int j = 0;\n    for( auto r: mat )\n    {\n        int i = 0;\n        for( auto c: r )\n        {\n            cerr << int(c) << \" \";\n            i++;\n            if( i == NR_LETTERS ) cerr << \" \";\n        }\n        cerr << endl;\n        j++;\n        if( j == NR_LETTERS ) cerr << endl;\n    }\n}\n\nint char_to_idx( char c )\n{\n    return ( c > 'I' ? c - 'A' - 1 : c - 'A' );\n}\n\nchar idx_to_char( int i )\n{\n    char c = i + 'A';\n    if( c > 'I' ) c++;\n    return c;\n}\n\nMatrix build_matrix( string clear, string enc )\n{\n    Matrix variables{};\n\n    int e_idx = 0;\n    int e_type = 0;\n\n    for( int c = 0; c < clear.size(); c++ )\n    {\n        int cl = char_to_idx( clear[c] );\n        int el = char_to_idx( enc[e_idx] );\n        if( e_type == 0 )\n        {\n            row_equals_row( variables, cl, el );\n            e_type = 1;\n        }\n        else\n        {\n            row_equals_col( variables, cl, el );\n            e_type = 0;\n            e_idx++;\n        }\n    }\n    for( int c = 0; c < clear.size(); c++ )\n    {\n        int cl = char_to_idx( clear[c] );\n        int el = char_to_idx( enc[e_idx] );\n        if( e_type == 0 )\n        {\n            col_equals_row( variables, cl, el );\n            e_type = 1;\n        }\n        else\n        {\n            col_equals_col( variables, cl, el );\n            e_type = 0;\n            e_idx++;\n        }\n    }\n\n    return variables;\n}\n\nbool inherit_row( Matrix& mat, int row, int from )\n{\n    bool changed = false;\n    for( int i = 0; i < NR_VARIABLES; i++ )\n    {\n        if( mat[from][i] == Same::TRUE )\n        {\n            if( mat[row][i] == Same::UNKNOWN )\n            {\n                mat[row][i] = Same::TRUE;\n                changed = true;\n            }\n        }\n        else if( mat[from][i] == Same::FALSE )\n        {\n            if( mat[row][i] == Same::UNKNOWN )\n            {\n                mat[row][i] = Same::FALSE;\n                changed = true;\n            }\n        }\n    }\n    return changed;\n}\n\nbool inherit_inverse_row( Matrix& mat, int row, int from )\n{\n    bool changed = false;\n    for( int i = 0; i < NR_VARIABLES; i++ )\n    {\n        if( mat[from][i] == Same::TRUE )\n        {\n            if( mat[row][i] == Same::UNKNOWN )\n            {\n                mat[row][i] = Same::FALSE;\n                changed = true;\n            }\n        }\n    }\n    return changed;\n}\n\nvoid copy_rows_to_columns( Matrix& mat )\n{\n    for( int r = 0; r < NR_VARIABLES; r++ )\n    {\n        for( int c = 0; c < NR_VARIABLES; c++ )\n        {\n            if( mat[r][c] != mat[c][r] )\n            {\n                if( mat[r][c] == Same::UNKNOWN )\n                {\n                    mat[r][c] = mat[c][r];\n                }\n                else if( mat[c][r] == Same::UNKNOWN )\n                {\n                    mat[c][r] = mat[r][c];\n                }\n            }\n        }\n    }\n}\n\nvoid set_rest_to_false( Matrix& mat, int r, int offset )\n{\n    for( int c = offset; c < offset + NR_LETTERS; c++ )\n    {\n        if( mat[r][c] == Same::UNKNOWN )\n        {\n            mat[r][c] = Same::FALSE;\n        }\n    }\n}\n\nvoid no_more_than_five( Matrix& mat )\n{\n    for( int r = 0; r < NR_VARIABLES; r++ )\n    {\n        int cnt = 0;\n        for( int c = 0; c < NR_LETTERS; c++ )\n        {\n            if( mat[r][c] == Same::TRUE ) cnt++;\n        }\n        if( cnt >= 5 )\n        {\n            set_rest_to_false( mat, r, 0 );\n        }\n        \n        cnt = 0;\n        for( int c = NR_LETTERS; c < NR_VARIABLES; c++ )\n        {\n            if( mat[r][c] == Same::TRUE ) cnt++;\n        }\n        if( cnt >= 5 )\n        {\n            set_rest_to_false( mat, r, NR_LETTERS );\n        }\n    }\n}\n\nbool single_pass( Matrix& mat )\n{\n    bool changed = false;\n\n    for( int i = 0; i < NR_VARIABLES; i++ )\n    {\n        for( int j = 0; j < NR_VARIABLES; j++ )\n        {\n            if( mat[i][j] == Same::TRUE )\n            {\n                changed = changed || inherit_row( mat, i, j );\n            }\n            if( mat[i][j] == Same::FALSE )\n            {\n                changed = changed || inherit_inverse_row( mat, i, j );\n            }\n        }\n    }\n\n    copy_rows_to_columns( mat );\n    no_more_than_five( mat );\n\n    return changed;\n}\n\nvoid find_groups( Matrix& mat )\n{\n    bool changed = true;\n\n    while( changed )\n    {\n        changed = single_pass( mat );\n    }\n}\n\nchar find_match( const Matrix& mat, int row_row, int col_row )\n{\n    for( int i = 0; i < NR_LETTERS; i++ )\n    {\n        if( mat[row_row][i] == Same::TRUE && mat[col_row][i+NR_LETTERS] == Same::TRUE )\n        {\n            return idx_to_char( i );\n        }\n    }\n    throw runtime_error(\"Can't find match\");\n}\n\nstring decrypt( const Matrix& mat, string enc )\n{\n    string decrypted = \"\";\n    \n    int idx1 = 0;\n    int idx2 = enc.size() / 2;\n    bool use_row1 = true;\n    bool use_row2 = ( enc.size() % 2 == 0 ? true : false );\n\n    for( int i = 0; i < enc.size(); i++ )\n    {\n        int row1 = char_to_idx( enc[idx1] ) + ( use_row1 ? 0 : NR_LETTERS );\n        int row2 = char_to_idx( enc[idx2] ) + ( use_row2 ? 0 : NR_LETTERS );\n        decrypted.push_back( find_match( mat, row1, row2 ) );\n\n        if( use_row1 == false )\n        {\n            use_row1 = true;\n            idx1++;\n        }\n        else\n        {\n            use_row1 = false;\n        }\n\n        if( use_row2 == false )\n        {\n            use_row2 = true;\n            idx2++;\n        }\n        else\n        {\n            use_row2 = false;\n        }\n    }    \n    \n    return decrypted;\n}\n\nvoid clean( string& txt )\n{\n    txt.erase( remove( txt.begin(), txt.end(), ' ' ), txt.end() );\n    replace( txt.begin(), txt.end(), 'J', 'I' );\n}\n\nint main()\n{\n    string cleartext;\n    string encrypted;\n    string encrypted2;\n\n    getline( cin, cleartext );\n    getline( cin, encrypted );\n    getline( cin, encrypted2 );\n\n    clean( cleartext );\n\n    auto mat = build_matrix( cleartext, encrypted );\n    find_groups( mat );\n\n    auto decrypted = decrypt( mat, encrypted2 );\n    \n    cout << decrypted << endl;\n\n    return 0;\n}\n",
+      "statement": "Bifid is one of the classic hand ciphers, invented around 1900 by amateur cryptographer Felix Delastelle. In this puzzle you are given a plaintext and its Bifid-encrypted ciphertext. The encryption key is not given. You have to use the combination of these two texts to decrypt a second ciphertext that was encrypted using the same key.\n\nBifid uses a Polybius square as a key. This is a 5 by 5 square containing 25 letters of the alphabet (the {{J}} is merged with {{I}}), in an arbitrary order. For example:\n\n`B G W K Z\nQ P N D S\nI O A X E\nF C L U M\nT H Y V R`\nTo encrypt a plaintext, we start by removing spaces and replacing each {{J}} by an {{I}}. Underneath each letter in the resulting text we write the coordinates (row and column) of that letter in the Polybius square:\n\n`F L E E A T O N C E\n4 4 3 3 3 5 3 2 4 3\n1 3 5 5 3 1 2 3 2 5`\nThe two lines of numbers are written after each other:\n\n`4 4 3 3 3 5 3 2 4 3 1 3 5 5 3 1 2 3 2 5`\nThe numbers are then grouped in pairs, and the pairs are used as coordinates into the Polybius square (the first number being the row, and second being the column), to find the letters of the ciphertext:\n\n`44 33 35 32 43 13 55 31 23 25\nU  A  E  O  L  W  R  I  N  S`\n(see also https://en.wikipedia.org/wiki/Bifid_cipher)",
+      "testCases": [
+        {
+          "title": "Long text",
+          "isTest": true,
+          "testIn": "LOREM IPSUM DOLOR SIT AMET CONSECTETUR ADIPISCING ELIT SED DO EIUSMOD TEMPOR INCIDIDUNT UT LABORE ET DOLORE MAGNA ALIQUA TEMPOR COMMODO ULLAMCORPER A LACUS VESTIBULUM SED ARCU NON ODIO\nFRGLRCFTIAECIGRTRCFQCAFTGCGTGIAFQCCCQTSAIAQDIAAOMIRRMICACIKACSEMGTWTOSRROQQCCCRELXXHRMTMTOXQTUALYFUITSSHTXHLSWEVSSZUTBATSEASGWEQWTPAOKMBTMOBREGXILUYXLHGZBMR\nQADFFQKECOQAHZERHWRIIA",
+          "testOut": "ROMANPHILOSOPHERCICERO",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Long text",
+          "isTest": false,
+          "testIn": "VITAE ULTRICIES LEO INTEGER MALESUADA NUNC VEL RISUS TELLUS MOLESTIE NUNC NON BLANDIT MASSA ENIM NEC DUI NUNC ADIPISCING DIAM DONEC ADIPISCING TRISTIQUE RISUS NEC FEUGIAT IN FERMENTUM\nXTRLEFRLQGETGLSHEQDHESOHCQPREEQFQBEFEROEKGBQMIHMMFKFECGLFQPKGEOMOESQHLQGEITGGQHANTPPMEHVGMUEUZZZOGPUOGASTMHNZUALZWRYUNCXUWZYZBCPVWYVXUWBSDTPOFXPUUMKVDHXMQVY\nQTTVTGSFSLIAIAHKGQQOGTZZGL",
+          "testOut": "ONTHEEXTREMESOFGOODANDEVIL",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Pangram",
+          "isTest": true,
+          "testIn": "THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG\nVCVBCEQEMKPUSHLLAOEHKQNNLVEEZWATBSA\nVGCUQERLAVDLZANO",
+          "testOut": "THEBOSTONIOURNAL",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Pangram",
+          "isTest": false,
+          "testIn": "SPHINX OF BLACK QUARTZ JUDGE MY VOW\nSSPQBAKVRUVGTYUBTPBVRECZMWSOB\nCMYFYMPTEOMTM",
+          "testOut": "ARTHURFCURTIS",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Medium length text",
+          "isTest": true,
+          "testIn": "TRAITE ELEMENTAIRE DE CRYPTOGRAPHIE WAS THE MAIN WORK OF FELIX MARIE DELASTELLE BUT WAS PUBLISHED AFTER HIS DEATH\nIANTTNEIIEOKRRKNRSNMNDWRAKYBNUMSTKBIGLFHNRAINVENMIMBCAKRBCFPZAQRKTXAUQAYMDCERRUTBRUPNKDUXUPCVIAQ\nLQBFNGRSNUIETNWVQAQRNULKLSBQC",
+          "testOut": "POLYGRAPHICSUBSTITUTIONCIPHER",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Medium length text",
+          "isTest": false,
+          "testIn": "DELASTELLE FIRST PRESENTED THE BIFID CIPHER IN REVUE DU GENIE CIVIL UNDER THE NAME CRYPTOGRAPHIE NOUVELLE\nFMSEODKNQISFIEIIMQGSQYFQDIMVBIGIDAEUKOKQIAUEOALTLLFKWPAUMZBFDXCBGPTMYBEXICKBZBMCRCGPCEQVLL\nMDELMIIKMASSMVINSNMSANFDXNGMGCXGCFPHZPKOIXG",
+          "testOut": "BIFIDCOMBINESFRACTIONATIONWITHTRANSPOSITION",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Short text",
+          "isTest": true,
+          "testIn": "THE PLAYFAIR CIPHER WAS NAMED AFTER LORD PLAYFAIR BUT HE WAS NOT THE INVENTOR\nWALXEMIWLHSLDDAMPQTDICWWHOWWFUSBVGAMQZPNULINACKHUDQBRLVDLFZNPNKC\nSALSWWSOTBUDHIUVG",
+          "testOut": "CHARLESWHEATSTONE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Short text",
+          "isTest": false,
+          "testIn": "TRIFID USES TRANSPOSED TRIGRAMS TO CREATE A STRONGER ENCRYPTION EFFECT THAN BIFID\nNRCMANAEONNROMNCAAANOFONIMCAGNAFTRCGWYZUGNXSQGXFSFRMHSGNHHCHGWDALGMCWY\nCTMCANCGMCNNSZNNQWSZN",
+          "testOut": "CONFUSIONANDDIFFUSION",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Minimal text",
+          "isTest": true,
+          "testIn": "CLASSIC HAND CIPHERS\nECEAEBMBCEGORHBAXY\nBRG",
+          "testOut": "HAS",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Minimal text",
+          "isTest": false,
+          "testIn": "TURING CHANGED THE WORLD\nTRVBRVCFYBDVDLAXTWPVT\nIVGET",
+          "testOut": "GREEN",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "Length of the plaintexts ≤ 200",
+      "coverBinaryId": 92755205781415,
+      "stubGenerator": "read plainText1:string(200)\nread cipherText1:string(200)\nread cipherText2:string(200)\nwrite plaintext2",
+      "inputDescription": "<<Line 1:>> A string [[plainText1]]\n<<Line 2:>> A string [[cipherText1]]. This is [[plainText1]] encrypted with Bifid using a hidden key.\n<<Line 3:>> A string [[cipherText2]]. This is the result of encrypting an unknown [[plainText2]] with Bifid using the same hidden key.",
+      "solutionLanguage": "C++",
+      "outputDescription": "<<A single line:>> A string containing [[plainText2]]. Spaces should be omitted."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Bifid is one of the classic hand ciphers, invented around 1900 by amateur cryptographer Felix Delastelle. In this puzzle you are given a plaintext and its Bifid-encrypted ciphertext. The encryption key is not given. You have to use the combination of these two texts to decrypt a second ciphertext that was encrypted using the same key.<br><br>Bifid uses a Polybius square as a key. This is a 5 by 5 square containing 25 letters of the alphabet (the <const>J</const> is merged with <const>I</const>), in an arbitrary order. For example:<br><br><pre style=\"font-family: monospace\">B G W K Z<br>Q P N D S<br>I O A X E<br>F C L U M<br>T H Y V R</pre><br>To encrypt a plaintext, we start by removing spaces and replacing each <const>J</const> by an <const>I</const>. Underneath each letter in the resulting text we write the coordinates (row and column) of that letter in the Polybius square:<br><br><pre style=\"font-family: monospace\">F L E E A T O N C E<br>4 4 3 3 3 5 3 2 4 3<br>1 3 5 5 3 1 2 3 2 5</pre><br>The two lines of numbers are written after each other:<br><br><pre style=\"font-family: monospace\">4 4 3 3 3 5 3 2 4 3 1 3 5 5 3 1 2 3 2 5</pre><br>The numbers are then grouped in pairs, and the pairs are used as coordinates into the Polybius square (the first number being the row, and second being the column), to find the letters of the ciphertext:<br><br><pre style=\"font-family: monospace\">44 33 35 32 43 13 55 31 23 25<br>U  A  E  O  L  W  R  I  N  S</pre><br>(see also https://en.wikipedia.org/wiki/Bifid_cipher)</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> A string <var>plainText1</var><br><strong>Line 2:</strong> A string <var>cipherText1</var>. This is <var>plainText1</var> encrypted with Bifid using a hidden key.<br><strong>Line 3:</strong> A string <var>cipherText2</var>. This is the result of encrypting an unknown <var>plainText2</var> with Bifid using the same hidden key.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>A single line:</strong> A string containing <var>plainText2</var>. Spaces should be omitted.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Length of the plaintexts &le; 200</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">LOREM IPSUM DOLOR SIT AMET CONSECTETUR ADIPISCING ELIT SED DO EIUSMOD TEMPOR INCIDIDUNT UT LABORE ET DOLORE MAGNA ALIQUA TEMPOR COMMODO ULLAMCORPER A LACUS VESTIBULUM SED ARCU NON ODIO\nFRGLRCFTIAECIGRTRCFQCAFTGCGTGIAFQCCCQTSAIAQDIAAOMIRRMICACIKACSEMGTWTOSRROQQCCCRELXXHRMTMTOXQTUALYFUITSSHTXHLSWEVSSZUTBATSEASGWEQWTPAOKMBTMOBREGXILUYXLHGZBMR\nQADFFQKECOQAHZERHWRIIA</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">ROMANPHILOSOPHERCICERO</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 98371868191,
+  "avatar": 54066924332220,
+  "commentCount": 7,
+  "upVotes": 11,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 743368,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1670252737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1670252843473,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1672357684270,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

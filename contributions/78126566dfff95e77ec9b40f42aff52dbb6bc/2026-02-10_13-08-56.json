@@ -1,0 +1,480 @@
+{
+  "id": 78126,
+  "activeVersion": 29,
+  "score": 11,
+  "votableId": 31795221,
+  "codingamerId": 5300766,
+  "views": 373,
+  "commentableId": 31653853,
+  "title": "Rummikub 1",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "jddingemanse",
+  "publicHandle": "78126566dfff95e77ec9b40f42aff52dbb6bc",
+  "codingamerHandle": "d95f1456c7409de3e7dcc202f89a3d646670035",
+  "lastVersion": {
+    "version": 29,
+    "autocloseTime": 1713357942525,
+    "data": {
+      "title": "Rummikub 1",
+      "topics": [
+        {
+          "id": 86,
+          "handle": "simulation",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Simulation",
+            "2": "Simulation"
+          },
+          "pageTitle": "Simulation: exercises and theory",
+          "puzzleCount": 43,
+          "parentTopicId": 42,
+          "contentDetailsId": 72
+        },
+        {
+          "id": 68,
+          "handle": "pathfinding",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Recherche de chemins",
+            "2": "Pathfinding"
+          },
+          "pageTitle": "Pathfinding: exercises and theory",
+          "puzzleCount": 46,
+          "parentTopicId": 41,
+          "contentDetailsId": 69
+        },
+        {
+          "id": 52,
+          "handle": "sets",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Ensembles",
+            "2": "Sets"
+          },
+          "pageTitle": "Sets: exercises and theory",
+          "puzzleCount": 3,
+          "parentTopicId": 40,
+          "contentDetailsId": 98
+        },
+        {
+          "id": 59,
+          "handle": "brute-force",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Force brute",
+            "2": "Brute-force"
+          },
+          "pageTitle": "Brute-force: exercises and theory",
+          "puzzleCount": 17,
+          "parentTopicId": 41,
+          "contentDetailsId": 90
+        }
+      ],
+      "solution": "import sys\nimport time\n\ndef getRowtype(row):\n    numbers = [int(tile[:-1]) for tile in row]\n    colors = [tile[-1] for tile in row]\n    length = len(row)\n    if len(set(numbers)) == 1:\n        rowtype = 'set' if len(set(colors)) == len(colors) and 4 >= len(colors) >= 3 else 'invalid'\n    elif len(set(colors)) == 1: \n        rowtype = 'run' if len(set(numbers)) == length and 13 >= length >= 3 and length-1 == max(numbers)-min(numbers) else 'invalid'\n    else: rowtype = 'invalid'    \n    return rowtype\n\ndef TAKE(tile, row):\n    if tile not in row: return False\n    \n    newrow = row.copy()\n    newrow.remove(tile)\n    if row.index(tile) > 2 and row[::-1].index(tile) > 2:\n        nrow1 = row[:row.index(tile)]\n        nrow2 = row[row.index(tile)+1:]\n        return [nrow1, nrow2]    \n    elif getRowtype(newrow) != 'invalid': return [newrow]\n    else: return False\n\ndef PUT(tile, row):\n    newrow = sorted(sorted(row+[tile]), key = lambda x: int(x[:-1]))\n    if getRowtype(newrow) != 'invalid': return [newrow]\n    elif tile in row and row.index(tile) >= 2 and row[::-1].index(tile) >= 2:\n        return [row[:row.index(tile) + 1],row[row.index(tile):]]\n    else: return False\n\ndef COMBINE(row1, row2):\n    newrow = sorted(sorted(row1 + row2),key = lambda x: int(x[:-1]))\n    return [newrow] if getRowtype(newrow) == 'run' else False\n\ndef nextStep(tile, road, table, newroads, max_rowid, goalTileCheck=False):\n    # Try to PUT goaltile\n    if goalTileCheck:\n        for ix, row in table.items():\n            table_copy = table.copy()\n            nrows = PUT(tile, row)\n            if type(nrows) == bool: continue\n            table_copy[ix] = nrows[0]\n            if len(nrows) == 2:\n                max_rowid += 1\n                table_copy[max_rowid] = nrows[1]\n            newroads[road + f';PUT {tile} {ix}'] = table_copy\n        return newroads\n    \n    # Try TAKE -> PUT\n    for rowid,row in table.items():\n        newrows = TAKE(tile,row)\n        if type(newrows) == bool: continue\n        table_copy = table.copy()\n        table_copy[rowid] = newrows[0]\n        put_avoid = [rowid]\n        if len(newrows)==2:\n            max_rowid += 1\n            table_copy[max_rowid] = newrows[1]\n            put_avoid += [max_rowid]\n        newsteps = f';TAKE {tile} {rowid}'\n        for rowid2,row2 in table_copy.items():\n            if rowid2 in put_avoid: continue\n            newrows = PUT(tile,row2)\n            if type(newrows) == bool: continue\n            table_copy2 = table_copy.copy()\n            table_copy2[rowid2] = newrows[0]\n            if len(newrows)==2:\n                max_rowid += 1\n                table_copy2[max_rowid] = newrows[1]\n            newsteps += f';PUT {tile} {rowid2}'\n            newroads[road + newsteps] = table_copy2\n    \n    # Try COMBINE\n    rowids = list(table.keys())\n    for ii, rowid1 in enumerate(rowids[:-1]):\n        for rowid2 in rowids[ii+1:]:           \n            newrows = COMBINE(table[rowid1], table[rowid2])\n            if type(newrows) == bool: continue\n            table_copy = table.copy()            \n            table_copy[rowid1] = newrows[0]\n            del table_copy[rowid2]\n            newroads[road + f';COMBINE {rowid1} {rowid2}'] = table_copy        \n    \n    return newroads\n\ngoaltile = input()\ntable = {}\nnrow = int(input())\nfor i in range(nrow):\n    rowid,*row = input().split()\n    table[int(rowid)] = row\n\nstart = time.time()\nall_roads = {'' : table}\nall_roads_list = ['']\nresult_roads = {}\nbest_roadlength = 100\nmax_rowid = max(table.keys())\n\nwhile all_roads_list:\n    road = all_roads_list.pop(0)\n    table = all_roads.pop(road)\n    newroads = nextStep(goaltile, road, table, {}, max_rowid, True)\n    for row in table.values():\n        for tile in row: newroads = nextStep(tile, road, table, newroads, max_rowid)\n    for road,table in newroads.items():\n        roadlength = len(road.split())\n        if f'PUT {goaltile}' in road and roadlength <= best_roadlength:\n            best_roadlength = roadlength\n            result_roads[road] = table\n        elif roadlength < best_roadlength:\n            all_roads[road] = table\n            all_roads_list.append(road)\n\nsteps = list(result_roads.keys())[0]\ntable_out = result_roads[steps]\nprint(*steps.strip(';').split(';'),sep='\\n')\nfor rowid, row in table_out.items(): print(rowid, *row)\n\nprint(f'Execution time: {(time.time()-start)* 10**3} ms',file=sys.stderr,flush=True)",
+      "statement": "<<This is part 1 of the two-part Rummikub puzzle. In this part, the basic dynamics are introduced.>>\n\nRummikub is a game played with tiles numbered 1-13 in four colors: {{B}}lue, {{G}}reen, {{R}}ed and {{Y}}ellow. There are two tiles of each number-color combination. Players play their tiles to form <<runs>> (same-colored uninterrupted range of numbers) or <<sets>> (same-numbered tiles all of a unique color). A valid run or set consists of at least three tiles, and a maximum of four (set) or thirteen (run). Example of a run: {{3G 4G 5G 6G}}. Example of a set: {{4B 4G 4R}}.\n\nYou will get a table with valid runs and sets ([[row]]s), and one tile ([[goalTile]]) to put on the table in as few actions as possible. You must output all actions needed to put the tile on the table (becoming part of a valid run or set), and the new rows of the table after those actions.\n\n<<Actions>>\nOne action can be one of:\n• {{TAKE}} [[tile]] [[rowid]]: take a tile from a row, or\n• {{PUT}} [[tile]] [[rowid]]: put a tile in a row, or\n• {{COMBINE}} [[rowid_1]] [[rowid_2]]: combine two rows.\n\nApply the actions according to the following rules:\n• Each {{TAKE}} action must always immediately be followed by a {{PUT}} action of the same tile. (While possible in the real game, in this puzzle you are not allowed to take another tile before putting away the already taken tile)\n• After each {{PUT}} action, the table should only contain valid runs and/or sets.\n• Your final action is always to {{PUT}} [[goalTile]].\n• A {{COMBINE}} action can be used to merge two runs into one longer valid run. Order the rowids from the two rows numerically. The new run gets the lowest rowid ([[rowid1]]), the other rowid ([[rowid2]]) becomes unused (and cannot be attributed to new runs).\n\nYou are allowed to <<split>> one valid run into two valid runs by a {{PUT}} or {{TAKE}} action. For example: {{TAKE}} the middle tile of a run of seven tiles, or {{PUT}} a tile in the middle of a run of five tiles. In case of a split, the new run with the highest numerical tile values gets a new [[rowid]] (highest [[rowid]] that ever existed + 1), and the other run keeps the original [[rowid]].\n\nSome examples of valid actions and their result on table rows:\n<<Starting table>>\n{{     1 1G 2G 3G 4G}}\n{{     2 5G 6G 7G}}\n{{     3 4B 4R 4Y}}\n<<ACTION 1: >>{{COMBINE 1 2}} (This action creates a long run with lowest [[rowid1]], higher [[rowid2]] row is deleted)\n<<Table after action 1:>>\n{{     1 1G 2G 3G 4G 5G 6G 7G}}\n{{     3 4B 4R 4Y}}\n<<ACTION 2: >>{{TAKE 4G 1}} (This action <<splits>> row 1; the run with highest numeric values gets a new [[rowid]])\n<<ACTION 3: >>{{PUT 4G 3}} (A {{TAKE}} should directly be followed by a {{PUT}})\n<<Table after actions 2 and 3:>>\n{{     1 1G 2G 3G}}\n{{     3 4B 4G 4R 4Y}}\n{{     4 5G 6G 7G}}\n\nRuns are always displayed from low to high value. Sets are always displayed in the order {{B}} {{G}} {{R}} {{Y}}.\n\n<<Action selection and order>>\nWhen different series of actions would lead to the same output, follow the rules below:\n- Always select the least number of actions;\n- {{COMBINE}} always as early as possible;\n- {{COMBINE}} lower-numbered [[rowid]]s before higher-numbered [[rowid]]s (e.g. {{COMBINE 1 2}} before {{COMBINE 1 3}}, {{COMBINE 2 6}} before {{COMBINE 3 4}}).\n\n<<Note>>\nThe real Rummikub allows for more complex actions (multiple {{TAKE}} after each other, after a single {{PUT}} the runs or sets do not need to be valid yet, as long as more PUTs are coming). To reduce difficulty of this puzzle, this is left out (the creator of the puzzle was not able to solve this).\nTwo important consequences of these rules (<<hint>>): 1) It is never possible to create a new set. It is only possible to make a set longer or shorter. 2) It is never possible to create a new run, except if it is created by <<splitting>> one run into multiple smaller valid runs.\n\n<<Rummikub 2>>\nPart two of the puzzle (https://www.codingame.com/training/hard/rummikub-2) follows the same rules, but adds the following:\n- A {{J}}oker tile;\n- Longer cases.\n\n<<CREDITS to Cedricdd for coming up with several of the cases>>",
+      "testCases": [
+        {
+          "title": "Add to a run",
+          "isTest": true,
+          "testIn": "3R\n2\n1 4R 5R 6R\n2 4B 4G 4Y",
+          "testOut": "PUT 3R 1\n1 3R 4R 5R 6R\n2 4B 4G 4Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "4Y\n2\n1 7B 7R 7Y\n2 5Y 6Y 7Y",
+          "testOut": "PUT 4Y 2\n1 7B 7R 7Y\n2 4Y 5Y 6Y 7Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Add to a run: the end",
+          "isTest": true,
+          "testIn": "9B\n3\n1 6R 7R 8R\n2 6B 7B 8B\n3 6G 7G 8G",
+          "testOut": "PUT 9B 2\n1 6R 7R 8R\n2 6B 7B 8B 9B\n3 6G 7G 8G",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "11Y\n3\n1 8G 9G 10G\n2 8B 9B 10B\n3 8Y 9Y 10Y",
+          "testOut": "PUT 11Y 3\n1 8G 9G 10G\n2 8B 9B 10B\n3 8Y 9Y 10Y 11Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Add to set",
+          "isTest": true,
+          "testIn": "4R\n2\n1 4R 5R 6R\n2 4B 4G 4Y",
+          "testOut": "PUT 4R 2\n1 4R 5R 6R\n2 4B 4G 4R 4Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "9B\n2\n1 9G 9R 9Y\n2 8B 9B 10B",
+          "testOut": "PUT 9B 1\n1 9B 9G 9R 9Y\n2 8B 9B 10B",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Insert to the middle of a run",
+          "isTest": true,
+          "testIn": "6G\n2\n1 3G 4G 5G 6G 7G 8G 9G\n2 4R 5R 6R 7R",
+          "testOut": "PUT 6G 1\n1 3G 4G 5G 6G\n2 4R 5R 6R 7R\n3 6G 7G 8G 9G",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "9Y\n2\n1 3G 4G 5G 6G\n2 6Y 7Y 8Y 9Y 10Y 11Y 12Y",
+          "testOut": "PUT 9Y 2\n1 3G 4G 5G 6G\n2 6Y 7Y 8Y 9Y\n3 9Y 10Y 11Y 12Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Insert to run",
+          "isTest": true,
+          "testIn": "7G\n2\n1 3G 4G 5G 6G 7G 8G 9G\n2 4R 5R 6R 7R",
+          "testOut": "PUT 7G 1\n1 3G 4G 5G 6G 7G\n2 4R 5R 6R 7R\n3 7G 8G 9G",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "10Y\n2\n1 3G 4G 5G 6G\n2 6Y 7Y 8Y 9Y 10Y 11Y 12Y",
+          "testOut": "PUT 10Y 2\n1 3G 4G 5G 6G\n2 6Y 7Y 8Y 9Y 10Y\n3 10Y 11Y 12Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Choose the run",
+          "isTest": true,
+          "testIn": "10B\n2\n1 6B 7B 8B 9B\n2 10B 10G 10R",
+          "testOut": "PUT 10B 1\n1 6B 7B 8B 9B 10B\n2 10B 10G 10R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "5Y\n2\n1 6Y 7Y 8Y\n2 5G 5R 5Y",
+          "testOut": "PUT 5Y 1\n1 5Y 6Y 7Y 8Y\n2 5G 5R 5Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Take one and add",
+          "isTest": true,
+          "testIn": "9Y\n2\n1 8B 8G 8R 8Y\n2 5Y 6Y 7Y",
+          "testOut": "TAKE 8Y 1\nPUT 8Y 2\nPUT 9Y 2\n1 8B 8G 8R\n2 5Y 6Y 7Y 8Y 9Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "11B\n2\n1 6B 7B 8B 9B\n2 10B 10G 10R 10Y",
+          "testOut": "TAKE 10B 2\nPUT 10B 1\nPUT 11B 1\n1 6B 7B 8B 9B 10B 11B\n2 10G 10R 10Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Take one and add again",
+          "isTest": true,
+          "testIn": "3G\n2\n1 5G 6G 7G 8G 9G\n2 4B 4G 4R 4Y",
+          "testOut": "TAKE 4G 2\nPUT 4G 1\nPUT 3G 1\n1 3G 4G 5G 6G 7G 8G 9G\n2 4B 4R 4Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "5B\n2\n1 6B 6G 6R 6Y\n2 7B 8B 9B 10B 11B",
+          "testOut": "TAKE 6B 1\nPUT 6B 2\nPUT 5B 2\n1 6G 6R 6Y\n2 5B 6B 7B 8B 9B 10B 11B",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Take one and insert",
+          "isTest": true,
+          "testIn": "7Y\n2\n1 5B 5G 5R 5Y\n2 6Y 7Y 8Y 9Y",
+          "testOut": "TAKE 5Y 1\nPUT 5Y 2\nPUT 7Y 2\n1 5B 5G 5R\n2 5Y 6Y 7Y\n3 7Y 8Y 9Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "8B\n2\n1 6B 7B 8B 9B\n2 10B 10G 10R 10Y",
+          "testOut": "TAKE 10B 2\nPUT 10B 1\nPUT 8B 1\n1 6B 7B 8B\n2 10G 10R 10Y\n3 8B 9B 10B",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Take a split",
+          "isTest": true,
+          "testIn": "6G\n3\n1 8G 9G 10G\n2 4Y 5Y 6Y 7Y 8Y 9Y 10Y\n3 7B 7G 7R",
+          "testOut": "TAKE 7Y 2\nPUT 7Y 3\nTAKE 7G 3\nPUT 7G 1\nPUT 6G 1\n1 6G 7G 8G 9G 10G\n2 4Y 5Y 6Y\n3 7B 7R 7Y\n4 8Y 9Y 10Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "5Y\n3\n1 3B 4B 5B 6B 7B 8B 9B\n2 6G 6R 6Y\n3 7Y 8Y 9Y",
+          "testOut": "TAKE 6B 1\nPUT 6B 2\nTAKE 6Y 2\nPUT 6Y 3\nPUT 5Y 3\n1 3B 4B 5B\n2 6B 6G 6R\n3 5Y 6Y 7Y 8Y 9Y\n4 7B 8B 9B",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Switch right to left",
+          "isTest": true,
+          "testIn": "8Y\n4\n1 10B 10G 10R 10Y\n2 7R 8R 9R\n3 4Y 5Y 6Y\n4 7B 7G 7Y",
+          "testOut": "TAKE 10R 1\nPUT 10R 2\nTAKE 7R 2\nPUT 7R 4\nTAKE 7Y 4\nPUT 7Y 3\nPUT 8Y 3\n1 10B 10G 10Y\n2 8R 9R 10R\n3 4Y 5Y 6Y 7Y 8Y\n4 7B 7G 7R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "7Y\n4\n1 6B 6G 6Y\n2 6R 7R 8R\n3 9B 9G 9R 9Y\n4 3Y 4Y 5Y",
+          "testOut": "TAKE 9R 3\nPUT 9R 2\nTAKE 6R 2\nPUT 6R 1\nTAKE 6Y 1\nPUT 6Y 4\nPUT 7Y 4\n1 6B 6G 6R\n2 7R 8R 9R\n3 9B 9G 9Y\n4 3Y 4Y 5Y 6Y 7Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Switch left to right",
+          "isTest": true,
+          "testIn": "10B\n4\n1 7G 8G 9G\n2 6B 6G 6R 6Y\n3 9B 9R 9Y\n4 6B 7B 8B",
+          "testOut": "TAKE 6G 2\nPUT 6G 1\nTAKE 9G 1\nPUT 9G 3\nTAKE 9B 3\nPUT 9B 4\nPUT 10B 4\n1 6G 7G 8G\n2 6B 6R 6Y\n3 9G 9R 9Y\n4 6B 7B 8B 9B 10B",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "11B\n4\n1 10B 10R 10Y\n2 8G 9G 10G\n3 7B 8B 9B\n4 7B 7G 7R 7Y",
+          "testOut": "TAKE 7G 4\nPUT 7G 2\nTAKE 10G 2\nPUT 10G 1\nTAKE 10B 1\nPUT 10B 3\nPUT 11B 3\n1 10G 10R 10Y\n2 7G 8G 9G\n3 7B 8B 9B 10B 11B\n4 7B 7R 7Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Combine for the first",
+          "isTest": true,
+          "testIn": "3Y\n4\n1 5Y 6Y 7Y\n2 4G 4R 4Y\n3 4B 5B 6B\n4 7B 8B 9B",
+          "testOut": "COMBINE 3 4\nTAKE 4B 3\nPUT 4B 2\nTAKE 4Y 2\nPUT 4Y 1\nPUT 3Y 1\n1 3Y 4Y 5Y 6Y 7Y\n2 4B 4G 4R\n3 5B 6B 7B 8B 9B",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "5Y\n4\n1 6G 6R 6Y\n2 9B 10B 11B\n3 7Y 8Y 9Y\n4 6B 7B 8B",
+          "testOut": "COMBINE 2 4\nTAKE 6B 2\nPUT 6B 1\nTAKE 6Y 1\nPUT 6Y 3\nPUT 5Y 3\n1 6B 6G 6R\n2 7B 8B 9B 10B 11B\n3 5Y 6Y 7Y 8Y 9Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Combine for the last",
+          "isTest": true,
+          "testIn": "12B\n4\n1 6R 7R 8R\n2 11B 11G 11Y\n3 8B 9B 10B\n4 9R 10R 11R",
+          "testOut": "COMBINE 1 4\nTAKE 11R 1\nPUT 11R 2\nTAKE 11B 2\nPUT 11B 3\nPUT 12B 3\n1 6R 7R 8R 9R 10R\n2 11G 11R 11Y\n3 8B 9B 10B 11B 12B",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 14",
+          "isTest": false,
+          "testIn": "10B\n4\n1 4R 5R 6R\n2 7R 8R 9R\n3 9B 9G 9Y\n4 6B 7B 8B",
+          "testOut": "COMBINE 1 2\nTAKE 9R 1\nPUT 9R 3\nTAKE 9B 3\nPUT 9B 4\nPUT 10B 4\n1 4R 5R 6R 7R 8R\n3 9G 9R 9Y\n4 6B 7B 8B 9B 10B",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Combine priority",
+          "isTest": true,
+          "testIn": "8B\n7\n1 7B 7G 7R\n2 7B 7R 7Y\n3 7Y 8Y 9Y\n4 10G 11G 12G\n5 10Y 11Y 12Y\n6 7G 8G 9G\n7 4B 5B 6B",
+          "testOut": "COMBINE 3 5\nTAKE 7Y 3\nPUT 7Y 1\nTAKE 7B 1\nPUT 7B 7\nPUT 8B 7\n1 7G 7R 7Y\n2 7B 7R 7Y\n3 8Y 9Y 10Y 11Y 12Y\n4 10G 11G 12G\n6 7G 8G 9G\n7 4B 5B 6B 7B 8B",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 15",
+          "isTest": false,
+          "testIn": "8B\n7\n1 7B 7R 7Y\n2 7Y 8Y 9Y\n3 10G 11G 12G\n4 10Y 11Y 12Y\n5 7G 8G 9G\n6 4B 5B 6B\n7 7B 7G 7R",
+          "testOut": "COMBINE 2 4\nTAKE 7Y 2\nPUT 7Y 7\nTAKE 7B 7\nPUT 7B 6\nPUT 8B 6\n1 7B 7R 7Y\n2 8Y 9Y 10Y 11Y 12Y\n3 10G 11G 12G\n5 7G 8G 9G\n6 4B 5B 6B 7B 8B\n7 7G 7R 7Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Combine to insert",
+          "isTest": true,
+          "testIn": "8B\n3\n1 4B 5B 6B\n2 10B 11B 12B\n3 7B 8B 9B",
+          "testOut": "COMBINE 1 3\nCOMBINE 1 2\nPUT 8B 1\n1 4B 5B 6B 7B 8B\n4 8B 9B 10B 11B 12B",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 16",
+          "isTest": false,
+          "testIn": "7G\n3\n1 3G 4G 5G\n2 6G 7G 8G\n3 9G 10G 11G",
+          "testOut": "COMBINE 1 2\nCOMBINE 1 3\nPUT 7G 1\n1 3G 4G 5G 6G 7G\n4 7G 8G 9G 10G 11G",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Combine to take",
+          "isTest": true,
+          "testIn": "4Y\n4\n1 5G 5R 5Y\n2 7B 8B 9B\n3 6Y 7Y 8Y\n4 2B 3B 4B 5B 6B",
+          "testOut": "COMBINE 2 4\nTAKE 5B 2\nPUT 5B 1\nTAKE 5Y 1\nPUT 5Y 3\nPUT 4Y 3\n1 5B 5G 5R\n2 2B 3B 4B\n3 4Y 5Y 6Y 7Y 8Y\n5 6B 7B 8B 9B",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 17",
+          "isTest": false,
+          "testIn": "6B\n4\n1 7B 7G 7R\n2 9Y 10Y 11Y\n3 4Y 5Y 6Y 7Y 8Y\n4 8B 9B 10B",
+          "testOut": "COMBINE 2 3\nTAKE 7Y 2\nPUT 7Y 1\nTAKE 7B 1\nPUT 7B 4\nPUT 6B 4\n1 7G 7R 7Y\n2 4Y 5Y 6Y\n4 6B 7B 8B 9B 10B\n5 8Y 9Y 10Y 11Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Prepare for the split",
+          "isTest": true,
+          "testIn": "6B\n3\n1 5B 5G 5R 5Y\n2 3B 3G 3R 3Y\n3 4B 5B 6B 7B",
+          "testOut": "TAKE 3B 2\nPUT 3B 3\nTAKE 5B 1\nPUT 5B 3\nPUT 6B 3\n1 5G 5R 5Y\n2 3G 3R 3Y\n3 3B 4B 5B 6B\n4 5B 6B 7B",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 18",
+          "isTest": false,
+          "testIn": "4B\n3\n1 2B 3B 4B 5B\n2 1B 1G 1R 1Y\n3 3B 3G 3R 3Y",
+          "testOut": "TAKE 1B 2\nPUT 1B 1\nTAKE 3B 3\nPUT 3B 1\nPUT 4B 1\n1 1B 2B 3B 4B\n2 1G 1R 1Y\n3 3G 3R 3Y\n4 3B 4B 5B",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Prepare for the split again",
+          "isTest": true,
+          "testIn": "8Y\n3\n1 9B 9G 9R 9Y\n2 7Y 8Y 9Y 10Y\n3 11B 11G 11R 11Y",
+          "testOut": "TAKE 11Y 3\nPUT 11Y 2\nTAKE 9Y 1\nPUT 9Y 2\nPUT 8Y 4\n1 9B 9G 9R\n2 7Y 8Y 9Y\n3 11B 11G 11R\n4 8Y 9Y 10Y 11Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 19",
+          "isTest": false,
+          "testIn": "6Y\n3\n1 9B 9G 9R 9Y\n2 5Y 6Y 7Y 8Y\n3 7B 7G 7R 7Y",
+          "testOut": "TAKE 9Y 1\nPUT 9Y 2\nTAKE 7Y 3\nPUT 7Y 2\nPUT 6Y 4\n1 9B 9G 9R\n2 5Y 6Y 7Y\n3 7B 7G 7R\n4 6Y 7Y 8Y 9Y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "You take some, you put some",
+          "isTest": true,
+          "testIn": "5B\n4\n1 5B 6B 7B\n2 3B 3G 3R 3Y\n3 4B 4G 4Y\n4 4R 5R 6R 7R",
+          "testOut": "TAKE 4R 4\nPUT 4R 3\nTAKE 4B 3\nPUT 4B 1\nTAKE 3B 2\nPUT 3B 1\nPUT 5B 1\n1 3B 4B 5B\n2 3G 3R 3Y\n3 4G 4R 4Y\n4 5R 6R 7R\n5 5B 6B 7B",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 20",
+          "isTest": false,
+          "testIn": "4B\n4\n1 3B 3G 3Y\n2 4B 5B 6B\n3 3R 4R 5R 6R\n4 2B 2G 2R 2Y",
+          "testOut": "TAKE 3R 3\nPUT 3R 1\nTAKE 3B 1\nPUT 3B 2\nTAKE 2B 4\nPUT 2B 2\nPUT 4B 2\n1 3G 3R 3Y\n2 2B 3B 4B\n3 4R 5R 6R\n4 2G 2R 2Y\n5 4B 5B 6B",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Its time for Rummikub 2",
+          "isTest": true,
+          "testIn": "4B\n8\n1 4B 5B 6B\n2 3B 3G 3Y\n3 2R 3R 4R 5R\n4 6G 7G 8G\n5 7B 8B 9B\n6 3R 4R 5R 6R\n7 9Y 10Y 11Y\n8 2B 2G 2R 2Y",
+          "testOut": "TAKE 3R 6\nPUT 3R 2\nTAKE 3B 2\nPUT 3B 1\nTAKE 2B 8\nPUT 2B 1\nPUT 4B 1\n1 2B 3B 4B\n2 3G 3R 3Y\n3 2R 3R 4R 5R\n4 6G 7G 8G\n5 7B 8B 9B\n6 4R 5R 6R\n7 9Y 10Y 11Y\n8 2G 2R 2Y\n9 4B 5B 6B",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 21",
+          "isTest": false,
+          "testIn": "4G\n8\n1 4G 5G 6G\n2 3B 3G 3R\n3 2Y 3Y 4Y 5Y\n4 6R 7R 8R\n5 7G 8G 9G\n6 3Y 4Y 5Y 6Y\n7 9B 10B 11B\n8 2B 2G 2R 2Y",
+          "testOut": "TAKE 3Y 6\nPUT 3Y 2\nTAKE 3G 2\nPUT 3G 1\nTAKE 2G 8\nPUT 2G 1\nPUT 4G 1\n1 2G 3G 4G\n2 3B 3R 3Y\n3 2Y 3Y 4Y 5Y\n4 6R 7R 8R\n5 7G 8G 9G\n6 4Y 5Y 6Y\n7 9B 10B 11B\n8 2B 2R 2Y\n9 4G 5G 6G",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "Cases have been constructed such that there is always only one solution after following the <<action selection and order>> rules.\n[[naction]] <= 7.",
+      "coverBinaryId": 115715922824196,
+      "stubGenerator": "read goaltile:string(3)\nread nrow:int\nloop nrow read row:string(42)\nwrite PUT tile rowid\nrowid tile tile tile",
+      "inputDescription": "<<Line 1>>: string [[goalTile]]: tile to put on the table. A tile is a combination of a numeric value (1-13) and a single letter indicating the color (one of {{R}}, {{G}}, {{B}} or {{Y}}) .\n<<Line 2>>: integer [[nrow]]: number of rows (sets or runs) on the table.\n<<Next [[nrow]] lines>>: [[row]]: the [[rowid]] (1-[[nrow]]), followed by space separated strings representing tiles, that form a valid run or set.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[naction]] lines>>: the actions needed to put [[goalTile]] on the table (one action per line), in the format: {{PUT}} [[tile]] [[rowid]], {{TAKE}} [[tile]] [[rowid]] or {{COMBINE}} [[rowid1]] [[rowid2]].\n<<[[nrow_new]] lines>>: the new rows that are formed after putting [[goalTile]] on the table (one [[row]] per line). The new rows have either their original [[rowid]], or a new [[rowid]] (if it was a new row as a result from splitting an original row). Rows that became unused due to a {{COMBINE}} action should be skipped."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><strong>This is part 1 of the two-part Rummikub puzzle. In this part, the basic dynamics are introduced.</strong><br><br>Rummikub is a game played with tiles numbered 1-13 in four colors: <const>B</const>lue, <const>G</const>reen, <const>R</const>ed and <const>Y</const>ellow. There are two tiles of each number-color combination. Players play their tiles to form <strong>runs</strong> (same-colored uninterrupted range of numbers) or <strong>sets</strong> (same-numbered tiles all of a unique color). A valid run or set consists of at least three tiles, and a maximum of four (set) or thirteen (run). Example of a run: <const>3G 4G 5G 6G</const>. Example of a set: <const>4B 4G 4R</const>.<br><br>You will get a table with valid runs and sets (<var>row</var>s), and one tile (<var>goalTile</var>) to put on the table in as few actions as possible. You must output all actions needed to put the tile on the table (becoming part of a valid run or set), and the new rows of the table after those actions.<br><br><strong>Actions</strong><br>One action can be one of:<br>&bull; <const>TAKE</const> <var>tile</var> <var>rowid</var>: take a tile from a row, or<br>&bull; <const>PUT</const> <var>tile</var> <var>rowid</var>: put a tile in a row, or<br>&bull; <const>COMBINE</const> <var>rowid_1</var> <var>rowid_2</var>: combine two rows.<br><br>Apply the actions according to the following rules:<br>&bull; Each <const>TAKE</const> action must always immediately be followed by a <const>PUT</const> action of the same tile. (While possible in the real game, in this puzzle you are not allowed to take another tile before putting away the already taken tile)<br>&bull; After each <const>PUT</const> action, the table should only contain valid runs and/or sets.<br>&bull; Your final action is always to <const>PUT</const> <var>goalTile</var>.<br>&bull; A <const>COMBINE</const> action can be used to merge two runs into one longer valid run. Order the rowids from the two rows numerically. The new run gets the lowest rowid (<var>rowid1</var>), the other rowid (<var>rowid2</var>) becomes unused (and cannot be attributed to new runs).<br><br>You are allowed to <strong>split</strong> one valid run into two valid runs by a <const>PUT</const> or <const>TAKE</const> action. For example: <const>TAKE</const> the middle tile of a run of seven tiles, or <const>PUT</const> a tile in the middle of a run of five tiles. In case of a split, the new run with the highest numerical tile values gets a new <var>rowid</var> (highest <var>rowid</var> that ever existed + 1), and the other run keeps the original <var>rowid</var>.<br><br>Some examples of valid actions and their result on table rows:<br><strong>Starting table</strong><br><const>     1 1G 2G 3G 4G</const><br><const>     2 5G 6G 7G</const><br><const>     3 4B 4R 4Y</const><br><strong>ACTION 1: </strong><const>COMBINE 1 2</const> (This action creates a long run with lowest <var>rowid1</var>, higher <var>rowid2</var> row is deleted)<br><strong>Table after action 1:</strong><br><const>     1 1G 2G 3G 4G 5G 6G 7G</const><br><const>     3 4B 4R 4Y</const><br><strong>ACTION 2: </strong><const>TAKE 4G 1</const> (This action <strong>splits</strong> row 1; the run with highest numeric values gets a new <var>rowid</var>)<br><strong>ACTION 3: </strong><const>PUT 4G 3</const> (A <const>TAKE</const> should directly be followed by a <const>PUT</const>)<br><strong>Table after actions 2 and 3:</strong><br><const>     1 1G 2G 3G</const><br><const>     3 4B 4G 4R 4Y</const><br><const>     4 5G 6G 7G</const><br><br>Runs are always displayed from low to high value. Sets are always displayed in the order <const>B</const> <const>G</const> <const>R</const> <const>Y</const>.<br><br><strong>Action selection and order</strong><br>When different series of actions would lead to the same output, follow the rules below:<br>- Always select the least number of actions;<br>- <const>COMBINE</const> always as early as possible;<br>- <const>COMBINE</const> lower-numbered <var>rowid</var>s before higher-numbered <var>rowid</var>s (e.g. <const>COMBINE 1 2</const> before <const>COMBINE 1 3</const>, <const>COMBINE 2 6</const> before <const>COMBINE 3 4</const>).<br><br><strong>Note</strong><br>The real Rummikub allows for more complex actions (multiple <const>TAKE</const> after each other, after a single <const>PUT</const> the runs or sets do not need to be valid yet, as long as more PUTs are coming). To reduce difficulty of this puzzle, this is left out (the creator of the puzzle was not able to solve this).<br>Two important consequences of these rules (<strong>hint</strong>): 1) It is never possible to create a new set. It is only possible to make a set longer or shorter. 2) It is never possible to create a new run, except if it is created by <strong>splitting</strong> one run into multiple smaller valid runs.<br><br><strong>Rummikub 2</strong><br>Part two of the puzzle (https://www.codingame.com/training/hard/rummikub-2) follows the same rules, but adds the following:<br>- A <const>J</const>oker tile;<br>- Longer cases.<br><br><strong>CREDITS to Cedricdd for coming up with several of the cases</strong></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: string <var>goalTile</var>: tile to put on the table. A tile is a combination of a numeric value (1-13) and a single letter indicating the color (one of <const>R</const>, <const>G</const>, <const>B</const> or <const>Y</const>) .<br><strong>Line 2</strong>: integer <var>nrow</var>: number of rows (sets or runs) on the table.<br><strong>Next <var>nrow</var> lines</strong>: <var>row</var>: the <var>rowid</var> (1-<var>nrow</var>), followed by space separated strings representing tiles, that form a valid run or set.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>naction</var> lines</strong>: the actions needed to put <var>goalTile</var> on the table (one action per line), in the format: <const>PUT</const> <var>tile</var> <var>rowid</var>, <const>TAKE</const> <var>tile</var> <var>rowid</var> or <const>COMBINE</const> <var>rowid1</var> <var>rowid2</var>.<br><strong><var>nrow_new</var> lines</strong>: the new rows that are formed after putting <var>goalTile</var> on the table (one <var>row</var> per line). The new rows have either their original <var>rowid</var>, or a new <var>rowid</var> (if it was a new row as a result from splitting an original row). Rows that became unused due to a <const>COMBINE</const> action should be skipped.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Cases have been constructed such that there is always only one solution after following the <strong>action selection and order</strong> rules.<br><var>naction</var> &lt;= 7.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3R\n2\n1 4R 5R 6R\n2 4B 4G 4Y</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">PUT 3R 1\n1 3R 4R 5R 6R\n2 4B 4G 4Y</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 59850392030,
+  "avatar": 98376709796567,
+  "commentCount": 61,
+  "upVotes": 11,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 932928,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1704193537001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1708160720421,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1710752737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1710765942525,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1710878543221,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

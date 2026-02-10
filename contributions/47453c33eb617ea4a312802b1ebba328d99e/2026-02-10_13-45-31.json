@@ -1,0 +1,232 @@
+{
+  "id": 4745,
+  "activeVersion": 26,
+  "score": 5,
+  "votableId": 12171592,
+  "codingamerId": 2064637,
+  "views": 247,
+  "commentableId": 12096906,
+  "title": "Mars Colonization",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "java_coffee_cup",
+  "publicHandle": "47453c33eb617ea4a312802b1ebba328d99e",
+  "codingamerHandle": "f4c116cad137a7eee91b727ff6fe53597364602",
+  "lastVersion": {
+    "version": 26,
+    "autocloseTime": 1579190728795,
+    "data": {
+      "title": "Mars Colonization",
+      "topics": [
+        {
+          "id": 48,
+          "handle": "graphs",
+          "labelMap": {
+            "1": "Graphes",
+            "2": "Graphs"
+          },
+          "pageTitle": "Graphs: exercises and theory",
+          "puzzleCount": 11,
+          "parentTopicId": 40,
+          "contentDetailsId": 75
+        }
+      ],
+      "solution": "import java.awt.Point;\nimport java.util.ArrayList;\nimport java.util.Collections;\nimport java.util.Comparator;\nimport java.util.HashSet;\nimport java.util.Iterator;\nimport java.util.LinkedList;\nimport java.util.List;\nimport java.util.Scanner;\nimport java.util.Set;\n\npublic class Solution {\n\tpublic static void main(String[] args) {\n\t\tScanner in = new Scanner(System.in);\n\t\tint M = in.nextInt();\n\t\tint S = in.nextInt();\n\n\t\tGraph graph = new Graph(M, S);\n\n\t\tfor (int j = 0; j < M; j++) {\n\t\t\tint x = in.nextInt();\n\t\t\tint y = in.nextInt();\n\t\t\tgraph.addNode(j, x, y);\n\t\t}\n\t\tprocess(graph, M, S);\n\t\tin.close();\n\t}\n\n\tprivate static void process(Graph graph, int m, int s) {\n\t\tgraph.createLinks();\n\t\tList<Link> mst = graph.findMinSpinningTree(s);\n\t\tLink last = mst.get(mst.size() - 1);\n\t\tSystem.out.printf(\"%.2f\\n\", Math.sqrt(last.dist));\n\t}\n}\n\nclass Graph {\n\tstatic int linkId = 0;\n\tint nodeCount;\n\tint satellite;\n\tList<Integer> adj[]; // an array of List\n\tList<Node> nodeList; // list of stations (Nodes)\n\tList<Link> linkList; // list of links (distances)\n\n\tpublic Graph(int nodeCount, int s) {\n\t\tthis.nodeCount = nodeCount;\n\t\tthis.satellite = s;\n\t\tadj = new LinkedList[nodeCount];\n\t\tfor (int i = 0; i < nodeCount; ++i) {\n\t\t\tadj[i] = new LinkedList();\n\t\t}\n\t\tnodeList = new ArrayList<>();\n\t\tlinkList = new ArrayList<>();\n\t}\n\n\tpublic List<Link> findMinSpinningTree(int s) {\n\t\tSet<Link> tmpSet = new HashSet<>();\n\t\tList<Link> mstList = new ArrayList<>();\n\t\tfor (int i = 0; i < linkList.size(); i++) {\n\t\t\tLink ll = linkList.get(i);\n\t\t\tif (!tmpSet.contains(ll)) {\n\t\t\t\ttmpSet.add(ll);\n\t\t\t\tif (isCycle(tmpSet)) {\n\t\t\t\t\ttmpSet.remove(ll);\n\t\t\t\t} else {\n\t\t\t\t\tmstList.add(ll);\n\t\t\t\t\tint treeCount = countTrees();\n\t\t\t\t\tif (treeCount <= s) {\n\t\t\t\t\t\tbreak;\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t} // for linkList\n\t\treturn mstList;\n\t}\n\n\tint countTrees() {\n\t\tboolean visited[] = new boolean[nodeCount];\n\t\tint res = 0;\n\t\tfor (int i = 0; i < nodeCount; ++i) {\n\t\t\tif (visited[i] == false) {\n\t\t\t\tcountTreeUtil(i, visited);\n\t\t\t\tres++;\n\t\t\t}\n\t\t}\n\t\treturn res;\n\t}\n\n\tvoid countTreeUtil(int v, boolean visited[]) {\n\t\tvisited[v] = true;\n\t\tIterator<Integer> i = adj[v].listIterator();\n\t\twhile (i.hasNext()) {\n\t\t\tint n = i.next();\n\t\t\tif (!visited[n]) {\n\t\t\t\tcountTreeUtil(n, visited);\n\t\t\t}\n\t\t}\n\t}\n\n\tpublic boolean isCycle(Set<Link> llSet) {\n\t\tboolean result = false;\n\t\tfor (int i = 0; i < nodeCount; i++) {\n\t\t\tadj[i] = new LinkedList<>();\n\t\t}\n\t\tfor (Link ll : llSet) {\n\t\t\tadj[ll.n1.id].add(ll.n2.id);\n\t\t\tadj[ll.n2.id].add(ll.n1.id);\n\t\t}\n\n\t\tboolean[] visited = new boolean[nodeCount];\n\t\tfor (int i = 0; i < nodeCount; i++) {\n\t\t\tif (visited[i] == false) {\n\t\t\t\tif (isCycleUtil(adj, i, visited, -1)) {\n\t\t\t\t\treturn true;\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\treturn result;\n\t}\n\n\tboolean isCycleUtil(List<Integer>[] adjList, int currVertex, boolean[] visited, int parent) {\n\t\tvisited[currVertex] = true;\n\t\tfor (int i = 0; i < adjList[currVertex].size(); i++) {\n\t\t\tint vertex = adjList[currVertex].get(i);\n\t\t\tif (vertex != parent) {\n\t\t\t\tif (visited[vertex]) {\n\t\t\t\t\treturn true;\n\t\t\t\t} else {\n\t\t\t\t\tif (isCycleUtil(adjList, vertex, visited, currVertex)) {\n\t\t\t\t\t\treturn true;\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\treturn false;\n\t}\n\n\t// v, w - two nodes making an edge\n\tpublic void addEdge(int v, int w) {\n\t\tadj[v].add(w);\n\t\tadj[w].add(v);\n\t}\n\n\tpublic void addNode(int id, int x, int y) {\n\t\tnodeList.add(new Node(id, x, y));\n\t}\n\n\tpublic void createLinks() {\n\t\tfor (int i = 0; i < nodeCount - 1; i++) {\n\t\t\tfor (int j = i + 1; j < nodeCount; j++) {\n\t\t\t\tNode s1 = nodeList.get(i);\n\t\t\t\tNode s2 = nodeList.get(j);\n\t\t\t\tint d = dist(s1.p, s2.p);\n\t\t\t\tLink ll = new Link(linkId++, d, s1, s2);\n\t\t\t\tlinkList.add(ll);\n\t\t\t}\n\t\t}\n\n\t\tCollections.sort(linkList, new Comparator<Link>() {\n\t\t\t@Override\n\t\t\tpublic int compare(Link o1, Link o2) {\n\t\t\t\treturn Integer.compare(o1.dist, o2.dist);\n\t\t\t}\n\t\t});\n\t}\n\n\tprivate static int dist(Point p1, Point p2) {\n\t\tint dx = p1.x - p2.x;\n\t\tint dy = p1.y - p2.y;\n\t\treturn dx * dx + dy * dy;\n\t}\n}\n\nclass Node {\n\tint id;\n\tPoint p; // x,y\n\n\tpublic Node(int id, int x, int y) {\n\t\tthis.id = id;\n\t\tthis.p = new Point(x, y);\n\t}\n\n\t@Override\n\tpublic String toString() {\n\t\treturn String.valueOf(id);\n\t}\n\n\t@Override\n\tpublic int hashCode() {\n\t\tfinal int prime = 31;\n\t\tint result = 1;\n\t\tresult = prime * result + id;\n\t\treturn result;\n\t}\n\n\t@Override\n\tpublic boolean equals(Object obj) {\n\t\tif (this == obj)\n\t\t\treturn true;\n\t\tif (obj == null)\n\t\t\treturn false;\n\t\tif (!(obj instanceof Node))\n\t\t\treturn false;\n\t\tNode other = (Node) obj;\n\t\tif (id != other.id)\n\t\t\treturn false;\n\t\treturn true;\n\t}\n}\n\nclass Link {\n\tint id;\n\tint dist;\n\tNode n1, n2;\n\n\tpublic Link(int hash, int dist, Node n1, Node n2) {\n\t\tthis.dist = dist;\n\t\tthis.n1 = n1;\n\t\tthis.n2 = n2;\n\t\tthis.id = hash;\n\t}\n\n\tpublic boolean hasNodes(int id1, int id2) {\n\t\treturn n1.id == id1 && n2.id == id2;\n\t}\n\n\t@Override\n\tpublic String toString() {\n\t\treturn \"Link [id=\" + id + \", dist=\" + dist + \", n1=\" + n1 + \", n2=\" + n2 + \"]\";\n\t}\n\n\t@Override\n\tpublic int hashCode() {\n\t\tfinal int prime = 31;\n\t\tint result = 1;\n\t\tresult = prime * result + id;\n\t\treturn result;\n\t}\n\n\t@Override\n\tpublic boolean equals(Object obj) {\n\t\tif (this == obj)\n\t\t\treturn true;\n\t\tif (obj == null)\n\t\t\treturn false;\n\t\tif (!(obj instanceof Link))\n\t\t\treturn false;\n\t\tLink other = (Link) obj;\n\t\tif (id != other.id)\n\t\t\treturn false;\n\t\treturn true;\n\t}\n}\n\n",
+      "statement": "Men are sending robots to Mars as precursors for the final target of colonization.\n\nThe robots are called Mobile Construction Vehicles (MCV), that rove on Mars surface to seek suitable stationing sites. MCV will deploy itself to become a shelter for all kinds of equipment to establish power, communications, heating, plant cultivation and manufacturing basics by robotic systems. There are multiple MCVs to deploy to form a network of colonies.\n\n<<Commu links>>\nIt is necessary to keep a communication link between the deployment stations. There are two forms of communication. One is by a xG wireless network (evolved from 1G, 2G, 3G...). Wireless transmitters are simple and sturdy but have a transmission distance limit, determined by the designed power consumption. To standardize the equipment, all MCVs to send to Mars will be equipped with wireless transmitters of the same specification.\n\nThe second communication mode is by satellite microwave transmission. Communication by satellites does not have a distance limit but it needs an extra bulky equipment installed in the station. Some but not all stations will have satellite transmitters besides the standard wireless transmitters.\n\n<<Commu distance>>\nYou, as the network architect, are given a list of planned stationing sites on Mars, denoted by (x,y) coordinates. Each site will have a MCV to deploy. The deployment area is carefully chosen to be a flatland so that we assume the land is flat.\n\nIt is not yet confirmed how strong the signal is needed for the wireless transmitters. You would like the communication distance be as long as possible. But longer distance causes progressively higher power consumption. So, you are asked to determine the minimum distance to conserve energy but still keep all stations linked up according to the deployment plan.\n\nThe baseline is, all stations need to have communication link, directly or indirectly, connected with each others, no matter it is by xG wireless or by satellites or by both.\n\n<<Example>>\n\nM = 5 (stations)\nS = 2 (satellite transmitters available)\n\nA (1,0)\nB (1,1)\nC (2,0)\nD (4,0)\nE (4,1)\n\n` B o            o E\n   |            |\n   o---o........o\n   A   C        D`\nOne possible solution is to install satellite transmitters in C and D.\nCommunication distance between wireless transmitters can be kept to minimum 1.00 unit length and still have all 5 stations linked up.",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "5 2\n1 0\n1 1\n2 0\n4 0\n4 1",
+          "testOut": "1.00",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "4 2\n2 2\n5 2\n2 9\n5 9",
+          "testOut": "3.00",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Lonely remote site",
+          "isTest": true,
+          "testIn": "5 2\n9 20\n10 12\n11 0\n100 5\n3 10",
+          "testOut": "12.04",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "5 2\n0 0\n18 30\n15 45\n20 55\n30 50",
+          "testOut": "15.30",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Pentagon",
+          "isTest": true,
+          "testIn": "5 3\n161 172\n115 688\n322 215\n437 1075\n322 860",
+          "testOut": "243.82",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "5 3\n341 255\n217 510\n217 1020\n341 1428\n496 969",
+          "testOut": "283.62",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "10 Stations",
+          "isTest": true,
+          "testIn": "10 4\n4135 356\n1027 5337\n5813 3478\n7787 2932\n1684 647\n8720 4656\n7902 2141\n4430 4592\n6051 9833\n1995 3411",
+          "testOut": "2468.21",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "10 4\n3140 7394\n2452 8724\n5283 1285\n9287 2248\n7902 8184\n3251 8343\n3484 4042\n8972 1059\n4046 652\n9774 3147",
+          "testOut": "3292.03",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "20 Stations",
+          "isTest": true,
+          "testIn": "20 7\n5874 373\n5182 5463\n1950 8000\n7569 1922\n4551 3561\n6975 6202\n2824 5476\n9585 8798\n9060 5456\n1977 8641\n6463 4958\n1269 2130\n6587 8269\n3086 8470\n4256 4324\n2221 9172\n1573 1547\n652 765\n5643 7942\n9338 1031",
+          "testOut": "2103.10",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "20 7\n8729 6314\n9041 5738\n4304 4665\n496 3516\n1131 5879\n6200 9590\n2927 166\n7823 9258\n5582 6642\n2125 3999\n7017 1643\n9684 1938\n8748 1667\n9530 9446\n8859 4787\n581 5868\n6727 856\n898 2046\n5900 6315\n274 9397",
+          "testOut": "2278.51",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "50 Stations",
+          "isTest": true,
+          "testIn": "51 10\n4226 4372\n4603 1740\n9590 2821\n1588 4432\n7437 3726\n8380 6876\n5688 9221\n8149 7066\n9782 5494\n9136 759\n1490 4147\n8716 7794\n9037 1685\n4892 3727\n7027 2545\n8580 5036\n9981 9798\n2144 9003\n1154 163\n9985 6110\n1802 3334\n3717 5633\n6081 2734\n5809 8961\n2357 9378\n638 5947\n4268 6330\n2494 8655\n948 1611\n9497 5890\n2552 6641\n7032 4211\n1132 5204\n6621 9381\n8358 5133\n2157 5787\n8281 898\n2604 3651\n3455 6029\n8435 8057\n2354 7131\n8272 6572\n4199 3056\n5098 5773\n4743 5687\n4974 1475\n1787 1671\n5483 140\n452 4498\n4744 2110\n2517 3943",
+          "testOut": "1402.05",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "47 9\n1699 1277\n787 9361\n1414 5873\n8613 6656\n3278 8157\n9917 5379\n8555 1246\n1155 3188\n1883 1534\n6511 8150\n8785 9889\n3861 3338\n9841 5179\n2795 302\n9144 2828\n3995 9923\n2009 6153\n6323 3753\n9234 6007\n7530 9993\n8877 5782\n5997 2894\n9810 665\n6264 9425\n1610 8750\n9392 1584\n1550 6942\n76 9131\n2606 2754\n6084 6955\n5341 3663\n1874 3038\n7226 9168\n3269 595\n7753 784\n2341 9854\n7840 512\n9984 9257\n5822 4251\n9811 952\n645 6339\n5716 2967\n232 1495\n7868 7970\n240 7780\n4098 6832\n5625 9077",
+          "testOut": "1496.83",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "75 Stations",
+          "isTest": true,
+          "testIn": "75 35\n7292 8449\n2005 2393\n484 2525\n9380 285\n5742 3535\n9928 6822\n8710 4674\n5977 225\n1997 993\n8248 3779\n2204 6241\n5228 9501\n3206 9723\n3366 4030\n5842 7799\n7571 2194\n8669 1380\n3535 2520\n1403 7109\n1648 7746\n886 677\n7718 902\n9413 3163\n636 4097\n890 344\n5419 8570\n5048 5757\n6092 6276\n1390 6042\n360 2046\n8805 1746\n7886 5173\n7410 4794\n2655 7641\n808 8943\n4954 332\n7293 1063\n2767 9271\n1383 5727\n9314 5319\n7411 244\n1455 7172\n1874 2910\n3012 6178\n4801 6214\n319 5345\n4035 8649\n7796 6463\n6173 2212\n9819 318\n7181 143\n8613 1631\n7384 2774\n8505 7773\n6735 2002\n2511 2631\n8781 3527\n6631 5829\n3520 9670\n7335 8524\n3489 8499\n1760 3660\n5426 1169\n8187 5302\n6243 8393\n2134 3211\n8688 6713\n5637 4064\n7003 8761\n7510 2878\n6305 3704\n2741 5670\n9004 3621\n2889 2849\n7509 7051",
+          "testOut": "837.97",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "73 33\n2665 8523\n8724 6206\n7969 129\n8843 8312\n7964 2434\n7070 6322\n8219 3277\n3535 3005\n6745 3664\n3194 2547\n605 4243\n7378 161\n9052 258\n3542 7135\n8683 7685\n7747 9486\n8882 3038\n8995 5885\n2044 2415\n6451 5959\n5514 4293\n3666 4172\n6967 4949\n1285 8586\n2902 7329\n9351 8601\n1512 2230\n8318 6160\n427 885\n2297 8919\n1148 5389\n2645 1098\n7196 3298\n1087 5590\n9472 5356\n3764 4147\n7074 5550\n9156 9934\n9285 1456\n8084 3714\n1110 5420\n1763 4835\n783 994\n4932 2358\n7141 2152\n6058 2480\n8497 6658\n3123 4442\n1435 5178\n6795 8782\n2385 7771\n4449 4384\n7880 4704\n7014 4124\n986 5204\n2402 536\n3533 3221\n9984 9957\n5285 3819\n1418 7624\n3007 975\n4783 5007\n270 8345\n3553 3666\n1939 634\n9467 4920\n4117 5074\n2031 4019\n8400 8495\n4638 2409\n233 4836\n8401 4287\n2592 7393",
+          "testOut": "706.88",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "100 Stations",
+          "isTest": true,
+          "testIn": "100 50\n1542 7327\n1000 3601\n6696 2276\n7226 213\n6217 9471\n412 7001\n3654 3368\n5961 5967\n5528 9091\n3112 1822\n6502 4628\n8985 7977\n4456 4430\n9850 7658\n9862 444\n5513 2955\n5486 7962\n4932 7745\n7493 5825\n1820 8966\n8725 8109\n2776 9713\n1940 8141\n9382 6212\n613 6647\n4700 8578\n1032 9717\n5053 8683\n9804 2048\n9255 9893\n9925 4375\n9177 6425\n344 3324\n2129 8327\n9396 5531\n2387 534\n8987 4856\n7446 3404\n8653 8212\n8105 4934\n6245 9323\n1619 5494\n3581 7278\n1256 8278\n8093 7832\n6615 5693\n7761 6431\n3696 5533\n8232 2968\n2771 2629\n2584 6167\n1284 3002\n8911 8962\n3642 669\n7269 8689\n2134 8857\n5869 7189\n4881 7740\n7274 2418\n1695 4272\n143 9386\n6255 1172\n4238 3079\n7732 4571\n849 5108\n2206 8465\n9799 9848\n8785 2118\n8823 5169\n1576 6088\n9984 7449\n2098 4689\n4977 7112\n2282 2042\n4292 8501\n1332 8058\n8581 4074\n1363 9024\n7056 4323\n1176 4665\n6056 3794\n1317 8270\n820 1715\n8768 8925\n7429 3751\n6147 1938\n5266 1327\n1008 5937\n4180 9303\n5361 995\n1934 4588\n4525 4331\n9139 3548\n5911 3156\n7803 4072\n3025 3641\n5473 2920\n5662 112\n8276 5595\n7428 9988",
+          "testOut": "685.69",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "100 50\n7948 3195\n3067 5553\n6039 6466\n2205 1678\n760 4874\n9262 8278\n3237 2798\n8328 7011\n4784 2425\n5416 976\n1458 8791\n3438 4612\n7636 8073\n9534 2729\n2618 9476\n4470 618\n477 4169\n4108 6090\n1299 7694\n6084 4098\n1372 4731\n4315 9298\n4524 6274\n8563 5081\n1936 4341\n8555 4752\n335 1723\n5017 5840\n9454 9021\n5991 2356\n6592 8923\n1784 7801\n2521 4428\n7957 1153\n6045 5650\n6009 8375\n3449 4652\n2213 701\n5309 6661\n6848 3298\n6773 8698\n2735 1231\n9011 6216\n6125 7360\n4251 179\n3623 1168\n3307 8548\n5367 7405\n9652 6394\n8554 1562\n9833 3361\n5024 1827\n9251 5536\n8544 9275\n5886 9724\n2454 7266\n9844 2762\n1450 3491\n276 1426\n877 3977\n2751 8655\n6994 6369\n9519 6595\n2727 522\n5203 2807\n3423 889\n1947 7983\n574 4425\n7533 4684\n8688 1936\n9730 9596\n6790 7533\n1473 2524\n8830 2318\n149 3213\n1534 1022\n733 260\n844 9658\n3888 4364\n4413 1844\n5914 1318\n9240 5921\n1112 816\n7542 4030\n1980 7972\n3481 8528\n3533 2727\n4134 1736\n3679 4178\n2304 1156\n1706 5325\n6690 2899\n6905 1783\n4185 2241\n6306 9810\n2988 8256\n8221 908\n9801 8840\n2722 520\n6861 8421",
+          "testOut": "672.89",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Many satellites links",
+          "isTest": true,
+          "testIn": "100 70\n271 6573\n1897 6047\n5375 9131\n689 8454\n6557 3193\n5067 8226\n8008 7189\n4820 8048\n9296 9220\n9288 7326\n7610 7070\n5126 3714\n7120 983\n2237 4859\n1157 2726\n4962 7682\n6230 9956\n1780 1420\n6252 2306\n614 4687\n990 1671\n2747 366\n660 7957\n9713 307\n8294 5927\n4275 5272\n8355 3785\n4386 6482\n3165 9604\n6750 2347\n9009 1973\n6863 8171\n9908 6856\n1312 1233\n4121 9158\n4395 6947\n4752 8376\n3199 3136\n4936 8743\n1437 2862\n2197 2834\n6595 5910\n2189 6379\n7663 9944\n7532 670\n6454 2795\n8135 3727\n125 6965\n3101 9215\n9587 9684\n6026 6779\n1666 8567\n9925 5761\n7434 2620\n3785 3935\n3262 5670\n8369 5050\n1930 9434\n5612 8072\n8529 86\n6321 8394\n246 5743\n8396 7450\n8688 4166\n8821 9053\n8993 8327\n1490 1956\n3103 8285\n1811 5989\n9633 5445\n9499 2577\n438 8093\n5294 7154\n6686 7161\n1750 8739\n4620 5858\n4352 6860\n2019 5483\n9699 1496\n1790 1586\n368 9092\n6908 4846\n6421 6279\n6824 3419\n924 4713\n8263 976\n513 8769\n6922 4985\n7152 735\n5571 7846\n7869 2914\n6116 3391\n3293 1110\n9042 4098\n6433 4110\n8601 347\n7123 6251\n1930 2574\n8888 8086\n3583 5124",
+          "testOut": "430.26",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "100 70\n4009 3606\n1877 2693\n1989 5794\n114 210\n3774 4513\n7079 2745\n6616 3994\n4577 5362\n2918 9996\n6093 684\n6633 2900\n7325 5670\n1699 123\n6759 6476\n2090 8159\n7517 8065\n1688 188\n7975 5173\n5854 9671\n3356 7043\n4233 9175\n6448 5674\n1389 7056\n8471 1126\n9949 3693\n9544 3066\n1933 5194\n5740 6284\n2207 9883\n8662 5870\n3449 1564\n4877 5892\n840 3829\n7636 2823\n1118 5914\n8362 9541\n7430 1741\n7021 4674\n5849 5488\n1882 527\n4904 843\n1231 1077\n4329 4150\n642 4302\n7184 6260\n7882 5953\n3362 7420\n7851 2504\n9279 1333\n8687 9439\n1064 2637\n640 7243\n2587 4806\n8866 9557\n1776 1821\n5277 8850\n4171 9497\n1304 7968\n1906 5805\n81 9775\n3849 9177\n9129 2697\n1321 979\n3260 5215\n6303 542\n3534 322\n6784 3620\n3729 6843\n1978 3782\n8899 9160\n710 924\n5669 3075\n1514 5098\n1862 3376\n8219 6866\n2685 9330\n8271 6304\n2934 6299\n6336 7479\n9443 9295\n5069 4101\n6116 2036\n9339 565\n3538 9560\n1096 4737\n3588 1470\n9168 8305\n6405 6230\n5704 8580\n6125 5368\n6792 5434\n9099 1005\n5814 3805\n1876 3994\n3165 5978\n3653 5706\n8237 3631\n4965 1319\n6635 4962\n710 8949",
+          "testOut": "497.43",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Not enough satellite links",
+          "isTest": true,
+          "testIn": "100 6\n1141 1246\n7431 6659\n7007 4213\n7485 1468\n4177 8692\n3488 29\n5091 2000\n7359 4329\n1322 4781\n58 9898\n7730 1668\n8718 2762\n1686 5171\n5000 1998\n9772 8065\n7563 1040\n2350 6620\n7981 6231\n8403 1537\n8155 2709\n7596 2983\n2573 1437\n6554 2217\n1365 2750\n6908 6446\n1808 3217\n3462 5399\n7103 6843\n862 4724\n335 271\n5248 6675\n8548 9587\n9938 7686\n8709 5213\n7985 7952\n2688 2427\n9690 3036\n1070 5148\n9045 9849\n4801 9645\n9707 8390\n5690 1779\n1912 4502\n280 6226\n4011 160\n4843 3193\n6603 4726\n3942 571\n8580 448\n9362 5450\n6095 2549\n8479 7681\n8463 5813\n7973 1470\n5928 5653\n4633 4458\n7530 2167\n7708 1575\n1323 6406\n8317 1685\n4674 5675\n7391 8464\n1215 9743\n8005 9194\n7721 830\n8137 2192\n4271 9444\n2172 5180\n16 2407\n2519 4711\n2647 3696\n9697 296\n1085 7367\n5897 5054\n402 6346\n9619 2534\n8742 7881\n7904 265\n2274 1234\n1733 5076\n6420 2532\n8558 7557\n1463 8946\n139 2192\n4609 5910\n1624 7003\n2390 254\n7947 9196\n2985 7592\n7191 3389\n8499 8246\n2797 3305\n6124 1262\n3330 9638\n4054 4033\n8283 5631\n1978 8166\n836 5212\n7146 9762\n1793 5440",
+          "testOut": "1243.03",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "100 7\n6352 7491\n3991 3263\n4603 1066\n1373 5949\n8449 5835\n1319 5000\n1708 8722\n7306 3900\n9753 4019\n7878 5505\n2187 5851\n5772 748\n3308 753\n2969 469\n6081 5020\n9395 2500\n7880 3966\n14 7093\n3217 6750\n6332 1850\n5510 596\n3199 9744\n6760 3917\n7020 345\n8200 4750\n6126 8456\n6575 1957\n1380 2140\n347 8970\n6792 676\n1046 2997\n4429 8240\n1940 5642\n6852 2440\n6457 5087\n9115 8390\n9284 3854\n4163 7598\n9340 5877\n8060 4766\n7430 7755\n9151 4256\n1584 3725\n600 9612\n9949 1510\n5533 9050\n6685 1182\n96 2262\n1977 7961\n2013 6908\n440 2976\n3840 7971\n7104 29\n2406 6918\n940 3711\n8686 333\n3318 6846\n7837 7098\n9378 7128\n7386 8703\n935 6010\n5356 6621\n7579 5546\n686 4184\n1177 8481\n7404 1558\n882 5334\n654 3958\n7181 3574\n3102 9181\n3468 3983\n7862 2619\n4365 9739\n5163 1597\n9961 9067\n9328 6123\n3213 3753\n6969 3921\n8978 207\n7373 2139\n2379 2277\n8342 1018\n1306 3541\n9481 8067\n2080 9723\n7788 5959\n5872 1881\n6857 269\n4878 8487\n2910 4698\n5129 2567\n7869 3347\n6817 3303\n8455 2154\n6055 3887\n1344 836\n865 4746\n6175 4427\n5430 145\n4821 6447",
+          "testOut": "1140.05",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "2 ≤  S ≤  M ≤  100\n0 ≤  x, y ≤  10000",
+      "coverBinaryId": 38341448605855,
+      "stubGenerator": "read M:int S:int\nloop M read x:int y:int\nwrite 1.00",
+      "inputDescription": "<<Line 1:>> [[M]] [[S]]\n\n[[M]] is the number of stations. It also equals to the number of wireless transmitters.\n[[S]] is the number of satellite transmitters among all stations.\n\n<<Next [[M]] lines:>>\neach line will be [[x]] [[y]], the coordinates of one spot of deployment. [[x]] and [[y]] are non-negative integers.",
+      "solutionLanguage": "Java",
+      "outputDescription": "<<Line 1:>> the minimum wireless transmission distance required for the wireless transmitters, accurate to the nearest 2 decimal places."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Men are sending robots to Mars as precursors for the final target of colonization.<br><br>The robots are called Mobile Construction Vehicles (MCV), that rove on Mars surface to seek suitable stationing sites. MCV will deploy itself to become a shelter for all kinds of equipment to establish power, communications, heating, plant cultivation and manufacturing basics by robotic systems. There are multiple MCVs to deploy to form a network of colonies.<br><br><strong>Commu links</strong><br>It is necessary to keep a communication link between the deployment stations. There are two forms of communication. One is by a xG wireless network (evolved from 1G, 2G, 3G...). Wireless transmitters are simple and sturdy but have a transmission distance limit, determined by the designed power consumption. To standardize the equipment, all MCVs to send to Mars will be equipped with wireless transmitters of the same specification.<br><br>The second communication mode is by satellite microwave transmission. Communication by satellites does not have a distance limit but it needs an extra bulky equipment installed in the station. Some but not all stations will have satellite transmitters besides the standard wireless transmitters.<br><br><strong>Commu distance</strong><br>You, as the network architect, are given a list of planned stationing sites on Mars, denoted by (x,y) coordinates. Each site will have a MCV to deploy. The deployment area is carefully chosen to be a flatland so that we assume the land is flat.<br><br>It is not yet confirmed how strong the signal is needed for the wireless transmitters. You would like the communication distance be as long as possible. But longer distance causes progressively higher power consumption. So, you are asked to determine the minimum distance to conserve energy but still keep all stations linked up according to the deployment plan.<br><br>The baseline is, all stations need to have communication link, directly or indirectly, connected with each others, no matter it is by xG wireless or by satellites or by both.<br><br><strong>Example</strong><br><br>M = 5 (stations)<br>S = 2 (satellite transmitters available)<br><br>A (1,0)<br>B (1,1)<br>C (2,0)<br>D (4,0)<br>E (4,1)<br><br><pre style=\"font-family: monospace\"> B o            o E<br>   |            |<br>   o---o........o<br>   A   C        D</pre><br>One possible solution is to install satellite transmitters in C and D.<br>Communication distance between wireless transmitters can be kept to minimum 1.00 unit length and still have all 5 stations linked up.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> <var>M</var> <var>S</var><br><br><var>M</var> is the number of stations. It also equals to the number of wireless transmitters.<br><var>S</var> is the number of satellite transmitters among all stations.<br><br><strong>Next <var>M</var> lines:</strong><br>each line will be <var>x</var> <var>y</var>, the coordinates of one spot of deployment. <var>x</var> and <var>y</var> are non-negative integers.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> the minimum wireless transmission distance required for the wireless transmitters, accurate to the nearest 2 decimal places.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &le;  S &le;  M &le;  100<br>0 &le;  x, y &le;  10000</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5 2\n1 0\n1 1\n2 0\n4 0\n4 1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1.00</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 193906786698,
+  "avatar": 13281799951852,
+  "commentCount": 11,
+  "upVotes": 5,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 414421,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1576824343090,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

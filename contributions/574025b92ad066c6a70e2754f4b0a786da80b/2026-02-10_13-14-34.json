@@ -1,0 +1,169 @@
+{
+  "id": 57402,
+  "activeVersion": 15,
+  "score": 9,
+  "votableId": 29281823,
+  "codingamerId": 5271147,
+  "views": 376,
+  "commentableId": 29148540,
+  "title": "16x16 Sudoku",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "yoch",
+  "publicHandle": "574025b92ad066c6a70e2754f4b0a786da80b",
+  "codingamerHandle": "14a6f9fb972f723d06789c969370ff2e7411725",
+  "lastVersion": {
+    "version": 15,
+    "autocloseTime": 1686309518417,
+    "data": {
+      "title": "16x16 Sudoku",
+      "topics": [
+        {
+          "id": 56,
+          "handle": "backtracking",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Retour sur trace",
+            "2": "Backtracking"
+          },
+          "pageTitle": "Backtracking: exercises and theory",
+          "puzzleCount": 20,
+          "parentTopicId": 41,
+          "contentDetailsId": 80
+        }
+      ],
+      "solution": "#include <cstdio>\n#include <cstdlib>\n#include <cstring>\n#include <list>\n#include <algorithm>\n\nusing namespace std;\n\n#define N       4\n#define N_2     (N*N)\n#define poss    ((1<<N_2)-1)\n#define base    'A'\n#define vide    '.'\n#define bx(j, k) (((int)((j) / N)) * N + (int)((k) / N))\n\n\nunsigned candrow[N_2];\nunsigned candcol[N_2];\nunsigned candbox[N_2];\nchar grid[N_2][N_2+1];\nchar solution[N_2][N_2+1];\n\nbool backtrack(list<unsigned>& pos) {\n    if (pos.empty()) {\n        return true;\n    }\n\n    unsigned mini = 2 * N_2;\n    list<unsigned>::const_iterator cit;\n    for (auto it=pos.begin(); it!=pos.end(); ++it) {\n        const unsigned p = *it;\n        const unsigned i = p / N_2;\n        const unsigned j = p % N_2;\n        const unsigned b = bx(i, j);\n        const unsigned nb = __builtin_popcount(candrow[i] & candcol[j] & candbox[b]);\n        if (nb < mini) {\n            mini = nb;\n            cit = it;\n        }\n    }\n\n    const unsigned p = *cit;\n    const unsigned i = p / N_2;\n    const unsigned j = p % N_2;\n    const unsigned b = bx(i, j);\n    unsigned bitset = candrow[i] & candcol[j] & candbox[b];\n    pos.erase(cit);\n    while (bitset) {\n        const unsigned k = __builtin_ctz(bitset);\n        bitset &= ~(1 << k);\n\n        candrow[i] &= ~(1 << k);\n        candcol[j] &= ~(1 << k);\n        candbox[b] &= ~(1 << k);\n\n        if (backtrack(pos)) {\n            solution[i][j] = base + k; \n            return true;\n        }\n\n        candrow[i] |= (1 << k);\n        candcol[j] |= (1 << k);\n        candbox[b] |= (1 << k);\n    }\n    pos.push_front(p);\n    return false;\n}\n\nvoid display (char g[N_2][N_2+1], FILE *stream)\n{\n    for (int i=0; i<N_2; i++)\n    {\n        fputs(g[i], stream);\n        fputc('\\n', stream);\n    }\n}\n\nint main (void)\n{\n    fill(candrow, candrow+N_2, poss);\n    fill(candcol, candcol+N_2, poss);\n    fill(candbox, candbox+N_2, poss);\n\n    for (unsigned l=0; l < N_2; l++)\n    {\n        char line[N_2 + 1];\n        scanf(\"%[^\\n]\", line);\n        fgetc(stdin);\n        strncpy(grid[l], line, N_2 + 1 );\n    }\n\n    list<unsigned> pos;\n    for (unsigned i=0, n=0; i<N_2; ++i)\n        for (unsigned j=0; j<N_2; ++j, ++n) {\n            const unsigned b = bx(i, j);\n            const char val = grid[i][j];\n            if (val != vide) {\n                const unsigned k = val - base;\n                candrow[i] &= ~(1 << k);\n                candcol[j] &= ~(1 << k);\n                candbox[b] &= ~(1 << k);\n                solution[i][j] = val;\n            } else {\n                pos.push_back(n);\n            }\n        }\n\n    //display(grid, stderr);\n\n    bool ok = backtrack(pos);\n    if (ok) display(solution, stdout);\n\n    return 0;\n}",
+      "statement": "Backtracking is the process of incrementally exploring a problem space to find a solution, abandoning paths as soon as it can be determined they cannot lead to a solution. The term “brute force backtracking” is often used to describe a backtracking process that tries every possible path until a solution is found.\n\nIn some problems, the search space is so vast that brute force is impratical and a “smart” version of backtracking is needed. As the backtracking explores paths, some kind of logic is used to determine which remaining paths are still viable and which options to explore first to reduce the search tree.\n\nFor instance, in the classic Sudoku puzzle, the backtracking algorithm might know that a cell must be one of three values. A basic algorithm will try each of these values looking for a path to a solution and then try each remaining path from there. A smart algorithm will try each of the three values in the most promising order, and then reevaluate the remaining viable paths before moving forward. With such an approach, significant time can be saved.\n\n<<In this puzzle you have to solve a 16x16 sudoku grid!>>\nHowever, the grids have been carefully chosen so that they cannot be solved within the time limit by brute-force backtracking. Proper solutions will need to add some “smartness” to the backtracking.\n\n<<RULES>>:\nAn empty <<cell>> is represented by {{.}} and the letters {{A}} to {{P}} are used to fill the grid.\nEach <<line>> contains exactly one occurrence of each letter.\nEach <<column>> contains exactly one occurrence of each letter.\nEach <<block>> (4x4 cells) contains exactly one occurrence of each letter.\n\n<<NOTE>>: These grids are challenging, but they are not advanced level grids. They can all be solved without Algorithm X or Dancing Links (DLX) which are often utilized for very difficult sudoku grids.\n\n<<ACKNOWLEDGMENT>>:\nThanks to Timinator for his precious help to create this puzzle.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": ".LEK.G.....NO.C.\n..M.H.JOBDG.FENK\nJ..C.BAN.EK....I\n.BG..K..C.J..DPM\n.HA.FL..K..M.P..\n...OA.....D.IK.G\n..KDJ.CBFAIG.MHL\n.M.....EPJNO.A..\nG...IA.DE.CJP...\nAK....GHNM..LIJ.\n..DJON..GL.BKH.F\n.N...J.K.F...GAB\nD..A..FJ..LIM.K.\nE.LFCDB.O.M.N.I.\n.JI....PD.....L.\n.....H.IJ....CBA",
+          "testOut": "HLEKDGMFAIPNOBCJ\nIAMPHCJOBDGLFENK\nJDOCPBANMEKFHLGI\nFBGNEKILCOJHADPM\nCHAIFLDGKBEMJPON\nBEJOAPNMLHDCIKFG\nNPKDJOCBFAIGEMHL\nLMFGKIHEPJNOBADC\nGFHBIALDEKCJPNMO\nAKCEBFGHNMOPLIJD\nMIDJONPCGLABKHEF\nONPLMJEKIFHDCGAB\nDCBAGEFJHNLIMOKP\nEGLFCDBAOPMKNJIH\nKJIHNMOPDCBAGFLE\nPONMLHKIJGFEDCBA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": ".BGHJC.P....E.M.\nA....LD...H..P.B\n...L...B...M.D.J\nJ.MD..A...GBHINC\nO..EC.L..KB.DGFN\n...PFO.K..DEICL.\nI..CAN...M.H....\n.F.G.DM.O.CJ..PK\n.I.AHFB..DLOM..P\n...JE...MN..LFI.\nM.F.LP..ICAK.E.G\nLN..G..D.HE..AC.\nD.C.MA..H...NKE.\n...F.J....M..LHI\nKLHM.B.NC.IA....\nP.N.K.FL..JDCMB.",
+          "testOut": "FBGHJCKPDANIEOML\nAEONILDMFJHCKPGB\nCPILNGHBEOKMFDAJ\nJKMDOEAFPLGBHINC\nOMJECILHAKBPDGFN\nHABPFOJKNGDEICLM\nIDKCANPGLMFHOBJE\nNFLGBDMEOICJAHPK\nGIEAHFBCJDLOMNKP\nBCDJEKOAMNPGLFIH\nMHFOLPNJICAKBEDG\nLNPKGMIDBHEFJACO\nDJCBMAGIHPOLNKEF\nEGAFDJCOKBMNPLHI\nKLHMPBENCFIAGJOD\nPONIKHFLGEJDCMBA",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": ".EDK.H..L.IGBA..\n.I.G.AKN.....D.P\n..O.IE.PBA.N.G..\nPNABG.ODE.....IJ\nIFL.HG..J.A.O.DN\nD...C....M..E..F\nBOENJIL.KD.P....\nHJK..BA........L\n..C..F.B.KJ.LP.M\nJ.....DC..P.INKG\n.L...P.K..CAJH..\nN..OL.JI...F.E.C\n.CBIMD.G.J.K.L..\n.DFEP..LA.M.KO..\n.M.H...ACIL.PF.D\n.PNLOJ.HG.E..B..",
+          "testOut": "CEDKFHMJLPIGBANO\nLIMGBAKNOCFJHDEP\nFHOJIECPBADNMGLK\nPNABGLODEHKMFCIJ\nIFLMHGPEJBACOKDN\nDAGPCKNOIMHLEJBF\nBOENJILFKDGPAMCH\nHJKCDBAMFENOGIPL\nEGCANFHBDKJILPOM\nJBHFAODCMLPEINKG\nMLIDEPGKNOCAJHFB\nNKPOLMJIHGBFDEAC\nACBIMDFGPJOKNLHE\nGDFEPCBLANMHKOJI\nOMJHKNEACILBPFGD\nKPNLOJIHGFEDCBMA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": ".MI...GD..O.BC..\nG.J.C.BK..D..MLP\nLB......P...K..J\nA.CN.LE.M.H.DIO.\nPJ.K.E.MA.NH.GB.\nDC.B.....JPFE.I.\n.EN.FB...D..A.J.\n.O....HN...MCK..\nE.......L..J.O..\n.K...DI.O...JFML\n...J..L.NKAB.D.H\n....JMK.I.F.GBA.\nJIBAGFDHKP...NC.\n.DGE.PA.F.MNL.KI\n..K.E.MOD.J.H.G.\n..O..K...GB.F.D.",
+          "testOut": "KMIPAHGDJNOLBCFE\nGHJOCIBKEFDANMLP\nLBEDMONFPCIGKAHJ\nAFCNPLEJMBHKDIOG\nPJLKDECMAINHOGBF\nDCMBKAOLGJPFEHIN\nIENHFBPGCDKOALJM\nFOAGIJHNBLEMCKPD\nEADIHGFBLMCJPONK\nBKHCNDIAOEGPJFML\nMGFJOCLPNKABIDEH\nONPLJMKEIHFDGBAC\nJIBAGFDHKPLEMNCO\nHDGEBPACFOMNLJKI\nCLKFENMODAJIHPGB\nNPOMLKJIHGBCFEDA",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "........B.HAL..N\n..N.....D...OEF.\n..K.A..J..NO.B.P\n...CL.D..G.E.M.J\n...JH..P.......E\n.N.K.....I..JGOD\n.OM..IECNB.GH...\nHB...D..P.J.NFCI\n.HA.ME......KN.C\nD..ENB.H.POL....\nNM.B..O.JK..D...\n.PL....D.....A.O\n.E.HDC.....FPK..\n.C..EAN.OL.P.I..\nIA.NG.PM..KD..E.\n..O.IH.....NAC..",
+          "testOut": "OIJPCKFEBMHALDGN\nMLNABPHGDCIJOEFK\nEDKGAMIJLFNOCBHP\nBFHCLODNKGPEIMAJ\nCGIJHNAPFODKBLME\nANPKFLMBEICHJGOD\nFOMDJIECNBLGHPKA\nHBELODGKPAJMNFCI\nJHAOMELIGDFBKNPC\nDKFENBCHAPOLMJIG\nNMCBPGOAJKEIDHLF\nGPLIKFJDHNMCEABO\nLEGHDCBOIJAFPKNM\nKCDMEANFOLBPGIJH\nIABNGJPMCHKDFOEL\nPJOFIHKLMEGNACDB",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "......PEN....O..\n..L............G\nN.H.C.OIAEM.....\n.....A.MJICG.E.H\n...K.CJG..E...F.\nE..NA....J..M...\nA..PL.EDC.GF....\nJ.B.OM...NL.I..E\n.DICB.H..LA.K..J\n...B.....K.J....\nOJPH.KM.I.B.G.A.\nK...I.G.DF....EM\nHB.AF...E.I.L.J.\nGKFDEPBCL.J...M.\n.EJ....K..NCHG..\n....J....GFD...A",
+          "testOut": "IMDJGFPENHKBAOLC\nCALEKHNJFDPOBMIG\nNFHGCBOIAEMLDJPK\nBPKODALMJICGFENH\nDLMKHCJGOBEIPAFN\nEHGNAIFBPJDKMLCO\nAIOPLNEDCMGFJHKB\nJCBFOMKPHNLAIDGE\nMDICBEHFGLANKPOJ\nFGEBPDCAMKOJNIHL\nOJPHNKMLICBEGFAD\nKNALIJGODFHPCBEM\nHBCAFGDNEOIMLKJP\nGKFDEPBCLAJHONMI\nLEJIMOAKBPNCHGDF\nPONMJLIHKGFDECBA",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": ".M.OA.F......I..\n.G.PK.MC.NB...EH\nK.C..H.E.IP.F...\nN.....OL.AJE.P.B\n....B...A...L.JO\n.I.C..L.G..N.E..\n.H.K..I..J.LG.D.\n......G.EF..I...\nGC.BI..D..K..H.N\n..F..C.B....MKL.\nLKH..N..B..G..C.\nP..M.KJ..E.C.AI.\nIAE....F..C..MKJ\nH....DCA...O.LP.\nM....ON.DB.....C\n.P....K.I..F....",
+          "testOut": "EMBOAJFPCGLHDINK\nJGLPKIMCFNBDAOEH\nKDCANHBEOIPMFJGL\nNFIHDGOLKAJECPMB\nFEMGBPDHACIKLNJO\nBIJCFALOGPDNKEHM\nAHPKCEINMJOLGBDF\nONDLJMGKEFHBICAP\nGCABIFEDLMKJPHON\nDJFEHCABPONIMKLG\nLKHIONPMBDAGJFCE\nPONMLKJGHEFCBAID\nIAEDGBHFNLCPOMKJ\nHBGFEDCAJKMONLPI\nMLKJPONIDBEAHGFC\nCPONMLKJIHGFEDBA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": ".J.F........K...\n.......LKBO..M.F\n.EOH.I...L......\n...C.BDPA..M....\nNK..I.OC.E.D.JML\n.H.EBAG.C.FL.PN.\n.D.P.....K.....G\nCBL.KP...GH.FI.D\n..EB......D.NL..\nGA..D..BN..K...I\n.IKN.MEAB.....D.\nO...NL...IE.GF..\nB..D.FC...KI.NOM\nEF.IA.B.O.MPLK..\n..JK.OL....B..FE\n..N....HG.....B.",
+          "testOut": "IJBFGNMOEDCHKALP\nDNPAEJHLKBOGCMIF\nMEOHCIAKFLPNBDGJ\nKLGCFBDPAJIMEOHN\nNKFGIHOCPEBDAJML\nJHIEBAGDCMFLOPNK\nADMPLEJFIKNOHBCG\nCBLOKPNMJGHAFIED\nFCEBHGPIMADJNLKO\nGAHJDCFBNOLKMEPI\nLIKNOMEABPGFJHDC\nOPDMNLKJHIECGFAB\nBGADJFCELHKIPNOM\nEFCIADBGONMPLKJH\nHMJKPOLNDCABIGFE\nPONLMKIHGFJEDCBA",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": ".L.J...E.....M..\n....B..P...LA.OG\nNMB.GKD..J.O....\nC.P...NH....K.E.\nABCG..ON....J.LK\nE.....KJ..BN...H\n.J.K..........IB\nFHN..PBLJC.GE.M.\nJ...FGE.K.LCO..N\n.I...HC..P.DML..\nH.ML.N.KA.O..EG.\n.N.P.L..B.EHI...\nD.....JC..A..G..\nB.....A.N.J....E\n.K......PDC....M\n...NHE......D.BA",
+          "testOut": "GLAJOCIEDBFKNMHP\nIDKEBMFPCNHLAJOG\nNMBHGKDAEJPOFICL\nCFPOLJNHIGMAKBED\nABCGMDONHEIFJPLK\nEPOICAKJMLBNGFDH\nMJLKEFHGOADPCNIB\nFHNDIPBLJCKGEAMO\nJADBFGEIKMLCOHPN\nOIEFAHCBGPNDMLKJ\nHCMLDNPKAIOJBEGF\nKNGPJLMOBFEHIDAC\nDEFMKOJCLHABPGNI\nBGHCPIADNOJMLKFE\nLKIANBGFPDCEHOJM\nPOJNHELMFKGIDCBA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "I..F..E..L.....A\n...N.LJ..A...I.M\n.A..MI..JK.....B\n.K......N.....FL\nF..P..LNM..KDEA.\n.DAL.J..IF.....H\nJC.E......D.BM..\nKNMO..HP..LB.F..\nMOHD..G...IF..J.\n.FC...KI..JL...G\n.IJ..M.L...O.A.E\nG..KNH....A..D..\n.......C...MNB.P\nHE..I..GA.P....J\n..K..A.MH.......\n.P..L..D.CE.AHG.",
+          "testOut": "IMOFGNEKCLBPHJDA\nPGENDLJBOAFHCIKM\nDALHMICFJKGEOPNB\nCKBJOPAHNDMIEGFL\nFHIPBGLNMJCKDEAO\nBDALCJMEIFONGKPH\nJCGEKFIOPHDABMLN\nKNMOADHPGELBJFIC\nMOHDECGABPIFLNJK\nEFCAPBKIDNJLMOHG\nNIJBFMDLKGHOPACE\nGLPKNHOJEMACIDBF\nAJDGHEFCLIKMNBOP\nHEFCIONGABPDKLMJ\nLBKIJAPMHONGFCED\nOPNMLKBDFCEJAHGI",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": ".C......E.......\n..J..A.BFP...KLD\n..I.D.NJ.A..EB.G\nL..A....J..N...O\nDH.MBJCP..F..IKA\n...L.NM..OD....C\n..N.I........G..\nB..F..OGICP..LDM\n.G.E...D...IM.OK\n.A..G.P....FLHCN\n.F....HOM.B.G.E.\nMOP......G....A.\n..MI.B.F.HOEK.G.\n.B.DC.E.N.L..FM.\nG......NC..P.A.E\n.EFH...I..G...N.",
+          "testOut": "KCBGOPLMEIHDANJF\nENJOHAIBFPMGCKLD\nFMIPDKNJLACOEBHG\nLDHAFEGCJBKNPMIO\nDHEMBJCPGNFLOIKA\nPIGLKNMABODHJEFC\nOJNCIDFLKEAMBGPH\nBKAFEHOGICPJNLDM\nHGCEAFBDPLNIMJOK\nIADBGMPEOKJFLHCN\nJFLKNCHOMDBAGPEI\nMOPNLIJKHGECFDAB\nNPMIJBAFDHOEKCGL\nABODCGEHNJLKIFMP\nGLKJMODNCFIPHABE\nCEFHPLKIAMGBDONJ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "JF...B.MND....LA\nEO.B..D...I...N.\nID.A.....P.M.K..\nM..L.....CJAPE.B\n...PIFM..H.L.D..\n..M.B..KG.D.CPI.\n.A...H.C.......L\nGNK.E..P...F.A.H\n.....G..EOLPH.C.\n...J.ACE...K..P.\n....PKON..M.EF..\nO..GJM......LBA.\nBHD..IE......O.J\n..CE...D....I...\nN...MCJODB....F.\n.J.....H.I.N...E",
+          "testOut": "JFHCKBPMNDOEGILA\nEOPBAJDFLKIGMHNC\nIDGACENLHPBMFKJO\nMKNLHOIGFCJAPEDB\nCEBPIFMJOHALNDKG\nHLMOBNAKGEDJCPIF\nFAJDOHGCKNPIBMEL\nGNKIEDLPBMCFJAOH\nKMANDGFBEOLPHJCI\nDBFJLACEIGHKONPM\nLCIHPKONJAMBEFGD\nOPEGJMHICFNDLBAK\nBHDFNIEAPLGCKOMJ\nAGCEFPBDMJKOILHN\nNILKMCJODBEHAGFP\nPJOMGLKHAIFNDCBE",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "Every grid has a unique solution.",
+      "coverBinaryId": 104265762194819,
+      "stubGenerator": "loop 16 read ROW:string(16)\nwrite answer",
+      "inputDescription": "<<Line 1>> to <<Line 16>> : {{16}} characters in the range {{A}}..{{P}} or {{.}} (empty cell)",
+      "solutionLanguage": "C++",
+      "outputDescription": "<<Line 1>> to <<Line 16>> : {{16}} characters in the range {{A}}..{{P}}"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Backtracking is the process of incrementally exploring a problem space to find a solution, abandoning paths as soon as it can be determined they cannot lead to a solution. The term &ldquo;brute force backtracking&rdquo; is often used to describe a backtracking process that tries every possible path until a solution is found.<br><br>In some problems, the search space is so vast that brute force is impratical and a &ldquo;smart&rdquo; version of backtracking is needed. As the backtracking explores paths, some kind of logic is used to determine which remaining paths are still viable and which options to explore first to reduce the search tree.<br><br>For instance, in the classic Sudoku puzzle, the backtracking algorithm might know that a cell must be one of three values. A basic algorithm will try each of these values looking for a path to a solution and then try each remaining path from there. A smart algorithm will try each of the three values in the most promising order, and then reevaluate the remaining viable paths before moving forward. With such an approach, significant time can be saved.<br><br><strong>In this puzzle you have to solve a 16x16 sudoku grid!</strong><br>However, the grids have been carefully chosen so that they cannot be solved within the time limit by brute-force backtracking. Proper solutions will need to add some &ldquo;smartness&rdquo; to the backtracking.<br><br><strong>RULES</strong>:<br>An empty <strong>cell</strong> is represented by <const>.</const> and the letters <const>A</const> to <const>P</const> are used to fill the grid.<br>Each <strong>line</strong> contains exactly one occurrence of each letter.<br>Each <strong>column</strong> contains exactly one occurrence of each letter.<br>Each <strong>block</strong> (4x4 cells) contains exactly one occurrence of each letter.<br><br><strong>NOTE</strong>: These grids are challenging, but they are not advanced level grids. They can all be solved without Algorithm X or Dancing Links (DLX) which are often utilized for very difficult sudoku grids.<br><br><strong>ACKNOWLEDGMENT</strong>:<br>Thanks to Timinator for his precious help to create this puzzle.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong> to <strong>Line 16</strong> : <const>16</const> characters in the range <const>A</const>..<const>P</const> or <const>.</const> (empty cell)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1</strong> to <strong>Line 16</strong> : <const>16</const> characters in the range <const>A</const>..<const>P</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Every grid has a unique solution.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">.LEK.G.....NO.C.\n..M.H.JOBDG.FENK\nJ..C.BAN.EK....I\n.BG..K..C.J..DPM\n.HA.FL..K..M.P..\n...OA.....D.IK.G\n..KDJ.CBFAIG.MHL\n.M.....EPJNO.A..\nG...IA.DE.CJP...\nAK....GHNM..LIJ.\n..DJON..GL.BKH.F\n.N...J.K.F...GAB\nD..A..FJ..LIM.K.\nE.LFCDB.O.M.N.I.\n.JI....PD.....L.\n.....H.IJ....CBA</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">HLEKDGMFAIPNOBCJ\nIAMPHCJOBDGLFENK\nJDOCPBANMEKFHLGI\nFBGNEKILCOJHADPM\nCHAIFLDGKBEMJPON\nBEJOAPNMLHDCIKFG\nNPKDJOCBFAIGEMHL\nLMFGKIHEPJNOBADC\nGFHBIALDEKCJPNMO\nAKCEBFGHNMOPLIJD\nMIDJONPCGLABKHEF\nONPLMJEKIFHDCGAB\nDCBAGEFJHNLIMOKP\nEGLFCDBAOPMKNJIH\nKJIHNMOPDCBAGFLE\nPONMLHKIJGFEDCBA</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 84654847154,
+  "avatar": 96235642204607,
+  "commentCount": 25,
+  "upVotes": 10,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 802041,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1686074425831,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

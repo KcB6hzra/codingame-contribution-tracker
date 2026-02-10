@@ -1,0 +1,166 @@
+{
+  "id": 7112,
+  "activeVersion": 38,
+  "score": 10,
+  "votableId": 19236357,
+  "codingamerId": 4153272,
+  "views": 226,
+  "commentableId": 19136559,
+  "title": "Simple Blur",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "embermeetstimber",
+  "publicHandle": "71127283a887b3f143df18ce64f71232b208",
+  "codingamerHandle": "05f0f489aac3dee700bf551e055597622723514",
+  "lastVersion": {
+    "version": 38,
+    "autocloseTime": 1628453267350,
+    "data": {
+      "title": "Simple Blur",
+      "topics": [
+        {
+          "id": 64,
+          "handle": "image-processing",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Traitement d'images",
+            "2": "Image processing"
+          },
+          "pageTitle": "Image processing: exercises and theory",
+          "puzzleCount": 5,
+          "parentTopicId": 41,
+          "contentDetailsId": 101
+        },
+        {
+          "id": 50,
+          "handle": "lists",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Listes",
+            "2": "Lists"
+          },
+          "pageTitle": "Lists: exercises and theory",
+          "puzzleCount": 8,
+          "parentTopicId": 40,
+          "contentDetailsId": 96
+        }
+      ],
+      "solution": "using System;\nusing System.Linq;\nusing System.IO;\nusing System.Text;\nusing System.Collections;\nusing System.Collections.Generic;\n\nstatic class Program{\n    static void Main(string[] args)\n    {\n        var dimensions = Console.\n        ReadLine().Split(' ').Select(x => int.Parse(x)).ToList();\n        var image = new Image(new Coord(dimensions[0], dimensions[1]));\n        for (int row = 0; row < image.size.row; row++){\n            var newRow = new List<Pixel>();\n            for (int col = 0; col < image.size.col; col++){\n                var line = Console.ReadLine().Split(' ').Select(x => int.Parse(x)).ToList();\n                newRow.Add(new Pixel(new Coord(row, col), line[0], line[1], line[2]));\n            }\n            image.pixels.Add(newRow);\n        }\n\n        var output = Blur(image);\n        for (var r = 0; r < output.size.row; r++){\n            for (var c = 0; c < output.size.col; c++){\n                Console.WriteLine(\"{0} {1} {2}\", output.pixels[r][c].red, output.pixels[r][c].green, output.pixels[r][c].blue);\n            }\n        }\n    }\n\n    static Image Blur(Image original){\n        var result = new Image(original.size);\n        for (var row = 0; row < original.size.row; row++){\n            var newRow = new List<Pixel>();\n            for (var col = 0; col < original.size.col; col++){\n                var neighbors = new List<Coord>();\n                // treating the pixel itself as its own neighbor\n                neighbors.Add(new Coord(row, col));\n                neighbors.Add(new Coord(row+1, col));\n                neighbors.Add(new Coord(row-1, col));\n                neighbors.Add(new Coord(row, col+1));\n                neighbors.Add(new Coord(row, col-1));\n                // Remove neighbor coordinates that aren't within the image bounds\n                neighbors = neighbors.Where(x => x.row >= 0 && x.row < original.size.row && x.col >= 0 && x.col < original.size.col).ToList();\n                var blurPixels = neighbors.Select(x => original.pixels[x.row][x.col]);\n                var red = (int)Math.Floor((double)blurPixels.Select(x => x.red).Sum() / blurPixels.Count());\n                var green = (int)Math.Floor((double)blurPixels.Select(x => x.green).Sum() / blurPixels.Count());\n                var blue = (int)Math.Floor((double)blurPixels.Select(x => x.blue).Sum() / blurPixels.Count());\n                newRow.Add(new Pixel(new Coord(row, col), red, green, blue));\n            }\n            result.pixels.Add(newRow);\n        }\n        return result;\n    }\n}\n\npublic class Coord{\n    public int row, col;\n\n    public Coord(int _row, int _col){\n        row = _row;\n        col = _col;\n    }\n}\n\npublic class Image{\n    public List<List<Pixel>> pixels;\n    public Coord size;\n\n    public Image(Coord _size){\n        pixels = new List<List<Pixel>>();\n        size = _size;\n    }\n}\n\npublic class Pixel{\n    public Coord location;\n    public int red, green, blue;\n    public Pixel(Coord _location, int _red, int _green, int _blue){\n        location = _location;\n        red = _red;\n        green = _green;\n        blue = _blue;\n    }\n}",
+      "statement": "Take a data representation of an image and blur it by averaging each pixel's color with its neighbors above, below, and to the left and right of it.\n\n<<Rules:>>\n\nThe average value should be the <<arithmetic mean>>, that is, all the values you are combining, divided by the number of values.\n\nIf the outcome of an average operation is not an integer, <<round it down>>.\n\nEach pixel should be blurred using five pixels: itself, and its four neighbors (above, below, left, and right). The exception is edge and corner pixels, which will use themselves and their three/two neighbors respectively. In the diagram below, {{X}} represents a target pixel, and the {{N}}'s represent the other pixels that it should be blended with. The {{O}}'s represent pixels that should not be included.\n\nStandard example:\n`ONO\nNXN\nONO`\nCorner example:\n`XN\nNO`\nEdge example:\n`NO\nXN\nNO`",
+      "testCases": [
+        {
+          "title": "Simple",
+          "isTest": true,
+          "testIn": "2 3\n0 0 0\n50 25 0\n150 35 200\n255 0 255\n198 74 241\n120 15 185",
+          "testOut": "101 8 85\n99 33 110\n106 25 128\n151 24 165\n155 28 170\n156 41 208",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Validator",
+          "isTest": false,
+          "testIn": "5 7\n202 139 62\n94 195 173\n5 91 208\n127 123 41\n230 152 97\n221 45 252\n107 221 105\n94 227 170\n35 188 102\n206 168 42\n238 201 24\n177 91 66\n237 250 87\n250 236 169\n251 165 246\n2 182 119\n74 177 159\n14 188 45\n184 108 167\n146 58 6\n70 53 177\n166 144 176\n16 53 61\n31 238 49\n165 112 240\n191 97 61\n178 33 5\n238 132 245\n137 223 12\n233 247 238\n154 90 192\n81 179 182\n246 85 21\n69 240 129\n58 43 193",
+          "testOut": "130 187 135\n84 153 136\n108 144 116\n150 141 92\n188 102 114\n198 167 135\n192 167 175\n145 179 145\n86 192 121\n111 165 107\n152 154 43\n213 160 88\n206 136 116\n166 190 134\n128 179 177\n75 153 137\n65 190 82\n135 157 127\n142 108 69\n163 100 88\n176 119 149\n142 146 123\n89 172 128\n88 134 140\n96 162 115\n192 87 98\n164 112 89\n136 65 155\n178 204 142\n135 153 125\n124 188 165\n161 116 158\n146 150 98\n137 100 87\n121 138 189",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Larger",
+          "isTest": true,
+          "testIn": "11 5\n70 157 233\n183 0 222\n222 38 21\n12 126 116\n52 67 242\n140 27 30\n37 11 245\n173 25 169\n191 111 116\n84 210 245\n153 88 234\n200 143 55\n136 118 212\n139 206 140\n176 115 224\n110 234 31\n176 30 212\n76 103 92\n24 152 131\n64 246 144\n105 138 82\n30 114 37\n137 107 178\n187 4 163\n72 153 59\n105 252 164\n199 81 131\n85 162 180\n33 76 240\n141 176 246\n179 71 127\n68 33 68\n57 145 1\n187 228 127\n107 244 25\n48 3 205\n32 173 154\n221 119 164\n12 20 230\n156 251 37\n52 250 185\n187 7 187\n35 4 120\n246 48 106\n162 12 107\n4 232 172\n154 240 72\n35 109 3\n91 212 206\n217 55 13\n92 155 148\n218 134 233\n196 175 236\n92 12 253\n84 40 125",
+          "testOut": "131 61 161\n128 51 180\n147 47 132\n119 85 123\n49 134 201\n100 70 185\n146 41 144\n151 60 152\n119 135 157\n125 125 206\n150 123 87\n140 78 191\n144 119 133\n133 140 164\n115 194 188\n136 122 139\n118 124 85\n109 102 165\n98 142 134\n84 166 139\n87 184 78\n129 94 128\n103 98 130\n90 98 154\n116 144 153\n147 135 126\n97 128 116\n102 114 146\n126 129 191\n88 162 142\n100 89 141\n107 100 96\n123 137 108\n79 142 124\n147 224 108\n77 124 167\n111 67 155\n71 92 133\n164 133 132\n109 131 99\n72 123 187\n92 134 143\n144 57 116\n109 59 153\n195 91 65\n75 219 144\n119 144 133\n102 148 127\n136 87 116\n138 79 112\n104 173 184\n165 176 172\n135 107 181\n115 109 205\n131 35 130",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Larger Validator",
+          "isTest": false,
+          "testIn": "7 9\n124 118 60\n233 43 110\n173 56 134\n242 132 198\n248 174 40\n137 9 126\n144 76 180\n192 36 115\n143 57 180\n95 12 110\n241 92 128\n254 32 156\n186 227 98\n72 210 171\n208 24 84\n117 171 120\n146 198 97\n35 7 31\n40 186 82\n199 90 240\n185 77 43\n24 1 40\n69 248 141\n138 206 37\n27 72 120\n9 238 12\n31 26 141\n59 204 68\n12 206 85\n96 214 100\n74 242 137\n112 142 132\n127 183 22\n44 47 177\n234 7 247\n60 7 190\n166 31 203\n70 167 63\n99 125 128\n230 12 49\n210 228 34\n40 64 218\n155 170 184\n242 136 55\n244 241 233\n218 80 196\n76 206 198\n150 185 183\n152 3 74\n73 12 16\n4 152 171\n227 89 74\n143 194 198\n29 160 92\n5 178 149\n147 81 181\n85 136 45\n187 153 60\n106 59 42\n106 142 60\n143 81 157\n168 238 239\n139 16 152",
+          "testOut": "150 57 93\n192 77 108\n225 65 149\n212 147 117\n174 131 133\n184 70 107\n147 73 135\n156 91 143\n123 33 108\n125 102 95\n204 53 148\n207 96 111\n155 120 132\n156 176 106\n134 124 107\n128 108 120\n99 130 75\n88 72 112\n98 123 125\n135 130 115\n151 82 115\n107 159 91\n83 161 104\n113 146 80\n67 146 93\n89 108 123\n33 69 93\n69 156 109\n87 176 111\n93 172 98\n107 122 91\n118 208 93\n92 128 117\n117 95 150\n117 87 136\n142 70 202\n128 120 132\n84 147 135\n129 140 104\n153 122 84\n133 91 89\n107 159 125\n141 101 141\n203 149 183\n143 136 142\n116 123 186\n132 143 164\n112 131 125\n158 73 76\n109 90 67\n90 91 107\n134 137 156\n161 163 131\n138 152 168\n123 113 175\n78 150 143\n142 138 117\n132 87 55\n118 91 44\n89 108 107\n161 137 132\n148 132 186\n112 138 161",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "1D",
+          "isTest": true,
+          "testIn": "1 4\n31 141 33\n4 126 109\n56 15 151\n117 119 43",
+          "testOut": "17 133 71\n30 94 97\n59 86 101\n86 67 97",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "1D Validator",
+          "isTest": false,
+          "testIn": "1 9\n179 164 43\n101 206 15\n186 15 186\n248 231 100\n67 203 175\n25 180 108\n143 138 230\n36 86 139\n43 63 66",
+          "testOut": "140 185 29\n155 128 81\n178 150 100\n167 149 153\n113 204 127\n78 173 171\n68 134 159\n74 95 145\n39 74 102",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Black",
+          "isTest": true,
+          "testIn": "5 5\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0",
+          "testOut": "0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Black Validator",
+          "isTest": false,
+          "testIn": "7 9\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0",
+          "testOut": "0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0\n0 0 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Gray",
+          "isTest": true,
+          "testIn": "5 5\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0",
+          "testOut": "170 170 170\n63 63 63\n191 191 191\n63 63 63\n170 170 170\n63 63 63\n204 204 204\n51 51 51\n204 204 204\n63 63 63\n191 191 191\n51 51 51\n204 204 204\n51 51 51\n191 191 191\n63 63 63\n204 204 204\n51 51 51\n204 204 204\n63 63 63\n170 170 170\n63 63 63\n191 191 191\n63 63 63\n170 170 170",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Gray Validator",
+          "isTest": false,
+          "testIn": "8 8\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0\n255 255 255\n0 0 0",
+          "testOut": "170 170 170\n63 63 63\n191 191 191\n63 63 63\n191 191 191\n63 63 63\n191 191 191\n85 85 85\n63 63 63\n204 204 204\n51 51 51\n204 204 204\n51 51 51\n204 204 204\n51 51 51\n191 191 191\n191 191 191\n51 51 51\n204 204 204\n51 51 51\n204 204 204\n51 51 51\n204 204 204\n63 63 63\n63 63 63\n204 204 204\n51 51 51\n204 204 204\n51 51 51\n204 204 204\n51 51 51\n191 191 191\n191 191 191\n51 51 51\n204 204 204\n51 51 51\n204 204 204\n51 51 51\n204 204 204\n63 63 63\n63 63 63\n204 204 204\n51 51 51\n204 204 204\n51 51 51\n204 204 204\n51 51 51\n191 191 191\n191 191 191\n51 51 51\n204 204 204\n51 51 51\n204 204 204\n51 51 51\n204 204 204\n63 63 63\n85 85 85\n191 191 191\n63 63 63\n191 191 191\n63 63 63\n191 191 191\n63 63 63\n170 170 170",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "Each color value will be an integer in the range 0 ≤ [[r]],[[g]],[[b]] ≤ 255.\n\nEach dimension of the image grid will be an integer in the range 1 ≤ [[rows]],[[cols]] ≤ 15.",
+      "coverBinaryId": 67451181712279,
+      "stubGenerator": "read rows:int cols:int\nloop rows loop cols read r:int g:int b:int\nloop rows loop cols write outputPixel",
+      "inputDescription": "<<Line 1>>: Two space-separated integers [[rows]] and [[cols]] for the number of rows and number of columns in the grid respectively.\n<<Next [[rows]] x [[cols]] lines>>: Each line contains three space-separated integers for a pixel's RGB (red, green, blue) values. The pixels are given in left-to-right, top-to-bottom order.",
+      "solutionLanguage": "C#",
+      "outputDescription": "<<[[rows]] x [[cols]] lines>>: The transformed image, one pixel per line. Each pixel will be expressed as a space-separated list of the pixel's RGB values."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Take a data representation of an image and blur it by averaging each pixel's color with its neighbors above, below, and to the left and right of it.<br><br><strong>Rules:</strong><br><br>The average value should be the <strong>arithmetic mean</strong>, that is, all the values you are combining, divided by the number of values.<br><br>If the outcome of an average operation is not an integer, <strong>round it down</strong>.<br><br>Each pixel should be blurred using five pixels: itself, and its four neighbors (above, below, left, and right). The exception is edge and corner pixels, which will use themselves and their three/two neighbors respectively. In the diagram below, <const>X</const> represents a target pixel, and the <const>N</const>'s represent the other pixels that it should be blended with. The <const>O</const>'s represent pixels that should not be included.<br><br>Standard example:<br><pre style=\"font-family: monospace\">ONO<br>NXN<br>ONO</pre><br>Corner example:<br><pre style=\"font-family: monospace\">XN<br>NO</pre><br>Edge example:<br><pre style=\"font-family: monospace\">NO<br>XN<br>NO</pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: Two space-separated integers <var>rows</var> and <var>cols</var> for the number of rows and number of columns in the grid respectively.<br><strong>Next <var>rows</var> x <var>cols</var> lines</strong>: Each line contains three space-separated integers for a pixel's RGB (red, green, blue) values. The pixels are given in left-to-right, top-to-bottom order.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>rows</var> x <var>cols</var> lines</strong>: The transformed image, one pixel per line. Each pixel will be expressed as a space-separated list of the pixel's RGB values.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Each color value will be an integer in the range 0 &le; <var>r</var>,<var>g</var>,<var>b</var> &le; 255.<br><br>Each dimension of the image grid will be an integer in the range 1 &le; <var>rows</var>,<var>cols</var> &le; 15.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2 3\n0 0 0\n50 25 0\n150 35 200\n255 0 255\n198 74 241\n120 15 185</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">101 8 85\n99 33 110\n106 25 128\n151 24 165\n155 28 170\n156 41 208</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 142371167509,
+  "avatar": 60764646308698,
+  "commentCount": 11,
+  "upVotes": 10,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 581258,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1628359203337,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

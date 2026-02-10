@@ -1,0 +1,177 @@
+{
+  "id": 422,
+  "activeVersion": 9,
+  "score": 3,
+  "votableId": 3209815,
+  "codingamerId": 1418821,
+  "views": 345,
+  "commentableId": 3156160,
+  "title": "Unflood The World",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "input.txt",
+  "publicHandle": "4220b733614e3954daf39759940d70f78f3",
+  "codingamerHandle": "c96ef356539198f0d2256efec98bad501288141",
+  "lastVersion": {
+    "version": 9,
+    "data": {
+      "title": "Unflood The World",
+      "topics": [],
+      "solution": "#include <iostream>\r\n#include <fstream>\r\n#include <vector>\r\n#include <queue>\r\n#include <set>\r\n\r\ntypedef std::vector<int> iv_t;\r\ntypedef std::vector<iv_t> viv_t;\r\n\r\n\r\nint FindDrain( const viv_t& field, int i, int j )\r\n{\r\n    static std::set<int> visited;\r\n    visited.clear();\r\n\r\n    int h = field.size();\r\n    int w = field[0].size();\r\n\r\n    visited.insert( i*w+j );\r\n\r\n    for( ;; ) {\r\n        int current = field[i][j];\r\n\r\n        if( i > 0\r\n                && field[i - 1][j] <= current\r\n                && visited.insert( i * w + j - w ).second ) {\r\n            --i;\r\n        } else if( j > 0\r\n                   && field[i][j - 1] <= current\r\n                   && visited.insert( i * w + j - 1 ).second ) {\r\n            --j;\r\n        } else if( i < h - 1\r\n                   && field[i + 1][j] <= current\r\n                   && visited.insert( i * w + j + w ).second ) {\r\n            ++i;\r\n        } else if( j < w - 1\r\n                   && field[i][j + 1] <= current\r\n                   && visited.insert( i * w + j + 1 ).second ) {\r\n            ++j;\r\n        } else {\r\n            return i * w + j;\r\n        }\r\n    }\r\n\r\n    return -1;\r\n}\r\n\r\n\r\nvoid Wave( const viv_t& field, viv_t& drains, int i, int j )\r\n{\r\n    static std::queue<int> store;\r\n\r\n    int w = field[0].size();\r\n    int h = field.size();\r\n\r\n    store.push( i * w + j );\r\n    drains[i][j] = i * w + j;\r\n\r\n    while( !store.empty() ) {\r\n        int v = store.front();\r\n        int x = v % w;\r\n        int y = v / w;\r\n\r\n        store.pop();\r\n\r\n        int nbs[] = {\r\n            x > 0     ? v - 1 : v,\r\n            x < w - 1 ? v + 1 : v,\r\n            y > 0     ? v - w : v,\r\n            y < h - 1 ? v + w : v\r\n        };\r\n\r\n        for( int nb : nbs ) {\r\n            int xx = nb % w;\r\n            int yy = nb / w;\r\n            if( drains[yy][xx] == -1\r\n                    && field[yy][xx] >= field[y][x] ) {\r\n                store.push( nb );\r\n                drains[yy][xx] = drains[i][j];\r\n            }\r\n        }\r\n    }\r\n}\r\n\r\n\r\nint main()\r\n{\r\n    /* Input */\r\n    int W, H;\r\n    std::cin >> W >> H;\r\n\r\n    viv_t field( H, iv_t( W ) );\r\n    viv_t drains( H, iv_t( W, -1 ) );\r\n    std::set<int> unique_drains;\r\n\r\n    for( auto& row : field ) {\r\n        for( int& sqr : row ) {\r\n            std::cin >> sqr;\r\n        }\r\n    }\r\n\r\n    /* Solution */\r\n    for( int i = 0; i < H; ++i ) {\r\n        for( int j = 0; j < W; ++j ) {\r\n            if( drains[i][j] == -1 ) {\r\n                // Find square, where water will flow\r\n                int d = FindDrain( field, i, j );\r\n                drains[i][j] = d;\r\n                unique_drains.insert( d );\r\n\r\n                // Find all squares from which water will flow into square 'd'\r\n                Wave( field, drains, d / W, d % W );\r\n            }\r\n        }\r\n    }\r\n\r\n    /* Output */\r\n    std::cout << unique_drains.size() << std::endl;\r\n}\r\n",
+      "statement": "A rectangular map is made of squares, each with a specific height.\nWhen it rains, the water falls evenly on all squares.\n\nThe water flows down from any square to an adjacent lower one. The water also flows freely between adjacent squares of equal height. If a square is surrounded by higher squares, the water just accumulates there.\n\nYou are allowed to build drains in some squares.\nWhen a square has a drain, all the water that would accumulate on it will leak out instead.\n\nWhat is the minimum number of drains that have to be built to leak out all the rain water?\n\nNOTE: Adjacency is horizontal or vertical. Squares that touch diagonally through a corner aren't adjacent.\n\nNOTE: The water can never flow outside the map. You can consider it  bounded by walls of infinite height.",
+      "testCases": [
+        {
+          "title": "One drain",
+          "isTest": true,
+          "testIn": "5 4\n5 5 5 5 5\n5 4 4 4 5\n5 3 2 1 5\n5 5 5 5 5",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "One drain 2",
+          "isTest": false,
+          "testIn": "4 5\n5 5 5 5\n5 4 4 5\n5 3 2 5\n5 4 1 5\n5 5 5 5",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Hill",
+          "isTest": true,
+          "testIn": "7 5\n1 1 1 1 1 1 1\n1 2 2 2 2 2 1\n1 2 3 9 3 2 1\n1 2 2 2 2 2 1\n1 1 1 1 1 1 1",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Hill 2",
+          "isTest": false,
+          "testIn": "5 7\n1 1 1 1 1\n1 2 2 2 1\n1 2 3 9 1\n1 2 2 2 1\n1 2 2 2 1\n1 2 2 2 1\n1 1 1 1 1",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Wall",
+          "isTest": true,
+          "testIn": "5 3\n1 1 9 1 1\n1 1 9 1 1\n1 1 9 1 1",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Wall 2",
+          "isTest": false,
+          "testIn": "5 3\n2 3 4 5 6\n9 9 9 9 9\n5 4 3 2 1",
+          "testOut": "2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Flat field",
+          "isTest": true,
+          "testIn": "3 3\n1 1 1\n1 1 1\n1 1 1",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Flat field 2",
+          "isTest": false,
+          "testIn": "1 1\n10000",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Chess board",
+          "isTest": true,
+          "testIn": "5 5\n1 2 1 2 1\n2 1 2 1 2\n1 2 1 2 1\n2 1 2 1 2\n1 2 1 2 1",
+          "testOut": "13",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Chess board 2",
+          "isTest": false,
+          "testIn": "5 4\n1 11 2 12 3\n13 4 14 5 15\n6 16 7 17 8\n18 9 19 10 20",
+          "testOut": "10",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Fractal",
+          "isTest": true,
+          "testIn": "9 9\n2 2 2 2 2 2 2 2 2\n2 1 2 2 1 2 2 1 2\n2 2 2 2 2 2 2 2 2\n2 2 2 1 1 1 2 2 2\n2 1 2 1 1 1 2 1 2\n2 2 2 1 1 1 2 2 2\n2 2 2 2 2 2 2 2 2\n2 1 2 2 1 2 2 1 2\n2 2 2 2 2 2 2 2 2",
+          "testOut": "9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Walls 3",
+          "isTest": false,
+          "testIn": "5 4\n1 9 9 1 1\n9 1 2 9 2\n9 4 3 9 1\n9 8 7 6 2",
+          "testOut": "4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Maze",
+          "isTest": true,
+          "testIn": "9 9\n1 2 3 4 5 6 7 8 9\n999 999 999 999 999 999 999 999 10\n31 32 33 34 35 36 37 999 11\n30 999 999 999 999 999 38 999 12\n29 999 47 48 49 999 39 999 13\n28 999 46 999 999 999 40 999 14\n27 999 45 44 43 42 41 999 15\n26 999 999 999 999 999 999 999 16\n25 24 23 22 21 20 19 18 17",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Maze 2",
+          "isTest": false,
+          "testIn": "7 5\n2 9 2 9 1 9 2\n2 3 2 9 2 3 2\n9 2 9 9 9 2 9\n9 2 2 2 2 2 9\n9 9 9 1 9 9 9",
+          "testOut": "5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Plateaus",
+          "isTest": true,
+          "testIn": "6 6\n1 1 2 2 3 3\n1 1 2 2 3 3\n6 6 5 5 4 4\n6 6 5 5 4 4\n7 7 8 8 9 9\n7 7 8 8 9 9",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Plateaus 2",
+          "isTest": false,
+          "testIn": "6 6\n1 1 6 6 7 7\n1 1 6 6 7 7\n2 2 5 5 8 8\n2 2 5 5 8 8\n3 3 4 4 9 9\n3 3 4 4 9 9",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "1 <= [[N]], [[M]] <= 100",
+      "stubGenerator": "read W:int H:int\nloop H loopline W squareH:int\nwrite 0",
+      "inputDescription": "First line: integers [[N]] and [[M]] - width and height of map\nNext [[M]] lines: [[N]] space separated integers between 1 and 10000 - height of each square",
+      "solutionLanguage": "C++",
+      "outputDescription": "A single integer - number of drains to be built."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A rectangular map is made of squares, each with a specific height.<br>When it rains, the water falls evenly on all squares.<br><br>The water flows down from any square to an adjacent lower one. The water also flows freely between adjacent squares of equal height. If a square is surrounded by higher squares, the water just accumulates there.<br><br>You are allowed to build drains in some squares.<br>When a square has a drain, all the water that would accumulate on it will leak out instead.<br><br>What is the minimum number of drains that have to be built to leak out all the rain water?<br><br>NOTE: Adjacency is horizontal or vertical. Squares that touch diagonally through a corner aren't adjacent.<br><br>NOTE: The water can never flow outside the map. You can consider it  bounded by walls of infinite height.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">First line: integers <var>N</var> and <var>M</var> - width and height of map<br>Next <var>M</var> lines: <var>N</var> space separated integers between 1 and 10000 - height of each square</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">A single integer - number of drains to be built.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt;= <var>N</var>, <var>M</var> &lt;= 100</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5 4\n5 5 5 5 5\n5 4 4 4 5\n5 3 2 1 5\n5 5 5 5 5</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 298085868946,
+  "avatar": 13393616028136,
+  "commentCount": 10,
+  "upVotes": 3,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1309,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

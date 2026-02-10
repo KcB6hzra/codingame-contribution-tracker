@@ -1,0 +1,217 @@
+{
+  "id": 1891,
+  "activeVersion": 19,
+  "score": 17,
+  "votableId": 9697976,
+  "codingamerId": 1569823,
+  "views": 711,
+  "commentableId": 9630778,
+  "title": "Her Majesty's well shared secret",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Niako",
+  "publicHandle": "1891038767fb6c8aea61bcc246ee1ee9dc8f",
+  "codingamerHandle": "eb89cbdf69d07106c84edf1d191caaf33289651",
+  "lastVersion": {
+    "version": 19,
+    "autocloseTime": 1549402627388,
+    "data": {
+      "title": "Her Majesty's well shared secret",
+      "topics": [
+        {
+          "id": 74,
+          "handle": "cryptology",
+          "labelMap": {
+            "1": "Cryptologie",
+            "2": "Cryptography"
+          },
+          "pageTitle": "Cryptography: exercises and theory",
+          "puzzleCount": 5,
+          "parentTopicId": 43,
+          "contentDetailsId": 105
+        },
+        {
+          "labelMap": {
+            "2": "Secret sharing"
+          }
+        },
+        {
+          "id": 94,
+          "handle": "mathematics",
+          "labelMap": {
+            "1": "Mathematics",
+            "2": "Mathematics"
+          },
+          "puzzleCount": 10,
+          "parentTopicId": 93
+        },
+        {
+          "labelMap": {
+            "2": "Interpolation"
+          }
+        },
+        {
+          "labelMap": {
+            "2": "Polynomials"
+          }
+        }
+      ],
+      "solution": "#!/usr/bin/env python3\n\nAlphaChr = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_'\nAlphaOrd = {a:i for i,a in enumerate(AlphaChr)}\n\nB = 53  # prime\n\n# modular inverse\ndef inv(x):\n    return pow(x,B-2,B)\n\n# modular Lagrange interpolation\ndef lagrange(Pts, x=0):\n    y = 0\n    for xi,yi in Pts:\n        pi = yi\n        for xj,_ in Pts:\n            if xj!=xi:\n                pi = (pi*(x-xj)*inv(xi-xj)) % B\n        y = (y+pi) % B\n    return y\n\ndef reveal(Parts):\n    Secret = []\n    for i in range(len(Parts[0][1])):\n        Pts = [(x,AlphaOrd[s[i]]) for x,s in Parts]\n        Secret.append(AlphaChr[lagrange(Pts)])\n    return ''.join(Secret)\n\nif __name__=='__main__':\n    N = int(input())\n    Parts = []\n    for _ in range(N):\n        a,s = input().split()\n        a = int(a)\n        Parts.append((a,s))\n    print(reveal(Parts))\n",
+      "statement": "Some top secret information has been shared between Her Majesty's double-zero agents. Time has come to reveal it! But in order to avoid the secret to fall too easily into the hands of the enemy, a deeply thought process has been used to share it.\n\nFirst, each of the nine double-zero agents (from 001 to 009) only carries a distinct \"part\" of the secret.\nAlso, there is a <<threshold>> [[k]] ({{1}} < [[k]] < {{9}}) such that <<at least any [[k]] parts>> of the secret are necessary to reveal it. This allows to retrieve the secret even with a few agents missing in action.\nFinally, the knowledge of less than [[k]] parts does not allow to derive any information about the secret! (There might be some statistical biases for some poorly chosen parameters, but in general there is none.) The enemy has to capture or hire at least [[k]] agents to learn anything.\n\n<<Your task is to figure out how to reveal the secret given at least [[k]] parts.>>\nThe following describes the secret sharing process in details.\n\nFirst of all, the secret message [[S]] is written using the following alphabet of {{53}} characters:\n{{abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_}}\nwhere each character is <<identified by its index>> from {{0}} to {{52}}: a=0, b=1, ..., underscore=52.\n\nGiven a threshold [[k]] ≥ 2, the secret sharing process is the following:\nFor each index i of [[S]], a polynomial\n```P[i] = A[i,k-1]⋅X^(k-1) + A[i,k-2]⋅X^(k-2) + ... + A[i,1]⋅X + S[i]``` is defined where the coefficients A[..] are chosen randomly between {{0}} and {{52}} (inclusive) with the additional constraint A[i,k-1]>0.\nEach agent 00{{x}} is provided with the string representing the values [P[0]({{x}})%53, P[1]({{x}})%53, ...]. This constitutes his part of the secret, while the secret itself is the string representing [P[0]({{0}}), P[1]({{0}}), ...].\n\n<<Example:>> Consider [[k]] = 2 and [[S]] = \"SIS\" = [44, 34, 44].\nFor each character we pick a random polynomial of degree 1 with the corresponding character as constant coefficient:\n```P0 = 41X + 44, P1 = 8X + 34, P2 = 2X + 44``` Agent 001 receives [P0(1)%53, P1(1)%53, P2(1)%53] = [32, 42, 46] = GQU;\nAgent 002 receives [P0(2)%53, P1(2)%53, P2(2)%53] = [20, 50, 48] = uYW;\n...",
+      "testCases": [
+        {
+          "title": "EXAMPLE",
+          "isTest": true,
+          "testIn": "2\n005 Lvb\n004 Xn_",
+          "testOut": "SIS",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "REDACTED #0",
+          "isTest": false,
+          "testIn": "2\n009 yHc\n002 CRL",
+          "testOut": "oiV",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "INTEL #1",
+          "isTest": true,
+          "testIn": "2\n001 tPwgrGoTViRGTSgWUpLZrvpnssoJEDoneJmuQtxQVFm\n008 uzRugynlcwErXudCxoC_LowMlQltzXFfDEijfpzScSf",
+          "testOut": "Intels_might_contain_worthwhile_information",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "REDACTED #1",
+          "isTest": false,
+          "testIn": "2\n004 WbRkddVdbyailoMTVLzrWXWGXTiGKaeacxAMaudONna\n003 sDzwluGmHBdeXlNyvtudldBshnJRgROSNCRdKzsmbOD",
+          "testOut": "IhyfJsONxKmTecQoXsfogyrDOxkxwnQrSRPeMOkIUpk",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "INTEL #2",
+          "isTest": true,
+          "testIn": "3\n002 yJpZeDuPXGvwXZn_PVrpqLqyeyCalMfqjLksjwMLVHjIsrslhVWjBMYbfnKYhjdQomgJmNqlfDNdVALfXeLOSEcD\n008 qLKvYgsQkFAACpPCevNLzMTHZzMVJFjehgwXCToOHlrbmmJtEzlGeHkJcTvzkwkGsllPkndDuWSKuIVqZrASBjJY\n007 INtHrulo_iDuYPqCEPWCSwolUeOUUKBXlAajNXUYiVEbEOiOrOCZnZBLiSTuqNXkZtdrcisYjHRCChmdklTXJftU",
+          "testOut": "SPECTRE_means_SPecial_Executive_for_Counter_intelligence_Terrorism_Revenge_and_Extortion",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "REDACTED #2",
+          "isTest": false,
+          "testIn": "3\n004 ZMrGBYbeJUjblGyTGHHvZZcFGJWpLhnCELCUizFhcMbVNNFIVu_AgDKIcdzYiNcplLbxweTyLbGtwasllEQaWFkC\n005 JZJzCQTsbeIoPiOYoopJrBhjrqYoOLywKUssPSqniCYDjkujUpmuaEKzvgQVSXHIBjfndVjfiFSNtuMDQQovwMio\n001 ZltFuUEwbNKRpJpMtNyziHXRwFcnRBTkBKJUxlHMhxFFUduKC_tLeovGSxp_NJzUrmFCccHwwIhLDTbWqzMyhbgL",
+          "testOut": "JgdPIafWpkAFEnzdkyayqYYDsBSUYJQTFjmsndLVIdVuddLEGHkdGfleMeRpzhKpLMcNfAQLKHuqnQTupqziQPtD",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "INTEL #3",
+          "isTest": true,
+          "testIn": "8\n008 TfJwSxfyriTMPLNVSpjdyzlIRCDCGqdYpTMNVpbFFgFsEwSw_EqEIuZLUndmnpZbcYzJBIbMGMCWpJdnfGqSiAKvFdOFEvnTWIjiJwKRiaAThHIYGnOHtxKwkxGuCXJ_AiNi_jTWKKCtFJXBw\n005 UsxtdCRKpDwvYSMTakLwskJczaquGC_EoLxyxOqCDFXUb_vpUBkAIwtYnaIstoWQBYnCbpqhalZARLOnpHsYXCIgXDIxDQyBNQCdWGkuwpKmsjiYcVwXwzolBmYzddyzsR_vBvcCzLEjZVuQK\n006 aGWxHnSdEXwMQfMZFHFCevzJADzWQQqvQZvzympPQcXkcaZLlZQCmihLuJJymxQLOOx_VdqcVLZJAMvMegfOtVeraOpqhRGWZjitBLxtHSSgKfWrUFyPLLcWdNHJYmHuefctkgfmzPQFWqtxb\n009 sZKJyIUlKivtZXpcrqSAZLU_lAvqpsUTh_jqbEXYXVsRmK_aNaPUymwltiDaadoZkkipBxB_AhSAkxnpvylabnqMMVOTWSdXeL_nStBSiZhKAJcWb_coAbIpOueOdGzrrgQCvLpWfJmnhtxJs\n007 LwtvMXjtoxlSmNqFdkwWqoLLOqvBpFoAifIKiySJskZWCahCtxNjvnxWvngvOXIbnYcQBKninVCDTvqVahsETHKspqQudU_oYQZHAwQnOKnANsaUzevEVsJhyK_rZAUPxBVbZseTsewmRxVVy\n003 OjZkDBKmkVElVJwzShSYGcRe_zskbaBrXOjsaKNuuzThfiuh_fUHoqGouAKuvL_jCMyWdrFZCDkpWYXxYCvBlXumiKHHwhkDITbhFIucwwWZrwSoKrbPdgepaapRbLyTxowzSgmUJXXZsLlBD\n001 osaCoXJdxTlwSKpfmTZwHulVWGNmqSsaFmzd_xCcJnthicKYwdBtszFRoQPdyTQcTQssIUaKGtoVZNhCKyLIJPeUzOdDLwWoTgPxcncccMvPLsuZtphDQZMha_rYCRfsggCdMNLQeiNALTKjF\n004 wqeaCWTtzmiViaceVAPdJZvsivwFkvgWHDlZNkRClOwHvBBIKxIWitwBxPaaTUzcyedNpUtkdzJpwwQ_FNTKQQiAnRpTduURcKVwUzICQUmsfTCumfPLJHQBrPtSVWVNiEBtPfcnNPIMeR_Ga",
+          "testOut": "Jaws_appears_in_The_Spy_Who_Loved_Me_and_is_two_meters_seventeen_tall_while_Nick_Nack_from_The_Man_with_the_Golden_Gun_is_one_meter_nineteen_tall",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "REDACTED #3",
+          "isTest": false,
+          "testIn": "8\n007 xhAhGM_FAZpRYuTIuepzhbSWCYPyEGxmtkbn_JAfbPeubNktuAUDGgcuOkky_PwbWfBrdKpgczYwiDhHhP_pSprxhtoVBHNqVTPPxxHbfaKyuRvGyzKlgg_fOx_yhcpNmIqjFsY_BOkykvYAZ\n002 BTQeHWjttkZQtVTwOjwHKTtWTNxwaqRTxcfHtzCgklxGTcrqZptDbDrYwdeePBYRNnfatXeNVgMTDXdqewPvPsjrlXH_uep_YLKquAuRQlYMuRMes_rXzhuGWfyoWPzOiLNpemlxOzVsbRIbo\n009 rcyaMilQCkfwoGdTviwbNApcLVifQGzaovfofsrScxjhhIaojOGXtTdYXfEeHu_MBNScGmLZI_GnrHVGD_LEEtutwWoMdvyJazCVmeRxDegYxeuHIzDXWLOzGPLB_PTqKJlGIdIuCBhSSGIms\n004 bbizcAmCIenMXgCWmTFUJnedagyDqmCqnfdiILqcdSdMenjKyLuKjUFMyFPUjAPItYCWSZtdvoRMJmeoqc_EGHpzyrDrDuXbuwLcRXygDLd_hz_NhxJeVRBrLJXlgOeYWfgfLsqwfDDAQIwsb\n005 kvqNvWKAElWYvMJGOWLXOlIwpKcTaKurXjxUdsoLdjRtnMJVkYFTSDINEzfJwRNBotSQHPk_DkoNILPMXiYwQgkmInQcKHWyufPYkKIsBCdJAMYsNOPtEZrFZvTqIoeHsyBPzxpCAFYrlI_hm\n006 klbPWhfwwZMTrPRassuOgIMiIoMTpNrYJpbSaCMzkmmlzXWn_eMCHiSawmhfVCWuGASzTEmpUeuGtrVEzYMRJxmXNGGzqpsGikiQFcRjQywCtnACjIJRt_ILKYlNeuA_ytaEXXIFu_NuarQwS\n008 sTWtClTpfSllBHIeoceklRBrvQAEoAQmXIIrBhwqgFh_ibQSXFhNSUiNsLEbfKvlLXTMQyjHNXOotSmLfawtXtvHmzdDvWGuPmFejqNqgLvqkjxUGHkrKGTlfaivCkwGIhhp_lOgIXEsQFCJO\n001 sLlTAIDFvkhsPeECbLclaziSePxPEwQqADfvzfdukubWoEvXgrtXwcsy_NfBSFRqZyamFbacjQARNkqjfkjbVigktCuSiAGMhtTfyYjWGANvLVUwgfuBcgcpEaYCQwYRUarOjiZPqvfxHDnVy",
+          "testOut": "soxltaTIircdJsSiOWFgaKsEECvldqEh_ezFeKORdjjZKtfphJWAMMYNoXHyCCtLBtKNdNVgWnOnqQfkplJekaACSMEscosTsSDeRoqYYOLQZmBhIoPjr_jedkYtMV_KsChDStSzrGIFCfMcB",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "INTEL #4",
+          "isTest": true,
+          "testIn": "5\n006 tBdpVtzytFVwpDQRKvqFk_KjNSxeps_WDLgOLybaabIGVbTxUGpsEpQYdWNZIQLWTvLtLQjSwJRrXxwZKyAJZzGqBrBvjbvqxRrUvGLTMN_DrpwrlKsOJ_TSGnJlgRDegWxPCdmcyEgknTGPkoyfpgsCqWZqwA\n001 LHJajkRgZM_fIKxrSMtmeGYrFjcWqksrKYDTBUeVQsSzTxTcUyZJGoLnFUbYkjfLgTOGbOfsmbOfKrudSxnGtNWQclPiDFJaX_jfysKFC_xpVaBdJacEFhM_RvtbH_ZeHzJuKIAOeeqmIRYJBMLzT_pVFUpO_n\n004 Kzfw_VobAHXAyAltDNflmePZWbUhyTbmTnMipJFpirSXPHBDmqWaMFYjfqMXtlVhUUbGBwvrGudPUOylxPKlLPlEqMKzqRJcxexmeQbykTHcjflaywKtXvDyOtyBTpOIltdpmOYEiXSiEjOQp_ICfuoAltWgcS\n008 TOFotlZKbcqIaeqbiAOfyjylqaWtRdUasgFKbqnOaAFmzPqVwdUjvsSAyzdkFJt_bfYdYRHGZqCDjLdvbgPkHDuBvdXATnLeuwTqdzWAOePqsNQQBomEOGKqvnBdbHAOmPpsEbSlyfjUJoMDdpYPlVrcKzZIVE\n007 GPIHWEshCAgzJBorJtxZLuxdoWvHbfjiDF_LHAwTeJSxmktGpHNxRu_iUjUlmQZKFwEigGgMVawgfcJJdYRYHziaBOKZTMzs_uPGfXIbSrElpecIyhPGsBhdxVBDKBSzmnauLvZeyrmjxVdEbnyCAfKPmXRwhn",
+          "testOut": "In_Moonraker_Drax_lives_in_California_in_a_castle_imported_from_France_He_did_also_buy_the_Eiffel_tower_but_the_French_government_refused_him_an_export_permit",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "REDACTED #4",
+          "isTest": false,
+          "testIn": "5\n003 zdVySGdyNVgBqcpZKeUNBpPLRFNvhkWYkUDMlwFuJZMbpFMokBjblEdQQ_GrgdPllPDmzYzzxrLYBAJKpmGQNSrluVKhOOvfdqHsiPILow_LnpcfT_mQVvwknkmG_v_XCzviEivhkqUOouJiyPkvnbgLEIPerE\n001 ZzWMYHndJxXrfxfRTPkezyXsTqHoh_JHvhzehhoUqpNyoHfiNKngAmrQVOCqLqzqlWESjycigestQZMCurjqmxXxheiUxigChYEoeVUAvvPwYEIJKYllVnXGEbvGFPlYYSHsThFABBRxFBljdOfMxiLCrIgcca\n006 QaJKnZAEoWfAkttrxpDHKRZgdyYQpxFydcQIKQJGPtezUwgWTONJnYbahAsJXpEAUpfwqOtdvARWfDIGbjuaEeX_OcoufvbfIGgMEjpxAXqIqJtmGxGgxydLmVb_lFVntPPgYBhPCoQPYYBPJDrsEosmLaznCK\n009 HUhqGQn_LZQYlLaHTNLzjFsnJdMicCaRDQcsKPbmkVusBuobPnJlSMdtgpiVBuwmHIrkkq_sMfbnOcOrzXcBaJEwYGHVog_cGjKZxDSAGNdPfkTCVgJIaRLTcKIevxmmnslKDfAWlGjGCfrjfFBHMooNDuqhBH\n007 gFZvQniXdYfrKqyiUlKlyOgFQLnYmQWWrNfoXgNpynqfJdxBktGGZCDKSlHvYuTfRKttDeyvbLlZPIfaycMQnPZTbmdcQFKGBwrtgJqTVhuKqExPLSRUdFrLLwSBwtHYeLBdyXPpifBbnltTUXslMracOwVUKK",
+          "testOut": "GxpyfxobugTPvYjicsESiWTECNafbqnjJUMHBhXspthdpAOYNDehFMIbOGKpTjsBaNwpKAlQQfHxeHIGYGJbyEcOyxqVbwYewpUQOgXLVWvicwIv_PlXRDSEOlZieTXDcsmcYmcutGz_IEqcWPmswXdPvrhZxB",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "INTEL #5",
+          "isTest": true,
+          "testIn": "6\n005 LMAPSpxmFjgsEgFNdN_UhmRlSWZUPJlXQpPgd_aCMKXnxHwZVjb_ExxiIoaDOnXNVCWKXaOgewFjeKvYlIFCKhLusLFdDhURKEQxyNgwVUTMAwCcMGxEIUtfSKYpbSuFWsCIiQxIWFfPrXNvJrHziRCgwnyoDuKAUouOLhbtqmIJCyUspErlqEcECSYltrvTLIqoIfHcwSlTaZGoQSNuvDXnLjTXxtQWAGGPzFzGAlwFkLFs_Wc_RNcALLqyoPnHpSnszsIj\n007 VTDsTMqwZKQYVneDsToKQWxtYMqi_QftLPhYsmmYnnUpGKRdkAxmJwOIYKrTLiTcUXNgwYRAxZdmWWsKQfZTsIwOsoYksuJlSNElwVOwSlXRLKfxRLOFJbxSuTkCWjsibJDkoz_FTUFDSJkVtmCxnGOZZZJusmriAx_N_TXYrcVvMeJoKnsBdFJgAbGQyNBa_RxkELTSUBrUwzbcVZKzYUXCnLiMIQSO_iqKnNcQIwucqcssUi_FVAhFezgoxHGkNhu_xHg_\n004 mwfnPaFWVkDXTdRFCGUhWgfuTDBKvhbieHNcFLxHfrZKHLocRwVAXPoWqgVZagckwphdzIgzMtypDjvjFWbQHFzRQOqOKdyxPPytVpItbTKNKbnrqYoglfwNktjwMZiXLvmyjjNoJuOfAirRzxNUINHzvhz_LyhIKrqKoLoiZLtMaimznuOgoBapDpsIonkOzicgjIIlVO_gXfoRIZ_HcUREPhgBlLEhOXFGIUkwRmHEtKICMkXVsCCMUFeVF_AIeiczURVT\n006 LiQEBXrnzZuYoawMTcfwnZuKVK_DSFlPKgclJhJORyVpEcVWdavySsxmoSAJtpdAHJTqkXRKuHyaWjFtRaCvgwvQRDGiWBNbipaCMtqtPWNuHvXHmFhFDcaLsHLKHXPMUBFpTQoCLmkqwqFjuQNZCxXlPDvcfBCz__RmOJUOVJeiKqHgxtOECaWdCyRufmuhItkyoJxuP__VPwWPUFenwMsMtnTcxXMpvpRnalvU_zJu_aPWYtbEbpORmNuBHXCoHzqxEOqf\n008 uUPKgJurBdciztDQCAHBgfDmbamvJcOMaCFRdXaDUCGkJgPfpqvimtwhfXCv_GZNtxWGMqUQhMpotGHEGNbmZPswAESgrPbUFmKyKoToTzcMiriibpMKqCCKypCcowzXVKzFKvCOZYW_HOPbuzVQOfONcuamVaUjnXfGVtkTpaFBWIdSQTbfSMe_fwIshUkErbjoBseRcpBCQEZCQaioSPRUriHCBIukoZJnmqTmxbvubgK_ChiksWIVmXlajiAyoujMTAOR\n001 GCwGGDDvrZBUmsDQejTpQFxGRWcReMGdjVoIhANRxTVAanTWKfmIlKQ_fzsQfHJVuzXzXuyHgguBsjg_XhXYNMIrjakBjonQHBJAhePB_ejWT_xoYQDKoQoldInlxTOSaBGRdvjuautWoxYcgZIJiCiRROIttNSinhBhOOU_CZuzYbewxdmNXH_GYEIBixTVzBdhcHfJGIcZeKRCAvyTuqFZBJLZAIPGyISWrOPz_RaIZNuBuIwwtispVbPWIkNDeyktZByl",
+          "testOut": "Oddjob_appears_in_Goldfinger_and_as_a_multiplayer_character_in_the_Nintendo_sixty_four_video_game_Goldeneye_Despite_not_being_a_midget_such_as_Nick_Nack_his_character_is_very_short_in_the_game_making_him_way_harder_to_hit_and_thus_giving_him_a_tremendous_advantage",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "REDACTED #5",
+          "isTest": false,
+          "testIn": "6\n009 VLPyNshJkuWYhidUcqHHoddoapAoRwUOexTTUqjHsJCeAFvdYuBVbTpVrvgtekEwNhXIVCDzwXzidAomzMASwfZecoqIPudyUsiOS_pNEuVbsdtHfgDjzNf_uxjMGZZFCrVHKQbuiwTpYcaOnxRXejlAeGkxUGLfIiThGAvGwxbyzaTrPOpK_rYjxIFsANXGPcLQNqnrnJUigyirZjoXFCYUTAbuZSoCmVqM_hrBiNmzzIIrMSXEUfyMfIMOlksXavaIJdLu\n008 SeAtSgRIfzwUDWKiioIquClsIvDfRMnavHDsSqBJHvPzAkaPehbUkBSdAsXRWjiELpIyNGDIsTUvQVHvf_qEKsnDUnLNUqNiCRgIDTikxzbWDYCpmAyDAQYrZMMeLFZuhgMvPNhWGlFlQYVHEOrYPQxJTCnykJHtNECffdLXtKNofIzBDlEtywVWUiutzcuybAKXiFLsrKMcjgnxqPUUkHFpWQVU_QlvIwHBTFkJPwfnlSEuEipXngOMRehakfjP__gTqMbA\n005 daACqlI_iqXXhVvFR_okgsrqWKqZBkTQPvrqBVkTtEYlcsLjSuQXoMDiNLcPNzVEehlOU_SgBFOkveJDUNJacOoBvccAbAcXtNxDXiZXPASToMYSMbVVUhZUZTahzJjROJHVqfpIkynBrsBpkrNCVyCONaYxqJFSaf_ZWRFtbUFALhBGntomXafCaufCXsnQORrNjPRq_VgqeDYxdVZqneuiEwJqOreD_TdIFVemnlBxxjEyWtuyhsagfhDO_uH_rnvdjJHI\n007 YRktPXkWRBvsPMUOlEdYhETCtBMmuAhAFJUYIeOYZVwJxjWHxxcZJBkyMTAyyzbKHorqHtWtfOpahLBCObIoxjorSIfJuYoinuJbanJFEmicCUmUjeIsWPkXwPzwaXlqmOdDBRlfDkYKwEpRAHYFqUjUjd_MuZkRCwFAZKJCzSqyLthrvpdAotoPdkfSXDBtUcqFJnEgVrEmtFAIeQXGSqZNrbDNaYaXhXnQIiVjLApraqkDBBmSJLIvUCfDnhQEVshQmh_A\n004 AaXfQzsSeJtJsSKDQMDElvCFmPlYHhairPoGSZGcqFAtIrzupzLeqLuMvMlOvEBMHYjYoQCeUIIzMXnhMTlbPf_dORkuNVNTygvyRGjgAbjcoDaskxhqFqiLgNsdwzfxXtIWdLPqtaNxKdjljEVTiNOuRbPnDZKtD_CEparNpLhqenqNDtqZyazKzyUSUSkQDOZLhTHQmknbDhjRhXVnGMYIByysSHXQPgSMCwTXluQPmOLrpEAlPtvJCj_yXbFQdoCsZAlH\n003 UqxRAwEqnCMELoHQyafkmGGSoVNWKIOBzdjHtSnqbGekotqRFoWECpCNCVRlMePYeHFZZzeyOcwTuFoWMbfedqLXkgqNjNWWoWsfkdLSwIthWMNHYThszEkXNvEMZJUeUtEcDbtfCJnuJJCI_yRaaFtElKXcqkMNWrZanMTcjAmOngLTpfhbUBMubLPeusdETtXtFaplwCaarvWhGSrUTVDWYNQJUDNkUxdTxKZolEcfnrvwIxIymEIAvIzyPEequEcwsrFa",
+          "testOut": "OIINjrftfGnZjIuzLOWPRPetSBUpdpfBhDNMdtQVQVlhaTiSakFwHHY_UqkxiVXrUhXbvZBrHeqTKOeFDGxdFKkxkqXgKRUhoVGacapcExyjlcJZTVPAoupAUur_eKxhGRdloZHczeDsXtufJDaxmsKYtVNpDxLFXXmUIWYpjaAboIwOSavaWQyVUtgnHpAFdjTrfcoHASxDVfLgGiO_zeLKdBQipsquZzSVuuCroemiXXLgjgkCDuAhIwXnCtDqhfkZRt_T",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "INTEL #6",
+          "isTest": true,
+          "testIn": "8\n001 cPFFRRYWpisEAsltNrsIkJ_OBCCDAsEFTDXahZ_svzxefqY_yQ\n007 VxhXBA_WrZQWrEguafRQKpyHkgYTyhcBuXEgeggudyPg_jbSIU\n005 A_lrEQRrzLxA_ogVnHbkWujcXeiWpSmaIIkPQFSzqqXmHf__Hz\n008 hWKBiZzYruZqIzVWMhDsRaIZys_xRfmfuDiPYntwbyjcnROCHm\n009 bqsYKfDj_dkpmbTUuurRhndfsLMrzLGhmLMbHqiokHmjpQaKrI\n003 jNUXMReeERNWbFtQcktIULofdbyVknkdXUrxFeWKudfCKohwAa\n006 fOshZIJXFpcrgWzftuxqfUJGnYdYjhMOEaJMjPtRWGfQQMPUTC\n002 tXfdbwEVcHDgCXV_bvYtSlmdgFc_paWsLZeCEpzBHqhNWtEKuG",
+          "testOut": "The_process_used_is_called_Shamir_s_Secret_Sharing",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "REDACTED #6",
+          "isTest": false,
+          "testIn": "8\n002 IuWBMLugtH_BEHvfrTXogEqhwhjrswzJW_OzVYhIzxuILWZJzs\n007 zgPoXllgFxHCZQQzkjJkuJtESbMiavQeYlTIqsSTIEYgWIQBwH\n009 U_fwasaEfugJPujDfGUSJtLbrWbhcxiWoht_FKsdpJPLhjSeO_\n003 QJlFHJxcSbypuRXGr_VKqOWOXuJdQnJ__MRkaHwDEDElzkKWon\n004 SmmppIOsoDAMWDCzlqKyZQaNJDDzGqfDtEnymyYzEdPkjmAIxO\n008 XuEsgZazEKFbVnNP_FMxwYDEEleUmHvZdPbhPcytbhhqDhyfdR\n001 OXQMEWhuXvSsxbOpiLddhmeEDaBwRBdEpTMrghekQGbipkAHEP\n005 MuOoHEDgDwifUZAM_eNBepHGavEaZxkffPTPajBBodyIbIBsBb",
+          "testOut": "nAPGjkloNqmhlQZKdWJDPJesQeqgmULFvwiQPpgsNemuFCvNQt",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "INTEL #7",
+          "isTest": true,
+          "testIn": "8\n008 jfqNiTLUABlOkmTKnTSHSiJLqWwFuIUohjlBWNMWakPsbUUzRZE_ptLmyjmjMkDmWxtgfBeCUMZoWGIxzSqMGsxFASOKHevadfyrsBOvTOuhWGGNVcTjfNPVkeYUzRARWXyQpyadcEocCeBGgDNEKnYcMmqxPkdrMOuyPErxIuRKnxlFXRhohWNDJvIANdAhbfILxmJGGtKJruZwwlYnPlpjDdWCfYotNSvgJGQdzytRugcziTsBSGUfnuzh_BeHPnCfsIfvGedGQJ\n006 uewaJwoiQdkHTHUuxghHARGzGNCCfTVSIehfSpZfngdMKoGJLKbfkZOTTyFfCustMnJPKfXhpDaBYopGeMskvHrwJXrJEPkSLcGeGShbpbpQsIhBdOwQprTlXLBkMunqJHUIAuJifzcNbtVaUnMceR_IQ_hoVuNKHRyFCSjeZzpggdkgVJKRBpr_JEsJVoBXi_mGNWtPLgdkIQlITMtBqmkATwvgViIQUdJRsLDsjOFCODFMSCixBgmiUirKsVYQpeLoUrjNgbljhw\n003 IUOqjuEumVKMFkxJB_uEXyDhEWIuQJJJnMa_kv_iMfmiENqdmqWXdprAFomnjVxQiGldXpHKSnxyDcIkHWgjPLbbqjf_UUwwPWGaFIzSqdGNXpwjRzCtncoNfWh_yVElpTHECZGfp_JFbYdrcKlmWYoMsqsnrzyzysNmRymAHjOOPXTyWCaqtKuvHLgEROaPGvW_ClwByoVMSdneusFcPGFiyxkxUbaBELTnYaBThjoNsFewLqSddSJoBQfhlCmvbFfWFXioENbIEC\n007 XrAXosQsARJbwkBgBszIdnaDgtJawgKOSFMUbVBBgjtFRxH_kyvIffLRADRYaIpbfSvBhwCnstvocQxrQlfeFpdjCiGEzuhUWGziA_iPvMNy_eU_ykwOcGzqMprJyxQirbceN_pRsAZdyfPE_CEbtSLaQfjzsYsPkIHtdoATLXlGCLKZSIUqQkKYUOgndPdaaAGmLDbczgTYNdmoykKUgDYpORspW_ho_oNMCZVaNIxD_DnIQIKZrCuzaGJsWf_bXtSXIvvt_JQzkR\n002 YcYokHQVHFCczvmdVcUkPcWlLNuryRDdmdlFHZSdYYpXaMJ_BFtYDDOHkpsgSkxnxZANsKpWuGgLoCVuegLgGyzYOFGRIkKmRfBKfckJWBBJSeHygWROOsPpuZcWacTeWJrOsrjGleSJVrTIjILfSzcT_rTqArlRJZYqVfcOqdmFMRvUj_dfVOVolDBbiqAOUwPXkddv_GXeqJwccMTIhGDMxfIC_EIXSQheYuWrMwkBiGEIJzngabBytOeULREAzClZwpigZdrHlm\n001 fcRDGlzuIDtzairehOMEnksUPrVwaCDqyJMvptrNKAssZbsXcLwuaZtVZjSsRQaixaMYcGlkyPAdbIiuGBX_AUJlLGdPKueqpQmhsclSH_AaBbjxBvKDzsaGpsPzcvALVDHCSODdrj_fVlTqFmPcmzqKCQRMFXOoGt_CBHxmYHnDLSIYoVDpWHUgznfALiUIginxDBoxWTlPmHhlAsiqENgAavwUnQTaytCAYxwpODaPFUULDEaQJjy_JfoFUMtrjTVEbrNeXluisI\n005 HcurkRFBxkfmlNtXoDKfdncXFVJikpMnwFBkRIkzomDlUJrhswDuvqwFNFjtAavbqDuwneWQlwYlaCDOTioCwaqwjaDCpvUjckSSXAgpxIoKEKIzhirqCOPxMhGEPSSlqqqEALRCKWsqNWaYQXrfBFPLnzKczqHgDddKHLfYJtFPvtcHIswqkfLtlk_tajAhGomj_jdbxhzAwjGyEQFMURygDkYYBTCtcUPEstWOUIiSLzcJPpRrESbkmMFaePgoHVFOaMyMkTfROn\n004 FMbnSUdkjKmnKHMrdzcmPJerTituuEmtBIDOHWGcvWeMkWJbIcHFhJiwanVONYiItXaAOIhJSUzWJqvllymWJsYxYtHZjOpKfNIdguvNSPyyUpWHpsmlqiyslKHYBeAABjGVOjEQbXEuFEgOLkmnlyigfvIarMZlERxGrtzzdTTomAlAcyojCQybCmrn_zbXERQGPGYHISDbsDkFLnuRDCyBonPsHROqcFuPObknoBZbgOCMMDyZfSmcKwXtjauRNFlAyqHhrPLech",
+          "testOut": "This_process_is_only_worthwhile_if_one_does_need_the_threshold_Otherwise_seeing_the_secret_as_a_bitstring_it_is_enough_to_give_random_bitstrings_of_the_same_size_to_all_the_agents_but_one_and_the_bitwise_XOR_of_the_secret_with_all_these_random_bitstrings_to_the_last_one",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "REDACTED #7",
+          "isTest": false,
+          "testIn": "8\n008 tRNnwXvmu_gMbvhITJBQUJcdFOQDyiFprdcteBnHxIUjHVzp_FnrZSvMbzCK_MsBRVGvwYmIsnSdoTYQLNkRmmQUauHyRBZRAczspkhjDvHoROLHLjorYkQRstgtLUdtZ_eYFSVcIgiCBXkpsIMHlDJWnvuaWoYbPGktJNBHuOWnDEfZL_rYPDSUMLncwRDEPb_DNqAG_oOstizRieMtkTXrnQiQghwkWD_odmzAjqxuXetGWliYXbArAFN_sPgucdcUZroDEYZZRn\n001 UTUJyhzWKtsqEfYphSfdTLAYXfeboxRiePQspDtvELpUrhYMgLVZHoUhxqPzpPBEfLLWtuRQiVZDJtvwTAAfjPfgtWYPMLpvOdncMKmqaLSFCsqJhZAeMFIukjUnDFZS_nOVgGDEGGUqIhpJifGhaNrbonrRuvYdjTCpNyLuFpkKkkSJcZKMQMMWX_EAqjjvYzSmgZrmaAWwzeoutLLCFyayvhalwwmlZfMMcokBY_xGrsUSzHljIeitCTJyvGtJUlyXHtlBLEag_O\n007 UQ_JcDZnezZUgrpZaoBiEoeHpaSApandeXFNsfUuEiSeHtSC_oWRrTIckTlnzxNqoXdbFUyrarFPHsqoFSFtuJvOTiQLRIimtTrKCTPOLAIEDjNahtixhLbBrUPvmRnsavaOIUpyLSTtUVddEdMHCSggwfCLz_jJdbkxG_wmWIVzVHgikoqAhBJEBuVOmOjb_OsSlSDArSZ_udcjMdRjYce_vWZCnfWakpcHWTxpikhuKkPHYYnhYHjnTC_MkgTMjPOZRRvNadqHIw\n009 QmHkmDrUvSuduMCqeWRZjWwKeZYhmItBFmcwWTPwkIq_LZArfjGiDTqpJVUqdmeWYMuJgqEwQyBCcPtsrJljsSZqXiiBmppMODNBOUnZLMdKYHCPAhPxSJBqjwHugvOSxHGnjvggUJhHzSlCASDdmxtaCdMvccLYYXjmSTGYQJOggQwYcmmDfbNcadoMiKGDZxBqtmLjBwNjEvODbXqNNwoQXHQSKDPAAAysRrswkDUaUGUIXarLBp_vnGxAfTVoIWEuqsUSLkVvGr\n002 ucahbkitCWfTKHiNLgIMBxphDkQlLESrUvnJeFngMufPrNUoJAxrQgQPvABVGDQqBeQgJVSTDyyOHQCesUBKyNiNgJuuSZPePBbahuwGmEUkHIamgosJeNrxBOYUKAzLlPCqFRpmVUJcVMOylWxdOSMyVukqRboBIvrjeNLcLZNOO_DMHCsMvkUSVpRdAbQHGcWnxgyUvHfqpwsuOVWFSfuCbisercVVqKlwSNHkzSmbbReFcDrsHElWOiioiiEUHiLNPgognCdWyT\n004 fTGonWlqaAXJBaFeGakhAXftMCQTVFLZWJNGvQHuITapstCIgaICTqTMwuzxPCMMBFKhenNlRFjIwEMdLyQwargyATDkJRDJaYnKxCMUwBhsGdlNIItKCjvTb_YQFdssQWxhBxMeZoMTgETvBvWwbfRfpBUOwKAJkgwzxZKtzTmKJlVYXItblNYIfeEnECFqBwgvfvscmC_NPzwDFZHoHmMNeaHvYTDZqxPEmGJDgvGAmxrppyuJkG_xS_emLHGlmRhIEdxTsqXEtl\n003 _pzqkUIZBmjrj_yWhoFkjgNG_oWrbznzlEckwvkyywsDLadpcLTijpGIF_drUYxzCmbhDBPUGYQCiHXsJgrP_dUOOpEghxUIqcItKIKwCDBYKbwoGqyAbJXVslWLDWx_FcPgVXSWXSotAWSFTaemFuaPKHGMoJYlRqlWxkWvFzasKfNMUYmAINuUeWzSPblqSdJdJXYeuvctgFLrFYyVXwEQmtyFQPGzqaOQCBvVmfjCgUhlDCyrrFYdaLUWvKnkIrWwXzLWY_wTVe\n006 mUXIhtHHUeUFstAFdxWZhKOmoqnLlEIgyW_cFIfsoCYZPDSf_ymwBuHLFgnnZsJeYtPLSGoknDNIN_MYINbfeYGA_Z_OpjYJECE_JOCrwTQwyPuQCiNKCRCcUtmnRJw_OwzqWcHwmHkKykyKFAQtywqkwkZLTqnlIsJAHDUKBecsZEqzuxuIokugKPqAJSem_RAGaGPMXSKMd_rA_aFOYkiWOHJyptsWmJObyHEBLDPdXYMzAuiUMWkUFOMsCyQYwWujCKlGvfLjHT",
+          "testOut": "f_ZSDgDtRPTXDEoojNqxzlSQvYuDFbeEhwEDksXwMKiGgz_TYguJPeYtIDzLApNpJkEyevn_SLBYBKYvISplQQeVTKFhLMDuJg_CltzeMgR_MX_yuFPQdfn_iLWOZaWjQjCIsyNKCmnRutKYRtBTwfLaNGzisdxJdaTJ_whsbpBSLzOuTyzyBInQlEimJyxAjsQiiaePbjUFQBifiPZADYSMBNlDGBJ_CywolBMaKFUpTGrAIKxccKETxhLESfjUUHWXrDHfHNfpEO",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "{{1}} < [[N]] < {{9}}\nIt is guaranteed that [[N]] ≥ [[k]] the threshold that was used to share the secret.\nAll the [[Si]] have the same length <{{300}}.",
+      "coverBinaryId": 34321700076156,
+      "stubGenerator": "read N:int\nloop N read c:word(3) s:word(300)\nwrite Revealed_Secret",
+      "inputDescription": "<<Line 1:>> An integer [[N]], the number of parts gathered.\n<<Next [[N]] lines:>> The code number [[Ci]] of an agent followed by his part [[Si]] of the secret. All the [[Si]] have the same size.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "One single string corresponding to the revealed secret."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Some top secret information has been shared between Her Majesty's double-zero agents. Time has come to reveal it! But in order to avoid the secret to fall too easily into the hands of the enemy, a deeply thought process has been used to share it.<br><br>First, each of the nine double-zero agents (from 001 to 009) only carries a distinct &quot;part&quot; of the secret.<br>Also, there is a <strong>threshold</strong> <var>k</var> (<const>1</const> &lt; <var>k</var> &lt; <const>9</const>) such that <strong>at least any <var>k</var> parts</strong> of the secret are necessary to reveal it. This allows to retrieve the secret even with a few agents missing in action.<br>Finally, the knowledge of less than <var>k</var> parts does not allow to derive any information about the secret! (There might be some statistical biases for some poorly chosen parameters, but in general there is none.) The enemy has to capture or hire at least <var>k</var> agents to learn anything.<br><br><strong>Your task is to figure out how to reveal the secret given at least <var>k</var> parts.</strong><br>The following describes the secret sharing process in details.<br><br>First of all, the secret message <var>S</var> is written using the following alphabet of <const>53</const> characters:<br><const>abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_</const><br>where each character is <strong>identified by its index</strong> from <const>0</const> to <const>52</const>: a=0, b=1, ..., underscore=52.<br><br>Given a threshold <var>k</var> &ge; 2, the secret sharing process is the following:<br>For each index i of <var>S</var>, a polynomial<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">P[i] = A[i,k-1]&sdot;X^(k-1) + A[i,k-2]&sdot;X^(k-2) + ... + A[i,1]&sdot;X + S[i]</pre><pre style=\"font-family: monospace\"></pre> is defined where the coefficients A[..] are chosen randomly between <const>0</const> and <const>52</const> (inclusive) with the additional constraint A[i,k-1]&gt;0.<br>Each agent 00<const>x</const> is provided with the string representing the values [P[0](<const>x</const>)%53, P[1](<const>x</const>)%53, ...]. This constitutes his part of the secret, while the secret itself is the string representing [P[0](<const>0</const>), P[1](<const>0</const>), ...].<br><br><strong>Example:</strong> Consider <var>k</var> = 2 and <var>S</var> = &quot;SIS&quot; = [44, 34, 44].<br>For each character we pick a random polynomial of degree 1 with the corresponding character as constant coefficient:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">P0 = 41X + 44, P1 = 8X + 34, P2 = 2X + 44</pre><pre style=\"font-family: monospace\"></pre> Agent 001 receives [P0(1)%53, P1(1)%53, P2(1)%53] = [32, 42, 46] = GQU;<br>Agent 002 receives [P0(2)%53, P1(2)%53, P2(2)%53] = [20, 50, 48] = uYW;<br>...</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var>, the number of parts gathered.<br><strong>Next <var>N</var> lines:</strong> The code number <var>Ci</var> of an agent followed by his part <var>Si</var> of the secret. All the <var>Si</var> have the same size.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">One single string corresponding to the revealed secret.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><const>1</const> &lt; <var>N</var> &lt; <const>9</const><br>It is guaranteed that <var>N</var> &ge; <var>k</var> the threshold that was used to share the secret.<br>All the <var>Si</var> have the same length &lt;<const>300</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\n005 Lvb\n004 Xn_</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">SIS</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 221613206258,
+  "avatar": 11911528647474,
+  "commentCount": 18,
+  "upVotes": 21,
+  "downVotes": 4,
+  "validateAction": {
+    "actionId": 306726,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

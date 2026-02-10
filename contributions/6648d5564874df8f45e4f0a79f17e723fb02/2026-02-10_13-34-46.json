@@ -1,0 +1,163 @@
+{
+  "id": 6648,
+  "activeVersion": 12,
+  "score": 16,
+  "votableId": 18080761,
+  "codingamerId": 3792309,
+  "views": 503,
+  "commentableId": 17985356,
+  "title": "SHA-256 Hash",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "schachmatt",
+  "publicHandle": "6648d5564874df8f45e4f0a79f17e723fb02",
+  "codingamerHandle": "bdb9b04f80071565baa07373f60c8c899032973",
+  "lastVersion": {
+    "version": 12,
+    "autocloseTime": 1622654942941,
+    "data": {
+      "title": "SHA-256 Hash",
+      "topics": [
+        {
+          "id": 74,
+          "handle": "cryptology",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Cryptologie",
+            "2": "Cryptography"
+          },
+          "pageTitle": "Cryptography: exercises and theory",
+          "puzzleCount": 12,
+          "parentTopicId": 43,
+          "contentDetailsId": 105
+        },
+        {
+          "labelMap": {
+            "2": "Hashing"
+          }
+        },
+        {
+          "labelMap": {
+            "2": "SHA-256"
+          }
+        }
+      ],
+      "solution": "import math\n\nINITIAL_HASH = [\n    0xCBBB9D5D,\n    0x629A292A,\n    0x9159015A,\n    0x152FECD8,\n    0x67332667,\n    0x8EB44A87,\n    0xDB0C2E0D,\n    0x47B5481D,\n]\n\nROUND_CONSTANTS = [\n    0x428A2F98,\n    0x71374491,\n    0xB5C0FBCF,\n    0xE9B5DBA5,\n    0x3956C25B,\n    0x59F111F1,\n    0x923F82A4,\n    0xAB1C5ED5,\n    0xD807AA98,\n    0x12835B01,\n    0x243185BE,\n    0x550C7DC3,\n    0x72BE5D74,\n    0x80DEB1FE,\n    0x9BDC06A7,\n    0xC19BF174,\n    0xE49B69C1,\n    0xEFBE4786,\n    0x0FC19DC6,\n    0x240CA1CC,\n    0x2DE92C6F,\n    0x4A7484AA,\n    0x5CB0A9DC,\n    0x76F988DA,\n    0x983E5152,\n    0xA831C66D,\n    0xB00327C8,\n    0xBF597FC7,\n    0xC6E00BF3,\n    0xD5A79147,\n    0x06CA6351,\n    0x14292967,\n    0x27B70A85,\n    0x2E1B2138,\n    0x4D2C6DFC,\n    0x53380D13,\n    0x650A7354,\n    0x766A0ABB,\n    0x81C2C92E,\n    0x92722C85,\n    0xA2BFE8A1,\n    0xA81A664B,\n    0xC24B8B70,\n    0xC76C51A3,\n    0xD192E819,\n    0xD6990624,\n    0xF40E3585,\n    0x106AA070,\n    0x19A4C116,\n    0x1E376C08,\n    0x2748774C,\n    0x34B0BCB5,\n    0x391C0CB3,\n    0x4ED8AA4A,\n    0x5B9CCA4F,\n    0x682E6FF3,\n    0x748F82EE,\n    0x78A5636F,\n    0x84C87814,\n    0x8CC70208,\n    0x90BEFFFA,\n    0xA4506CEB,\n    0xBEF9A3F7,\n    0xC67178F2,\n]\n\nMASK32 = (1 << 32) - 1\n\n\ndef NOT(x: int) -> int:\n    return MASK32 - x\n\n\ndef encode_binary(n: int, l: int) -> str:\n    return bin(n)[2:].zfill(l)\n\n\ndef decode_binary(n: str) -> int:\n    return int(n, 2)\n\n\ndef encode(message: str) -> str:\n    ret = \"\"\n    for char in message:\n        ret += encode_binary(ord(char), 8)\n    return ret\n\n\ndef right_rotate(x: int, n: int) -> int:\n    b = encode_binary(x, 32)\n    return decode_binary(b[-n:] + b[:-n])\n\n\ndef right_shift(x: int, n: int) -> int:\n    return x >> n\n\n\ndef pad(message: str) -> str:\n    l = len(message)\n    message += \"1\"\n    k = 512 * math.ceil((l + 1 + 64) / 512) - (l + 1 + 64)\n    message += \"0\" * k\n    l_binary = encode_binary(l, 64)\n    message += l_binary\n    return message\n\n\ndef split_chunks(padded_message: str) -> list[list[int]]:\n    length = len(padded_message)\n    ret = []\n    for i in range(0, length, 512):\n        chunk = padded_message[i : i + 512]\n        ret.append([decode_binary(chunk[j * 32 : j * 32 + 32]) for j in range(0, 16)])\n    return ret\n\n\ndef digest(chunks: list[list[int]]):\n    current_hash = INITIAL_HASH[:]\n    for chunk in chunks:\n        w = [0 for _ in range(64)]\n        for i in range(0, 16):\n            w[i] = chunk[i]\n        for i in range(16, 64):\n            s0 = (\n                right_rotate(w[i - 15], 7)\n                ^ right_rotate(w[i - 15], 18)\n                ^ right_shift(w[i - 15], 3)\n            )\n            s1 = (\n                right_rotate(w[i - 2], 17)\n                ^ right_rotate(w[i - 2], 19)\n                ^ right_shift(w[i - 2], 10)\n            )\n            w[i] = (w[i - 16] + s0 + w[i - 7] + s1) & MASK32\n\n        del s0, s1\n\n        a, b, c, d, e, f, g, h = current_hash\n\n        for i in range(64):\n            S1 = right_rotate(e, 6) ^ right_rotate(e, 11) ^ right_rotate(e, 25)\n            ch = (e & f) ^ (NOT(e) & g)\n            temp1 = (h + S1 + ch + ROUND_CONSTANTS[i] + w[i]) & MASK32\n\n            S0 = right_rotate(a, 2) ^ right_rotate(a, 13) ^ right_rotate(a, 22)\n            maj = (a & b) ^ (a & c) ^ (b & c)\n            temp2 = (S0 + maj) & MASK32\n\n            h = g\n            g = f\n            f = e\n            e = (d + temp1) & MASK32\n            d = c\n            c = b\n            b = a\n            a = (temp1 + temp2) & MASK32\n\n        current_hash[0] = (current_hash[0] + a) & MASK32\n        current_hash[1] = (current_hash[1] + b) & MASK32\n        current_hash[2] = (current_hash[2] + c) & MASK32\n        current_hash[3] = (current_hash[3] + d) & MASK32\n        current_hash[4] = (current_hash[4] + e) & MASK32\n        current_hash[5] = (current_hash[5] + f) & MASK32\n        current_hash[6] = (current_hash[6] + g) & MASK32\n        current_hash[7] = (current_hash[7] + h) & MASK32\n\n    return \"\".join(hex(h)[2:].zfill(8) for h in current_hash)\n\n\ndef sha256(message: str) -> int:\n    encoded = encode(message)\n    padded = pad(encoded)\n    chunks = split_chunks(padded)\n    return digest(chunks)\n\n\nif __name__ == \"__main__\":\n    string = input()\n    hashed = sha256(string)\n    print(hashed)",
+      "statement": "Implement a slightly modified version of the SHA-256 hash.\n\nA full description of the SHA-256 algorithm can be found on Wikipedia: https://en.wikipedia.org/wiki/SHA-2#Pseudocode\n\nA detailed walkthrough can be found here: https://qvault.io/cryptography/how-sha-2-works-step-by-step-sha-256/\n\nThe only difference between the <<standard implementation>> (detailed in the 2 links above) and our implementation is in the definition of the <<initial hash values>> (referred to as h0 - h7 in the links above).\n\nThe <<standard implementation>> uses the first 32 bits of the fractional parts of the square roots of the <<first>> 8 primes (2, 3, 5, 7, 11, 13, 17, 19). We will instead use the first 32 bits of the fractional parts of the square roots of the <<next>> 8 primes (23, 29, 31, 37, 41, 43, 47, 53), given here in hexadecimal form:\n\n`0xcbbb9d5d\n0x629a292a\n0x9159015a\n0x152fecd8\n0x67332667\n0x8eb44a87\n0xdb0c2e0d\n0x47b5481d`\nThe reason we're using different initial hash values is so that you can't use built-in hash functions, e.g. python's hashlib.sha256.\n\nApart from this change in initial hash values, the algorithm proceeds <<exactly the same as the standard implementation>>. Note: the \"round constants\" are not changed, i.e. they are the same as in the standard implementation.\n\nYou will be given a string, you must convert that string to a sequence of bits (using ASCII) and hash it using our version of the SHA-256 algorithm.",
+      "testCases": [
+        {
+          "title": "Which house are you?",
+          "isTest": true,
+          "testIn": "Ravenclaw",
+          "testOut": "70ac5b0feb57d7b1823a905a398863318594dd996d5c40ecced5089935e7a922",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "Slytherin",
+          "testOut": "89de941cb5cef72a648d7637666be88f129227f5cf5dd3aed3d98cb9f2b6c758",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "You can't escape!",
+          "isTest": true,
+          "testIn": "\\\\\\\\\\\\\\\\\\\\\\\\\\\\",
+          "testOut": "65952a2281b2103380639d56920ef9556a09d4a1c42ab935d85607be5242bf17",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "\"\"\"\"\"\"\"\"\"\"\"\"\"\"",
+          "testOut": "1d2ab9ae234a137d59ce464157043f7074eeca3ab0e861c82235311d12438d8d",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Obligatory CodinGame",
+          "isTest": true,
+          "testIn": "CodinGame",
+          "testOut": "010c767db82263fb41277141e8e92f19439c5af01ccdc30bc6880659c4a2b7ea",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "codingame",
+          "testOut": "86bb072e1922005a0b20fbb7eedb38e06b7b7f0765090605c72f4e03e9b942ce",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Running out of ideas",
+          "isTest": true,
+          "testIn": "I can't put an empty string in the test box :/ oh well, this will have to do....",
+          "testOut": "68013a34a7720624ba571c2a94ef52bc75b14dfc061942846276265b0083de38",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "EMPTY_STR1NGG",
+          "testOut": "72db961ced7e9a76f1d52973886fe4038e1600140ee15083f049ee34ca462f94",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Jealous?",
+          "isTest": true,
+          "testIn": "import hashlib;print(hashlib.sha256(input().encode()).hexdigest())",
+          "testOut": "2c19865bdbd63947c3b234e34a8c245a10efde21aa55e1eae4d64d35a7bf3922",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "public class Main { public static void main(String [] args) { System.out.println(\"I cannot possibly express how much I hate Java.\"); } }",
+          "testOut": "e4269d49c4409c9961a84f94f5b152f4b1167c3b2e839efaf89a5196b8136d80",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "All characters of the string will be printable ASCII characters in the range [32 - 126] inclusive.",
+      "coverBinaryId": 63232423775630,
+      "stubGenerator": "read message:string(150)\nwrite answer",
+      "inputDescription": "<<One line:>> a string [[S]] to hash.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<One line:>> the 64-character hash value [[H]] output by our version of the SHA-256 algorithm in lowercase hexadecimal form."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Implement a slightly modified version of the SHA-256 hash.<br><br>A full description of the SHA-256 algorithm can be found on Wikipedia: https://en.wikipedia.org/wiki/SHA-2#Pseudocode<br><br>A detailed walkthrough can be found here: https://qvault.io/cryptography/how-sha-2-works-step-by-step-sha-256/<br><br>The only difference between the <strong>standard implementation</strong> (detailed in the 2 links above) and our implementation is in the definition of the <strong>initial hash values</strong> (referred to as h0 - h7 in the links above).<br><br>The <strong>standard implementation</strong> uses the first 32 bits of the fractional parts of the square roots of the <strong>first</strong> 8 primes (2, 3, 5, 7, 11, 13, 17, 19). We will instead use the first 32 bits of the fractional parts of the square roots of the <strong>next</strong> 8 primes (23, 29, 31, 37, 41, 43, 47, 53), given here in hexadecimal form:<br><br><pre style=\"font-family: monospace\">0xcbbb9d5d<br>0x629a292a<br>0x9159015a<br>0x152fecd8<br>0x67332667<br>0x8eb44a87<br>0xdb0c2e0d<br>0x47b5481d</pre><br>The reason we're using different initial hash values is so that you can't use built-in hash functions, e.g. python's hashlib.sha256.<br><br>Apart from this change in initial hash values, the algorithm proceeds <strong>exactly the same as the standard implementation</strong>. Note: the &quot;round constants&quot; are not changed, i.e. they are the same as in the standard implementation.<br><br>You will be given a string, you must convert that string to a sequence of bits (using ASCII) and hash it using our version of the SHA-256 algorithm.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>One line:</strong> a string <var>S</var> to hash.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>One line:</strong> the 64-character hash value <var>H</var> output by our version of the SHA-256 algorithm in lowercase hexadecimal form.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">All characters of the string will be printable ASCII characters in the range [32 - 126] inclusive.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">Ravenclaw</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">70ac5b0feb57d7b1823a905a398863318594dd996d5c40ecced5089935e7a922</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 148078121255,
+  "avatar": 58313205988826,
+  "commentCount": 17,
+  "upVotes": 23,
+  "downVotes": 7,
+  "validateAction": {
+    "actionId": 565283,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1622652364033,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

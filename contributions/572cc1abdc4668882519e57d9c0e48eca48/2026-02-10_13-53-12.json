@@ -1,0 +1,374 @@
+{
+  "id": 572,
+  "activeVersion": 9,
+  "score": 29,
+  "votableId": 4199603,
+  "codingamerId": 1174714,
+  "views": 1173,
+  "commentableId": 4143600,
+  "title": "Osu! Standard Score Calculator",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Shoko84",
+  "publicHandle": "572cc1abdc4668882519e57d9c0e48eca48",
+  "codingamerHandle": "b23e9b2c3708c21e0a0221b1d6c0a9eb4174711",
+  "lastVersion": {
+    "version": 9,
+    "data": {
+      "title": "Osu! Standard Score Calculator",
+      "solution": "var stats = readline();\nvar mods = readline();\nvar N = parseInt(readline());\nvar values = [];\nfor (var i = 0; i < N; i++) {\n    values.push(parseInt(readline()));\n}\n\n\nstats = stats.split(\" \");\nfor (var i in stats) {\n  stats[i] = Math.floor(stats[i].replace(/[^0-9.]/g, \"\"));\n}\nvar diffMult = stats.reduce((a, b) => {\n  return a + b;\n}) - 2 - stats[1];\nswitch (true) {\n  case (diffMult >= 0 && diffMult <= 5):\n    diffMult = 2;\n    break;\n  case (diffMult >= 6 && diffMult <= 12):\n    diffMult = 3;\n    break;\n  case (diffMult >= 13 && diffMult <= 17):\n    diffMult = 4;\n    break;\n  case (diffMult >= 18 && diffMult <= 24):\n    diffMult = 5;\n    break;\n  case (diffMult == 25):\n    diffMult = 6;\n    break;\n}\n\n// Mods Multiplier Calculation\nvar modsNames = [\"EZ\", \"NF\", \"HT\", \"HR\", \"DT\", \"NC\", \"HD\", \"FL\", \"SO\", \"RL\", \"AP\"];\nvar modsValues = [0.5, 0.5, 0.3, 1.06, 1.12, 1.12, 1.06, 1.12, 0.9, 0, 0];\nvar modMult = 1;\nvar SD = false;\nvar PF = false;\n\nmods = mods.split(\" \");\nfor (var i in mods) {\n    if (mods[i] == \"SD\") {\n        SD = true;\n    } else if (mods[i] == \"PF\") {\n        PF = true;\n    }\n  for (var j in modsNames) {\n    if (mods[i].indexOf(modsNames[j]) > -1) {\n      modMult *= modsValues[j];\n    }\n  }\n}\nmodMult = Math.floor(modMult * 100) / 100;\n\n// Accuracy Calculation\nvar accuracy = Math.round(values.reduce(function(a, b) {\n  return a + b;\n}) / (values.length * 300) * 10000) / 100;\n\n// Score Calculation\nvar maxCombo = 0;\nvar totalScore = 0;\nfor (var i in values) {\n  if (maxCombo <= 1) {\n    totalScore += values[i];\n  } else {\n    totalScore += Math.floor(values[i] + values[i] * ((maxCombo - 1) * diffMult * modMult) / 25);\n  }\n  if (values[i] != 0) {\n    maxCombo += 1;\n  } else {\n    maxCombo = 0;\n  }\n  if (((SD || PF) && values[i] == 0) || (PF && values[i] != 300)) {\n      totalScore = 0;\n      accuracy = 0;\n      break;\n  }\n}\n\n// Print Output\nprintErr(stats.join(\" \"))\nprintErr(\"diffMult:\", diffMult)\nprintErr(\"modMult:\", modMult)\nprintErr()\nprint(totalScore);\nprint((\"0\" + parseInt(accuracy)).slice((accuracy == 100) ? (-3) : (-2)) + \".\" + (\"0\" + Math.round(accuracy % 1 * 100)).slice(-2) + \"%\")",
+      "statement": "Your goal is to calculate the final score and the accuracy about a play on a beatmap on the Osu! game\nYou're given beatmap statistics [[stats]], game modifiers activated  [[mods]] and a list of [[N]] hit circle values [[hit]]\n\nBeatmap stats are always printed in the same order, which is:\n\"CS[[nb]] AR[[nb]] HP[[nb]] OD[[nb]]\"\n\nHit circle values given will always be <<0, 50, 100 or 300>>\n\n<<CS>> is an abbreviation for Circle Size, also:\n<<AR>> for Approach Rate\n<<HP>> for HP Drain\n<<OD>> for Overall Difficulty\n\n{{HOW TO CALCULATE THE SCORE}}\n\n<<Score for one hit value = Hit Value + Hit Value * (Combo multiplier * Difficulty multiplier * Mod multiplier) / 25>>\n\nHit Value : The hit circle judgement (50, 100 or 300).\nCombo multiplier : (Combo before this hit - 1) or 0, whichever is higher (can't be -1).\nDifficulty multiplier : The difficulty setting for the beatmap.\nMod multiplier : The multiplier of the selected mods.\n\nFor each score calculation, the result needs to be <<rounded down>> to the nearest integer\n\n<<Combo Multiplier clarifications:>>\nBy default, the Combo Multiplier is equal to 1.\n\nEvery time the player hits a 300, 100 or 50, the combo is incremented by 1.\nIf the player hits a 0, the Combo Multiplier is equal to 0.\n\n<<Difficulty Multiplier clarifications:>>\nCalculate the following formula:\nFloor([[CS]] - 2) + Floor([[OD]]) + Floor([[HP]])\n\nWhen in range, the Difficulty Multiplier will be equal to the indicated result :\n<<0-5:>> 2x multiplier\n<<6-12:>> 3x multiplier\n<<13-17:>> 4x multiplier\n<<18-24:>> 5x multiplier\n<<25:>> 6x multiplier\n\n<<Mod Multiplier clarifications:>>\nBy default, the Mod Multiplier is equal to 1.\n\nYou need to do the product of all mods activated, where:\n<<EZ>> (for Easy) = x0.5\n<<NF>> (for No Fail) = x0.5\n<<HT>> (for Half Time) = x0.3\n<<HR>> (for Hard Rock) = x1.06\n<<DT>> (for Double Time) = x1.12\n<<NC>> (for Nightcore) = x1.12\n<<HD>> (for Hidden) = x1.06\n<<FL>> (for Flashlight) = x1.12\n<<SO>> (for Spun Out) = x0.9\n<<RL>> (for Relax) = x0\n<<AP>> (for Auto Pilot) = x0\n\nThe result of the product is <<rounded down>> to the nearest 0.01.\n\n<<Additional mods:>>\n<<SD>> (for Sudden Death) = If the player miss a note, he fails immediately\n<<PF>> (for Perfect) = If the player hit something else than a 300, he fails immediately\n\nIf the player fails the beatmap, the score and the accuracy is equal to 0 and 00.00% respectively.\n\n{{HOW TO CALCULATE THE ACCURACY}}\n\n<<Accuracy = Total points of hits / (Total number of hits * 300) * 100>>\n\nTotal points of hits = (Number of 50s * 50 + Number of 100s * 100 + Number of 300s * 300)\nTotal number of hits = (Number of misses + Number of 50s + Number of 100s + Number of 300s)\n\nThe accuracy is <<rounded up>> to the nearest 0.01 and <<must be>> printed with two leading decimals.",
+      "testCases": [
+        {
+          "title": "Exemple",
+          "isTest": true,
+          "testIn": "CS2 AR9 HP9 OD8\nHD\n6\n300\n300\n0\n50\n300\n100",
+          "testOut": "1066\n58.33%",
+          "isValidator": false
+        },
+        {
+          "title": "Exemple",
+          "isTest": false,
+          "testIn": "CS2 AR9 HP9 OD8\nHD\n6\n300\n300\n0\n50\n300\n100",
+          "testOut": "1066\n58.33%",
+          "isValidator": true
+        },
+        {
+          "title": "Short beatmap",
+          "isTest": true,
+          "testIn": "CS4 AR7 HP7 OD7\n\n7\n300\n100\n100\n300\n100\n300\n50",
+          "testOut": "1642\n59.52%",
+          "isValidator": false
+        },
+        {
+          "title": "Short beatmap Validator",
+          "isTest": false,
+          "testIn": "CS4 AR7 HP7 OD7\n\n8\n100\n100\n300\n300\n300\n300\n50\n300",
+          "testOut": "2558\n72.92%",
+          "isValidator": true
+        },
+        {
+          "title": "Easy beatmap",
+          "isTest": true,
+          "testIn": "CS2 AR5 HP4 OD5\n\n20\n300\n300\n300\n100\n300\n300\n100\n100\n50\n300\n100\n300\n300\n300\n100\n300\n300\n300\n300\n100",
+          "testOut": "9224\n75.83%",
+          "isValidator": false
+        },
+        {
+          "title": "Easy beatmap Validator",
+          "isTest": false,
+          "testIn": "CS2 AR6 HP3 OD5\n\n25\n100\n300\n100\n300\n300\n50\n50\n100\n100\n100\n300\n300\n300\n300\n50\n100\n300\n300\n50\n100\n100\n300\n100\n300\n300",
+          "testOut": "11210\n62.67%",
+          "isValidator": true
+        },
+        {
+          "title": "Stats with dots",
+          "isTest": true,
+          "testIn": "CS3.5 AR8.7 HP8.2 OD8.1\n\n28\n100\n100\n300\n300\n300\n300\n300\n100\n300\n100\n100\n50\n100\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n100\n300\n50\n300",
+          "testOut": "18380\n72.62%",
+          "isValidator": false
+        },
+        {
+          "title": "Stats with dots Validator",
+          "isTest": false,
+          "testIn": "CS2.8 AR5.5 HP4.1 OD5.9\n\n31\n100\n300\n300\n300\n100\n300\n300\n300\n300\n300\n100\n300\n100\n300\n300\n300\n100\n300\n50\n100\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300",
+          "testOut": "20320\n80.11%",
+          "isValidator": true
+        },
+        {
+          "title": "Some misses",
+          "isTest": true,
+          "testIn": "CS2.4 AR2 HP3 OD4\n\n12\n300\n300\n0\n300\n0\n50\n50\n0\n300\n100\n300\n50",
+          "testOut": "1798\n48.61%",
+          "isValidator": false
+        },
+        {
+          "title": "Some misses Validator",
+          "isTest": false,
+          "testIn": "CS3.2 AR5 HP2 OD5\n\n19\n300\n100\n300\n0\n300\n50\n50\n0\n300\n300\n100\n100\n0\n0\n0\n100\n0\n50\n0",
+          "testOut": "2128\n35.96%",
+          "isValidator": true
+        },
+        {
+          "title": "Single mod",
+          "isTest": true,
+          "testIn": "CS4.1 AR7 HP5.4 OD4.3\nDT\n20\n300\n100\n300\n300\n100\n50\n300\n300\n300\n300\n100\n0\n50\n100\n300\n0\n100\n100\n0\n0",
+          "testOut": "4492\n51.67%",
+          "isValidator": false
+        },
+        {
+          "title": "Single mod Validator",
+          "isTest": false,
+          "testIn": "CS6 AR8.1 HP9 OD5\nHD\n23\n100\n100\n300\n300\n0\n300\n300\n300\n300\n100\n300\n50\n50\n300\n300\n0\n300\n50\n50\n300\n0\n0\n300",
+          "testOut": "6003\n59.42%",
+          "isValidator": true
+        },
+        {
+          "title": "Multiple mods",
+          "isTest": true,
+          "testIn": "CS4.9 AR9.1 HP6 OD10\nFL HR\n16\n100\n100\n300\n100\n300\n300\n0\n300\n50\n50\n300\n0\n100\n300\n100\n300",
+          "testOut": "3628\n56.25%",
+          "isValidator": false
+        },
+        {
+          "title": "Multiple mods Validator",
+          "isTest": false,
+          "testIn": "CS7 AR6 HP7.2 OD3\nFL DT\n22\n300\n300\n100\n0\n100\n300\n100\n50\n100\n300\n300\n300\n300\n100\n300\n0\n300\n300\n300\n100\n0\n300",
+          "testOut": "6490\n64.39%",
+          "isValidator": true
+        },
+        {
+          "title": "Sudden Death mod",
+          "isTest": true,
+          "testIn": "CS4 AR7 HP2 OD4.2\nDT SD HR\n24\n300\n100\n300\n100\n50\n50\n300\n100\n300\n100\n100\n300\n100\n300\n300\n300\n300\n300\n0\n100\n50\n100\n300\n100",
+          "testOut": "0\n00.00%",
+          "isValidator": false
+        },
+        {
+          "title": "Sudden Death mod Validator",
+          "isTest": false,
+          "testIn": "CS5 AR6.5 HP1 OD5.1\nHD SD\n33\n300\n300\n100\n300\n0\n300\n100\n100\n100\n300\n300\n50\n50\n300\n300\n100\n300\n100\n300\n50\n50\n50\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n100",
+          "testOut": "0\n00.00%",
+          "isValidator": true
+        },
+        {
+          "title": "Perfect mod",
+          "isTest": true,
+          "testIn": "CS3.7 AR7.1 HP2.3 OD1\nHD PF\n17\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300",
+          "testOut": "0\n00.00%",
+          "isValidator": false
+        },
+        {
+          "title": "Perfect mod Validator",
+          "isTest": false,
+          "testIn": "CS4.6 AR9.8 HP5.2 OD3\nDT PF\n21\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n300\n300\n300\n50",
+          "testOut": "0\n00.00%",
+          "isValidator": true
+        },
+        {
+          "title": "Difficulty Multiplier - 2x",
+          "isTest": true,
+          "testIn": "CS2 AR8 HP0 OD0.5\n\n18\n300\n300\n300\n100\n300\n100\n100\n100\n300\n50\n300\n100\n0\n300\n100\n0\n300\n0",
+          "testOut": "3778\n56.48%",
+          "isValidator": false
+        },
+        {
+          "title": "Difficulty Multiplier - 2x Validator",
+          "isTest": false,
+          "testIn": "CS4 AR9 HP2 OD1.5\n\n22\n300\n300\n100\n300\n300\n50\n300\n0\n100\n300\n50\n0\n50\n300\n100\n300\n50\n0\n100\n0\n50\n100",
+          "testOut": "3486\n47.73%",
+          "isValidator": true
+        },
+        {
+          "title": "Difficulty Multiplier - 3x",
+          "isTest": true,
+          "testIn": "CS4 AR5 HP2.1 OD2.2\n\n18\n300\n100\n300\n100\n300\n100\n300\n300\n100\n50\n50\n100\n0\n100\n300\n0\n100\n0",
+          "testOut": "3518\n48.15%",
+          "isValidator": false
+        },
+        {
+          "title": "Difficulty Multiplier - 3x Validator",
+          "isTest": false,
+          "testIn": "CS4.1 AR6 HP3.3 OD7.2\n\n22\n300\n100\n300\n50\n300\n50\n300\n0\n100\n300\n0\n0\n100\n300\n300\n100\n50\n0\n100\n0\n50\n100",
+          "testOut": "3338\n43.94%",
+          "isValidator": true
+        },
+        {
+          "title": "Difficulty Multiplier - 4x",
+          "isTest": true,
+          "testIn": "CS5 AR7.1 HP5 OD5.5\n\n18\n300\n300\n100\n300\n300\n100\n300\n50\n100\n100\n0\n100\n0\n100\n100\n0\n100\n0",
+          "testOut": "3198\n43.52%",
+          "isValidator": false
+        },
+        {
+          "title": "Difficulty Multiplier - 4x Validator",
+          "isTest": false,
+          "testIn": "CS4 AR8.2 HP8 OD7\n\n22\n100\n100\n300\n50\n300\n50\n50\n0\n100\n300\n0\n0\n100\n300\n300\n300\n300\n0\n100\n0\n50\n100",
+          "testOut": "3468\n43.94%",
+          "isValidator": true
+        },
+        {
+          "title": "Difficulty Multiplier - 5x",
+          "isTest": true,
+          "testIn": "CS7 AR8.3 HP7.1 OD6.2\n\n18\n300\n100\n50\n50\n300\n300\n300\n300\n50\n100\n0\n100\n0\n100\n300\n0\n100\n0",
+          "testOut": "3790\n45.37%",
+          "isValidator": false
+        },
+        {
+          "title": "Difficulty Multiplier - 5x Validator",
+          "isTest": false,
+          "testIn": "CS7 AR9.3 HP10 OD9.2\n\n22\n100\n300\n300\n300\n300\n50\n100\n0\n100\n0\n0\n0\n100\n300\n50\n100\n300\n0\n100\n0\n50\n100",
+          "testOut": "3380\n40.15%",
+          "isValidator": true
+        },
+        {
+          "title": "Difficulty Multiplier - 6x",
+          "isTest": true,
+          "testIn": "CS7 AR7.8 HP10 OD10\n\n18\n300\n300\n300\n50\n300\n50\n300\n100\n50\n50\n0\n300\n0\n100\n300\n0\n50\n0",
+          "testOut": "3594\n47.22%",
+          "isValidator": false
+        },
+        {
+          "title": "Difficulty Multiplier - 6x Validator",
+          "isTest": false,
+          "testIn": "CS7 AR8.2 HP10 OD10\n\n22\n300\n100\n300\n300\n50\n100\n100\n0\n300\n100\n0\n0\n100\n300\n100\n100\n50\n0\n100\n0\n50\n300",
+          "testOut": "3326\n41.67%",
+          "isValidator": true
+        },
+        {
+          "title": "Full Combo !",
+          "isTest": true,
+          "testIn": "CS5.4 AR9 HP2.1 OD5.1\nSD HR\n42\n300\n300\n100\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n100\n300\n300\n300\n100\n300\n300\n300\n300\n50\n300\n300\n300\n300\n300\n300\n300\n100\n300",
+          "testOut": "38625\n88.10%",
+          "isValidator": false
+        },
+        {
+          "title": "Full Combo ! Validator",
+          "isTest": false,
+          "testIn": "CS6.3 AR8.5 HP4 OD9\nSD\n47\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n100\n300\n300\n300\n300\n300\n100\n300\n300\n100\n300\n300\n300\n300",
+          "testOut": "56104\n89.36%",
+          "isValidator": true
+        },
+        {
+          "title": "Perfect !",
+          "isTest": true,
+          "testIn": "CS5 AR8 HP5.3 OD8\nDT PF\n52\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300",
+          "testOut": "84120\n100.00%",
+          "isValidator": false
+        },
+        {
+          "title": "Perfect ! Validator",
+          "isTest": false,
+          "testIn": "CS4 AR7 HP3.1 OD10\nPF HD\n76\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300",
+          "testOut": "163956\n100.00%",
+          "isValidator": true
+        },
+        {
+          "title": "Are you even playing ?",
+          "isTest": true,
+          "testIn": "CS3 AR8.3 HP9 OD7.8\nNF\n110\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0",
+          "testOut": "0\n00.00%",
+          "isValidator": false
+        },
+        {
+          "title": "Are you even playing ? Validator",
+          "isTest": false,
+          "testIn": "CS4 AR3.2 HP7.6 OD7.1\nNF\n124\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0",
+          "testOut": "0\n00.00%",
+          "isValidator": true
+        },
+        {
+          "title": "Noobish",
+          "isTest": true,
+          "testIn": "CS5.1 AR5.3 HP8.6 OD8\nHT EZ\n156\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n300\n50\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n100\n50\n300\n100\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n300\n0\n0",
+          "testOut": "1215\n02.56%",
+          "isValidator": false
+        },
+        {
+          "title": "Noobish score Validator",
+          "isTest": false,
+          "testIn": "CS6.8 AR9.2 HP7.1 OD9\nEZ HT\n178\n0\n0\n0\n300\n0\n0\n0\n0\n0\n0\n0\n0\n100\n300\n50\n100\n50\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n100\n50\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n300\n100\n0\n0\n0\n0\n0\n0\n0\n0\n0\n100\n0\n0\n0\n0\n300\n0\n0\n0\n0\n0\n0\n0\n0",
+          "testOut": "1861\n03.46%",
+          "isValidator": true
+        },
+        {
+          "title": "Suffering",
+          "isTest": true,
+          "testIn": "CS5.2 AR8.2 HP8 OD8\nEZ SO\n81\n50\n50\n50\n100\n50\n0\n50\n100\n300\n300\n300\n100\n100\n100\n100\n100\n0\n100\n100\n100\n0\n100\n300\n0\n0\n0\n0\n300\n100\n100\n100\n100\n100\n300\n50\n300\n100\n100\n100\n100\n300\n100\n100\n100\n100\n100\n0\n50\n50\n50\n50\n50\n0\n100\n100\n100\n100\n50\n300\n300\n300\n300\n100\n100\n100\n100\n300\n300\n100\n50\n100\n300\n300\n100\n300\n300\n50\n50\n50\n50\n0",
+          "testOut": "16767\n40.53%",
+          "isValidator": false
+        },
+        {
+          "title": "Suffering Validator",
+          "isTest": false,
+          "testIn": "CS4.3 AR9.1 HP7 OD7\nSO EZ\n93\n100\n100\n300\n300\n50\n50\n50\n0\n50\n50\n50\n50\n50\n100\n100\n100\n100\n100\n100\n100\n0\n0\n0\n0\n0\n0\n50\n50\n300\n50\n50\n300\n100\n100\n100\n100\n50\n50\n50\n50\n50\n50\n50\n50\n50\n100\n100\n100\n50\n100\n50\n100\n50\n100\n50\n50\n50\n50\n50\n50\n50\n50\n100\n100\n100\n100\n100\n100\n100\n100\n100\n100\n100\n100\n100\n100\n100\n100\n0\n50\n50\n50\n50\n100\n50\n0\n0\n50\n300\n300\n100\n100\n50",
+          "testOut": "15807\n27.06%",
+          "isValidator": true
+        },
+        {
+          "title": "Relax mod",
+          "isTest": true,
+          "testIn": "CS3 AR8.5 HP7.5 OD8\nHD RL\n45\n300\n300\n300\n100\n100\n50\n50\n0\n100\n50\n0\n300\n50\n100\n100\n300\n100\n300\n0\n50\n300\n100\n50\n300\n100\n100\n100\n50\n100\n300\n100\n300\n300\n100\n100\n100\n300\n300\n300\n100\n300\n0\n50\n50\n300",
+          "testOut": "6850\n50.74%",
+          "isValidator": false
+        },
+        {
+          "title": "Relax mod  Validator",
+          "isTest": false,
+          "testIn": "CS4 AR7.3 HP8.7 OD9\nRL HR\n52\n300\n100\n300\n100\n100\n50\n100\n0\n100\n50\n0\n300\n100\n100\n50\n300\n100\n300\n0\n50\n300\n100\n50\n0\n0\n100\n100\n50\n100\n300\n100\n0\n100\n100\n50\n100\n300\n50\n300\n100\n300\n0\n50\n50\n300\n100\n100\n50\n50\n100\n0\n0",
+          "testOut": "5900\n37.82%",
+          "isValidator": true
+        },
+        {
+          "title": "Auto Pilot",
+          "isTest": true,
+          "testIn": "CS3 AR8.5 HP7.5 OD8\nDT AP\n45\n300\n100\n300\n100\n100\n50\n300\n0\n100\n50\n100\n300\n50\n100\n0\n0\n100\n300\n0\n50\n300\n0\n100\n300\n100\n300\n100\n50\n100\n300\n100\n300\n300\n300\n100\n100\n300\n300\n300\n100\n300\n0\n50\n100\n300",
+          "testOut": "7000\n51.85%",
+          "isValidator": false
+        },
+        {
+          "title": "Auto Pilot Validator",
+          "isTest": false,
+          "testIn": "CS4 AR7.3 HP8.7 OD9\nAP NC\n52\n300\n100\n100\n0\n0\n50\n100\n0\n100\n50\n100\n300\n100\n100\n100\n300\n100\n300\n0\n300\n300\n100\n50\n0\n0\n100\n0\n50\n100\n300\n100\n0\n100\n0\n50\n100\n100\n50\n300\n100\n300\n0\n300\n50\n300\n100\n100\n50\n50\n100\n0\n100",
+          "testOut": "5850\n37.50%",
+          "isValidator": true
+        },
+        {
+          "title": "Long beatmap",
+          "isTest": true,
+          "testIn": "CS5 AR9 HP8 OD8.5\nHD HR\n352\n300\n100\n300\n300\n300\n300\n100\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n50\n300\n300\n300\n100\n0\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n300\n300\n100\n300\n100\n100\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n0\n0\n0\n300\n300\n100\n100\n300\n300\n300\n0\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n100\n100\n300\n300\n0\n300\n300\n300\n300\n300\n100\n300\n100\n300\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n50\n50\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n100\n100\n300\n300\n300\n300\n300\n300\n300\n0\n0\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n100\n100\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n100\n100\n50\n50\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n100\n100\n300\n300\n300\n300\n100\n300\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n100\n300\n100\n300\n50\n300\n300\n50\n50\n300\n300\n300\n300\n100\n300\n100\n300\n300\n300\n300\n100\n100\n100\n100\n300\n300\n300\n0\n0\n0\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n100\n100",
+          "testOut": "955733\n81.39%",
+          "isValidator": false
+        },
+        {
+          "title": "Long beatmap Validator",
+          "isTest": false,
+          "testIn": "CS4 AR9.2 HP8.2 OD7.2\nHD DT HR\n465\n300\n100\n300\n300\n300\n300\n100\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n50\n300\n300\n300\n100\n0\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n300\n300\n100\n300\n100\n100\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n0\n0\n0\n300\n300\n100\n100\n300\n300\n300\n0\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n100\n100\n300\n300\n0\n300\n300\n300\n300\n300\n100\n300\n100\n300\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n50\n50\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n100\n100\n300\n300\n300\n300\n300\n300\n300\n0\n0\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n100\n100\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n100\n100\n50\n50\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n100\n100\n300\n300\n300\n300\n100\n300\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n100\n300\n100\n300\n50\n300\n300\n50\n50\n300\n300\n300\n300\n100\n300\n100\n300\n300\n300\n300\n100\n100\n100\n100\n300\n300\n300\n0\n0\n0\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n100\n100\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n0\n300\n300\n300\n0\n300\n300\n100\n300\n300\n100\n300\n100\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n300\n300\n300\n300\n50\n300\n300\n300\n300\n300\n300\n0\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n100\n300\n300\n300\n0\n300\n50\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n300\n300\n300\n300\n100\n100\n100",
+          "testOut": "1003880\n81.94%",
+          "isValidator": true
+        },
+        {
+          "title": "Marathon beatmap",
+          "isTest": true,
+          "testIn": "CS4 AR9.4 HP9 OD9\nHD NC\n869\n300\n100\n300\n300\n300\n300\n100\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n50\n300\n300\n300\n100\n0\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n300\n300\n100\n300\n100\n100\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n0\n0\n0\n300\n300\n100\n100\n300\n300\n300\n0\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n100\n100\n300\n300\n0\n300\n300\n300\n300\n300\n100\n300\n100\n300\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n50\n50\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n100\n100\n300\n300\n300\n300\n300\n300\n300\n0\n0\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n100\n100\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n100\n100\n50\n50\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n100\n100\n300\n300\n300\n300\n100\n300\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n100\n300\n100\n300\n50\n300\n300\n50\n50\n300\n300\n300\n300\n100\n300\n100\n300\n300\n300\n300\n100\n100\n100\n100\n300\n300\n300\n0\n0\n0\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n100\n100\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n0\n300\n300\n300\n0\n300\n300\n100\n300\n300\n100\n300\n100\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n300\n300\n300\n300\n50\n300\n300\n300\n300\n300\n300\n0\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n100\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n100\n100\n100\n50\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n300\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n300\n300\n300\n300\n300\n300\n300\n300\n0\n300\n100\n100\n100\n300\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n50\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300",
+          "testOut": "5400748\n88.49%",
+          "isValidator": false
+        },
+        {
+          "title": "Marathon beatmap Validator",
+          "isTest": false,
+          "testIn": "CS5 AR9.2 HP10 OD10\nNC HR\n1189\n300\n100\n300\n300\n300\n300\n100\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n50\n300\n300\n300\n100\n0\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n300\n300\n100\n300\n100\n100\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n0\n0\n0\n300\n300\n100\n100\n300\n300\n300\n0\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n100\n100\n300\n300\n0\n300\n300\n300\n300\n300\n100\n300\n100\n300\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n50\n50\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n100\n100\n300\n300\n300\n300\n300\n300\n300\n0\n0\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n100\n100\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n100\n100\n50\n50\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n100\n100\n300\n300\n300\n300\n100\n300\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n100\n300\n100\n300\n50\n300\n300\n50\n50\n300\n300\n300\n300\n100\n300\n100\n300\n300\n300\n300\n100\n100\n100\n100\n300\n300\n300\n0\n0\n0\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n100\n100\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n0\n300\n300\n300\n0\n300\n300\n100\n300\n300\n100\n300\n100\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n300\n300\n300\n300\n50\n300\n300\n300\n300\n300\n300\n0\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n100\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n100\n100\n100\n50\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n300\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n300\n300\n300\n300\n300\n300\n300\n300\n0\n300\n100\n100\n100\n300\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n50\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n0\n300\n300\n300\n300\n300\n300\n100\n100\n300\n0\n300\n300\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n300\n300\n300\n100\n0\n300\n50\n300\n300\n300\n100\n300\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n50\n300\n100\n300\n100\n100\n100\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n100\n100\n100\n300\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n50\n300\n100\n300\n100\n50\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300\n300",
+          "testOut": "7628346\n89.91%",
+          "isValidator": true
+        }
+      ],
+      "constraints": "2 <= CS[[nb]] <= 7\n0 <= AR, HP, OD[[nb]] <= 10\n[[mods]] can be null.\n1 <= [[N]] <= 2000",
+      "stubGenerator": "read stats:string(32)\nread mods:string(256)\nread N:int\nloop N read hit:int",
+      "inputDescription": "<<Line 1:>> A string [[stats]], a list of a map statistics separated with whitespaces {{' '}}\n<<Line 2:>> A string [[mods]], a list of game modifiers separated with whitespaces {{' '}}\n<<Line 3:>> An integer [[N]], the number of hit values\n<<[[N]] next lines:>> Line by line, an hit value.",
+      "solutionLanguage": "Javascript",
+      "outputDescription": "<<Line 1:>> The total points at the end of the \"map\"\n<<Line 2:>> The accuracy as a percentage, formatted with 2 decimals and 2 or 3 units (xx.xx% or 100.00%)"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h1><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h1>\n   <span class=\"question-statement\">Your goal is to calculate the final score and the accuracy about a play on a beatmap on the Osu! game<br>You're given beatmap statistics <var>stats</var>, game modifiers activated  <var>mods</var> and a list of <var>N</var> hit circle values <var>hit</var><br><br>Beatmap stats are always printed in the same order, which is:<br>&quot;CS<var>nb</var> AR<var>nb</var> HP<var>nb</var> OD<var>nb</var>&quot;<br><br>Hit circle values given will always be <strong>0, 50, 100 or 300</strong><br><br><strong>CS</strong> is an abbreviation for Circle Size, also:<br><strong>AR</strong> for Approach Rate<br><strong>HP</strong> for HP Drain<br><strong>OD</strong> for Overall Difficulty<br><br><const>HOW TO CALCULATE THE SCORE</const><br><br><strong>Score for one hit value = Hit Value + Hit Value * (Combo multiplier * Difficulty multiplier * Mod multiplier) / 25</strong><br><br>Hit Value : The hit circle judgement (50, 100 or 300).<br>Combo multiplier : (Combo before this hit - 1) or 0, whichever is higher (can't be -1).<br>Difficulty multiplier : The difficulty setting for the beatmap.<br>Mod multiplier : The multiplier of the selected mods.<br><br>For each score calculation, the result needs to be <strong>rounded down</strong> to the nearest integer<br><br><strong>Combo Multiplier clarifications:</strong><br>By default, the Combo Multiplier is equal to 1.<br><br>Every time the player hits a 300, 100 or 50, the combo is incremented by 1.<br>If the player hits a 0, the Combo Multiplier is equal to 0.<br><br><strong>Difficulty Multiplier clarifications:</strong><br>Calculate the following formula:<br>Floor(<var>CS</var> - 2) + Floor(<var>OD</var>) + Floor(<var>HP</var>)<br><br>When in range, the Difficulty Multiplier will be equal to the indicated result :<br><strong>0-5:</strong> 2x multiplier<br><strong>6-12:</strong> 3x multiplier<br><strong>13-17:</strong> 4x multiplier<br><strong>18-24:</strong> 5x multiplier<br><strong>25:</strong> 6x multiplier<br><br><strong>Mod Multiplier clarifications:</strong><br>By default, the Mod Multiplier is equal to 1.<br><br>You need to do the product of all mods activated, where:<br><strong>EZ</strong> (for Easy) = x0.5<br><strong>NF</strong> (for No Fail) = x0.5<br><strong>HT</strong> (for Half Time) = x0.3<br><strong>HR</strong> (for Hard Rock) = x1.06<br><strong>DT</strong> (for Double Time) = x1.12<br><strong>NC</strong> (for Nightcore) = x1.12<br><strong>HD</strong> (for Hidden) = x1.06<br><strong>FL</strong> (for Flashlight) = x1.12<br><strong>SO</strong> (for Spun Out) = x0.9<br><strong>RL</strong> (for Relax) = x0<br><strong>AP</strong> (for Auto Pilot) = x0<br><br>The result of the product is <strong>rounded down</strong> to the nearest 0.01.<br><br><strong>Additional mods:</strong><br><strong>SD</strong> (for Sudden Death) = If the player miss a note, he fails immediately<br><strong>PF</strong> (for Perfect) = If the player hit something else than a 300, he fails immediately<br><br>If the player fails the beatmap, the score and the accuracy is equal to 0 and 00.00% respectively.<br><br><const>HOW TO CALCULATE THE ACCURACY</const><br><br><strong>Accuracy = Total points of hits / (Total number of hits * 300) * 100</strong><br><br>Total points of hits = (Number of 50s * 50 + Number of 100s * 100 + Number of 300s * 300)<br>Total number of hits = (Number of misses + Number of 50s + Number of 100s + Number of 300s)<br><br>The accuracy is <strong>rounded up</strong> to the nearest 0.01 and <strong>must be</strong> printed with two leading decimals.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> A string <var>stats</var>, a list of a map statistics separated with whitespaces <const>' '</const><br><strong>Line 2:</strong> A string <var>mods</var>, a list of game modifiers separated with whitespaces <const>' '</const><br><strong>Line 3:</strong> An integer <var>N</var>, the number of hit values<br><strong><var>N</var> next lines:</strong> Line by line, an hit value.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> The total points at the end of the &quot;map&quot;<br><strong>Line 2:</strong> The accuracy as a percentage, formatted with 2 decimals and 2 or 3 units (xx.xx% or 100.00%)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &lt;= CS<var>nb</var> &lt;= 7<br>0 &lt;= AR, HP, OD<var>nb</var> &lt;= 10<br><var>mods</var> can be null.<br>1 &lt;= <var>N</var> &lt;= 2000</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">CS2 AR9 HP9 OD8\nHD\n6\n300\n300\n0\n50\n300\n100</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1066\n58.33%</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 281157171442,
+  "avatar": 9552765056380,
+  "commentCount": 12,
+  "upVotes": 35,
+  "downVotes": 6,
+  "validateAction": {
+    "actionId": 97674,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "denyAction": {
+    "actionId": 69982,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

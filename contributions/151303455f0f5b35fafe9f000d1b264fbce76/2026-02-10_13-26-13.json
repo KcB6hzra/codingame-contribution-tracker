@@ -1,0 +1,183 @@
+{
+  "id": 15130,
+  "activeVersion": 16,
+  "score": 4,
+  "votableId": 23043478,
+  "codingamerId": 1441239,
+  "views": 141,
+  "commentableId": 22929913,
+  "title": "Join the Dots",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "PiDayDev",
+  "publicHandle": "151303455f0f5b35fafe9f000d1b264fbce76",
+  "codingamerHandle": "48a3e58db5e6bdb381ea3bb19c55be6d9321441",
+  "lastVersion": {
+    "version": 16,
+    "autocloseTime": 1653380759358,
+    "data": {
+      "title": "Join the Dots",
+      "topics": [
+        {
+          "id": 128,
+          "handle": "ascii-art",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Ascii Art",
+            "2": "Ascii Art"
+          },
+          "puzzleCount": 19,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import kotlin.math.sign\n\ntypealias RowCol = Pair<Int, Int>\ntypealias Board = List<String>\n\nconst val dot = 'o'\nconst val H = '-'\nconst val V = '|'\nconst val U = '/'\nconst val D = '\\\\'\nconst val HV = '+'\nconst val UD = 'X'\nconst val ALL = '*'\n\nfun combine(c: Char, k: Char) = when {\n    c == dot || k == dot -> dot\n    c == ALL || k == ALL -> ALL\n    c == H && k == V -> HV\n    k == H && c == V -> HV\n    c == U && k == D -> UD\n    k == U && c == D -> UD\n    c in \"$UD$U$D\" && k in \"$HV$H$V\" -> ALL\n    k in \"$UD$U$D\" && c in \"$HV$H$V\" -> ALL\n    c == ' ' -> k\n    k == ' ' -> c\n    else -> k\n}\n\nfun List<MutableList<Char>>.replace(rc: RowCol, element: Char) {\n    this[rc.first][rc.second] = combine(this[rc.first][rc.second], element)\n}\n\noperator fun RowCol.rangeTo(other: RowCol): List<RowCol> {\n    val (r1, c1) = this\n    val (r2, c2) = other\n    val rSign = (r2 - r1).sign\n    val cSign = (c2 - c1).sign\n\n    val result = mutableListOf(this)\n    var curr = this\n    do {\n        curr = curr.first + rSign to curr.second + cSign\n        result += curr\n    } while (curr != other)\n    return result.toList()\n}\n\nfun link(board: Board, rc1: RowCol, rc2: RowCol): Board {\n    val tmp: List<MutableList<Char>> = board.map { it.toMutableList() }\n    val (r1, c1) = rc1\n    val (r2, c2) = rc2\n    val line = when {\n        r1 == r2 -> H\n        c1 == c2 -> V\n        r1 - r2 == c1 - c2 -> D\n        else -> U\n    }\n    (rc1..rc2).forEach { tmp.replace(it, line) }\n    tmp.replace(rc1, dot)\n    tmp.replace(rc2, dot)\n    return tmp.map { it.joinToString(\"\") }\n}\n\nfun dots(board: Board): Board {\n    val positions = mutableMapOf<Char, RowCol>()\n    board.forEachIndexed { row, line ->\n        line.forEachIndexed { col, char ->\n            if (char != '.')\n                positions[char] = row to col\n        }\n    }\n    val order = ('1'..'9') + ('A'..'Z')\n\n    var curr = board.map { it.replace('.', ' ') }\n    order.zipWithNext().forEach { (a, b) ->\n        val pa = positions[a]\n        val pb = positions[b]\n        if (pa != null && pb != null)\n            curr = link(curr, pa, pb)\n    }\n    return curr.map { it.trimEnd() }\n}\n\n\nfun main() {\n    val (h,w) = readLine()!!.split(\" \").map{ it.toInt() }\n    val src = List(h){readLine()!!}\n    dots(src).forEach(::println)\n}\n",
+      "statement": "Have you ever played Join the Dots (or \"Connect the Dots\") as a kid? Well, now you get to do it again!\n\nYou will be given a rectangular board with some numbers and letters on it, you must join them in order with the appropriate ASCII characters.\n\n---------------------------------\n\nYour input contains a rectangular board made only of digits, letters, and \"{{.}}\" \n{{.}} represents an empty space.\nDigits {{1}} to {{9}} and uppercase letters {{A}} to {{Z}} represent the dots you must connect in order. \n\nThe order is {{1}} -> {{2}} -> ... -> {{8}} -> {{9}} -> {{A}} -> {{B}} -> ... -> {{Y}} -> {{Z}}\n\nThe digits and letters will always start from {{1}}, but may stop before {{Z}}.\n\n---------------------------------\n\nYou must output the board after connecting the dots, with characters replaced as follow:\n- each digit or letter in the original board must be replaced by a lowercase {{o}};\n- {{.}} characters between two consecutive digits/letters must be replaced by a line drawn with the rules explained below (remember that {{A}} comes right after {{9}});\n- each other {{.}} character must be replaced with a space;\n- spaces at the end of a line must be trimmed.\n\nTwo consecutive digits/letters are always aligned horizontally, vertically, or diagonally.\nNote that in some cases they may be in adjacent positions.\n\nEach line that joins two dots must be entirely made of one of these characters: {{- | / \\ + X *}}.\n\nJoin dots with:\n- {{-}} if on the same row;\n- {{|}} if on the same column;\n- {{/}} or {{\\}} if on the same diagonal (moving of the same number of rows and columns).\n\nExamples:\n\n`1...23.4  becomes  o---oo-o` (2 and 3 are adjacent, so nothing is drawn between them)\n\n`..9.               o\n....              /\nA..C             o  o\n....   becomes    \\ |\n....               \\|\n...B                o`\n\nWhenever lines cross with each other, apply these substitutions:\n- if a horizontal line crosses a vertical one, the character becomes {{+}};\n- if a diagonal line crosses another, the character becomes {{X}};\n- if a diagonal crosses a horizontal or vertical line, or 3 or more lines meet in a point, the character becomes {{*}}.",
+      "testCases": [
+        {
+          "title": "Square of 4",
+          "isTest": true,
+          "testIn": "4 4\n1..2\n5...\n....\n4..3",
+          "testOut": "o--o\no  |\n|  |\no--o",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Square of 5",
+          "isTest": false,
+          "testIn": "5 5\n3...2\n.....\n.....\n.....\n4..51",
+          "testOut": "o---o\n|   |\n|   |\n|   |\no--oo",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Zig-zag",
+          "isTest": true,
+          "testIn": "7 4\n1..2\n....\n....\n3..4\n....\n....\n5..6",
+          "testOut": "o--o\n  /\n /\no--o\n  /\n /\no--o",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Zag-zig",
+          "isTest": false,
+          "testIn": "7 3\n..1\n...\n2.3\n...\n4.5\n...\n6.7",
+          "testOut": "  o\n /\no-o\n /\no-o\n /\no-o",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "X marks the spot",
+          "isTest": true,
+          "testIn": "5 5\n1...4\n.....\n.....\n.....\n3...2",
+          "testOut": "o   o\n \\ /\n  X\n / \\\no---o",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Hourglass",
+          "isTest": false,
+          "testIn": "5 5\n4..51\n.....\n.....\n.....\n2...3",
+          "testOut": "o--oo\n \\ /\n  X\n / \\\no---o",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Plus one",
+          "isTest": true,
+          "testIn": "5 9\n..2.....1\n.........\n5.......6\n.........\n4.3......",
+          "testOut": "  o-----o\n  |\no-+-----o\n| |\no-o",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Plus two",
+          "isTest": false,
+          "testIn": "6 7\n..1.8..\n.......\n4.....5\n.......\n.......\n3.2.7.6",
+          "testOut": "  o o\n  | |\no-+-+-o\n| | | |\n| | | |\no-o o-o",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Inspire",
+          "isTest": true,
+          "testIn": "13 13\n....2...1....\n.............\n......A...9..\n.............\n3......H....8\n...B.........\n.........G...\n.............\n4..C.....F..7\n.............\n.....D.E.....\n.............\n....5...6....",
+          "testOut": "    o---o\n   /\n  /   o---o\n /   /     \\\no   /  o    o\n|  o    \\   |\n|  |     o  |\n|  |     |  |\no  o     o  o\n \\  \\   /  /\n  \\  o-o  /\n   \\     /\n    o---o",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Expire",
+          "isTest": false,
+          "testIn": "13 13\n....D...C....\n.............\n.....5.4.....\n.............\nE..6.....3..B\n.............\n.........2...\n...7.........\nF......1....A\n.............\n......8...9..\n.............\n....G.....H..",
+          "testOut": "    o---o\n   /     \\\n  /  o-o  \\\n /  /   \\  \\\no  o     o  o\n|  |     |  |\n|  |     o  |\n|  o    /   |\no   \\  o    o\n \\   \\     /\n  \\   o---o\n   \\\n    o-----o",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Unicorn-ish",
+          "isTest": true,
+          "testIn": "23 32\n......1.........................\n................................\n................................\n................................\n............VU..................\n......3....2....................\n......4....5....................\n................................\n................................\n.............T..................\n................................\n..7...6.........................\n.....A..B.......................\n.................S.....R........\n........................Q......P\n......8.9..C.....D.......N....O.\n................................\n................FE..............\n................................\n..................GJ............\n...................K............\n................HI..............\n.................LM.............",
+          "testOut": "      o\n       \\\n        \\\n         \\\n          \\ oo\n      o----o |\n      o----o |\n          /  |\n         /   |\n        /    o\n       /      \\\n  o---o        \\\n   \\ o--o       \\\n    \\ \\  \\       o-----o\n     \\ \\  \\             o------o\n      o-o  o-----o       o----o\n                 |      /\n                oo     /\n                 \\    /\n                  oo /\n                 //o/\n                oo//\n                 oo",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Unicorn-ish mirrored",
+          "isTest": false,
+          "testIn": "23 32\n.........................1......\n................................\n................................\n................................\n..................UV............\n....................2....3......\n....................5....4......\n................................\n................................\n..................T.............\n................................\n.........................6...7..\n.......................B..A.....\n........R.....S.................\nP......Q........................\n.O....N.......D.....C..9.8......\n................................\n..............EF................\n................................\n............JG..................\n............K...................\n..............IH................\n.............ML.................",
+          "testOut": "                         o\n                        /\n                       /\n                      /\n                  oo /\n                  | o----o\n                  | o----o\n                  |  \\\n                  |   \\\n                  o    \\\n                 /      \\\n                /        o---o\n               /       o--o /\n        o-----o       /  / /\no------o             /  / /\n o----o       o-----o  o-o\n       \\      |\n        \\     oo\n         \\    /\n          \\ oo\n           \\o\\\\\n            \\\\oo\n             oo",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Butterfly",
+          "isTest": true,
+          "testIn": "9 21\n.......1.....6.......\n.....................\n.....................\n4...................3\n.....................\n.....................\n.....................\n.....................\n.....5.........2.....",
+          "testOut": "       o     o\n        \\   /\n         \\ /\no---------*---------o\n \\       / \\       /\n  \\     /   \\     /\n   \\   /     \\   /\n    \\ /       \\ /\n     o         o",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Totally lost",
+          "isTest": false,
+          "testIn": "9 21\n............3...4...1\n.....................\n.....................\n.....................\n8...................7\n.....................\n.....................\n.....................\n............2...5...6",
+          "testOut": "            o---o   o\n            |   |  /\n            |   | /\n            |   |/\no-----------+---*---o\n            |  /|   |\n            | / |   |\n            |/  |   |\n            o   o---o",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "3 ≤ [[W]],[[H]] ≤ 40",
+      "coverBinaryId": 82754047857184,
+      "stubGenerator": "read H:int W:int\nloop H read row:string(W)\nwrite o--------oo--------o\n|        ||        |\n| o------o| o------o\n| |       | |\n| |       | |   o--o\n| |       | |   |  |\n| |       | |   |  |\n| o------o| o---o  |\n|         o        |\no------------------o",
+      "inputDescription": "<<Line 1:>> Two integers [[H]] and [[W]] for the height and width of the board.\n<<Next [[H]] lines:>> Exactly [[W]] characters on each line, which can be one of:\n- {{.}} to represent an empty space;\n- a digit {{1}} to {{9}};\n- an uppercase letter {{A}} to {{Z}}.",
+      "solutionLanguage": "Kotlin",
+      "outputDescription": "[[H]] lines, each with up to [[W]] character following the rules described above.\nEach character is a either a space or one of {{o - | / \\ + X *}}."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Have you ever played Join the Dots (or &quot;Connect the Dots&quot;) as a kid? Well, now you get to do it again!<br><br>You will be given a rectangular board with some numbers and letters on it, you must join them in order with the appropriate ASCII characters.<br><br>---------------------------------<br><br>Your input contains a rectangular board made only of digits, letters, and &quot;<const>.</const>&quot; <br><const>.</const> represents an empty space.<br>Digits <const>1</const> to <const>9</const> and uppercase letters <const>A</const> to <const>Z</const> represent the dots you must connect in order. <br><br>The order is <const>1</const> -&gt; <const>2</const> -&gt; ... -&gt; <const>8</const> -&gt; <const>9</const> -&gt; <const>A</const> -&gt; <const>B</const> -&gt; ... -&gt; <const>Y</const> -&gt; <const>Z</const><br><br>The digits and letters will always start from <const>1</const>, but may stop before <const>Z</const>.<br><br>---------------------------------<br><br>You must output the board after connecting the dots, with characters replaced as follow:<br>- each digit or letter in the original board must be replaced by a lowercase <const>o</const>;<br>- <const>.</const> characters between two consecutive digits/letters must be replaced by a line drawn with the rules explained below (remember that <const>A</const> comes right after <const>9</const>);<br>- each other <const>.</const> character must be replaced with a space;<br>- spaces at the end of a line must be trimmed.<br><br>Two consecutive digits/letters are always aligned horizontally, vertically, or diagonally.<br>Note that in some cases they may be in adjacent positions.<br><br>Each line that joins two dots must be entirely made of one of these characters: <const>- | / \\ + X *</const>.<br><br>Join dots with:<br>- <const>-</const> if on the same row;<br>- <const>|</const> if on the same column;<br>- <const>/</const> or <const>\\</const> if on the same diagonal (moving of the same number of rows and columns).<br><br>Examples:<br><br><pre style=\"font-family: monospace\">1...23.4  becomes  o---oo-o</pre> (2 and 3 are adjacent, so nothing is drawn between them)<br><br><pre style=\"font-family: monospace\">..9.               o<br>....              /<br>A..C             o  o<br>....   becomes    \\ |<br>....               \\|<br>...B                o</pre><br><br>Whenever lines cross with each other, apply these substitutions:<br>- if a horizontal line crosses a vertical one, the character becomes <const>+</const>;<br>- if a diagonal line crosses another, the character becomes <const>X</const>;<br>- if a diagonal crosses a horizontal or vertical line, or 3 or more lines meet in a point, the character becomes <const>*</const>.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Two integers <var>H</var> and <var>W</var> for the height and width of the board.<br><strong>Next <var>H</var> lines:</strong> Exactly <var>W</var> characters on each line, which can be one of:<br>- <const>.</const> to represent an empty space;<br>- a digit <const>1</const> to <const>9</const>;<br>- an uppercase letter <const>A</const> to <const>Z</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><var>H</var> lines, each with up to <var>W</var> character following the rules described above.<br>Each character is a either a space or one of <const>o - | / \\ + X *</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">3 &le; <var>W</var>,<var>H</var> &le; 40</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4 4\n1..2\n5...\n....\n4..3</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">o--o\no  |\n|  |\no--o</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 118968859940,
+  "avatar": 71707560017158,
+  "commentCount": 12,
+  "upVotes": 5,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 661614,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1651761112541,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

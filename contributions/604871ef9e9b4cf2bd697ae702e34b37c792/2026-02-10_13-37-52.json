@@ -1,0 +1,209 @@
+{
+  "id": 6048,
+  "activeVersion": 66,
+  "score": 12,
+  "votableId": 16596061,
+  "codingamerId": 257832,
+  "views": 640,
+  "commentableId": 16507159,
+  "title": "A Man with a Plan",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "publicHandle": "604871ef9e9b4cf2bd697ae702e34b37c792",
+  "codingamerHandle": "51cf3569a28219e695585f664d80a5b5238752",
+  "lastVersion": {
+    "version": 66,
+    "autocloseTime": 1615227651675,
+    "data": {
+      "title": "A Man with a Plan",
+      "topics": [
+        {
+          "id": 68,
+          "handle": "pathfinding",
+          "labelMap": {
+            "1": "Recherche de chemins",
+            "2": "Pathfinding"
+          },
+          "pageTitle": "Pathfinding: exercises and theory",
+          "puzzleCount": 31,
+          "parentTopicId": 41,
+          "contentDetailsId": 69
+        },
+        {
+          "id": 257,
+          "handle": "reading-the-statement",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Reading the statement",
+            "2": "Reading the statement"
+          },
+          "puzzleCount": 6,
+          "parentTopicId": 39
+        }
+      ],
+      "solution": "#include <functional>\n#include <iostream>\n#include <climits>\n#include <vector>\n#include <map>\n#include <set>\n\nstruct coord;\n\nint W, H, N;\nstd::string O;\nstd::vector<std::string> R;\nstd::map<coord,std::string> POI;\nstd::map<std::string,coord> IOP;\n\nstruct coord\n{\n    int x;\n    int y;\n\n    coord(int px = -1, int py = -1): x(px), y(py) {}\n    bool operator==(const coord& c)const\n    {\n        return x == c.x && y == c.y;\n    }\n    bool operator!=(const coord& c)const\n    {\n        return !operator==(c);\n    }\n    bool operator<(const coord& c)const\n    {\n        return y * W + x < c.y * W + c.x;\n    }\n    int distance(const coord& c)const\n    {\n        return abs(x - c.x) + abs(y - c.y);\n    }\n};\n\nint aStar(coord start, coord target, bool sword, bool horse, std::set<std::string>& acts)\n{\n    std::function<int(coord&)> h =\n        [&target](coord& n)\n        {\n            return std::max(abs(n.x - target.x), abs(n.y - target.y));\n        };\n    \n    std::set<coord> openSet;\n    std::map<coord,int> gScore, fScore;\n\n    gScore[start] = 0;\n    openSet.insert(start);\n    fScore[start] = h(start);\n\n    while(openSet.size())\n    {\n        std::set<coord>::iterator cit;\n        int minFScore = INT_MAX;\n\n        for(std::set<coord>::iterator it = openSet.begin(); it != openSet.end(); ++it)\n            if(fScore.count(*it) && fScore[*it] < minFScore)\n            {\n                cit = it;\n                minFScore = fScore[*it];\n            }\n\n        coord current = *cit;\n\n        if(current == target)break;\n\n        openSet.erase(cit);\n\n        std::vector<coord> neighbours;\n\n        if(R[current.y][current.x] == 'I' && POI[current] == \"WIZARD\")\n        {\n\n            int minDist = INT_MAX;\n            coord closestPOI;\n\n            for(auto poi : POI)\n            {\n                if(poi.second != \"WIZARD\")\n                {\n                    int dist = current.distance(poi.first);\n\n                    if(dist < minDist)\n                    {\n                        closestPOI = poi.first;\n                        minDist = dist;\n                    }\n                }\n            }\n\n            neighbours.push_back(closestPOI);\n        }\n        else\n            for(int i = -1; i <= 1; ++i)\n                for(int j = -1; j <= 1; ++j)\n                {\n                    coord n(current.x + j, current.y + i);\n\n                    if(n != current && n.x >= 0 && n.x < W && n.y >= 0 && n.y < H && R[n.y][n.x] != 'R' \n                        && (!sword || (sword && R[n.y][n.x] != 'W')) && (!horse || (horse && R[n.y][n.x] != 'M')))\n                            neighbours.push_back(n);\n                }\n\n        int weight = 1;\n\n        switch(R[current.y][current.x])\n        {\n            case 'W':\n            case 'G': weight = horse ? 1 : 2;\n            break;\n            case 'M': weight = 4;\n            break;\n            case 'S': weight = horse ? 3 : 6;\n            break;\n            case 'I':\n            {\n                std::string type = POI[current];\n\n                if(!acts.count(type) &&\n                    (type == \"PRINCESS\" ||\n                    type == \"DRAGON\" ||\n                    type == \"TREASURE\"))\n                {\n                    weight = sword ? 2 : 4;\n\n                    acts.insert(type);\n                }\n            }\n        }\n\n        for(int i = 0; i < neighbours.size(); ++i)\n        {\n            bool isPOI = POI.count(neighbours[i]);\n\n            std::string type = isPOI ? POI[neighbours[i]] : \"\";\n\n            if(!isPOI || (isPOI &&\n                (type == POI[target] ||\n                (type == O && acts.count(O)) ||\n                (type == \"STABLE\" && horse) ||\n                (type == \"BLACKSMITH\" && sword) ||\n                (type != O && type != \"STABLE\" && type != \"BLACKSMITH\"))))\n            {\n                int tgScore = gScore[current] + weight;\n\n                if(tgScore < (gScore.count(neighbours[i]) ? gScore[neighbours[i]] : INT_MAX))\n                {\n                    gScore[neighbours[i]] = tgScore;\n                    fScore[neighbours[i]] = gScore[neighbours[i]] + h(neighbours[i]);\n\n                    if(!openSet.count(neighbours[i]))\n                        openSet.insert(neighbours[i]);\n                }\n            }\n        }\n    }\n\n    return gScore.count(target) ? gScore[target] : W * H * 6 * 2;\n}\n\nint search(coord c, int d, bool o, bool s, bool h, std::set<std::string> a)\n{\n    int r = INT_MAX;\n\n    if(POI[c] != \"CASTLE\")\n    {\n        int asr, p;\n        std::set<std::string> ac(a);\n\n        if(!o)\n        {\n            asr = aStar(c, IOP[O], s, h, ac);\n            r = search(IOP[O], d + asr, true, s, h, ac);\n        }\n        else\n        {\n            asr = aStar(c, IOP[\"CASTLE\"], s, h, ac);\n            r = search(IOP[\"CASTLE\"], d + asr, o, s, h, ac);\n        }\n\n        if(!s && IOP.count(\"BLACKSMITH\"))\n        {\n            ac = a;\n            asr = aStar(c, IOP[\"BLACKSMITH\"], s, h, ac);\n            p = search(IOP[\"BLACKSMITH\"], d + asr, o, true, h, ac);\n\n            if(p < r)r = p;\n        }\n\n        if(!h && IOP.count(\"STABLE\"))\n        {\n            ac = a;\n            asr = aStar(c, IOP[\"STABLE\"], s, h, ac);\n            p = search(IOP[\"STABLE\"], d + asr, o, s, true, ac);\n\n            if(p < r)r = p;\n        }\n    }\n    else r = d;\n\n    return r;\n}\n\nint main()\n{\n    std::cin >> W >> H >> N >> O;\n    std::cin.ignore();\n\n    R.resize(H);\n\n    for(int i = 0; i < H; ++i)\n        getline(std::cin, R[i]);\n\n    for(int i = 0; i < N; ++i)\n    {\n        coord pos;\n        std::string type;\n\n        std::cin >> type >> pos.x >> pos.y;\n\n        POI[pos] = type;\n        IOP[type] = pos;\n    }\n\n    std::cout << search(IOP[\"HOUSE\"], 0, false, false, false, {}) << std::endl;\n}",
+      "statement": "{{ }}{{ }}{{ }}You're a peasant, but you've got enough of this life. You want to be famous, rich, and live in a castle… And you have a plan to reach this objective: You heard that the king would be extremely generous with the hero who would fulfill a certain act of bravery in his name. You must be this hero! You gonna leave your house, cross the realm, achieve the king's quest, and then go to the castle to get your due. So much to do to make your dream come true!  So you want to plan your journey perfectly to avoid any waste of time.\n\n{{ }}{{ }}{{ }}You procured a map of the realm and, looking at it, you notice there are four kinds of grounds you might be confronted with: Firstly, flat and peaceful grasslands, that you can cross in two days. Secondly, water points. You do not know how to swim, but there will always be a fisher to make you pass through in two days on his boat. Thirdly, mountains. You will have to climb to pass them, but you are a strong man and you think that will take just four days. And finally, swamps... A real hell, that will retain you six days! You also notice the existence of ravines, but you decide to consider them as impassable because you have vertigo.\n\n{{ }}{{ }}{{ }}You continue your study of the map with the points of interest existing in the realm.\n\n{{ }}{{ }}{{ }}There is of course the king's castle, your final goal, which is pretty well guarded. Pass by there before you finish your quest will make you waste one day convincing the guards you are not a thief.\n\n{{ }}{{ }}{{ }}You note the presence of two shops that could potentially be helpful. A blacksmith, who can sell you an armor and a sword that will permit you to accomplish any act of bravery twice as fast. And a stable, where you can buy a horse to travel twice as fast, even on water since the horse can pull the boat. But you want to be sure those purchases will serve your quest, because you are aware that you will not be able to climb a mountain with your horse, or to cross a water point without your armor rusting. And it's absolutely out of question to abandon them once purchased. Moreover, you are very bad at negotiating, while the blacksmith and the breeder are certainly real sharks. You can be sure that if you enter in one of those stores, you will spend one day arguing, to finally surrender and buy something. You also know from their reputation that these two men really love their respective work, and would not hesitate to retain you one day to verify you are taking good care of your purchases, if you pass back by their workshops.\n\n{{ }}{{ }}{{ }}There's also the house of a crazy wizard, who teleports anyone he sees to the closest point of interest. That can be useful, or a total mess. You have to study carefully where the old man will send you and then use his \"services\" wisely, or not at all. All the more that you will need one day to recover after the sudden change of environment...\n\n{{ }}{{ }}{{ }}You now observe three special places: The lair of an awful dragon, a cavern known to hide a fantastic treasure, and a dungeon where is imprisoned a princess member of the royal family. You know that the king's quest only concern one of those, but you do not exclude the possibility to cross the other two if that can save you some time. Since each of those spots is extremely dangerous and populated with enemies, it will take you four days to pass through one of them. But once the cleansing done, passing there again will only take one day. But not less, even with a horse, because of the tourists that will inevitably come to admire the places of your feats.\n\n{{ }}{{ }}{{ }}Finally, you add your house to the map. You know that your mother will not let you leave so easily, she can be a little clingy. You will have to devote a full day to convince her to let you go, and another day each time you return home... But, hey! She's your mom!\n\n{{ }}{{ }}{{ }}With the map of the realm in your possession, and knowing the objective of the king's quest, can you say how many days your quest will take you at least?\n\nArt by Florent Llamas:\n{{https://www.deviantart.com/florentllamas}}",
+      "testCases": [
+        {
+          "title": "Run to the Hills",
+          "isTest": true,
+          "testIn": "5 5 3\nPRINCESS\nGGGGI\nGGGGG\nGGIGG\nGGGGG\nIGGGG\nHOUSE 0 4\nCASTLE 4 0\nPRINCESS 2 2",
+          "testOut": "9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Run to the Hills",
+          "isTest": false,
+          "testIn": "5 5 3\nPRINCESS\nIGGGI\nGGGGG\nGGGGG\nGGGGG\nGGGGI\nHOUSE 4 4\nCASTLE 0 0\nPRINCESS 4 0",
+          "testOut": "17",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Hall of the Mountain King",
+          "isTest": true,
+          "testIn": "5 5 4\nTREASURE\nIMMMI\nMMMMM\nGGIMM\nGGGGG\nIGGGG\nHOUSE 0 4\nCASTLE 4 0\nSTABLE 2 2\nTREASURE 0 0",
+          "testOut": "25",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Hall of the Mountain King",
+          "isTest": false,
+          "testIn": "5 5 4\nTREASURE\nMMMMI\nMMMMM\nIGIMM\nGGGGG\nGGGGI\nHOUSE 4 4\nCASTLE 4 0\nSTABLE 2 2\nTREASURE 0 2",
+          "testOut": "21",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "The River",
+          "isTest": true,
+          "testIn": "5 5 4\nDRAGON\nIGGGI\nGGGGG\nWWWWW\nGGGGG\nIIGGG\nHOUSE 0 4\nCASTLE 0 0\nBLACKSMITH 1 4\nDRAGON 4 0",
+          "testOut": "17",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "The River",
+          "isTest": false,
+          "testIn": "5 5 4\nDRAGON\nIIGGG\nGGGGG\nWWWWW\nGGGGG\nGGGII\nHOUSE 4 4\nCASTLE 1 0\nBLACKSMITH 3 4\nDRAGON 0 0",
+          "testOut": "11",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Rise of the Chaos Wizards",
+          "isTest": true,
+          "testIn": "5 5 4\nTREASURE\nGGGGI\nIGGGG\nRRRRR\nIGGGG\nGGGGI\nHOUSE 4 4\nCASTLE 4 0\nWIZARD 0 3\nTREASURE 0 1",
+          "testOut": "18",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Rise of the Chaos Wizards",
+          "isTest": false,
+          "testIn": "5 5 4\nTREASURE\nGGGGI\nGIGGG\nRRRRR\nIGGGG\nGGGGI\nHOUSE 4 4\nCASTLE 4 0\nWIZARD 0 3\nTREASURE 1 1",
+          "testOut": "16",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Iron Man",
+          "isTest": true,
+          "testIn": "5 5 5\nPRINCESS\nRRIRR\nRRIRR\nRRGRR\nGGGIG\nIGGGI\nHOUSE 0 4\nCASTLE 4 4\nBLACKSMITH 3 3\nDRAGON 2 1\nPRINCESS 2 0",
+          "testOut": "16",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Iron Man",
+          "isTest": false,
+          "testIn": "5 5 5\nPRINCESS\nRRIRR\nRRIRR\nRRGRR\nGIGIG\nGGGGI\nHOUSE 1 3\nCASTLE 4 4\nBLACKSMITH 3 3\nDRAGON 2 1\nPRINCESS 2 0",
+          "testOut": "14",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "To Hell and Back",
+          "isTest": true,
+          "testIn": "5 6 6\nTREASURE\nISSSS\nRRRSS\nRRIRR\nRGGGR\nGGGGI\nIGIIG\nHOUSE 0 5\nCASTLE 4 4\nSTABLE 2 5\nBLACKSMITH 3 5\nDRAGON 2 2\nTREASURE 0 0",
+          "testOut": "31",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "To Hell and Back",
+          "isTest": false,
+          "testIn": "5 6 6\nTREASURE\nISSSS\nRSSSS\nRRIRR\nRGGGR\nGGGGI\nIGIIG\nHOUSE 0 5\nCASTLE 4 4\nSTABLE 2 5\nBLACKSMITH 3 5\nDRAGON 2 2\nTREASURE 0 0",
+          "testOut": "19",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Thunderhorse",
+          "isTest": true,
+          "testIn": "14 14 5\nDRAGON\nWWRRRMMMMMMMMM\nRWWWRIMMMMMMMW\nRRRWWGGMMMIGWW\nMMRRWGGGGGGWWW\nMMSSWGGGIGWWWW\nMMSSWWWGGGGWWW\nMSSSSSWWGGGGWW\nMSSSSSSWWIGGWW\nMMISSSSSSWWWWW\nMMMSSSSSSSGWWW\nMMMGGGGGSGGGWW\nMMGGWWWGGGWWWW\nMWWWWWWWWWWWWW\nWWWWWWWWWWWWWW\nHOUSE 10 2\nCASTLE 5 1\nSTABLE 8 4\nBLACKSMITH 9 7\nDRAGON 2 8",
+          "testOut": "27",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Thunderhorse",
+          "isTest": false,
+          "testIn": "14 14 5\nDRAGON\nWWRRRMMMMMMMMM\nRWWWRIMMMMMMMW\nRRRWWGGMMMIGWW\nMMRRWGGGGGGWWW\nMMSSWGGGIGWWWW\nMMSSWWWGGGGWWW\nMSSSSSWWGGGGWW\nMSSSSSSWWIGGWW\nMMSSSSSSSWWWWW\nMMMSSSISSSGWWW\nMMMGGGGGSGGGWW\nMMGGWWWGGGWWWW\nMWWWWWWWWWWWWW\nWWWWWWWWWWWWWW\nHOUSE 10 2\nCASTLE 5 1\nSTABLE 8 4\nBLACKSMITH 9 7\nDRAGON 6 9",
+          "testOut": "23",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Carry On",
+          "isTest": true,
+          "testIn": "10 10 7\nTREASURE\nIIMMRRSISS\nRRRRMRSSSS\nRMMMRRSSSS\nMRRRRMSSSS\nGMMMMSSGGS\nIGWWWWWWGS\nGWWWWWWWWG\nGWWIIWWWWG\nGGWGWWWWGG\nGIGGGGGGGG\nHOUSE 1 9\nCASTLE 3 7\nBLACKSMITH 4 7\nSTABLE 0 5\nWIZARD 7 0\nDRAGON 1 0\nTREASURE 0 0",
+          "testOut": "71",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Carry On",
+          "isTest": false,
+          "testIn": "10 10 7\nTREASURE\nIIMMRRSISS\nRRRRMRSSSS\nRMMMRRSSSS\nMRRRRMSSSS\nGMMMMSSGGS\nGGWWWWWWGS\nIWWWWWWWWG\nGWWIIWWWWG\nGGWGWWWWGG\nGIGGGGGGGG\nHOUSE 1 9\nCASTLE 3 7\nBLACKSMITH 4 7\nSTABLE 0 6\nWIZARD 7 0\nDRAGON 1 0\nTREASURE 0 0",
+          "testOut": "72",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "The (0, 0) coordinates correspond to the top-left corner of the realm.\n\nEach piece of land is directly connected to its eight neighbors.\n\nThe wizard uses Manhattan distance.\n\n3 <= [[W]], [[H]] <= 20\n3 <= [[N]] <= 8\n0 <= [[x]] < [[W]]\n0 <= [[y]] < [[H]]\n0 < [[D]] < 100",
+      "coverBinaryId": 57132267940211,
+      "stubGenerator": "read W:int H:int N:int\nread O:word(10)\nloop H read Line:string(100)\nloop N read k:word(10) x:int y:int\nwrite answer",
+      "inputDescription": "<<First line>>: [[W]], [[H]] and [[N]],  three integers, respectively the width and the height of the realm, and the number of points of interest existing in the realm.\n\n<<Second line>>: [[O]], a string, the objective of the king's quest.\n\n<<Next [[H]] lines>>: A string of length [[W]] with each char representing a piece of land of the realm, among:\n- {{G}} for a grassland,\n- {{W}} for a water point,\n- {{M}} for a mountain,\n- {{S}} for a swamp,\n- {{R}} for a ravine,\n- {{I}} for a point of interest.\n\n<<Next [[N]] lines>>: [[k]], [[x]] and [[y]], a string and two integers, respectively the kind and the coordinates of a point of interest. With [[k]] among:\n- {{HOUSE}},\n- {{CASTLE}},\n- {{BLACKSMITH}},\n- {{STABLE}},\n- {{WIZARD}},\n- {{PRINCESS}},\n- {{DRAGON}},\n- {{TREASURE}}.",
+      "solutionLanguage": "C++",
+      "outputDescription": "An integer [[D]], the minimum number of days that your quest will take."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><const> </const><const> </const><const> </const>You're a peasant, but you've got enough of this life. You want to be famous, rich, and live in a castle&hellip; And you have a plan to reach this objective: You heard that the king would be extremely generous with the hero who would fulfill a certain act of bravery in his name. You must be this hero! You gonna leave your house, cross the realm, achieve the king's quest, and then go to the castle to get your due. So much to do to make your dream come true!  So you want to plan your journey perfectly to avoid any waste of time.<br><br><const> </const><const> </const><const> </const>You procured a map of the realm and, looking at it, you notice there are four kinds of grounds you might be confronted with: Firstly, flat and peaceful grasslands, that you can cross in two days. Secondly, water points. You do not know how to swim, but there will always be a fisher to make you pass through in two days on his boat. Thirdly, mountains. You will have to climb to pass them, but you are a strong man and you think that will take just four days. And finally, swamps... A real hell, that will retain you six days! You also notice the existence of ravines, but you decide to consider them as impassable because you have vertigo.<br><br><const> </const><const> </const><const> </const>You continue your study of the map with the points of interest existing in the realm.<br><br><const> </const><const> </const><const> </const>There is of course the king's castle, your final goal, which is pretty well guarded. Pass by there before you finish your quest will make you waste one day convincing the guards you are not a thief.<br><br><const> </const><const> </const><const> </const>You note the presence of two shops that could potentially be helpful. A blacksmith, who can sell you an armor and a sword that will permit you to accomplish any act of bravery twice as fast. And a stable, where you can buy a horse to travel twice as fast, even on water since the horse can pull the boat. But you want to be sure those purchases will serve your quest, because you are aware that you will not be able to climb a mountain with your horse, or to cross a water point without your armor rusting. And it's absolutely out of question to abandon them once purchased. Moreover, you are very bad at negotiating, while the blacksmith and the breeder are certainly real sharks. You can be sure that if you enter in one of those stores, you will spend one day arguing, to finally surrender and buy something. You also know from their reputation that these two men really love their respective work, and would not hesitate to retain you one day to verify you are taking good care of your purchases, if you pass back by their workshops.<br><br><const> </const><const> </const><const> </const>There's also the house of a crazy wizard, who teleports anyone he sees to the closest point of interest. That can be useful, or a total mess. You have to study carefully where the old man will send you and then use his &quot;services&quot; wisely, or not at all. All the more that you will need one day to recover after the sudden change of environment...<br><br><const> </const><const> </const><const> </const>You now observe three special places: The lair of an awful dragon, a cavern known to hide a fantastic treasure, and a dungeon where is imprisoned a princess member of the royal family. You know that the king's quest only concern one of those, but you do not exclude the possibility to cross the other two if that can save you some time. Since each of those spots is extremely dangerous and populated with enemies, it will take you four days to pass through one of them. But once the cleansing done, passing there again will only take one day. But not less, even with a horse, because of the tourists that will inevitably come to admire the places of your feats.<br><br><const> </const><const> </const><const> </const>Finally, you add your house to the map. You know that your mother will not let you leave so easily, she can be a little clingy. You will have to devote a full day to convince her to let you go, and another day each time you return home... But, hey! She's your mom!<br><br><const> </const><const> </const><const> </const>With the map of the realm in your possession, and knowing the objective of the king's quest, can you say how many days your quest will take you at least?<br><br>Art by Florent Llamas:<br><const>https://www.deviantart.com/florentllamas</const></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>First line</strong>: <var>W</var>, <var>H</var> and <var>N</var>,  three integers, respectively the width and the height of the realm, and the number of points of interest existing in the realm.<br><br><strong>Second line</strong>: <var>O</var>, a string, the objective of the king's quest.<br><br><strong>Next <var>H</var> lines</strong>: A string of length <var>W</var> with each char representing a piece of land of the realm, among:<br>- <const>G</const> for a grassland,<br>- <const>W</const> for a water point,<br>- <const>M</const> for a mountain,<br>- <const>S</const> for a swamp,<br>- <const>R</const> for a ravine,<br>- <const>I</const> for a point of interest.<br><br><strong>Next <var>N</var> lines</strong>: <var>k</var>, <var>x</var> and <var>y</var>, a string and two integers, respectively the kind and the coordinates of a point of interest. With <var>k</var> among:<br>- <const>HOUSE</const>,<br>- <const>CASTLE</const>,<br>- <const>BLACKSMITH</const>,<br>- <const>STABLE</const>,<br>- <const>WIZARD</const>,<br>- <const>PRINCESS</const>,<br>- <const>DRAGON</const>,<br>- <const>TREASURE</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">An integer <var>D</var>, the minimum number of days that your quest will take.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">The (0, 0) coordinates correspond to the top-left corner of the realm.<br><br>Each piece of land is directly connected to its eight neighbors.<br><br>The wizard uses Manhattan distance.<br><br>3 &lt;= <var>W</var>, <var>H</var> &lt;= 20<br>3 &lt;= <var>N</var> &lt;= 8<br>0 &lt;= <var>x</var> &lt; <var>W</var><br>0 &lt;= <var>y</var> &lt; <var>H</var><br>0 &lt; <var>D</var> &lt; 100</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5 5 3\nPRINCESS\nGGGGI\nGGGGG\nGGIGG\nGGGGG\nIGGGG\nHOUSE 0 4\nCASTLE 4 0\nPRINCESS 2 2</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">9</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 156191162223,
+  "commentCount": 31,
+  "upVotes": 13,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 530490,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1614539508995,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

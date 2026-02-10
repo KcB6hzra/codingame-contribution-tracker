@@ -1,0 +1,145 @@
+{
+  "id": 964,
+  "activeVersion": 39,
+  "score": 3,
+  "votableId": 6492581,
+  "codingamerId": 272329,
+  "views": 379,
+  "commentableId": 6432442,
+  "title": "Dungeon Designer",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Arglanir",
+  "publicHandle": "964be0c6ef01133dc1ce77a144ba337660d",
+  "codingamerHandle": "465ccb0b5ae845115115bb2070e7e0b6923272",
+  "lastVersion": {
+    "version": 39,
+    "data": {
+      "title": "Dungeon Designer",
+      "solution": "import sys\nimport math\n#import random\nimport fractions\n\n\nw, h = [int(i) for i in input().split()]\np, q, r = [int(i) for i in input().split()]\n\n# Possible primes list\n# p, q: [1579, 1583, 1607, 1619, 1627, 1663, 1667, 1699, 1723, 1747, 1759, 1783, 1787, 1811, 1823, 1831, 1847, 1867, 1871, 1879, 1907, 1931, 1951, 1979, 1987, 1999, 2003, 2011, 2027, 2039, 2063, 2083, 2087, 2099, 2111, 2131, 2143, 2179, 2203, 2207, 2239, 2243, 2251, 2267, 2287, 2311, 2339, 2347, 2351, 2371, 2383, 2399, 2411, 2423, 2447, 2459, 2467, 2503, 2531, 2539, 2543, 2551, 2579, 2591, 2647, 2659, 2663, 2671, 2683, 2687, 2699, 2707, 2711, 2719, 2731, 2767, 2791, 2803, 2819, 2843, 2851, 2879, 2887, 2903, 2927, 2939, 2963, 2971, 2999, 3011, 3019, 3023, 3067, 3079, 3083, 3119, 3163, 3167, 3187, 3191, 3203, 3251, 3259, 3271, 3299, 3307, 3319, 3323, 3331, 3343, 3347, 3359, 3371, 3391, 3407, 3463, 3467, 3491, 3499, 3511, 3527, 3539, 3547, 3559, 3571, 3583, 3607, 3623, 3631, 3643, 3659, 3671, 3691, 3719, 3727, 3739, 3767, 3779, 3803, 3823, 3847, 3851, 3863, 3907, 3911, 3919, 3923, 3931, 3943, 3947, 3967, 4003, 4007, 4019, 4027, 4051, 4079, 4091, 4099, 4111, 4127]\n\n# map constants\nW = \"#\"\nE = \".\"\nT = \"T\"\nX = \"X\"\n\n# storing constants\nlcm = lambda a, b: a*b//fractions.gcd(a, b)\nM = p*q\nlcmpm1qm1 = lcm(p-1,q-1)\n\nprint(\"M=\", M, file=sys.stderr)\nprint(\"GCD(\", M, \",\", r, \") = \", fractions.gcd(M, r), file=sys.stderr)\n\n# https://en.wikipedia.org/wiki/Blum_Blum_Shub\ndef rand(x, y):\n    n = pow(r, pow(2,x+y*w+1,lcmpm1qm1),M)\n    return n & 1\n\ndef base0empty(x, y):\n    '''Helper method to create an empty map'''\n    return W if x == 0 or y == 0 or x == 2*w or y == 2*h else E\n\ndef base1pillars(x, y):\n    '''Helper method to create a map with pillars'''\n    toreturn = base0empty(x, y)\n    if toreturn == E:\n        if x % 2 == 0 and y % 2 == 0:\n            toreturn = W\n    return toreturn\n        \ndef base2full(x, y):\n    '''Helper method to create a map with walls everywhere'''\n    toreturn = base0empty(x, y)\n    if toreturn == E:\n        if x*y % 2 == 0:\n            toreturn = W\n    return toreturn\n\ndef generatebase(typ): # typ: 0: empty, 1: pillars, 2: full\n    '''Generates a starting map with the given type'''\n    meth = {0:base0empty, 1:base1pillars, 2:base2full}[typ]\n    lab = [[meth(x,y) for x in range(2*w+1)] for y in range(2*h+1)]\n    lab[0][1] = E\n    lab[2*h][2*w-1] = E\n    return lab\n\ndef binarylab():\n    '''Generates a labyrinth with the stated problem'''\n    lab = generatebase(1)\n    for x in range(w-1):\n        for y in range(h-1):\n            cx, cy = 2*x+1, 2*y+1\n            if rand(x, y):\n                # wall to east\n                lab[cy][cx+1] = W\n                #lab[cy][cx] = \"V\"\n            else:\n                # to south\n                lab[cy+1][cx] = W\n                #lab[cy][cx] = \">\"\n    return lab\n\ndef npos(x,y, lab):\n    '''Generator of next positions'''\n    if x < w-1 and lab[2*y+1][2*x+2] != W: yield x+1, y\n    if y < h-1 and lab[2*y+2][2*x+1] != W: yield x, y+1\n    if x > 0 and lab[2*y+1][2*x] != W: yield x-1, y\n    if y > 0 and lab[2*y][2*x+1] != W: yield x, y-1\n\ndef storetreasure(lab, x=0, y=0):\n    # locate the treasure at the furthest point in the lab\n    # return the path\n    current = [((x,y),())] # pos, history\n    visited = set([(x,y)])\n    distance = 0\n    while True:\n        nex = set()\n        for pos, hist in current:\n            for pos2 in npos(*pos, lab):\n                if pos2 in visited: continue\n                nex.add((pos2, hist+(pos,)))\n        if not nex:\n            if len(current) > 1:\n                raise Exception(\"Too many furthest points (distance %s) :%s\" %(distance, current))\n            else:\n                (x, y), hist = list(current)[0]\n                cx, cy = 2*x+1, 2*y+1\n                lab[cy][cx] = T\n            return hist+((x, y),)\n        distance += 1\n        current = nex\n        visited.update(k for k, hist in nex)\n\ndef findintersection(lab, advpath, x=w-1, y=h-1):\n    advpath = set(advpath)\n    current = [(x,y)]\n    visited = set(current)\n    while True:\n        nex = set()\n        for pos in current:\n            if pos in advpath:\n                x, y = pos\n                cx, cy = 2*x+1, 2*y+1\n                if lab[cy][cx] == \".\":\n                    lab[cy][cx] = X\n                return\n            for pos2 in npos(*pos, lab):\n                if pos2 in visited: continue\n                nex.add(pos2)\n        if not nex:\n            raise Exception(\"No intersection!\")\n        current = nex\n        visited.update(nex)\n\ndef printlab(lab):\n    '''Print the labyrinth'''\n    for row in lab:\n        print(\"\".join(row))\n\nlab = binarylab()\npath = storetreasure(lab)\nfindintersection(lab, path)\nprintlab(lab) # full map\n",
+      "statement": "Topics: {{Maze creation algorithm}}, {{Pseudo-random number generator}}, {{Longest path search}}, {{Shortest path search}}, {{Path intersection}}\n \nThe adventurers have raided the dungeon. They've destroyed almost everything with multiple fireballs: doors, traps and monsters. And they've stolen the treasure! Their levels were probably too high.\nLuckily, at the last moment the Dungeon Master invoked gigantic cavern trolls that slew those pesky adventurers in order to secure the stolen gold. But in the battle, the rest of the dungeon has collapsed.\n\nThe Dungeon Master asks you, his trusted servant, to redesign the dungeon. He wants to better hide the treasure, so there is more time to react the next time the dungeon is raided.\n\nThe dungeon has a rectangular shape, [[W]] cells wide by [[H]] cells high, with the adventurers' entrance in the north west corner, so it's a good fit to create a labyrinth in.\n\nYou find a relatively simple algorithm : in each cell except the eastern and southern ones, the building slaves will toss a coin. If “heads” they will build a wall to the east; if “tails” they will build a wall to the south.\n\nThis creates a simple maze, with long corridors in the south and east since no wall is built from [[x]]=[[W-1]] or [[y]]=[[H-1]]. The monsters barracks being on the south east corner, this makes for a perfect confrontation stage.\n\nAfter designing this labyrinth, you need to find the location furthest away from the adventurers' entrance : that's where the treasure {{T}} will be hidden. Then you need to mark with an {{X}} the spot where the garrisoned monsters can easily intercept any adventurer : the point of the entrance-treasure path closest to the barracks. If the closest point is already the treasure's location, place only a {{T}}.\n\nYour Master will be proud of you.\n\n<<Note 1:>> You are asked to draw the maze formed from a [[W]]‍×‍[[H]] cell grid. Each cell of the grid may have a wall {{#}} to the north, east, west or south, which leads to a [[(2×H+1)]]‍×‍[[(2×W+1)]] map:\n\n`Grid 2×2  Map 5×5\n           #.###\n   .T      #.#T#\n   .X      #.#.#\n           #..X#\n           ###.#`\n<<Note 2:>> For the reproducibility of the map across languages, you are given two primes [[P]] and [[Q]], and a seed [[R]], and you will generate pseudo-random numbers using the Blum Blum Shub algorithm (its name goes well with the theme… more information here: https://en.wikipedia.org/wiki/Blum_Blum_Shub )\nTossing a coin in [[(x,y)]] (where {{(0,0)}} is the top left corner): compute [[(R^(2^(x+y×W+1) mod lcm(P-1,Q-1)) mod P×Q)]].\nIf odd (“heads”) build a wall to the east; if even (“tails”) build a wall to the south.\n\n<<Note 3:>> Take care that the expression given above for Blum Blum Shub, taken literally, involves numbers greater than can fit in 64 bits. You are invited to optimize it. :-)",
+      "testCases": [
+        {
+          "title": "Small one",
+          "isTest": true,
+          "testIn": "3 2\n1723 1579 100000",
+          "testOut": "#.#####\n#.#.#T#\n#.#.#.#\n#....X#\n#####.#",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3 2\n1723 1667 100000",
+          "testOut": "#.#####\n#.#T..#\n#.###.#\n#....X#\n#####.#",
+          "isValidator": true
+        },
+        {
+          "title": "Verrry smal one",
+          "isTest": true,
+          "testIn": "1 1\n1619 1699 100000",
+          "testOut": "#.#\n#T#\n#.#",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "1 1\n1747 1783 1000000",
+          "testOut": "#.#\n#T#\n#.#",
+          "isValidator": true
+        },
+        {
+          "title": "Bigger one",
+          "isTest": true,
+          "testIn": "5 5\n1619 1607 100000",
+          "testOut": "#.#########\n#.#.#T#...#\n#.#.#.###.#\n#.#.#.....#\n#.#.#####.#\n#.#.#.#.#.#\n#.#.#.#.#.#\n#.#.#.#...#\n#.#.#.###.#\n#........X#\n#########.#",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "5 5\n1619 1663 100000",
+          "testOut": "#.#########\n#...#...#.#\n###.###.#.#\n#.....#.#.#\n#####.#.#.#\n#.....#.#.#\n#####.#.#.#\n#T#.#.....#\n#.#.#####.#\n#........X#\n#########.#",
+          "isValidator": true
+        },
+        {
+          "title": "Rectangular - X not in front of barracks",
+          "isTest": true,
+          "testIn": "6 10 \n1619 1663 100000",
+          "testOut": "#.###########\n#...#T..#...#\n###.###.###.#\n#...#.#.....#\n###.#.#####.#\n#.#.#.#.#.#.#\n#.#.#.#.#.#.#\n#...#...#...#\n###.###.###.#\n#.......#.#.#\n#######.#.#.#\n#.....#.#...#\n#####.#.###.#\n#...#.#.#.#.#\n###.#.#.#.#.#\n#..........X#\n###########.#\n#.#...#.....#\n#.###.#####.#\n#...........#\n###########.#",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "10 6 \n1867 1831 100000",
+          "testOut": "#.###################\n#.#...#T....#.....#.#\n#.###.#####.#####.#.#\n#.........#...#...#.#\n#########.###.###.#.#\n#...#.......#...#.#.#\n###.#######.###.#.#.#\n#.#...#.#...#.#...#.#\n#.###.#.###.#.###.#.#\n#.#...#.#...#.....#.#\n#.###.#.###.#####.#.#\n#................X..#\n###################.#",
+          "isValidator": true
+        },
+        {
+          "title": "Big",
+          "isTest": true,
+          "testIn": "18 12\n1619 1699 100000",
+          "testOut": "#.###################################\n#.#.#...#.#...#.#.#.#T#.#.#.#.#.#...#\n#.#.###.#.###.#.#.#.#.#.#.#.#.#.###.#\n#.........#.......#.#.#.#.#.#.#.#.#.#\n#########.#######.#.#.#.#.#.#.#.#.#.#\n#.#.........#.#.....#.......#.#...#.#\n#.#########.#.#####.#######.#.###.#.#\n#.#.#.#.#.#.#.........#.......#.#.#.#\n#.#.#.#.#.#.#########.#######.#.#.#.#\n#.....#.....#...#.....#...#.#.#.....#\n#####.#####.###.#####.###.#.#.#####.#\n#.#.......#...#.......#.#.........#.#\n#.#######.###.#######.#.#########.#.#\n#.#.#...#.......#.#.#.#...#...#.#...#\n#.#.###.#######.#.#.#.###.###.#.###.#\n#.....#.........#.....#.#.....#...#.#\n#####.#########.#####.#.#####.###.#.#\n#...#.#.#...#.#.....#.#.......#.....#\n###.#.#.###.#.#####.#.#######.#####.#\n#.#...#.#.#.....#.#.#...#.#...#...#.#\n#.###.#.#.#####.#.#.###.#.###.###.#.#\n#.#...#.#...#.#.....#.......#.#...#.#\n#.###.#.###.#.#####.#######.#.###.#.#\n#..................................X#\n###################################.#",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "19 11\n1747 1811 100000",
+          "testOut": "#.#####################################\n#.....#.#T..#.#.#.......#.........#.#.#\n#####.#.###.#.#.#######.#########.#.#.#\n#.#.#...#.#.#.....#...#.........#.....#\n#.#.###.#.#.#####.###.#########.#####.#\n#.#.#...#.#.#.......#.#.#.....#.#.#...#\n#.#.###.#.#.#######.#.#.#####.#.#.###.#\n#...#.#.#.....#.#.#.#.#...#.#.#...#.#.#\n###.#.#.#####.#.#.#.#.###.#.#.###.#.#.#\n#...#.#...#...........#.#.#.....#.#...#\n###.#.###.###########.#.#.#####.#.###.#\n#...#.#.....#.#...#.#.............#.#.#\n###.#.#####.#.###.#.#############.#.#.#\n#.....#.#...#...#.#.......#.#.#.......#\n#####.#.###.###.#.#######.#.#.#######.#\n#.#.........#.....#.#.#.#.........#...#\n#.#########.#####.#.#.#.#########.###.#\n#.#...#.#.#...#.#.....#.......#.#.#...#\n#.###.#.#.###.#.#####.#######.#.#.###.#\n#.#.#.#.....#...#.#.....#.#.....#...#.#\n#.#.#.#####.###.#.#####.#.#####.###.#.#\n#....................................X#\n#####################################.#",
+          "isValidator": true
+        },
+        {
+          "title": "Corridor |",
+          "isTest": true,
+          "testIn": "1 7\n1747 1811 100000",
+          "testOut": "#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#T#\n#.#",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "1 8\n1747 1811 100000",
+          "testOut": "#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#T#\n#.#",
+          "isValidator": true
+        },
+        {
+          "title": "Corridor -",
+          "isTest": true,
+          "testIn": "7 1\n1831 1667 100000",
+          "testOut": "#.#############\n#............T#\n#############.#",
+          "isValidator": false
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "8 1\n1747 1811 100000",
+          "testOut": "#.###############\n#..............T#\n###############.#",
+          "isValidator": true
+        }
+      ],
+      "constraints": "0 < [[H]], [[W]] ≤ 40\n1000 < [[P]], [[Q]] ≤ 3000\n0 < [[R]] ≤ 100000\nThere is only one position where the treasure is furthest away from the entrance.\nThe treasure is forbidden from being in the entrance or in the passage to the monsters' barracks.",
+      "stubGenerator": "read w:int h:int\nread p:int q:int r:int\n\nwrite #.#####\n#.....#\n#####.#\n#T#...#\n#.###.#\n#....X#\n#####.#",
+      "inputDescription": "<<Line 1:>> Size of the labyrinth [[W]] and [[H]] as integers\n<<Line 2:>> Random number generator arguments [[P]], [[Q]] and [[R]]",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[2×H+1]] lines:>> The labyrinth map, with {{.}} for empty passage, {{#}} for a wall, {{T}} for the treasure, and {{X}} for the monster's intersection with the adventurers' way back.\nThere is wall all around the maze, except for an empty passage {{.}} on the north of cell {{0,0}}, and to the south of cell {{W-1, H-1}}."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Topics: <const>Maze creation algorithm</const>, <const>Pseudo-random number generator</const>, <const>Longest path search</const>, <const>Shortest path search</const>, <const>Path intersection</const><br> <br>The adventurers have raided the dungeon. They've destroyed almost everything with multiple fireballs: doors, traps and monsters. And they've stolen the treasure! Their levels were probably too high.<br>Luckily, at the last moment the Dungeon Master invoked gigantic cavern trolls that slew those pesky adventurers in order to secure the stolen gold. But in the battle, the rest of the dungeon has collapsed.<br><br>The Dungeon Master asks you, his trusted servant, to redesign the dungeon. He wants to better hide the treasure, so there is more time to react the next time the dungeon is raided.<br><br>The dungeon has a rectangular shape, <var>W</var> cells wide by <var>H</var> cells high, with the adventurers' entrance in the north west corner, so it's a good fit to create a labyrinth in.<br><br>You find a relatively simple algorithm&nbsp;: in each cell except the eastern and southern ones, the building slaves will toss a coin. If &ldquo;heads&rdquo; they will build a wall to the east; if &ldquo;tails&rdquo; they will build a wall to the south.<br><br>This creates a simple maze, with long corridors in the south and east since no wall is built from <var>x</var>=<var>W-1</var> or <var>y</var>=<var>H-1</var>. The monsters barracks being on the south east corner, this makes for a perfect confrontation stage.<br><br>After designing this labyrinth, you need to find the location furthest away from the adventurers' entrance&nbsp;: that's where the treasure <const>T</const> will be hidden. Then you need to mark with an <const>X</const> the spot where the garrisoned monsters can easily intercept any adventurer&nbsp;: the point of the entrance-treasure path closest to the barracks. If the closest point is already the treasure's location, place only a <const>T</const>.<br><br>Your Master will be proud of you.<br><br><strong>Note 1:</strong> You are asked to draw the maze formed from a <var>W</var>&zwj;&times;&zwj;<var>H</var> cell grid. Each cell of the grid may have a wall <const>#</const> to the north, east, west or south, which leads to a <var>(2&times;H+1)</var>&zwj;&times;&zwj;<var>(2&times;W+1)</var> map:<br><br><pre style=\"font-family: monospace\">Grid 2&times;2  Map 5&times;5<br>           #.###<br>   .T      #.#T#<br>   .X      #.#.#<br>           #..X#<br>           ###.#</pre><br><strong>Note 2:</strong> For the reproducibility of the map across languages, you are given two primes <var>P</var> and <var>Q</var>, and a seed <var>R</var>, and you will generate pseudo-random numbers using the Blum Blum Shub algorithm (its name goes well with the theme&hellip; more information here: https://en.wikipedia.org/wiki/Blum_Blum_Shub )<br>Tossing a coin in <var>(x,y)</var> (where <const>(0,0)</const> is the top left corner): compute <var>(R^(2^(x+y&times;W+1) mod lcm(P-1,Q-1)) mod P&times;Q)</var>.<br>If odd (&ldquo;heads&rdquo;) build a wall to the east; if even (&ldquo;tails&rdquo;) build a wall to the south.<br><br><strong>Note 3:</strong> Take care that the expression given above for Blum Blum Shub, taken literally, involves numbers greater than can fit in 64 bits. You are invited to optimize it. :-)</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Size of the labyrinth <var>W</var> and <var>H</var> as integers<br><strong>Line 2:</strong> Random number generator arguments <var>P</var>, <var>Q</var> and <var>R</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>2&times;H+1</var> lines:</strong> The labyrinth map, with <const>.</const> for empty passage, <const>#</const> for a wall, <const>T</const> for the treasure, and <const>X</const> for the monster's intersection with the adventurers' way back.<br>There is wall all around the maze, except for an empty passage <const>.</const> on the north of cell <const>0,0</const>, and to the south of cell <const>W-1, H-1</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt; <var>H</var>, <var>W</var> &le; 40<br>1000 &lt; <var>P</var>, <var>Q</var> &le; 3000<br>0 &lt; <var>R</var> &le; 100000<br>There is only one position where the treasure is furthest away from the entrance.<br>The treasure is forbidden from being in the entrance or in the passage to the monsters' barracks.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3 2\n1723 1579 100000</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">#.#####\n#.#.#T#\n#.#.#.#\n#....X#\n#####.#</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 258675078391,
+  "avatar": 3884009540055,
+  "commentCount": 15,
+  "upVotes": 3,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 172817,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

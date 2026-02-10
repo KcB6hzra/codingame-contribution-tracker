@@ -1,0 +1,292 @@
+{
+  "id": 6926,
+  "activeVersion": 42,
+  "score": 11,
+  "votableId": 18889589,
+  "codingamerId": 878974,
+  "views": 406,
+  "commentableId": 18791504,
+  "title": "Mathematics for big ears",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "nicola",
+  "publicHandle": "6926d99d9b5773a79f6643fd11f0fc43089b",
+  "codingamerHandle": "21bf42f790de293c3aef398f18cd2627479878",
+  "lastVersion": {
+    "version": 42,
+    "autocloseTime": 1626367811874,
+    "data": {
+      "title": "Mathematics for big ears",
+      "topics": [
+        {
+          "id": 104,
+          "handle": "group-theory",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Group theory",
+            "2": "Group theory"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        },
+        {
+          "id": 70,
+          "handle": "permutations",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Permutations",
+            "2": "Permutations"
+          },
+          "pageTitle": "Permutations: exercises and theory",
+          "puzzleCount": 6,
+          "parentTopicId": 41,
+          "contentDetailsId": 103
+        }
+      ],
+      "solution": "n=int(input())\n\nG=[input() for _ in range(n)]\n\ndef prod(chaine):\n  \"\"\"Calcule le produit de permutations\n  sous la forme minimale lexicographique\n  \"\"\"\n  \n  p=chaine.replace(\"()\",\"\")[1:-1].split(\")(\")\n  p=[[int(i) for i in l.split()] for l in p][::-1]\n  p=[l+[l[0]] for l in p]\n  m=max(max(l) for l in p)\n  d={i:i for i in range(1,m+1)}\n\n  for e in range(1,m+1):\n    ee=e\n    for l in p:\n      if ee in l:\n        ee=l[l.index(ee)+1]\n    d[e]=ee\n\n  s=set(range(1,m+1))\n  r=[]\n\n  while s:\n    n=[]\n    e=min(s)\n    while e not in n:\n      s-={e}\n      n.append(e)\n      e=d[e]\n    if len(n)>1:\n      r.append(str(tuple(n)).replace(\",\",\"\"))\n\n  if r:\n    return \"\".join(r)\n  return \"()\"\n\ndef éléments(G):\n  \"\"\"Si G=[\"(a b)\",\"(a b ga 1)\"] alors\n  Gprime=['(', 'a', 'b', ')', ',', '(', 'a', 'b', 'ga', '1', ')']\n  Géléments={'b', '1', 'a', 'ga'}\n  \"\"\"\n  while \"()\" in G:\n    try:\n      i=G.index(\"()\")\n      G=G[:i]+G[i+1:]\n    except:\n      G=G.remove(\"()\")\n  if not G:\n    return tuple()\n  Gprime=\", \".join(G).replace(\"(\",\"( \").replace(\")\",\" ) \")\n  Gprime=Gprime.split()\n  Géléments=set(Gprime)-{\")\",\"(\",\",\"}\n  return Gprime,Géléments\n\ndef réduction(G):\n  \"\"\"Réduit un ensemble de permutations\n  (\"(1 5 7 8 99)\",\"(1 99 13 72)\") devient (\"(1 2 3 4 7)\",\"(1 7 5 6)\")\n  On peut même envoyer en entrée des permutations sur autre chose,\n  par exemple des lettres ou des chiffres ou les deux\n  \"\"\"\n\n  Gprime,Géléments=éléments(G)\n  Grange=list(range(1,len(Géléments)+1))\n  while Grange:\n    e=Grange.pop(0)\n    f=min(Géléments)\n    Géléments.discard(f)\n    while f in Gprime:\n      Gprime[Gprime.index(f)]=e\n  return tuple(map(prod,\" \".join(map(str,Gprime)).replace(\"( \",\"(\").replace(\" )\",\")\").replace(\") (\",\")(\").split(\" , \")))\n\n# e: identity operator\n# G: list of generators\n# L: list of all the elements of the group\n# N: maximum order of the group we deem acceptable\n\ndef dimino(G=(\"(1 2)\",\"(1 3)\"),r=True):\n  \"\"\"Algorithme de Dimino pour déterminer\n  un groupe de permutations à l’aide de générateurs\n  r réduit la taille du groupe\n  \"\"\"\n  e=éléments(G)[1]\n  if r or \"0\" in e or any(not a.isnumeric() for a in e) or type(G) not in (tuple,list):\n    G=réduction(G)\n  if not G:\n    return 1\n  e=\"()\"\n  g=g1=G[0]\n  L={e}\n  while g!=e:\n    L.add(g)\n    g=prod(g+g1)\n\n  for i in range(1,len(G)):\n    C={e}\n    L1=set(L)\n    more=True\n    while more:\n      more=False\n      for g in set(C):\n        for s in G[:i+1]:\n          sg=prod(s+g)\n          if sg not in L:\n            C.add(sg)\n            L|={prod(sg+t) for t in L1}\n            more=True\n  \"\"\"print(i)\n  print(L)\n  print(len(C))\"\"\"\n  return len(L)\n\n#print(prod(\"(1 2)()\"))\n\n#G=(\"(1 2)\",\"(1 3)\",\"(4 5)\") # D_6\n#G=(\"(1 2 4 7)(3 6 8 5)\",\"(1 3 4 8)(2 5 7 6)\") # ℍ\n#G=(\"(1 2 3 4 7)\",\"(1 7 5 6)\") # 𝕾_7 rapide\n#G=(\"(1 5 7 8 99)\",\"(1 99 13 72)\") # 𝕾_7 lent\n#G=(\"(1 2 3)\",\"(1 4 5)\") # 𝕬_5\n#G=(\"(1 3 6 5 4 8 7 2)\",\"(3 7 1)(4 8 6)\") # Gl_2(F_3)\n#G=(\"(1 4 2 3)\",\"(2 3 4)\") # PGL_2(F_3)≈𝕾_4\n#G=(\"(1 2)(3 4)\",\"(2 3 4)\") # PSL_2(F_3)≈𝕬_4\n#G=(\"(1 6 4 7)(3 5 8 2)\",\"(1 3 7)(4 8 6)\") # Sl_2(F_3)\n#G=(\"(1 2 3 4)(1 2)\",\"(5 6)\") # Groupe du cube≈F_2×𝕾_4\n#G=(\"(1 5 6 2)\",\"(1 4 3 5)\") # PGL_2(F_5)≈𝕾_5\n#G=(\"(1 8)(2 7)(3 4)(5 6)\",\"(1 2 4)(3 6 5)\",\"(2 3 5)(4 7 6)\") # PSL_2(F_7)≈PSL_3(F_2)\"\"\"\n#G=(\"(1 2 3 4 5 6 7 8 9 10 11)\",\"(1 12)(2 11)(3 6)(4 8)(5 9)(7 10)\",\"(2 10)(3 4)(5 9)(6 7)\") # M_12 rapide\n#G={\"(1 12)(2 11)(3 10)(4 9)(5 8)(6 7)\",\"(2 3 5 9 8 10 6 11 4 7 12)\"} # M_12 lent\n#G=(\"(1 2 3 4 5 6 7 8 9 10 11)\",\"(1 12)(2 11)(3 6)(4 8)(5 9)(7 10)\",\n#   \"(2 10)(3 4)(5 9)(6 7)\",\"(1 12)(2 11)(3 10)(4 9)(5 8)(6 7)\",\"(2 3 5 9 8 10 6 11 4 7 12)\") # M_12 super lent\n#G=(\"()\",) # ∅\n#G=(\"(1 3)(2 4)\",\"(1 8)(4 5)\",\"(5 7)(6 8)\",\"(3 6)(2 7)\",\"(2 5)(1 6)\",\"(4 7)(3 8)\") # (C2 x C2) : 𝕾4\n# ↑ squares subgroup of the vertices of the Rubik’s cube\n#G=(\"(1 9)(5 8)\",\"(2 10)(5 6)\",\"(3 11)(6 7)\",\"(4 12)(7 8)\",\"(1 3)(2 4)\",\"(9 11)(10 12)\") # (C2 x C2) : ((C2 x C2) : (C3 : (𝕾_3 x 𝕾_4))\n# ↑ squares subgroup of the edges of the Rubik’s cube\n# G=tuple(\"(%d %d %d)\"%(3*a+1,3*a+2,3*a+3) for a in range(7))+(\"(22 23)\",\"(22 23 24 25 26 27 28\") # Groupe du 2×2×2\n#G={\"(a 1)\",\"(a b ga 1)\"}\n\nassert all(g==prod(g) for g in G)\n\nprint(dimino(G,True))",
+      "statement": "After having rung the bells https://www.codingame.com/training/medium/ring-the-bells (this puzzle is the second part of the bell themed puzzles), you will now learn how to find and count all the permutations that are generated by a set of permutations.\nFor example, if you have one permutation: [[p=(1 2 3)]], you can compose it with itself and you get [[q=(1 3 2)]]. If you compose [[q]] and [[p]], you get the null permutation [[e=()]] (the permutation that moves nothing). Here is the table of the operations below:\n`↱ | e | p | q\n--+===+===+===\ne ∥ e | p | q\n--+---+---+---\np ∥ p | {{q}} | [[e]]\n--+---+---+---\nq ∥ q | e | p`\nThis means that if you permute with [[p]] then with [[q]] (the [[yellow]] case in the table), you move nothing, that is [[e]], the null permutation.\nIf you permute with {{p}} and again with {{p}}, you permute in fact with {{q}} (the {{blue}} case in the table).\nIn other words, there are only 3 distinct permutations that can be generated by [[p]].\n\nIf you have the two permutations [[p=(1 2)]] and [[q=(1 3)]], you will be able to generate 6 distinct permutations: [[e=()]], [[(1 2)]], [[(1 3)]], [[(2 3)]], [[(1 2 3)]] and [[(1 3 2)]]. The output must be 6.\nEach combination of these two permutations [[p]] and [[q]] is one of these six, even [[pqqqppqqp]], that is [[pqp=(2 3)]].\nThe set of these six permutations is the third symmetric group (S3), the group of the bijections on a set of 3 elements.\n\nThe name of the tests and validators will help you debugging.\n\n<<A bit of mathematics>>\nA theorem by Cayley says that every finite group is isomorphic to a subgroup of a finite symmetric group.\nYou can find a copy of this subgroup in a finite symmetric group.\nTo be more precise, if a finite group G is generated by permutations of n elements, then there is a copy of G in the symmetric group on n elements.\n\n<<Teddy bears>>\nBut why this poster image? Because it’s the cover image of Charlemagne Palestine’s album whose name is Music for big ears and it’s repetitive music for a bell carillon.\n\n<<Some more mathematics, not needed to solve the puzzle>>\nHere’s an explanation of the names of the groups, if you understand this paragraph, your ears are big.\n* [[Cn]] are cyclic groups, the simplest groups you can build. They are the simple modular remainders when you calculate additions with modulus n.\n* [[Sn]] are symmetric groups, for exemple S4 is the set of all the permutations you can imagine over 1 2 3 4.\n* The [[Klein group]] is C2×C2, that is the addition over two coordinates with modulus 2: (0,0), (0,1), (1,0) and (1,1). Thus, (0,1)+(1,1)=(1,0) because 1+1=2=0 mod 2.\n* [[Dn]] are dihedral groups, the groups of the isometries that keep the regular polygon with n vertices (eg symmetries and rotations).\n* [[H]] is the group of quaternions (see the Quaternion multiplication by TheNinja medium puzzle about them), it’s a model of the rotations of a cube (see the CodinDice puzzle by BlitzProg).\n* [[An]] is the subgroup of SN whose permutations are even, that means that the number of wrongly ordered pair of elements… is even.\n* [[Fq]] is not a group but a field with q elements (like R or C but with a finite number of elements). You meet such things when you code self-correcting codes, for example. If q is prime, Fq is just Z with addition and multiplication but with modulus q.\n* [[GL2(Fq)]] is the group of the inversible tranformations of the 2×2 matrices whose elements are in Fq.\n[[SL2(Fq)]], [[PGL2(Fq)]] and [[PSL2(Fq)]] are explained below. The centre Z of a group G is its subgroup that commutes with everyone, eg for all g in Z, for all h in G, gh=hg. A quotient is when you identify some kind of elements who satisfy a condition.\n* The [[group of the cube]] is the group of symmetries and rotations (and so on) that keeps a cube.\n* The [[squares subgroups]] of the Rubik’s cube is the set of the moves such as R2U2D2. Here, we only look how it moves the vertices and the edges.\n* The [[M12 Mathieu]] group is a sporadic group, one of the simple groups that can’t be classified in other great families.",
+      "testCases": [
+        {
+          "title": "C3 Cyclic group with 3 elements",
+          "isTest": true,
+          "testIn": "1\n(1 2 3)",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C5 Cyclic group with 5 elements",
+          "isTest": false,
+          "testIn": "1\n(1 2 3 4 5)",
+          "testOut": "5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "S3 Symmetric group on 3 elements",
+          "isTest": true,
+          "testIn": "2\n(1 2)\n(1 3)",
+          "testOut": "6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "S4 Symmetric group on 4 elements",
+          "isTest": false,
+          "testIn": "2\n(1 2)\n(2 3 4)",
+          "testOut": "24",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Klein group",
+          "isTest": true,
+          "testIn": "2\n(1 2)\n(3 4)",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Klein group",
+          "isTest": false,
+          "testIn": "2\n(1 2)\n(1 2)(3 4)",
+          "testOut": "4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "D6 Dihedral group of the hexagon",
+          "isTest": true,
+          "testIn": "3\n(1 2)\n(1 2 3)\n(4 5)",
+          "testOut": "12",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "D6 Dihedral group of the hexagon",
+          "isTest": false,
+          "testIn": "3\n(1 2)\n(1 3)\n(4 5)",
+          "testOut": "12",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "H Group of quaternions",
+          "isTest": true,
+          "testIn": "2\n(1 2 4 7)(3 6 8 5)\n(1 3 4 8)(2 5 7 6)",
+          "testOut": "8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "H Group of quaternions",
+          "isTest": false,
+          "testIn": "2\n(1 3 4 8)(2 5 7 6)\n(1 2 4 7)(3 6 8 5)",
+          "testOut": "8",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "S5 Symmetric group on 5 elements",
+          "isTest": true,
+          "testIn": "2\n(1 5 6 2)\n(1 4 3 5)",
+          "testOut": "120",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "A5 Subgroup of the even permutations of S5",
+          "isTest": false,
+          "testIn": "2\n(1 2 3)\n(1 4 5)",
+          "testOut": "60",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "GL2(F3) Linear group of the 2×2 matrices over the finite field with 3 elements",
+          "isTest": true,
+          "testIn": "2\n(1 3 6 5 4 8 7 2)\n(1 3 7)(4 8 6)",
+          "testOut": "48",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "SL2(F3) Matrices with determinant=1 of GL2(F3)",
+          "isTest": false,
+          "testIn": "2\n(1 6 4 7)(2 3 5 8)\n(1 3 7)(4 8 6)",
+          "testOut": "24",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "PGL2(F3) Quotient of GL2(F3) by its centre",
+          "isTest": true,
+          "testIn": "2\n(1 4 2 3)\n(2 3 4)",
+          "testOut": "24",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "PSL2(F3) Quotient of SL2(F3) by its centre",
+          "isTest": false,
+          "testIn": "2\n(1 2)(3 4)\n(2 3 4)",
+          "testOut": "12",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "PSL2(F7)",
+          "isTest": true,
+          "testIn": "3\n(1 8)(2 7)(3 4)(5 6)\n(1 2 4)(3 6 5)\n(2 3 5)(4 7 6)",
+          "testOut": "168",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Group of the cube",
+          "isTest": false,
+          "testIn": "3\n(1 2 3 4)\n(1 2)\n(5 6)",
+          "testOut": "48",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "S7 Symmetric group on 7 elements",
+          "isTest": true,
+          "testIn": "2\n(1 2 3 4 7)\n(1 7 5 6)",
+          "testOut": "5040",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "S7 Symmetric group on 7 elements",
+          "isTest": false,
+          "testIn": "2\n(1 7 5 6)\n(1 2 3 4 7)",
+          "testOut": "5040",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Squares subgroup of the edges of the Rubik’s cube",
+          "isTest": true,
+          "testIn": "6\n(1 9)(5 8)\n(2 10)(5 6)\n(3 11)(6 7)\n(4 12)(7 8)\n(1 3)(2 4)\n(9 11)(10 12)",
+          "testOut": "6912",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Squares subgroup of the vertices of the Rubik’s cube",
+          "isTest": false,
+          "testIn": "6\n(1 3)(2 4)\n(1 8)(4 5)\n(5 7)(6 8)\n(2 7)(3 6)\n(1 6)(2 5)\n(3 8)(4 7)",
+          "testOut": "96",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "M12 Mathieu group",
+          "isTest": true,
+          "testIn": "3\n(1 2 3 4 5 6 7 8 9 10 11)\n(1 12)(2 11)(3 6)(4 8)(5 9)(7 10)\n(2 10)(3 4)(5 9)(6 7)",
+          "testOut": "95040",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "M12 Mathieu group",
+          "isTest": false,
+          "testIn": "3\n(1 2 3 4 5 6 7 8 9 10 11)\n(2 10)(3 4)(5 9)(6 7)\n(1 12)(2 11)(3 6)(4 8)(5 9)(7 10)",
+          "testOut": "95040",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "S5×S5×S3",
+          "isTest": true,
+          "testIn": "10\n(1 2)\n(2 3)\n(3 4)\n(4 5)\n(6 7)\n(7 8)\n(8 9)\n(9 10)\n(11 12)\n(12 13)",
+          "testOut": "86400",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "S4×S4×S5",
+          "isTest": false,
+          "testIn": "10\n(1 2)\n(2 3)\n(3 4)\n(5 6)\n(6 7)\n(7 8)\n(9 10)\n(10 11)\n(11 12)\n(12 13)",
+          "testOut": "69120",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "The final size is below 100,000.\nYou can assume that the given permutations are reduced (eg, what you can expect in the Ring the bells puzzle).",
+      "coverBinaryId": 65953408450678,
+      "stubGenerator": "read n:int\nloop n read permutation:string(40)\nwrite order",
+      "inputDescription": "<<First line>> The number n of permutations\n<<Next n lines>> A permutation",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The size of the subgroup."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">After having rung the bells https://www.codingame.com/training/medium/ring-the-bells (this puzzle is the second part of the bell themed puzzles), you will now learn how to find and count all the permutations that are generated by a set of permutations.<br>For example, if you have one permutation: <var>p=(1 2 3)</var>, you can compose it with itself and you get <var>q=(1 3 2)</var>. If you compose <var>q</var> and <var>p</var>, you get the null permutation <var>e=()</var> (the permutation that moves nothing). Here is the table of the operations below:<br><pre style=\"font-family: monospace\">↱ | e | p | q<br>--+===+===+===<br>e ∥ e | p | q<br>--+---+---+---<br>p ∥ p | <const>q</const> | <var>e</var><br>--+---+---+---<br>q ∥ q | e | p</pre><br>This means that if you permute with <var>p</var> then with <var>q</var> (the <var>yellow</var> case in the table), you move nothing, that is <var>e</var>, the null permutation.<br>If you permute with <const>p</const> and again with <const>p</const>, you permute in fact with <const>q</const> (the <const>blue</const> case in the table).<br>In other words, there are only 3 distinct permutations that can be generated by <var>p</var>.<br><br>If you have the two permutations <var>p=(1 2)</var> and <var>q=(1 3)</var>, you will be able to generate 6 distinct permutations: <var>e=()</var>, <var>(1 2)</var>, <var>(1 3)</var>, <var>(2 3)</var>, <var>(1 2 3)</var> and <var>(1 3 2)</var>. The output must be 6.<br>Each combination of these two permutations <var>p</var> and <var>q</var> is one of these six, even <var>pqqqppqqp</var>, that is <var>pqp=(2 3)</var>.<br>The set of these six permutations is the third symmetric group (S3), the group of the bijections on a set of 3 elements.<br><br>The name of the tests and validators will help you debugging.<br><br><strong>A bit of mathematics</strong><br>A theorem by Cayley says that every finite group is isomorphic to a subgroup of a finite symmetric group.<br>You can find a copy of this subgroup in a finite symmetric group.<br>To be more precise, if a finite group G is generated by permutations of n elements, then there is a copy of G in the symmetric group on n elements.<br><br><strong>Teddy bears</strong><br>But why this poster image? Because it&rsquo;s the cover image of Charlemagne Palestine&rsquo;s album whose name is Music for big ears and it&rsquo;s repetitive music for a bell carillon.<br><br><strong>Some more mathematics, not needed to solve the puzzle</strong><br>Here&rsquo;s an explanation of the names of the groups, if you understand this paragraph, your ears are big.<br>* <var>Cn</var> are cyclic groups, the simplest groups you can build. They are the simple modular remainders when you calculate additions with modulus n.<br>* <var>Sn</var> are symmetric groups, for exemple S4 is the set of all the permutations you can imagine over 1 2 3 4.<br>* The <var>Klein group</var> is C2&times;C2, that is the addition over two coordinates with modulus 2: (0,0), (0,1), (1,0) and (1,1). Thus, (0,1)+(1,1)=(1,0) because 1+1=2=0 mod 2.<br>* <var>Dn</var> are dihedral groups, the groups of the isometries that keep the regular polygon with n vertices (eg symmetries and rotations).<br>* <var>H</var> is the group of quaternions (see the Quaternion multiplication by TheNinja medium puzzle about them), it&rsquo;s a model of the rotations of a cube (see the CodinDice puzzle by BlitzProg).<br>* <var>An</var> is the subgroup of SN whose permutations are even, that means that the number of wrongly ordered pair of elements&hellip; is even.<br>* <var>Fq</var> is not a group but a field with q elements (like R or C but with a finite number of elements). You meet such things when you code self-correcting codes, for example. If q is prime, Fq is just Z with addition and multiplication but with modulus q.<br>* <var>GL2(Fq)</var> is the group of the inversible tranformations of the 2&times;2 matrices whose elements are in Fq.<br><var>SL2(Fq)</var>, <var>PGL2(Fq)</var> and <var>PSL2(Fq)</var> are explained below. The centre Z of a group G is its subgroup that commutes with everyone, eg for all g in Z, for all h in G, gh=hg. A quotient is when you identify some kind of elements who satisfy a condition.<br>* The <var>group of the cube</var> is the group of symmetries and rotations (and so on) that keeps a cube.<br>* The <var>squares subgroups</var> of the Rubik&rsquo;s cube is the set of the moves such as R2U2D2. Here, we only look how it moves the vertices and the edges.<br>* The <var>M12 Mathieu</var> group is a sporadic group, one of the simple groups that can&rsquo;t be classified in other great families.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>First line</strong> The number n of permutations<br><strong>Next n lines</strong> A permutation</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The size of the subgroup.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">The final size is below 100,000.<br>You can assume that the given permutations are reduced (eg, what you can expect in the Ring the bells puzzle).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1\n(1 2 3)</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">3</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 144405830528,
+  "avatar": 26090852120005,
+  "commentCount": 16,
+  "upVotes": 12,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 575132,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1626324577570,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

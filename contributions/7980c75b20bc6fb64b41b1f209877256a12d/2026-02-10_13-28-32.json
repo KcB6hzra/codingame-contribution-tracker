@@ -1,0 +1,419 @@
+{
+  "id": 7980,
+  "activeVersion": 74,
+  "score": 15,
+  "votableId": 21610242,
+  "codingamerId": 4623073,
+  "views": 411,
+  "commentableId": 21502001,
+  "title": "Condition Overshadowing",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Alonehoc",
+  "publicHandle": "7980c75b20bc6fb64b41b1f209877256a12d",
+  "codingamerHandle": "d180b60a25752e28dccd4c180a495bda3703264",
+  "lastVersion": {
+    "version": 74,
+    "autocloseTime": 1645018113314,
+    "data": {
+      "title": "Condition Overshadowing",
+      "topics": [
+        {
+          "id": 235,
+          "handle": "interpreter",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "interpreter",
+            "2": "Interpreters"
+          },
+          "puzzleCount": 4,
+          "parentTopicId": 93
+        },
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 47,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        }
+      ],
+      "solution": "class more(object):\n    def __init__(self, c):\n        self.c = c\n    def is_shadowing(self, other):\n        return (type(other) is more and self.c <= other.c) or \\\n            (type(other) is eq and self.c < other.c)\n    def merge(self, other):\n        if type(other) is more:\n            return self if self.is_shadowing(other) else other\n        elif type(other) is less:\n            return super_cond() if self.c < other.c else None\n        elif type(other) is eq:\n            return self if self.c < other.c else \\\n                more(self.c - 1) if self.c == other.c else None\nclass less(object):\n    def __init__(self, c):\n        self.c = c\n    def is_shadowing(self, other):\n        return (type(other) is less and self.c >= other.c) or \\\n            (type(other) is eq and self.c > other.c)\n    def merge(self, other):\n        if type(other) is less:\n            return self if self.is_shadowing(other) else other\n        elif type(other) is more:\n            return other.merge(self)\n        elif type(other) is eq:\n            return self if self.c > other.c else \\\n                less(self.c + 1) if self.c == other.c else None\nclass eq(object):\n    def __init__(self, c):\n        self.c = c\n    def is_shadowing(self, other):\n        return type(other) is eq and self.c == other.c\n    def merge(self, other):\n        if type(other) is eq:\n            return self if self.c == other.c else None\n        else:\n            return other.merge(self)\nclass super_cond(object):\n    def is_shadowing(self, other):\n        return True\n    def merge(self, other):\n        return self\n\ncond_objs = {'>': more, '<': less, '==': eq}\nconds = []\n\ndef merge_conds():\n    while merge_conds_():\n        pass\n\ndef merge_conds_():\n    global conds\n    for i in range(len(conds) - 1):\n        c1 = conds[i]\n        for j in range(i + 1, len(conds)):\n            c2 = conds[j]\n            merged = c1.merge(c2)\n            if merged:\n                conds.pop(j)\n                conds.pop(i)\n                conds += [merged]\n                return True\n\nlines = int(input())\nshadowed = []\nfor i in range(lines):\n    line = input().split()\n    op = line[1]\n    c = int(line[2])\n    if op in cond_objs:\n        new_conds = [cond_objs[op](c)]\n    else: # op is !=\n       new_conds = [cond_objs['>'](c), cond_objs['<'](c)]\n    is_shadowed = False\n    for c2 in new_conds:\n        is_shadowed = False\n        for c1 in conds:\n            if c1.is_shadowing(c2):\n                is_shadowed = True\n        if not is_shadowed:\n            break\n    if is_shadowed:\n        shadowed += [i]\n    conds += new_conds\n    merge_conds()\n\nif shadowed:\n    print(*shadowed)\nelse:\n    print(\"ok\")",
+      "statement": "Condition overshadowing can be a possible cause for unreachable code in a computer program and solving this problem can help detect it.\n\nPrograms often define a chain of conditions in the form of: if ... else if ... else if ... else if\nSome of those conditions can be overshadowed by previous conditions.\n\nThe meaning is fairly intuitive: an overshadowed condition is a condition for which any values satisfying the condition also satisfy at least one previous condition, thus making the overshadowed block of code unreachable.\n\nThe goal is to detect all overshadowed conditions in a chain of conditions and output their serial position in the chain. The first condition has index 0.\n\nOvershadowed conditions in real-life programs can be extremely hard to detect, but here the conditions are simplified to only an integer variable [[x]] compared to an integer constant {{c}} (and still this isn't so simple...)\n\nNote: <<Partial>> overshadowing does not count, while <<complete>> overshadowing (which leads to totally unreachable code) counts.\n\n<<In the example:>>\nCondition (x == 9) is overshadowed by condition (x > 4).\nCondition (x < 6) is overshadowed by conditions (x > 4) and (x != 5).\nCondition (x != 5) is only partially overshadowed by condition (x > 4) and hence is not treated as part of the answer.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "5\nx > 4\nx == 9\nx < 4\nx != 5\nx < 6",
+          "testOut": "1 4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "6\nx == 987\nx > 5\nx == 10\nx < 5\nx != 6\nx < 7",
+          "testOut": "2 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "3\nx > 0\nx == 0\nx < 0",
+          "testOut": "ok",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "4\nx == 987\nx > -1\nx == -1\nx < 0",
+          "testOut": "ok",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "4\nx < 2\nx < 2\nx < 1\nx < 3",
+          "testOut": "1 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "5\nx == 987\nx > 4\nx > 4\nx > 5\nx > 3",
+          "testOut": "2 3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "4\nx != 6\nx != 7\nx < 7\nx == 7",
+          "testOut": "2 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "5\nx == 987\nx != 4\nx != 5\nx > 5\nx == 5",
+          "testOut": "3 4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "3\nx != 8\nx < 8\nx > 8",
+          "testOut": "1 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "4\nx == 987\nx != 11\nx > 11\nx < 11",
+          "testOut": "2 3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "6\nx == 5\nx < 2\nx > 2\nx != 3\nx == 2\nx != 5",
+          "testOut": "4 5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "7\nx == 987\nx == 2\nx > -1\nx < -1\nx != 0\nx == -1\nx != 2",
+          "testOut": "5 6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 7",
+          "isTest": true,
+          "testIn": "4\nx > 7\nx < 7\nx != 7\nx == 7",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "5\nx == 987\nx < 11\nx > 11\nx != 11\nx == 11",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 8",
+          "isTest": true,
+          "testIn": "8\nx < 3\nx != 4\nx > 5\nx > 4\nx > 3\nx > 2\nx > 1\nx > 0",
+          "testOut": "2 3 5 6 7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "9\nx == 987\nx < -1\nx != 0\nx > 1\nx > 0\nx > -1\nx > -2\nx > -3\nx > -4",
+          "testOut": "3 4 6 7 8",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 9",
+          "isTest": true,
+          "testIn": "4\nx != 50\nx != 60\nx != 70\nx != 80",
+          "testOut": "2 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "5\nx == 987\nx != 55\nx != 65\nx != 75\nx != 85",
+          "testOut": "3 4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 10",
+          "isTest": true,
+          "testIn": "5\nx != 10\nx < 10\nx > 10\nx != 88\nx != 99",
+          "testOut": "1 2 4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "6\nx == 987\nx != 5\nx > 5\nx < 5\nx != 83\nx != 94",
+          "testOut": "2 3 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 11",
+          "isTest": true,
+          "testIn": "8\nx > 1\nx > 1\nx == 0\nx == 0\nx < -1\nx < -1\nx != -1\nx != -1",
+          "testOut": "1 3 5 7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "9\nx == 987\nx > 7\nx > 7\nx == 6\nx == 6\nx < 5\nx < 5\nx != 5\nx != 5",
+          "testOut": "2 4 6 8",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 12",
+          "isTest": true,
+          "testIn": "6\nx > -9\nx == -10\nx < -11\nx == -9\nx == -11\nx < -9",
+          "testOut": "5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "7\nx == 987\nx > -15\nx == -16\nx < -17\nx == -15\nx == -17\nx < -15",
+          "testOut": "6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 13",
+          "isTest": true,
+          "testIn": "4\nx > 5\nx < 6\nx != 7\nx < 8",
+          "testOut": "2 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "5\nx == 987\nx > 12\nx < 13\nx != 14\nx < 15",
+          "testOut": "3 4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 14",
+          "isTest": true,
+          "testIn": "4\nx > 5\nx < 7\nx < 8\nx < 9",
+          "testOut": "2 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 14",
+          "isTest": false,
+          "testIn": "5\nx == 987\nx > -2\nx < 0\nx < 1\nx < 2",
+          "testOut": "3 4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 15",
+          "isTest": true,
+          "testIn": "4\nx < 987654321\nx > 987654320\nx != 987654321\nx != 987654320",
+          "testOut": "2 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 15",
+          "isTest": false,
+          "testIn": "5\nx == 987\nx > -987654321\nx < -987654320\nx != -987654320\nx != -987654321",
+          "testOut": "3 4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 16",
+          "isTest": true,
+          "testIn": "3\nx == 987654321\nx != 987654321\nx < 987654322",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 16",
+          "isTest": false,
+          "testIn": "4\nx == 987\nx == -987654321\nx != -987654321\nx > -987654322",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 17",
+          "isTest": true,
+          "testIn": "5\nx > 1001\nx > 1000\nx < 1002\nx < 1001\nx != 1000",
+          "testOut": "3 4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 17",
+          "isTest": false,
+          "testIn": "6\nx == 987\nx > 11001\nx > 11000\nx < 11002\nx < 11001\nx != 11000",
+          "testOut": "4 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 18",
+          "isTest": true,
+          "testIn": "3\nx < -1000\nx > -1010\nx != -1000",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 18",
+          "isTest": false,
+          "testIn": "4\nx == 987\nx < -11000\nx > -11010\nx != -11000",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 19",
+          "isTest": true,
+          "testIn": "3\nx > 5\nx != 5\nx == 5",
+          "testOut": "ok",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 19",
+          "isTest": false,
+          "testIn": "4\nx == 987\nx < -115\nx != -115\nx == -115",
+          "testOut": "ok",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 20",
+          "isTest": true,
+          "testIn": "6\nx != 100\nx == 98\nx == 99\nx == 101\nx == 102\nx == 100",
+          "testOut": "1 2 3 4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 20",
+          "isTest": false,
+          "testIn": "7\nx == 987\nx != -100\nx == -98\nx == -99\nx == -101\nx == -102\nx == -100",
+          "testOut": "2 3 4 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 21",
+          "isTest": true,
+          "testIn": "6\nx < 7\nx == 9\nx == 8\nx == 7\nx < 10\nx < 11",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 21",
+          "isTest": false,
+          "testIn": "7\nx == 987\nx > -7\nx == -9\nx == -8\nx == -7\nx > -10\nx > -11",
+          "testOut": "5",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ [[N]] ≤ 10\n-2^30 < [[x]] < 2^30\n[[x]] is of type integer and {{c}} is an integer.",
+      "stubGenerator": "read N:int\nloop N read line:string(100)\nwrite 1 4",
+      "inputDescription": "[[N]] amount of conditions.\n<<Next [[N]] lines:>>\nA condition with a variable [[x]] compared to a constant {{c}}.\nA condition is one of:\nx == c\nx != c\nx > c\nx < c\nEach line is split into tokens separated by spaces.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The serial positions of all overshadowed conditions sorted from smallest to largest, in a single line separated by spaces.\nIf no overshadowed conditions exist, output {{ok}}."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Condition overshadowing can be a possible cause for unreachable code in a computer program and solving this problem can help detect it.<br><br>Programs often define a chain of conditions in the form of: if ... else if ... else if ... else if<br>Some of those conditions can be overshadowed by previous conditions.<br><br>The meaning is fairly intuitive: an overshadowed condition is a condition for which any values satisfying the condition also satisfy at least one previous condition, thus making the overshadowed block of code unreachable.<br><br>The goal is to detect all overshadowed conditions in a chain of conditions and output their serial position in the chain. The first condition has index 0.<br><br>Overshadowed conditions in real-life programs can be extremely hard to detect, but here the conditions are simplified to only an integer variable <var>x</var> compared to an integer constant <const>c</const> (and still this isn't so simple...)<br><br>Note: <strong>Partial</strong> overshadowing does not count, while <strong>complete</strong> overshadowing (which leads to totally unreachable code) counts.<br><br><strong>In the example:</strong><br>Condition (x == 9) is overshadowed by condition (x &gt; 4).<br>Condition (x &lt; 6) is overshadowed by conditions (x &gt; 4) and (x != 5).<br>Condition (x != 5) is only partially overshadowed by condition (x &gt; 4) and hence is not treated as part of the answer.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><var>N</var> amount of conditions.<br><strong>Next <var>N</var> lines:</strong><br>A condition with a variable <var>x</var> compared to a constant <const>c</const>.<br>A condition is one of:<br>x == c<br>x != c<br>x &gt; c<br>x &lt; c<br>Each line is split into tokens separated by spaces.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The serial positions of all overshadowed conditions sorted from smallest to largest, in a single line separated by spaces.<br>If no overshadowed conditions exist, output <const>ok</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 10<br>-2^30 &lt; <var>x</var> &lt; 2^30<br><var>x</var> is of type integer and <const>c</const> is an integer.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5\nx &gt; 4\nx == 9\nx &lt; 4\nx != 5\nx &lt; 6</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1 4</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 125730313205,
+  "avatar": 73993369310252,
+  "commentCount": 23,
+  "upVotes": 20,
+  "downVotes": 5,
+  "validateAction": {
+    "actionId": 630642,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1644999797830,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

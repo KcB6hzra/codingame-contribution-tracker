@@ -1,0 +1,394 @@
+{
+  "id": 118320,
+  "activeVersion": 62,
+  "score": 30,
+  "votableId": 36376507,
+  "codingamerId": 6456529,
+  "views": 627,
+  "commentableId": 36218966,
+  "title": "Find the Shortest Path Home",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "JesusR",
+  "publicHandle": "118320b86788e4449b325bdaee87a0af0eb47e",
+  "codingamerHandle": "2c86e0ded3d2fef0fd078b5be43c0cca9256546",
+  "lastVersion": {
+    "version": 62,
+    "autocloseTime": 1752573575590,
+    "freezeTime": 1740115825030,
+    "data": {
+      "title": "Find the Shortest Path Home",
+      "topics": [
+        {
+          "id": 112,
+          "handle": "string-manipulation",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "String manipulation",
+            "2": "String manipulation"
+          },
+          "puzzleCount": 71,
+          "parentTopicId": 93
+        },
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 77,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        },
+        {
+          "id": 210,
+          "handle": "coordinates",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Coordinates",
+            "2": "Coordinates"
+          },
+          "puzzleCount": 7,
+          "parentTopicId": 93
+        },
+        {
+          "id": 68,
+          "handle": "pathfinding",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Recherche de chemins",
+            "2": "Pathfinding"
+          },
+          "pageTitle": "Pathfinding: exercises and theory",
+          "puzzleCount": 52,
+          "parentTopicId": 41,
+          "contentDetailsId": 69
+        },
+        {
+          "id": 54,
+          "handle": "BFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en largeur",
+            "2": "BFS"
+          },
+          "pageTitle": "BFS: exercises and theory",
+          "puzzleCount": 35,
+          "parentTopicId": 41,
+          "contentDetailsId": 84
+        }
+      ],
+      "solution": "import java.util.*;\n\npublic class Solution {\n    static class Node {\n        int x, y;\n        String path;\n        public Node(int x, int y, String path) {\n            this.x = x;\n            this.y = y;\n            this.path = path;\n        }\n    }\n\n    public static void main(String[] args) {\n        Scanner input = new Scanner(System.in);\n        String route = input.nextLine().trim();\n\n        int x = 0, y = 0;\n        List<int[]> positions = new ArrayList<>();\n        positions.add(new int[]{x, y});\n        for (char c : route.toCharArray()) {\n            if (c == 'N') {\n                y++;\n            } else if (c == 'E') {\n                x++;\n            } else if (c == 'W') {\n                x--;\n            } else if (c == 'S') {\n                y--;\n            }\n            positions.add(new int[]{x, y});\n        }\n        int curX = x, curY = y;\n        Set<String> forbidden = new HashSet<>();\n        \n        for (int i = 0; i < route.length(); i++) {\n            int[] pos1 = positions.get(i);\n            int[] pos2 = positions.get(i + 1);\n            char move = route.charAt(i);\n            if (move == 'E' || move == 'S' || move == 'W') {\n                String seg = pos1[0] + \",\" + pos1[1] + \"->\" + pos2[0] + \",\" + pos2[1];\n                forbidden.add(seg);\n            }\n            char reverseMove = ' ';\n            if (move == 'N') {\n                reverseMove = 'S';\n            } else if (move == 'E') {\n                reverseMove = 'W';\n            } else if (move == 'W') {\n                reverseMove = 'E';\n            } else if (move == 'S') {\n                reverseMove = 'N';\n            }\n            if (reverseMove == 'E' || reverseMove == 'S' || reverseMove == 'W') {\n                String seg = pos2[0] + \",\" + pos2[1] + \"->\" + pos1[0] + \",\" + pos1[1];\n                forbidden.add(seg);\n            }\n        }\n\n        int[] dx = {1, 0, -1};\n        int[] dy = {0, -1, 0};\n        char[] moves = {'E', 'S', 'W'};\n\n        List<Node> currentLevel = new ArrayList<>();\n        currentLevel.add(new Node(curX, curY, \"\"));\n        Map<String, Integer> visited = new HashMap<>();\n        visited.put(curX + \",\" + curY, 0);\n\n        List<String> shortestPaths = new ArrayList<>();\n        boolean foundSolution = false;\n\n        while (!currentLevel.isEmpty() && !foundSolution) {\n            List<Node> nextLevel = new ArrayList<>();\n            for (Node node : currentLevel) {\n                if (node.x == 0 && node.y == 0) {\n                    shortestPaths.add(node.path);\n                    foundSolution = true;\n                }\n            }\n            if (foundSolution) break;\n\n            for (Node node : currentLevel) {\n                int currentSteps = node.path.length();\n                for (int i = 0; i < 3; i++) {\n                    int nx = node.x + dx[i];\n                    int ny = node.y + dy[i];\n                    String seg = node.x + \",\" + node.y + \"->\" + nx + \",\" + ny;\n                    if (forbidden.contains(seg)) continue;\n\n                    String key = nx + \",\" + ny;\n                    int newSteps = currentSteps + 1;\n                    if (!visited.containsKey(key) || newSteps < visited.get(key)) {\n                        visited.put(key, newSteps);\n                        nextLevel.add(new Node(nx, ny, node.path + moves[i]));\n                    } else if (visited.get(key) == newSteps) {\n                        nextLevel.add(new Node(nx, ny, node.path + moves[i]));\n                    }\n                }\n            }\n            currentLevel = nextLevel;\n        }\n\n        Collections.sort(shortestPaths);\n        for (String path : shortestPaths) {\n            System.out.println(path);\n        }\n    }\n}\n",
+      "statement": "You are given a [[route]] that consists of directions represented by the characters {{N}} (North), {{W}} (West)  and {{E}} (East). This [[route]] describes how you traveled from your starting point to your current location. Your task is to find all the shortest path(s) to return to your starting point without <<retracing>> any part of your original [[route]] or following the reverse order.\n\nYou can visit the same <<vertex>> multiple times, but you must avoid using any <<segment>> (the direct connection between two vertices) that was part of the original route.\n \nFor example:\n```\n{{4}} ← {{1}} → {{2}}\n↓    ↑   ↓\n{{5}} → {{P}} ← {{3}}\n```\n{{P}}: Starting Point\nOriginal route: {{N}} ({{P}} → {{1}})\nValid return: {{ESW}} ({{1}} → {{2}} → {{3}} → {{P}})\nValid return: {{WSE}} ({{1}} → {{4}} → {{5}} → {{P}})\nInvalid return: {{S}} ({{1}} → {{P}})",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "N",
+          "testOut": "ESW\nWSE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "NNNNNNNNNN",
+          "testOut": "ESSSSSSSSSSW\nWSSSSSSSSSSE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "NEN",
+          "testOut": "ESSWW\nESWSW\nWSWSE\nWWSSE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "NENEN",
+          "testOut": "ESSSWWW\nESSWSWW\nESSWWSW\nESWSSWW\nESWSWSW\nWSWSWSE\nWSWWSSE\nWWSSWSE\nWWSWSSE\nWWWSSSE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "NWN",
+          "testOut": "EESSW\nESESW\nWSESE\nWSSEE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "NWNWN",
+          "testOut": "EEESSSW\nEESESSW\nEESSESW\nESEESSW\nESESESW\nWSESESE\nWSESSEE\nWSSEESE\nWSSESEE\nWSSSEEE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "NE",
+          "testOut": "SW",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "NEEEEEEEEEE",
+          "testOut": "SWWWWWWWWWW",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "NW",
+          "testOut": "SE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "NWWWWWWWWWW",
+          "testOut": "SEEEEEEEEEE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "NENWN",
+          "testOut": "WSSSE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "NENWNENWN",
+          "testOut": "WSSSSSE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 7",
+          "isTest": true,
+          "testIn": "NEENWWN",
+          "testOut": "ESSSW\nWSSSE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "NEEENWWWN",
+          "testOut": "ESSSW\nWSSSE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 8",
+          "isTest": true,
+          "testIn": "NNEENNEENN",
+          "testOut": "WSSSSSSWWW\nWSSSSSWSWW\nWSSSSSWWSW\nWSSSSWSSWW\nWSSSSWSWSW\nWSSSWWSSSW\nWSWSWSSSSW\nWSWWSSSSSW\nWWSSWSSSSW\nWWSWSSSSSW\nWWWSSSSSSW",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "NNENNENN",
+          "testOut": "ESSSSSSWWW\nESSSSSWSWW\nESSSSSWWSW\nESSSSWSSWW\nESSSSWSWSW\nESSSSWWSSW\nESSSWSSSWW\nESSSWSSWSW\nESSSWSWSSW\nESSWSSSSWW\nESSWSSSWSW\nESSWSSWSSW\nWSSWSSWSSE\nWSSWSWSSSE\nWSSWWSSSSE\nWSWSSSWSSE\nWSWSSWSSSE\nWSWSWSSSSE\nWSWWSSSSSE\nWWSSSSWSSE\nWWSSSWSSSE\nWWSSWSSSSE\nWWSWSSSSSE\nWWWSSSSSSE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 9",
+          "isTest": true,
+          "testIn": "NENNWNENWNWN",
+          "testOut": "WSESSSSSSE\nWSSESSSSSE\nWSSSESSSSE\nWSSSSESSSE\nWSSSSSESSE\nWSSSSSSESE\nWSSSSSSSEE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "NEENNWWNEENWNWN",
+          "testOut": "WSSSSSSSE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 10",
+          "isTest": true,
+          "testIn": "NWNNWN",
+          "testOut": "EEESSSSW\nEESESSSW\nEESSESSW\nEESSSESW\nESEESSSW\nESESESSW\nESESSESW\nWSESSESE\nWSESSSEE\nWSSESESE\nWSSESSEE\nWSSSEESE\nWSSSESEE\nWSSSSEEE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "NWNNWNNWWNWN",
+          "testOut": "EESSSSESSESE\nEESSSSESSSEE\nEESSSSSESESE\nEESSSSSESSEE\nEESSSSSSEESE\nEESSSSSSESEE\nEESSSSSSSEEE\nESESSSESSESE\nESESSSESSSEE\nESESSSSESESE\nESESSSSESSEE\nESESSSSSEESE\nESESSSSSESEE\nESESSSSSSEEE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 11",
+          "isTest": true,
+          "testIn": "NENENWNWWW",
+          "testOut": "SESSSE\nSSESSE\nSSSESE\nSSSSEE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "NENENWNWWWWW",
+          "testOut": "SEEESSSE\nSEESESSE\nSEESSESE\nSEESSSEE\nSESEESSE\nSESESESE\nSESESSEE\nSESSEESE\nSESSESEE\nSESSSEEE\nSSEEESSE\nSSEESESE\nSSEESSEE\nSSESEESE\nSSESESEE\nSSESSEEE\nSSSEEESE\nSSSEESEE\nSSSESEEE\nSSSSEEEE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 12",
+          "isTest": true,
+          "testIn": "NNNWWWNNEENEEE",
+          "testOut": "SSSSSSWW\nSSSSSWSW\nSSSSWSSW\nSSSWSSSW\nSSWSSSSW\nSWSSSSSW",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "NNNWWWNNEEENEEEE",
+          "testOut": "SSSSSSWWWW\nSSSSSWSWWW\nSSSSSWWSWW\nSSSSSWWWSW\nSSSSWSSWWW\nSSSSWSWSWW\nSSSSWSWWSW\nSSSSWWSSWW\nSSSSWWSWSW\nSSSSWWWSSW\nSSSWSSSWWW\nSSSWSSWSWW\nSSSWSSWWSW\nSSSWSWSSWW\nSSSWSWSWSW\nSSSWSWWSSW\nSSSWWSSSWW\nSSSWWSSWSW\nSSSWWSWSSW\nSSSWWWSSSW\nSSWSSSSWWW\nSSWSSSWSWW\nSSWSSSWWSW\nSSWSSWSSWW\nSSWSSWSWSW\nSSWSSWWSSW\nSSWSWSSSWW\nSSWSWSSWSW\nSSWSWSWSSW\nSSWSWWSSSW\nSSWWSSSSWW\nSSWWSSSWSW\nSSWWSSWSSW\nSSWWSWSSSW\nSSWWWSSSSW\nSWSSSSSWWW\nSWSSSSWSWW\nSWSSSSWWSW\nSWSSSWSSWW\nSWSSSWSWSW\nSWSSSWWSSW\nSWSSWSSSWW\nSWSSWSSWSW\nSWSSWSWSSW\nSWSSWWSSSW\nSWSWSSSSWW\nSWSWSSSWSW\nSWSWSSWSSW\nSWSWSWSSSW\nSWSWWSSSSW\nSWWSSSSSWW\nSWWSSSSWSW\nSWWSSSWSSW\nSWWSSWSSSW\nSWWSWSSSSW\nSWWWSSSSSW",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 13",
+          "isTest": true,
+          "testIn": "NNNWWWNNEEENEEEENENW",
+          "testOut": "SWSSSSSSSWWW\nSWSSSSSSWSWW\nSWSSSSSSWWSW\nSWSSSSSWSSWW\nSWSSSSSWSWSW\nSWSSSSSWWSSW\nSWSSSSWSSSWW\nSWSSSSWSSWSW\nSWSSSSWSWSSW\nSWSSSSWWSSSW\nSWSSSWSSSSWW\nSWSSSWSSSWSW\nSWSSSWSSWSSW\nSWSSSWSWSSSW\nSWSSSWWSSSSW\nSWSSWSSSSSWW\nSWSSWSSSSWSW\nSWSSWSSSWSSW\nSWSSWSSWSSSW\nSWSSWSWSSSSW\nSWSSWWSSSSSW\nSWWSSSSSSSWW\nSWWSSSSSSWSW\nSWWSSSSSWSSW\nSWWSSSSWSSSW\nSWWSSSWSSSSW\nSWWSSWSSSSSW\nSWWWSSSSSSSW\nWSSSSSSSSWWW\nWSSSSSSSWSWW\nWSSSSSSSWWSW\nWSSSSSSWSSWW\nWSSSSSSWSWSW\nWSSSSSSWWSSW\nWSSSSSWSSSWW\nWSSSSSWSSWSW\nWSSSSSWSWSSW\nWSSSSSWWSSSW\nWSSSSWSSSSWW\nWSSSSWSSSWSW\nWSSSSWSSWSSW\nWSSSSWSWSSSW\nWSSSSWWSSSSW\nWSSSWSSSSSWW\nWSSSWSSSSWSW\nWSSSWSSSWSSW\nWSSSWSSWSSSW\nWSSSWSWSSSSW\nWSSSWWSSSSSW\nWSWSSSSSSSWW\nWSWSSSSSSWSW\nWSWSSSSSWSSW\nWSWSSSSWSSSW\nWSWSSSWSSSSW\nWSWSSWSSSSSW\nWSWWSSSSSSSW\nWWSSSSSSSSWW\nWWSSSSSSSWSW\nWWSSSSSSWSSW\nWWSSSSSWSSSW\nWWSSSSWSSSSW\nWWSSSWSSSSSW\nWWSWSSSSSSSW\nWWWSSSSSSSSW",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "NNNWWWNNEEENEEEENENWNWNW",
+          "testOut": "SSSSSSSSSSWW\nSSSSSSSSSWSW\nSSSSSSSSWSSW\nSSSSSSSWSSSW\nSSSSSSWSSSSW\nSSSSSWSSSSSW\nSSSWSSSSSSSW\nSSWSSSSSSSSW\nSWSSSSSSSSSW\nWSSSSSSSSSSW",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ length of [[route]] ≤ 25",
+      "coverBinaryId": 138529025012514,
+      "stubGenerator": "read route:string(256)\nwrite your answer",
+      "inputDescription": "<<Line 1>>: The input consists of a single string [[route]] where each character in the string represents a direction you traveled ({{N}}, {{W}} or {{E}}). The first direction is always {{N}}.",
+      "solutionLanguage": "Java",
+      "outputDescription": "<<1 or more lines>>: The paths to return to your starting point without <<retracing>> your original [[route]]. The output should be a string which consists of {{E}} (East), {{S}} (South) and {{W}} (West) only.\n\nIf multiple shortest paths exist, the output should display each path on a separate line, sorted alphabetically."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are given a <var>route</var> that consists of directions represented by the characters <const>N</const> (North), <const>W</const> (West)  and <const>E</const> (East). This <var>route</var> describes how you traveled from your starting point to your current location. Your task is to find all the shortest path(s) to return to your starting point without <strong>retracing</strong> any part of your original <var>route</var> or following the reverse order.<br><br>You can visit the same <strong>vertex</strong> multiple times, but you must avoid using any <strong>segment</strong> (the direct connection between two vertices) that was part of the original route.<br> <br>For example:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br><const>4</const> &larr; <const>1</const> &rarr; <const>2</const><br>&darr;    &uarr;   &darr;<br><const>5</const> &rarr; <const>P</const> &larr; <const>3</const><br></pre><pre style=\"font-family: monospace\"></pre><br><const>P</const>: Starting Point<br>Original route: <const>N</const> (<const>P</const> &rarr; <const>1</const>)<br>Valid return: <const>ESW</const> (<const>1</const> &rarr; <const>2</const> &rarr; <const>3</const> &rarr; <const>P</const>)<br>Valid return: <const>WSE</const> (<const>1</const> &rarr; <const>4</const> &rarr; <const>5</const> &rarr; <const>P</const>)<br>Invalid return: <const>S</const> (<const>1</const> &rarr; <const>P</const>)</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: The input consists of a single string <var>route</var> where each character in the string represents a direction you traveled (<const>N</const>, <const>W</const> or <const>E</const>). The first direction is always <const>N</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>1 or more lines</strong>: The paths to return to your starting point without <strong>retracing</strong> your original <var>route</var>. The output should be a string which consists of <const>E</const> (East), <const>S</const> (South) and <const>W</const> (West) only.<br><br>If multiple shortest paths exist, the output should display each path on a separate line, sorted alphabetically.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; length of <var>route</var> &le; 25</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">N</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">ESW\nWSE</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 19239716007,
+  "avatar": 137410581888381,
+  "commentCount": 56,
+  "upVotes": 32,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 1161032,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1742105137001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1742106237213,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1744700737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1744774898519,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1747368337001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1747374865267,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1749967537009,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1749981575590,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1751488676376,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

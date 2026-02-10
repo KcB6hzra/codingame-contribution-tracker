@@ -1,0 +1,295 @@
+{
+  "id": 43939,
+  "activeVersion": 51,
+  "score": 23,
+  "votableId": 27424980,
+  "codingamerId": 4806550,
+  "views": 460,
+  "commentableId": 27297853,
+  "title": "Library dependencies",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Rafarafa",
+  "publicHandle": "439391d1962cacc9a04e76f932b8fc7f43816",
+  "codingamerHandle": "68977779383d7e4ea558c7a5446487f40556084",
+  "lastVersion": {
+    "version": 51,
+    "autocloseTime": 1684338074423,
+    "data": {
+      "title": "Library dependencies",
+      "topics": [
+        {
+          "id": 116,
+          "handle": "cycle-detection",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Cycle detection",
+            "2": "Cycle detection"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        },
+        {
+          "id": 171,
+          "handle": "dependency-graph",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Dependency Graph",
+            "2": "Dependency Graph"
+          },
+          "puzzleCount": 1,
+          "parentTopicId": 93
+        },
+        {
+          "labelMap": {
+            "2": "Kahn’s algorithm"
+          }
+        }
+      ],
+      "solution": "import heapq\n\n\ndef successful_compile(dependencies):\n    compiled = set()\n    # We use the insertion order of dependencies\n    for library, deps in dependencies.items():\n        for d in deps:\n            if d not in compiled:\n                print(f\"Import error: tried to import {library} but {d} is required.\")\n                return False\n        compiled.add(library)\n    print(\"Compiled successfully!\")\n    return True\n\n\ndef kahn(dependencies):\n    ''' \n    Checks if there is a cycle and also builds the topological sorting.\n\n    I intended to do this but it ended up been easier working backwards:\n    https://en.wikipedia.org/wiki/Topological_sorting\n\n    Here we work with a heap starting with the independent libraries.\n    Then we add the libraries that become independent after we imported\n    the previous independent libraries (respecting lexicographical order)\n\n    Working with a heap is not needed and you could pass every test \n    sorting a whole array at each iteration.\n    '''\n    D = dict(dependencies)\n    h = [n for n in D if not D[n]]\n    h.sort()\n    record = []\n\n    while h:\n        library = heapq.heappop(h)\n        record.append(library)\n        for other, deps in D.items():\n            if library in deps:\n                deps.remove(library)\n            if not deps and other not in record and other not in h:\n                heapq.heappush(h, other)\n\n    if len(record) != len(dependencies):\n        print(\"Fatal error: interdependencies.\")\n    else:\n        print(\"Suggest to change import order:\")\n        for mod in record:\n            print(f\"import {mod}\")\n\n\ndef main():\n    dependencies = dict()\n    n_imp = int(input())\n    for _ in range(n_imp):\n        library = input().replace(\"import \", \"\")\n        dependencies[library] = list()\n    n_dep = int(input())\n    for _ in range(n_dep):\n        library, _deps = input().split(\" requires \")\n        dependencies[library] = _deps.split(\", \")\n\n    if not successful_compile(dependencies):\n        kahn(dependencies)\n\n\nmain()\n",
+      "statement": "You are given [[n_imp]] lines, each representing a library import in python style. Then, [[n_dep]] lines for the dependencies between libraries. Then, step by step you have to:\n\n<<(1)>> Assess if the code will run successfully as it is. If so, print {{Compiled successfully!}} and exit.\n\n<<(2)>> If the code doesn't run successfully, find where the first<<*>> error is located, print the line {{Import error: tried to import [[library1]] but [[library2]] is required.}}, and finally:\n\n<<(2.1)>> If it can be fixed by reordering the imports, find the only order such that at any time, among the possible importable libraries, the smallest (lexicographically) module is chosen.\nThe format will be, the line: {{Suggest to change import order:}}, and then, for each library to import in the suggested order, the line {{import }}[[library]] (similar to the input imports).\n\n<<(2.2)>> If the error is not salvageable return the message {{Fatal error: interdependencies.}}.\n\n<<*>> The imaginary compiler will import the libraries in the order that they are given by the puzzle until it finds one that requires a library that was not previously imported.",
+      "testCases": [
+        {
+          "title": "1. Successful compilation",
+          "isTest": true,
+          "testIn": "3\nimport A\nimport B\nimport C\n2\nB requires A\nC requires B",
+          "testOut": "Compiled successfully!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "1. Successful compilation val",
+          "isTest": false,
+          "testIn": "4\nimport A\nimport D\nimport B\nimport C\n3\nB requires A\nC requires B\nD requires A",
+          "testOut": "Compiled successfully!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "2. Fatal error",
+          "isTest": true,
+          "testIn": "3\nimport A\nimport B\nimport C\n3\nB requires A\nC requires B\nA requires C",
+          "testOut": "Import error: tried to import A but C is required.\nFatal error: interdependencies.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "2. Fatal error val",
+          "isTest": false,
+          "testIn": "4\nimport A\nimport B\nimport C\nimport D\n4\nB requires A\nC requires B\nD requires C\nA requires D",
+          "testOut": "Import error: tried to import A but D is required.\nFatal error: interdependencies.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3. Reordering",
+          "isTest": true,
+          "testIn": "4\nimport A\nimport C\nimport B\nimport D\n2\nC requires B, A\nD requires B",
+          "testOut": "Import error: tried to import C but B is required.\nSuggest to change import order:\nimport A\nimport B\nimport C\nimport D",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3. Reordering val",
+          "isTest": false,
+          "testIn": "3\nimport A\nimport C\nimport B\n1\nC requires B, A",
+          "testOut": "Import error: tried to import C but B is required.\nSuggest to change import order:\nimport A\nimport B\nimport C",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4. Reordering logic",
+          "isTest": true,
+          "testIn": "6\nimport F\nimport A\nimport B\nimport C\nimport E\nimport D\n2\nB requires E\nC requires A",
+          "testOut": "Import error: tried to import B but E is required.\nSuggest to change import order:\nimport A\nimport C\nimport D\nimport E\nimport B\nimport F",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4. Reordering logic val",
+          "isTest": false,
+          "testIn": "6\nimport C\nimport E\nimport A\nimport D\nimport F\nimport B\n3\nB requires E\nC requires A, D\nF requires B, C",
+          "testOut": "Import error: tried to import C but A is required.\nSuggest to change import order:\nimport A\nimport D\nimport C\nimport E\nimport B\nimport F",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5. Not lexicographic order but no error",
+          "isTest": true,
+          "testIn": "3\nimport C\nimport A\nimport B\n1\nB requires A",
+          "testOut": "Compiled successfully!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5. Not lexicographic order but no error val",
+          "isTest": false,
+          "testIn": "4\nimport C\nimport A\nimport B\nimport D\n2\nB requires A\nD requires B",
+          "testOut": "Compiled successfully!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6. Real fake test 15 libraries 1",
+          "isTest": true,
+          "testIn": "15\nimport requests\nimport itertools\nimport random\nimport functools\nimport inspect\nimport sys\nimport collections\nimport builtins\nimport pandas\nimport unittest\nimport contextlib\nimport os\nimport time\nimport math\nimport numpy\n10\nmath requires requests\ninspect requires contextlib, os\ntime requires collections, sys\ncontextlib requires sys, os\nnumpy requires os, requests, itertools\npandas requires unittest\nitertools requires random, inspect, contextlib\nfunctools requires inspect\nbuiltins requires math\nunittest requires contextlib",
+          "testOut": "Import error: tried to import itertools but random is required.\nSuggest to change import order:\nimport collections\nimport os\nimport random\nimport requests\nimport math\nimport builtins\nimport sys\nimport contextlib\nimport inspect\nimport functools\nimport itertools\nimport numpy\nimport time\nimport unittest\nimport pandas",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "6. Real fake test 15 libraries 1 val",
+          "isTest": false,
+          "testIn": "15\nimport sys\nimport inspect\nimport requests\nimport math\nimport itertools\nimport random\nimport contextlib\nimport unittest\nimport collections\nimport builtins\nimport pandas\nimport os\nimport numpy\nimport time\nimport functools\n7\nsys requires unittest\nmath requires os\ntime requires contextlib\nrandom requires os\nnumpy requires contextlib\nitertools requires sys\nrequests requires math",
+          "testOut": "Import error: tried to import sys but unittest is required.\nSuggest to change import order:\nimport builtins\nimport collections\nimport contextlib\nimport functools\nimport inspect\nimport numpy\nimport os\nimport math\nimport pandas\nimport random\nimport requests\nimport time\nimport unittest\nimport sys\nimport itertools",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "7. Real fake test 15 libraries 2 (fatal)",
+          "isTest": true,
+          "testIn": "15\nimport sys\nimport pandas\nimport os\nimport unittest\nimport numpy\nimport collections\nimport time\nimport inspect\nimport requests\nimport functools\nimport math\nimport builtins\nimport random\nimport contextlib\nimport itertools\n9\nmath requires functools\ninspect requires numpy\ntime requires requests\nrandom requires itertools\nfunctools requires requests\ncollections requires os\nbuiltins requires functools\nrequests requires time\nunittest requires numpy",
+          "testOut": "Import error: tried to import unittest but numpy is required.\nFatal error: interdependencies.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "7. Real fake test 15 libraries 2 (fatal) val",
+          "isTest": false,
+          "testIn": "15\nimport builtins\nimport numpy\nimport os\nimport contextlib\nimport inspect\nimport random\nimport requests\nimport math\nimport unittest\nimport time\nimport collections\nimport functools\nimport itertools\nimport pandas\nimport sys\n7\nsys requires random\nnumpy requires requests\npandas requires unittest\nitertools requires builtins\nbuiltins requires sys\nrequests requires sys\nunittest requires pandas",
+          "testOut": "Import error: tried to import builtins but sys is required.\nFatal error: interdependencies.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "8. Real fake test 15 libraries 3 (compiles)",
+          "isTest": true,
+          "testIn": "15\nimport collections\nimport os\nimport random\nimport requests\nimport math\nimport builtins\nimport sys\nimport contextlib\nimport inspect\nimport functools\nimport itertools\nimport numpy\nimport time\nimport unittest\nimport pandas\n10\nmath requires requests\ninspect requires contextlib, os\ntime requires collections, sys\ncontextlib requires sys, os\nnumpy requires os, requests, itertools\npandas requires unittest\nitertools requires random, inspect, contextlib\nfunctools requires inspect\nbuiltins requires math\nunittest requires contextlib",
+          "testOut": "Compiled successfully!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "8. Real fake test 15 libraries 3 (compiles) val",
+          "isTest": false,
+          "testIn": "15\nimport builtins\nimport collections\nimport contextlib\nimport functools\nimport inspect\nimport numpy\nimport os\nimport math\nimport pandas\nimport random\nimport requests\nimport time\nimport unittest\nimport sys\nimport itertools\n7\nsys requires unittest\nmath requires os\ntime requires contextlib\nrandom requires os\nnumpy requires contextlib\nitertools requires sys\nrequests requires math",
+          "testOut": "Compiled successfully!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "9. 40 libraries",
+          "isTest": true,
+          "testIn": "40\nimport T\nimport S\nimport W\nimport E\nimport L\nimport BF\nimport I\nimport BB\nimport O\nimport U\nimport M\nimport BA\nimport BJ\nimport BH\nimport K\nimport BK\nimport N\nimport C\nimport BN\nimport D\nimport BE\nimport BL\nimport P\nimport Z\nimport R\nimport J\nimport A\nimport H\nimport F\nimport BC\nimport V\nimport Q\nimport Y\nimport BM\nimport B\nimport BD\nimport BI\nimport G\nimport BG\nimport X\n24\nA requires N, Q\nC requires W, Y\nD requires BN, H, BE\nE requires BE, L, BF\nF requires L\nG requires BG, A\nH requires BC, Y\nI requires F, V\nJ requires BJ, BH, G\nK requires X, BN, A\nM requires BB, BA\nN requires BA\nO requires J\nQ requires BH\nV requires BK, L\nW requires BA, X\nX requires P, BH\nY requires U, J, G\nZ requires P\nBB requires Z, D, BF\nBD requires P, B\nBI requires X, I\nBL requires A, G, BE\nBM requires N",
+          "testOut": "Import error: tried to import W but BA is required.\nSuggest to change import order:\nimport B\nimport BA\nimport BC\nimport BE\nimport BF\nimport BG\nimport BH\nimport BJ\nimport BK\nimport BN\nimport L\nimport E\nimport F\nimport N\nimport BM\nimport P\nimport BD\nimport Q\nimport A\nimport G\nimport BL\nimport J\nimport O\nimport R\nimport S\nimport T\nimport U\nimport V\nimport I\nimport X\nimport BI\nimport K\nimport W\nimport Y\nimport C\nimport H\nimport D\nimport Z\nimport BB\nimport M",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "9. 40 libraries val",
+          "isTest": false,
+          "testIn": "40\nimport X\nimport BG\nimport BD\nimport Y\nimport T\nimport K\nimport BH\nimport J\nimport Q\nimport E\nimport V\nimport Z\nimport N\nimport B\nimport BM\nimport BC\nimport W\nimport BA\nimport D\nimport BL\nimport A\nimport G\nimport BK\nimport BI\nimport BF\nimport BE\nimport F\nimport L\nimport BB\nimport BN\nimport M\nimport I\nimport P\nimport C\nimport R\nimport H\nimport O\nimport BJ\nimport S\nimport U\n31\nA requires BC, BH\nB requires L, BD, X\nC requires BI\nD requires V, Q, K\nE requires Y\nF requires BL, L\nG requires K\nH requires P\nI requires L\nK requires W, I, E\nM requires BI, U\nO requires M, Y\nQ requires BE, BJ, BL\nT requires H, BI\nU requires BI, I\nX requires BN, O\nY requires BH\nZ requires A, D\nBA requires L\nBB requires BC, B, Y\nBC requires D, X\nBD requires X, D\nBF requires L\nBG requires O, J\nBH requires H\nBI requires J, H, BF\nBJ requires M, E\nBK requires BC, BM\nBL requires U\nBM requires O\nBN requires U, F",
+          "testOut": "Import error: tried to import X but BN is required.\nSuggest to change import order:\nimport BE\nimport J\nimport L\nimport BA\nimport BF\nimport I\nimport N\nimport P\nimport H\nimport BH\nimport BI\nimport C\nimport R\nimport S\nimport T\nimport U\nimport BL\nimport F\nimport BN\nimport M\nimport V\nimport W\nimport Y\nimport E\nimport BJ\nimport K\nimport G\nimport O\nimport BG\nimport BM\nimport Q\nimport D\nimport X\nimport BC\nimport A\nimport BD\nimport B\nimport BB\nimport BK\nimport Z",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "10. Max size in codingame",
+          "isTest": true,
+          "testIn": "93\nimport BV\nimport BE\nimport Q\nimport X\nimport CW\nimport DF\nimport BJ\nimport H\nimport CS\nimport BS\nimport BG\nimport BW\nimport D\nimport CF\nimport U\nimport DD\nimport CC\nimport BO\nimport BR\nimport BY\nimport CJ\nimport F\nimport DH\nimport R\nimport CT\nimport BH\nimport CX\nimport CY\nimport BM\nimport DC\nimport DM\nimport BU\nimport CN\nimport DA\nimport M\nimport O\nimport BF\nimport CU\nimport CQ\nimport CE\nimport BK\nimport DK\nimport V\nimport CA\nimport BX\nimport CH\nimport W\nimport CI\nimport C\nimport CZ\nimport K\nimport CV\nimport CK\nimport S\nimport BI\nimport CR\nimport BA\nimport J\nimport DJ\nimport L\nimport DB\nimport BP\nimport N\nimport CD\nimport BT\nimport CM\nimport BQ\nimport I\nimport Z\nimport E\nimport DO\nimport B\nimport CL\nimport DL\nimport G\nimport P\nimport BB\nimport DI\nimport BN\nimport CG\nimport DE\nimport Y\nimport BD\nimport DG\nimport CP\nimport T\nimport DN\nimport CB\nimport BC\nimport BZ\nimport BL\nimport A\nimport CO\n66\nA requires BW, Z, CA\nB requires BD\nC requires DD, BM, CL\nD requires CV, DJ, BD\nG requires BO\nH requires B\nI requires DC, F, BH\nJ requires DI, A\nK requires DB, E, CY\nL requires CM\nM requires DD, BT, DL\nO requires DM, Q\nP requires L, BD, BT\nQ requires L, CU, CO\nR requires BI, CW\nS requires DK, BN\nT requires BI, F, CC\nU requires BH, T, BZ\nV requires DI, Q\nW requires BT, CT, DB\nX requires CD, BO, BM\nZ requires BY, CS\nBA requires BB\nBB requires CH, L\nBC requires CO, BV\nBG requires CI, CA\nBH requires DG, BB\nBI requires BJ\nBJ requires CK, BH, CQ\nBK requires BW, CI, DL\nBL requires Y, DE\nBN requires DF, CI, Y\nBO requires CE\nBP requires CI\nBQ requires CA, CT\nBS requires CU\nBU requires BR, Z, CD\nCA requires E, BZ\nCB requires BD, E, Q\nCC requires CM\nCD requires BH, A\nCF requires DO, BJ\nCG requires O, BX, BO\nCH requires J\nCL requires BA, Z, D\nCM requires DD, DE, CJ\nCN requires BH\nCO requires BR\nCQ requires O\nCR requires BV, DE, DA\nCT requires Z\nCU requires BV\nCV requires DM\nCW requires CA\nCY requires DI, BX, Z\nCZ requires DO, CU, F\nDB requires BU, CZ, R\nDD requires BZ\nDE requires N, CW\nDF requires M, BF\nDG requires CU, DK, DM\nDH requires DN, BK\nDI requires Z\nDJ requires CF, W\nDK requires F, CE, BE\nDO requires CQ",
+          "testOut": "Import error: tried to import Q but L is required.\nSuggest to change import order:\nimport BD\nimport B\nimport BE\nimport BF\nimport BM\nimport BR\nimport BT\nimport BV\nimport BW\nimport BX\nimport BY\nimport BZ\nimport CE\nimport BO\nimport CI\nimport BP\nimport CJ\nimport CK\nimport CO\nimport BC\nimport CP\nimport CS\nimport CU\nimport BS\nimport CX\nimport DA\nimport DC\nimport DD\nimport DL\nimport BK\nimport DM\nimport CV\nimport DN\nimport DH\nimport E\nimport CA\nimport BG\nimport CW\nimport F\nimport DK\nimport DG\nimport G\nimport H\nimport M\nimport DF\nimport N\nimport DE\nimport CM\nimport CC\nimport CR\nimport L\nimport P\nimport Q\nimport CB\nimport O\nimport CG\nimport CQ\nimport DO\nimport CZ\nimport Y\nimport BL\nimport BN\nimport S\nimport Z\nimport A\nimport CT\nimport BQ\nimport DI\nimport CY\nimport J\nimport CH\nimport BB\nimport BA\nimport BH\nimport BJ\nimport BI\nimport CD\nimport BU\nimport CF\nimport CN\nimport I\nimport R\nimport DB\nimport K\nimport T\nimport U\nimport V\nimport W\nimport DJ\nimport D\nimport CL\nimport C\nimport X",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "10. Max size in codingame val",
+          "isTest": false,
+          "testIn": "93\nimport G\nimport DL\nimport BN\nimport H\nimport Z\nimport DM\nimport D\nimport BO\nimport S\nimport BX\nimport BK\nimport CS\nimport J\nimport DG\nimport DF\nimport BA\nimport CZ\nimport O\nimport BQ\nimport C\nimport BM\nimport BW\nimport P\nimport CR\nimport DC\nimport K\nimport CV\nimport CH\nimport N\nimport DA\nimport CC\nimport M\nimport BY\nimport R\nimport BU\nimport DH\nimport CP\nimport E\nimport BD\nimport CN\nimport BS\nimport CF\nimport CW\nimport Q\nimport DI\nimport BF\nimport DJ\nimport CD\nimport BG\nimport CE\nimport BP\nimport CM\nimport U\nimport BL\nimport CL\nimport BE\nimport DD\nimport CX\nimport CT\nimport CY\nimport BV\nimport CJ\nimport CI\nimport BJ\nimport Y\nimport BH\nimport X\nimport L\nimport CO\nimport DB\nimport B\nimport BZ\nimport DO\nimport BC\nimport T\nimport I\nimport DN\nimport CG\nimport CA\nimport BR\nimport BB\nimport CU\nimport A\nimport CK\nimport CQ\nimport BI\nimport V\nimport DE\nimport DK\nimport BT\nimport W\nimport CB\nimport F\n71\nA requires CN\nB requires DG, CT\nE requires BX, J\nF requires BT\nG requires L, CS, BE\nH requires CV, CF, DJ\nI requires BE\nM requires D, BX, A\nO requires DC\nP requires DM, DI\nQ requires DI, BH, O\nR requires DA\nU requires BK\nV requires C\nW requires CY\nX requires BM, BW, O\nY requires CZ, CY, J\nZ requires BO, CU\nBA requires CS, BC\nBB requires BU, DO\nBD requires CQ\nBF requires K, X, Z\nBG requires BH, F, BP\nBI requires DL, DM, X\nBJ requires CB, O, CP\nBK requires CJ, DL, CN\nBM requires DC\nBN requires DD\nBO requires BX, CN, BD\nBQ requires CP, DF, CK\nBR requires DD\nBT requires DO, U, Y\nBU requires CI, BS\nBV requires DM\nBX requires D, CH, BS\nBY requires DG\nBZ requires CB\nCA requires W\nCC requires CD, Y\nCD requires CF\nCE requires CX\nCF requires DD, CU\nCG requires BX\nCH requires CB, DJ\nCI requires X, BS\nCL requires BL, BU\nCM requires DC, BD, BN\nCN requires DE\nCO requires CY, BN, BW\nCP requires CY, BZ\nCR requires CN, Q, R\nCS requires M, DB, DC\nCT requires BF\nCU requires A, S\nCV requires G, BK\nCW requires CA\nCX requires K, BD\nCZ requires CG\nDA requires CL, BF, CB\nDC requires CG\nDD requires DL, BG, BU\nDE requires CA, S\nDF requires N\nDG requires BC, BL\nDH requires L\nDI requires D, BL, CL\nDJ requires CK, I\nDK requires DB, CV, H\nDL requires W, BU\nDM requires CF\nDO requires C",
+          "testOut": "Import error: tried to import G but L is required.\nSuggest to change import order:\nimport BC\nimport BE\nimport BH\nimport BL\nimport BP\nimport BS\nimport BW\nimport C\nimport CB\nimport BZ\nimport CJ\nimport CK\nimport CQ\nimport BD\nimport CY\nimport CP\nimport D\nimport DB\nimport DG\nimport BY\nimport DN\nimport DO\nimport I\nimport DJ\nimport CH\nimport BX\nimport CG\nimport CZ\nimport DC\nimport BM\nimport J\nimport E\nimport K\nimport CX\nimport CE\nimport L\nimport DH\nimport N\nimport DF\nimport BQ\nimport O\nimport BJ\nimport S\nimport T\nimport V\nimport W\nimport CA\nimport CW\nimport DE\nimport CN\nimport A\nimport BO\nimport CU\nimport M\nimport CS\nimport BA\nimport G\nimport X\nimport CI\nimport BU\nimport BB\nimport CL\nimport DI\nimport DL\nimport BK\nimport CV\nimport Q\nimport U\nimport Y\nimport BT\nimport F\nimport BG\nimport DD\nimport BN\nimport BR\nimport CF\nimport CD\nimport CC\nimport CM\nimport CO\nimport DM\nimport BI\nimport BV\nimport H\nimport DK\nimport P\nimport Z\nimport BF\nimport CT\nimport B\nimport DA\nimport R\nimport CR",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "11. Extra 1",
+          "isTest": true,
+          "testIn": "10\nimport J\nimport H\nimport D\nimport A\nimport I\nimport C\nimport B\nimport F\nimport G\nimport E\n5\nA requires F, J, E\nD requires H\nE requires J, F\nG requires A, I, H\nJ requires H, G",
+          "testOut": "Import error: tried to import J but H is required.\nFatal error: interdependencies.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "11. Extra 1 val",
+          "isTest": false,
+          "testIn": "10\nimport JJ\nimport HH\nimport DD\nimport AA\nimport II\nimport CC\nimport BB\nimport FF\nimport GG\nimport EE\n5\nAA requires FF, JJ, EE\nDD requires HH\nEE requires JJ, FF\nGG requires AA, II, HH\nJJ requires HH, GG",
+          "testOut": "Import error: tried to import JJ but HH is required.\nFatal error: interdependencies.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "12. Extra 2",
+          "isTest": true,
+          "testIn": "10\nimport I\nimport A\nimport D\nimport C\nimport G\nimport H\nimport B\nimport F\nimport E\nimport J\n9\nA requires H\nB requires G\nC requires D\nD requires J\nE requires I, G\nG requires I, F\nH requires J\nI requires F\nJ requires I",
+          "testOut": "Import error: tried to import I but F is required.\nSuggest to change import order:\nimport F\nimport I\nimport G\nimport B\nimport E\nimport J\nimport D\nimport C\nimport H\nimport A",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "12. Extra 2 val",
+          "isTest": false,
+          "testIn": "10\nimport II\nimport AA\nimport DD\nimport CC\nimport GG\nimport HH\nimport BB\nimport FF\nimport EE\nimport JJ\n9\nAA requires HH\nBB requires GG\nCC requires DD\nDD requires JJ\nEE requires II, GG\nGG requires II, FF\nHH requires JJ\nII requires FF\nJJ requires II",
+          "testOut": "Import error: tried to import II but FF is required.\nSuggest to change import order:\nimport FF\nimport II\nimport GG\nimport BB\nimport EE\nimport JJ\nimport DD\nimport CC\nimport HH\nimport AA",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "{{2}} ≤ [[n_imp]] ≤ {{100}}.\n{{1}} ≤ [[n_dep]] ≤ {{100}}.\n{{1}} ≤ Total amount of dependencies ≤ {{200}}.",
+      "coverBinaryId": 102789544367659,
+      "stubGenerator": "read nImp:int\nloop nImp read import:string(1024)\nread nDep:int\nloop nDep read dependency:string(1024)\n\nwrite answer",
+      "inputDescription": "<<Line 1:>> An integer [[n_imp]] for the number of libraries to import.\n<<Next [[n_imp]] lines:>> A python-like declaration for a library import.\n<<Next line:>>  An integer [[n_dep]] for the number of dependency relation between libraries.\n<<Next [[n_dep]] lines:>> A string representing a dependency relation between libraries.\n\nA dependency relation is given in the format:\n[[library]] {{requires}} [[library1]] [, [[library2]], [[library3]] ... ]",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The compilation log as defined in the statement, one log message per line."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are given <var>n_imp</var> lines, each representing a library import in python style. Then, <var>n_dep</var> lines for the dependencies between libraries. Then, step by step you have to:<br><br><strong>(1)</strong> Assess if the code will run successfully as it is. If so, print <const>Compiled successfully!</const> and exit.<br><br><strong>(2)</strong> If the code doesn't run successfully, find where the first<strong>*</strong> error is located, print the line <const>Import error: tried to import <var>library1</var> but <var>library2</var> is required.</const>, and finally:<br><br><strong>(2.1)</strong> If it can be fixed by reordering the imports, find the only order such that at any time, among the possible importable libraries, the smallest (lexicographically) module is chosen.<br>The format will be, the line: <const>Suggest to change import order:</const>, and then, for each library to import in the suggested order, the line <const>import </const><var>library</var> (similar to the input imports).<br><br><strong>(2.2)</strong> If the error is not salvageable return the message <const>Fatal error: interdependencies.</const>.<br><br><strong>*</strong> The imaginary compiler will import the libraries in the order that they are given by the puzzle until it finds one that requires a library that was not previously imported.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>n_imp</var> for the number of libraries to import.<br><strong>Next <var>n_imp</var> lines:</strong> A python-like declaration for a library import.<br><strong>Next line:</strong>  An integer <var>n_dep</var> for the number of dependency relation between libraries.<br><strong>Next <var>n_dep</var> lines:</strong> A string representing a dependency relation between libraries.<br><br>A dependency relation is given in the format:<br><var>library</var> <const>requires</const> <var>library1</var> [, <var>library2</var>, <var>library3</var> ... ]</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The compilation log as defined in the statement, one log message per line.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><const>2</const> &le; <var>n_imp</var> &le; <const>100</const>.<br><const>1</const> &le; <var>n_dep</var> &le; <const>100</const>.<br><const>1</const> &le; Total amount of dependencies &le; <const>200</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\nimport A\nimport B\nimport C\n2\nB requires A\nC requires B</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Compiled successfully!</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 88005463612,
+  "avatar": 80946308795008,
+  "commentCount": 21,
+  "upVotes": 24,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 792181,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1676984737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1681745779287,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1682723881199,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

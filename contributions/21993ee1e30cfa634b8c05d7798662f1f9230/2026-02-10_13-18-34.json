@@ -1,0 +1,231 @@
+{
+  "id": 21993,
+  "activeVersion": 54,
+  "score": 19,
+  "votableId": 24200609,
+  "codingamerId": 4471038,
+  "views": 484,
+  "commentableId": 24083825,
+  "title": "Maze for the Champions",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "nguyen.lam",
+  "publicHandle": "21993ee1e30cfa634b8c05d7798662f1f9230",
+  "codingamerHandle": "a9fd64833d93b2840c44b26d9d84493e8301744",
+  "lastVersion": {
+    "version": 54,
+    "autocloseTime": 1675801825241,
+    "data": {
+      "title": "Maze for the Champions",
+      "topics": [
+        {
+          "id": 186,
+          "handle": "maze",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Maze",
+            "2": "Maze"
+          },
+          "puzzleCount": 10,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import java.io.File;\nimport java.io.FileNotFoundException;\nimport java.util.*;\nimport java.util.function.Predicate;\nimport java.util.stream.Collectors;\n\nclass Log{\n\tstatic void log(String s) {\t\t\n\t//\tSystem.err.println(s);\t\t\n\t}\n\tstatic void input(String s) {\t\t\n\t//\tSystem.err.println(s);\t\n\t}\n}\n\n\nclass Board implements Cloneable{\n\tString[][] board;\n\tint width;\n\tint height;\t\n\t\n\tpublic Board() {super();}\n\n\tpublic Board(String[][] board, int width,int height) {\n\t\tsuper();\n\t\tthis.board = board;\n\t\tthis.width = width;\n\t\tthis.height = height;\n\t}\t\n\n\tpublic void write(ArrayList<Point> points) {\n\t\tfor(Point p : points ) {\n\t\t\tboard[p.x][p.y]= p.motif; \n\t\t}\n\t}\n\tpublic void display() {\n\t\tfor(int x=0;x<height;x++) {\n\t\t\tString ligne = \"\";\n\t\t\tfor(int y=0;y<width;y++) {\n\t\t\t\tligne += board[y][x];\n\t\t\t}\t\t\t\n\t\t\tSystem.out.print(ligne+\"\\n\");\n\t\t}\n\t}\n\n\tpublic Point getEntryPoint() {\t\t\n\t\tPoint returnVal = null;\n\t\tfor(int x=0;x<width;x++) {\n\t\t\tif(board[x][0].equals(\"v\"))return new Point(x,0,\"v\");\t\t\t\n\t\t}\n\t\tfor(int x=0;x<width;x++) {\n\t\t\tif(board[x][height-1].equals(\"^\"))return new Point(x,height-1,\"^\");\t\t\t\n\t\t}\n\t\tfor(int y=0;y<height;y++) {\n\t\t\tif(board[0][y].equals(\">\"))return new Point(0,y,\">\");\n\t\t}\n\t\tfor(int y=0;y<height;y++) {\n\t\t\tif(board[width-1][y].equals(\"<\"))return new Point(width-1,y,\"<\");\t\t\t\n\t\t}\n\t\treturn returnVal;\n\t}\n\t\n\tpublic Point getEndPoint() {\n\t\tPoint returnVal = null;\n\t\tfor(int x=0;x<width;x++) {\n\t\t\tif(board[x][0].equals(\"^\"))return new Point(x,0,\"^\");\t\t\t\n\t\t}\n\t\tfor(int x=0;x<width;x++) {\n\t\t\tif(board[x][height-1].equals(\"v\"))return new Point(x,height-1,\"v\");\t\t\t\n\t\t}\n\t\tfor(int y=0;y<height;y++) {\n\t\t\tif(board[0][y].equals(\"<\"))return new Point(0,y,\"<\");\t\t\t\n\t\t}\n\t\tfor(int y=0;y<height;y++) {\n\t\t\tif(board[width-1][y].equals(\">\"))return new Point(width-1,y,\">\");\t\t\t\n\t\t}\n\t\treturn returnVal;\n\t}\n\tpublic Point getPoint(String s) {\n\t\tPoint returnVal = null;\n\t\tfor(int x=0;x<width;x++) {\t\t\t\n\t\t\tfor(int y=0;y<height;y++) {\n\t\t\t\tif(board[x][y].equals(s)) return new Point(x,y,s);\n\t\t\t}\t\t\t\n\t\t\t\n\t\t}\n\t\treturn returnVal;\n\t}\n\n}\nclass Point{\n\tint x,y;\n\tString motif;\n\t//String cell = \".\";\n\n\tpublic Point(int x, int y, String motif) {\n\t\tsuper();\n\t\tthis.x = x;\n\t\tthis.y = y;\n\t\tthis.motif = motif;\n\t}\n\n\t@Override\n\tpublic String toString() {\n\t\treturn \"Point [\" + x + \",\" + y + \"],motif=\" + motif + \"]\";\n\t}\t\n\t\n}\nclass Node {\n    int x, y, dist; \n    Node(int x, int y, int dist)    {\n        this.x = x;\n        this.y = y;\n        this.dist = dist;\n    }\n\t@Override\n\tpublic String toString() {\n\t\treturn \"Node [x=\" + x + \", y=\" + y + \", dist=\" + dist + \"]\";\n\t}\n    \n}\n\nclass Maze{\n    private static final int[] rowRegular = { -1, 0, 0, 1 };\n    private static final int[] colRegular = { 0, -1, 1, 0 };\n \n    private static final int[] rowElf = { -1, 0, 0, 1, -1, 1, -1, 1 };\n    private static final int[] colElf = { 0, -1, 1, 0, -1, 1, 1, -1 };\n\n    private static boolean isValid(String[][] mat, boolean[][] visited, int row, int col) {\n        return (row >= 0) && (row < mat.length) && (col >= 0) && (col < mat[0].length)&& mat[row][col].equals(\".\") && !visited[row][col];\n    }\n\n    private static boolean isWall(String[][] mat, boolean[][] visited, int row, int col) {\n        return (row >= 0) && (row < mat.length) && (col >= 0) && (col < mat[0].length)&& mat[row][col].equals(\"#\") && !visited[row][col];\n    }\n    \n    public static ArrayList<Point> findShortestPathLengthElf(String[][] mat, Point start, Point end) {\n    \treturn findShortestPathLength(rowElf.length, rowElf, colElf, mat, start, end);\n    }\n    \n    public static ArrayList<Point> findShortestPathLengthWarrior(String[][] mat, Point start, Point end) {\n    \treturn findShortestPathLength(rowRegular.length, rowRegular, colRegular, mat, start, end);\n    }\n\n    public static ArrayList<Point> findShortestPathLengthMage(ArrayList<Point> temp){\n    \tArrayList<Point> returnVal = new ArrayList();\n    \tString motif = \"\";\n    \tfor(Point p : temp) {\n    \t\tif(motif.equals(\"\")) {\n    \t\t\tmotif = p.motif;\n    \t\t\treturnVal.add(p);\n    \t\t} else if( !motif.equals(p.motif)) {\n    \t\t\tmotif = p.motif;\n    \t\t\treturnVal.add(p);    \t\t\t\n    \t\t}\n    \t}\n    \treturn returnVal;\n    }\n    \n    public static ArrayList<Point> findShortestPathLength(int steps, int[] row, int[] col, String[][] mat, Point start, Point end) { \n        int M = mat.length;\n        int N = mat[0].length;\n \n        boolean[][] visited = new boolean[M][N];\n        Queue<Point> q = new ArrayDeque<>();\n        ArrayList<ArrayList<Point>> chemins = new ArrayList<>();\n        visited[start.x][start.y] = true;\n        q.add(new Point(start.x, start.y, start.motif)); \n        ArrayList<Point> pointDepart= new ArrayList();        \n        pointDepart.add(new Point(start.x, start.y, start.motif));\n        chemins.add(pointDepart);\n        int x = start.x;\n        int y = start.y;\n        while (!q.isEmpty()) {\n            Point node = q.poll();\n \n            x = node.x;\n            y = node.y;\n            for (int k = 0; k < steps; k++) {\n            \tif( (x+row[k])>=0 && (y+col[k]) >= 0 && (y+col[k]) < N && (x+row[k])<M  && mat[x+row[k]][y+col[k]].equals((end.motif)) && !isSamePoint(start, new Point(x+row[k],y+col[k],start.motif)) ) {\n            \t\tString direction = setDirection(row[k],col[k]);\n            \t\tfor(ArrayList<Point> chemin: chemins) {\n            \t\t\tfor(Point pp: chemin) {\n            \t\t\t\tif(pp.x == x && pp.y==y) {\n            \t\t\t\t\tpp.motif=direction;            \t\t\t\t\t\n            \t\t\t\t\tchemin.get(0).motif = start.motif;\n            \t\t\t\t\treturn chemin;\n            \t\t\t\t}            \t\t\t\t\n            \t\t\t}            \t\t\t\n            \t\t}            \t\t\n            \t}\n                if (isValid(mat, visited, x + row[k], y + col[k]))  {\n                    visited[x + row[k]][y + col[k]] = true;\n                    String direction = setDirection(row[k],col[k]);\n                    Point p = new Point(x + row[k], y + col[k], direction);\n                    q.add(p);\n                    ArrayList<ArrayList<Point>> cheminsTemp = new ArrayList<>();\n                    for(ArrayList<Point> chemin: chemins) {                    \t                    \t\n                    \tPoint pt = chemin.get(chemin.size()-1);\n                       \tif(pt.x == x && pt.y==y) {\n                       \t\tArrayList<Point> temp = new ArrayList();\n                       \t\tfor(Point ptT: chemin) {                           \t\t\t\n                       \t\t\tpt.motif=direction;\n                        \t\ttemp.add(new Point(ptT.x,ptT.y,ptT.motif));                           \t\t\t\n                       \t\t}\n                    \t\ttemp.add(new Point(pt.x + row[k],pt.y + col[k],pt.motif));                           \t\n                    \t\tcheminsTemp.add(temp);\n                       \t}                           \t\n                    }\n                    chemins.addAll(cheminsTemp);\n                }\n            }\n        }  \n        return null;\n    } \n    private static boolean isSamePoint(Point a, Point b) {\n\t\treturn a.x == b.x && a.y == b.y && a.motif.equals(b.motif);\n\t}\n\n\tpublic static ArrayList<Point> findShortestPathLengthDwarf(String[][] mat, Point start, Point end) { \n        int M = mat.length;\n        int N = mat[0].length;\n \n        boolean[][] visited = new boolean[M][N];\n        Queue<Point> q = new ArrayDeque<>();\n        ArrayList<ArrayList<Point>> chemins = new ArrayList<>();\n        visited[start.x][start.y] = true;\n        q.add(new Point(start.x, start.y, start.motif)); \n        ArrayList<Point> pointDepart= new ArrayList();        \n        pointDepart.add(new Point(start.x, start.y, start.motif));\n        \n        chemins.add(pointDepart);\n        int x = start.x;\n        int y = start.y;\n        while (!q.isEmpty()) {\n            Point node = q.poll();\n \n            x = node.x;\n            y = node.y;\n            for (int k = 0; k < 4; k++) {\n            \tif( (x+rowRegular[k])>=0 && (y+colRegular[k]) >=0&& (y+colRegular[k]) < N && (x+rowRegular[k])<M  && mat[x+rowRegular[k]][y+colRegular[k]].equals((end.motif))&& !isSamePoint(start, new Point(x+rowRegular[k],y+colRegular[k],start.motif)) ) {\n            \t\tString direction = setDirection(rowRegular[k],colRegular[k]);\n            \t\tfor(ArrayList<Point> chemin: chemins) {\n            \t\t\tfor(Point pp: chemin) {\n            \t\t\t\tif(pp.x == x && pp.y==y) {\n            \t\t\t\t\tpp.motif=direction;            \t\t\t\t\t\n            \t\t\t\t\tchemin.get(0).motif = start.motif;\n            \t\t\t\t\treturn chemin;\n            \t\t\t\t}            \t\t\t\t\n            \t\t\t}            \t\t\t\n            \t\t}            \t\t\n            \t}\n            \tint nextRow = rowRegular[k] * 2 ;\n            \tint nextCol = colRegular[k] * 2 ;\n                if ( (isValid(mat, visited, x + rowRegular[k], y + colRegular[k]) )\n                \t\t|| \n                \t(isValid(mat, visited, x + nextRow, y + nextCol) && isWall(mat, visited, x + rowRegular[k], y + colRegular[k]))\n                \t\t)  {\n                    visited[x + rowRegular[k]][y + colRegular[k]] = true;\n                    String direction = setDirection(rowRegular[k],colRegular[k]);\n                    Point p = new Point(x + rowRegular[k], y + colRegular[k], direction);\n                    q.add(p);\n                    ArrayList<ArrayList<Point>> cheminsTemp = new ArrayList<>();\n                    boolean sort = false;\n                    for(ArrayList<Point> chemin: chemins) {\n                    \tPoint pt = chemin.get(chemin.size()-1);\n                       \tif(pt.x == x && pt.y==y) {\n                       \t\tArrayList<Point> temp = new ArrayList();\n                       \t\tfor(Point ptT: chemin) {                           \t\t\t\n                       \t\t\tpt.motif=direction;\n                        \t\ttemp.add(new Point(ptT.x,ptT.y,ptT.motif));                           \t\t\t\n                       \t\t}\n                    \t\ttemp.add(new Point(pt.x + rowRegular[k],pt.y + colRegular[k],pt.motif));                           \t\n                    \t\tcheminsTemp.add(temp);\n                       \t}                           \t\n                    }\n                    chemins.addAll(cheminsTemp);\n                }\n            }\n        }  \n        return null;\n    } \n\n    \n    public static String setDirection(int row, int col){\n    \tif(row == -1 && col == 0 ) return \"<\";\n    \tif(row == 1 && col == 0 ) return \">\";\n    \tif(row == 0 && col == -1 ) return \"^\";\n    \tif(row == 0 && col == 1 ) return \"v\";\n    \tif(row != 0 && col != 0 ) return \"o\";\n    \treturn \"e\";\n    }\t\n}\nclass Solution {\n    public static void main(String args[]) throws FileNotFoundException {\n        Scanner in = new Scanner(System.in);\n\n        int width = in.nextInt(); \n        int height = in.nextInt();         \n        String [][] board = new String[width][height];\n        for (int i = 0; i < height; i++) {\n            String y = in.next(); \n            Log.input(y);\n            for(int j = 0; j< width; j++) {board[j][i] = String.valueOf(y.charAt(j)); }\n        }\n        \n        Board b = new Board(board, width, height);              \n        Point entry = b.getEntryPoint();\n        Point outdoor = b.getEndPoint();\n        HashMap<Integer, ArrayList<Point>> chemins = new HashMap<>();\n        ArrayList<Point> warriorPath = Maze.findShortestPathLengthWarrior(board,entry,outdoor);\n        chemins.put(2,warriorPath);\n        chemins.put(3,Maze.findShortestPathLengthDwarf(board,entry,outdoor));\n        chemins.put(4,Maze.findShortestPathLengthElf(board,entry,outdoor));\n        chemins.put(5,Maze.findShortestPathLengthMage(warriorPath));   \n        consolidationScore(chemins, b);     \n    }\n\n\tstatic void consolidationScore(HashMap<Integer, ArrayList<Point>> chemins, Board board) {\n\t\tArrayList<Point> returnVal = null;\n\t\tint score = Integer.MAX_VALUE;\n\t\tString champion = \"\";\n\t\tfor (Map.Entry mapentry : chemins.entrySet()) {\n\t\t\tint nb = (1+((ArrayList)mapentry.getValue()).size());\n\t        int scoreTemp = (int)mapentry.getKey() *nb;\t           \t        \n\t        if(scoreTemp < score) {\n\t\t\t\treturnVal = (ArrayList)mapentry.getValue();\n\t\t\t\tscore = scoreTemp;\n\t\t\t\tif((int)mapentry.getKey() == 2)champion = \"WARRIOR\";\n\t\t\t\tif((int)mapentry.getKey() == 3)champion = \"DWARF\";\n\t\t\t\tif((int)mapentry.getKey() == 4)champion = \"ELF\";\n\t\t\t\tif((int)mapentry.getKey() == 5)champion = \"MAGE\";\n\t\t\t}\t\t\n\t\t}\n\t\tSystem.out.println(champion+\" \"+score);\n\t\tboard.write(returnVal);\n        board.display();\n\t}\n}\n",
+      "statement": "Your objective is to send the fastest champion to solve the maze. The champions have different capabilities and speed.\n\n- The <<WARRIOR>> has no special capability but he is the fastest and he can cross a cell in <<2>> seconds!\n- The <<DWARF>> can break walls if the wall thickness is only 1 cell. He needs <<3>> seconds to cross a cell.\n- The <<ELF>> can make diagonal moves. Because he can make a lot of different moves, he must think twice before moving and it will cost <<4>> seconds to decide which move to make. When both give same result, prioritize straight moves as opposed to diagonal moves.\n- The <<MAGE>> can fly straight forward as many cells as he wants without crossing any walls. Because of his long wizard robe, he moves very slowly and each cell marked will cost <<5>> seconds.\n\n<<Rules:>>\n\n- Entry is given by an arrow ({{<}}, {{>}}, {{v}}, {{^}})  that points inside the maze.\n- Exit is given by an arrow ({{<}}, {{>}}, {{v}}, {{^}})  that points outside the maze. \n- Empty cells are shown with {{.}}\n- Walls are shown with {{#}}\n- The borders of the maze can't be broken by the dwarf.\n- First step and last step are mandatory and can't be changed, even for the mage who needs to land on the end point.\n\n<<Some Examples:>>\n\n`With WARRIOR:\nInput      Output\n#######    #######\n#.....#    #.....#\n>.....>    >>>>>>>\n#.....#    #.....#\n#######    #######\nscore: 14 (7 steps x 2 seconds)\n\n\nWith DWARF:\nInput      Output\n#######    #######\n#...#.#    #...#.#\n>.#.#.>    >>>>>>>\n#.#...#    #.#...#\n#######    #######\nscore: 21 (7 steps x 3 seconds)\n\n\nWith ELF:\nInput      Output\n#######    #######\n#.....>    #...>>>\n#.#.###    #.#o###\n>..#..#    >>o#..#\n#######    #######\nscore: 28 (7 steps x 4 seconds)\n\n\nWith MAGE:\nInput      Output\n#######    #######\n#.....>    #....>>\n#####.#    #####.#\n>.....#    >....^#\n#######    #######\nscore: 20 (4 x 5 seconds)\n`",
+      "testCases": [
+        {
+          "title": "1: Easy for Warrior",
+          "isTest": true,
+          "testIn": "8\n8\n########\n#......#\n#.####.>\n#.######\n#.######\n#.####.#\n>......#\n########",
+          "testOut": "WARRIOR 28\n########\n#>>>>>v#\n#^####>>\n#^######\n#^######\n#^####.#\n>^.....#\n########",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "1: Easy for Warrior Validator",
+          "isTest": false,
+          "testIn": "7\n9\n#######\n#.....#\n#.###.>\n#.#####\n#.#####\n#.#####\n#.###.#\n>.....#\n#######",
+          "testOut": "WARRIOR 28\n#######\n#>>>>v#\n#^###>>\n#^#####\n#^#####\n#^#####\n#^###.#\n>^....#\n#######",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "2: Easy for Elf",
+          "isTest": true,
+          "testIn": "8\n8\n########\n#......#\n#.##.#.>\n#.#.#.##\n#....###\n###.#.##\n>....###\n########",
+          "testOut": "ELF 32\n########\n#......#\n#.##.#>>\n#.#.#o##\n#...o###\n###o#.##\n>>o..###\n########",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "2: Easy for Elf Validator",
+          "isTest": false,
+          "testIn": "8\n9\n########\n#.....##\n#.###.##\n#.###..>\n#.###.##\n#....###\n###.####\n>...####\n########",
+          "testOut": "ELF 32\n########\n#.....##\n#.###.##\n#.###.>>\n#.###o##\n#...o###\n###o####\n>>o.####\n########",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3: Easy for Mage",
+          "isTest": true,
+          "testIn": "9\n9\n#########\n>.....###\n##.###.##\n##.####.#\n##.##.#.#\n##.####.>\n##.####.#\n#.......#\n#########",
+          "testOut": "MAGE 30\n#########\n>.v...###\n##.###.##\n##.####.#\n##.##.#.#\n##.####>>\n##.####.#\n#.>....^#\n#########",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3: Easy for Mage Validator",
+          "isTest": false,
+          "testIn": "10\n10\n##########\n>......###\n##.####.##\n##.#####.#\n##.##..#.#\n##.##..#.#\n##.#####.>\n##.#####.#\n#........#\n##########",
+          "testOut": "MAGE 30\n##########\n>.v....###\n##.####.##\n##.#####.#\n##.##..#.#\n##.##..#.#\n##.#####>>\n##.#####.#\n#.>.....^#\n##########",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4: Easy for Dwarf",
+          "isTest": true,
+          "testIn": "11\n13\n###########\n#....#....#\n#...#.#...#\n#..#####..#\n#..#####..#\n#.###.###.#\n>.###.###.>\n#...#.#...#\n#...###...#\n#..#...#..#\n#..#...#..#\n#....#....#\n###########",
+          "testOut": "DWARF 39\n###########\n#....#....#\n#...#.#...#\n#..#####..#\n#..#####..#\n#.###.###.#\n>v###.###>>\n#>>>>>>>>^#\n#...###...#\n#..#...#..#\n#..#...#..#\n#....#....#\n###########",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4: Easy for Dwarf Validator",
+          "isTest": false,
+          "testIn": "10\n12\n##########\n#...#...##\n#.#...#..#\n#.#.#.####\n#.#.#.####\n>.#.#.##.>\n#.###....#\n#.#####..#\n#.#####..#\n#.#...#.##\n#...#....#\n##########",
+          "testOut": "DWARF 36\n##########\n#...#...##\n#.#...#..#\n#.#.#.####\n#.#.#.####\n>>>>>v##>>\n#.###>>>^#\n#.#####..#\n#.#####..#\n#.#...#.##\n#...#....#\n##########",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5: Complex for Warrior",
+          "isTest": true,
+          "testIn": "17\n19\n#################\n#....#...#...####\n#.##...#...#...##\n#..###########..#\n#.#.###.###.###.#\n#.....###....##.#\n#####.######.#..#\n<.....###....#.##\n############.#.##\n#.#########..#..#\n##....##....###.#\n##.##....##.....#\n##.##############\n#..############.#\n#.##......##.#.##\n#.##.#.##.##..#.#\n#.##.#.##.##.#.##\n#....#.##.....#.#\n######^##########",
+          "testOut": "WARRIOR 164\n#################\n#v<<<#v<<#v<<####\n#v##^<<#^<<#^<<##\n#v.###########^<#\n#v#.###.###.###^#\n#>>>>v###....##^#\n#####v######.#>^#\n<<<<<<###....#^##\n############.#^##\n#.#########..#^<#\n##>>>v##>>>v###^#\n##^##>>>^##>>>>^#\n##^##############\n#>^############.#\n#^##v<<...##.#.##\n#^##v#^##.##..#.#\n#^##v#^##.##.#.##\n#^<<<#^##.....#.#\n######^##########",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5: Complex for Warrior Validator",
+          "isTest": false,
+          "testIn": "19\n19\n###################\n#....#...#...#....#\n#.##...#...#...####\n#..###########....#\n#.#.###.###.####..#\n#.....###....#.#..#\n#####.######.#....#\n<.....###....#..#.#\n############.#..###\n#.#########..#....#\n##....##....####..#\n##.##....##.......#\n##.#############.##\n#..##############.#\n#.##......##.#..###\n#.##.#.##.##..##..#\n#.##.#.##.##.#..###\n#....#.##.....##..#\n######^############",
+          "testOut": "WARRIOR 168\n###################\n#v<<<#v<<#v<<#....#\n#v##^<<#^<<#^<<####\n#v.###########^<<.#\n#v#.###.###.####^.#\n#>>>>v###....#.#^.#\n#####v######.#.>^.#\n<<<<<<###....#.^#.#\n############.#.^###\n#.#########..#.^<.#\n##>>>v##>>>v####^.#\n##^##>>>^##>>>>>^.#\n##^#############.##\n#>^##############.#\n#^##v<<...##.#..###\n#^##v#^##.##..##..#\n#^##v#^##.##.#..###\n#^<<<#^##.....##..#\n######^############",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6: Complex for Elf",
+          "isTest": true,
+          "testIn": "17\n11\n#################\n#......#....###.#\n#..#.#.#.##..##.>\n#.####.#.#.#.##.#\n#.#.##.#..###...#\n>..###.#.##...#.#\n#.#.##...#..#####\n#.##.#.#.##..#..#\n#..##..#..##.##.#\n#.####.##.......#\n#################",
+          "testOut": "ELF 68\n#################\n#......#....###.#\n#..#.#.#.##o.##.>\n#.####.#.#o#o##o#\n#.#.##.#.o###>o.#\n>>o###.#o##...#.#\n#.#o##.o.#..#####\n#.##o#o#.##..#..#\n#..##o.#..##.##.#\n#.####.##.......#\n#################",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "6: Complex for Elf Validator",
+          "isTest": false,
+          "testIn": "19\n13\n###################\n#......#......###.>\n#..#.#.#.##.##.##.#\n#.####.#.##.##....#\n#.#.##.#..#...##.##\n>..###...##...#...#\n###.##.#.##...###.#\n#..##...##.#..#...#\n#.#.##.#..#.#.#.###\n#.##.##.##....#...#\n#..##..#..##.#.##.#\n#.####.##.........#\n###################",
+          "testOut": "ELF 84\n###################\n#......#......###.>\n#..#.#.#.##.##.##o#\n#.####.#.##.##>>o.#\n#.#.##.#..#..o##.##\n>>o###...##.o.#...#\n###o##.#.##o..###.#\n#.o##...##o#..#...#\n#.#o##.#>o#.#.#.###\n#.##o##o##....#...#\n#..##>o#..##.#.##.#\n#.####.##.........#\n###################",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "7:  Complex for Mage",
+          "isTest": true,
+          "testIn": "22\n20\n######################\n#....#...#...####....#\n#.##...#...#...##.##.#\n#..###########....##.#\n#.#.###.###.###.####.#\n#.....###....##.#....#\n#####.######.##.#.####\n<.....###....#.##.####\n############.#.##....#\n#.#########..#..####.#\n##....##....###.####.#\n##.##....##........#.#\n##.#############.#.#.#\n#..##############..#.#\n#.##......##.#.###.#.#\n#.##.#.##.##..#.##...#\n#.##.#.##.##.#.#.#####\n#.##.#.##.##.#.#######\n#....#.##............<\n######################",
+          "testOut": "MAGE 210\n######################\n#v..<#v.<#v.<####v..<#\n#.##^.<#^.<#^.<##.##.#\n#..###########^..<##.#\n#.#.###.###.###.####.#\n#>...v###....##.#>..^#\n#####.######.##.#.####\n<....<###....#.##.####\n############.#.##^..<#\n#.#########..#..####.#\n##>..v##>..v###.####.#\n##.##>..^##>......v#.#\n##.#############.#.#.#\n#>^##############..#.#\n#.##v....<##.#.###.#.#\n#.##.#.##.##..#.##>.^#\n#.##.#.##.##.#.#.#####\n#.##.#.##.##.#.#######\n#^..<#.##^...........<\n######################",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "7: Complex for Mage Validator",
+          "isTest": false,
+          "testIn": "22\n23\n######################\n#....#...#...####....#\n#.##...#...#...##.##.#\n#..###########....##.#\n#.#.###.###.###.####.#\n#.....###....##.#....#\n#####.######.##.#.####\n<.....###....#.##.####\n############.#.##....#\n#.#########..#..####.#\n##....##....###.####.#\n##.##.#..##.#...#..#.#\n##.##..#.##.#.#.#..#.#\n##.##.##.##.#.#.#..#.#\n##.##....##...#....#.#\n##.#############.#.#.#\n#..##############..#.#\n#.##......##.#.###.#.#\n#.##.#.##.##..#.##...#\n#.##.#.##.##.#.#.#####\n#.##.#.##.##.#.#######\n#....#.##............<\n######################",
+          "testOut": "MAGE 230\n######################\n#v..<#v.<#v.<####v..<#\n#.##^.<#^.<#^.<##.##.#\n#..###########^..<##.#\n#.#.###.###.###.####.#\n#>...v###....##.#>..^#\n#####.######.##.#.####\n<....<###....#.##.####\n############.#.##^..<#\n#.#########..#..####.#\n##>..v##>..v###.####.#\n##.##.#..##.#>.v#..#.#\n##.##..#.##.#.#.#..#.#\n##.##.##.##.#.#.#..#.#\n##.##>..^##>.^#>..v#.#\n##.#############.#.#.#\n#>^##############..#.#\n#.##v....<##.#.###.#.#\n#.##.#.##.##..#.##>.^#\n#.##.#.##.##.#.#.#####\n#.##.#.##.##.#.#######\n#^..<#.##^...........<\n######################",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "8: Complex for Dwarf",
+          "isTest": true,
+          "testIn": "20\n20\n####################\n#....#..#...#...##.#\n#.##......#...#...##\n#..##############..#\n#.#.###.##########.#\n#.....#######...##.#\n#####.#.#.#.###.#..#\n<.....######.#.#..##\n###############.#..#\n#.###############..#\n##...##...##......##\n##.#....#....#######\n##.#################\n#..###############.#\n#.##.........##.#.##\n#.##.#.#.###.##..#.#\n#.##.###.###.##..#.#\n#.##.#..#.#..##.#.##\n#....####.##.....#.#\n#############^######",
+          "testOut": "DWARF 174\n####################\n#....#..#...#...##.#\n#.##......#...#...##\n#..##############..#\n#.#.###.##########.#\n#.....#######...##.#\n#####v<<<<<<<<#.#..#\n<<<<<<######.^<<..##\n###############^#..#\n#.#############^#..#\n##...##...##>>>^..##\n##>>>>>>>>>>^#######\n##^#################\n#>^###############.#\n#^##.........##.#.##\n#^##.#.#.###.##..#.#\n#^##.###.###.##..#.#\n#^##v<<<<<<<<##.#.##\n#^<<<####.##^<...#.#\n#############^######",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "8: Complex for Dwarf Validator",
+          "isTest": false,
+          "testIn": "17\n21\n#################\n#....#...#...####\n#.##...#...#...##\n#..###########.##\n#.#.###.######.##\n#.....###....#.##\n#####.#.####.#.##\n<.....###.#..#.##\n#######.####.#..#\n#.##########.#..#\n##.#...........##\n#############.###\n####.##.#####.###\n##.##########.###\n##.............##\n#..############.#\n#.##...##.##.#.##\n#.##.#....##..#.#\n#.##.#.##.##.#.##\n#....#.##.....#.#\n######^##########",
+          "testOut": "DWARF 66\n#################\n#....#...#...####\n#.##...#...#...##\n#..###########.##\n#.#.###.######.##\n#.....###....#.##\n#####.#.####.#.##\n<<<<<<<<#.#..#.##\n#######^####.#..#\n#.#####^####.#..#\n##.#...^.......##\n#######^#####.###\n####.##^#####.###\n##.####^#####.###\n##....>^.......##\n#..###^########.#\n#.##..^##.##.#.##\n#.##.#^...##..#.#\n#.##.#^##.##.#.##\n#....#^##.....#.#\n######^##########",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "All champions can complete all the mazes.\nThere is always only one champion (no draw between two champions)\n{{0}} < [[W]] < {{25}}\n{{0}} < [[H]] < {{25}}",
+      "coverBinaryId": 91421347595027,
+      "stubGenerator": "read W:int\nread H:int\nloop H read EXT:word(100)\nwrite answer",
+      "inputDescription": "<<Line 1:>> An integer [[W]] for the width of the maze\n<<Line 2:>> An integer [[H]] for the height of the maze\n<<Next [[H]] lines:>> Details for the maze",
+      "solutionLanguage": "Java",
+      "outputDescription": "<<Line 1:>> The <<champion>> and his <<score>>, separated with a space\n<<Next [[H]] lines:>> The complete maze with the path travelled by the champion. The path is represented using the arrows denoting the directions ({{<}}, {{>}}, {{v}}, {{^}}) except for the elf's diagonal moves which are denoted with {{o}}."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Your objective is to send the fastest champion to solve the maze. The champions have different capabilities and speed.<br><br>- The <strong>WARRIOR</strong> has no special capability but he is the fastest and he can cross a cell in <strong>2</strong> seconds!<br>- The <strong>DWARF</strong> can break walls if the wall thickness is only 1 cell. He needs <strong>3</strong> seconds to cross a cell.<br>- The <strong>ELF</strong> can make diagonal moves. Because he can make a lot of different moves, he must think twice before moving and it will cost <strong>4</strong> seconds to decide which move to make. When both give same result, prioritize straight moves as opposed to diagonal moves.<br>- The <strong>MAGE</strong> can fly straight forward as many cells as he wants without crossing any walls. Because of his long wizard robe, he moves very slowly and each cell marked will cost <strong>5</strong> seconds.<br><br><strong>Rules:</strong><br><br>- Entry is given by an arrow (<const>&lt;</const>, <const>&gt;</const>, <const>v</const>, <const>^</const>)  that points inside the maze.<br>- Exit is given by an arrow (<const>&lt;</const>, <const>&gt;</const>, <const>v</const>, <const>^</const>)  that points outside the maze. <br>- Empty cells are shown with <const>.</const><br>- Walls are shown with <const>#</const><br>- The borders of the maze can't be broken by the dwarf.<br>- First step and last step are mandatory and can't be changed, even for the mage who needs to land on the end point.<br><br><strong>Some Examples:</strong><br><br><pre style=\"font-family: monospace\">With WARRIOR:<br>Input      Output<br>#######    #######<br>#.....#    #.....#<br>&gt;.....&gt;    &gt;&gt;&gt;&gt;&gt;&gt;&gt;<br>#.....#    #.....#<br>#######    #######<br>score: 14 (7 steps x 2 seconds)<br><br><br>With DWARF:<br>Input      Output<br>#######    #######<br>#...#.#    #...#.#<br>&gt;.#.#.&gt;    &gt;&gt;&gt;&gt;&gt;&gt;&gt;<br>#.#...#    #.#...#<br>#######    #######<br>score: 21 (7 steps x 3 seconds)<br><br><br>With ELF:<br>Input      Output<br>#######    #######<br>#.....&gt;    #...&gt;&gt;&gt;<br>#.#.###    #.#o###<br>&gt;..#..#    &gt;&gt;o#..#<br>#######    #######<br>score: 28 (7 steps x 4 seconds)<br><br><br>With MAGE:<br>Input      Output<br>#######    #######<br>#.....&gt;    #....&gt;&gt;<br>#####.#    #####.#<br>&gt;.....#    &gt;....^#<br>#######    #######<br>score: 20 (4 x 5 seconds)<br></pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>W</var> for the width of the maze<br><strong>Line 2:</strong> An integer <var>H</var> for the height of the maze<br><strong>Next <var>H</var> lines:</strong> Details for the maze</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> The <strong>champion</strong> and his <strong>score</strong>, separated with a space<br><strong>Next <var>H</var> lines:</strong> The complete maze with the path travelled by the champion. The path is represented using the arrows denoting the directions (<const>&lt;</const>, <const>&gt;</const>, <const>v</const>, <const>^</const>) except for the elf's diagonal moves which are denoted with <const>o</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">All champions can complete all the mazes.<br>There is always only one champion (no draw between two champions)<br><const>0</const> &lt; <var>W</var> &lt; <const>25</const><br><const>0</const> &lt; <var>H</var> &lt; <const>25</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">8\n8\n########\n#......#\n#.####.&gt;\n#.######\n#.######\n#.####.#\n&gt;......#\n########</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">WARRIOR 28\n########\n#&gt;&gt;&gt;&gt;&gt;v#\n#^####&gt;&gt;\n#^######\n#^######\n#^####.#\n&gt;^.....#\n########</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 95877003092,
+  "avatar": 115730569738380,
+  "commentCount": 24,
+  "upVotes": 20,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 747456,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1667581537001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1667939267327,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1670533537002,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1673209825241,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1674852509691,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

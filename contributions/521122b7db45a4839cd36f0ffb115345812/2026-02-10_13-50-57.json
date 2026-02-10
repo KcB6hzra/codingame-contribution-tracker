@@ -1,0 +1,204 @@
+{
+  "id": 521,
+  "activeVersion": 52,
+  "score": 3,
+  "votableId": 4045456,
+  "codingamerId": 1174714,
+  "views": 335,
+  "commentableId": 3989924,
+  "title": "Simplified Monopoly™ Turns Prediction",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Shoko84",
+  "publicHandle": "521122b7db45a4839cd36f0ffb115345812",
+  "codingamerHandle": "b23e9b2c3708c21e0a0221b1d6c0a9eb4174711",
+  "lastVersion": {
+    "version": 52,
+    "data": {
+      "title": "Simplified Monopoly™ Turns Prediction",
+      "topics": [
+        {
+          "id": 46,
+          "handle": "loops",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 41,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        },
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 41,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        }
+      ],
+      "solution": "var P = parseInt(readline());\nvar players = [];\nfor (var i = 0; i < P; i++) {\n    var input = readline().split(' ');\n    players.push({name: input[0], position: parseInt(input[1]), inJail: false, jailTurns: 0});\n}\nvar D = parseInt(readline());\nvar dices = [];\nfor (var i = 0; i < D; i++) {\n    dices.push(readline());\n    dices[i] = dices[i].split(' ');\n    for (var j = 0; j < dices[i].length; j++) {\n        dices[i][j] = parseInt(dices[i][j]);\n    }\n}\nvar board = [];\nfor (var i = 0; i < 40; i++) {\n    board.push(readline());\n}\n// printErr(\"players:\", players);\n// printErr(\"dices:\", dices);\n// printErr(\"board:\", board);\n\nvar turnPlayer = 0;\nvar playedInARow = 0;\nfor (var i = 0; i < dices.length; i++) {\n    var sum = 0;\n    var stock;\n    var isDouble = true;\n    var futurePos;\n    for (var j = 0; j < dices[i].length; j++) {\n        (j === 0) ? (stock = dices[i][j]) : ((stock != dices[i][j]) ? (isDouble = false) : (0));\n        sum += dices[i][j];\n    }\n    // printErr(\"sum:\", sum);\n    // printErr(\"isDouble:\", isDouble);\n    // printErr(\"Turn:\", players[turnPlayer].name)\n    \n    futurePos = players[turnPlayer].position + sum;\n    while (futurePos >= 40) {\n        futurePos -= 40;\n    }\n    if (players[turnPlayer].inJail) {\n        if (!isDouble) {\n            players[turnPlayer].jailTurns += 1;\n        }\n        if (players[turnPlayer].jailTurns == 3 || isDouble) {\n            players[turnPlayer].position = futurePos;\n            players[turnPlayer].jailTurns = 0;\n            players[turnPlayer].inJail = false;\n        }\n        turnPlayer += 1;\n    } else {\n        if (isDouble) {\n            playedInARow += 1;\n        }\n        if (playedInARow == 3) {\n            players[turnPlayer].position = board.indexOf(\"Visit Only / In Jail\");\n            players[turnPlayer].inJail = true;\n        } else if (board[futurePos] == \"Go To Jail\") {\n            players[turnPlayer].position = board.indexOf(\"Visit Only / In Jail\");\n            players[turnPlayer].inJail = true;\n        } else {\n            players[turnPlayer].position = futurePos;\n        }\n        if (!isDouble || players[turnPlayer].inJail) {\n            playedInARow = 0;\n            turnPlayer += 1;\n        }\n    }\n    if (turnPlayer > players.length - 1) {\n        turnPlayer = 0;\n    }\n}\n\nfor (var i = 0; i < players.length; i++) {\n    print(players[i].name + ' ' + players[i].position);\n}",
+      "statement": "Your goal is to recreate a simplified turns prediction for the Monopoly™ game.\n\nYou'll be given a list of players with their names and their initial positions, a list of dice rolls, and a list of names of all the game board positions. You'll need to find the <<latest position>> for each player after all the given dice rolls.\n\n<<GAME BOARD>>\n\nThe game is played on a <<circular>> game board.\nThere are 40 positions on the board, indexed from {{0}} to {{39}}.\n\n<<BASIC RULES>>\n\nEach player rolls two dice, and moves forward {{the sum of the dice rolled}} positions.\nMultiple players can occupy the <<same>> position.\nIf a player reaches position {{39}} and still needs to move forward, he'll continue from position {{0}}. In other words, positions 38, 39, 0, 1, 2 are contiguous.\nUnless something special happens (see below), his turn ends after moving.\n\n<<DOUBLE RULES>>\n\nA double refers to a roll where both dice have the same value.\nIf the player rolls a double, then he rolls the dice and moves again.\nIf the player rolls a double three times in a row, then he immediately goes to jail (see below) and his turn ends there.\n\n<<JAIL RULES>>\n\nThe {{Visit Only / In Jail}} position has a dual nature: the player is either visiting only, or actually in jail, depending on how he got there.\n\nIf at the end of a basic move, the player lands on {{Go To Jail}}, then he immediately moves to the position {{Visit Only / In Jail}} and is in jail. His turn ends.\nIf the player rolls a double for the third time in a single turn, then he immediately moves to the position {{Visit Only / In Jail}} and is in jail. His turn ends.\n\nIf after moving, the player lands on {{Visit Only / In Jail}}, he is visiting only and is <<not>> in jail.\n\nWhile the player is in jail, he still rolls the dice on his turn as usual, but doesn't move until either:\n(a) he rolls a double, or\n(b) he fails to roll a double for three throws (i.e. his previous two turns after moving to jail and his current turn).\nIf either (a) or (b) happens in the player's turn, then he moves forward {{the sum of the dice rolled}} positions and his turn ends. He doesn't roll the dice again even if he has rolled a double.\n\n<<Note:>> {{Visit Only / In Jail}} is at position {{10}}. {{Go To Jail}} is at position {{30}}.",
+      "testCases": [
+        {
+          "title": "Start from Go",
+          "isTest": true,
+          "testIn": "2\nHorse 0\nTopHat 0\n6\n1 6\n2 1\n6 4\n2 1\n4 5\n6 5\nGo\nMediterranean Avenue\nCommunity Chest\nBaltic Avenue\nIncome Tax\nReading Railroad\nOriental Avenue\nChance\nVermont Avenue\nConnecticut Avenue\nVisit Only / In Jail\nSt. Charles Place\nElectric Company\nStates Avenue\nVirginia Avenue\nPennsylvania Railroad\nSt. James Place\nCommunity Chest\nTennessee Avenue\nNew York Avenue\nFree Parking\nKentucky Avenue\nChance\nIndiana Avenue\nIllinois Avenue\nB. & O. Railroad\nAtlantic Avenue\nVentnor Avenue\nWater Works\nMarvin Gardens\nGo To Jail\nPacific Avenue\nNorth Carolina Avenue\nCommunity Chest\nPennsylvania Avenue\nShort Line\nChance\nPark Place\nLuxury Tax\nBoardwalk",
+          "testOut": "Horse 26\nTopHat 17",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Start from Go",
+          "isTest": false,
+          "testIn": "2\nHorse 0\nTopHat 0\n6\n2 1\n6 4\n2 1\n4 5\n6 5\n1 6\nGo\nMediterranean Avenue\nCommunity Chest\nBaltic Avenue\nIncome Tax\nReading Railroad\nOriental Avenue\nChance\nVermont Avenue\nConnecticut Avenue\nVisit Only / In Jail\nSt. Charles Place\nElectric Company\nStates Avenue\nVirginia Avenue\nPennsylvania Railroad\nSt. James Place\nCommunity Chest\nTennessee Avenue\nNew York Avenue\nFree Parking\nKentucky Avenue\nChance\nIndiana Avenue\nIllinois Avenue\nB. & O. Railroad\nAtlantic Avenue\nVentnor Avenue\nWater Works\nMarvin Gardens\nGo To Jail\nPacific Avenue\nNorth Carolina Avenue\nCommunity Chest\nPennsylvania Avenue\nShort Line\nChance\nPark Place\nLuxury Tax\nBoardwalk",
+          "testOut": "Horse 17\nTopHat 26",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Not start from Go",
+          "isTest": true,
+          "testIn": "2\nBoot 13\nCar 8\n4\n1 2\n5 3\n3 2\n6 4\nGo\nMediterranean Avenue\nCommunity Chest\nBaltic Avenue\nIncome Tax\nReading Railroad\nOriental Avenue\nChance\nVermont Avenue\nConnecticut Avenue\nVisit Only / In Jail\nSt. Charles Place\nElectric Company\nStates Avenue\nVirginia Avenue\nPennsylvania Railroad\nSt. James Place\nCommunity Chest\nTennessee Avenue\nNew York Avenue\nFree Parking\nKentucky Avenue\nChance\nIndiana Avenue\nIllinois Avenue\nB. & O. Railroad\nAtlantic Avenue\nVentnor Avenue\nWater Works\nMarvin Gardens\nGo To Jail\nPacific Avenue\nNorth Carolina Avenue\nCommunity Chest\nPennsylvania Avenue\nShort Line\nChance\nPark Place\nLuxury Tax\nBoardwalk",
+          "testOut": "Boot 21\nCar 26",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Not start from Go",
+          "isTest": false,
+          "testIn": "2\nBoot 3\nCar 5\n5\n2 4\n1 5\n3 4\n2 1\n5 6\nGo\nMediterranean Avenue\nCommunity Chest\nBaltic Avenue\nIncome Tax\nReading Railroad\nOriental Avenue\nChance\nVermont Avenue\nConnecticut Avenue\nVisit Only / In Jail\nSt. Charles Place\nElectric Company\nStates Avenue\nVirginia Avenue\nPennsylvania Railroad\nSt. James Place\nCommunity Chest\nTennessee Avenue\nNew York Avenue\nFree Parking\nKentucky Avenue\nChance\nIndiana Avenue\nIllinois Avenue\nB. & O. Railroad\nAtlantic Avenue\nVentnor Avenue\nWater Works\nMarvin Gardens\nGo To Jail\nPacific Avenue\nNorth Carolina Avenue\nCommunity Chest\nPennsylvania Avenue\nShort Line\nChance\nPark Place\nLuxury Tax\nBoardwalk",
+          "testOut": "Boot 27\nCar 14",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Around the board",
+          "isTest": true,
+          "testIn": "2\nThimble 25\nWheelbarrow 21\n6\n5 4\n6 5\n2 4\n5 2\n6 3\n1 6\nGo\nMediterranean Avenue\nCommunity Chest\nBaltic Avenue\nIncome Tax\nReading Railroad\nOriental Avenue\nChance\nVermont Avenue\nConnecticut Avenue\nVisit Only / In Jail\nSt. Charles Place\nElectric Company\nStates Avenue\nVirginia Avenue\nPennsylvania Railroad\nSt. James Place\nCommunity Chest\nTennessee Avenue\nNew York Avenue\nFree Parking\nKentucky Avenue\nChance\nIndiana Avenue\nIllinois Avenue\nB. & O. Railroad\nAtlantic Avenue\nVentnor Avenue\nWater Works\nMarvin Gardens\nGo To Jail\nPacific Avenue\nNorth Carolina Avenue\nCommunity Chest\nPennsylvania Avenue\nShort Line\nChance\nPark Place\nLuxury Tax\nBoardwalk",
+          "testOut": "Thimble 9\nWheelbarrow 6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Around the board",
+          "isTest": false,
+          "testIn": "2\nThimble 38\nWheelbarrow 13\n4\n3 2\n5 4\n6 3\n5 6\nGo\nMediterranean Avenue\nCommunity Chest\nBaltic Avenue\nIncome Tax\nReading Railroad\nOriental Avenue\nChance\nVermont Avenue\nConnecticut Avenue\nVisit Only / In Jail\nSt. Charles Place\nElectric Company\nStates Avenue\nVirginia Avenue\nPennsylvania Railroad\nSt. James Place\nCommunity Chest\nTennessee Avenue\nNew York Avenue\nFree Parking\nKentucky Avenue\nChance\nIndiana Avenue\nIllinois Avenue\nB. & O. Railroad\nAtlantic Avenue\nVentnor Avenue\nWater Works\nMarvin Gardens\nGo To Jail\nPacific Avenue\nNorth Carolina Avenue\nCommunity Chest\nPennsylvania Avenue\nShort Line\nChance\nPark Place\nLuxury Tax\nBoardwalk",
+          "testOut": "Thimble 12\nWheelbarrow 33",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Lucky doubles",
+          "isTest": true,
+          "testIn": "2\nCat 5\nCoinPurse 7\n8\n2 2\n6 6\n5 3\n5 5\n2 3\n3 3\n1 1\n6 5\nGo\nMediterranean Avenue\nCommunity Chest\nBaltic Avenue\nIncome Tax\nReading Railroad\nOriental Avenue\nChance\nVermont Avenue\nConnecticut Avenue\nVisit Only / In Jail\nSt. Charles Place\nElectric Company\nStates Avenue\nVirginia Avenue\nPennsylvania Railroad\nSt. James Place\nCommunity Chest\nTennessee Avenue\nNew York Avenue\nFree Parking\nKentucky Avenue\nChance\nIndiana Avenue\nIllinois Avenue\nB. & O. Railroad\nAtlantic Avenue\nVentnor Avenue\nWater Works\nMarvin Gardens\nGo To Jail\nPacific Avenue\nNorth Carolina Avenue\nCommunity Chest\nPennsylvania Avenue\nShort Line\nChance\nPark Place\nLuxury Tax\nBoardwalk",
+          "testOut": "Cat 8\nCoinPurse 22",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Lucky doubles",
+          "isTest": false,
+          "testIn": "2\nCat 10\nCoinPurse 9\n7\n3 3\n5 5\n2 3\n6 6\n5 5\n4 3\n1 1\nGo\nMediterranean Avenue\nCommunity Chest\nBaltic Avenue\nIncome Tax\nReading Railroad\nOriental Avenue\nChance\nVermont Avenue\nConnecticut Avenue\nVisit Only / In Jail\nSt. Charles Place\nElectric Company\nStates Avenue\nVirginia Avenue\nPennsylvania Railroad\nSt. James Place\nCommunity Chest\nTennessee Avenue\nNew York Avenue\nFree Parking\nKentucky Avenue\nChance\nIndiana Avenue\nIllinois Avenue\nB. & O. Railroad\nAtlantic Avenue\nVentnor Avenue\nWater Works\nMarvin Gardens\nGo To Jail\nPacific Avenue\nNorth Carolina Avenue\nCommunity Chest\nPennsylvania Avenue\nShort Line\nChance\nPark Place\nLuxury Tax\nBoardwalk",
+          "testOut": "Cat 33\nCoinPurse 38",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Go to jail",
+          "isTest": true,
+          "testIn": "2\nLantern 25\nClothesIron 18\n9\n3 2\n5 3\n3 5\n6 6\n5 4\n4 2\n4 3\n5 4\n2 2\nGo\nMediterranean Avenue\nCommunity Chest\nBaltic Avenue\nIncome Tax\nReading Railroad\nOriental Avenue\nChance\nVermont Avenue\nConnecticut Avenue\nVisit Only / In Jail\nSt. Charles Place\nElectric Company\nStates Avenue\nVirginia Avenue\nPennsylvania Railroad\nSt. James Place\nCommunity Chest\nTennessee Avenue\nNew York Avenue\nFree Parking\nKentucky Avenue\nChance\nIndiana Avenue\nIllinois Avenue\nB. & O. Railroad\nAtlantic Avenue\nVentnor Avenue\nWater Works\nMarvin Gardens\nGo To Jail\nPacific Avenue\nNorth Carolina Avenue\nCommunity Chest\nPennsylvania Avenue\nShort Line\nChance\nPark Place\nLuxury Tax\nBoardwalk",
+          "testOut": "Lantern 19\nClothesIron 18",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Go to jail",
+          "isTest": false,
+          "testIn": "2\nLantern 21\nClothesIron 19\n8\n5 4\n6 6\n4 5\n6 3\n5 3\n2 3\n5 5\n2 4\nGo\nMediterranean Avenue\nCommunity Chest\nBaltic Avenue\nIncome Tax\nReading Railroad\nOriental Avenue\nChance\nVermont Avenue\nConnecticut Avenue\nVisit Only / In Jail\nSt. Charles Place\nElectric Company\nStates Avenue\nVirginia Avenue\nPennsylvania Railroad\nSt. James Place\nCommunity Chest\nTennessee Avenue\nNew York Avenue\nFree Parking\nKentucky Avenue\nChance\nIndiana Avenue\nIllinois Avenue\nB. & O. Railroad\nAtlantic Avenue\nVentnor Avenue\nWater Works\nMarvin Gardens\nGo To Jail\nPacific Avenue\nNorth Carolina Avenue\nCommunity Chest\nPennsylvania Avenue\nShort Line\nChance\nPark Place\nLuxury Tax\nBoardwalk",
+          "testOut": "Lantern 10\nClothesIron 24",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Early release",
+          "isTest": true,
+          "testIn": "2\nCat 18\nScottieDog 12\n5\n6 6\n2 3\n2 2\n4 3\n2 1\nGo\nMediterranean Avenue\nCommunity Chest\nBaltic Avenue\nIncome Tax\nReading Railroad\nOriental Avenue\nChance\nVermont Avenue\nConnecticut Avenue\nVisit Only / In Jail\nSt. Charles Place\nElectric Company\nStates Avenue\nVirginia Avenue\nPennsylvania Railroad\nSt. James Place\nCommunity Chest\nTennessee Avenue\nNew York Avenue\nFree Parking\nKentucky Avenue\nChance\nIndiana Avenue\nIllinois Avenue\nB. & O. Railroad\nAtlantic Avenue\nVentnor Avenue\nWater Works\nMarvin Gardens\nGo To Jail\nPacific Avenue\nNorth Carolina Avenue\nCommunity Chest\nPennsylvania Avenue\nShort Line\nChance\nPark Place\nLuxury Tax\nBoardwalk",
+          "testOut": "Cat 17\nScottieDog 24",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Early release",
+          "isTest": false,
+          "testIn": "2\nScottieDog 27\nCat 24\n7\n1 2\n5 2\n3 2\n6 3\n6 6\n2 1\n5 4\nGo\nMediterranean Avenue\nCommunity Chest\nBaltic Avenue\nIncome Tax\nReading Railroad\nOriental Avenue\nChance\nVermont Avenue\nConnecticut Avenue\nVisit Only / In Jail\nSt. Charles Place\nElectric Company\nStates Avenue\nVirginia Avenue\nPennsylvania Railroad\nSt. James Place\nCommunity Chest\nTennessee Avenue\nNew York Avenue\nFree Parking\nKentucky Avenue\nChance\nIndiana Avenue\nIllinois Avenue\nB. & O. Railroad\nAtlantic Avenue\nVentnor Avenue\nWater Works\nMarvin Gardens\nGo To Jail\nPacific Avenue\nNorth Carolina Avenue\nCommunity Chest\nPennsylvania Avenue\nShort Line\nChance\nPark Place\nLuxury Tax\nBoardwalk",
+          "testOut": "ScottieDog 31\nCat 3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Friends forever",
+          "isTest": true,
+          "testIn": "4\nLantern 23\nClothesIron 19\nThimble 28\nCoinPurse 18\n10\n6 1\n6 5\n1 1\n6 6\n2 3\n5 4\n3 2\n1 6\n5 1\n2 6\nGo\nMediterranean Avenue\nCommunity Chest\nBaltic Avenue\nIncome Tax\nReading Railroad\nOriental Avenue\nChance\nVermont Avenue\nConnecticut Avenue\nVisit Only / In Jail\nSt. Charles Place\nElectric Company\nStates Avenue\nVirginia Avenue\nPennsylvania Railroad\nSt. James Place\nCommunity Chest\nTennessee Avenue\nNew York Avenue\nFree Parking\nKentucky Avenue\nChance\nIndiana Avenue\nIllinois Avenue\nB. & O. Railroad\nAtlantic Avenue\nVentnor Avenue\nWater Works\nMarvin Gardens\nGo To Jail\nPacific Avenue\nNorth Carolina Avenue\nCommunity Chest\nPennsylvania Avenue\nShort Line\nChance\nPark Place\nLuxury Tax\nBoardwalk",
+          "testOut": "Lantern 10\nClothesIron 10\nThimble 10\nCoinPurse 10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Friends forever",
+          "isTest": false,
+          "testIn": "4\nThimble 22\nLantern 23\nCoinPurse 24\nClothesIron 25\n8\n6 2\n6 1\n4 2\n2 3\n5 5\n5 5\n5 5\n5 5\nGo\nMediterranean Avenue\nCommunity Chest\nBaltic Avenue\nIncome Tax\nReading Railroad\nOriental Avenue\nChance\nVermont Avenue\nConnecticut Avenue\nVisit Only / In Jail\nSt. Charles Place\nElectric Company\nStates Avenue\nVirginia Avenue\nPennsylvania Railroad\nSt. James Place\nCommunity Chest\nTennessee Avenue\nNew York Avenue\nFree Parking\nKentucky Avenue\nChance\nIndiana Avenue\nIllinois Avenue\nB. & O. Railroad\nAtlantic Avenue\nVentnor Avenue\nWater Works\nMarvin Gardens\nGo To Jail\nPacific Avenue\nNorth Carolina Avenue\nCommunity Chest\nPennsylvania Avenue\nShort Line\nChance\nPark Place\nLuxury Tax\nBoardwalk",
+          "testOut": "Thimble 20\nLantern 20\nCoinPurse 20\nClothesIron 20",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Big run",
+          "isTest": true,
+          "testIn": "6\nThimble 0\nWheelbarrow 0\nLantern 0\nCoinPurse 0\nClothesIron 0\nCat 0\n57\n5 5\n3 2\n4 2\n5 1\n3 6\n2 2\n1 1\n3 3\n4 6\n5 5\n1 2\n4 5\n3 3\n6 5\n4 1\n1 1\n2 2\n3 3\n5 6\n1 1\n4 4\n3 3\n3 4\n2 1\n6 4\n1 3\n1 4\n3 1\n6 6\n5 5\n2 2\n2 5\n1 5\n3 3\n4 4\n1 1\n4 4\n1 3\n3 1\n4 2\n5 4\n3 6\n1 2\n2 2\n6 6\n6 6\n3 3\n3 3\n5 5\n1 1\n3 3\n2 2\n4 4\n1 1\n3 3\n5 5\n6 2\nGo\nMediterranean Avenue\nCommunity Chest\nBaltic Avenue\nIncome Tax\nReading Railroad\nOriental Avenue\nChance\nVermont Avenue\nConnecticut Avenue\nVisit Only / In Jail\nSt. Charles Place\nElectric Company\nStates Avenue\nVirginia Avenue\nPennsylvania Railroad\nSt. James Place\nCommunity Chest\nTennessee Avenue\nNew York Avenue\nFree Parking\nKentucky Avenue\nChance\nIndiana Avenue\nIllinois Avenue\nB. & O. Railroad\nAtlantic Avenue\nVentnor Avenue\nWater Works\nMarvin Gardens\nGo To Jail\nPacific Avenue\nNorth Carolina Avenue\nCommunity Chest\nPennsylvania Avenue\nShort Line\nChance\nPark Place\nLuxury Tax\nBoardwalk",
+          "testOut": "Thimble 0\nWheelbarrow 16\nLantern 10\nCoinPurse 14\nClothesIron 18\nCat 12",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Big run",
+          "isTest": false,
+          "testIn": "6\nThimble 0\nLantern 0\nWheelbarrow 0\nCat 0\nClothesIron 0\nCoinPurse 0\n57\n4 2\n2 2\n3 3\n1 2\n1 5\n1 4\n5 5\n2 3\n4 1\n2 3\n6 6\n6 6\n2 2\n1 2\n5 5\n6 6\n3 3\n2 2\n1 5\n6 4\n3 2\n2 6\n5 4\n1 6\n2 2\n5 1\n3 6\n2 4\n5 2\n3 6\n2 4\n1 4\n5 5\n2 3\n2 1\n4 3\n5 5\n5 5\n6 6\n1 1\n2 2\n3 3\n4 4\n5 5\n6 6\n4 5\n2 4\n3 1\n3 2\n2 3\n3 5\n3 3\n6 6\n2 2\n1 4\n5 6\n2 2\nGo\nMediterranean Avenue\nCommunity Chest\nBaltic Avenue\nIncome Tax\nReading Railroad\nOriental Avenue\nChance\nVermont Avenue\nConnecticut Avenue\nVisit Only / In Jail\nSt. Charles Place\nElectric Company\nStates Avenue\nVirginia Avenue\nPennsylvania Railroad\nSt. James Place\nCommunity Chest\nTennessee Avenue\nNew York Avenue\nFree Parking\nKentucky Avenue\nChance\nIndiana Avenue\nIllinois Avenue\nB. & O. Railroad\nAtlantic Avenue\nVentnor Avenue\nWater Works\nMarvin Gardens\nGo To Jail\nPacific Avenue\nNorth Carolina Avenue\nCommunity Chest\nPennsylvania Avenue\nShort Line\nChance\nPark Place\nLuxury Tax\nBoardwalk",
+          "testOut": "Thimble 12\nLantern 32\nWheelbarrow 14\nCat 17\nClothesIron 10\nCoinPurse 16",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "2 ≤ [[P]] ≤ 6\nPlayers' names do not contain any spaces.\nPlayers never start on {{Go To Jail}} or in jail.\nThe game board is <<constant>>.",
+      "stubGenerator": "read P:int\nloop P read player:string(256)\nread D:int\nloop D read dice:string(256)\nloop 40 read boardline:string(256)\nwrite answer",
+      "inputDescription": "<<Line 1:>> An integer [[P]] for the number of players\n<<Next [[P]] lines:>> One line for each player, containing the name and the initial position, separated with a space\n<<Next line:>> An integer [[D]] for the number of dice rolls in <<playing order>>\n<<Next [[D]] lines:>> One line for each dice roll (space-separated)\n<<Next 40 lines:>> One line for the name of each board position. Note that these aren't actually needed to solve the puzzle.",
+      "solutionLanguage": "Javascript",
+      "outputDescription": "<<[[P]] lines:>> One line for each player, containing the name and the latest position, separated with a space. The output should follow the same order of the players as given in the input."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Your goal is to recreate a simplified turns prediction for the Monopoly&trade; game.<br><br>You'll be given a list of players with their names and their initial positions, a list of dice rolls, and a list of names of all the game board positions. You'll need to find the <strong>latest position</strong> for each player after all the given dice rolls.<br><br><strong>GAME BOARD</strong><br><br>The game is played on a <strong>circular</strong> game board.<br>There are 40 positions on the board, indexed from <const>0</const> to <const>39</const>.<br><br><strong>BASIC RULES</strong><br><br>Each player rolls two dice, and moves forward <const>the sum of the dice rolled</const> positions.<br>Multiple players can occupy the <strong>same</strong> position.<br>If a player reaches position <const>39</const> and still needs to move forward, he'll continue from position <const>0</const>. In other words, positions 38, 39, 0, 1, 2 are contiguous.<br>Unless something special happens (see below), his turn ends after moving.<br><br><strong>DOUBLE RULES</strong><br><br>A double refers to a roll where both dice have the same value.<br>If the player rolls a double, then he rolls the dice and moves again.<br>If the player rolls a double three times in a row, then he immediately goes to jail (see below) and his turn ends there.<br><br><strong>JAIL RULES</strong><br><br>The <const>Visit Only / In Jail</const> position has a dual nature: the player is either visiting only, or actually in jail, depending on how he got there.<br><br>If at the end of a basic move, the player lands on <const>Go To Jail</const>, then he immediately moves to the position <const>Visit Only / In Jail</const> and is in jail. His turn ends.<br>If the player rolls a double for the third time in a single turn, then he immediately moves to the position <const>Visit Only / In Jail</const> and is in jail. His turn ends.<br><br>If after moving, the player lands on <const>Visit Only / In Jail</const>, he is visiting only and is <strong>not</strong> in jail.<br><br>While the player is in jail, he still rolls the dice on his turn as usual, but doesn't move until either:<br>(a) he rolls a double, or<br>(b) he fails to roll a double for three throws (i.e. his previous two turns after moving to jail and his current turn).<br>If either (a) or (b) happens in the player's turn, then he moves forward <const>the sum of the dice rolled</const> positions and his turn ends. He doesn't roll the dice again even if he has rolled a double.<br><br><strong>Note:</strong> <const>Visit Only / In Jail</const> is at position <const>10</const>. <const>Go To Jail</const> is at position <const>30</const>.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>P</var> for the number of players<br><strong>Next <var>P</var> lines:</strong> One line for each player, containing the name and the initial position, separated with a space<br><strong>Next line:</strong> An integer <var>D</var> for the number of dice rolls in <strong>playing order</strong><br><strong>Next <var>D</var> lines:</strong> One line for each dice roll (space-separated)<br><strong>Next 40 lines:</strong> One line for the name of each board position. Note that these aren't actually needed to solve the puzzle.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>P</var> lines:</strong> One line for each player, containing the name and the latest position, separated with a space. The output should follow the same order of the players as given in the input.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &le; <var>P</var> &le; 6<br>Players' names do not contain any spaces.<br>Players never start on <const>Go To Jail</const> or in jail.<br>The game board is <strong>constant</strong>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\nHorse 0\nTopHat 0\n6\n1 6\n2 1\n6 4\n2 1\n4 5\n6 5\nGo\nMediterranean Avenue\nCommunity Chest\nBaltic Avenue\nIncome Tax\nReading Railroad\nOriental Avenue\nChance\nVermont Avenue\nConnecticut Avenue\nVisit Only / In Jail\nSt. Charles Place\nElectric Company\nStates Avenue\nVirginia Avenue\nPennsylvania Railroad\nSt. James Place\nCommunity Chest\nTennessee Avenue\nNew York Avenue\nFree Parking\nKentucky Avenue\nChance\nIndiana Avenue\nIllinois Avenue\nB. &amp; O. Railroad\nAtlantic Avenue\nVentnor Avenue\nWater Works\nMarvin Gardens\nGo To Jail\nPacific Avenue\nNorth Carolina Avenue\nCommunity Chest\nPennsylvania Avenue\nShort Line\nChance\nPark Place\nLuxury Tax\nBoardwalk</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Horse 26\nTopHat 17</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 241462410804,
+  "avatar": 9552765056380,
+  "commentCount": 16,
+  "upVotes": 4,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 233459,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

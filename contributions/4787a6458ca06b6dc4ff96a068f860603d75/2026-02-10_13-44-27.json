@@ -1,0 +1,191 @@
+{
+  "id": 4787,
+  "activeVersion": 18,
+  "score": 14,
+  "votableId": 12282951,
+  "codingamerId": 1962352,
+  "views": 580,
+  "commentableId": 12208008,
+  "title": "Map Colorations",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "DPAmar",
+  "publicHandle": "4787a6458ca06b6dc4ff96a068f860603d75",
+  "codingamerHandle": "1aa3b57d313d36f2b421bf8a30a7dfef2532691",
+  "lastVersion": {
+    "version": 18,
+    "autocloseTime": 1591470322824,
+    "data": {
+      "title": "Map Colorations",
+      "topics": [
+        {
+          "id": 100,
+          "handle": "graph-theory",
+          "labelMap": {
+            "1": "Graph theory",
+            "2": "Graph theory"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        },
+        {
+          "id": 182,
+          "handle": "combinatorics",
+          "labelMap": {
+            "1": "Combinatorics",
+            "2": "Combinatorics"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "/**\n * Auto-generated code below aims at helping you parse\n * the standard input according to the problem statement.\n **/\n\nfunction getPolynom(graph)\n{\n\tvar p = deletionContraction(graph);\n\treturn x => {\n\t\tvar res = 0;\n\t\tfor(var i = p.length-1; i >= 0; i--)\n\t\t\tres = res * x + p[i];\n\t\treturn res * x;\n\t};\n}\n\nfunction deletionContraction(graph)\n{\n\tvar nodeCount = graph.length;\n\t\n\t//1. Find link\n\tvar targetI = -1, targetJ = -1;\n\tfor(var i=0; targetI == -1 && i<nodeCount; i++)\n\t{\n\t\tfor(var j=i+1; j<nodeCount; j++) {\n\t\t\tif(!graph[i][j]) continue;\n\t\t\ttargetI = i;\n\t\t\ttargetJ = j;\n\t\t\tbreak;\n\t\t}\n\t}\n\t\n\t//2. Link not found ==> X^nodeCount\n\tif(targetI == -1) {\n\t\tvar res = [];\n\t\tfor(var i=0; i<nodeCount-1; i++) res.push(0);\n\t\tres.push(1);\n\t\treturn res;\n\t}\n\t\n\t//3. Link found ==> Deletion minus contraction\n\t//3.1 Clone graph\n\tvar dGraph = [], cGraph = [];\n\tfor(var i=0; i<nodeCount; i++) {\n\t\tvar dRow = [], cRow = [];\n\t\tfor(var j=0; j<nodeCount; j++) dRow[j] = cRow[j] = graph[i][j];\n\t\tdGraph.push(dRow); cGraph.push(cRow);\n\t}\n\t\n\t//3.2 Deletion graph\n\tdGraph[targetI][targetJ] = dGraph[targetJ][targetI] = 0;\n\tvar dPol = deletionContraction(dGraph);\n\t\n\t//3.3 Contraction graph\n\tfor(var i=0; i<nodeCount; i++)\n\t\tif(cGraph[targetJ][i] && targetI != i)\n\t\t  cGraph[targetI][i] = cGraph[i][targetI] = 1;\n\tcGraph = cGraph.filter((x,i)=>i != targetJ).map(x=>x.filter((y,i)=>i != targetJ));\n\tvar cPol = deletionContraction(cGraph);\n\t\n\tfor(var i=0; i<cPol.length; i++) dPol[i] -= cPol[i];\n\treturn dPol;\n}\n\nvar nodeNames = [];\nvar nodeIndex = {};\nvar links = [];\n\nconst N = parseInt(readline());\nfor (let i = 0; i < N; i++) {\n    var inputs = readline().split(' ');\n    const countryA = inputs[0];\n    const countryB = inputs[1];\n\tif(nodeNames.indexOf(countryA) == -1) {\n\t\tnodeIndex[countryA] = nodeNames.length;\n\t\tnodeNames.push(countryA);\n\t}\n\tif(nodeNames.indexOf(countryB) == -1) {\n\t\tnodeIndex[countryB] = nodeNames.length;\n\t\tnodeNames.push(countryB);\n\t}\n\tlinks.push(inputs);\n}\n\n\nvar graph = [];\nfor(var i=0; i<nodeNames.length; i++) {\n\tvar neighbours = [];\n\tfor(var j=0; j<nodeNames.length; j++) neighbours.push(0);\n\tgraph.push(neighbours);\n}\nfor(var i=0; i<N; i++) {\n    var link = links[i];\n    graph[nodeIndex[link[0]]][nodeIndex[link[1]]] = \n      graph[nodeIndex[link[1]]][nodeIndex[link[0]]] = 1;\n}\n\nvar polynom = getPolynom(graph);\nconst K = parseInt(readline());\nfor (let i = 0; i < K; i++)  {\n    const C = parseInt(readline());\n    print(polynom(C));\n}",
+      "statement": "It is a well known result that a map, split into different regions (countries, states, ...) can be painted using different colors on contiguous regions with at most 4 different colors (see https://en.wikipedia.org/wiki/Four_color_theorem), although the proof isn't really obvious...\n\nBut in how many ways can it be painted?\n\nYou are given a \"map\", simplified to [[N]] neighborhood relationships ([[regionA]] [[regionB]], space separated).\n\nYou are also given a list of integers, corresponding to available colors.\nThe goal is, for each integer [[C]] in the list, to compute in how many ways the map can be painted using at most [[C]] colors.\n\n\n<<Example:>> Consider a map with 4 regions in a square\n`A-B\n| |\nD-C`\nOne definition can be ([[N]] = 4)\n`A B\nA D\nC B\nC D`\nGiven 1 single color, there is no way to paint it.\nUsing 2 colors, there are 2 ways: A = C = first color and B = D = second color; or the opposite.\nGiven 5 different colors, there are \n* 5 possible colors for A\n* 4 possible colors for B\n* considering B and D are the same, there is one possibility for D, and then 4 possible colors for C (not B = not D)\n* considering B and D aren't the same, there are 3 possible colors for D, and then 3 possible colors for C (not B and not D)\nTotal = 5 × 4 × (1×4 + 3×3) = 260 ways to paint the map.\n\nSo, for such map and an entry {{1 2 5}}, answer will be:\n`0\n2\n260`",
+      "testCases": [
+        {
+          "title": "Small graph",
+          "isTest": true,
+          "testIn": "4\nA B\nA D\nC B\nC D\n8\n1\n3\n5\n7\n9\n11\n13\n15",
+          "testOut": "0\n18\n260\n1302\n4104\n10010\n20748\n38430",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Small graph",
+          "isTest": false,
+          "testIn": "5\nA B\nB C\nC D\nD E\nE A\n4\n1\n2\n3\n10",
+          "testOut": "0\n0\n30\n59040",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "European countries",
+          "isTest": true,
+          "testIn": "13\nFrance Germany\nFrance Italy\nFrance Switzerland\nFrance Spain\nSwitzerland Germany\nSwitzerland Italy\nSpain Portugal\nFrance Belgium\nBelgium Germany\nFrance Luxembourg\nLuxembourg Belgium\nGermany Netherlands\nNetherlands Belgium\n5\n1\n2\n4\n7\n11",
+          "testOut": "0\n0\n3456\n4725000\n649539000",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "European countries",
+          "isTest": false,
+          "testIn": "16\nFrance Germany\nFrance Italy\nFrance Switzerland\nFrance Spain\nSwitzerland Germany\nSwitzerland Italy\nSpain Portugal\nFrance Belgium\nBelgium Germany\nFrance Luxembourg\nLuxembourg Belgium\nGermany Netherlands\nNetherlands Belgium\nAustria Italy\nAustria Germany\nAustria Switzerland\n4\n3\n6\n8\n10",
+          "testOut": "24\n2496000\n110242944\n1702010880",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Large number of colors",
+          "isTest": true,
+          "testIn": "3\nA B\nB C\nC A\n4\n2\n10\n100\n1000",
+          "testOut": "0\n720\n970200\n997002000",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Large number of colors",
+          "isTest": false,
+          "testIn": "6\nA B\nB C\nC D\nD A\nA C\nB D\n5\n1\n5\n10\n50\n100",
+          "testOut": "0\n120\n5040\n5527200\n94109400",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "USA",
+          "isTest": true,
+          "testIn": "22\nAK WA\nID MT\nID NV\nID OR\nID UT\nID WA\nID WY\nOR WA\nMT WY\nAZ CA\nAZ CO\nAZ NM\nAZ NV\nAZ UT\nCA NV\nNV OR\nNV UT\nCO WY\nUT WY\nCA OR\nCO NM\nCO UT\n5\n4\n5\n6\n7\n8",
+          "testOut": "7488\n868320\n24998400\n340830000\n2898322560",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "USA",
+          "isTest": false,
+          "testIn": "18\t\nAL FL\nAL GA\nAL MS\nAL TN\nFL GA\nGA NC\nGA SC\nGA TN\nMS TN\nNC SC\nNC TN\nAR LA\nAR MO\nAR MS\nAR OK\nAR TN\nAR TX\nMO TN\n5\n1\n3\n5\n6\n7",
+          "testOut": "0\n48\n2799360\n61440000\n708750000",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "1 ≤ [[N]] ≤ 25\n1 ≤ [[K]] ≤ 10\n1 ≤ [[C]] ≤ 1000\n\n<<Note:>> For the given test cases, all results are < 2^32.",
+      "stubGenerator": "read N:int\nloop N read countryA:word(100) countryB:word(100)\nread K:int\nloop K read C:int\nloop K write answer",
+      "inputDescription": "<<First line:>> [[N]], number of neighborhood relationships\n<<Next [[N]] lines:>> 2 neighbor entity names, space separated\n<<Next line:>> [[K]], number of color sets\n<<Next [[K]] lines:>> an integer [[C]], number of colors available",
+      "solutionLanguage": "Javascript",
+      "outputDescription": "<<[[K]] lines:>> Painting configuration counts for this map using [[C]] colors for each value of [[C]]"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">It is a well known result that a map, split into different regions (countries, states, ...) can be painted using different colors on contiguous regions with at most 4 different colors (see https://en.wikipedia.org/wiki/Four_color_theorem), although the proof isn't really obvious...<br><br>But in how many ways can it be painted?<br><br>You are given a &quot;map&quot;, simplified to <var>N</var> neighborhood relationships (<var>regionA</var> <var>regionB</var>, space separated).<br><br>You are also given a list of integers, corresponding to available colors.<br>The goal is, for each integer <var>C</var> in the list, to compute in how many ways the map can be painted using at most <var>C</var> colors.<br><br><br><strong>Example:</strong> Consider a map with 4 regions in a square<br><pre style=\"font-family: monospace\">A-B<br>| |<br>D-C</pre><br>One definition can be (<var>N</var> = 4)<br><pre style=\"font-family: monospace\">A B<br>A D<br>C B<br>C D</pre><br>Given 1 single color, there is no way to paint it.<br>Using 2 colors, there are 2 ways: A = C = first color and B = D = second color; or the opposite.<br>Given 5 different colors, there are <br>* 5 possible colors for A<br>* 4 possible colors for B<br>* considering B and D are the same, there is one possibility for D, and then 4 possible colors for C (not B = not D)<br>* considering B and D aren't the same, there are 3 possible colors for D, and then 3 possible colors for C (not B and not D)<br>Total = 5 &times; 4 &times; (1&times;4 + 3&times;3) = 260 ways to paint the map.<br><br>So, for such map and an entry <const>1 2 5</const>, answer will be:<br><pre style=\"font-family: monospace\">0<br>2<br>260</pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>First line:</strong> <var>N</var>, number of neighborhood relationships<br><strong>Next <var>N</var> lines:</strong> 2 neighbor entity names, space separated<br><strong>Next line:</strong> <var>K</var>, number of color sets<br><strong>Next <var>K</var> lines:</strong> an integer <var>C</var>, number of colors available</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>K</var> lines:</strong> Painting configuration counts for this map using <var>C</var> colors for each value of <var>C</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 25<br>1 &le; <var>K</var> &le; 10<br>1 &le; <var>C</var> &le; 1000<br><br><strong>Note:</strong> For the given test cases, all results are &lt; 2^32.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4\nA B\nA D\nC B\nC D\n8\n1\n3\n5\n7\n9\n11\n13\n15</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">0\n18\n260\n1302\n4104\n10010\n20748\n38430</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 179984608170,
+  "avatar": 56994389567033,
+  "commentCount": 16,
+  "upVotes": 14,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 457878,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1580652337003,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1580669339699,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1583262337002,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1583277868382,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1585872337000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1588878322823,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1590746458044,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

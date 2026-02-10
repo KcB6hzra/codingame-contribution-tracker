@@ -1,0 +1,176 @@
+{
+  "id": 556,
+  "activeVersion": 12,
+  "score": 4,
+  "votableId": 4151292,
+  "codingamerId": 154906,
+  "views": 264,
+  "commentableId": 4095426,
+  "title": "Musical Intervals",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "JBM",
+  "publicHandle": "5565f114a9ba29844d0ccd15851fdfdbfc2",
+  "codingamerHandle": "0d71f9df5da706f9f77c07c34d12480e609451",
+  "lastVersion": {
+    "version": 12,
+    "data": {
+      "title": "Musical Intervals",
+      "topics": [],
+      "solution": "main = interact (unlines . map (format . uncurry solve) . parse)\r\nparse = pairs . map readN . tail . words where\r\n  pairs (a:b:cs) = (a,b) : pairs cs\r\n  pairs [] = []\r\n  readN (p:a) = (,) (fromEnum p - fromEnum 'A') $ case a of [] -> 0; \"+\" -> 1; \"-\" -> -1\r\nformat (t,q) = qualities!!q ++ \" \" ++ types!!t where\r\n  types = [\"octave\",\"second\",\"third\",\"fourth\",\"fifth\",\"sixth\",\"seventh\",\"prime\"]\r\n  qualities = [\"diminished\",\"minor\",\"perfect\",\"major\",\"augmented\"]\r\nsolve (fn,fa) (tn,ta) | fn == tn && ta-fa == 1 = (7,4)\r\n                      | otherwise = (t,(ps !! t) !! (ib-fa+ta+rs-is))\r\n  where t = (fromEnum tn - fromEnum fn) `mod` 7\r\n        ib = if t == 1 then 2 else 1\r\n        semitones fn tn = length (filter (`elem` [2,5]) scale) where\r\n            scale = map (`mod` 7) $ take ((tn - fn) `mod` 7) [fn+1..]\r\n        rs = semitones 0 t\r\n        is = semitones fn tn\r\n        ps = [pure,impure,impure,pure,pure,impure,impure]\r\n        impure = [0,1,3,4]\r\n        pure = [0,2,4]\r\n",
+      "statement": "A <<musical interval>> is a measure of the distance between two notes' pitches. You are given pitch pairs and asked to describe the musical interval between them.\n\n<<Note:>> This puzzle describes tuning-independent interval identification. If you know another recipe, it's perfectly valid too, and you can safely skip to the I/O format description.\n\nIn western musical formalism, an interval is a combination of a <<type>> and a <<quality>>.\n\nThe type describes the distance between the two unaltered pitches that compose it, ranging from the {{prime}} between two notes of the same pitch, to the {{second}}, {{third}}, {{fourth}}, {{fifth}}, {{sixth}}, {{seventh}}, and {{octave}} between two same-named notes a full scale apart.\n\nQualities are, in increasing order of span: {{diminished}}, {{minor}}, {{perfect}}, {{major}} and {{augmented}}.\nSecond, third, sixth and seventh intervals can be any quality but perfect. Primes, fourths, fifths and octaves can be any quality but major and minor.\n\nUsing English names, the unaltered pitches are A, B, C, D, E, F and G. The distance between B and C is a semitone; the distance between E and F is a semitone; all other consecutive pitches are a tone apart, including from G up to A.\nNatural intervals from A to:\n• B: major second\n• C: minor third\n• D: perfect fourth\n• E: perfect fifth\n• F: minor sixth\n• G: minor seventh\n• next A: perfect octave\n\nHere's one way to find an interval's quality:\n• Take the reference interval of the same type from the list above\n• Shift it step by step until the pitches match.\n – shifting both pitches over a tone or semitone doesn't change the quality.\n – shifting pitches one over a tone and the other over a semitone expands or shrinks the quality to the next available one for that type.\n• Sharps and flats, when present, also expand or reduce the quality to the next. Sharp (traditional notation ♯ represented as a {{+}} in the inputs) raises a pitch, and flat (traditionally ♭, here {{-}}) lowers it.\n\nIdentifying the interval from C to E: the pitches are two steps apart (CDE), so the interval is a third. What's its quality? The provided reference third, A to C, is minor. Shifting it one step up makes it B to D; the A to B step is a tone, C to D is a tone too; so the interval quality doesn't change and is still minor. Shifting one more step reaches the goal C to E; the B to C step is a semitone, D to E a tone; so we're raising the bottom pitch less than the upper one, and the interval expands to the next available quality: major. So C to E is a major third.\n\nWhat's the interval between B♭ and F♯? They're four steps apart, so it's a fifth. The reference fifth, A to E, is perfect. Shifting up once raises the bottom pitch by a tone and the top one a semitone, so B to F is a diminished fifth. Lowering B to B♭ expands that to a perfect fifth, and raising the F to F♯ expands that to an augmented fifth.",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "2\nC E\nB- F+",
+          "testOut": "major third\naugmented fifth",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Example",
+          "isTest": false,
+          "testIn": "2\nB- F+\nC E",
+          "testOut": "augmented fifth\nmajor third",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Diatonic C Major",
+          "isTest": true,
+          "testIn": "49\nC D\nC E\nC F\nC G\nC A\nC B\nC C\nD E\nD F\nD G\nD A\nD B\nD C\nD D\nE F\nE G\nE A\nE B\nE C\nE D\nE E\nF G\nF A\nF B\nF C\nF D\nF E\nF F\nG A\nG B\nG C\nG D\nG E\nG F\nG G\nA B\nA C\nA D\nA E\nA F\nA G\nA A\nB C\nB D\nB E\nB F\nB G\nB A\nB B",
+          "testOut": "major second\nmajor third\nperfect fourth\nperfect fifth\nmajor sixth\nmajor seventh\nperfect octave\nmajor second\nminor third\nperfect fourth\nperfect fifth\nmajor sixth\nminor seventh\nperfect octave\nminor second\nminor third\nperfect fourth\nperfect fifth\nminor sixth\nminor seventh\nperfect octave\nmajor second\nmajor third\naugmented fourth\nperfect fifth\nmajor sixth\nmajor seventh\nperfect octave\nmajor second\nmajor third\nperfect fourth\nperfect fifth\nmajor sixth\nminor seventh\nperfect octave\nmajor second\nminor third\nperfect fourth\nperfect fifth\nminor sixth\nminor seventh\nperfect octave\nminor second\nminor third\nperfect fourth\ndiminished fifth\nminor sixth\nminor seventh\nperfect octave",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Diatonic Mystery Major Key",
+          "isTest": false,
+          "testIn": "49\nF+ C\nC E\nA F+\nC G\nF+ G\nC C\nF+ F+\nD D\nF+ E\nD F+\nD A\nG E\nE F+\nB F+\nE E\nB B\nG D\nE D\nA C\nG B\nE A\nG A\nB C\nG G\nF+ B\nC A\nF+ D\nA D\nA G\nE C\nA A\nE B\nA E\nD B\nB A\nG F+\nB D\nD G\nD E\nC F+\nE G\nA B\nD C\nF+ A\nC D\nB E\nC B\nG C\nB G",
+          "testOut": "diminished fifth\nmajor third\nmajor sixth\nperfect fifth\nminor second\nperfect octave\nperfect octave\nperfect octave\nminor seventh\nmajor third\nperfect fifth\nmajor sixth\nmajor second\nperfect fifth\nperfect octave\nperfect octave\nperfect fifth\nminor seventh\nminor third\nmajor third\nperfect fourth\nmajor second\nminor second\nperfect octave\nperfect fourth\nmajor sixth\nminor sixth\nperfect fourth\nminor seventh\nminor sixth\nperfect octave\nperfect fifth\nperfect fifth\nmajor sixth\nminor seventh\nmajor seventh\nminor third\nperfect fourth\nmajor second\naugmented fourth\nminor third\nmajor second\nminor seventh\nminor third\nmajor second\nperfect fourth\nmajor seventh\nperfect fourth\nminor sixth",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Diatonic F♯ Major",
+          "isTest": true,
+          "testIn": "49\nF+ G+\nF+ A+\nF+ B\nF+ C+\nF+ D+\nF+ E+\nF+ F+\nG+ A+\nG+ B\nG+ C+\nG+ D+\nG+ E+\nG+ F+\nG+ G+\nA+ B\nA+ C+\nA+ D+\nA+ E+\nA+ F+\nA+ G+\nA+ A+\nB C+\nB D+\nB E+\nB F+\nB G+\nB A+\nB B\nC+ D+\nC+ E+\nC+ F+\nC+ G+\nC+ A+\nC+ B\nC+ C+\nD+ E+\nD+ F+\nD+ G+\nD+ A+\nD+ B\nD+ C+\nD+ D+\nE+ F+\nE+ G+\nE+ A+\nE+ B\nE+ C+\nE+ D+\nE+ E+",
+          "testOut": "major second\nmajor third\nperfect fourth\nperfect fifth\nmajor sixth\nmajor seventh\nperfect octave\nmajor second\nminor third\nperfect fourth\nperfect fifth\nmajor sixth\nminor seventh\nperfect octave\nminor second\nminor third\nperfect fourth\nperfect fifth\nminor sixth\nminor seventh\nperfect octave\nmajor second\nmajor third\naugmented fourth\nperfect fifth\nmajor sixth\nmajor seventh\nperfect octave\nmajor second\nmajor third\nperfect fourth\nperfect fifth\nmajor sixth\nminor seventh\nperfect octave\nmajor second\nminor third\nperfect fourth\nperfect fifth\nminor sixth\nminor seventh\nperfect octave\nminor second\nminor third\nperfect fourth\ndiminished fifth\nminor sixth\nminor seventh\nperfect octave",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Diatonic Mystery Major Key",
+          "isTest": false,
+          "testIn": "49\nG+ C+\nG+ D+\nG+ G+\nC+ G+\nD+ F+\nD+ C+\nF+ A+\nC+ A+\nF+ E\nF+ G+\nD+ G+\nC+ B\nB A+\nE E\nG+ B\nE F+\nG+ F+\nE C+\nF+ B\nE B\nB F+\nA+ G+\nC+ F+\nE D+\nA+ C+\nE A+\nF+ D+\nC+ E\nA+ F+\nD+ D+\nA+ D+\nD+ E\nB E\nE G+\nD+ A+\nG+ A+\nB D+\nG+ E\nA+ B\nA+ A+\nC+ D+\nB C+\nC+ C+\nB G+\nF+ F+\nB B\nD+ B\nA+ E\nF+ C+",
+          "testOut": "perfect fourth\nperfect fifth\nperfect octave\nperfect fifth\nminor third\nminor seventh\nmajor third\nmajor sixth\nminor seventh\nmajor second\nperfect fourth\nminor seventh\nmajor seventh\nperfect octave\nminor third\nmajor second\nminor seventh\nmajor sixth\nperfect fourth\nperfect fifth\nperfect fifth\nminor seventh\nperfect fourth\nmajor seventh\nminor third\naugmented fourth\nmajor sixth\nminor third\nminor sixth\nperfect octave\nperfect fourth\nminor second\nperfect fourth\nmajor third\nperfect fifth\nmajor second\nmajor third\nminor sixth\nminor second\nperfect octave\nmajor second\nmajor second\nperfect octave\nmajor sixth\nperfect octave\nperfect octave\nminor sixth\ndiminished fifth\nperfect fifth",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Diatonic A♭ Major",
+          "isTest": true,
+          "testIn": "49\nA- B-\nA- C\nA- D-\nA- E-\nA- F\nA- G\nA- A-\nB- C\nB- D-\nB- E-\nB- F\nB- G\nB- A-\nB- B-\nC D-\nC E-\nC F\nC G\nC A-\nC B-\nC C\nD- E-\nD- F\nD- G\nD- A-\nD- B-\nD- C\nD- D-\nE- F\nE- G\nE- A-\nE- B-\nE- C\nE- D-\nE- E-\nF G\nF A-\nF B-\nF C\nF D-\nF E-\nF F\nG A-\nG B-\nG C\nG D-\nG E-\nG F\nG G",
+          "testOut": "major second\nmajor third\nperfect fourth\nperfect fifth\nmajor sixth\nmajor seventh\nperfect octave\nmajor second\nminor third\nperfect fourth\nperfect fifth\nmajor sixth\nminor seventh\nperfect octave\nminor second\nminor third\nperfect fourth\nperfect fifth\nminor sixth\nminor seventh\nperfect octave\nmajor second\nmajor third\naugmented fourth\nperfect fifth\nmajor sixth\nmajor seventh\nperfect octave\nmajor second\nmajor third\nperfect fourth\nperfect fifth\nmajor sixth\nminor seventh\nperfect octave\nmajor second\nminor third\nperfect fourth\nperfect fifth\nminor sixth\nminor seventh\nperfect octave\nminor second\nminor third\nperfect fourth\ndiminished fifth\nminor sixth\nminor seventh\nperfect octave",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Diatonic Mystery Major Key",
+          "isTest": false,
+          "testIn": "49\nA- D-\nG- E-\nD- G-\nB- G-\nF C\nE- F\nA- G-\nG- F\nA- F\nB- F\nF D-\nC B-\nD- D-\nE- G-\nE- A-\nG- A-\nF A-\nB- E-\nE- C\nB- D-\nE- E-\nD- F\nC F\nF G-\nE- D-\nA- E-\nF E-\nE- B-\nG- D-\nD- E-\nA- B-\nF F\nB- C\nD- C\nG- G-\nF B-\nB- B-\nD- A-\nA- C\nA- A-\nC E-\nG- B-\nB- A-\nG- C\nC C\nC G-\nD- B-\nC D-\nC A-",
+          "testOut": "perfect fourth\nmajor sixth\nperfect fourth\nminor sixth\nperfect fifth\nmajor second\nminor seventh\nmajor seventh\nmajor sixth\nperfect fifth\nminor sixth\nminor seventh\nperfect octave\nminor third\nperfect fourth\nmajor second\nminor third\nperfect fourth\nmajor sixth\nminor third\nperfect octave\nmajor third\nperfect fourth\nminor second\nminor seventh\nperfect fifth\nminor seventh\nperfect fifth\nperfect fifth\nmajor second\nmajor second\nperfect octave\nmajor second\nmajor seventh\nperfect octave\nperfect fourth\nperfect octave\nperfect fifth\nmajor third\nperfect octave\nminor third\nmajor third\nminor seventh\naugmented fourth\nperfect octave\ndiminished fifth\nmajor sixth\nminor second\nminor sixth",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Harmonic D Minor",
+          "isTest": true,
+          "testIn": "49\nD E\nD F\nD G\nD A\nD B-\nD C+\nD D\nE F\nE G\nE A\nE B-\nE C+\nE D\nE E\nF G\nF A\nF B-\nF C+\nF D\nF E\nF F\nG A\nG B-\nG C+\nG D\nG E\nG F\nG G\nA B-\nA C+\nA D\nA E\nA F\nA G\nA A\nB- C+\nB- D\nB- E\nB- F\nB- G\nB- A\nB- B-\nC+ D\nC+ E\nC+ F\nC+ G\nC+ A\nC+ B-\nC+ C+",
+          "testOut": "major second\nminor third\nperfect fourth\nperfect fifth\nminor sixth\nmajor seventh\nperfect octave\nminor second\nminor third\nperfect fourth\ndiminished fifth\nmajor sixth\nminor seventh\nperfect octave\nmajor second\nmajor third\nperfect fourth\naugmented fifth\nmajor sixth\nmajor seventh\nperfect octave\nmajor second\nminor third\naugmented fourth\nperfect fifth\nmajor sixth\nminor seventh\nperfect octave\nminor second\nmajor third\nperfect fourth\nperfect fifth\nminor sixth\nminor seventh\nperfect octave\naugmented second\nmajor third\naugmented fourth\nperfect fifth\nmajor sixth\nmajor seventh\nperfect octave\nminor second\nminor third\ndiminished fourth\ndiminished fifth\nminor sixth\ndiminished seventh\nperfect octave",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Mystery Harmonic Minor Key",
+          "isTest": false,
+          "testIn": "49\nD A\nE A\nG+ C\nB D\nE D\nF G+\nC D\nF E\nE F\nA E\nC G+\nC F\nE G+\nF F\nB C\nA A\nD G+\nG+ B\nG+ F\nG+ G+\nB E\nF C\nB B\nE C\nA C\nF A\nF B\nB A\nC B\nC A\nB G+\nB F\nD E\nG+ A\nC E\nE E\nD B\nA F\nA G+\nG+ D\nC C\nE B\nG+ E\nF D\nA D\nD D\nD F\nD C\nA B",
+          "testOut": "perfect fifth\nperfect fourth\ndiminished fourth\nminor third\nminor seventh\naugmented second\nmajor second\nmajor seventh\nminor second\nperfect fifth\naugmented fifth\nperfect fourth\nmajor third\nperfect octave\nminor second\nperfect octave\naugmented fourth\nminor third\ndiminished seventh\nperfect octave\nperfect fourth\nperfect fifth\nperfect octave\nminor sixth\nminor third\nmajor third\naugmented fourth\nminor seventh\nmajor seventh\nmajor sixth\nmajor sixth\ndiminished fifth\nmajor second\nminor second\nmajor third\nperfect octave\nmajor sixth\nminor sixth\nmajor seventh\ndiminished fifth\nperfect octave\nperfect fifth\nminor sixth\nmajor sixth\nperfect fourth\nperfect octave\nminor third\nminor seventh\nmajor second",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Harmonic F♯ Minor",
+          "isTest": true,
+          "testIn": "49\nF+ G+\nF+ A\nF+ B\nF+ C+\nF+ D\nF+ E+\nF+ F+\nG+ A\nG+ B\nG+ C+\nG+ D\nG+ E+\nG+ F+\nG+ G+\nA B\nA C+\nA D\nA E+\nA F+\nA G+\nA A\nB C+\nB D\nB E+\nB F+\nB G+\nB A\nB B\nC+ D\nC+ E+\nC+ F+\nC+ G+\nC+ A\nC+ B\nC+ C+\nD E+\nD F+\nD G+\nD A\nD B\nD C+\nD D\nE+ F+\nE+ G+\nE+ A\nE+ B\nE+ C+\nE+ D\nE+ E+",
+          "testOut": "major second\nminor third\nperfect fourth\nperfect fifth\nminor sixth\nmajor seventh\nperfect octave\nminor second\nminor third\nperfect fourth\ndiminished fifth\nmajor sixth\nminor seventh\nperfect octave\nmajor second\nmajor third\nperfect fourth\naugmented fifth\nmajor sixth\nmajor seventh\nperfect octave\nmajor second\nminor third\naugmented fourth\nperfect fifth\nmajor sixth\nminor seventh\nperfect octave\nminor second\nmajor third\nperfect fourth\nperfect fifth\nminor sixth\nminor seventh\nperfect octave\naugmented second\nmajor third\naugmented fourth\nperfect fifth\nmajor sixth\nmajor seventh\nperfect octave\nminor second\nminor third\ndiminished fourth\ndiminished fifth\nminor sixth\ndiminished seventh\nperfect octave",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Mystery Harmonic Minor Key",
+          "isTest": false,
+          "testIn": "49\nD- G\nB- C\nD- A-\nB- F\nB- G\nB- E\nG G\nG D-\nC C\nA- A-\nG A-\nE D-\nF D-\nE C\nA- D-\nF E\nD- C\nG E\nB- D-\nA- C\nE A-\nE G\nE B-\nF B-\nF C\nE F\nB- A-\nD- F\nD- B-\nA- B-\nC D-\nG C\nC B-\nC A-\nF A-\nE E\nC F\nA- E\nF F\nC G\nC E\nB- B-\nD- D-\nD- E\nA- F\nG B-\nF G\nG F\nA- G",
+          "testOut": "augmented fourth\nmajor second\nperfect fifth\nperfect fifth\nmajor sixth\naugmented fourth\nperfect octave\ndiminished fifth\nperfect octave\nperfect octave\nminor second\ndiminished seventh\nminor sixth\nminor sixth\nperfect fourth\nmajor seventh\nmajor seventh\nmajor sixth\nminor third\nmajor third\ndiminished fourth\nminor third\ndiminished fifth\nperfect fourth\nperfect fifth\nminor second\nminor seventh\nmajor third\nmajor sixth\nmajor second\nminor second\nperfect fourth\nminor seventh\nminor sixth\nminor third\nperfect octave\nperfect fourth\naugmented fifth\nperfect octave\nperfect fifth\nmajor third\nperfect octave\nperfect octave\naugmented second\nmajor sixth\nminor third\nmajor second\nminor seventh\nmajor seventh",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Melodic E Minor",
+          "isTest": true,
+          "testIn": "15\nE F+\nF+ G\nG A\nA B\nB C+\nC+ D+\nD+ E\nE D\nD C\nC B\nB A\nA G\nG F+\nF+ E\nG D+",
+          "testOut": "major second\nminor second\nmajor second\nmajor second\nmajor second\nmajor second\nminor second\nminor seventh\nminor seventh\nmajor seventh\nminor seventh\nminor seventh\nmajor seventh\nminor seventh\naugmented fifth",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Mystery Melodic Minor Key",
+          "isTest": false,
+          "testIn": "15\nB C\nE- B\nB- A-\nG A\nE- F\nA- G\nF G\nD C\nF E-\nG F\nA B\nE- D\nC D\nD E-\nC B-",
+          "testOut": "minor second\naugmented fifth\nminor seventh\nmajor second\nmajor second\nmajor seventh\nmajor second\nminor seventh\nminor seventh\nminor seventh\nmajor second\nmajor seventh\nmajor second\nminor second\nminor seventh",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Classical Chromaticism in G",
+          "isTest": true,
+          "testIn": "12\nC A-\nA- G\nG A-\nA- A\nC+ B-\nB- C+\nE- C+\nC+ E-\nC C+\nC+ D\nD C+\nC+ C",
+          "testOut": "minor sixth\nmajor seventh\nminor second\naugmented prime\ndiminished seventh\naugmented second\naugmented sixth\ndiminished third\naugmented prime\nminor second\nmajor seventh\ndiminished octave",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Classical Chromaticism",
+          "isTest": false,
+          "testIn": "12\nF+ A-\nG F+\nF+ F\nE- F+\nF+ G\nF D-\nF+ E-\nD- D\nD- C\nF F+\nA- F+\nC D-",
+          "testOut": "diminished third\nmajor seventh\ndiminished octave\naugmented second\nminor second\nminor sixth\ndiminished seventh\naugmented prime\nmajor seventh\naugmented prime\naugmented sixth\nminor second",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "[[from]] and [[to]] describe the smallest strictly rising interval between the two pitches. There are no edge cases.\nNo other interval types and qualities than  those mentioned in the statement are needed.\n\nSemitones are assumed to be smaller than tones. No other assumption is needed on the tuning system used, or on sharps', flats', tones' and semitones' relative extents.",
+      "stubGenerator": "read N:int\nloop N read from:word(2) to:word(2)\nloop N write major third\n",
+      "inputDescription": "<<Line 1:>> the number [[N]] of intervals\n<<Next [[N]] lines:>> two space-separated pitches [[from]] and [[to]]\n\nA pitch is a letter from {{A}} to {{G}}, optionally followed by a {{+}} for sharp or a {{-}} for flat.",
+      "solutionLanguage": "Haskell",
+      "outputDescription": "<<[[N]] lines:>> a fully-qualified interval"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A <strong>musical interval</strong> is a measure of the distance between two notes' pitches. You are given pitch pairs and asked to describe the musical interval between them.<br><br><strong>Note:</strong> This puzzle describes tuning-independent interval identification. If you know another recipe, it's perfectly valid too, and you can safely skip to the I/O format description.<br><br>In western musical formalism, an interval is a combination of a <strong>type</strong> and a <strong>quality</strong>.<br><br>The type describes the distance between the two unaltered pitches that compose it, ranging from the <const>prime</const> between two notes of the same pitch, to the <const>second</const>, <const>third</const>, <const>fourth</const>, <const>fifth</const>, <const>sixth</const>, <const>seventh</const>, and <const>octave</const> between two same-named notes a full scale apart.<br><br>Qualities are, in increasing order of span: <const>diminished</const>, <const>minor</const>, <const>perfect</const>, <const>major</const> and <const>augmented</const>.<br>Second, third, sixth and seventh intervals can be any quality but perfect. Primes, fourths, fifths and octaves can be any quality but major and minor.<br><br>Using English names, the unaltered pitches are A, B, C, D, E, F and G. The distance between B and C is a semitone; the distance between E and F is a semitone; all other consecutive pitches are a tone apart, including from G up to A.<br>Natural intervals from A to:<br>&bull; B: major second<br>&bull; C: minor third<br>&bull; D: perfect fourth<br>&bull; E: perfect fifth<br>&bull; F: minor sixth<br>&bull; G: minor seventh<br>&bull; next A: perfect octave<br><br>Here's one way to find an interval's quality:<br>&bull; Take the reference interval of the same type from the list above<br>&bull; Shift it step by step until the pitches match.<br>&emsp;&ndash; shifting both pitches over a tone or semitone doesn't change the quality.<br>&emsp;&ndash; shifting pitches one over a tone and the other over a semitone expands or shrinks the quality to the next available one for that type.<br>&bull; Sharps and flats, when present, also expand or reduce the quality to the next. Sharp (traditional notation ♯ represented as a <const>+</const> in the inputs) raises a pitch, and flat (traditionally ♭, here <const>-</const>) lowers it.<br><br>Identifying the interval from C to E: the pitches are two steps apart (CDE), so the interval is a third. What's its quality? The provided reference third, A to C, is minor. Shifting it one step up makes it B to D; the A to B step is a tone, C to D is a tone too; so the interval quality doesn't change and is still minor. Shifting one more step reaches the goal C to E; the B to C step is a semitone, D to E a tone; so we're raising the bottom pitch less than the upper one, and the interval expands to the next available quality: major. So C to E is a major third.<br><br>What's the interval between B♭ and F♯? They're four steps apart, so it's a fifth. The reference fifth, A to E, is perfect. Shifting up once raises the bottom pitch by a tone and the top one a semitone, so B to F is a diminished fifth. Lowering B to B♭ expands that to a perfect fifth, and raising the F to F♯ expands that to an augmented fifth.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> the number <var>N</var> of intervals<br><strong>Next <var>N</var> lines:</strong> two space-separated pitches <var>from</var> and <var>to</var><br><br>A pitch is a letter from <const>A</const> to <const>G</const>, optionally followed by a <const>+</const> for sharp or a <const>-</const> for flat.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>N</var> lines:</strong> a fully-qualified interval</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><var>from</var> and <var>to</var> describe the smallest strictly rising interval between the two pitches. There are no edge cases.<br>No other interval types and qualities than  those mentioned in the statement are needed.<br><br>Semitones are assumed to be smaller than tones. No other assumption is needed on the tuning system used, or on sharps', flats', tones' and semitones' relative extents.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\nC E\nB- F+</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">major third\naugmented fifth</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 255659199472,
+  "commentCount": 11,
+  "upVotes": 4,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 174425,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

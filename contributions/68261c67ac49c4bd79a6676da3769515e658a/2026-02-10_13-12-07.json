@@ -1,0 +1,241 @@
+{
+  "id": 68261,
+  "activeVersion": 56,
+  "score": 7,
+  "votableId": 30658734,
+  "codingamerId": 2964267,
+  "views": 304,
+  "commentableId": 30521257,
+  "title": "Mind Cracker",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Humanosaure",
+  "publicHandle": "68261c67ac49c4bd79a6676da3769515e658a",
+  "codingamerHandle": "5bbc0f4b299d3bb28410b96df8a45b607624692",
+  "lastVersion": {
+    "version": 56,
+    "autocloseTime": 1695852417948,
+    "data": {
+      "title": "Mind Cracker",
+      "topics": [
+        {
+          "id": 176,
+          "handle": "combination-puzzle",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Combination puzzle",
+            "2": "Combination puzzle"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        },
+        {
+          "id": 66,
+          "handle": "optimization",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Optimisation",
+            "2": "Optimization"
+          },
+          "pageTitle": "Optimization: exercises and theory",
+          "puzzleCount": 17,
+          "parentTopicId": 41,
+          "contentDetailsId": 87
+        },
+        {
+          "id": 70,
+          "handle": "permutations",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Permutations",
+            "2": "Permutations"
+          },
+          "pageTitle": "Permutations: exercises and theory",
+          "puzzleCount": 12,
+          "parentTopicId": 41,
+          "contentDetailsId": 103
+        }
+      ],
+      "solution": "const lines = []\n\nconst nColors = parseInt(readline());\nconst nColumns = parseInt(readline());\nconst nLines = parseInt(readline());\nfor (let i = 0; i < nLines; i++) {\n    var inputs = readline().split(' ');\n    const colors = inputs[0];\n    const nBlackClues = parseInt(inputs[1]);\n    const nWhiteClues = parseInt(inputs[2]);\n    lines.push({\n        value: colors.split('').map(Number),\n        clues: {\n            blacks: nBlackClues,\n            whites: nWhiteClues\n        }\n    })\n}\n\nconst start = Date.now()\nsolve()\nconsole.error('Time:', Date.now() - start)\n\nfunction solve() {\n\n    let start = Date.now()\n    const exclusions = new Array(nColumns).fill().map(_ => [])\n    lines.forEach((line) => {\n        if (line.clues.blacks === 0) {\n            line.value.forEach((color, j) => {\n                exclusions[j].push(color)\n            })\n        }\n    })\n    console.error('Exclusion Time:', Date.now() - start)\n\n    start = Date.now()\n    const lineHypotheses = []\n    lines.forEach(line => {\n        let time = Date.now()\n        const postulates = generatePostulates(nColumns, line.clues.blacks, line.clues.whites)\n        console.error('postulates:', Date.now() - time)\n        time = Date.now()\n        const hypotheses = postulates.map(postulate => getPossibleStates(line.value, postulate, exclusions)).flat()\n        console.error('hypotheses:', Date.now() - time)\n        lineHypotheses.push(hypotheses)\n\n    })\n    console.error('Hypotheses Time:', Date.now() - start)\n\n    start = Date.now()\n    const getComplexity = (solutions) => solutions.reduce((sum, sol) => {\n        sum += sol.reduce((product, state) => {\n            product *= state.length\n            return product\n        }, 1)\n\n        return sum\n    }, 0)\n\n    const sortedLines = lineHypotheses.map(solutions => ({ complexity: getComplexity(solutions), solutions }))\n        .sort((a, b) => a.complexity - b.complexity)\n        .map(x => x.solutions)\n\n    console.error('Sorting Time:', Date.now() - start)\n\n    start = Date.now()\n    let refTree = null\n\n    sortedLines.forEach((solutions) => {\n        const tree = {}\n        time = Date.now()\n        solutions.forEach(solution => growTree(solution, tree, refTree))\n        console.error('growTree:', Date.now() - time)\n\n\n        refTree = tree\n\n    })\n    console.error('Grow tree Time:', Date.now() - start)\n\n    start = Date.now()\n    console.log(pick(refTree))\n    console.error('Picking Time:', Date.now() - start)\n}\n\nfunction pick(branch, depth = 0) {\n    const keys = Object.keys(branch)\n\n    if (depth === nColumns - 1) {\n        return keys[0] || ''\n    }\n    return keys.reduce((acc, key) => {\n\n        const next = pick(branch[key], depth + 1)\n        if (next) {\n            acc = key + next\n        }\n        return acc\n    }, '')\n}\n\nfunction growTree(solution, tree, refTree) {\n    function backtrack(index, branch, refBranch) {\n        if (index === solution.length) { return; }\n        for (let state of solution[index]) {\n            if (!refBranch || refBranch.hasOwnProperty(state)) {\n                if (!branch.hasOwnProperty(state)) {\n                    branch[state] = {}\n                }\n                backtrack(index + 1, branch[state], refBranch && refBranch[state]);\n            }\n        }\n    }\n    backtrack(0, tree, refTree);\n}\n\nfunction generatePostulates(nColumns, nBlack, nWhite) {\n    const results = [];\n\n    function backtrack(combination, columnIndex, blackCount, whiteCount) {\n        if (columnIndex === nColumns) {\n            if (blackCount === nBlack && whiteCount === nWhite) {\n                results.push(combination.slice());\n            }\n            return;\n        }\n\n        combination[columnIndex] = 'B';\n        backtrack(combination, columnIndex + 1, blackCount + 1, whiteCount);\n\n        combination[columnIndex] = 'W';\n        backtrack(combination, columnIndex + 1, blackCount, whiteCount + 1);\n\n        combination[columnIndex] = undefined;\n        backtrack(combination, columnIndex + 1, blackCount, whiteCount);\n    }\n\n    backtrack([], 0, 0, 0);\n\n    return results;\n}\n\nfunction getPossibleStates(guesses, positions, exclusions) {\n\n    const states = [];\n\n    const excludeColors = guesses.filter((_, i) => !positions[i])\n    const colors = Array.from({ length: nColors }, (_, i) => i)\n    const validColors = exclusions.map(exclusion => colors.filter(c => ![...excludeColors, ...exclusion].includes(c)))\n\n    for (let i = 0; i < nColumns; i++) {\n        if (positions[i] === \"B\") { states[i] = [guesses[i]] }\n        if (positions[i] === undefined) { states[i] = validColors[i] }\n        if (positions[i] === \"W\") { states[i] = validColors[i].filter(c => c !== guesses[i]) }\n\n    }\n\n    const whitePegs = guesses.filter((_, i) => positions[i] === 'W')\n\n    return getDistributions(whitePegs, guesses, positions, states, exclusions)\n}\n\nfunction getDistributions(whitePegs, guesses, positions, states, exclusions) {\n\n    if (!whitePegs.length) { return [states] }\n\n    const peg = whitePegs.pop()\n    const pegPositions = positions.reduce((acc, position, i) => {\n        if (position !== 'B' && !exclusions[i].includes(peg) && guesses[i] !== peg) { acc.push(i) }\n        return acc\n    }, [])\n\n    return pegPositions.reduce((acc, pos) => {\n        const newStates = states.slice()\n        const newPositions = positions.slice()\n        newStates[pos] = [peg]\n        newPositions[pos] = 'B'\n        return [...acc, ...getDistributions(whitePegs.slice(), guesses, newPositions, newStates, exclusions)]\n    }, [])\n\n}",
+      "statement": "In this coding challenge, you are tasked with deciphering a series of Mastermind riddles. Mastermind is a classic board game where players deduce a hidden color code through a process of elimination. In this digital version, your task is to efficiently determine the correct color combination based on the provided clues.\n\nDevelop an algorithm that accurately deduces the unique solution for each riddle with minimal computational effort.\nBrute force solutions may struggle to meet performance requirements.\n\nRules:\n\n    The game involves a grid of [[nColumns]] columns and [[nLines]] lines of color code guesses.\n\n    Each line contains a guess on what the color code is, as  [[nColumns]]  colors represented each by an integer between {{0}} to [[nColors]]{{ – 1}}.\n\n    Next to each guess are the numbers of clues:\n    - [[nBlackClues]] indicates <<the number of color matches in the correct position (black clues)>>.\n    - [[nWhiteClues]] indicates <<the number of color matches in incorrect positions (white clues)>>.\n\nCheck out the rules of Mastermind if needed: https://en.wikipedia.org/wiki/Mastermind_(board_game)#Gameplay_and_rules\n\nIt is guaranteed that there is always one unique solution.",
+      "testCases": [
+        {
+          "title": "27 combinations / 2 lines",
+          "isTest": true,
+          "testIn": "3\n3\n2\n002 0 2\n101 1 1",
+          "testOut": "120",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3\n3\n2\n121 0 2\n110 1 1",
+          "testOut": "012",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "256 combinations  / 4 line",
+          "isTest": true,
+          "testIn": "4\n4\n4\n3213 0 2\n0123 2 0\n0011 0 2\n3312 1 1",
+          "testOut": "1122",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "4\n4\n4\n2311 1 1\n1123 0 2\n2320 1 1\n1122 0 1",
+          "testOut": "3010",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3125 combinations / 5 line",
+          "isTest": true,
+          "testIn": "5\n5\n5\n23414 1 2\n11320 1 1\n23430 1 2\n03321 1 1\n23421 2 1",
+          "testOut": "40422",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "5\n5\n5\n32420 2 1\n11322 0 2\n32142 1 2\n00112 0 2\n32231 2 1",
+          "testOut": "33401",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "531441 combinations  / 6 lines",
+          "isTest": true,
+          "testIn": "9\n6\n6\n011885 0 3\n012052 1 2\n067445 0 2\n001737 1 2\n000040 2 1\n066666 0 2",
+          "testOut": "608001",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "9\n6\n6\n000740 1 2\n748353 0 1\n000233 1 2\n871363 0 3\n514813 1 1\n005503 2 1",
+          "testOut": "016008",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "2097152 combinations  / 7 lines",
+          "isTest": true,
+          "testIn": "8\n7\n7\n3027141 1 2\n3573721 0 4\n5124573 0 3\n3033730 3 0\n1141333 1 1\n2310776 1 3\n0111252 0 4",
+          "testOut": "2032635",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "8\n7\n7\n2432307 1 3\n0161551 1 2\n2501240 1 2\n3171641 0 3\n0116062 0 3\n0645335 2 2\n3160242 0 4",
+          "testOut": "7627350",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "10000000  combinations  / 10 lines",
+          "isTest": true,
+          "testIn": "10\n7\n10\n1402724 0 3\n0801398 0 3\n1018639 0 4\n7480753 1 2\n1466707 0 3\n2041418 2 1\n1216042 0 4\n4795450 1 2\n0715880 1 1\n1170746 1 2",
+          "testOut": "2145963",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "10\n7\n10\n2512317 0 2\n2744171 0 3\n2627356 0 3\n2684355 0 4\n2543032 1 2\n9827095 1 3\n2497517 1 2\n2715453 0 3\n3308066 3 0\n2576705 0 4",
+          "testOut": "7458064",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "100000000  combinations  / 11 lines",
+          "isTest": true,
+          "testIn": "10\n8\n11\n04815813 1 3\n77548184 0 4\n70019962 1 1\n78543118 1 3\n78541184 0 3\n85387663 1 3\n74848393 1 3\n74584398 0 4\n71158458 2 2\n71158584 0 4\n71143854 2 2",
+          "testOut": "50773453",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "10\n8\n11\n72993350 1 1\n43966481 2 2\n92124618 1 2\n84643619 1 3\n14426312 2 2\n18683244 0 4\n14426316 2 2\n71224841 0 3\n74247881 1 2\n52115482 3 1\n84661770 2 2",
+          "testOut": "54156400",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "100000000 combinations / 11 lines (2)",
+          "isTest": true,
+          "testIn": "10\n8\n11\n69997441 1 1\n28337626 1 3\n58537036 1 3\n63788352 1 3\n73087626 1 3\n65705387 1 3\n67623705 0 4\n45958008 1 3\n72510501 0 4\n17880021 2 2\n63060398 0 4",
+          "testOut": "29285013",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "10\n8\n11\n98454652 1 3\n94526485 2 2\n98295665 1 3\n68204032 0 4\n84554361 1 3\n54688351 0 4\n97458054 1 3\n92171131 1 1\n80474515 2 2\n65360832 1 2\n08665571 0 4",
+          "testOut": "90540916",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "100000000 combinations / 11 lines (3)",
+          "isTest": true,
+          "testIn": "10\n8\n11\n93657007 1 3\n53424834 1 1\n73500756 0 3\n73507591 1 3\n12164002 0 4\n57160053 0 4\n63597657 3 1\n54776611 1 3\n70019414 1 3\n93556600 1 3\n56610041 1 3",
+          "testOut": "66297810",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "10\n8\n11\n38775281 1 1\n20926941 1 3\n64021091 1 3\n62029491 1 3\n64021901 2 2\n24036230 1 2\n20611240 1 2\n36639709 0 4\n19224641 1 3\n65452200 3 1\n99073346 0 4",
+          "testOut": "68464950",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "3 ≤ [[nColors]] ≤ 10\n3 ≤ [[nColumns]] ≤ 8\n2 ≤ [[nLines]] ≤ 11",
+      "coverBinaryId": 110866548878748,
+      "stubGenerator": "read nColors:int\nread nColumns:int\nread nLines:int\n\nloop nLines read  colors:word(nColumns) nBlackClues:int nWhiteClues:int\n\nwrite 021",
+      "inputDescription": "<<Line 1>> [[nColors]]: Number of available colors.\n<<Line 2>> [[nColumns]]: Number of colors in each guess.\n<<Line 3>> [[nLines]]: Number of guesses.\n\n   <<Next [[nLines]] lines>> each containing, separated by a space: \n- [[colors]]: a string of [[nColumns]] integers ( from {{0}} to [[nColors]]{{ – 1}}) representing a guess\n- [[nBlackClues]]: Number of black clues received for that guess.\n- [[ nWhiteClues]]: Number of white clues received for that guess.",
+      "solutionLanguage": "Javascript",
+      "outputDescription": "Output a string of [[nColumns]] integers ({{0}} to [[nColors]]{{ – 1}}) representing the unique solution that satisfies the provided clues."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">In this coding challenge, you are tasked with deciphering a series of Mastermind riddles. Mastermind is a classic board game where players deduce a hidden color code through a process of elimination. In this digital version, your task is to efficiently determine the correct color combination based on the provided clues.<br><br>Develop an algorithm that accurately deduces the unique solution for each riddle with minimal computational effort.<br>Brute force solutions may struggle to meet performance requirements.<br><br>Rules:<br><br>    The game involves a grid of <var>nColumns</var> columns and <var>nLines</var> lines of color code guesses.<br><br>    Each line contains a guess on what the color code is, as  <var>nColumns</var>  colors represented each by an integer between <const>0</const> to <var>nColors</var><const> &ndash; 1</const>.<br><br>    Next to each guess are the numbers of clues:<br>    - <var>nBlackClues</var> indicates <strong>the number of color matches in the correct position (black clues)</strong>.<br>    - <var>nWhiteClues</var> indicates <strong>the number of color matches in incorrect positions (white clues)</strong>.<br><br>Check out the rules of Mastermind if needed: https://en.wikipedia.org/wiki/Mastermind_(board_game)#Gameplay_and_rules<br><br>It is guaranteed that there is always one unique solution.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong> <var>nColors</var>: Number of available colors.<br><strong>Line 2</strong> <var>nColumns</var>: Number of colors in each guess.<br><strong>Line 3</strong> <var>nLines</var>: Number of guesses.<br><br>   <strong>Next <var>nLines</var> lines</strong> each containing, separated by a space: <br>- <var>colors</var>: a string of <var>nColumns</var> integers ( from <const>0</const> to <var>nColors</var><const> &ndash; 1</const>) representing a guess<br>- <var>nBlackClues</var>: Number of black clues received for that guess.<br>- <var> nWhiteClues</var>: Number of white clues received for that guess.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Output a string of <var>nColumns</var> integers (<const>0</const> to <var>nColors</var><const> &ndash; 1</const>) representing the unique solution that satisfies the provided clues.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">3 &le; <var>nColors</var> &le; 10<br>3 &le; <var>nColumns</var> &le; 8<br>2 &le; <var>nLines</var> &le; 11</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\n3\n2\n002 0 2\n101 1 1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">120</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 74959236761,
+  "avatar": 22915430912225,
+  "commentCount": 37,
+  "upVotes": 7,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 859379,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1695769888918,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

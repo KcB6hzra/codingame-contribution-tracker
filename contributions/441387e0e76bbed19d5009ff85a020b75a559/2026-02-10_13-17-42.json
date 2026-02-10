@@ -1,0 +1,243 @@
+{
+  "id": 44138,
+  "activeVersion": 49,
+  "score": 6,
+  "votableId": 27447648,
+  "codingamerId": 5271799,
+  "views": 297,
+  "commentableId": 27320448,
+  "title": "Fun with CGX Expressions",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Eulero314",
+  "publicHandle": "441387e0e76bbed19d5009ff85a020b75a559",
+  "codingamerHandle": "7ed5fd396d11683394bd215ec8f0faf49971725",
+  "lastVersion": {
+    "version": 49,
+    "autocloseTime": 1677311336913,
+    "data": {
+      "title": "Fun with CGX Expressions",
+      "topics": [
+        {
+          "id": 73,
+          "handle": "strings",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Chaînes de caractères",
+            "2": "Strings"
+          },
+          "pageTitle": "Strings: exercises and theory",
+          "puzzleCount": 41,
+          "parentTopicId": 41,
+          "contentDetailsId": 73
+        },
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 31,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "id": 71,
+          "handle": "recursion",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Récursion",
+            "2": "Recursion"
+          },
+          "pageTitle": "Recursion: exercises and theory",
+          "puzzleCount": 29,
+          "parentTopicId": 41,
+          "contentDetailsId": 77
+        }
+      ],
+      "solution": "import json\nfrom fractions import Fraction\nimport sys\n\nclass CGX:\n\n    # quick and dirty\n    def cgx_to_dict(self, cgx):\n        cgx = cgx.replace('(', '{')\n        cgx = cgx.replace(')', '}')\n        cgx = cgx.replace('=', ':')\n        cgx = cgx.replace(';', ',')\n        cgx = cgx.replace(\"'\", '\"')\n        d = json.loads(cgx)\n        return d\n\n    def exec_op(self, num1, operator, num2):\n        if operator == '+':\n            return self.value(num1) + self.value(num2)\n        if operator == '*':\n            return self.value(num1) * self.value(num2)\n        if operator == '-':\n            return self.value(num1) - self.value(num2)\n        if operator == '/':\n            return Fraction(self.value(num1), self.value(num2))\n\n    def value(self, v):\n        if isinstance(v, dict):\n            if 'operator' in v:\n                return self.exec_op(v['num1'], v['operator'], v['num2'])\n            else:  # fraction\n                return Fraction(self.value(v['numerator']), self.value(v['denominator']))\n        # Memoization\n        if v in self.memo_vars:\n            return self.memo_vars[v]\n        if isinstance(v, int) or isinstance(v, Fraction):\n            vl = v\n        if isinstance(v, str):\n            vl = self.d['vars'][v]\n            vl = self.value(vl)\n            self.memo_vars[v] = vl\n        return vl\n\n    def eval_cgx(self, cgx):\n        self.memo_vars = {}\n        self.d = self.cgx_to_dict(cgx)\n        r = self.value(self.d['result'])\n        print(self.memo_vars, file=sys.stderr)\n        return r\n\nif __name__ == '__main__':\n    n=int(input())\n    cgx = ''\n    for i in range(n):\n        cgxline = input()\n        cgx += cgxline\n    cgxclass=CGX()\n    print(cgxclass.eval_cgx(cgx))",
+      "statement": "You have to parse the CGX file format (see CGX Formatter https://www.codingame.com/training/hard/cgx-formatter for details) to evaluate an expression.\nThe CGX file contains a BLOCK with 2 KEY_VALUE fields: {{result}} and optionally {{vars}}.\nThe {{result}} BLOCK contains the <<variable>> whose final value should be calculated and returned as output, while the {{vars}} BLOCK contains a list of the intermediate variables.\nEach <<variable>> (a KEY_VALUE) has a value that is an expression.\nAn <<expression>> could be: \n- a constant value PRIMITIVE_TYPE [[int]], `e.g. ('v1'=10)`\n- if the expression is a PRIMITIVE_TYPE [[str]], then it is a variable name, `e.g. ('v1'='v2')`\n- a BLOCK with 3 KEY_VALUE [[num1]] , [[num2]] and an [[operator]]: {{+}} {{-}} {{/}} {{*}}, `e.g. ({{'num1'}}=<<expression>>;{{'num2'}}='v2';{{'operator'}}='+') `\nis the value of the variable v2 plus the value of the <<expression>>.\nThe order ('num1';'num2';'operator') is not guaranteed, any arrangements are possible, ex: ('num1';'operator';'num2'), ...\n\n- a fraction BLOCK in the form ('{{numerator}}'=<<expression>>;'{{denominator}}'=<<expression>>),  `e.g. ('numerator'=1;'denominator'=2) is 1/2.` \nThe computations must be carried out in exact fractional form, in the lowest terms. e.g. 5/9+7/9=4/3.",
+      "testCases": [
+        {
+          "title": "Very simple",
+          "isTest": true,
+          "testIn": "1\n('result'=10)",
+          "testOut": "10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "1\n('result'=355)",
+          "testOut": "355",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Easy",
+          "isTest": true,
+          "testIn": "1\n('result'='var2';'vars'=('var1'=10;'var2'='var1'))",
+          "testOut": "10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "1\n('result'='var2';'vars'=('var1'=20;'var2'='var1'))",
+          "testOut": "20",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simple",
+          "isTest": true,
+          "testIn": "2\n('result'='var1';'vars'=('var1'=\n('num1'=10;'operator'='+';'num2'=20)))",
+          "testOut": "30",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "2\n('result'='var1';'vars'=('var1'=\n('num1'=10;'operator'='*';'num2'=20)))",
+          "testOut": "200",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Fractions",
+          "isTest": true,
+          "testIn": "9\n('result'='v8';'vars'=('v1'=5;'v2'='v4';'v3'=('num1'='v1';'num2'='v2';'operator'='+')\n;'v4'=('numerator'='v1';'denominator'=19)\n;'v5'=('num1'=1;'num2'='v1';'operator'='/')\n;'v6'=('numerator'=1;'denominator'=3)\n;'v7'=('num1'='v6';'num2'='v4';'operator'='*')\n;'v8'=('num1'=('num1'='v7';'num2'='v5';'operator'='-')\n;'num2'='v1';'operator'='*')\n)\n)",
+          "testOut": "-32/57",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "9\n('result'='v8';'vars'=('v1'=23;'v2'='v4';'v3'=('num1'='v1';'num2'='v2';'operator'='+')\n;'v4'=('numerator'='v1';'denominator'=19)\n;'v5'=('num1'=1;'num2'='v1';'operator'='/')\n;'v6'=('numerator'=1;'denominator'=3)\n;'v7'=('num1'='v6';'num2'='v4';'operator'='*')\n;'v8'=('num1'=('num1'='v7';'num2'='v5';'operator'='-')\n;'num2'='v1';'operator'='*')\n)\n)",
+          "testOut": "472/57",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Negative constants",
+          "isTest": true,
+          "testIn": "4\n('result'='var4';'vars'=('var1'=-2;'var2'=15;\n'var3'=('num1'='var1';'num2'=-3;'operator'='+');\n'var4'=('num1'='var3';'num2'='var2';'operator'='-')\n))",
+          "testOut": "-20",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "4\n('result'='var4';'vars'=('var1'=-4;'var2'=15;\n'var3'=('num1'='var1';'num2'=-3;'operator'='+');\n'var4'=('num1'='var3';'num2'='var2';'operator'='-')\n))",
+          "testOut": "-22",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Not so simple",
+          "isTest": true,
+          "testIn": "9\n('result'='v8';'vars'=('v1'=5;'v2'='v4';'v3'=('num1'='v1';'num2'='v2';'operator'='+')\n;'v4'=('numerator'='v1';'denominator'=2)\n;'v5'=('num1'=1;'num2'=3;'operator'='/')\n;'v6'=('numerator'=1;'denominator'=3)\n;'v7'=('num1'='v6';'num2'='v4';'operator'='*')\n;'v8'=('num1'=('num1'=20;'num2'=10;'operator'='-')\n;'num2'=5;'operator'='*')\n)\n)",
+          "testOut": "50",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "9\n('result'='v8';'vars'=('v1'=23;'v2'='v4';'v3'=('num1'='v1';'num2'='v2';'operator'='+')\n;'v4'=('numerator'='v1';'denominator'=2)\n;'v5'=('num1'=1;'num2'=3;'operator'='/')\n;'v6'=('numerator'=1;'denominator'=3)\n;'v7'=('num1'='v6';'num2'='v4';'operator'='*')\n;'v8'=('num1'=('num1'=20;'num2'=10;'operator'='-')\n;'num2'=23;'operator'='*')\n)\n)",
+          "testOut": "230",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Negative denominator",
+          "isTest": true,
+          "testIn": "4\n('result'='var3';'vars'=('var1'=-678;\n'var2'=('num1'=123;'num2'='var1';'operator'='/');\n'var3'=('num1'=-1;'num2'='var2';'operator'='/')\n))",
+          "testOut": "226/41",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "4\n('result'='var3';'vars'=('var1'=-567;\n'var2'=('num1'=123;'num2'='var1';'operator'='/');\n'var3'=('num1'=-1;'num2'='var2';'operator'='/')\n))",
+          "testOut": "189/41",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Some recursion",
+          "isTest": true,
+          "testIn": "17\n('result'='out';'vars'=('basei'=5;'basej'=10;'out'=('num1'='i';'num2'='j';'operator'='*')\n;'i'=('num1'=('num1'=('num1'='basei';'num2'='basei';'operator'='+')\n;'num2'=('num1'='basei';'num2'='basei';'operator'='+')\n;'operator'='+')\n;'num2'=('num1'=('num1'='basei';'num2'='basei';'operator'='+')\n;'num2'=('num1'='basei';'num2'='basei';'operator'='+')\n;'operator'='+')\n;'operator'='+')\n;'j'=('num1'=('num1'=('num1'='basej';'num2'='basej';'operator'='+')\n;'num2'=('num1'='basej';'num2'='basej';'operator'='+')\n;'operator'='+')\n;'num2'=('num1'=('num1'='basej';'num2'='basej';'operator'='+')\n;'num2'=('num1'='basej';'num2'='basej';'operator'='+')\n;'operator'='+')\n;'operator'='+')\n)\n)",
+          "testOut": "3200",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "17\n('result'='out';'vars'=('basei'=23;'basej'=46;'out'=('num1'='i';'num2'='j';'operator'='*')\n;'i'=('num1'=('num1'=('num1'='basei';'num2'='basei';'operator'='+')\n;'num2'=('num1'='basei';'num2'='basei';'operator'='+')\n;'operator'='+')\n;'num2'=('num1'=('num1'='basei';'num2'='basei';'operator'='+')\n;'num2'=('num1'='basei';'num2'='basei';'operator'='+')\n;'operator'='+')\n;'operator'='+')\n;'j'=('num1'=('num1'=('num1'='basej';'num2'='basej';'operator'='+')\n;'num2'=('num1'='basej';'num2'='basej';'operator'='+')\n;'operator'='+')\n;'num2'=('num1'=('num1'='basej';'num2'='basej';'operator'='+')\n;'num2'=('num1'='basej';'num2'='basej';'operator'='+')\n;'operator'='+')\n;'operator'='+')\n)\n)",
+          "testOut": "67712",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Random variables",
+          "isTest": true,
+          "testIn": "9\n('result'='out';'vars'=('YSVPHbD'=945;'hxEpyIg'=302;'UnArlXy'=('num1'='YSVPHbD';'num2'='hxEpyIg';'operator'='-')\n;'NCiiaan'='UnArlXy';'sumIROn'=322;'tbxAkjq'=('num1'='NCiiaan';'num2'='sumIROn';'operator'='+')\n;'LaMRTve'='tbxAkjq';'ESulEET'=454;'bVwzbJY'=('num1'='LaMRTve';'num2'='ESulEET';'operator'='/')\n;'aCcTlNm'='bVwzbJY';'wGwHqXD'=137;'scBfnvG'=('num1'='aCcTlNm';'num2'='wGwHqXD';'operator'='*')\n;'SIftRut'='scBfnvG';'UStEkUd'=212;'zcpVMwq'=('num1'='SIftRut';'num2'='UStEkUd';'operator'='/')\n;'OcZFvni'='zcpVMwq';'gkBxjdA'=926;'NkHDFSU'=('num1'='OcZFvni';'num2'='gkBxjdA';'operator'='*')\n;'EzjhyIl'='NkHDFSU';'fFrGYJG'=752;'SLQcWtx'=('num1'='EzjhyIl';'num2'='fFrGYJG';'operator'='*')\n;'out'='SLQcWtx')\n)",
+          "testOut": "11507652020/12031",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "9\n('result'='out';'vars'=('LtByHwi'=410;'aoNDbgf'=347;'GOUBwXd'=('num1'='LtByHwi';'num2'='aoNDbgf';'operator'='-')\n;'QlNnVxK'='GOUBwXd';'QuKfElT'=594;'RPklZlI'=('num1'='QlNnVxK';'num2'='QuKfElT';'operator'='*')\n;'hfgBcKr'='RPklZlI';'vgxsItX'=949;'qjgNYhT'=('num1'='hfgBcKr';'num2'='vgxsItX';'operator'='/')\n;'jVLgykC'='qjgNYhT';'zbkZoRa'=6;'CVfwbYy'=('num1'='jVLgykC';'num2'='zbkZoRa';'operator'='/')\n;'qDJmWDs'='CVfwbYy';'JHPkSIJ'=311;'AkaCWvQ'=('num1'='qDJmWDs';'num2'='JHPkSIJ';'operator'='/')\n;'eSOVpIs'='AkaCWvQ';'XJNJdsg'=664;'JUBpkQf'=('num1'='eSOVpIs';'num2'='XJNJdsg';'operator'='*')\n;'pJEZCTr'='JUBpkQf';'bYjVznY'=56;'VBfASrE'=('num1'='pJEZCTr';'num2'='bYjVznY';'operator'='-')\n;'out'='VBfASrE')\n)",
+          "testOut": "-12386416/295139",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1<=[[N]]<=30\n-2^63<=[[numerator]] and [[denominator]] <=2^63\nThe CGX content supplied will always be valid.\nEach line contains maximum 1000 characters. \nAll the characters are ASCII.\nA KEY_VALUE {{'result'}} will always be present.\nThe {{'result'}} is always a number (integer or fraction).\nThe {{'vars'}} BLOCK could be present if necessary.\nThere are no circular references.",
+      "coverBinaryId": 97308342907577,
+      "stubGenerator": "read n:int\nloop n read line:string(1000)\nwrite result",
+      "inputDescription": "<<Line 1>>: The number [[N]] of CGX lines.\n<<The [[N]] following lines>>: The CGX content.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The result of the expression in the KEY_VALUE {{'result'}}."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You have to parse the CGX file format (see CGX Formatter https://www.codingame.com/training/hard/cgx-formatter for details) to evaluate an expression.<br>The CGX file contains a BLOCK with 2 KEY_VALUE fields: <const>result</const> and optionally <const>vars</const>.<br>The <const>result</const> BLOCK contains the <strong>variable</strong> whose final value should be calculated and returned as output, while the <const>vars</const> BLOCK contains a list of the intermediate variables.<br>Each <strong>variable</strong> (a KEY_VALUE) has a value that is an expression.<br>An <strong>expression</strong> could be: <br>- a constant value PRIMITIVE_TYPE <var>int</var>, <pre style=\"font-family: monospace\">e.g. ('v1'=10)</pre><br>- if the expression is a PRIMITIVE_TYPE <var>str</var>, then it is a variable name, <pre style=\"font-family: monospace\">e.g. ('v1'='v2')</pre><br>- a BLOCK with 3 KEY_VALUE <var>num1</var> , <var>num2</var> and an <var>operator</var>: <const>+</const> <const>-</const> <const>/</const> <const>*</const>, <pre style=\"font-family: monospace\">e.g. (<const>'num1'</const>=<strong>expression</strong>;<const>'num2'</const>='v2';<const>'operator'</const>='+') </pre><br>is the value of the variable v2 plus the value of the <strong>expression</strong>.<br>The order ('num1';'num2';'operator') is not guaranteed, any arrangements are possible, ex: ('num1';'operator';'num2'), ...<br><br>- a fraction BLOCK in the form ('<const>numerator</const>'=<strong>expression</strong>;'<const>denominator</const>'=<strong>expression</strong>),  <pre style=\"font-family: monospace\">e.g. ('numerator'=1;'denominator'=2) is 1/2.</pre> <br>The computations must be carried out in exact fractional form, in the lowest terms. e.g. 5/9+7/9=4/3.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: The number <var>N</var> of CGX lines.<br><strong>The <var>N</var> following lines</strong>: The CGX content.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The result of the expression in the KEY_VALUE <const>'result'</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1&lt;=<var>N</var>&lt;=30<br>-2^63&lt;=<var>numerator</var> and <var>denominator</var> &lt;=2^63<br>The CGX content supplied will always be valid.<br>Each line contains maximum 1000 characters. <br>All the characters are ASCII.<br>A KEY_VALUE <const>'result'</const> will always be present.<br>The <const>'result'</const> is always a number (integer or fraction).<br>The <const>'vars'</const> BLOCK could be present if necessary.<br>There are no circular references.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1\n('result'=10)</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">10</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 93595422867,
+  "avatar": 96314909854613,
+  "commentCount": 19,
+  "upVotes": 6,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 761193,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1677134038363,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

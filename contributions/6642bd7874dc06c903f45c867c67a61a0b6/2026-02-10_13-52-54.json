@@ -1,0 +1,113 @@
+{
+  "id": 664,
+  "activeVersion": 14,
+  "score": 8,
+  "votableId": 4682639,
+  "codingamerId": 969316,
+  "views": 359,
+  "commentableId": 4625575,
+  "title": "Cubax Folding",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "masterglob",
+  "publicHandle": "6642bd7874dc06c903f45c867c67a61a0b6",
+  "codingamerHandle": "31da02a904ce9a29d5587b8f7ad76c70613969",
+  "lastVersion": {
+    "version": 14,
+    "data": {
+      "title": "Cubax Folding",
+      "topics": [],
+      "solution": "\nsize = int(input())\nblocks = input()\n\n\nimport sys,time\n\ndef DEBUG(x): print(x, file=sys.stderr, flush=True)\n\n# number of elements.\nNB_ELTS=1\nfor i in blocks :NB_ELTS = NB_ELTS + int(i)-1\nCUBE_SIZE = int (round (NB_ELTS**(1/3.0)))\nCUBE_SIZE_2 = CUBE_SIZE * CUBE_SIZE\nDEBUG (\"%d, SIZE = %d\"%(NB_ELTS,CUBE_SIZE))\nif CUBE_SIZE**3 != NB_ELTS:\n    raise Exception (\"NB_ELTS has to be a square root 3 number (%d,%d)\"%(CUBE_SIZE**3, NB_ELTS))\nLAST_NODE_KEY = (CUBE_SIZE**3) - 1\nFIRST_NODE_KEY = 0\n\n\ndef key(x,y,z):return x + y *CUBE_SIZE + z * CUBE_SIZE_2\n\n# A 3D position class\n# NOte : This calss is only used to create static neighbours map. Direct use is too coslty\nclass Pos:\n    def __init__(self,x=0,y=0,z=0):self.x,self.y,self.z=x,y,z\n    def __eq__(self,v): return self.key() == v.key()\n    def __str__(self):return \"(%d,%d,%d)\"%(self.x,self.y,self.z)\n    def key(self): return key (self.x, self.y, self.z)\n    def add(self, v): return Pos (self.x+v.x,self.y+v.y,self.z+v.z)\n    def valid(self): return (self.x>=0 and self.y>=0 and self.z>=0 and\n                             self.x<CUBE_SIZE and self.y<CUBE_SIZE and self.z<CUBE_SIZE)\n    def neighbours(self):\n        res=[]\n        for _, d in DIRS.items():\n            n=self.add(d)\n            if n.valid():res.append(n)\n        return res\n\n# Directions:  front, Back, Up, Down, Left and Right\nDIRS={\"F\":Pos(z=1), \"B\":Pos(z=-1),\n      \"U\":Pos(y=1), \"D\":Pos(y=-1),\n      \"R\":Pos(x=1), \"L\":Pos(x=-1)}\nNB_ALIGNED=[int(c)-1 for c in blocks]\n\nFOLLOWING_ANGLES = {\"L\":\"BDFU\",\"R\":\"BDFU\",\"U\":\"BFLR\",\"D\":\"BFLR\",\"F\":\"DLRU\",\"B\":\"DLRU\"}\n\n#Create static init count of free neighbours\nINIT_NEIGHBOURS_COUNT = [0] * NB_ELTS\n\n'''NEXT_KEY [key] = {\"DIR\":keyn} : all possible neighbours of key \nNEXT_KEY [key][\"UDRLFB\"] =  key of neighbour\n'''\nNEXT_KEY=[{} for _ in range (NB_ELTS)]\n\ndef in_range (t): return (t>=0) and (t<CUBE_SIZE)\nfor x in range (CUBE_SIZE):\n    for y in range (CUBE_SIZE):\n        for z in range (CUBE_SIZE):\n            p=Pos(x,y,z)\n            k=p.key()\n            INIT_NEIGHBOURS_COUNT[k] = len (p.neighbours())\n            if in_range(x-1): NEXT_KEY[Pos(x-1,y,z).key()][\"R\"]  = k\n            if in_range(x+1): NEXT_KEY[Pos(x+1,y,z).key()][\"L\"]  = k\n            if in_range(y-1): NEXT_KEY[Pos(x,y-1,z).key()][\"U\"]  = k\n            if in_range(y+1): NEXT_KEY[Pos(x,y+1,z).key()][\"D\"]  = k\n            if in_range(z-1): NEXT_KEY[Pos(x,y,z-1).key()][\"F\"]  = k\n            if in_range(z+1): NEXT_KEY[Pos(x,y,z+1).key()][\"B\"]  = k\n    \nclass Shape:\n    def __init__(self, copyOf=None):\n        if copyOf:\n            self.elts=copyOf.elts[:]\n            self.nbFree = copyOf.nbFree\n            self.nb_neighbours=copyOf.nb_neighbours[:]\n            self.curKey=copyOf.curKey\n            self.alignedPos=copyOf.alignedPos\n            self.full_path=copyOf.full_path\n            self.isolatedNeighbour = copyOf.isolatedNeighbour\n        else:\n            # self.elts[key] is True if pos key(x,y,z) is filled\n            self.elts=[False] * NB_ELTS\n            self.nbFree = NB_ELTS\n            self.nb_neighbours=INIT_NEIGHBOURS_COUNT[:]\n            self.isolatedNeighbour=None #set to a node which only has 1 free neighbour (except END node)\n            self.curKey=FIRST_NODE_KEY\n            self.set()\n            self.alignedPos=0 # Position inside NB_ALIGNED array\n            self.full_path=\"\"\n                \n    def copy(self): return Shape(copyOf=self)\n    # @ return True if new shape OK \n    def continuePath(self,path):\n        for c in path:\n            self.full_path = self.full_path + c\n            align=NB_ALIGNED [self.alignedPos]\n            self.alignedPos=self.alignedPos+1\n            for _ in range (align):\n                try:\n                    self.curKey=NEXT_KEY [self.curKey][c]\n                except:    \n                    return False\n                if not self.set():\n                    return False\n        return True\n    def done(self):return self.nbFree == 0\n    def set(self):\n        k=self.curKey\n        # Block already occupied. Overlap\n        if self.elts[k]: return False\n        self.elts[k] = True\n        if self.isolatedNeighbour == k:\n            self.isolatedNeighbour = None\n        elif self.isolatedNeighbour != None:\n            # The isolated previous neighbour is now alone!\n            return False\n                 \n        self.nb_neighbours[k] = 0\n        self.nbFree = self.nbFree - 1\n#         self.freeKeys.remove (k)\n        # for n in pos.neighbours():\n        NK=NEXT_KEY [k]\n        for d in NK:\n            kn=NK[d]\n            if not self.elts[kn]: \n                np = self.nb_neighbours[kn]\n                if kn != LAST_NODE_KEY:\n#                     if np <= 1 :\n#                         # No more path to this place...\n#                         # Test useless because node would be elimiated before when np ==2\n#                         return  self.setError(\"N\")\n                    if np == 2 :\n                        if self.isolatedNeighbour != None:\n                            # There is already a 1 free-neighbour node\n                            return False\n                        self.isolatedNeighbour = kn\n                        \n                self.nb_neighbours[kn] = np - 1\n        # Last element is occupied only if done\n        return True if self.nbFree == 0 else not self.elts[LAST_NODE_KEY] \n    '''\n    def canComplete(self):\n        if not self.last:return None\n        nList=self.last.neighbours()\n        free = self.freeKeys[:]\n        while nList:\n            n=nList.pop()\n            k=n.key()\n            if k in free:\n                free.remove(k)\n                nList.extend(n.neighbours())\n        if free:\n            # Still element after extension from last insertion: unreacheable elements\n            return self.setError(\"Z\")\n        return None\n    '''\n   \n\ndef proc_recurs(pathEnd,sh):\n    global nbiter, ttmp\n    nbiter=nbiter+1\n    for contPath in FOLLOWING_ANGLES [pathEnd]:\n        child = sh.copy()\n#         if child.alignedPos >= len(NB_ALIGNED):\n#             DEBUG (\"Error: Free=%s, Path=%s \"%(child.freeKeys,sh.full_path))\n        if child.continuePath (contPath):\n            if child.done():\n                DEBUG(\"!!New solution: %s\"%child.full_path)\n                solutions.append(child.full_path)\n            else:\n                proc_recurs (contPath,child)\n#     if time.clock()-ttmp>3.0:\n#         ttmp=time.clock()\n#         DEBUG (\"%d:(%s)\"%(nbiter,sh.full_path))\n        \n        \nsolutions=[]\nt0=time.perf_counter()\nttmp=time.perf_counter()\nnbiter=0\nstartWith = \"FU\"\nDEBUG (\"Find solutions starting by '%s'\"%startWith)\nshape = Shape()\nif not shape.continuePath(startWith):\n    raise Exception (\"No solution found from %s!\"%startWith)\nproc_recurs (startWith[-1],shape)\n\nt1=time.perf_counter()\nDEBUG (\"Duration: %0.2f , %d iter (%d/s)\"%(t1-t0,nbiter,nbiter/(t1-t0)))\nDEBUG(blocks)\nintab = \"FBLRUD\"\n# now deduce all symmetrical solutions from FU to FR \nfor s in solutions[:]:\n    # F => F\n    # B => B\n    # L => D\n    # R => U\n    # U => R\n    # D => L\n    outtab = \"FBDURL\"\n    trantab = str.maketrans(intab, outtab)\n    solutions.append(s.translate(trantab))\nfor s in solutions[:]:\n    # Initial possible directions are \"F\", \"U\" and \"R\", because first point isin the corner (0,0,0)\n    # F => U\n    # B => D\n    # L => L\n    # R => R\n    # U => F\n    # D => B\n    outtab = \"UDLRFB\"\n    trantab = str.maketrans(intab, outtab)\n    solutions.append(s.translate(trantab))\n    # F => R\n    # B => L\n    # L => B\n    # R => F\n    # U => U\n    # D => D\n    outtab = \"RLBFUD\"\n    trantab = str.maketrans(intab, outtab)\n    solutions.append(s.translate(trantab))\nsolutions.sort()\nif not solutions:\n    raise Exception (\"No solution found!\")\nprint (\"\\n\".join(solutions))\n",
+      "statement": "Woody and Buzz Lightyear are welcoming Cubax, Andy's new toy. This toy is actually a Chinese puzzle whose expected “final” state is a simple cube. During the festivities, Cubax unfolded, because it cannot move when folded.\nSuddenly, Andy appears at the window! He will be up in the room in an instant. Buzz and Woody only have a few seconds to pack Cubax back into its original package before Andy comes in and discovers his toys are alive…\n\nCubax is composed of [[N]]³ smaller cubes (elements) linked together in a kind of doubly linked chain. The chain has two ends, it doesn't loop.\n3 successive elements of Cubax are either:\n- always aligned\n- always at a right angle (90°)\n\nThus a simple way of defining Cubax's structure is to provide the successive number of aligned blocks, starting from the first element.\n\nFor example, representing {{S}} as the starting elements, {{E}} as the ending element and {{X}} as other elements, the structure defined as {{332}} could take any of the following 2D shapes:\n`\n  XE   EX\n  X     X\nSXX   SXX   SXX   SXX\n              X     X\n             EX     XE\n`\nAnother example: {{434}} could be represented as:\n`\nS E\nX X\nX X\nXXX\n`\nNote: Counting the successive the number of aligned elements implies that elements in an angle are counted twice. In the last example {{434}}, there are actually only {{4}}+{{3-1}}+{{4-1}}={{9}} elements.\n\nTo provide the output solution, use the following rules.\nFor each series of aligned blocks, one character representing the direction where it has to point to is written:\n- {{U}} Direction <<Up>> (increasing y)\n- {{D}} Direction <<Down>> (decreasing y)\n- {{R}} Direction <<Right>> (increasing x)\n- {{L}} Direction <<Left>> (decreasing x)\n- {{F}} Direction <<Front>> (increasing z)\n- {{B}} Direction <<Back>> (decreasing z)\nConsidering a 3D representation (x,y,z), we will only be interested in the solutions where the first element is located at (1,1,1) and where the last element is located at ([[N]],[[N]],[[N]])\nNote: As a consequence, there will be no valid solution starting by {{D}}, {{L}} or {{B}}.\n\nExample: for the input {{3332}}, the output {{RDRD}} corresponds to the following planar shape:\n`\nSXX\n  X\n  XXX\n    E\n`\nFor the same input {{3332}}, the output {{RDLU}} corresponds to:\n`\nSXX\nE X\nXXX\n`\nYour program has to read the initial shape of Cubax and provide to Woody and Buzz the moves to apply so as to pack it back to a full cube of side length [[N]].",
+      "testCases": [
+        {
+          "title": "2*2*2",
+          "isTest": true,
+          "testIn": "2\n2222222",
+          "testOut": "FRBULFR\nFUBRDFU\nRFLUBRF\nRULFDRU\nUFDRBUF\nURDFLUR",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "2*2*2",
+          "isTest": false,
+          "testIn": "2\n2222222",
+          "testOut": "FRBULFR\nFUBRDFU\nRFLUBRF\nRULFDRU\nUFDRBUF\nURDFLUR",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3*3*3",
+          "isTest": true,
+          "testIn": "3\n232333232223222233",
+          "testOut": "FRFLUBRFDRBLBRDRUF\nFUFDRBUFLUBDBULURF\nRFRBULFRDFLBLFDFUR\nRURDFLURBULDLUBUFR\nUFUBRDFULFDBDFLFRU\nURULFDRUBRDLDRBRFU",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3*3*3",
+          "isTest": false,
+          "testIn": "3\n232333232223222233",
+          "testOut": "FRFLUBRFDRBLBRDRUF\nFUFDRBUFLUBDBULURF\nRFRBULFRDFLBLFDFUR\nRURDFLURBULDLUBUFR\nUFUBRDFULFDBDFLFRU\nURULFDRUBRDLDRBRFU",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "More solutions",
+          "isTest": true,
+          "testIn": "3\n33322322332223332",
+          "testOut": "FRBLFUFLBRFDBLFRU\nFRBLFURBLFRDLBRFU\nFUBDFRFDBUFLBDFUR\nFUBDFRUBDFULDBUFR\nRFLBRUFLBRFDBLFRU\nRFLBRURBLFRDLBRFU\nRULDRFRDLURBLDRUF\nRULDRFULDRUBDLURF\nUFDBURFDBUFLBDFUR\nUFDBURUBDFULDBUFR\nURDLUFRDLURBLDRUF\nURDLUFULDRUBDLURF",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "More solutions",
+          "isTest": false,
+          "testIn": "3\n3232232222233332222",
+          "testOut": "FRBULFRBRFDBULFRBRF\nFRBULFRBUFLBRDFUBUF\nFUBRDFUBRFDBULFRBRF\nFUBRDFUBUFLBRDFUBUF\nRFLUBRFLFRDLUBRFLFR\nRFLUBRFLURBLFDRULUR\nRULFDRULFRDLUBRFLFR\nRULFDRULURBLFDRULUR\nUFDRBUFDFULDRBUFDFU\nUFDRBUFDRUBDFLURDRU\nURDFLURDFULDRBUFDFU\nURDFLURDRUBDFLURDRU",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4*4*4",
+          "isTest": true,
+          "testIn": "4\n3232242323232222222233222223422242322222222242",
+          "testOut": "FRBULFDRBUBDBRFUFDFULBUBRDRULDFURDFLULDBLFUBRF\nFUBRDFLUBRBLBUFRFLFRDBRBULURDLFRULFDRDLBDFRBUF\nRFLUBRDFLULDLFRURDRUBLULFDFUBDRUFDRBUBDLBRULFR\nRULFDRBULFLBLURFRBRFDLFLUBUFDBRFUBRDFDBLDRFLUR\nUFDRBULFDRDLDFURULURBDRDFLFRBLURFLUBRBLDBURDFU\nURDFLUBRDFDBDRUFUBUFLDFDRBRFLBUFRBULFLBDLUFDRU",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4*4*4",
+          "isTest": false,
+          "testIn": "4\n3232242433222222223232333224323222232322223",
+          "testOut": "FRBULFDRULDRBLBRBDFRBUFUBDFLFUBRBLDRUFDLUFR\nFUBRDFLURDLUBDBUBLFUBRFRBLFDFRBUBDLURFLDRFU\nRFLUBRDFUBDFLBLFLDRFLURULDRBRULFLBDFURDBURF\nRULFDRBUFDBULDLULBRULFRFLBRDRFLULDBUFRBDFRU\nUFDRBULFRBLFDBDFDLUFDRURDLUBURDFDBLFRULBRUF\nURDFLUBRFLBRDLDRDBURDFUFDBULUFDRDLBRFUBLFUR",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "{{2}} ≤ [[N]] ≤ {{4}}\nSUM ( [[BLOCKS]][i] - 1 ) = [[N]]³ - 1\n{{2}} ≤ [[BLOCKS]][i] ≤ [[N]]",
+      "stubGenerator": "read N:int\nread BLOCKS:string(256)\nwrite answer",
+      "inputDescription": "<<Line 1 :>> An integer [[N]]. The side length of the cube\n<<Line 2 :>> A string [[BLOCKS]]. Each character providing the successive number of aligned blocks",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The alphabetically-sorted list of all solutions, one solution per line"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Woody and Buzz Lightyear are welcoming Cubax, Andy's new toy. This toy is actually a Chinese puzzle whose expected &ldquo;final&rdquo; state is a simple cube. During the festivities, Cubax unfolded, because it cannot move when folded.<br>Suddenly, Andy appears at the window! He will be up in the room in an instant. Buzz and Woody only have a few seconds to pack Cubax back into its original package before Andy comes in and discovers his toys are alive&hellip;<br><br>Cubax is composed of <var>N</var>&sup3; smaller cubes (elements) linked together in a kind of doubly linked chain. The chain has two ends, it doesn't loop.<br>3 successive elements of Cubax are either:<br>- always aligned<br>- always at a right angle (90&deg;)<br><br>Thus a simple way of defining Cubax's structure is to provide the successive number of aligned blocks, starting from the first element.<br><br>For example, representing <const>S</const> as the starting elements, <const>E</const> as the ending element and <const>X</const> as other elements, the structure defined as <const>332</const> could take any of the following 2D shapes:<br><pre style=\"font-family: monospace\"><br>  XE   EX<br>  X     X<br>SXX   SXX   SXX   SXX<br>              X     X<br>             EX     XE<br></pre><br>Another example: <const>434</const> could be represented as:<br><pre style=\"font-family: monospace\"><br>S E<br>X X<br>X X<br>XXX<br></pre><br>Note: Counting the successive the number of aligned elements implies that elements in an angle are counted twice. In the last example <const>434</const>, there are actually only <const>4</const>+<const>3-1</const>+<const>4-1</const>=<const>9</const> elements.<br><br>To provide the output solution, use the following rules.<br>For each series of aligned blocks, one character representing the direction where it has to point to is written:<br>- <const>U</const> Direction <strong>Up</strong> (increasing y)<br>- <const>D</const> Direction <strong>Down</strong> (decreasing y)<br>- <const>R</const> Direction <strong>Right</strong> (increasing x)<br>- <const>L</const> Direction <strong>Left</strong> (decreasing x)<br>- <const>F</const> Direction <strong>Front</strong> (increasing z)<br>- <const>B</const> Direction <strong>Back</strong> (decreasing z)<br>Considering a 3D representation (x,y,z), we will only be interested in the solutions where the first element is located at (1,1,1) and where the last element is located at (<var>N</var>,<var>N</var>,<var>N</var>)<br>Note: As a consequence, there will be no valid solution starting by <const>D</const>, <const>L</const> or <const>B</const>.<br><br>Example: for the input <const>3332</const>, the output <const>RDRD</const> corresponds to the following planar shape:<br><pre style=\"font-family: monospace\"><br>SXX<br>  X<br>  XXX<br>    E<br></pre><br>For the same input <const>3332</const>, the output <const>RDLU</const> corresponds to:<br><pre style=\"font-family: monospace\"><br>SXX<br>E X<br>XXX<br></pre><br>Your program has to read the initial shape of Cubax and provide to Woody and Buzz the moves to apply so as to pack it back to a full cube of side length <var>N</var>.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1 :</strong> An integer <var>N</var>. The side length of the cube<br><strong>Line 2 :</strong> A string <var>BLOCKS</var>. Each character providing the successive number of aligned blocks</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The alphabetically-sorted list of all solutions, one solution per line</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><const>2</const> &le; <var>N</var> &le; <const>4</const><br>SUM ( <var>BLOCKS</var>[i] - 1 ) = <var>N</var>&sup3; - 1<br><const>2</const> &le; <var>BLOCKS</var>[i] &le; <var>N</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\n2222222</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">FRBULFR\nFUBRDFU\nRFLUBRF\nRULFDRU\nUFDRBUF\nURDFLUR</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 276621745401,
+  "avatar": 5246485288293,
+  "commentCount": 13,
+  "upVotes": 8,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 107227,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

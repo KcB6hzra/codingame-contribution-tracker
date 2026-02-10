@@ -1,0 +1,136 @@
+{
+  "id": 591,
+  "activeVersion": 27,
+  "score": 7,
+  "votableId": 4342791,
+  "codingamerId": 1549013,
+  "views": 755,
+  "commentableId": 4286589,
+  "title": "Simple CPU Emulation 1",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "SunMan",
+  "publicHandle": "5915184a85c6c0ec1c1e2ed819908a69579",
+  "codingamerHandle": "7d42c1bfe5b345a3f2d46d68ab24f4923109451",
+  "lastVersion": {
+    "version": 27,
+    "data": {
+      "title": "Simple CPU Emulation 1",
+      "topics": [
+        {
+          "id": 235,
+          "handle": "interpreter",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "interpreter",
+            "2": "Interpreters"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        },
+        {
+          "id": 199,
+          "handle": "stack",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Stack",
+            "2": "Stack"
+          },
+          "puzzleCount": 7,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "var program = readline();\nvar registers = [0,0,0];\nfor (var i=0;i<program.length;i+=4) {\n    var opcode = program[i]+program[i+1]+program[i+2]+program[i+3];\n    var opcodeI = parseInt(opcode,16);\n    var nn = opcodeI & 0x00FF;\n    var x = (opcodeI & 0x00F0) >> 4;\n    var y = opcodeI & 0x000F;\n    var k = (opcodeI & 0x0F00) >> 8;\n    var o = (opcodeI & 0xFF00) >> 8;\n    switch ((opcodeI & 0xFF00)>>8) {\n        case 0x00: {\n            i=program.length;\n            break;   \n        }\n        case 0x10:\n        case 0x11:\n        case 0x12: {\n            registers[k] = nn;\n            break;\n        }\n        case 0x20: {\n            registers[x] += registers[y];\n            if (registers[x] > 255) {\n                registers[x] %= 256;\n                registers[2] = 1;\n            } else {\n                registers[2] = 0;\n            }\n            break;\n        }\n        case 0x30: {\n            var flag = (registers[x] < registers[y]) ? 1 : 0;\n            registers[x] -= registers[y];\n            if (registers[x] < 0) {\n                registers[x] += 256;   \n            }\n            registers[2] = flag;\n            break;\n        }\n        case 0x40: {\n            registers[x] |= registers[y];\n            break;\n        }\n        case 0x50: {\n            registers[x] &= registers[y];\n            break;\n        }\n        case 0x60: {\n            registers[x] ^= registers[y];\n            break;\n        }\n        case 0x70:\n        case 0x71:\n        case 0x72: {\n            if (registers[k] == nn) {\n                i+=4;   \n            }\n            break;\n        }\n        case 0x80:\n        case 0x81:\n        case 0x82: {\n            if (registers[k] != nn) {\n                i+=4;   \n            }\n            break;\n        }\n        case 0x90: {\n            if (registers[x] == registers[y]) {\n                i+=4;   \n            }\n            break;\n        }\n        case 0xA0: {\n            if (registers[x] != registers[y]) {\n                i+=4;   \n            }\n            break;\n        }\n    }\n}\n\nprint(registers[0],registers[1],registers[2]);",
+      "statement": "You must create an emulator that takes a set of instructions and interprets them.\n\nAn emulator is a software program that mimics hardware, in this case a CPU. In this puzzle, you'll have to emulate an Arithmetic and Logic Unit (ALU) and registers. This CPU uses three 8-bit registers numbered 0, 1, and 2, initialized to zero.\n\nEach register can only hold values between 0 and 255 (inclusive). Any operation that results in a value outside this range must wrap around using modulo 256 arithmetic to stay within 8 bits.\n\nOpcode table\n<<0000>> – EXIT - Stop Execution and print result\n<<1knn>> - LD k, nn - Load value nn into register k\n<<20xy>> - ADD x, y - Add the value of register y to register x and store the value in register x. Then, if the result (before adjusting for overflow) is greater than 8 bits set register 2 to 1 else 0.\n<<30xy>> - SUB x, y - Subtract the value of register y from register x and store the value in register x. Then, if the result (before adjusting for underflow) is less than 0 set register 2 to 1 else 0.\n<<40xy>> – OR x, y – Bitwise OR on value of register x and register y, store value in register x\n<<50xy>> – AND x, y – Bitwise AND on value of register x and register y, store value in register x\n<<60xy>> – XOR x, y - Bitwise XOR on value of register x and register y, store value in register x\n<<7knn>> – SE k, nn – Skip next instruction if value of register k equals nn\n<<8knn>> – SNE k, nn – Skip next instruction if value of register k is not equal to nn\n<<90xy>> – SE x, y – Skip next instruction if value of register x equals value of register y\n<<A0xy>> – SNE x, y - Skip next instruction if value of register x is not equal to the value of register y\n\nExample:\nInstruction - Opcode - description; comment\n<<1015>> - 1knn - LD k, nn ; Load 0x15 into register 0x0\n\nExample set of instructions:\n`1005110520010000`\nopcode - instruction - comment\n<<1005>> - LD 0, 05 - Load 0x05 into register 0x0\n<<1105>> - LD 1, 05 - Load 0x05 into register 0x1\n<<2001>> - ADD 0, 1 - Add register 0x0 to register 0x1, store in register 0x0\n<<0000>> - EXIT - stop and print results\n\nExample execution:\n# register values = 0, 0, 0\n<<opcode 1005>>\n# register values = 5, 0, 0\n<<opcode 1105>>\n# register values = 5, 5, 0\n<<opcode 2001>>\n# register values = 10, 5, 0\n<<opcode 0000>>\n# exit and print register values\n<<PRINT 10 5 0>>",
+      "testCases": [
+        {
+          "title": "5+5",
+          "isTest": true,
+          "testIn": "1005110520010000",
+          "testOut": "10 5 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "1006110620010000",
+          "testOut": "12 6 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "(11-6+2) | 8",
+          "isTest": true,
+          "testIn": "100B1106300111022001110840010000",
+          "testOut": "15 8 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "100A1106300111022001110740010000",
+          "testOut": "7 7 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Overflow 145+192",
+          "isTest": true,
+          "testIn": "109111C0200120020000",
+          "testOut": "82 192 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "106F11C8200120020000",
+          "testOut": "56 200 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "15-18",
+          "isTest": true,
+          "testIn": "100F111271122001A0010000300100002001",
+          "testOut": "253 18 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "100E110F710F2001A0010000300100002001",
+          "testOut": "255 15 1",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "[[program]] length <= 100 and is divisible by 4",
+      "stubGenerator": "read program:string(1024)\n\nwrite 1 2 3",
+      "inputDescription": "You will receive a string of hexadecimal characters that represent the instructions to be interpreted.  Each character represents 4 bits and an opcode is made up of 4 characters, or 16 bits. An opcode is a single operation that must be performed.\n\n<<Line 1:>> A string of hex characters, [[program]], without spaces",
+      "solutionLanguage": "Javascript",
+      "outputDescription": "Print the values of registers 0, 1 and 2, in decimal notation and separated by spaces."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You must create an emulator that takes a set of instructions and interprets them.<br><br>An emulator is a software program that mimics hardware, in this case a CPU. In this puzzle, you'll have to emulate an Arithmetic and Logic Unit (ALU) and registers. This CPU uses three 8-bit registers numbered 0, 1, and 2, initialized to zero.<br><br>Each register can only hold values between 0 and 255 (inclusive). Any operation that results in a value outside this range must wrap around using modulo 256 arithmetic to stay within 8 bits.<br><br>Opcode table<br><strong>0000</strong> &ndash; EXIT - Stop Execution and print result<br><strong>1knn</strong> - LD k, nn - Load value nn into register k<br><strong>20xy</strong> - ADD x, y - Add the value of register y to register x and store the value in register x. Then, if the result (before adjusting for overflow) is greater than 8 bits set register 2 to 1 else 0.<br><strong>30xy</strong> - SUB x, y - Subtract the value of register y from register x and store the value in register x. Then, if the result (before adjusting for underflow) is less than 0 set register 2 to 1 else 0.<br><strong>40xy</strong> &ndash; OR x, y &ndash; Bitwise OR on value of register x and register y, store value in register x<br><strong>50xy</strong> &ndash; AND x, y &ndash; Bitwise AND on value of register x and register y, store value in register x<br><strong>60xy</strong> &ndash; XOR x, y - Bitwise XOR on value of register x and register y, store value in register x<br><strong>7knn</strong> &ndash; SE k, nn &ndash; Skip next instruction if value of register k equals nn<br><strong>8knn</strong> &ndash; SNE k, nn &ndash; Skip next instruction if value of register k is not equal to nn<br><strong>90xy</strong> &ndash; SE x, y &ndash; Skip next instruction if value of register x equals value of register y<br><strong>A0xy</strong> &ndash; SNE x, y - Skip next instruction if value of register x is not equal to the value of register y<br><br>Example:<br>Instruction - Opcode - description; comment<br><strong>1015</strong> - 1knn - LD k, nn ; Load 0x15 into register 0x0<br><br>Example set of instructions:<br><pre style=\"font-family: monospace\">1005110520010000</pre><br>opcode - instruction - comment<br><strong>1005</strong> - LD 0, 05 - Load 0x05 into register 0x0<br><strong>1105</strong> - LD 1, 05 - Load 0x05 into register 0x1<br><strong>2001</strong> - ADD 0, 1 - Add register 0x0 to register 0x1, store in register 0x0<br><strong>0000</strong> - EXIT - stop and print results<br><br>Example execution:<br># register values = 0, 0, 0<br><strong>opcode 1005</strong><br># register values = 5, 0, 0<br><strong>opcode 1105</strong><br># register values = 5, 5, 0<br><strong>opcode 2001</strong><br># register values = 10, 5, 0<br><strong>opcode 0000</strong><br># exit and print register values<br><strong>PRINT 10 5 0</strong></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">You will receive a string of hexadecimal characters that represent the instructions to be interpreted.  Each character represents 4 bits and an opcode is made up of 4 characters, or 16 bits. An opcode is a single operation that must be performed.<br><br><strong>Line 1:</strong> A string of hex characters, <var>program</var>, without spaces</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Print the values of registers 0, 1 and 2, in decimal notation and separated by spaces.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><var>program</var> length &lt;= 100 and is divisible by 4</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1005110520010000</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">10 5 0</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 262105470810,
+  "avatar": 6122501543829,
+  "commentCount": 10,
+  "upVotes": 10,
+  "downVotes": 3,
+  "validateAction": {
+    "actionId": 159857,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

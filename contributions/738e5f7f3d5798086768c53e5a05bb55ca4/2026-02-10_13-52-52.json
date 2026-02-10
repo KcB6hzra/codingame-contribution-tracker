@@ -1,0 +1,129 @@
+{
+  "id": 738,
+  "activeVersion": 39,
+  "score": 6,
+  "votableId": 5202056,
+  "codingamerId": 1306541,
+  "views": 398,
+  "commentableId": 5144357,
+  "title": "The two piles difference",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Steuh",
+  "publicHandle": "738e5f7f3d5798086768c53e5a05bb55ca4",
+  "codingamerHandle": "96e62e1385aa7bcfd1c0449d1a7fbcc81456031",
+  "lastVersion": {
+    "version": 39,
+    "data": {
+      "title": "The two piles difference",
+      "topics": [],
+      "solution": "import random\nfrom functools import reduce\n\nclass Individual:\n    \n    def __init__(self):\n        random.shuffle(values)\n        self.genotype = list(values)\n        \n    def mutate(self):\n        pos1 = random.randint(0, CHROMOSOME_SIZE-1)\n        pos2 = random.randint(0, CHROMOSOME_SIZE-1)\n        self.genotype[pos1], self.genotype[pos2] = self.genotype[pos2], self.genotype[pos1]\n        \n    def crossover(self, mother):\n        child = Individual()\n        child.genotype = self.genotype[:CHROMOSOME_SIZE//2]\n        for gene in mother.genotype:\n            if child.genotype.count(gene) != self.genotype.count(gene):\n                child.genotype.append(gene)\n        return child\n        \n    def score(self):\n        list_add = self.genotype[:CHROMOSOME_SIZE//2]\n        list_mult = self.genotype[CHROMOSOME_SIZE//2:]\n        fitness_add = sum(list_add)\n        fitness_mult = reduce(lambda x, y: x*y, list_mult)\n        return abs(fitness_add**2 - fitness_mult)\n    \n    def output(self):\n        print(self.score())\n        \nclass Population:\n    \n    def __init__(self, size):\n        self.individuals = [Individual() for _ in range(size)]\n        \n    def grade(self):\n        self.individuals = sorted(self.individuals, key=lambda x: x.score())\n        \n    def evolve(self):\n        \n        # Sort individuals by fitness\n        self.grade()\n        \n        # Keep best solution of previous generation\n        elite = self.individuals[0]\n        children = [elite]\n        \n        # Crossover\n        for _ in range(POPULATION_SIZE-1):\n            father = self.individuals[random.randint(0, POPULATION_SIZE-1)]\n            if random.random() < CROSSOVER_RATE:\n                mother = self.individuals[random.randint(0, POPULATION_SIZE-1)]\n                child = father.crossover(mother)\n            else:\n                child = Individual()\n                child.genotype = list(father.genotype)\n            children.append(child)\n            \n        # Mutation\n        for i in range(1, POPULATION_SIZE):\n            if random.random() < MUTATION_RATE:\n                children[i].mutate()\n        \n        self.individuals = children\n        \ndef run():\n    population = Population(POPULATION_SIZE)\n    for i in range(NB_GENERATION):\n        population.evolve()\n    population.grade()\n    population.individuals[0].output()\n\nNB_GENERATION = 400\nPOPULATION_SIZE = 16\nCHROMOSOME_SIZE = int(input())\nCROSSOVER_RATE = 0.3\nMUTATION_RATE = 0.8\nvalues = [int(i) for i in input().split()]\nrandom.seed(3)\nrun()",
+      "statement": "You have a list of natural numbers of size [[N]] and you must distribute the values in two lists A and B of size [[N]]/2, so that the <<squared sum of the A elements>> is the nearest possible to the <<product of the B elements>>.\n\n<<Example:>>\nConsider the list <<7 11 1 9 10 3 5 13 9 12>>.\nThe optimized distribution is:\n<<List A: 5 9 9 12 13\nList B: 1 3 7 10 11>>\nwhich leads to the difference <<abs( (5+9+9+12+13)^2 - (1*3*7*10*11) ) = 6>>\nYour program should therefore output 6, which is the minimum difference that can be achieved.",
+      "testCases": [
+        {
+          "title": "Simple",
+          "isTest": true,
+          "testIn": "10\n7 11 1 9 10 3 5 13 9 12",
+          "testOut": "6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple",
+          "isTest": false,
+          "testIn": "10\n7 11 1 9 10 6 5 13 9 12",
+          "testOut": "4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Normal",
+          "isTest": true,
+          "testIn": "16\n2 3 5 4 7 4 20 17 19 18 16 20 17 2 1 3",
+          "testOut": "476",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Normal",
+          "isTest": false,
+          "testIn": "16\n2 3 5 4 7 4 4 17 19 18 16 20 17 2 1 3",
+          "testOut": "128",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Complex",
+          "isTest": true,
+          "testIn": "16\n2 3 5 4 7 4 1 2 4 3 6 2 17 2 1 3",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Complex",
+          "isTest": false,
+          "testIn": "16\n2 3 5 4 7 5 1 2 4 3 6 2 17 2 1 3",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "More values",
+          "isTest": true,
+          "testIn": "20\n1 2 1 3 4 4 3 6 5 6 7 8 5 3 2 2 7 7 3 4",
+          "testOut": "92",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "More values",
+          "isTest": false,
+          "testIn": "20\n1 2 1 3 5 4 3 6 5 6 7 8 5 3 2 2 7 7 3 4",
+          "testOut": "25",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Big size",
+          "isTest": true,
+          "testIn": "40\n1 2 3 2 1 2 3 2 1 2 3 2 1 2 3 2 1 2 3 1 1 1 3 2 1 2 4 2 1 2 4 2 1 2 4 2 1 2 3 2",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Big size",
+          "isTest": false,
+          "testIn": "40\n1 2 3 2 2 2 3 2 1 2 3 2 1 2 3 2 1 2 3 1 1 1 3 2 1 2 4 2 1 2 4 2 1 2 4 2 1 2 3 2",
+          "testOut": "97",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "1 <= [[N]] <= 40\n0 < value of an element < 21 \n[[N]] is always even, so size(A) = size(B).\nThere are at most 12 different natural numbers.",
+      "stubGenerator": "read N:int\nloopline N value:int\nwrite answer",
+      "inputDescription": "<<Line 1:>> The list size [[N]]\n<<Line 2:>> [[N]] space separated natural numbers",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> The minimum difference between the squared sum of elements in list A and the product of elements in list B."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You have a list of natural numbers of size <var>N</var> and you must distribute the values in two lists A and B of size <var>N</var>/2, so that the <strong>squared sum of the A elements</strong> is the nearest possible to the <strong>product of the B elements</strong>.<br><br><strong>Example:</strong><br>Consider the list <strong>7 11 1 9 10 3 5 13 9 12</strong>.<br>The optimized distribution is:<br><strong>List A: 5 9 9 12 13<br>List B: 1 3 7 10 11</strong><br>which leads to the difference <strong>abs( (5+9+9+12+13)^2 - (1*3*7*10*11) ) = 6</strong><br>Your program should therefore output 6, which is the minimum difference that can be achieved.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> The list size <var>N</var><br><strong>Line 2:</strong> <var>N</var> space separated natural numbers</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> The minimum difference between the squared sum of elements in list A and the product of elements in list B.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt;= <var>N</var> &lt;= 40<br>0 &lt; value of an element &lt; 21 <br><var>N</var> is always even, so size(A) = size(B).<br>There are at most 12 different natural numbers.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">10\n7 11 1 9 10 3 5 13 9 12</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">6</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 276331259839,
+  "avatar": 15808915160175,
+  "commentCount": 18,
+  "upVotes": 6,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 117250,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

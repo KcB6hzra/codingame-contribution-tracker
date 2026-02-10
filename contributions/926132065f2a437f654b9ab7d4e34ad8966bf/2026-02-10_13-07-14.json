@@ -1,0 +1,125 @@
+{
+  "id": 92613,
+  "activeVersion": 16,
+  "score": 3,
+  "votableId": 33616113,
+  "codingamerId": 4908528,
+  "views": 184,
+  "commentableId": 33468234,
+  "title": "Resistance circuits",
+  "status": "ACCEPTED",
+  "type": "CLASHOFCODE",
+  "nickname": "Molag_Bal",
+  "publicHandle": "926132065f2a437f654b9ab7d4e34ad8966bf",
+  "codingamerHandle": "7252e311f93aea32aefefe92fb76b6618258094",
+  "lastVersion": {
+    "version": 16,
+    "autocloseTime": 1717493711792,
+    "freezeTime": 1715506511792,
+    "data": {
+      "title": "Resistance circuits",
+      "topics": [],
+      "fastest": true,
+      "reverse": false,
+      "shortest": false,
+      "solution": "import sys\nimport math\n\n\ndef separate_layer(formula):\n    '''\n    Separate the formula in values and operators on the current layer\n    Example: '((100|200)+300)|400|500' --> ['((100|200)+300)', '|', '400', '|', '500']\n    '''\n    splits = []\n    current = \"\"\n    layer = 0\n    for c in formula:\n        # on separator on the current layer\n        if (c in ['+', '|']) and (layer == 0):\n            splits.append(current)\n            current=\"\"\n            splits.append(c)\n        # everything else\n        else:\n            if c == '(':\n                layer += 1\n            elif c == ')':\n                layer -= 1\n            current += c\n    splits.append(current)\n    return splits\n\ndef string_to_value(string):\n    '''\n    Convert resistor string to value\n    Example: '12k' --> 12000\n    '''\n    number = \"\".join(filter(str.isnumeric, string))\n    number = int(number)\n    postfix = \"\".join(filter(str.isalpha, string))\n    if postfix == 'k':\n        number *= 1_000\n    elif postfix == 'M':\n        number *= 1_000_000\n    return number\n\ndef calculate_parallel(values):\n    '''\n    Calculate resistors in parallel\n    '''\n    div_r = sum([1/value for value in values])\n    return 1 / div_r\n\ndef calculate_series(values):\n    '''\n    Calculate resistors in series\n    '''\n    return sum(values)\n\ndef calculate_formula(formula):\n    '''\n    Calculate the result of the formula recursively\n    '''\n    # separate the formula on the upper layer\n    splits = separate_layer(formula)\n    # get the values of each resistor value or sub formula\n    values = []\n    for i in range(len(splits)):\n        # between the values are operators\n        if (i % 2) == 0:\n            if splits[i].startswith('('):\n                value = calculate_formula(splits[i][1:-1])\n                values.append(value)\n            else:\n                value = string_to_value(splits[i])\n                values.append(value)\n    # get the operator (only one operator per layer)\n    operator = splits[1]\n    if operator == '+':\n        return calculate_series(values)\n    else:\n        return calculate_parallel(values)\n\n\n# Auto-generated code below aims at helping you parse\n# the standard input according to the problem statement.\n\nformula = input().strip().replace(' ', '')\n\n# Write an answer using print\n# To debug: print(\"Debug messages...\", file=sys.stderr, flush=True)\n\nresult = round(calculate_formula(formula))\nprint(result)\n",
+      "statement": "Tom works as an electrical engineer. Every day he has to calculate the total resistance of circuits. He wants to get rid of this tedious work and thinks about an automation. The input for this automation will be a formula of the entire circuit, with calculation of resistors in series (operator {{+}}) and resistors in parallel (operator {{|}}). To make this task easier every formula consists of nested formulas in between parentheses. Every nested formula and top one contain a unique operator (either series {{+}} or parallel {{|}}, never both). Can you help Tom to get this automation work as soon as possible?\n\nHint:\n- Resistors in series: R = R1 + R2 + R3 + ...\n- Resistors in parallel: 1/R = 1/R1 + 1/R2 + 1/R3 + ...",
+      "testCases": [
+        {
+          "title": "Test: Simple formula",
+          "isTest": true,
+          "testIn": "1M + (20k | 20k) + 100",
+          "testOut": "1010100",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator: Simple formula",
+          "isTest": false,
+          "testIn": "2M + (40k | 40k) + 200",
+          "testOut": "2020200",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test: Parallel circuit",
+          "isTest": true,
+          "testIn": "100 | 150 | 200",
+          "testOut": "46",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator: Parallel circuit",
+          "isTest": false,
+          "testIn": "120k | 140k | 160k",
+          "testOut": "46027",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test: Nested formula",
+          "isTest": true,
+          "testIn": "(1M + (20k | 20k | 40k) + 100) | 200k",
+          "testOut": "166890",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator: Nested formula",
+          "isTest": false,
+          "testIn": "((20k | 25k) + (40k | 45k | 50k)) | 20000",
+          "testOut": "11302",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test: More nested formula",
+          "isTest": true,
+          "testIn": "((20k + 25k + (30k | (1M + 100k + (30k | 30k)) | 35k)) | 40k) + 1",
+          "testOut": "24147",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator: More nested formula",
+          "isTest": false,
+          "testIn": "((55k + 55k + (30k | (2M + 1M + (32k | 46k)) | 35k)) | 40k) + 100",
+          "testOut": "30465",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "constraints": "For every nested [[formula]] in between parentheses it can be assumed that either the series operator {{+}} or the parallel operator {{|}} is used (never both). All individual values in [[formula]] are positive integers.",
+      "stubGenerator": "read formula:string(100)\nwrite Result",
+      "inputDescription": "<<Line 1:>> A string [[formula]] nested with parentheses. The resistor values can be pure numbers or they can also ends with {{k}} (for 1000) or {{M}} (for 1000000).",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> Total resistance rounded to the nearest integer (Rounding at end of calculation)."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Tom works as an electrical engineer. Every day he has to calculate the total resistance of circuits. He wants to get rid of this tedious work and thinks about an automation. The input for this automation will be a formula of the entire circuit, with calculation of resistors in series (operator <const>+</const>) and resistors in parallel (operator <const>|</const>). To make this task easier every formula consists of nested formulas in between parentheses. Every nested formula and top one contain a unique operator (either series <const>+</const> or parallel <const>|</const>, never both). Can you help Tom to get this automation work as soon as possible?<br><br>Hint:<br>- Resistors in series: R = R1 + R2 + R3 + ...<br>- Resistors in parallel: 1/R = 1/R1 + 1/R2 + 1/R3 + ...</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> A string <var>formula</var> nested with parentheses. The resistor values can be pure numbers or they can also ends with <const>k</const> (for 1000) or <const>M</const> (for 1000000).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> Total resistance rounded to the nearest integer (Rounding at end of calculation).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">For every nested <var>formula</var> in between parentheses it can be assumed that either the series operator <const>+</const> or the parallel operator <const>|</const> is used (never both). All individual values in <var>formula</var> are positive integers.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1M + (20k | 20k) + 100</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1010100</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 53239035188,
+  "avatar": 84204082923605,
+  "commentCount": 9,
+  "upVotes": 8,
+  "downVotes": 5,
+  "validateAction": {
+    "actionId": 953427,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1717489797796,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

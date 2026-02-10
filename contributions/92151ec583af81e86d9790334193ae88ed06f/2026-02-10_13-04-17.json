@@ -1,0 +1,338 @@
+{
+  "id": 92151,
+  "activeVersion": 42,
+  "score": 26,
+  "votableId": 33574998,
+  "codingamerId": 878974,
+  "views": 524,
+  "commentableId": 33427326,
+  "title": "M.A.R.I. and the crazy factory",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "nicola",
+  "publicHandle": "92151ec583af81e86d9790334193ae88ed06f",
+  "codingamerHandle": "21bf42f790de293c3aef398f18cd2627479878",
+  "lastVersion": {
+    "version": 42,
+    "autocloseTime": 1728145668461,
+    "freezeTime": 1718906136760,
+    "data": {
+      "title": "M.A.R.I. and the crazy factory",
+      "topics": [
+        {
+          "id": 56,
+          "handle": "backtracking",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Retour sur trace",
+            "2": "Backtracking"
+          },
+          "pageTitle": "Backtracking: exercises and theory",
+          "puzzleCount": 23,
+          "parentTopicId": 41,
+          "contentDetailsId": 80
+        },
+        {
+          "id": 59,
+          "handle": "brute-force",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Force brute",
+            "2": "Brute-force"
+          },
+          "pageTitle": "Brute-force: exercises and theory",
+          "puzzleCount": 18,
+          "parentTopicId": 41,
+          "contentDetailsId": 90
+        },
+        {
+          "id": 182,
+          "handle": "combinatorics",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Combinatoire",
+            "2": "Combinatorics"
+          },
+          "puzzleCount": 14,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "from itertools import permutations\nfrom math import factorial as f\n\ndirs=[(-1,0),(0,1),(1,0),(0,-1)]\n\nclass mari():\n  def __init__(self,c):\n    self.u=list(map(list,c)) # le plateau\n    self.p=[] # la porte et la zone d’ouverture\n    self.g=None # l’engrenage posé au sol\n    self.k=None # la clé\n    self.ins=[] # les instructions\n    self.z=None # en cas de zigzag\n    for i,l in enumerate(c):\n      for j,e in enumerate(l):\n        if \"0\"<=e<=\"3\":\n          self.d=int(e)\n          self.x,self.y=i,j\n          self.u[i][j]=\".\"\n        elif e==\"E\":\n          self.a=i,j\n          self.u[i][j]=\".\"\n        elif e==\"d\":\n          self.p.append([i,j,\"#.\"])\n          self.u[i][j]=\"#\"\n        elif e==\"r\":\n          self.p.append([i,j,\".#\"])\n          self.u[i][j]=\".\"\n        elif e==\"W\":\n          self.p.append([i,j,\"##\"])\n          self.u[i][j]=\"#\"\n        elif e==\"G\":\n          self.g=(i,j)\n          self.u[i][j]=\".\"\n        elif e==\"k\":\n          self.k=(i,j)\n          self.u[i][j]=\".\"\n\n  def p1(self):\n    x=self.x+dirs[self.d][0]\n    y=self.y+dirs[self.d][1]\n    if not (0<=x<7 and 0<=y<5):\n      raise Exception(\"Sortie de carte\")\n    if self.u[x][y]!=\".\":\n      raise Exception(\"Sortie de trajet\")\n    if self.g==(x,y):\n      gx=x+dirs[self.d][0]\n      gy=y+dirs[self.d][1]\n      if self.u[gx][gy]!=\".\":\n        raise Exception(\"Impossible de pousser les murs\")\n      if not (0<=gx<7 and 0<=gy<5):\n        raise Exception(\"Impossible de sortir le boulon\")\n      self.g=(gx,gy)\n    self.x,self.y=x,y\n\n  def p2(self):\n    self.p1()\n    self.p1()\n\n  def tr(self):\n    self.d+=1\n    self.d%=4\n\n  def tl(self):\n    self.d-=1\n    self.d%=4\n\n  def zr(self):\n    if self.z==None:\n      self.z=0\n    [self.tr,self.tl][self.z]()\n    self.z=1-self.z\n\n  def zl(self):\n    if self.z==None:\n      self.z=1\n    [self.tr,self.tl][self.z]()\n    self.z=1-self.z\n\n  def nop(self):\n    pass\n\n  def uk(self):\n    if self.k!=\"ok\":\n      raise Exception(\"Il faut la clé\")\n    x,y,e=self.p[0]\n    if self.x==x and self.y==y:\n      raise Exception(\"Écrasé\")\n    self.p[0][2]=e[::-1]\n    self.u[x][y]=self.p[0][2][0]\n    x,y,e=self.p[2]\n    if self.x==x and self.y==y:\n      raise Exception(\"Écrasé\")\n    self.p[2][2]=e[::-1]\n    self.u[x][y]=self.p[2][2][0]\n\n  def fin(self):\n    return (self.x,self.y)==self.a and self.k in {None,\"ok\"}\n\n  def __str__(self):\n    v=list(map(list,self.u))\n    v[self.x][self.y]=\"↑→↓←\"[self.d]\n    if self.g:\n      v[self.g[0]][self.g[1]]=\"o\"\n    return \"\\n\".join(\"\".join(l) for l in v)\n\n  def action(self,a):\n    {\"p1\":self.p1,\"p2\":self.p2,\n     \"tr\":self.tr,\"tl\":self.tl,\n     \"zr\":self.zr,\"zl\":self.zl,\n     \"uk\":self.uk,\n     \"nop\":self.nop}[a]()\n\n  def actions(self):\n    if \"nop\" in self.ins and self.ins[-1]!=\"nop\":\n      raise Exception(\"nop doit etre à la fin\")\n    t={i*(i+1)//2 for i in range(1,len(self.ins))}\n    for i,a in enumerate(self.ins):\n      if a==\"bk\":\n        return\n      if a==\"x2\" and i<len(self.ins):\n        a=self.ins[i+1]\n      self.action(a)\n    if self.k==(self.x,self.y):\n      self.k=\"ok\"\n\ndef bf(n,m):\n  f=1\n  p=1\n  while f<=n:\n    p+=1\n    f*=p\n  f//=p\n  p-=1\n  l=[]\n  while p:\n    r,n=divmod(n,f)\n    l.append(r)\n    f//=p\n    p-=1\n  return l[::-1]+[0]*(m-len(l))\n\ndef solution(u,ins):\n  j=ins[0]==\"\"\n\n  l=len(ins)-1\n  solutions=set()\n\n  for p in permutations(ins[1:]):\n    for n in range(f(l+1-j)):\n      m=mari(u)\n      o=[]\n      b=bf(n,l)\n      if j:\n        b=[0]+b[:-1]\n      else:\n        m.ins=[ins[0]]\n      for i,e in enumerate(b):\n        m.ins.insert(e,p[i])\n        o+=m.ins\n        try:\n          m.actions()\n        except Exception as e:\n          break\n        if m.fin():\n          solutions.add(\" \".join(o))\n  if solutions:\n    if len(solutions)==1:\n      for s in sorted(solutions):\n        l=2-j\n        s=s.split()\n        while s:\n            a,s=s[:l],s[l:]\n            print(*a)\n            l+=1\n    else:\n      print(len(solutions))\n\nins=input()\nif ins.startswith(\" \"):\n    ins=[\"\"]+ins.split()\nelse:\n    ins=ins.split()\nv=[input() for _ in range(7)]\nsolution(v,ins)",
+      "statement": "M.A.R.I. is a Mobile Autonomous Robotic Intelligence who works in a factory.\nAfter a thunder storm, the factory has gone crazy and you need to help her fixing it, crossing the factory to the last room where the central command is.\n\n<<Instructions>>\nHere are M.A.R.I.’s instructions:\n* {{p1}} Go 1 square forward\n* {{p2}} Go 2 squares forward\n* {{nop}} Do nothing (use it only as the last instruction of a set)\n* {{tl}} Turn left\n* {{tr}} Turn right\n* {{bk}} Drop the remaining instructions in the set (can be used as {{nop}} if it is the last instruction of a set)\n* {{x2}} Run twice the next instruction\n* {{uk}} Use key (to slide the door)\n* {{zl}} Turn left then acts like a {{zr}}\n* {{zr}} Turn right then acts like a {{zl}}\n\n<<How to play>>\nBut M.A.R.I. is also a bit messed up.\nYou are given a list of instructions but you must play them one by one in a specific way.\nWhen you use an instruction from the list, it’s popped out of the list and M.A.R.I. runs the complete set of instructions from the beginning of the set, not only the one you used.\nAn instruction can only be used once, or twice if it’s listed twice.\nYou can insert the new instruction wherever you want.\nYou might not use all the instructions.\nThe first instruction is already in the set but you must use a new instruction to move M.A.R.I.\nIf the instruction list begins with a space, no instruction is already in the set.\n\n<<Example>>\nThe solution of the first room is {{p2}}/{{p1 p2}}/{{p1 tr p2}}. But why?\nThe instructions list is {{ p1 tr p2}}, that starts with a space. Thus, the first set will be empty before you play the first instruction.\nFirst set, you play {{p2}}. She has not reached the exit so you must use another instruction.\nSecond set, you insert {{p1}} before {{p2}}, M.A.R.I. must execute {{p1 p2}}. Still not on the exit.\nThird set, finally you insert {{tr}} between {{p1}} and {{p2}}, follows {{p1 tr p2}}. M.A.R.I. reaches the exit when {{p2}} ends. Well done!\nJust write these six instructions, each set on a line.\n\n<<The rooms>>\nEach room is 5 squares wide and 7 squares high. M.A.R.I. must not step out of the room!\nHere is the meaning of the squares:\n* {{#}} Wall, do not bump into.\n* {{.}} Empty square.\n* {{0}} north {{1}} east {{2}} south {{3}} west is the initial position and direction of M.A.R.I.\n* {{E}} The exit where you need to end a set of instructions to finish the game.\n* {{G}} A gear unfortunately fallen on the ground. You can only push it to an empty square (like sokoban) but not step on it.\n* {{k}} A key. If this tile is present, you need to grab it to finish the game or to slide the door; and to end an instruction on it to grab it (beware of {{p2}}).\n* {{dd}} Sliding door that can move 1 square on the {{r}}. {{rdd}} becomes {{ddr}} and vice-versa. Don’t crush M.A.R.I. when she is on the railway!\n* {{r}} Railway for the door, you can walk on it if the door is not there. If the door has slid, the square where the door was is now a railway.",
+      "testCases": [
+        {
+          "title": "Go straight ahead… or maybe not",
+          "isTest": true,
+          "testIn": " p1 tr p2\n####2\n####.\n####.\n####.\n####.\n####.\n##E..",
+          "testOut": "p2\np1 p2\np1 tr p2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Go straight ahead… or maybe not",
+          "isTest": false,
+          "testIn": " p1 tl p2\n##E..\n####.\n####.\n####.\n####.\n####.\n####0",
+          "testOut": "p2\np1 p2\np1 tl p2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Straight ahead and nop",
+          "isTest": true,
+          "testIn": " p1 p1 nop\n#####\n##.##\n##E##\n##.##\n##.##\n##.##\n##0##",
+          "testOut": "p1\np1 nop\np1 p1 nop",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Straight ahead and nop",
+          "isTest": false,
+          "testIn": " p1 p1 nop\n#####\n##2##\n##.##\n##.##\n##.##\n##E##\n##.##",
+          "testOut": "p1\np1 nop\np1 p1 nop",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Turn right",
+          "isTest": true,
+          "testIn": " p1 p2 nop tr\n#####\n....#\n..E##\n..#2#\n....#\n....#\n#####",
+          "testOut": "p2\ntr p2\np1 tr p2\np1 tr p2 nop",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Turn right",
+          "isTest": false,
+          "testIn": " p1 p2 tr\n#####\n#####\n###0.\n##E..\n##..#\n#####\n#####",
+          "testOut": "tr\np1 tr\np1 tr p2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A bit harder",
+          "isTest": true,
+          "testIn": " tr tl p1 p1 p2\n#####\n##...\n##.#.\n##.#E\n##0#.\n##.#.\n#####",
+          "testOut": "p1\np1 p1\ntr p1 p1\ntr p1 p1 tl",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "A bit harder",
+          "isTest": false,
+          "testIn": " tr tl p1 p1 p2\n#####\n##.#E\n##...\n##.#.\n##0#.\n##.#.\n#####",
+          "testOut": "p1\np1 tr\np1 tl tr\np1 tl p1 tr",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "With break",
+          "isTest": true,
+          "testIn": " tr p1 p1 p2 bk\n#####\n##E##\n##.##\n#...#\n#...#\n#0#.#\n#####",
+          "testOut": "p2\ntr p2\ntr bk p2\ntr p1 bk p2\ntr p1 p1 bk p2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "With break",
+          "isTest": false,
+          "testIn": " tr tl bk p1 p2\n#####\nE..##\n...##\n.#.##\n....#\n##.3#\n#####",
+          "testOut": "p1\ntr p1\ntl tr p1\ntl tr p1 bk\ntl p2 tr p1 bk",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Starts with a not empty set",
+          "isTest": true,
+          "testIn": "p2 tl tr p1\n#####\n#1..#\n###.#\n###.#\n##..#\n##.##\n##E##",
+          "testOut": "p2 tr\np1 p2 tr\np1 tl p2 tr",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Starts with a not empty set",
+          "isTest": false,
+          "testIn": "p2 tl tr p1\n#####\n#..3#\n#.###\n#.###\n#..##\n##.##\n##E##",
+          "testOut": "p2 tl\np1 p2 tl\np1 tr p2 tl",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Repeat next instruction",
+          "isTest": true,
+          "testIn": " tl p1 p1 x2\n#####\nE.###\n#.###\n#.3##\n#.###\n#####\n#####",
+          "testOut": "p1\ntl p1\nx2 tl p1\nx2 p1 tl p1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Repeat next instruction",
+          "isTest": false,
+          "testIn": " tr p1 p1 x2\n#####\n#.E##\n#.###\n1.###\n#.###\n#####\n#####",
+          "testOut": "p1\ntr p1\nx2 tr p1\nx2 p1 tr p1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Random puzzle",
+          "isTest": true,
+          "testIn": " tr tl x2 p1 p1\n#####\n#####\n###E.\n####.\n#.##.\n#...3\n#####",
+          "testOut": "p1\nx2 p1\nx2 tl p1\nx2 p1 tl p1\nx2 p1 tl p1 tr",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Random puzzle",
+          "isTest": false,
+          "testIn": "p1 tr tl p2 x2\n#####\n#####\n##2##\n#...#\n##.##\n#..E#\n##.##",
+          "testOut": "p1 tr\ntl p1 tr\ntl p1 x2 tr\ntl p1 x2 tr p2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Someone lost a piece",
+          "isTest": true,
+          "testIn": "tr tl p2 bk p1\n#####\n#####\n#####\n##E##\n#.G.#\n#0.##\n##.##",
+          "testOut": "p1 tr\np1 bk tr\ntl p1 bk tr",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Someone lost a piece",
+          "isTest": false,
+          "testIn": "tl tr p2 bk p1\n#####\n#####\n#####\n##E##\n#.G.#\n#..0#\n##.##",
+          "testOut": "p1 tl\np1 bk tl\ntr p1 bk tl",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A key on the ground",
+          "isTest": true,
+          "testIn": " p1 tr tl p2 x2\n#####\n#..E#\n#...#\n#..##\n##..#\n#.0.#\n#.k##",
+          "testOut": "tr\ntr p1\nx2 tr p1\nx2 p2 tr p1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "A key on the ground",
+          "isTest": false,
+          "testIn": " p1 tr tl p2 x2\n#####\n#E.##\n#...#\n##..#\n#..##\n#.0.#\n##k.#",
+          "testOut": "tl\ntl p1\nx2 tl p1\nx2 p2 tl p1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Open the door tyrannosaur",
+          "isTest": true,
+          "testIn": " tl p1 p1 p2 uk\n#####\nE...#\n#.ddr\n....#\n.0..#\n.k..#\n#####",
+          "testOut": "tl\ntl p1\nuk tl p1\nuk tl p1 p1\nuk p2 tl p1 p1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Open the door tyrannosaur",
+          "isTest": false,
+          "testIn": " tr p2 p1 x2 uk\n#####\n#...#\n#rdd#\n#.#.#\n#k..#\n#0.E#\n#####",
+          "testOut": "p1\nuk p1\nuk x2 p1\ntr uk x2 p1\ntr p2 uk x2 p1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Drunken M.A.R.I.",
+          "isTest": true,
+          "testIn": "zr tl p1 p1 nop p2\n#####\n#####\nE..##\n#..##\n##..#\n##.3#\n#####",
+          "testOut": "zr p1\nzr p1 nop\nzr p1 p1 nop\nzr p1 p1 tl nop",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Drunken M.A.R.I.",
+          "isTest": false,
+          "testIn": "zl tl p1 p1 nop p2\n#####\n#####\n##..E\n##..#\n#..##\n#1.##\n#####",
+          "testOut": "zl p1\nzl p1 nop\nzl p1 p1 nop\nzl p1 p1 tl nop",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "To the central command",
+          "isTest": true,
+          "testIn": " tl x2 p2 zl p1\n#####\n#..E#\n#...#\n#k..#\n#ddr#\n#...#\n#..0#",
+          "testOut": "p1\nx2 p1\nx2 p1 tl\nx2 p1 tl p2\nzl x2 p1 tl p2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "To the central command",
+          "isTest": false,
+          "testIn": " tr x2 p2 zr p1\n#####\n#E..#\n#...#\n#..k#\n#rdd#\n#...#\n#0..#",
+          "testOut": "p1\nx2 p1\nx2 p1 tr\nx2 p1 tr p2\nzr x2 p1 tr p2",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "Each room has got only one solution if {{nop}} is used as the last instruction of a set.",
+      "coverBinaryId": 122862846083567,
+      "stubGenerator": "read ins:string(20)\nloop 7 read line:word(5)\nwrite instructions",
+      "inputDescription": "<<Line 1>>: The available instructions\nNext <<7 lines>>: The room",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The instructions that bring M.A.R.I. to the exit, one line by set"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">M.A.R.I. is a Mobile Autonomous Robotic Intelligence who works in a factory.<br>After a thunder storm, the factory has gone crazy and you need to help her fixing it, crossing the factory to the last room where the central command is.<br><br><strong>Instructions</strong><br>Here are M.A.R.I.&rsquo;s instructions:<br>* <const>p1</const> Go 1 square forward<br>* <const>p2</const> Go 2 squares forward<br>* <const>nop</const> Do nothing (use it only as the last instruction of a set)<br>* <const>tl</const> Turn left<br>* <const>tr</const> Turn right<br>* <const>bk</const> Drop the remaining instructions in the set (can be used as <const>nop</const> if it is the last instruction of a set)<br>* <const>x2</const> Run twice the next instruction<br>* <const>uk</const> Use key (to slide the door)<br>* <const>zl</const> Turn left then acts like a <const>zr</const><br>* <const>zr</const> Turn right then acts like a <const>zl</const><br><br><strong>How to play</strong><br>But M.A.R.I. is also a bit messed up.<br>You are given a list of instructions but you must play them one by one in a specific way.<br>When you use an instruction from the list, it&rsquo;s popped out of the list and M.A.R.I. runs the complete set of instructions from the beginning of the set, not only the one you used.<br>An instruction can only be used once, or twice if it&rsquo;s listed twice.<br>You can insert the new instruction wherever you want.<br>You might not use all the instructions.<br>The first instruction is already in the set but you must use a new instruction to move M.A.R.I.<br>If the instruction list begins with a space, no instruction is already in the set.<br><br><strong>Example</strong><br>The solution of the first room is <const>p2</const>/<const>p1 p2</const>/<const>p1 tr p2</const>. But why?<br>The instructions list is <const> p1 tr p2</const>, that starts with a space. Thus, the first set will be empty before you play the first instruction.<br>First set, you play <const>p2</const>. She has not reached the exit so you must use another instruction.<br>Second set, you insert <const>p1</const> before <const>p2</const>, M.A.R.I. must execute <const>p1 p2</const>. Still not on the exit.<br>Third set, finally you insert <const>tr</const> between <const>p1</const> and <const>p2</const>, follows <const>p1 tr p2</const>. M.A.R.I. reaches the exit when <const>p2</const> ends. Well done!<br>Just write these six instructions, each set on a line.<br><br><strong>The rooms</strong><br>Each room is 5 squares wide and 7 squares high. M.A.R.I. must not step out of the room!<br>Here is the meaning of the squares:<br>* <const>#</const> Wall, do not bump into.<br>* <const>.</const> Empty square.<br>* <const>0</const> north <const>1</const> east <const>2</const> south <const>3</const> west is the initial position and direction of M.A.R.I.<br>* <const>E</const> The exit where you need to end a set of instructions to finish the game.<br>* <const>G</const> A gear unfortunately fallen on the ground. You can only push it to an empty square (like sokoban) but not step on it.<br>* <const>k</const> A key. If this tile is present, you need to grab it to finish the game or to slide the door; and to end an instruction on it to grab it (beware of <const>p2</const>).<br>* <const>dd</const> Sliding door that can move 1 square on the <const>r</const>. <const>rdd</const> becomes <const>ddr</const> and vice-versa. Don&rsquo;t crush M.A.R.I. when she is on the railway!<br>* <const>r</const> Railway for the door, you can walk on it if the door is not there. If the door has slid, the square where the door was is now a railway.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: The available instructions<br>Next <strong>7 lines</strong>: The room</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The instructions that bring M.A.R.I. to the exit, one line by set</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Each room has got only one solution if <const>nop</const> is used as the last instruction of a set.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\"> p1 tr p2\n####2\n####.\n####.\n####.\n####.\n####.\n##E..</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">p2\np1 p2\np1 tr p2</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 42897796471,
+  "avatar": 26090852120005,
+  "commentCount": 21,
+  "upVotes": 26,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1009435,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1717351537001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1717353516306,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1720893937001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1725553668461,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1727830859605,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

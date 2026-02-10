@@ -1,0 +1,298 @@
+{
+  "id": 5799,
+  "activeVersion": 30,
+  "score": 19,
+  "votableId": 16195236,
+  "codingamerId": 1256312,
+  "views": 717,
+  "commentableId": 16108761,
+  "title": "Nurikabe",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Djoums",
+  "publicHandle": "57991ba72eeb03337cbf302800299bc662a9",
+  "codingamerHandle": "f0b5a892e52b5ec167931b7bdf52eb982136521",
+  "lastVersion": {
+    "version": 30,
+    "autocloseTime": 1611840578688,
+    "data": {
+      "title": "Nurikabe",
+      "topics": [
+        {
+          "id": 47,
+          "handle": "arrays",
+          "labelMap": {
+            "1": "Tableaux",
+            "2": "Arrays"
+          },
+          "pageTitle": "Arrays: exercises and theory",
+          "puzzleCount": 9,
+          "parentTopicId": 40,
+          "contentDetailsId": 78
+        },
+        {
+          "id": 117,
+          "handle": "logic",
+          "labelMap": {
+            "1": "Logic",
+            "2": "Logic"
+          },
+          "puzzleCount": 8,
+          "parentTopicId": 93
+        },
+        {
+          "id": 68,
+          "handle": "pathfinding",
+          "labelMap": {
+            "1": "Recherche de chemins",
+            "2": "Pathfinding"
+          },
+          "pageTitle": "Pathfinding: exercises and theory",
+          "puzzleCount": 30,
+          "parentTopicId": 41,
+          "contentDetailsId": 69
+        },
+        {
+          "id": 48,
+          "handle": "graphs",
+          "labelMap": {
+            "1": "Graphes",
+            "2": "Graphs"
+          },
+          "pageTitle": "Graphs: exercises and theory",
+          "puzzleCount": 19,
+          "parentTopicId": 40,
+          "contentDetailsId": 75
+        }
+      ],
+      "solution": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\nusing System.Diagnostics;\n\npublic static class Nurikabe {\n    private static int S;\n    private const int Free = -1, Water = -2;\n    private static int[][] Neighbors;\n    private static readonly List<Number> AllNumbers = new List<Number>();\n\n    private class Number {\n        public readonly int Pos, Val;\n        public bool Done { get; private set; }\n        private HashSet<int> Core = new HashSet<int>();\n        private HashSet<int> CoreBorder = new HashSet<int>();\n        public HashSet<int> Cover { get; private set; } = new HashSet<int>();\n        public HashSet<int> CoverBorder { get; private set; } = new HashSet<int>();\n        public List<HashSet<int>> Shapes { get; private set; }\n        public Number(int pos, int val, Span<int> status) {\n            Pos = pos; Val = val; Done = false;\n            if (Val == 1) { Core.Add(Pos); setDone(status); }\n        }\n        private bool validPos(int n, Span<int> status) {\n            if (status[n] != Free && status[n] != Pos) return false;\n            foreach (int n2 in Neighbors[n])\n                if (status[n2] >= 0 && status[n2] != Pos)\n                    return false;\n            return true;\n        }\n        private static HashSet<int> getBorder(HashSet<int> source, Span<int> status) {\n            var res = new HashSet<int>();\n            foreach (int n in source)\n                foreach (int n2 in Neighbors[n])\n                    if (status[n2] == Free)\n                        res.Add(n2);\n            return res;\n        }\n        private HashSet<int> getGroup(int pos, HashSet<int> group) {\n            var res = new HashSet<int> { pos };\n            Span<int> queue = stackalloc int[group.Count];\n            queue[0] = pos; int idx = 0, end = 1;\n            while (idx < end) {\n                int cur = queue[idx++];\n                foreach (int n in Neighbors[cur])\n                    if (group.Contains(n) && !res.Contains(n)) {\n                        queue[end++] = n; res.Add(n);\n                    }\n            }\n            return res;\n        }\n        private List<HashSet<int>> getPaths(HashSet<int> from, HashSet<int> to) {\n            int idx = 0;\n            var paths = new List<HashSet<int>>();\n            var queue = new List<(int pos, HashSet<int> path)>();\n            foreach (int n in from) queue.Add((n, new HashSet<int>()));\n            while (idx < queue.Count) {\n                var (cur, path) = queue[idx++];\n                foreach (int n in Neighbors[cur]) {\n                    if (path.Contains(n) || from.Contains(n)) continue;\n                    if (to.Contains(n)) paths.Add(path);\n                    else if (path.Count <= Val - Core.Count && Cover.Contains(n))\n                        queue.Add((n, new HashSet<int>(path) { n }));\n                }\n            }\n            return paths;\n        }\n        private HashSet<int> tryJoinGroups(HashSet<int> from, HashSet<int> to, int groupCount, Span<int> status) {\n            var paths = getPaths(from, to);\n            if (paths.Count > 1) {\n                Span<int> copy = stackalloc int[status.Length];\n                foreach (var path in paths.ToList()) {\n                    status.CopyTo(copy);\n                    foreach (int n in path) copy[n] = Pos;\n                    if (!Solver.IsWaterValid(copy)) paths.Remove(path);\n                }\n            }\n            if (paths.Count == 0) return new HashSet<int>();\n            if (paths.Count == 1) return paths.First();\n\n            var common = paths.Aggregate(paths[0], (p, c) => { p.IntersectWith(c); return p; });\n            if (groupCount == 2) {\n                int minPath = paths.Min(p => p.Count);\n                if (Core.Count + minPath == Val) {\n                    foreach (int n in CoreBorder)\n                        if (!from.Contains(n) && !paths.Any(p => p.Contains(n))) {\n                            status[n] = Water;\n                            Cover.Remove(n);\n                        }\n                    CoreBorder = getBorder(Core, status);\n                    CoverBorder = getBorder(Cover, status);\n                    common.ExceptWith(Core);\n                }\n            }\n            return common;\n        }\n        private void connectGroups(Span<int> status, int pos) {\n            if (Done || Core.Count < 2) return;\n            var groups = new List<HashSet<int>>();\n            foreach (int n in Core)\n                if (!groups.Any(g => g.Contains(n)))\n                    groups.Add(getGroup(n, Core));\n            if (groups.Count == 1) return;\n\n            var startGroup = pos >= 0 ? groups.First(g => g.Contains(pos)) : groups.First(g => g.Contains(Pos));\n            foreach (var group in groups)\n                if (group != startGroup)\n                    foreach (int n in tryJoinGroups(startGroup, group, groups.Count, status))\n                        AddToCore(n, status, false);\n        }\n        private void setDone(Span<int> status) {\n            if (Done) return;\n            CoreBorder = getBorder(Core, status);\n            foreach (int n in CoreBorder)\n                if (status[n] == Free) status[n] = Water;\n            Done = true;\n            Cover.Clear(); CoverBorder.Clear();\n        }\n        public void ComputeCover(Span<int> status) {\n            if (Done) return;\n            Core.Add(Pos);\n            if (Val > 1) {\n                int idx = 0, end = 1;\n                Span<int> dists = stackalloc int[status.Length]; dists.Fill(int.MaxValue); dists[Pos] = 1;\n                Span<int> queue = stackalloc int[status.Length]; queue[0] = Pos;\n                while (idx < end) {\n                    var cur = queue[idx++];\n                    if (dists[cur] >= Val) continue;\n                    foreach (int n in Neighbors[cur])\n                        if (dists[n] > dists[cur] + 1 && validPos(n, status)) {\n                            Cover.Add(n);\n                            queue[end++] = n;\n                            dists[n] = dists[cur] + 1;\n                        }\n                }\n            }\n            CoreBorder = getBorder(Core, status);\n            CoverBorder = getBorder(Cover, status);\n        }\n        public void AddToCore(int pos, Span<int> status, bool updateAll) {\n            if (Done || Core.Contains(pos)) return;\n            Core.Add(pos);\n            status[pos] = Pos;\n            Cover.Remove(pos);\n            if (updateAll) {\n                connectGroups(status, pos);\n                CoreBorder = getBorder(Core, status);\n                CoverBorder = getBorder(Cover, status);\n            }\n            if (Core.Count == Val) setDone(status);\n        }\n        public void Progress(Span<int> status) {\n            if (Done) return;\n\n            foreach (int i in Cover.ToList())\n                if (!validPos(i, status) || AllNumbers.Any(other => other != this && (other.Core.Contains(i) || other.CoreBorder.Contains(i))))\n                    Cover.Remove(i);\n            foreach (int n in Cover.ToList())\n                if (!Neighbors[n].Any(n2 => Cover.Contains(n2) || Core.Contains(n2)))\n                    Cover.Remove(n);\n\n            var exits = new List<int>();\n            foreach (int n in CoreBorder)\n                if (status[n] == Free)\n                    exits.Add(n);\n            if (exits.Count == 1) AddToCore(exits[0], status, false);\n\n            if (!Done) {\n                Span<int> copy = stackalloc int[status.Length];\n                foreach (int n in Cover.ToList()) {\n                    status.CopyTo(copy); copy[n] = Pos;\n                    if (!Solver.IsWaterValid(copy)) {\n                        Cover.Remove(n);\n                        if (!AllNumbers.Any(number => number.Cover.Contains(n)))\n                            status[n] = Water;\n                    }\n                }\n            }\n\n            if (!Done) {\n                var group = new HashSet<int>(Core); group.UnionWith(Cover);\n                foreach (int n in Cover.ToList()) {\n                    group.Remove(n);\n                    if (getGroup(Pos, group).Count < Val) AddToCore(n, status, false);\n                    group.Add(n);\n                }\n                connectGroups(status, -1);\n            }\n\n            if (!Done) {\n                if (Core.Count + Cover.Count == Val) {\n                    foreach (int n in Cover) status[n] = Pos;\n                    Core.UnionWith(Cover);\n                    setDone(status);\n                }\n                else {\n                    CoverBorder = getBorder(Cover, status);\n                    CoreBorder = getBorder(Core, status);\n                }\n            }\n\n            if (!Done) {\n                var water = new HashSet<int>(); bool init = true;\n                foreach (var spot in Cover)\n                    if (status[spot] == Free) {\n                        if (init) { init = false; water.UnionWith(Neighbors[spot]); }\n                        else water.IntersectWith(Neighbors[spot]);\n                    }\n                foreach (int n in water) if (status[n] == Free) status[n] = Water;\n            }\n        }\n        public void MakeShapes(Span<int> status) {\n            Shapes = new List<HashSet<int>> { Core };\n            for (int i = Core.Count; i < Val; i++) {\n                var nextShapes = Shapes; Shapes = new List<HashSet<int>>();\n                foreach (var shape in nextShapes)\n                    foreach (int pos in shape)\n                        foreach (int n in Neighbors[pos])\n                            if (Cover.Contains(n) && !shape.Contains(n) &&\n                                !Shapes.Any(other => other.Contains(n) && other.IsSupersetOf(shape)))\n                                Shapes.Add(new HashSet<int>(shape) { n });\n            }\n\n            Span<int> copy = stackalloc int[status.Length];\n            foreach (var shape in Shapes.ToList()) {\n                if (getGroup(Pos, shape).Count < Val) Shapes.Remove(shape);\n                else {\n                    status.CopyTo(copy);\n                    foreach (int n in shape) copy[n] = Pos;\n                    if (!Solver.IsWaterValid(copy)) Shapes.Remove(shape);\n                }\n            }\n        }\n    }\n\n    private class Area {\n        public readonly List<Number> Numbers = new List<Number>(16);\n        public readonly List<List<(Number number, HashSet<int> shape)>> Scenarios = new List<List<(Number, HashSet<int>)>>();\n        public Area(Number start) {\n            int i = 0; Numbers.Add(start);\n            while (i < Numbers.Count) {\n                var n = Numbers[i++];\n                foreach (var other in AllNumbers)\n                    if (!other.Done && !Numbers.Contains(other) && (n.Cover.Overlaps(other.Cover) || n.CoverBorder.Overlaps(other.Cover)))\n                        Numbers.Add(other);\n            }\n        }\n        private bool validScenario(Span<int> status, List<(Number number, HashSet<int> shape)> scenario) {\n            Span<int> copy = stackalloc int[status.Length]; status.CopyTo(copy);\n            foreach (var (number, shape) in scenario)\n                foreach (var n in shape)\n                    copy[n] = number.Pos;\n            return Solver.IsWaterValid(copy);\n        }\n        private void makeScenarios(Span<int> status, int idx, List<(Number number, HashSet<int> shape)> scenario) {\n            foreach (var shape in Numbers[idx].Shapes)\n                if (!shape.Any(n => scenario.Any(sc => sc.shape.Contains(n) || Neighbors[n].Any(n2 => sc.shape.Contains(n2))))) {\n                    var newScenario = new List<(Number, HashSet<int>)>(scenario) { (Numbers[idx], shape) };\n                    if (validScenario(status, newScenario)) {\n                        if (idx == Numbers.Count - 1)\n                            Scenarios.Add(newScenario);\n                        else\n                            makeScenarios(status, idx + 1, newScenario);\n                    }\n                }\n        }\n        public void MakeScenarios(Span<int> status) {\n            foreach (var number in Numbers) number.MakeShapes(status);\n            makeScenarios(status, 0, new List<(Number, HashSet<int>)>());\n        }\n    }\n\n    private static class Solver {\n        public static int CountFree(Span<int> status) {\n            int count = 0;\n            for (int i = 0; i < status.Length; i++)\n                if (status[i] == Free) count++;\n            return count;\n        }\n        public static int[] GetNeighbors(int pos) {\n            var res = new List<int>(4);\n            if (pos % S > 0) res.Add(pos - 1);\n            if (pos % S < S - 1) res.Add(pos + 1);\n            if (pos >= S) res.Add(pos - S);\n            if (pos < S * (S - 1)) res.Add(pos + S);\n            return res.ToArray();\n        }\n        public static int[] GetNeighbors2(int pos) {\n            var res = new List<int>(4);\n            if (pos % S > 1) res.Add(pos - 2);\n            if (pos % S < S - 2) res.Add(pos + 2);\n            if (pos >= 2 * S) res.Add(pos - 2 * S);\n            if (pos < S * (S - 2)) res.Add(pos + 2 * S);\n            return res.ToArray();\n        }\n        public static int[] GetDiagNeighbors(int pos) {\n            var res = new List<int>(4);\n            if (pos > S && pos % S > 0) res.Add(pos - S - 1);\n            if (pos > S && pos % S < S - 1) res.Add(pos - S + 1);\n            if (pos < S * (S - 1) && pos % S > 0) res.Add(pos + S - 1);\n            if (pos < S * (S - 1) && pos % S < S - 1) res.Add(pos + S + 1);\n            return res.ToArray();\n        }\n        public static bool IsWaterValid(Span<int> status) {\n            int total = 0;\n            for (int i = 0; i < status.Length; i++)\n                if (status[i] == Water) {\n                    if (i % S < S - 1 && i / S < S - 1 &&\n                        status[i + 1] == Water && status[i + S] == Water && status[i + S + 1] == Water)\n                        return false;\n                    total++;\n                }\n\n            Span<int> queue = stackalloc int[status.Length];\n            queue[0] = status.IndexOf(Water);\n            int idx = 0, end = 1, count = 1;\n            while (idx < end) {\n                int cur = queue[idx++];\n                foreach (int n in Neighbors[cur])\n                    if (status[n] < 0 && !queue.Slice(0, end).Contains(n)) {\n                        queue[end++] = n;\n                        if (status[n] == Water) count++;\n                    }\n            }\n            return total == count;\n        }\n        public static void FirstTrim(Span<int> status) {\n            foreach (var number in AllNumbers)\n                if (!number.Done) { // Separate close neighbors\n                    foreach (int n in GetNeighbors2(number.Pos))\n                        if (status[n] > 0) status[(number.Pos + n) / 2] = Water;\n                    foreach (int n in GetDiagNeighbors(number.Pos))\n                        if (status[n] > 0) {\n                            status[number.Pos % S + S * (n / S)] = Water;\n                            status[n % S + S * (number.Pos / S)] = Water;\n                        }\n                }\n        }\n        public static void Progress(Span<int> status, bool includeNumbers) {\n            if (includeNumbers)\n                for (int i = 0; i < status.Length; i++)\n                    if (status[i] == Free) {\n                        bool flooded = true;\n                        foreach (int n in Neighbors[i])\n                            if (status[n] != Water) {\n                                flooded = false; break; }\n                        if (flooded || AllNumbers.All(n => n.Done || !n.Cover.Contains(i)))\n                            status[i] = Water;\n                    }\n\n            var done = new HashSet<int>();\n            var exitGroups = new List<HashSet<int>>();\n            Span<int> queue = stackalloc int[status.Length];\n            for (int i = 0; i < status.Length; i++)\n                if (status[i] == Water && !done.Contains(i)) {\n                    exitGroups.Add(new HashSet<int>());\n                    queue[0] = i; int idx = 0, end = 1;\n                    while (idx < end) {\n                        int cur = queue[idx++];\n                        foreach (int n in Neighbors[cur])\n                            if (status[n] == Water && !done.Contains(n)) {\n                                queue[end++] = n; done.Add(n);\n                            }\n                            else if (status[n] == Free) exitGroups[^1].Add(n);\n                    }\n                }\n            if (exitGroups.Count > 1)\n                foreach (var exits in exitGroups)\n                    if (exits.Count == 1)\n                        status[exits.First()] = Water;\n\n            if (includeNumbers) {\n                for (int i = 0; i < status.Length; i++)\n                    if (status[i] < 0 && i % S < S - 1 && i / S < S - 1) {\n                        if (status[i] == Free) {\n                            bool waterSquare = true;\n                            foreach (int j in new int[3] { i + 1, i + S, i + S + 1 })\n                                waterSquare &= status[j] == Water;\n                            if (waterSquare) {\n                                var candidates = AllNumbers.Where(n => n.Cover.Contains(i)).ToList();\n                                if (candidates.Count == 1) candidates[0].AddToCore(i, status, true);\n                            }\n                        }\n                        else { // is water\n                            int water = 0, free = Free;\n                            foreach (int j in new int[3] { i + 1, i + S, i + S + 1 }) {\n                                if (status[j] == Water) water++;\n                                else if (status[j] == Free) free = j;\n                            }\n                            if (water == 2 && free != Free) {\n                                var candidates = AllNumbers.Where(n => n.Cover.Contains(free)).ToList();\n                                if (candidates.Count == 1) candidates[0].AddToCore(free, status, true);\n                            }\n                        }\n                    }\n                foreach (var number in AllNumbers)\n                    if (!number.Done)\n                        number.Progress(status);\n            }\n        }\n        private static IEnumerable<List<(Number number, HashSet<int> shape)>> GetScenario(List<Area> areas, int idx) {\n            foreach (var scenario in areas[idx].Scenarios) {\n                if (idx == areas.Count - 1)\n                    yield return new List<(Number, HashSet<int>)>(scenario);\n                else\n                    foreach (var next in GetScenario(areas, idx + 1)) {\n                        next.AddRange(scenario);\n                        yield return next;\n                    }\n            }\n        }\n        public static void MergeScenarios(Span<int> status, List<Area> areas) {\n            Span<int> copy = stackalloc int[status.Length];\n            foreach (var scenario in GetScenario(areas, 0)) {\n                status.CopyTo(copy);\n                foreach (var (number, shape) in scenario)\n                    foreach (int n in shape) copy[n] = number.Pos;\n                for (int i = 0; i < copy.Length; i++)\n                    if (copy[i] == Free) copy[i] = Water;\n                if (IsWaterValid(copy)) { copy.CopyTo(status); return; }\n            }\n        }\n    }\n\n    public static void Main() {\n        S = int.Parse(Console.ReadLine());\n        Neighbors = new int[S * S][]; int offset = 0;\n        Span<int> status = stackalloc int[S * S], grid = stackalloc int[S * S];\n        for (int i = 0; i < S; i++) {\n            string line = Console.ReadLine();\n            for (int x = 0; x < S; x++) {\n                grid[offset + x] = line[x] == '.' ? 0 : (int)char.GetNumericValue(line[x]);\n                status[offset + x] = grid[offset + x] > 0 ? offset + x : Free;\n                Neighbors[offset + x] = Solver.GetNeighbors(offset + x);\n            }\n            offset += S;\n        }\n\n        var clock = Stopwatch.StartNew();\n\n        for (int i = 0; i < grid.Length; i++)\n            if (grid[i] > 0)\n                AllNumbers.Add(new Number(i, grid[i], status));\n\n        Solver.FirstTrim(status);\n        int free = Solver.CountFree(status), backup;\n        do {\n            backup = free;\n            Solver.Progress(status, false);\n            free = Solver.CountFree(status);\n        } while (free != backup);\n        \n        foreach (var number in AllNumbers) number.ComputeCover(status);\n        \n        free = Solver.CountFree(status);\n        do {\n            backup = free;\n            Solver.Progress(status, true);\n            free = Solver.CountFree(status);\n        } while (free != backup);\n\n        if (AllNumbers.Any(n => !n.Done)) {\n            var areas = new List<Area>();\n            foreach (var number in AllNumbers)\n                if (!number.Done && !areas.Any(a => a.Numbers.Contains(number)))\n                    areas.Add(new Area(number));\n\n            foreach (var area in areas) area.MakeScenarios(status);\n            Solver.MergeScenarios(status, areas);\n        }\n\n        Console.Error.WriteLine($\"Solved in {clock.ElapsedMilliseconds}ms\");\n        Span<string> sp = new string[status.Length];\n        for (int i = 0; i < sp.Length; i++)\n            sp[i] = status[i] == Water ? \"~\" : grid[status[i]].ToString();\n        for (int y = 0; y < S; y++)\n            Console.WriteLine(string.Join(\"\", sp.Slice(S * y, S).ToArray()));\n    }\n}",
+      "statement": "Nurikabe is a Japanese number logic game in the same vein as Sudoku and Kakuro. It only requires pure logic, no particular math knowledge is necessary.\n\nYou start with a grid representing an island group seen from above, your goal is to find the shape of each island and fill the rest with water. Clues are given to you in the form of numbers, each number belongs to a distinct island and tells you the surface of its island. Diagonals do not count as links in Nurikabe, so each island must contain the right number of continuous cells. Additional rules apply to water, see the formal rules definition below.\n\nHere's an example and its solution, {{.}} being an empty cell and {{~}} being water :\n\n`.....     ~~~~3\n1....     1~4~3\n....3     ~~4~3\n...4.     2~44~\n2....     2~~~~`\nIf you want to get a better feel for the game, you can play it online at https://www.puzzle-nurikabe.com\n\nFormal rules definition :\n- Each island contains exactly one clue.\n- The number of cells in each island equals the value of the clue.\n- Clues can range from 1 to a maximum of 9.\n- All islands are isolated from each other horizontally and vertically.\n- There are no water areas of 2x2 or larger.\n- When completed, all water cells form a continuous shape (again, diagonals do not count).\n- Each given grid has a unique solution.\n\nUse this knowledge to your advantage, good luck !\n\nNote : if you're looking for a personal challenge, it is possible to solve this puzzle without any backtracking.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "5\n.....\n1....\n....3\n...4.\n2....",
+          "testOut": "~~~~3\n1~4~3\n~~4~3\n2~44~\n2~~~~",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "5\n1.4.3\n.....\n.....\n.....\n1.1.1",
+          "testOut": "1~4~3\n~~4~3\n~44~3\n~~~~~\n1~1~1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "5\n.1...\n....2\n.....\n6....\n...2.",
+          "testOut": "~1~~~\n~~~22\n66~~~\n66~2~\n66~2~",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "5\n.2..1\n.....\n.....\n.....\n.5..2",
+          "testOut": "~22~1\n~~~~~\n~555~\n~5~~~\n~5~22",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "7\n.6...2.\n.......\n..3.2..\n.......\n..3.2..\n.......\n.2...1.",
+          "testOut": "66~~~22\n6~33~~~\n6~3~22~\n6~~~~~~\n6~3~22~\n~~33~~~\n22~~~1~",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "7\n.....1.\n.......\n.......\n.......\n....3.3\n5......\n..7.2..",
+          "testOut": "~~~~~1~\n5~77~~~\n5~7~3~3\n5~7~3~3\n5~7~3~3\n5~7~~~~\n~~7~22~",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "7\n......9\n.......\n...6...\n....4..\n...3...\n.......\n......1",
+          "testOut": "9999999\n~~~~~99\n~666~~~\n~6~~444\n~6~3~~4\n~6~33~~\n~~~~~~1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "7\n.......\n.......\n.2....5\n..6....\n.3....1\n.......\n.......",
+          "testOut": "~~~~~~~\n~2~5555\n~2~~~~5\n~~666~~\n~3~~6~1\n~33~66~\n~~~~~~~",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "10\n..2...2..1\n2......1..\n......2.2.\n..........\n..........\n..........\n..........\n......1.8.\n5......1..\n..9...6..1",
+          "testOut": "~~22~22~~1\n2~~~~~~1~~\n2~99~22~2~\n~~9~~~~~2~\n5~9~888~~~\n5~9~~~888~\n5~9~6~~~8~\n5~9~6~1~8~\n5~9~6~~1~~\n~~9~666~~1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "10\n..........\n..1....2..\n3..1..4...\n..2....2..\n.........2\n2.........\n.......2..\n...3..8..1\n..2....2..\n..........",
+          "testOut": "~~~~~~~~~~\n3~1~44~22~\n3~~1~44~~~\n3~2~~~~22~\n~~2~88~~~2\n2~~~~8~2~2\n2~33~8~2~~\n~~~3~88~~1\n~22~88~22~\n~~~~~~~~~~",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "10\n....2.....\n.5.3..3...\n..........\n......3...\n.....2....\n......1...\n...7......\n..6.....3.\n..........\n.....1...1",
+          "testOut": "~~~~22~~~~\n~5~3~~333~\n~5~33~~~~~\n~5~~~~333~\n~55~22~~~~\n~~~~~~1~3~\n~6~777~~3~\n~66~~77~3~\n~666~~77~~\n~~~~~1~~~1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "10\n..7.......\n.1........\n.........1\n4.3.......\n...7......\n......9...\n.......5.4\n2.........\n........1.\n.......1..",
+          "testOut": "~~7777777~\n~1~~~~~~~~\n~~33~999~1\n4~3~~99~~~\n4~~7~99~44\n44~7~99~~4\n~~~7~~~5~4\n2~77~555~~\n2~77~5~~1~\n~~~~~~~1~~",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 7",
+          "isTest": true,
+          "testIn": "12\n1..8.2......\n.5..........\n.....5....2.\n...........1\n............\n...2........\n........4...\n............\n3...........\n.2....5.....\n..........9.\n......5.5..1",
+          "testOut": "1~~8~22~~~~~\n~5~8~~~~5~2~\n~5~8~5555~2~\n~5~88~~~~~~1\n~5~~888~99~~\n~5~2~~~~~99~\n~~~2~4444~9~\n33~~~~~~~~9~\n3~~555~55~9~\n~2~~~55~5~9~\n~2~5~~~~5~9~\n~~~5555~5~~1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "12\n............\n....1.......\n3....1..4...\n..3.5.......\n........2.5.\n.........2..\n..3........1\n.2.3........\n.......3.2..\n...2..2.....\n.......4....\n.....6......",
+          "testOut": "~~~~~~~~~~~~\n3~3~1~44~55~\n3~3~~1~44~5~\n3~3~5~~~~~5~\n~~~~55~22~5~\n~33~55~~~2~~\n~~3~~~~3~2~1\n~2~333~3~~~~\n~2~~~~~3~22~\n~~22~22~~~~~\n~6~~~~~4444~\n~66666~~~~~~",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 8",
+          "isTest": true,
+          "testIn": "12\n............\n......3.2..1\n............\n.4.2..2.6...\n............\n.1.2........\n........1.4.\n............\n...2.2..2.6.\n............\n...6.1......\n............",
+          "testOut": "~~~~~~~~~~~~\n~44~333~22~1\n~4~2~~~~~~~~\n~4~2~22~6~4~\n~~~~~~~66~4~\n~1~22~66~~4~\n~~~~~~6~1~4~\n~6~2~2~~~~~~\n~6~2~2~22~6~\n~6~~~~~~~~6~\n~666~1~6666~\n~~~~~~~~~~~~",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "12\n1....1.4....\n....1.......\n1.......3...\n..3.2.2.....\n........4.2.\n...7........\n........2...\n.4.........1\n.....4.2.3..\n...2.......1\n.......1....\n...........1",
+          "testOut": "1~~~~1~4444~\n~~3~1~~~~~~~\n1~3~~~2~333~\n~~3~2~2~~~~~\n~7~~2~~44~2~\n~777~~44~~2~\n~~~77~~~22~~\n~4~7~4~2~~~1\n~4~~~4~2~3~~\n~4~2~4~~~3~1\n~4~2~4~1~3~~\n~~~~~~~~~~~1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 9",
+          "isTest": true,
+          "testIn": "15\n..5............\n.1.........3...\n...1.2.1..4....\n...........3...\n2...5..........\n......1...6....\n..1..........3.\n1.....2.2.....1\n.1..........2..\n....7...1......\n..........5...2\n...2...........\n....6..1.2.3...\n...6.........2.\n............9..",
+          "testOut": "~~55555~~~~~~~~\n~1~~~~~~44~333~\n~~~1~2~1~44~~~~\n~55~~2~~~~~333~\n2~555~~6666~~~~\n2~~~~~1~~66~33~\n~~1~77~~2~~~~3~\n1~~77~2~2~55~~1\n~1~77~2~~~5~2~~\n~~~~7~~~1~5~2~2\n~6~2~~66~~5~~~2\n~6~2~66~~2~33~~\n~6~~66~1~2~3~2~\n~666~~~~~~~~~2~\n~~~~999999999~~",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "15\n......1...1....\n........1...1.1\n...3......2....\n....1.3..3..3..\n2.5........1...\n...3....2......\n.1...2.....2...\n...............\n...2.....7...3.\n......2....3...\n...1........1.1\n..5..1..2.1....\n....2......5...\n.1....1......2.\n....2..........",
+          "testOut": "~~~~~~1~~~1~~~~\n~5~33~~~1~~~1~1\n~5~3~~3~~~22~~~\n~55~1~3~33~~33~\n2~5~~~3~~3~1~3~\n2~~33~~22~~~~~~\n~1~3~2~~~~22~3~\n~~~~~2~777~~~3~\n~5~22~~777~3~3~\n~5~~~22~7~33~~~\n~5~1~~~~~~~~1~1\n~55~~1~22~1~~~~\n~~~22~~~~~~5~2~\n~1~~~~1~5555~2~\n~~~22~~~~~~~~~~",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 10",
+          "isTest": true,
+          "testIn": "15\n.......4.......\n........1......\n...1.........2.\n.....7......6..\n....2.....2....\n......1....2...\n.7.......1.....\n4.4.........4.4\n.....2.......6.\n...2....5......\n....3.....1....\n..2......2.....\n.3.....3...2...\n......3.....2..\n.......4.......",
+          "testOut": "~~~~4444~~~~~~~\n~77~~~~~1~66~2~\n~7~1~77~~~66~2~\n~7~~~7777~~66~~\n~7~22~~7~22~~~4\n~7~~~~1~~~~22~4\n~7~44~~5~1~~~~4\n4~44~2~5~~444~4\n4~~~~2~55~4~~6~\n4~22~~~~5~~~66~\n4~~~33~3~~1~66~\n~~22~3~3~2~2~6~\n~3~~~~~3~2~2~~~\n~33~333~~~~~22~\n~~~~~~~4444~~~~",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "15\n...........2.1.\n..2...7..3.....\n...........3...\n..4....6.....2.\n1........5.....\n...............\n1...2..........\n.5...2...3.2.3.\n..........1...1\n....2.......1..\n.....3........4\n.2.....3....4..\n...2...........\n.....4..3...1..\n.5.2...........",
+          "testOut": "~~~7777~~~22~1~\n~22~777~33~~~~~\n~~~~~~~~~3~3~2~\n~444~666~~~3~2~\n1~4~~66~55~3~~~\n~~~~2~6~555~~3~\n1~5~2~~~~~~2~3~\n~555~22~33~2~3~\n~5~~~~~~3~1~~~1\n~~~22~3~~~~~1~~\n~2~~~33~3~4~~~4\n~2~2~~~33~444~4\n5~~2~44~~~~~~~4\n55~~~44~333~1~4\n55~22~~~~~~~~~~",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 11",
+          "isTest": true,
+          "testIn": "20\n4..1.3.3.4.2..1.2.4.\n....................\n..3........1.4...2..\n2...........1.......\n..2.2.3.1.2.......1.\n............3..3.1..\n2.......2.........1.\n..1.3.....2..3...3..\n.2.1...............2\n....2.1.3..1...3....\n..1....1..3..1......\n1....1...........2..\n.1.2...4....1.1.3..2\n.........1.4........\n4..6...........1....\n......1.1.1.....3.1.\n.....4.1...4..2.....\n1.3.....1.2.......1.\n.................1..\n1.......1.....3....1",
+          "testOut": "44~1~3~3~4~22~1~2~44\n44~~~3~3~4~~~~~~2~~4\n~~33~3~3~4~1~444~2~4\n2~~3~~~~~4~~1~~4~2~~\n2~2~2~3~1~2~~3~~~~1~\n~~2~2~33~~2~33~3~1~~\n2~~~~~~~2~~~~~~3~~1~\n2~1~333~2~22~3~3~3~~\n~2~1~~~~~3~~~33~~3~2\n~2~~2~1~33~1~~~3~3~2\n~~1~2~~1~~3~~1~3~~~~\n1~~~~1~~4~33~~~3~22~\n~1~22~~44~~~1~1~3~~2\n~~~~~6~4~1~4~~~~33~2\n44~666~~~~~444~1~~~~\n44~6~~1~1~1~~~~~3~1~\n~~~6~4~1~~~44~2~33~~\n1~3~~4~~1~2~4~2~~~1~\n~~33~44~~~2~4~~3~1~~\n1~~~~~~~1~~~~~33~~~1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "20\n2..4..3.2.2.3.2..3.2\n....................\n4.............3.....\n...2.2.2..1..7......\n.................3..\n1.3.3.2.3.....2.3...\n..................3.\n1......1.....2......\n.....1..3......2.2..\n2.3...3...1.1.......\n.........4...1......\n.2.3.3.....1..1.2.4.\n.......3....4.......\n...............1.2.2\n1.3.3....3..........\n........2...2.4...2.\n2.....1.............\n...1.2.3..6.........\n.1.............3...1\n...1................",
+          "testOut": "22~44~3~2~2~3~22~3~2\n~~~44~3~2~2~3~~~~3~2\n44~~~~3~~~~~3~33~3~~\n44~2~2~22~1~~7~3~~3~\n~~~2~2~~~3~~77~~~33~\n1~3~3~2~33~77~2~3~~~\n~~3~3~2~~~~7~~2~3~33\n1~3~3~~1~3~7~2~~3~~3\n~~~~~1~~33~~~2~2~2~~\n2~333~3~~~1~1~~2~2~4\n2~~~~~33~4~~~1~~~~~4\n~2~3~3~~~4~1~~1~2~44\n~2~3~3~3~44~4~~~2~~~\n~~~3~3~3~~~~44~1~2~2\n1~3~3~~3~33~~4~~~2~2\n~~3~33~~2~3~2~44~~2~\n2~3~~~1~2~~~2~~44~2~\n2~~1~2~3~~6~~6~~~~~~\n~1~~~2~33~6666~333~1\n~~~1~~~~~~~~~~~~~~~~",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "5 <= [[N]] <= 20",
+      "coverBinaryId": 54815625233850,
+      "stubGenerator": "read N:int\nloop N read row:string(32)\nwrite Solution",
+      "inputDescription": "First line : [[N]], the grid side length. Grids are always square.\nNext [[N]] lines : the grid rows, containing either integer clues or {{.}} for empty cells.",
+      "solutionLanguage": "C#",
+      "outputDescription": "[[N]] lines representing the solved puzzle. Use {{~}} for water cells and fill the islands with their size."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Nurikabe is a Japanese number logic game in the same vein as Sudoku and Kakuro. It only requires pure logic, no particular math knowledge is necessary.<br><br>You start with a grid representing an island group seen from above, your goal is to find the shape of each island and fill the rest with water. Clues are given to you in the form of numbers, each number belongs to a distinct island and tells you the surface of its island. Diagonals do not count as links in Nurikabe, so each island must contain the right number of continuous cells. Additional rules apply to water, see the formal rules definition below.<br><br>Here's an example and its solution, <const>.</const> being an empty cell and <const>~</const> being water :<br><br><pre style=\"font-family: monospace\">.....     ~~~~3<br>1....     1~4~3<br>....3     ~~4~3<br>...4.     2~44~<br>2....     2~~~~</pre><br>If you want to get a better feel for the game, you can play it online at https://www.puzzle-nurikabe.com<br><br>Formal rules definition :<br>- Each island contains exactly one clue.<br>- The number of cells in each island equals the value of the clue.<br>- Clues can range from 1 to a maximum of 9.<br>- All islands are isolated from each other horizontally and vertically.<br>- There are no water areas of 2x2 or larger.<br>- When completed, all water cells form a continuous shape (again, diagonals do not count).<br>- Each given grid has a unique solution.<br><br>Use this knowledge to your advantage, good luck !<br><br>Note : if you're looking for a personal challenge, it is possible to solve this puzzle without any backtracking.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">First line : <var>N</var>, the grid side length. Grids are always square.<br>Next <var>N</var> lines : the grid rows, containing either integer clues or <const>.</const> for empty cells.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><var>N</var> lines representing the solved puzzle. Use <const>~</const> for water cells and fill the islands with their size.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">5 &lt;= <var>N</var> &lt;= 20</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5\n.....\n1....\n....3\n...4.\n2....</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">~~~~3\n1~4~3\n~~4~3\n2~44~\n2~~~~</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 158908338559,
+  "avatar": 3366390627127,
+  "commentCount": 22,
+  "upVotes": 22,
+  "downVotes": 3,
+  "validateAction": {
+    "actionId": 521281,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1609243537000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1609248578688,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1611822397020,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

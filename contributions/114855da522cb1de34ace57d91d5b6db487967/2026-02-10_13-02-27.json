@@ -1,0 +1,211 @@
+{
+  "id": 114855,
+  "activeVersion": 35,
+  "score": 5,
+  "votableId": 35931766,
+  "codingamerId": 1983963,
+  "views": 164,
+  "commentableId": 35775489,
+  "title": "Logic Gates Detective",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "pluieciel",
+  "publicHandle": "114855da522cb1de34ace57d91d5b6db487967",
+  "codingamerHandle": "3ae5608cc0aec3a2d51efd34cade51cb3693891",
+  "lastVersion": {
+    "version": 35,
+    "autocloseTime": 1737986598818,
+    "freezeTime": 1735999398818,
+    "data": {
+      "title": "Logic Gates Detective",
+      "topics": [
+        {
+          "id": 117,
+          "handle": "logic",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Logic",
+            "2": "Logic"
+          },
+          "puzzleCount": 28,
+          "parentTopicId": 93
+        },
+        {
+          "id": 171,
+          "handle": "dependency-graph",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Dependency Graph",
+            "2": "Dependency Graph"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "(ns Solution\n  (:require [clojure.string :as str]\n            [clojure.set :as set])\n  (:gen-class))\n\n(defn debug [k dict]\n  (println k (->> (map #(let [[k v] %] [k @v]) dict) (sort-by first))))\n\n(defn addand [A B C dict]\n  (let [[a b c] (map #(get dict %) [A B C])]\n    (add-watch a (keyword (str \"and1-\" A A B C))\n               (fn [k _ _ val]\n               ;(debug k dict)\n                 (cond\n                   (= val 0) (when (nil? @c) (reset! c 0))\n                   (some? @b) (when (nil? @c) (reset! c @b))\n                   (some? @c) (when (nil? @b) (reset! b @c)))))\n    (add-watch b (keyword (str \"and2-\" B A B C))\n               (fn [k _ _ val]\n               ;(debug k dict)\n               ;(println C @c val)\n                 (cond\n                   (= val 0) (when (nil? @c) (reset! c 0))\n                   (some? @a) (when (nil? @c) (reset! c @a))\n                   (some? @c) (when (nil? @a) (reset! a @c)))))\n    (add-watch c (keyword (str \"and3-\" C A B C))\n               (fn [k _ _ val]\n               ;(debug k dict)\n                 (cond\n                   (= val 1) (do (when (nil? @a) (reset! a 1))\n                                 (when (nil? @b) (reset! b 1)))\n                   (and (some? @a) (= @a 1)) (when (nil? @b) (reset! b 0))\n                   (and (some? @b) (= @b 1)) (when (nil? @a) (reset! a 0)))))))\n\n(defn addor [A B C dict]\n  (let [[a b c] (map #(get dict %) [A B C])]\n    (add-watch a (keyword (str \"or1-\" A A B C))\n               (fn [k _ _ val]\n               ;(debug k dict)\n                 (cond\n                   (= val 1) (when (nil? @c) (reset! c 1))\n                   (some? @b) (when (nil? @c) (reset! c @b))\n                   (some? @c) (when (nil? @b) (reset! b @c)))))\n    (add-watch b (keyword (str \"or2-\" B A B C))\n               (fn [k _ _ val]\n               ;(debug k dict)\n                 (cond\n                   (= val 1) (when (nil? @c) (reset! c 1))\n                   (some? @a) (when (nil? @c) (reset! c @a))\n                   (some? @c) (when (nil? @a) (reset! a @c)))))\n    (add-watch c (keyword (str \"or3-\" C A B C))\n               (fn [k _ _ val]\n               ;(debug k dict)\n                 (cond\n                   (= val 0) (do (when (nil? @a) (reset! a 0))\n                                 (when (nil? @b) (reset! b 0)))\n                   (and (some? @a) (= @a 0)) (when (nil? @b) (reset! b 1))\n                   (and (some? @b) (= @b 0)) (when (nil? @a) (reset! a 1)))))))\n\n(defn addxor [A B C dict]\n  (let [[a b c] (map #(get dict %) [A B C])]\n    (add-watch a (keyword (str \"xor1-\" A A B C))\n               (fn [k _ _ val]\n               ;(debug k dict)\n                 (cond\n                   (some? @b) (when (nil? @c) (reset! c (bit-xor @b val)))\n                   (some? @c) (when (nil? @b) (reset! b (bit-xor @c val))))))\n    (add-watch b (keyword (str \"xor2-\" B A B C))\n               (fn [k _ _ val]\n               ;(debug k dict)\n                 (cond\n                   (some? @a) (when (nil? @c) (reset! c (bit-xor @a val)))\n                   (some? @c) (when (nil? @a) (reset! a (bit-xor @c val))))))\n    (add-watch c (keyword (str \"xor3-\" C A B C))\n               (fn [k _ _ val]\n               ;(debug k dict)\n                 (cond\n                   (some? @b) (when (nil? @a) (reset! a (bit-xor @b val)))\n                   (some? @a) (when (nil? @b) (reset! b (bit-xor @a val))))))))\n\n(defn -main [& _]\n  (let [input  (->> (read-line)\n                    (#(str/split % #\" \"))\n                    (map #(re-seq #\"\\w+\" %))\n                    (map #(let [[node val] %] [node (read-string val)])))\n        output (->> (read-line) (#(str/split % #\" \")))\n        n      (Integer/parseInt (read-line))\n        rules  (repeatedly n #(->> (read-line) (re-seq #\"\\w+\")))\n        nodes  (->> rules\n                    (map #(let [[a _ b out] %] (set [a b out])))\n                    (apply set/union))\n        dict   (->> nodes (reduce #(assoc %1 %2 (atom nil)) {}))]\n    (doseq [[A OP B C] rules]\n      (case OP\n        \"and\" (addand A B C dict)\n        \"or\"  (addor A B C dict)\n        \"xor\" (addxor A B C dict)))\n\n    (doseq [[k v] input]\n      (reset! (get dict k) v))\n\n    (->> output (map #(do @(get dict %))) (str/join \"\") println)))",
+      "statement": "Given a graph of logic gates, can you deduce the values of expected nodes?\n\nIn the example case, from (1) {{a or b -> d}} and (2) {{a=0}}, {{d=1}}, we can deduce that {{b=1}}.\nBased on the other dependency rules, we got {{c=0}}, {{f=0}}, {{g=1}} and {{h=1}}.\nSo the output for {{h c g}} is {{101}}.",
+      "testCases": [
+        {
+          "title": "example",
+          "isTest": true,
+          "testIn": "a:0 d:1 e:0\nh c g\n5\nf or g -> h\nd or e -> g\na xor c -> f\nb and c -> e\na or b -> d",
+          "testOut": "101",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "example",
+          "isTest": false,
+          "testIn": "a:1 d:0 e:1\nh g c\n5\nf or g -> h\nd or e -> g\na xor c -> f\nb or c -> e\na and b -> d",
+          "testOut": "111",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "easy",
+          "isTest": true,
+          "testIn": "f:0 a:1 g:1\na b c d\n3\na and b -> e\nb or c -> f\nc xor d -> g",
+          "testOut": "1001",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "easy",
+          "isTest": false,
+          "testIn": "c:1 e:0 g:0\na b c d\n3\na or b -> e\nb and c -> f\nc xor d -> g",
+          "testOut": "0011",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "ignore some nodes",
+          "isTest": true,
+          "testIn": "b:1\ne\n3\na or b -> e\nb and c -> f\nc xor d -> g",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "ignore some nodes",
+          "isTest": false,
+          "testIn": "b:0\ne\n3\na and b -> e\nb or c -> f\nc xor d -> g",
+          "testOut": "0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "and",
+          "isTest": true,
+          "testIn": "d:0 f:1\nk g j c h\n7\na and b -> e\na and c -> f\nb and d -> g\nc and d -> h\ne and g -> i\nf and h -> j\ni and j -> k",
+          "testOut": "00010",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "and",
+          "isTest": false,
+          "testIn": "c:0 g:1\nk g j c b\n7\na and b -> e\na and c -> f\nb and d -> g\nc and d -> h\ne and g -> i\nf and h -> j\ni and j -> k",
+          "testOut": "01001",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "or",
+          "isTest": true,
+          "testIn": "i:0 k:1\nl j h c e f b\n8\na or b -> e\nb or c -> f\nc or d -> g\nb or d -> h\ne or h -> i\nf or g -> j\nh or g -> k\nb or i -> l",
+          "testOut": "0101010",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "or",
+          "isTest": false,
+          "testIn": "i:1 j:0\nk l f g e a c\n8\na or b -> e\nb or c -> f\nc or d -> g\nb or d -> h\ne or h -> i\nf or g -> j\nh or g -> k\nb or i -> l",
+          "testOut": "0100110",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "xor",
+          "isTest": true,
+          "testIn": "h:1 i:0 c:0 g:1\na b c d e f g j m k n l o\n11\na xor b -> e\nb xor c -> f\nc xor d -> g\na xor c -> h\ne xor h -> i\nh xor g -> j\nf xor g -> m\ni xor f -> k\nk xor j -> l\nj xor m -> n\nl xor n -> o",
+          "testOut": "1001101010101",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "xor",
+          "isTest": false,
+          "testIn": "f:1 m:0 d:1 a:0\nb c e h g i j m k l n o\n11\na xor b -> e\nb xor c -> f\nc xor d -> g\na xor c -> h\ne xor h -> i\nh xor g -> j\nf xor g -> m\ni xor f -> k\nk xor j -> l\nj xor m -> n\nl xor n -> o",
+          "testOut": "101011100110",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "large adder",
+          "isTest": true,
+          "testIn": "x00:1 x01:0 x02:1 x03:1 x04:0 x05:0 x06:1 x07:1 x08:0 x09:1 x10:1 x11:1 x12:1 x13:1 x14:0 x15:1 x16:0 x17:1 x18:0 x19:1 x20:1 x21:0 x22:0 x23:0 x24:1 x25:1 x26:1 x27:0 x28:1 x29:1 x30:1 x31:0 x32:0 x33:1 x34:1 x35:0 x36:0 x37:0 x38:1 x39:0 x40:0 x41:0 x42:0 x43:1 x44:1 y00:1 y01:0 y02:0 y03:1 y04:1 y05:0 y06:0 y07:0 y08:0 y09:0 y10:0 y11:1 y12:0 y13:0 y14:0 y15:0 y16:1 y17:0 y18:0 y19:1 y20:0 y21:1 y22:0 y23:1 y24:0 y25:0 y26:1 y27:0 y28:0 y29:1 y30:0 y31:0 y32:0 y33:1 y34:0 y35:0 y36:0 y37:1 y38:0 y39:0 y40:1 y41:0 y42:1 y43:1 y44:1\nz45 z44 z43 z42 z41 z40 z39 z38 z37 z36 z35 z34 z33 z32 z31 z30 z29 z28 z27 z26 z25 z24 z23 z22 z21 z20 z19 z18 z17 z16 z15 z14 z13 z12 z11 z10 z09 z08 z07 z06 z05 z04 z03 z02 z01 z00\n222\nx44 xor y44 -> drc\nphq or frm -> hjs\nvdh and nwn -> gqd\ny40 xor x40 -> vkn\nx21 xor y21 -> cnb\ncnb and wmb -> vvk\ndfb xor bfn -> z14\nbhd xor mmh -> z06\nfkc xor bwj -> z22\ngnj and jfw -> spq\ndwh and kqn -> fhp\nx19 and y19 -> kkg\ndrc xor qqt -> z44\nfkc and bwj -> jbb\ny32 xor x32 -> qwt\ny37 and x37 -> kgg\nx07 and y07 -> dqn\ndsp and bvp -> hff\npmv or pkn -> wmt\ncjf or pfk -> z45\nhgq xor phb -> z27\nqnq or dpc -> djp\nx32 and y32 -> nbb\nqwt and jqm -> fdk\nx18 xor y18 -> grp\nvkf or hdm -> kqn\ncqv and jss -> bwd\nx00 and y00 -> jfw\ncjb xor srm -> z19\njss xor cqv -> z35\nntt or spq -> ndd\ncqm xor qqj -> z43\nx01 and y01 -> ntt\ny14 xor x14 -> dfb\nnbk xor wrk -> z05\ndvw and rpg -> dbb\nvvc or kcv -> qqj\nbqc xor fwr -> z26\ndwh xor kqn -> z41\nx15 xor y15 -> bkb\nrjm xor gjr -> z24\nx22 xor y22 -> bwj\ny22 and x22 -> hpj\nx08 xor y08 -> hnf\ny27 and x27 -> frm\nwrw or swr -> fds\ngtm and rmt -> mkv\nkdh and qvq -> ghr\nfgv and mfm -> kcv\nhnf and gqs -> pmv\nkkg or qvs -> vdh\nfdk or nbb -> rmt\ny29 and x29 -> cwd\nhjk or bts -> vkg\nvtk and npm -> tqb\ndvw xor rpg -> z23\ny39 xor x39 -> mnm\ny05 xor x05 -> wrk\ndjd and fds -> dqt\ntvh or sqm -> npm\ncdr xor cmt -> z10\nx28 xor y28 -> hgd\nx33 xor y33 -> gtm\nmnm xor vhv -> z39\nfbv xor bwg -> z38\nhqs and nhr -> vbt\nkth or qcp -> hgq\nwjj or scs -> bfn\nbkv or vvk -> fkc\ncmt and cdr -> pph\ndqt or gqb -> bqc\ny35 xor x35 -> jss\nvkb or krd -> cdr\nmqf and cvh -> trj\nx36 xor y36 -> dsp\ny41 xor x41 -> dwh\ny38 xor x38 -> bwg\nghr or tpc -> jqm\nckn xor hqq -> z07\nvkn and vkg -> vkf\ny28 and x28 -> wkc\nx31 xor y31 -> qvq\nrjm and gjr -> swr\ngcb or dbb -> rjm\ny18 and x18 -> kvn\ny24 and x24 -> wrw\nx17 xor y17 -> kbh\ny24 xor x24 -> gjr\nx26 xor y26 -> fwr\ny43 and x43 -> bvm\ny15 and x15 -> sbt\ny12 xor x12 -> fvh\nkvn or ffb -> cjb\ny31 and x31 -> tpc\ny37 xor x37 -> bnh\ny11 and x11 -> scv\nhgd and hjs -> phr\njfw xor gnj -> z01\nfvh xor sfk -> z12\nfds xor djd -> z25\nqwt xor jqm -> z32\nbvp xor dsp -> z36\nphr or wkc -> jdq\ny07 xor x07 -> hqq\ny43 xor x43 -> cqm\nbnh xor kss -> z37\ntrg or vbt -> kdh\ncwd or pkc -> nhr\ny19 xor x19 -> srm\ndkd and jdq -> pkc\nwrk and nbk -> fnk\nhjs xor hgd -> z28\nrnt and qbs -> rcp\ndjp xor mft -> z03\ncht or mkv -> mqf\nhbk xor bkb -> z15\nx44 and y44 -> pfk\nx26 and y26 -> qcp\nndd xor jgw -> z02\nx06 and y06 -> dhs\nckn and hqq -> cpt\ny13 and x13 -> wjj\nx10 and y10 -> tvr\nffr or gqd -> wmb\ny09 xor x09 -> tjb\nnhr xor hqs -> z30\nhgq and phb -> phq\nx00 xor y00 -> z00\ny16 and x16 -> prt\ndqn or cpt -> gqs\nx23 and y23 -> gcb\nmft and djp -> tvh\nbkb and hbk -> qtw\nkfk and chk -> vgb\nvhv and mnm -> hjk\ny42 xor x42 -> mfm\nx25 xor y25 -> djd\nfgv xor mfm -> z42\ngrp xor fgr -> z18\nx16 xor y16 -> chk\nx09 and y09 -> krd\ncqb or rmg -> mqm\ny30 xor x30 -> hqs\nkss and bnh -> dvf\ny11 xor x11 -> rnt\nx04 and y04 -> ptm\ny13 xor x13 -> cbr\nrnt xor qbs -> z11\nhff or fjf -> kss\nx25 and y25 -> gqb\nkdh xor qvq -> z31\ny06 xor x06 -> mmh\ncnb xor wmb -> z21\ny02 xor x02 -> jgw\nx17 and y17 -> hkn\ny34 and x34 -> tfn\nx27 xor y27 -> phb\nx42 and y42 -> vvc\nx03 xor y03 -> mft\ny35 and x35 -> nvg\nx10 xor y10 -> cmt\ny20 and x20 -> ffr\nx30 and y30 -> trg\nptm or tqb -> nbk\nbfn and dfb -> sjr\njgw and ndd -> qnq\ny39 and x39 -> bts\ny38 and x38 -> knq\nnpm xor vtk -> z04\nprt or vgb -> jqc\nkfk xor chk -> z16\nrvd or dhs -> ckn\nfnk or wkv -> bhd\ny03 and x03 -> sqm\nx08 and y08 -> pkn\ny02 and x02 -> dpc\nbwg and fbv -> pdw\nmqf xor cvh -> z34\ntjb and wmt -> vkb\njdq xor dkd -> z29\nx34 xor y34 -> cvh\ny21 and x21 -> bkv\ntfn or trj -> cqv\nfgr and grp -> ffb\nbwd or nvg -> bvp\ncjv or hkn -> fgr\nfhp or rnc -> fgv\nsjr or tck -> hbk\nvkn xor vkg -> z40\nkbh xor jqc -> z17\nkgg or dvf -> fbv\ntjb xor wmt -> z09\ntvr or pph -> qbs\nqqj and cqm -> gsg\npdw or knq -> vhv\ngqs xor hnf -> z08\ny20 xor x20 -> nwn\nkbh and jqc -> cjv\nbqc and fwr -> kth\nrcp or scv -> sfk\nsbt or qtw -> kfk\nbhd and mmh -> rvd\nnwn xor vdh -> z20\ny29 xor x29 -> dkd\ny23 xor x23 -> rpg\njbb or hpj -> dvw\ncbr xor mqm -> z13\ny33 and x33 -> cht\ny12 and x12 -> rmg\nmqm and cbr -> scs\nsfk and fvh -> cqb\ny14 and x14 -> tck\nx04 xor y04 -> vtk\ny05 and x05 -> wkv\nrmt xor gtm -> z33\ny01 xor x01 -> gnj\nsrm and cjb -> qvs\nx36 and y36 -> fjf\ndrc and qqt -> cjf\ny40 and x40 -> hdm\ny41 and x41 -> rnc\ngsg or bvm -> qqt",
+          "testOut": "1101010110100010011011110000111100011011100110",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "large adder",
+          "isTest": false,
+          "testIn": "x00:0 x01:0 x02:0 x03:1 x04:0 x05:0 x06:1 x07:1 x08:0 x09:1 x10:0 x11:1 x12:1 x13:1 x14:0 x15:1 x16:0 x17:1 x18:0 x19:1 x20:1 x21:0 x22:1 x23:0 x24:1 x25:0 x26:1 x27:0 x28:1 x29:0 x30:1 x31:0 x32:0 x33:1 x34:1 x35:0 x36:0 x37:0 x38:0 x39:0 x40:0 x41:0 x42:0 x43:1 x44:1 y00:0 y01:0 y02:0 y03:1 y04:1 y05:0 y06:0 y07:0 y08:0 y09:0 y10:0 y11:1 y12:0 y13:0 y14:0 y15:0 y16:1 y17:0 y18:0 y19:1 y20:0 y21:0 y22:0 y23:1 y24:1 y25:0 y26:1 y27:0 y28:1 y29:0 y30:0 y31:0 y32:0 y33:1 y34:0 y35:1 y36:0 y37:1 y38:0 y39:0 y40:1 y41:1 y42:1 y43:0 y44:1\nz45 z44 z43 z42 z41 z40 z39 z38 z37 z36 z35 z34 z33 z32 z31 z30 z29 z28 z27 z26 z25 z24 z23 z22 z21 z20 z19 z18 z17 z16 z15 z14 z13 z12 z11 z10 z09 z08 z07 z06 z05 z04 z03 z02 z01 z00\n222\nx44 xor y44 -> drc\nphq or frm -> hjs\nvdh and nwn -> gqd\ny40 xor x40 -> vkn\nx21 xor y21 -> cnb\ncnb and wmb -> vvk\ndfb xor bfn -> z14\nbhd xor mmh -> z06\nfkc xor bwj -> z22\ngnj and jfw -> spq\ndwh and kqn -> fhp\nx19 and y19 -> kkg\ndrc xor qqt -> z44\nfkc and bwj -> jbb\ny32 xor x32 -> qwt\ny37 and x37 -> kgg\nx07 and y07 -> dqn\ndsp and bvp -> hff\npmv or pkn -> wmt\ncjf or pfk -> z45\nhgq xor phb -> z27\nqnq or dpc -> djp\nx32 and y32 -> nbb\nqwt and jqm -> fdk\nx18 xor y18 -> grp\nvkf or hdm -> kqn\ncqv and jss -> bwd\nx00 and y00 -> jfw\ncjb xor srm -> z19\njss xor cqv -> z35\nntt or spq -> ndd\ncqm xor qqj -> z43\nx01 and y01 -> ntt\ny14 xor x14 -> dfb\nnbk xor wrk -> z05\ndvw and rpg -> dbb\nvvc or kcv -> qqj\nbqc xor fwr -> z26\ndwh xor kqn -> z41\nx15 xor y15 -> bkb\nrjm xor gjr -> z24\nx22 xor y22 -> bwj\ny22 and x22 -> hpj\nx08 xor y08 -> hnf\ny27 and x27 -> frm\nwrw or swr -> fds\ngtm and rmt -> mkv\nkdh and qvq -> ghr\nfgv and mfm -> kcv\nhnf and gqs -> pmv\nkkg or qvs -> vdh\nfdk or nbb -> rmt\ny29 and x29 -> cwd\nhjk or bts -> vkg\nvtk and npm -> tqb\ndvw xor rpg -> z23\ny39 xor x39 -> mnm\ny05 xor x05 -> wrk\ndjd and fds -> dqt\ntvh or sqm -> npm\ncdr xor cmt -> z10\nx28 xor y28 -> hgd\nx33 xor y33 -> gtm\nmnm xor vhv -> z39\nfbv xor bwg -> z38\nhqs and nhr -> vbt\nkth or qcp -> hgq\nwjj or scs -> bfn\nbkv or vvk -> fkc\ncmt and cdr -> pph\ndqt or gqb -> bqc\ny35 xor x35 -> jss\nvkb or krd -> cdr\nmqf and cvh -> trj\nx36 xor y36 -> dsp\ny41 xor x41 -> dwh\ny38 xor x38 -> bwg\nghr or tpc -> jqm\nckn xor hqq -> z07\nvkn and vkg -> vkf\ny28 and x28 -> wkc\nx31 xor y31 -> qvq\nrjm and gjr -> swr\ngcb or dbb -> rjm\ny18 and x18 -> kvn\ny24 and x24 -> wrw\nx17 xor y17 -> kbh\ny24 xor x24 -> gjr\nx26 xor y26 -> fwr\ny43 and x43 -> bvm\ny15 and x15 -> sbt\ny12 xor x12 -> fvh\nkvn or ffb -> cjb\ny31 and x31 -> tpc\ny37 xor x37 -> bnh\ny11 and x11 -> scv\nhgd and hjs -> phr\njfw xor gnj -> z01\nfvh xor sfk -> z12\nfds xor djd -> z25\nqwt xor jqm -> z32\nbvp xor dsp -> z36\nphr or wkc -> jdq\ny07 xor x07 -> hqq\ny43 xor x43 -> cqm\nbnh xor kss -> z37\ntrg or vbt -> kdh\ncwd or pkc -> nhr\ny19 xor x19 -> srm\ndkd and jdq -> pkc\nwrk and nbk -> fnk\nhjs xor hgd -> z28\nrnt and qbs -> rcp\ndjp xor mft -> z03\ncht or mkv -> mqf\nhbk xor bkb -> z15\nx44 and y44 -> pfk\nx26 and y26 -> qcp\nndd xor jgw -> z02\nx06 and y06 -> dhs\nckn and hqq -> cpt\ny13 and x13 -> wjj\nx10 and y10 -> tvr\nffr or gqd -> wmb\ny09 xor x09 -> tjb\nnhr xor hqs -> z30\nhgq and phb -> phq\nx00 xor y00 -> z00\ny16 and x16 -> prt\ndqn or cpt -> gqs\nx23 and y23 -> gcb\nmft and djp -> tvh\nbkb and hbk -> qtw\nkfk and chk -> vgb\nvhv and mnm -> hjk\ny42 xor x42 -> mfm\nx25 xor y25 -> djd\nfgv xor mfm -> z42\ngrp xor fgr -> z18\nx16 xor y16 -> chk\nx09 and y09 -> krd\ncqb or rmg -> mqm\ny30 xor x30 -> hqs\nkss and bnh -> dvf\ny11 xor x11 -> rnt\nx04 and y04 -> ptm\ny13 xor x13 -> cbr\nrnt xor qbs -> z11\nhff or fjf -> kss\nx25 and y25 -> gqb\nkdh xor qvq -> z31\ny06 xor x06 -> mmh\ncnb xor wmb -> z21\ny02 xor x02 -> jgw\nx17 and y17 -> hkn\ny34 and x34 -> tfn\nx27 xor y27 -> phb\nx42 and y42 -> vvc\nx03 xor y03 -> mft\ny35 and x35 -> nvg\nx10 xor y10 -> cmt\ny20 and x20 -> ffr\nx30 and y30 -> trg\nptm or tqb -> nbk\nbfn and dfb -> sjr\njgw and ndd -> qnq\ny39 and x39 -> bts\ny38 and x38 -> knq\nnpm xor vtk -> z04\nprt or vgb -> jqc\nkfk xor chk -> z16\nrvd or dhs -> ckn\nfnk or wkv -> bhd\ny03 and x03 -> sqm\nx08 and y08 -> pkn\ny02 and x02 -> dpc\nbwg and fbv -> pdw\nmqf xor cvh -> z34\ntjb and wmt -> vkb\njdq xor dkd -> z29\nx34 xor y34 -> cvh\ny21 and x21 -> bkv\ntfn or trj -> cqv\nfgr and grp -> ffb\nbwd or nvg -> bvp\ncjv or hkn -> fgr\nfhp or rnc -> fgv\nsjr or tck -> hbk\nvkn xor vkg -> z40\nkbh xor jqc -> z17\nkgg or dvf -> fbv\ntjb xor wmt -> z09\ntvr or pph -> qbs\nqqj and cqm -> gsg\npdw or knq -> vhv\ngqs xor hnf -> z08\ny20 xor x20 -> nwn\nkbh and jqc -> cjv\nbqc and fwr -> kth\nrcp or scv -> sfk\nsbt or qtw -> kfk\nbhd and mmh -> rvd\nnwn xor vdh -> z20\ny29 xor x29 -> dkd\ny23 xor x23 -> rpg\njbb or hpj -> dvw\ncbr xor mqm -> z13\ny33 and x33 -> cht\ny12 and x12 -> rmg\nmqm and cbr -> scs\nsfk and fvh -> cqb\ny14 and x14 -> tck\nx04 xor y04 -> vtk\ny05 and x05 -> wkv\nrmt xor gtm -> z33\ny01 xor x01 -> gnj\nsrm and cjb -> qvs\nx36 and y36 -> fjf\ndrc and qqt -> cjf\ny40 and x40 -> hdm\ny41 and x41 -> rnc\ngsg or bvm -> qqt",
+          "testOut": "1011110011000001101010111000111100001011100000",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "large adder reverse input",
+          "isTest": true,
+          "testIn": "x00:1 x01:1 x02:1 x03:1 x04:1 x05:1 x06:1 x07:1 x08:1 x09:1 x10:1 x11:1 x12:1 x13:1 x14:1 x15:1 x16:1 x17:1 x18:1 x19:1 x20:1 x21:1 x22:1 x23:1 x24:1 x25:1 x26:1 x27:1 x28:1 x29:1 x30:1 x31:1 x32:1 x33:1 x34:1 x35:1 x36:1 x37:1 x38:1 x39:1 x40:1 x41:1 x42:1 x43:1 x44:1 z00:0 z01:0 z02:0 z03:0 z04:0 z05:0 z06:0 z07:0 z08:0 z09:0 z10:0 z11:0 z12:0 z13:0 z14:0 z15:0 z16:0 z17:0 z18:0 z19:0 z20:0 z21:0 z22:0 z23:0 z24:0 z25:0 z26:0 z27:0 z28:0 z29:0 z30:0 z31:0 z32:0 z33:0 z34:0 z35:0 z36:0 z37:0 z38:0 z39:0 z40:0 z41:0 z42:0 z43:0 z44:0 z45:1\ny44 y43 y42 y41 y40 y39 y38 y37 y36 y35 y34 y33 y32 y31 y30 y29 y28 y27 y26 y25 y24 y23 y22 y21 y20 y19 y18 y17 y16 y15 y14 y13 y12 y11 y10 y09 y08 y07 y06 y05 y04 y03 y02 y01 y00\n222\nx44 xor y44 -> drc\nphq or frm -> hjs\nvdh and nwn -> gqd\ny40 xor x40 -> vkn\nx21 xor y21 -> cnb\ncnb and wmb -> vvk\ndfb xor bfn -> z14\nbhd xor mmh -> z06\nfkc xor bwj -> z22\ngnj and jfw -> spq\ndwh and kqn -> fhp\nx19 and y19 -> kkg\ndrc xor qqt -> z44\nfkc and bwj -> jbb\ny32 xor x32 -> qwt\ny37 and x37 -> kgg\nx07 and y07 -> dqn\ndsp and bvp -> hff\npmv or pkn -> wmt\ncjf or pfk -> z45\nhgq xor phb -> z27\nqnq or dpc -> djp\nx32 and y32 -> nbb\nqwt and jqm -> fdk\nx18 xor y18 -> grp\nvkf or hdm -> kqn\ncqv and jss -> bwd\nx00 and y00 -> jfw\ncjb xor srm -> z19\njss xor cqv -> z35\nntt or spq -> ndd\ncqm xor qqj -> z43\nx01 and y01 -> ntt\ny14 xor x14 -> dfb\nnbk xor wrk -> z05\ndvw and rpg -> dbb\nvvc or kcv -> qqj\nbqc xor fwr -> z26\ndwh xor kqn -> z41\nx15 xor y15 -> bkb\nrjm xor gjr -> z24\nx22 xor y22 -> bwj\ny22 and x22 -> hpj\nx08 xor y08 -> hnf\ny27 and x27 -> frm\nwrw or swr -> fds\ngtm and rmt -> mkv\nkdh and qvq -> ghr\nfgv and mfm -> kcv\nhnf and gqs -> pmv\nkkg or qvs -> vdh\nfdk or nbb -> rmt\ny29 and x29 -> cwd\nhjk or bts -> vkg\nvtk and npm -> tqb\ndvw xor rpg -> z23\ny39 xor x39 -> mnm\ny05 xor x05 -> wrk\ndjd and fds -> dqt\ntvh or sqm -> npm\ncdr xor cmt -> z10\nx28 xor y28 -> hgd\nx33 xor y33 -> gtm\nmnm xor vhv -> z39\nfbv xor bwg -> z38\nhqs and nhr -> vbt\nkth or qcp -> hgq\nwjj or scs -> bfn\nbkv or vvk -> fkc\ncmt and cdr -> pph\ndqt or gqb -> bqc\ny35 xor x35 -> jss\nvkb or krd -> cdr\nmqf and cvh -> trj\nx36 xor y36 -> dsp\ny41 xor x41 -> dwh\ny38 xor x38 -> bwg\nghr or tpc -> jqm\nckn xor hqq -> z07\nvkn and vkg -> vkf\ny28 and x28 -> wkc\nx31 xor y31 -> qvq\nrjm and gjr -> swr\ngcb or dbb -> rjm\ny18 and x18 -> kvn\ny24 and x24 -> wrw\nx17 xor y17 -> kbh\ny24 xor x24 -> gjr\nx26 xor y26 -> fwr\ny43 and x43 -> bvm\ny15 and x15 -> sbt\ny12 xor x12 -> fvh\nkvn or ffb -> cjb\ny31 and x31 -> tpc\ny37 xor x37 -> bnh\ny11 and x11 -> scv\nhgd and hjs -> phr\njfw xor gnj -> z01\nfvh xor sfk -> z12\nfds xor djd -> z25\nqwt xor jqm -> z32\nbvp xor dsp -> z36\nphr or wkc -> jdq\ny07 xor x07 -> hqq\ny43 xor x43 -> cqm\nbnh xor kss -> z37\ntrg or vbt -> kdh\ncwd or pkc -> nhr\ny19 xor x19 -> srm\ndkd and jdq -> pkc\nwrk and nbk -> fnk\nhjs xor hgd -> z28\nrnt and qbs -> rcp\ndjp xor mft -> z03\ncht or mkv -> mqf\nhbk xor bkb -> z15\nx44 and y44 -> pfk\nx26 and y26 -> qcp\nndd xor jgw -> z02\nx06 and y06 -> dhs\nckn and hqq -> cpt\ny13 and x13 -> wjj\nx10 and y10 -> tvr\nffr or gqd -> wmb\ny09 xor x09 -> tjb\nnhr xor hqs -> z30\nhgq and phb -> phq\nx00 xor y00 -> z00\ny16 and x16 -> prt\ndqn or cpt -> gqs\nx23 and y23 -> gcb\nmft and djp -> tvh\nbkb and hbk -> qtw\nkfk and chk -> vgb\nvhv and mnm -> hjk\ny42 xor x42 -> mfm\nx25 xor y25 -> djd\nfgv xor mfm -> z42\ngrp xor fgr -> z18\nx16 xor y16 -> chk\nx09 and y09 -> krd\ncqb or rmg -> mqm\ny30 xor x30 -> hqs\nkss and bnh -> dvf\ny11 xor x11 -> rnt\nx04 and y04 -> ptm\ny13 xor x13 -> cbr\nrnt xor qbs -> z11\nhff or fjf -> kss\nx25 and y25 -> gqb\nkdh xor qvq -> z31\ny06 xor x06 -> mmh\ncnb xor wmb -> z21\ny02 xor x02 -> jgw\nx17 and y17 -> hkn\ny34 and x34 -> tfn\nx27 xor y27 -> phb\nx42 and y42 -> vvc\nx03 xor y03 -> mft\ny35 and x35 -> nvg\nx10 xor y10 -> cmt\ny20 and x20 -> ffr\nx30 and y30 -> trg\nptm or tqb -> nbk\nbfn and dfb -> sjr\njgw and ndd -> qnq\ny39 and x39 -> bts\ny38 and x38 -> knq\nnpm xor vtk -> z04\nprt or vgb -> jqc\nkfk xor chk -> z16\nrvd or dhs -> ckn\nfnk or wkv -> bhd\ny03 and x03 -> sqm\nx08 and y08 -> pkn\ny02 and x02 -> dpc\nbwg and fbv -> pdw\nmqf xor cvh -> z34\ntjb and wmt -> vkb\njdq xor dkd -> z29\nx34 xor y34 -> cvh\ny21 and x21 -> bkv\ntfn or trj -> cqv\nfgr and grp -> ffb\nbwd or nvg -> bvp\ncjv or hkn -> fgr\nfhp or rnc -> fgv\nsjr or tck -> hbk\nvkn xor vkg -> z40\nkbh xor jqc -> z17\nkgg or dvf -> fbv\ntjb xor wmt -> z09\ntvr or pph -> qbs\nqqj and cqm -> gsg\npdw or knq -> vhv\ngqs xor hnf -> z08\ny20 xor x20 -> nwn\nkbh and jqc -> cjv\nbqc and fwr -> kth\nrcp or scv -> sfk\nsbt or qtw -> kfk\nbhd and mmh -> rvd\nnwn xor vdh -> z20\ny29 xor x29 -> dkd\ny23 xor x23 -> rpg\njbb or hpj -> dvw\ncbr xor mqm -> z13\ny33 and x33 -> cht\ny12 and x12 -> rmg\nmqm and cbr -> scs\nsfk and fvh -> cqb\ny14 and x14 -> tck\nx04 xor y04 -> vtk\ny05 and x05 -> wkv\nrmt xor gtm -> z33\ny01 xor x01 -> gnj\nsrm and cjb -> qvs\nx36 and y36 -> fjf\ndrc and qqt -> cjf\ny40 and x40 -> hdm\ny41 and x41 -> rnc\ngsg or bvm -> qqt",
+          "testOut": "000000000000000000000000000000000000000000001",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "large adder reverse input",
+          "isTest": false,
+          "testIn": "x00:0 x01:0 x02:0 x03:0 x04:0 x05:0 x06:0 x07:0 x08:0 x09:0 x10:0 x11:0 x12:0 x13:0 x14:0 x15:0 x16:0 x17:0 x18:0 x19:0 x20:0 x21:0 x22:0 x23:0 x24:0 x25:0 x26:0 x27:0 x28:0 x29:0 x30:0 x31:0 x32:0 x33:0 x34:0 x35:0 x36:0 x37:0 x38:0 x39:0 x40:0 x41:0 x42:0 x43:0 x44:0 z00:1 z01:1 z02:1 z03:1 z04:1 z05:1 z06:1 z07:1 z08:1 z09:1 z10:1 z11:1 z12:1 z13:1 z14:1 z15:1 z16:1 z17:1 z18:1 z19:1 z20:1 z21:1 z22:1 z23:1 z24:1 z25:1 z26:1 z27:1 z28:1 z29:1 z30:1 z31:1 z32:1 z33:1 z34:1 z35:1 z36:1 z37:1 z38:1 z39:1 z40:1 z41:1 z42:1 z43:1 z44:1 z45:0\ny44 y43 y42 y41 y40 y39 y38 y37 y36 y35 y34 y33 y32 y31 y30 y29 y28 y27 y26 y25 y24 y23 y22 y21 y20 y19 y18 y17 y16 y15 y14 y13 y12 y11 y10 y09 y08 y07 y06 y05 y04 y03 y02 y01 y00\n222\nx44 xor y44 -> drc\nphq or frm -> hjs\nvdh and nwn -> gqd\ny40 xor x40 -> vkn\nx21 xor y21 -> cnb\ncnb and wmb -> vvk\ndfb xor bfn -> z14\nbhd xor mmh -> z06\nfkc xor bwj -> z22\ngnj and jfw -> spq\ndwh and kqn -> fhp\nx19 and y19 -> kkg\ndrc xor qqt -> z44\nfkc and bwj -> jbb\ny32 xor x32 -> qwt\ny37 and x37 -> kgg\nx07 and y07 -> dqn\ndsp and bvp -> hff\npmv or pkn -> wmt\ncjf or pfk -> z45\nhgq xor phb -> z27\nqnq or dpc -> djp\nx32 and y32 -> nbb\nqwt and jqm -> fdk\nx18 xor y18 -> grp\nvkf or hdm -> kqn\ncqv and jss -> bwd\nx00 and y00 -> jfw\ncjb xor srm -> z19\njss xor cqv -> z35\nntt or spq -> ndd\ncqm xor qqj -> z43\nx01 and y01 -> ntt\ny14 xor x14 -> dfb\nnbk xor wrk -> z05\ndvw and rpg -> dbb\nvvc or kcv -> qqj\nbqc xor fwr -> z26\ndwh xor kqn -> z41\nx15 xor y15 -> bkb\nrjm xor gjr -> z24\nx22 xor y22 -> bwj\ny22 and x22 -> hpj\nx08 xor y08 -> hnf\ny27 and x27 -> frm\nwrw or swr -> fds\ngtm and rmt -> mkv\nkdh and qvq -> ghr\nfgv and mfm -> kcv\nhnf and gqs -> pmv\nkkg or qvs -> vdh\nfdk or nbb -> rmt\ny29 and x29 -> cwd\nhjk or bts -> vkg\nvtk and npm -> tqb\ndvw xor rpg -> z23\ny39 xor x39 -> mnm\ny05 xor x05 -> wrk\ndjd and fds -> dqt\ntvh or sqm -> npm\ncdr xor cmt -> z10\nx28 xor y28 -> hgd\nx33 xor y33 -> gtm\nmnm xor vhv -> z39\nfbv xor bwg -> z38\nhqs and nhr -> vbt\nkth or qcp -> hgq\nwjj or scs -> bfn\nbkv or vvk -> fkc\ncmt and cdr -> pph\ndqt or gqb -> bqc\ny35 xor x35 -> jss\nvkb or krd -> cdr\nmqf and cvh -> trj\nx36 xor y36 -> dsp\ny41 xor x41 -> dwh\ny38 xor x38 -> bwg\nghr or tpc -> jqm\nckn xor hqq -> z07\nvkn and vkg -> vkf\ny28 and x28 -> wkc\nx31 xor y31 -> qvq\nrjm and gjr -> swr\ngcb or dbb -> rjm\ny18 and x18 -> kvn\ny24 and x24 -> wrw\nx17 xor y17 -> kbh\ny24 xor x24 -> gjr\nx26 xor y26 -> fwr\ny43 and x43 -> bvm\ny15 and x15 -> sbt\ny12 xor x12 -> fvh\nkvn or ffb -> cjb\ny31 and x31 -> tpc\ny37 xor x37 -> bnh\ny11 and x11 -> scv\nhgd and hjs -> phr\njfw xor gnj -> z01\nfvh xor sfk -> z12\nfds xor djd -> z25\nqwt xor jqm -> z32\nbvp xor dsp -> z36\nphr or wkc -> jdq\ny07 xor x07 -> hqq\ny43 xor x43 -> cqm\nbnh xor kss -> z37\ntrg or vbt -> kdh\ncwd or pkc -> nhr\ny19 xor x19 -> srm\ndkd and jdq -> pkc\nwrk and nbk -> fnk\nhjs xor hgd -> z28\nrnt and qbs -> rcp\ndjp xor mft -> z03\ncht or mkv -> mqf\nhbk xor bkb -> z15\nx44 and y44 -> pfk\nx26 and y26 -> qcp\nndd xor jgw -> z02\nx06 and y06 -> dhs\nckn and hqq -> cpt\ny13 and x13 -> wjj\nx10 and y10 -> tvr\nffr or gqd -> wmb\ny09 xor x09 -> tjb\nnhr xor hqs -> z30\nhgq and phb -> phq\nx00 xor y00 -> z00\ny16 and x16 -> prt\ndqn or cpt -> gqs\nx23 and y23 -> gcb\nmft and djp -> tvh\nbkb and hbk -> qtw\nkfk and chk -> vgb\nvhv and mnm -> hjk\ny42 xor x42 -> mfm\nx25 xor y25 -> djd\nfgv xor mfm -> z42\ngrp xor fgr -> z18\nx16 xor y16 -> chk\nx09 and y09 -> krd\ncqb or rmg -> mqm\ny30 xor x30 -> hqs\nkss and bnh -> dvf\ny11 xor x11 -> rnt\nx04 and y04 -> ptm\ny13 xor x13 -> cbr\nrnt xor qbs -> z11\nhff or fjf -> kss\nx25 and y25 -> gqb\nkdh xor qvq -> z31\ny06 xor x06 -> mmh\ncnb xor wmb -> z21\ny02 xor x02 -> jgw\nx17 and y17 -> hkn\ny34 and x34 -> tfn\nx27 xor y27 -> phb\nx42 and y42 -> vvc\nx03 xor y03 -> mft\ny35 and x35 -> nvg\nx10 xor y10 -> cmt\ny20 and x20 -> ffr\nx30 and y30 -> trg\nptm or tqb -> nbk\nbfn and dfb -> sjr\njgw and ndd -> qnq\ny39 and x39 -> bts\ny38 and x38 -> knq\nnpm xor vtk -> z04\nprt or vgb -> jqc\nkfk xor chk -> z16\nrvd or dhs -> ckn\nfnk or wkv -> bhd\ny03 and x03 -> sqm\nx08 and y08 -> pkn\ny02 and x02 -> dpc\nbwg and fbv -> pdw\nmqf xor cvh -> z34\ntjb and wmt -> vkb\njdq xor dkd -> z29\nx34 xor y34 -> cvh\ny21 and x21 -> bkv\ntfn or trj -> cqv\nfgr and grp -> ffb\nbwd or nvg -> bvp\ncjv or hkn -> fgr\nfhp or rnc -> fgv\nsjr or tck -> hbk\nvkn xor vkg -> z40\nkbh xor jqc -> z17\nkgg or dvf -> fbv\ntjb xor wmt -> z09\ntvr or pph -> qbs\nqqj and cqm -> gsg\npdw or knq -> vhv\ngqs xor hnf -> z08\ny20 xor x20 -> nwn\nkbh and jqc -> cjv\nbqc and fwr -> kth\nrcp or scv -> sfk\nsbt or qtw -> kfk\nbhd and mmh -> rvd\nnwn xor vdh -> z20\ny29 xor x29 -> dkd\ny23 xor x23 -> rpg\njbb or hpj -> dvw\ncbr xor mqm -> z13\ny33 and x33 -> cht\ny12 and x12 -> rmg\nmqm and cbr -> scs\nsfk and fvh -> cqb\ny14 and x14 -> tck\nx04 xor y04 -> vtk\ny05 and x05 -> wkv\nrmt xor gtm -> z33\ny01 xor x01 -> gnj\nsrm and cjb -> qvs\nx36 and y36 -> fjf\ndrc and qqt -> cjf\ny40 and x40 -> hdm\ny41 and x41 -> rnc\ngsg or bvm -> qqt",
+          "testOut": "111111111111111111111111111111111111111111111",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "every node's value is either {{1}} or {{0}}.\n[[operation]]: {{or}}, {{and}}, {{xor}}.\n[[node name]] is alphanumeric and always starts with a letter.\nWhile multiple solutions may exist for a given graph, the sequence of values for the output nodes is guaranteed to be unique.",
+      "coverBinaryId": 136408043951889,
+      "stubGenerator": "read input:string(1024)\nread output:string(1024)\nread n:int\nloop n read row:string(256)\nwrite answer",
+      "inputDescription": "<<line 1:>> the observations for some of the nodes, formatted as [[node name]]{{:}}[[value]], separated by a space\n<<line 2:>> the names of the nodes to output, separated by a space\n<<line 3:>> number of dependency rules [[n]]\n<<following [[n]] lines>>: the dependency rules on the graph. formatted as [[node_a]] [[operation]] [[node_b]] {{->}} [[node_c]], meaning that [[node_c]] is the result of the [[operation]] on [[node_a]] and [[node_b]]",
+      "solutionLanguage": "Clojure",
+      "outputDescription": "a single concatenated string containing the values of the specified nodes in the given order."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Given a graph of logic gates, can you deduce the values of expected nodes?<br><br>In the example case, from (1) <const>a or b -&gt; d</const> and (2) <const>a=0</const>, <const>d=1</const>, we can deduce that <const>b=1</const>.<br>Based on the other dependency rules, we got <const>c=0</const>, <const>f=0</const>, <const>g=1</const> and <const>h=1</const>.<br>So the output for <const>h c g</const> is <const>101</const>.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>line 1:</strong> the observations for some of the nodes, formatted as <var>node name</var><const>:</const><var>value</var>, separated by a space<br><strong>line 2:</strong> the names of the nodes to output, separated by a space<br><strong>line 3:</strong> number of dependency rules <var>n</var><br><strong>following <var>n</var> lines</strong>: the dependency rules on the graph. formatted as <var>node_a</var> <var>operation</var> <var>node_b</var> <const>-&gt;</const> <var>node_c</var>, meaning that <var>node_c</var> is the result of the <var>operation</var> on <var>node_a</var> and <var>node_b</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">a single concatenated string containing the values of the specified nodes in the given order.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">every node's value is either <const>1</const> or <const>0</const>.<br><var>operation</var>: <const>or</const>, <const>and</const>, <const>xor</const>.<br><var>node name</var> is alphanumeric and always starts with a letter.<br>While multiple solutions may exist for a given graph, the sequence of values for the output nodes is guaranteed to be unique.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">a:0 d:1 e:0\nh c g\n5\nf or g -&gt; h\nd or e -&gt; g\na xor c -&gt; f\nb and c -&gt; e\na or b -&gt; d</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">101</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 33520988717,
+  "avatar": 12585096610807,
+  "commentCount": 15,
+  "upVotes": 5,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1060453,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1737207557555,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

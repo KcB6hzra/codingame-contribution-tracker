@@ -1,0 +1,186 @@
+{
+  "id": 4468,
+  "activeVersion": 35,
+  "score": 4,
+  "votableId": 11141540,
+  "codingamerId": 943855,
+  "views": 261,
+  "commentableId": 11069673,
+  "title": "Battleship",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Eldoir",
+  "publicHandle": "44680233160c12d59b0a13d015e8c84dfa8f",
+  "codingamerHandle": "0fa848007484aa14fe221ab076de04b3558349",
+  "lastVersion": {
+    "version": 35,
+    "autocloseTime": 1567078210574,
+    "data": {
+      "title": "Battleship",
+      "topics": [
+        {
+          "id": 45,
+          "handle": "conditions",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 24,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        },
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "using System;\r\nusing System.Linq;\r\nusing System.IO;\r\nusing System.Text;\r\nusing System.Collections;\r\nusing System.Collections.Generic;\r\nusing System.Text.RegularExpressions;\r\n\r\nclass Solution\r\n{\r\n    static char EMPTY = '.',\r\n                INTACT = '+',\r\n                DESTROYED = '_';\r\n    \r\n    static char[,] grid;\r\n    \r\n    \r\n    static void Main(string[] args)\r\n    {\r\n        grid = new char[10, 10];\r\n        \r\n        string SHOT = Console.ReadLine();\r\n        \r\n        // Convert the string\r\n        Pos shotPos = new Pos\r\n        {\r\n            x = SHOT[0] - 'A',\r\n            y = int.Parse(SHOT.Substring(1)) - 1\r\n        };\r\n\r\n        List<Ship> ships = new List<Ship>();\r\n        \r\n        string[] verticals = new string[10];\r\n        \r\n        for (int i = 0; i < 10; i++)\r\n        {\r\n            string LINE = Console.ReadLine();\r\n            \r\n            ships.AddRange(GetHorizontalShips(LINE, i));\r\n            \r\n            for (int j = 0; j < 10; j++)\r\n            {\r\n                grid[i, j] = LINE[j];\r\n                verticals[j] += LINE[j];\r\n            }\r\n        }\r\n        \r\n        for (int i = 0; i < verticals.Length; i++)\r\n        {\r\n            ships.AddRange(GetVerticalShips(verticals[i], i));   \r\n        }\r\n        \r\n        ships = ships.OrderBy(s => s.Size).ToList(); // Sort by size\r\n        \r\n        int[] goodShipsSize = new int[] { 2, 3, 3, 4, 5 };\r\n        \r\n        // DEBUG\r\n        foreach (Ship ship in ships)\r\n        {\r\n            Console.Error.WriteLine(ship);   \r\n        }\r\n        // END DEBUG\r\n        \r\n        if (ShipsAreTooClose(ships) || !goodShipsSize.SequenceEqual(ships.Select(s => s.Size).ToArray()))\r\n        {\r\n            // Ships are too close, or wrong number of ships, or wrong size of ships\r\n            Console.WriteLine(\"INVALID\");\r\n            return;\r\n        }\r\n        \r\n        if (IsShotMissed(shotPos))\r\n        {\r\n            Console.WriteLine(\"MISSED\");\r\n            return;\r\n        }\r\n        \r\n        string result = string.Empty;\r\n        \r\n        foreach (Ship ship in ships)\r\n        {\r\n            if (ship.IsTouche(shotPos))\r\n            {\r\n                result = \"TOUCHE\";\r\n                \r\n                if (ship.IsCoule(shotPos))\r\n                {\r\n                    result += \" COULE \" + ship.Size;\r\n                    \r\n                    if (IsGameLost(ships, shotPos))\r\n                    {\r\n                        result += \" THEN LOSE\";\r\n                    }\r\n                }\r\n                \r\n                break;\r\n            }\r\n        }\r\n        \r\n        Console.WriteLine(result);\r\n    }\r\n    \r\n    static List<Ship> GetHorizontalShips(string line, int lineIndex)\r\n    {\r\n        return GetShips(line, lineIndex, Ship.HorizontalShip);\r\n    }\r\n    \r\n    static List<Ship> GetVerticalShips(string line, int columnIndex)\r\n    {\r\n        return GetShips(line, columnIndex, Ship.VerticalShip);\r\n    }\r\n    \r\n    static List<Ship> GetShips(string line, int lineOrColumnIndex, Func<int, int, int, Ship> buildShip)\r\n    {\r\n        List<Ship> ships = new List<Ship>();\r\n        \r\n        Regex regex = new Regex(@\"\\.*([\\+_]{2,5})\\.*\");\r\n        MatchCollection matches = regex.Matches(line);\r\n        \r\n        foreach (Match match in matches)\r\n        {\r\n            Ship ship = buildShip(lineOrColumnIndex, match.Groups[1].Index, match.Groups[1].Value.Length);\r\n            ships.Add(ship);\r\n        }\r\n        \r\n        return ships;\r\n    }\r\n    \r\n    static bool ShipsAreTooClose(List<Ship> ships)\r\n    {\r\n        for (int i = 0; i < ships.Count; i++)\r\n        {\r\n            for (int j = 0; j < ships.Count; j++)\r\n            {\r\n                if (i != j)\r\n                {\r\n                    if (ships[i].IsTooCloseTo(ships[j]))\r\n                    {\r\n                        return true;   \r\n                    }\r\n                }\r\n            }\r\n        }\r\n        \r\n        return false;\r\n    }\r\n    \r\n    static bool IsShotMissed(Pos shot)\r\n    {\r\n        return grid[shot.y, shot.x] == EMPTY;\r\n    }\r\n    \r\n    static bool IsGameLost(List<Ship> ships, Pos shot)\r\n    {\r\n        char previousState = grid[shot.y, shot.x]; // We save the previous state of the cell\r\n        grid[shot.y, shot.x] = DESTROYED; // We simulate destruction\r\n        \r\n        bool result = true; // The game is lost by default\r\n        \r\n        foreach (Ship ship in ships)\r\n        {\r\n            if (!ship.IsCoule())\r\n            {\r\n                // The game isn't lost if there is at least one undestroyed ship\r\n                result = false;\r\n                break;\r\n            }\r\n        }\r\n        \r\n        // We backup the state\r\n        grid[shot.y, shot.x] = previousState;\r\n                \r\n        return result;\r\n    }\r\n    \r\n    struct Pos\r\n    {\r\n        public int x, y;\r\n        \r\n        public override string ToString()\r\n        {\r\n            return $\"({x};{y})\";\r\n        }\r\n        \r\n        public bool IsAdjacentTo(Pos other)\r\n        {\r\n            int deltaX = Math.Abs(other.x - x);\r\n            int deltaY = Math.Abs(other.y - y);\r\n            \r\n            return (deltaX + deltaY == 1 ||\r\n                    deltaX == 1 && deltaY == 1);\r\n        }\r\n        \r\n        public static bool operator ==(Pos p1, Pos p2)\r\n        {\r\n            return p1.x == p2.x && p1.y == p2.y;\r\n        }\r\n        \r\n        public static bool operator !=(Pos p1, Pos p2)\r\n        {\r\n            return !(p1 == p2);\r\n        }\r\n    }\r\n    \r\n    class Ship\r\n    {\r\n        public Pos[] cellsPos { get; private set; }\r\n        public int Size { get { return cellsPos.Length; } }\r\n        \r\n        public static Ship HorizontalShip(int lineIndex, int startIndex, int size)\r\n        {\r\n            Pos[] cellsPos = new Pos[size];\r\n            \r\n            for (int i = 0; i < size; i++)\r\n            {\r\n                cellsPos[i] = new Pos { x = startIndex + i, y = lineIndex };\r\n            }\r\n            \r\n            return new Ship(cellsPos);\r\n        }\r\n        \r\n        public static Ship VerticalShip(int columnIndex, int startIndex, int size)\r\n        {\r\n            Pos[] cellsPos = new Pos[size];\r\n            \r\n            for (int i = 0; i < size; i++)\r\n            {\r\n                cellsPos[i] = new Pos { x = columnIndex, y = startIndex + i };\r\n            }\r\n            \r\n            return new Ship(cellsPos);\r\n        }\r\n        \r\n        Ship(Pos[] cellsPos)\r\n        {\r\n            this.cellsPos = cellsPos;\r\n        }\r\n        \r\n        public bool IsTooCloseTo(Ship other)\r\n        {\r\n            foreach (Pos cellPos in cellsPos)\r\n            {\r\n                foreach (Pos otherCellPos in other.cellsPos)\r\n                {\r\n                    if (cellPos.IsAdjacentTo(otherCellPos))\r\n                    {\r\n                        return true;\r\n                    }\r\n                }\r\n            }\r\n            \r\n            return false;\r\n        }\r\n        \r\n        public bool IsTouche(Pos shot)\r\n        {\r\n            foreach (Pos cellPos in cellsPos)\r\n            {\r\n                if (cellPos == shot)\r\n                {\r\n                    return true;\r\n                }\r\n            }\r\n            \r\n            return false;\r\n        }\r\n        \r\n        public bool IsCoule()\r\n        {\r\n            foreach (Pos cellPos in cellsPos)\r\n            {\r\n                if (grid[cellPos.y, cellPos.x] == INTACT)\r\n                {\r\n                    return false;\r\n                }\r\n            }\r\n            \r\n            return true;\r\n        }\r\n        \r\n        public bool IsCoule(Pos shotPos)\r\n        {\r\n            foreach (Pos pos in cellsPos)\r\n            {\r\n                if (pos != shotPos && grid[pos.y, pos.x] ==  INTACT)\r\n                {\r\n                    // There is an intact cell and it's not where the shot is\r\n                    return false;\r\n                }\r\n                else if (pos == shotPos && grid[pos.y, pos.x] == DESTROYED)\r\n                {\r\n                    // It's where the shot is, but the cell is already destroyed\r\n                    return false;\r\n                }\r\n            }\r\n            \r\n            return true;\r\n        }\r\n        \r\n        public override string ToString()\r\n        {\r\n            string str = $\"Size: {Size}, Cells: \";\r\n            \r\n            for (int i = 0; i < Size; i++)\r\n            {\r\n                str += cellsPos[i] + \" \";   \r\n            }\r\n            \r\n            return str.Substring(0, str.Length - 1); // Return with last space removed\r\n        }\r\n    }\r\n}",
+      "statement": "You play battleship against your older sister, when an urgent desire is felt. You then ask your little brother to replace you temporarily. When you come back from your small business, it's up to your older sister to play.\n\nHere is your mission, if you accept it:\n- Check that your grid is valid (your little brother could have been wrong when placing the pieces!)\n- Analyze the shot of your sister to determine the rest of the game.\n\nThe rules for checking the validity of the grid are as follows:\n- Two ships can not touch each other vertically, horizontally or diagonally.\n- There must be exactly <<1>> copy of these different ships:\n    • Aircraft carrier (size <<5>>)\n    • Cruiser (size <<4>>)\n    • Counter-torpedoist (size <<3>>)\n    • Submarine (size <<3>>)\n    • Torpedoist (size <<2>>)\n\nThe grid is always a square of {{10}}×{{10}} boxes, the lines being numbered from {{1}} to {{10}} and the columns being numbered from {{A}} to {{J}}.\nA little example:```  A B C\n1 . . .\n2 . . .\n3 . . .```\nA shot is always read beginning with the <<letter>>, for example: A5, H7, J10.",
+      "testCases": [
+        {
+          "title": "Ships too close",
+          "isTest": true,
+          "testIn": "A1\n.+++......\n.....+++..\n.+........\n.+......+.\n........+.\n........+.\n........+.\n........+.\n....++++..\n..........",
+          "testOut": "INVALID",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Ships too close",
+          "isTest": false,
+          "testIn": "A1\n.+++......\n..........\n.++++.....\n.+......+.\n........+.\n........+.\n.......++.\n.......++.\n.......+..\n.......+..",
+          "testOut": "INVALID",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Wrong number of ships",
+          "isTest": true,
+          "testIn": "A1\n..........\n..........\n..++......\n..........\n..........\n..+++++...\n........+.\n.+++....+.\n........+.\n........+.",
+          "testOut": "INVALID",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Wrong number of ships",
+          "isTest": false,
+          "testIn": "A1\n..........\n.........+\n......+..+\n......+...\n......+...\n......+...\n......+...\n.+++....+.\n........+.\n........+.",
+          "testOut": "INVALID",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Wrong size of ships",
+          "isTest": true,
+          "testIn": "A1\n.+++.....+\n.........+\n..........\n..........\n..+++++...\n........+.\n........+.\n........+.\n..........\n...++.....",
+          "testOut": "INVALID",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Wrong size of ships",
+          "isTest": false,
+          "testIn": "A1\n.+++.+....\n..........\n..........\n..........\n.++++++...\n........+.\n........+.\n........+.\n........+.\n...+++....",
+          "testOut": "INVALID",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Missed!",
+          "isTest": true,
+          "testIn": "C3\n.+++......\n.....+++..\n.+........\n.+......+.\n........+.\n........+.\n........+.\n........+.\n...++++...\n..........",
+          "testOut": "MISSED",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Missed!",
+          "isTest": false,
+          "testIn": "G8\n..........\n.....+++..\n..........\n..........\n..........\n....+++++.\n..........\n.+........\n.+.++++.+.\n.+......+.",
+          "testOut": "MISSED",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Touché!",
+          "isTest": true,
+          "testIn": "J10\n......++++\n..........\n..+.......\n..+.......\n....+.....\n....+.....\n....+.....\n.+..+.....\n.+..+.....\n.+.....+++",
+          "testOut": "TOUCHE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Touché!",
+          "isTest": false,
+          "testIn": "A6\n..+..+++..\n..+.......\n..+.......\n..+.......\n..........\n+++++.....\n..........\n..........\n.+........\n.+.....+++",
+          "testOut": "TOUCHE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Touché coulé!",
+          "isTest": true,
+          "testIn": "E9\n_++__.....\n..........\n..........\n..........\n....++....\n..........\n...__+.._.\n........+.\n..._+__.+.\n..........",
+          "testOut": "TOUCHE COULE 4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Touché coulé!",
+          "isTest": false,
+          "testIn": "F7\n_++__.....\n..........\n..........\n..........\n....++....\n..........\n...__+.._.\n........+.\n..._+++.+.\n..........",
+          "testOut": "TOUCHE COULE 3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Game lost",
+          "isTest": true,
+          "testIn": "B2\n..........\n.+.____...\n._........\n......_...\n......_...\n..___._.._\n........._\n........._\n........._\n........._",
+          "testOut": "TOUCHE COULE 2 THEN LOSE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Game lost",
+          "isTest": false,
+          "testIn": "D4\n..........\n....___...\n..........\n.__+__....\n..........\n..__._..._\n....._..._\n....._..._\n........._\n..........",
+          "testOut": "TOUCHE COULE 5 THEN LOSE",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "A ≤ [[l]] ≤ J\n1 ≤ [[n]] ≤ 10",
+      "coverBinaryId": 32027748309698,
+      "stubGenerator": "read SHOT:word(3)\nloop 10 read LINE:word(10)\nwrite answer",
+      "inputDescription": "<< Line 1: >> the shot your sister is about to play, in the form [[l]][[n]], where [[l]] is the letter corresponding to the column (from {{A}} to {{J}}) and [[n]] the line number (from {{1}} to {{10}}).\n<< Next 10 lines: >> the state of your grid.\nA point ({{.}}) represents a void, a plus ({{+}}) represents an <<intact>> cell occupied by one of your ships, and an underscore ({{_}}) represents a <<destroyed>> cell.",
+      "solutionLanguage": "C#",
+      "outputDescription": "If the grid is <<invalid>>, then the game ends: you stop there and return {{INVALID}}.\n\nOtherwise, analyze your sister's shot: if it <<falls in the water>>, return {{MISSED}}.\nOn the other hand, if it <<touches>> one of your ships, return {{TOUCHE}}.\nIf it's enough to <<sink>> it, rather return {{TOUCHE COULE}}, followed by a <<space>> and the <<size>> of the ship.\nIf it makes you <<lose>> the game (all your ships are sunk), add a <<space>> followed by {{THEN LOSE}}."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You play battleship against your older sister, when an urgent desire is felt. You then ask your little brother to replace you temporarily. When you come back from your small business, it's up to your older sister to play.<br><br>Here is your mission, if you accept it:<br>- Check that your grid is valid (your little brother could have been wrong when placing the pieces!)<br>- Analyze the shot of your sister to determine the rest of the game.<br><br>The rules for checking the validity of the grid are as follows:<br>- Two ships can not touch each other vertically, horizontally or diagonally.<br>- There must be exactly <strong>1</strong> copy of these different ships:<br>&nbsp;&nbsp;&nbsp;&nbsp;&bull; Aircraft carrier (size <strong>5</strong>)<br>&nbsp;&nbsp;&nbsp;&nbsp;&bull; Cruiser (size <strong>4</strong>)<br>&nbsp;&nbsp;&nbsp;&nbsp;&bull; Counter-torpedoist (size <strong>3</strong>)<br>&nbsp;&nbsp;&nbsp;&nbsp;&bull; Submarine (size <strong>3</strong>)<br>&nbsp;&nbsp;&nbsp;&nbsp;&bull; Torpedoist (size <strong>2</strong>)<br><br>The grid is always a square of <const>10</const>&times;<const>10</const> boxes, the lines being numbered from <const>1</const> to <const>10</const> and the columns being numbered from <const>A</const> to <const>J</const>.<br>A little example:<pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">  A B C<br>1 . . .<br>2 . . .<br>3 . . .</pre><pre style=\"font-family: monospace\"></pre><br>A shot is always read beginning with the <strong>letter</strong>, for example: A5, H7, J10.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong> Line 1: </strong> the shot your sister is about to play, in the form <var>l</var><var>n</var>, where <var>l</var> is the letter corresponding to the column (from <const>A</const> to <const>J</const>) and <var>n</var> the line number (from <const>1</const> to <const>10</const>).<br><strong> Next 10 lines: </strong> the state of your grid.<br>A point (<const>.</const>) represents a void, a plus (<const>+</const>) represents an <strong>intact</strong> cell occupied by one of your ships, and an underscore (<const>_</const>) represents a <strong>destroyed</strong> cell.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">If the grid is <strong>invalid</strong>, then the game ends: you stop there and return <const>INVALID</const>.<br><br>Otherwise, analyze your sister's shot: if it <strong>falls in the water</strong>, return <const>MISSED</const>.<br>On the other hand, if it <strong>touches</strong> one of your ships, return <const>TOUCHE</const>.<br>If it's enough to <strong>sink</strong> it, rather return <const>TOUCHE COULE</const>, followed by a <strong>space</strong> and the <strong>size</strong> of the ship.<br>If it makes you <strong>lose</strong> the game (all your ships are sunk), add a <strong>space</strong> followed by <const>THEN LOSE</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">A &le; <var>l</var> &le; J<br>1 &le; <var>n</var> &le; 10</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">A1\n.+++......\n.....+++..\n.+........\n.+......+.\n........+.\n........+.\n........+.\n........+.\n....++++..\n..........</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">INVALID</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 206080212162,
+  "avatar": 1774183693177,
+  "commentCount": 12,
+  "upVotes": 5,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 369054,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

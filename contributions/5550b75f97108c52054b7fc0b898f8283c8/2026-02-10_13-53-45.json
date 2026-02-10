@@ -1,0 +1,201 @@
+{
+  "id": 555,
+  "activeVersion": 12,
+  "score": 3,
+  "votableId": 4150381,
+  "codingamerId": 1691929,
+  "views": 183,
+  "commentableId": 4094516,
+  "title": "Micro Assembly",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Blubbor",
+  "publicHandle": "5550b75f97108c52054b7fc0b898f8283c8",
+  "codingamerHandle": "6f5bc9831713526e19561bddd96a9ab69291961",
+  "lastVersion": {
+    "version": 12,
+    "data": {
+      "title": "Micro Assembly",
+      "topics": [
+        {
+          "id": 199,
+          "handle": "stack",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Stack",
+            "2": "Stack"
+          },
+          "puzzleCount": 4,
+          "parentTopicId": 93
+        },
+        {
+          "id": 235,
+          "handle": "interpreter",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "interpreter",
+            "2": "Interpreters"
+          },
+          "puzzleCount": 1,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "# read input\na, b, c, d = [int(i) for i in input().split()]\ncommands = []\nn = int(input())\nfor i in range(n):\n    commands.append(input())\n\n\n# get value for either register string or immediate number\ndef read_operand(op):\n    if op == 'a':\n        return a\n    elif op == 'b':\n        return b\n    elif op == 'c':\n        return c\n    elif op == 'd':\n        return d\n    else:\n        return int(op)\n\n\n# copy value to destination register given as string\ndef set_dest(dest, value):\n    global a, b, c, d\n    if dest == 'a':\n        a = value\n    elif dest == 'b':\n        b = value\n    elif dest == 'c':\n        c = value\n    elif dest == 'd':\n        d = value\n\n\n# instruction processor with instruction pointer pointing to current instruction\nip = 0\nwhile ip < len(commands):\n    cmd = commands[ip].split()\n    if cmd[0] == \"MOV\":\n        set_dest(cmd[1], read_operand(cmd[2]))\n    elif cmd[0] == \"ADD\":\n        set_dest(cmd[1], read_operand(cmd[2]) + read_operand(cmd[3]))\n    elif cmd[0] == \"SUB\":\n        set_dest(cmd[1], read_operand(cmd[2]) - read_operand(cmd[3]))\n    elif cmd[0] == \"JNE\":\n        if read_operand(cmd[2]) != read_operand(cmd[3]):\n            ip = read_operand(cmd[1])\n            continue\n    ip += 1\n\n# print the four register values\nprint(\"%d %d %d %d\" % (a, b, c, d))\n",
+      "statement": "The task is to write an interpreter for a very simplistic assembly language and print the four register values after the instructions have been processed.\n\n<<Explanations:>>\n[[a]], [[b]], [[c]], [[d]]: registers containing integer values\n[[DEST]]: write the operation result to this register\n[[SRC]]: read operand value from this register\n[[IMM]]: immediate/integer value\n[[SRC|IMM]] means that the operand can be either a register or an immediate value.\n\nCommand and operands are always separated by a blank.\nThe program starts with the first instruction, iterates through all instructions and ends when the last instruction was processed.\nOnly valid input is given and there are no endless loops or over-/underflows to be taken care of.\n\n<<List of defined assembly instructions:>>\n\n{{MOV}} [[DEST]] [[SRC|IMM]]\ncopies register or immediate value to destination register\n<<Example:>> MOV a 3 => a = 3\n\n{{ADD}} [[DEST]] [[SRC|IMM]] [[SRC|IMM]]\nadd two register or immediate values and store the sum in destination register\n<<Example:>> ADD b c d => b = c + d\n\n{{SUB}} [[DEST]] [[SRC|IMM]] [[SRC|IMM]]\nsubtracts the third value from the second and stores the result in destination register\n<<Example:>> SUB d d 2 => d = d - 2\n\n{{JNE}} [[IMM]] [[SRC]] [[SRC|IMM]]\njumps to instruction number [[IMM]] (zero-based) if the other two values are not equal\n<<Example:>> JNE 0 a 0 => continue execution at line 0 if a is not zero\n\n<<Full example:>>\n`(line 0) MOV a 3      # a = 3\n(line 1) ADD a a -1   # a = a + (-1)\n(line 2) JNE 1 a 1    # jump to line 1 if a != 1` <<Program execution:>>\n0: a = 3\n1: a = a + (-1) = 3 + (-1) = 2\n2: a != 1 -> jump to line 1\n1: a = a + (-1) = 2 + (-1) = 1\n2: a == 1 -> don't jump\n\nProgram finished, register <<a>> now contains value <<1>>",
+      "testCases": [
+        {
+          "title": "MOV test",
+          "isTest": true,
+          "testIn": "1 2 3 -4\n2\nMOV b 3\nMOV c a",
+          "testOut": "1 3 1 -4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "MOV validator",
+          "isTest": false,
+          "testIn": "4 3 2 1\n2\nMOV d 3\nMOV b a",
+          "testOut": "4 4 2 3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "ADD test",
+          "isTest": true,
+          "testIn": "2 3 4 5\n3\nADD a b 1\nADD b 2 7\nADD c a b",
+          "testOut": "4 9 13 5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "ADD validator",
+          "isTest": false,
+          "testIn": "9 8 7 6\n3\nADD a b 2\nADD c 2 7\nADD d a b",
+          "testOut": "10 8 9 18",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "SUB test",
+          "isTest": true,
+          "testIn": "14 2 21 9\n3\nSUB a a a\nSUB d 12 a\nSUB b 15 3",
+          "testOut": "0 12 21 12",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "SUB validator",
+          "isTest": false,
+          "testIn": "14 8 18 9\n3\nSUB c c c\nSUB a 12 d\nSUB b 11 3",
+          "testOut": "3 8 0 9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "JNE test",
+          "isTest": true,
+          "testIn": "3 5 7 9\n2\nSUB b b 1\nJNE 0 b 0",
+          "testOut": "3 0 7 9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "JNE validator",
+          "isTest": false,
+          "testIn": "1 15 3 5\n2\nSUB c c 1\nJNE 0 c 0",
+          "testOut": "1 15 0 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Handling negative values",
+          "isTest": true,
+          "testIn": "0 -2 -3 -4\n4\nMOV a -1\nSUB b c -3\nADD d d -1\nJNE 2 d -10",
+          "testOut": "-1 0 -3 -10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Handling negative values validator",
+          "isTest": false,
+          "testIn": "0 -4 -6 -4\n4\nMOV a -2\nSUB b d -4\nADD c c -1\nJNE 2 c -9",
+          "testOut": "-2 0 -9 -4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Calculating sum of 1..N",
+          "isTest": true,
+          "testIn": "0 10 0 0\n3\nADD a a b\nSUB b b 1\nJNE 0 b 0",
+          "testOut": "55 0 0 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Calculating sum of 1..N validator",
+          "isTest": false,
+          "testIn": "0 0 12 0\n3\nADD b b c\nSUB c c 1\nJNE 0 c 0",
+          "testOut": "0 78 0 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Nested loops",
+          "isTest": true,
+          "testIn": "1 3 3 7\n9\nMOV a 10\nMOV b 5\nMOV c b\nSUB c c 1\nADD a a c\nJNE 3 c 0\nSUB b b 1\nJNE 2 b c\nSUB d 0 d",
+          "testOut": "30 0 0 -7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Nested loops validator",
+          "isTest": false,
+          "testIn": "1 3 3 8\n9\nMOV a 11\nMOV b 4\nMOV c b\nSUB c c 1\nADD a a c\nJNE 3 c 0\nSUB b b 1\nJNE 2 b c\nSUB d 0 d",
+          "testOut": "21 0 0 -8",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiplication and jump over instruction",
+          "isTest": true,
+          "testIn": "0 7 5 3\n13\nADD a a b\nSUB c c 1\nJNE 0 c 0\nMOV b a\nSUB c d 1\nADD a a b\nSUB c c 1\nJNE 5 c 0\nSUB b 0 d\nJNE 11 a -105\nMOV a 0\nADD d d b\nSUB b b b",
+          "testOut": "105 0 0 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiplication and jump over instruction validator",
+          "isTest": false,
+          "testIn": "8 0 4 7\n13\nADD b b a\nSUB c c 1\nJNE 0 c 0\nMOV a b\nSUB c d 1\nADD b b a\nSUB c c 1\nJNE 5 c 0\nSUB a 0 d\nJNE 11 b -105\nMOV b 0\nADD d d a\nSUB a a a",
+          "testOut": "0 224 0 0",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "0 < [[n]] < 16\n-2^15 ≤ [[a]], [[b]], [[c]], [[d]] < 2^15\nOverflow and underflow behavior is unspecified (and not tested).",
+      "coverBinaryId": 135109362555875,
+      "stubGenerator": "read a:int b:int c:int d:int\nread n:int\nloop n read instruction:string(16)\nwrite a b c d",
+      "inputDescription": "<<Line 1>> contains the blank-separated values for the registers [[a]], [[b]], [[c]], [[d]]\n<<Line 2>> contains the number [[n]] of the following instruction lines\n[[n]] lines containing assembly instructions",
+      "solutionLanguage": "Python3",
+      "outputDescription": "Line with the four blank-separated register values of [[a]], [[b]], [[c]], [[d]]"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">The task is to write an interpreter for a very simplistic assembly language and print the four register values after the instructions have been processed.<br><br><strong>Explanations:</strong><br><var>a</var>, <var>b</var>, <var>c</var>, <var>d</var>: registers containing integer values<br><var>DEST</var>: write the operation result to this register<br><var>SRC</var>: read operand value from this register<br><var>IMM</var>: immediate/integer value<br><var>SRC|IMM</var> means that the operand can be either a register or an immediate value.<br><br>Command and operands are always separated by a blank.<br>The program starts with the first instruction, iterates through all instructions and ends when the last instruction was processed.<br>Only valid input is given and there are no endless loops or over-/underflows to be taken care of.<br><br><strong>List of defined assembly instructions:</strong><br><br><const>MOV</const> <var>DEST</var> <var>SRC|IMM</var><br>copies register or immediate value to destination register<br><strong>Example:</strong> MOV a 3 =&gt; a = 3<br><br><const>ADD</const> <var>DEST</var> <var>SRC|IMM</var> <var>SRC|IMM</var><br>add two register or immediate values and store the sum in destination register<br><strong>Example:</strong> ADD b c d =&gt; b = c + d<br><br><const>SUB</const> <var>DEST</var> <var>SRC|IMM</var> <var>SRC|IMM</var><br>subtracts the third value from the second and stores the result in destination register<br><strong>Example:</strong> SUB d d 2 =&gt; d = d - 2<br><br><const>JNE</const> <var>IMM</var> <var>SRC</var> <var>SRC|IMM</var><br>jumps to instruction number <var>IMM</var> (zero-based) if the other two values are not equal<br><strong>Example:</strong> JNE 0 a 0 =&gt; continue execution at line 0 if a is not zero<br><br><strong>Full example:</strong><br><pre style=\"font-family: monospace\">(line 0) MOV a 3      # a = 3<br>(line 1) ADD a a -1   # a = a + (-1)<br>(line 2) JNE 1 a 1    # jump to line 1 if a != 1</pre> <strong>Program execution:</strong><br>0: a = 3<br>1: a = a + (-1) = 3 + (-1) = 2<br>2: a != 1 -&gt; jump to line 1<br>1: a = a + (-1) = 2 + (-1) = 1<br>2: a == 1 -&gt; don't jump<br><br>Program finished, register <strong>a</strong> now contains value <strong>1</strong></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong> contains the blank-separated values for the registers <var>a</var>, <var>b</var>, <var>c</var>, <var>d</var><br><strong>Line 2</strong> contains the number <var>n</var> of the following instruction lines<br><var>n</var> lines containing assembly instructions</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Line with the four blank-separated register values of <var>a</var>, <var>b</var>, <var>c</var>, <var>d</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt; <var>n</var> &lt; 16<br>-2^15 &le; <var>a</var>, <var>b</var>, <var>c</var>, <var>d</var> &lt; 2^15<br>Overflow and underflow behavior is unspecified (and not tested).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1 2 3 -4\n2\nMOV b 3\nMOV c a</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1 3 1 -4</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 290671288610,
+  "avatar": 8734602753318,
+  "commentCount": 9,
+  "upVotes": 3,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 54075,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

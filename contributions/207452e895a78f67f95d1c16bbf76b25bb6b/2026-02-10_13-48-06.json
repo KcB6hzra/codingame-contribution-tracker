@@ -1,0 +1,213 @@
+{
+  "id": 2074,
+  "activeVersion": 37,
+  "score": 4,
+  "votableId": 10238739,
+  "codingamerId": 1357614,
+  "views": 523,
+  "commentableId": 10170102,
+  "title": "Go competition",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "OptiPanda",
+  "publicHandle": "207452e895a78f67f95d1c16bbf76b25bb6b",
+  "codingamerHandle": "8e444a8800e500128dda1a63b8e9e7bc4167531",
+  "lastVersion": {
+    "version": 37,
+    "autocloseTime": 1555701861660,
+    "data": {
+      "title": "Go competition",
+      "topics": [
+        {
+          "id": 107,
+          "handle": "classic-board-games",
+          "labelMap": {
+            "1": "Classic board games",
+            "2": "Classic board games"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        },
+        {
+          "id": 71,
+          "handle": "recursion",
+          "labelMap": {
+            "1": "Récursion",
+            "2": "Recursion"
+          },
+          "pageTitle": "Recursion: exercises and theory",
+          "puzzleCount": 11,
+          "parentTopicId": 41,
+          "contentDetailsId": 77
+        },
+        {
+          "id": 62,
+          "handle": "flood-fill",
+          "labelMap": {
+            "1": "Remplissage par diffusion",
+            "2": "Flood fill"
+          },
+          "pageTitle": "Flood fill: exercises and theory",
+          "puzzleCount": 8,
+          "parentTopicId": 41,
+          "contentDetailsId": 81
+        }
+      ],
+      "solution": "import java.util.*;\n\nclass Solution {\n\n    public static int L;\n    public static final List<String> BLACK_STONES = Arrays.asList(\"b\", \"B\");\n    public static final List<String> WHITE_STONES = Arrays.asList(\"w\", \"W\");\n    public static final String NO_STONE = \"x\";\n\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n        L = in.nextInt();\n        if (in.hasNextLine()) {\n            in.nextLine();\n        }\n\n        String[][] map = new String[L][L];\n\n        for (int i = 0; i < L; i++) {\n            map[i] = in.nextLine().split(\"\");\n        }\n\n        int blackScore = 0;\n        int whiteScore = 0;\n\n        for (int i = 0; i < L; i++) {\n            for (int j = 0; j < L; j++) {\n                if(map[i][j].equals(\".\")) {\n                    String[][] tmp = Arrays.stream(map)\n                            .map(String[]::clone)\n                            .toArray(String[][]::new);\n                    RecursiveValues recursiveValues = recur(tmp, i, j);\n\n                    Set<String> edges = recursiveValues.getEdges();\n                    if(edges.stream().anyMatch(BLACK_STONES::contains) && edges.stream().noneMatch(WHITE_STONES::contains) && edges.stream().noneMatch(NO_STONE::contains)) {\n                        for (Position p : recursiveValues.getPositions()) {\n                            map[p.i][p.j] = \"b\";\n                            blackScore++;\n                        }\n                    } else if(edges.stream().anyMatch(WHITE_STONES::contains) && edges.stream().noneMatch(BLACK_STONES::contains) && edges.stream().noneMatch(NO_STONE::contains)) {\n                        for (Position p : recursiveValues.getPositions()) {\n                            map[p.i][p.j] = \"w\";\n                            whiteScore++;\n                        }\n                    } else {\n                        for (Position p : recursiveValues.getPositions()) {\n                            map[p.i][p.j] = \"x\";\n                        }\n                    }\n                }\n                if(map[i][j].equals(\"B\")) {\n                    blackScore++;\n                } else if(map[i][j].equals(\"W\")) {\n                    whiteScore++;\n                }\n            }\n        }\n\n        System.out.println(\"BLACK : \" + blackScore);\n        System.out.println(\"WHITE : \" + (whiteScore + 6.5));\n        System.out.println((blackScore > (whiteScore + 6.5) ? \"BLACK\" : \"WHITE\") + \" WINS\");\n    }\n\n    private static RecursiveValues recur(String[][] map, int i, int j) {\n\n        Set<String> edges = new HashSet<>();\n        Set<Position> pos = new HashSet<>();\n\n        if(map[i][j].equals(\"D\")) {\n            return new RecursiveValues(edges, pos);\n        }\n        Position p = new Position(i, j);\n        pos.add(p);\n        map[i][j] = \"D\";\n\n        if(i > 0) {\n            if (map[i - 1][j].equals(\".\")) {\n                RecursiveValues rec = recur(map, i - 1, j);\n                edges.addAll(rec.getEdges());\n                pos.addAll(rec.getPositions());\n            } else {\n                edges.add(map[i - 1][j]);\n            }\n        }\n\n        if(j > 0) {\n            if(map[i][j - 1].equals(\".\")) {\n                RecursiveValues rec = recur(map, i, j - 1);\n                edges.addAll(rec.getEdges());\n                pos.addAll(rec.getPositions());\n            } else {\n                edges.add(map[i][j - 1]);\n            }\n        }\n\n        if(i < L-2) {\n            if (map[i + 1][j].equals(\".\")) {\n                RecursiveValues rec = recur(map, i + 1, j);\n                edges.addAll(rec.getEdges());\n                pos.addAll(rec.getPositions());\n            } else {\n                edges.add(map[i + 1][j]);\n            }\n        }\n\n        if(j < L-2) {\n            if (map[i][j + 1].equals(\".\")) {\n                RecursiveValues rec = recur(map, i, j + 1);\n                edges.addAll(rec.getEdges());\n                pos.addAll(rec.getPositions());\n            } else {\n                edges.add(map[i][j + 1]);\n            }\n        }\n        return new RecursiveValues(edges, pos);\n    }\n}\n\nclass RecursiveValues {\n    private Set<String> edges;\n    private Set<Position> positions;\n\n    public RecursiveValues(Set<String> edges, Set<Position> positions) {\n        this.edges = edges;\n        this.positions = positions;\n    }\n\n    public Set<String> getEdges() {\n        return edges;\n    }\n\n    public Set<Position> getPositions() {\n        return positions;\n    }\n}\n\nclass Position {\n    int i;\n    int j;\n\n    public Position(int i, int j) {\n        this.i = i;\n        this.j = j;\n    }\n\n    @Override\n    public boolean equals(Object o) {\n        if (this == o) return true;\n        if (o == null || getClass() != o.getClass()) return false;\n        Position position = (Position) o;\n        return i == position.i &&\n                j == position.j;\n    }\n\n    @Override\n    public int hashCode() {\n        return Objects.hash(i, j);\n    }\n}",
+      "statement": "Go is an abstract strategy board game for two players, in which the aim is to surround more territory than the opponent. At the end of the game, you have to determine which player is the winner by counting which one has the biggest territory.\n\nArea scoring: A player's score is the number of stones that he has on the board, plus the number of empty points completely enclosed by that player's stones (counting only horizontal and vertical neighbours, not diagonals).\n\n{{BLACK}} is always first so {{WHITE}} starts with 6.5 points also known as \"komi\".\n\nEvery board is in a stable position, you only have to calculate the territories.\n\nExample (with only a 4x4 grid):\n\n`\n.BW.\nBBWW\n.BW.\nBBWW\n`\nAfter marking the empty points we have:\n\n`\nbBWw\nBBWW\nbBWw\nBBWW\n`\n\n6B + 2b = 8 for BLACK\n6W + 2w + 6.5(komi) = 14.5 for WHITE\n\nWHITE is the winner.",
+      "testCases": [
+        {
+          "title": "Test - Basics 1",
+          "isTest": true,
+          "testIn": "9\n....BW...\n....BW...\n....BW...\n....BW...\n...BBW...\n...BWW...\n...BW....\n...BW....\n...BW....",
+          "testOut": "BLACK : 41\nWHITE : 46.5\nWHITE WINS",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Basics 1",
+          "isTest": false,
+          "testIn": "9\n..BWW....\n...BW....\n...BW....\n...BWW...\n...BBW...\n....BW...\n....BW...\n....BW...\n....BW...",
+          "testOut": "BLACK : 40\nWHITE : 47.5\nWHITE WINS",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - Basics 2",
+          "isTest": true,
+          "testIn": "9\n...BBW...\n..BBW....\n..BWWW...\n.BWWW....\n.BWWBWW..\n..BBBW...\n....BBWWW\n.....BWBW\n.....BBBB",
+          "testOut": "BLACK : 44\nWHITE : 43.5\nBLACK WINS",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Basics 2",
+          "isTest": false,
+          "testIn": "9\n...WWB...\n...WBB...\n..WWB....\n...WBB...\n..W.WB...\n....WB...\n...WB.B..\n...WBB...\n...WWB...",
+          "testOut": "BLACK : 41\nWHITE : 46.5\nWHITE WINS",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - Basics 3",
+          "isTest": true,
+          "testIn": "9\n.B.....W.\nB.B...W.W\n.B.....W.\nB.B...W.W\n.B.....W.\nB.B...W.W\n.B.....W.\nB.B...W.W\n.B.....W.",
+          "testOut": "BLACK : 22\nWHITE : 28.5\nWHITE WINS",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Basics 3",
+          "isTest": false,
+          "testIn": "9\n.B.B.W.W.\nB.B...W.W\n.B.B.W.W.\nB.B...W.W\n.B.B.W.W.\nB.B...W.W\n.B.B.W.W.\nB.B...W.W\n.B.B.W.W.",
+          "testOut": "BLACK : 32\nWHITE : 38.5\nWHITE WINS",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - Basics 4",
+          "isTest": true,
+          "testIn": "9\n...W..W..\nWWWWWW.WW\nWBBWWWWWB\nBBBWBBWBB\nB.BBB.BB.\n.B.B...B.\nB.B.B.BB.\n.B.B.B...\nBB..B....",
+          "testOut": "BLACK : 55\nWHITE : 32.5\nBLACK WINS",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Basics 4",
+          "isTest": false,
+          "testIn": "9\n.WWB.BBBB\nWWWBB.B..\n.WBBBB.BB\nWWBBB.B.B\nWWBBBB.B.\n.WWWB.B..\nWWWWB.BB.\nWWWWWBB.B\n.WWWWWB.B",
+          "testOut": "BLACK : 50\nWHITE : 37.5\nBLACK WINS",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - Medium 1",
+          "isTest": true,
+          "testIn": "13\n......WWB....\n.....WWB.....\n....WWB.B....\n..W.WBB..B...\n.....WB......\n.....WB...B..\n....WWB....BB\n....WB....BWB\n..WWBB....BWW\n..WBB....BW.W\n...WBB.BBBW..\n...WWBBWBWW.W\n....WBBWWW...",
+          "testOut": "BLACK : 79\nWHITE : 96.5\nWHITE WINS",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Medium 1",
+          "isTest": false,
+          "testIn": "13\n.......B.BBBB\n........BBWWW\n...B.BBBWW...\n.....BWBBWW..\n..B.BWWWW....\n....BWW......\n.....BW..W...\n..B.BBW......\n...BWBBW.....\nBB.BWBBW.....\nWBBWWWW...W..\nWWW..........\n.............",
+          "testOut": "BLACK : 75\nWHITE : 100.5\nWHITE WINS",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - Medium 2",
+          "isTest": true,
+          "testIn": "13\n...WWWBB.....\n..W.WBB.B....\n...WB..B.....\nWWWBB..B.B...\nBWBB......B..\nBB.B...BB....\n..B...B.WBB..\nBB.BBBBWWWBBB\nBWB.BWB.W.WBW\nWWWBBWBBW.WBW\n..WWWWWW..WWW\n.............\n.............",
+          "testOut": "BLACK : 91\nWHITE : 82.5\nBLACK WINS",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Medium 2",
+          "isTest": false,
+          "testIn": "13\n....WWB.B.BBB\n...WWBBB.B...\n...WBBBWBB.B.\n...WWWWWWWBBB\n...WBWWWBBBBB\n...WBWBWWBWWW\n...WBBBBWBW.W\n..WWWWBBBBWW.\n...WBWWWBWW.W\n.WWBBBWBWWBWW\nWWB.B.BBBBBBB\nWWBB.B....BB.\nWBB.B........",
+          "testOut": "BLACK : 85\nWHITE : 90.5\nWHITE WINS",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - Hard 1",
+          "isTest": true,
+          "testIn": "19\n.W.WW...WWWB...B.W.\nWWWBWW..WWBB..BBWW.\nBBBBBW.W.WWB.BBWW..\n...BWW.W..WWBBW.WW.\n...BBBW...WWBWW.W..\n....BW.WWWBWW..W...\n...BBWWWWBBBWWWW...\n..BBWBBWBB.BW...WW.\n.BWWWWBBBBBWWW...WW\n..BBW.WB.BBBBW.....\n..BW.W.WBBWWW......\n..BWW..WBWWBWW.....\n...BW.WWWBBBBWW....\n...BW.WBWB.BWWWW...\n..BWWWBBB.BBWBBWWW.\n..BB.WW.BBBWWBBBBWW\n...BBBWWB..BWWBWBBW\n....BWWBB..BW.WWB.B\n...BWWWWB..BBW.WBB.",
+          "testOut": "BLACK : 161\nWHITE : 203.5\nWHITE WINS",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Hard 1",
+          "isTest": false,
+          "testIn": "19\n...WBBBBBW.........\n...WWWBBWWWWW......\n.....WBBBWBWBW.WWW.\n..WW.WB..BBBBW...WW\n....WBBB.BBWBWWWWBW\n...WB..BBWWWWWBBWBB\n...WBBB..BWBBWB.BB.\n...WWWB..BWWBBB.B..\n.....WB.BWWWB...B..\n......WB.BBWWB.B...\nWWWW.WWB.BWWWB.B...\nBWBW.WB.BBBWBB.B...\nBBBBWWB.BWBWBWB....\n..BWWBB.BWWWWWBB...\n..BBWB.BWW..W.WB...\n.BBWWWBBBBWW..WWB..\nB.BWWBBB..BW..WBB..\n.BW.WWWWBB.BWWWWBB.\n.BW....WWB.BBW.WWB.",
+          "testOut": "BLACK : 180\nWHITE : 187.5\nWHITE WINS",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test - Hard 2",
+          "isTest": true,
+          "testIn": "19\n...BWW.......WBB...\n..BBWBWWWW...WWB...\n..BWWBBWBBWW.WBB...\n..BWB.BB.BBW.WWBB..\n.BBWBB..B..BW.WWB..\nBWWWBWBBWB.BW.WBB..\n.BBWWWWWWB.BBWWWB..\n..BBW....WBBBWWB...\n..BW.....WWBW.WB...\n..BW......WWWWWB...\n..BBW......WBBWB...\n.BBBW....WWB.BB....\nBBWW.....WBB....BBB\nBWW.......WBB.BBWWB\nW..........WBBWWWWW\n.W.W.....WWWWWWWBWW\n.....W.W.WBBWBBBBBW\n........WB.BB....BB\n........WBB........",
+          "testOut": "BLACK : 175\nWHITE : 192.5\nWHITE WINS",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator - Hard 2",
+          "isTest": false,
+          "testIn": "19\n.WW................\nW.WWW.WW..WWWW.....\n...WW.W..WBBBBWWWW.\n.W...WW...WWB.BBBWW\n.W..WBBWWWWB.B...BB\n...WW.BWBWBB.......\n.WWWBBBBBBB........\n....WW..B.WB.......\n..WW.WWWWWWBB......\nWWWBBWBBWW.WWBBB...\nWBB..BBBW....WB....\nB.B..BBW...W.WWB...\n.....BW.W....WBB...\n.....BW.W.....WBBB.\n..B.BW.W......W.WWB\n....BWW.....WWWWWB.\n...B.BW.....WBWBBB.\n....BBWW...WWBBB...\n.....BBW...WBBB....",
+          "testOut": "BLACK : 166\nWHITE : 195.5\nWHITE WINS",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "[[L]] is in [ {{9}}, {{13}}, {{19}} ]\n[[L lines]] contains only [ {{.}}, {{B}}, {{W}} ] characters",
+      "stubGenerator": "read L:int\nloop L read ROW:string(1024)\nwrite BLACK : score\nWHITE : score\nBLACK/WHITE WINS\n",
+      "inputDescription": "<<Line 1:>> An integer [[L]] for the number of lines of the go board\n<<Next [[L]] lines:>> Each line is the state of the board, {{.}} represents an empty intersection, {{B}} a {{BLACK}} stone and {{W}} a {{WHITE}} stone.\nEach line contains [[L]] characters.",
+      "solutionLanguage": "Java",
+      "outputDescription": "<<Line 1>>: {{BLACK : }}[[BLACK's score]]\n<<Line 2>>: {{WHITE : }}[[WHITE's score]]\n<<Line 3>>: [{{BLACK}}/{{WHITE}}]{{ WINS}}"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Go is an abstract strategy board game for two players, in which the aim is to surround more territory than the opponent. At the end of the game, you have to determine which player is the winner by counting which one has the biggest territory.<br><br>Area scoring: A player's score is the number of stones that he has on the board, plus the number of empty points completely enclosed by that player's stones (counting only horizontal and vertical neighbours, not diagonals).<br><br><const>BLACK</const> is always first so <const>WHITE</const> starts with 6.5 points also known as &quot;komi&quot;.<br><br>Every board is in a stable position, you only have to calculate the territories.<br><br>Example (with only a 4x4 grid):<br><br><pre style=\"font-family: monospace\"><br>.BW.<br>BBWW<br>.BW.<br>BBWW<br></pre><br>After marking the empty points we have:<br><br><pre style=\"font-family: monospace\"><br>bBWw<br>BBWW<br>bBWw<br>BBWW<br></pre><br><br>6B + 2b = 8 for BLACK<br>6W + 2w + 6.5(komi) = 14.5 for WHITE<br><br>WHITE is the winner.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>L</var> for the number of lines of the go board<br><strong>Next <var>L</var> lines:</strong> Each line is the state of the board, <const>.</const> represents an empty intersection, <const>B</const> a <const>BLACK</const> stone and <const>W</const> a <const>WHITE</const> stone.<br>Each line contains <var>L</var> characters.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1</strong>: <const>BLACK : </const><var>BLACK's score</var><br><strong>Line 2</strong>: <const>WHITE : </const><var>WHITE's score</var><br><strong>Line 3</strong>: [<const>BLACK</const>/<const>WHITE</const>]<const> WINS</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><var>L</var> is in [ <const>9</const>, <const>13</const>, <const>19</const> ]<br><var>L lines</var> contains only [ <const>.</const>, <const>B</const>, <const>W</const> ] characters</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">9\n....BW...\n....BW...\n....BW...\n....BW...\n...BBW...\n...BWW...\n...BW....\n...BW....\n...BW....</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">BLACK : 41\nWHITE : 46.5\nWHITE WINS</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 217532248246,
+  "avatar": 25029501539760,
+  "commentCount": 9,
+  "upVotes": 4,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 326663,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

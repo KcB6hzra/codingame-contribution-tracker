@@ -1,0 +1,143 @@
+{
+  "id": 1030,
+  "activeVersion": 42,
+  "score": 8,
+  "votableId": 6847440,
+  "codingamerId": 1753925,
+  "views": 446,
+  "commentableId": 6786322,
+  "title": "Minimax Simple Example",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Wildcat",
+  "publicHandle": "103008966487926584b5410f78c91b6c56b5",
+  "codingamerHandle": "e92b4a5145939101dc6fa292725ecc075293571",
+  "lastVersion": {
+    "version": 42,
+    "data": {
+      "title": "Minimax Simple Example",
+      "topics": [
+        {
+          "id": 83,
+          "handle": "minimax",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Minimax",
+            "2": "Minimax"
+          },
+          "pageTitle": "Minimax: exercises and theory",
+          "puzzleCount": 35,
+          "parentTopicId": 42,
+          "contentDetailsId": 93
+        }
+      ],
+      "solution": "import java.util.List;\nimport java.util.Map;\nimport java.util.Scanner;\nimport java.util.Map.Entry;\nimport java.util.stream.Collectors;\nimport java.util.ArrayList;\nimport java.io.InputStream;\nimport java.util.HashMap;\n\n\nclass Solution {\n\t\n\t\n\tprivate static class Node {\n\t\tprivate static boolean ALPHA_BETA_PRUNING = true;\n\t\n\t\tprivate int player;\n\t\tprivate GameState resultingState;\n\t\n\t\tpublic Node(int player, Character action, GameState fromState) {\n\t\t\tthis.player = player;\n\t\t\tresultingState = fromState.clone();\n\t\t\tif (action != null) {\n\t\t\t\tresultingState.actionPlayer(player, action);\n\t\t\t}\n\t\t}\n\t\n\t\tpublic Node getMinimaxChild(int alpha, int beta) {\n\t\t\tNode minimax = this;\n\t\n\t\t\t// next player\n\t\t\tint nextPlayer = (player + 1) % 2;\n\t\n\t\t\t// compute the children\n\t\t\tList<Character> possibleActions = resultingState.getPossibleActions();\n\t\n\t\t\t// evaluate the children and choose the minimax\n\t\t\tif (nextPlayer != 0) {\n\t\t\t\t// min node\n\t\t\t\tint score = Integer.MAX_VALUE;\n\t\t\t\tfor (Character action : possibleActions) {\n\t\t\t\t\tNode child = new Node(nextPlayer, action, resultingState);\n\t\t\t\t\tNode testedMinimax = child.getMinimaxChild(alpha, beta);\n\t\t\t\t\tint testedScore = testedMinimax.resultingState.evaluate();\n\t\t\t\t\tif (testedScore < score) {\n\t\t\t\t\t\tminimax = testedMinimax;\n\t\t\t\t\t\tscore = testedScore;\n\t\t\t\t\t}\n\t\t\t\t\tif (ALPHA_BETA_PRUNING && alpha >= score) {\n\t\t\t\t\t\tbreak; // cut alpha\n\t\t\t\t\t}\n\t\t\t\t\tbeta = Math.min(beta, score);\n\t\t\t\t}\n\t\t\t} else {\n\t\t\t\t// max node\n\t\t\t\tint score = Integer.MIN_VALUE;\n\t\t\t\tfor (Character action : possibleActions) {\n\t\t\t\t\tNode child = new Node(nextPlayer, action, resultingState);\n\t\t\t\t\tNode testedMinimax = child.getMinimaxChild(alpha, beta);\n\t\t\t\t\tint testedScore = testedMinimax.resultingState.evaluate();\n\t\t\t\t\tif (testedScore > score) {\n\t\t\t\t\t\tminimax = testedMinimax;\n\t\t\t\t\t\tscore = testedScore;\n\t\t\t\t\t}\n\t\t\t\t\tif (ALPHA_BETA_PRUNING && score >= beta) {\n\t\t\t\t\t\tbreak; // cut beta\n\t\t\t\t\t}\n\t\t\t\t\talpha = Math.max(alpha, score);\n\t\t\t\t}\n\t\t\t}\n\t\n\t\t\treturn minimax;\n\t\t}\n\t\n\t\tpublic String getResult() {\n\t\t\tCharacter choice = resultingState.getFirstAction(0);\n\t\t\tint score0 = resultingState.evaluate(0);\n\t\t\tint score1 = resultingState.evaluate(1);\n\t\t\treturn choice + \" \" + score0 + \"-\" + score1;\n\t\t}\n\t\n\t}\n\t\n\t\n\tprivate static class GameState implements Cloneable {\n\t\tprivate List<Character> deck;\n\t\tprivate List<Character> player0;\n\t\tprivate List<Character> player1;\n\t\n\t\tprivate static Map<List<Character>, Integer> dictionary;\n\t\n\t\tpublic static void setDictionary(Map<String, Integer> dictionary) {\n\t\t\tGameState.dictionary = dictionary.entrySet().stream()\n\t\t\t\t\t.collect(Collectors.toMap(\n\t\t\t\t\t\t\te -> e.getKey().chars().mapToObj(c -> (char) c).collect(Collectors.toList()),\n\t\t\t\t\t\t\te -> e.getValue()));\n\t\t}\n\t\n\t\tpublic GameState(List<Character> deck, List<Character> player0, List<Character> player1) {\n\t\t\tthis.deck = deck;\n\t\t\tthis.player0 = player0;\n\t\t\tthis.player1 = player1;\n\t\t}\n\t\n\t\t@Override\n\t\tpublic GameState clone() {\n\t\t\treturn new GameState(new ArrayList<>(deck), new ArrayList<>(player0), new ArrayList<>(player1));\n\t\t}\n\t\n\t\tpublic List<Character> getPossibleActions() {\n\t\t\tList<Character> possibleCards = new ArrayList<>();\n\t\t\tif (deck.size() > 0) {\n\t\t\t\tpossibleCards.add(deck.get(0));\n\t\t\t}\n\t\t\tif (deck.size() > 1) {\n\t\t\t\tpossibleCards.add(deck.get(1));\n\t\t\t}\n\t\t\treturn possibleCards;\n\t\t}\n\t\n\t\tpublic void actionPlayer(int player, Character action) {\n\t\t\tdeck.remove(action);\n\t\n\t\t\tList<Character> playerDeck = getPlayerDeck(player);\n\t\t\tplayerDeck.add(action);\n\t\t}\n\t\n\t\tprivate List<Character> getPlayerDeck(int player) {\n\t\t\treturn player == 0 ? player0 : player1;\n\t\t}\n\t\n\t\tpublic int evaluate() {\n\t\t\treturn evaluate(0) - evaluate(1);\n\t\t}\n\t\n\t\tpublic int evaluate(int player) {\n\t\t\tint score = 0;\n\t\t\tfor (Entry<List<Character>, Integer> purpose : dictionary.entrySet()) {\n\t\t\t\tList<Character> playerDeck = getPlayerDeck(player);\n\t\t\t\tList<Character> wordLetters = purpose.getKey();\n\t\t\t\tif (playerDeck.containsAll(wordLetters)) {\n\t\t\t\t\tscore += purpose.getValue();\n\t\t\t\t}\n\t\t\t}\n\t\t\treturn score;\n\t\t}\n\t\n\t\tpublic Character getFirstAction(int player) {\n\t\t\treturn getPlayerDeck(player).get(0);\n\t\t}\n\t\n\t}\n\n\tpublic static void main(String args[]) {\n\t\tString res = play(System.in);\n\t\tSystem.out.println(res);\n\t}\n\n\tpublic static String play(InputStream is) {\n\t\tScanner in = new Scanner(is);\n\n\t\tint n = in.nextInt();\n\t\tint q = in.nextInt();\n\t\tif (in.hasNextLine()) {\n\t\t\tin.nextLine();\n\t\t}\n\n\t\tList<Character> deck = new ArrayList<>();\n\t\tfor (int i = 0; i < n; i++) {\n\t\t\tString letter = in.next();\n\t\t\tdeck.add(letter.charAt(0));\n\t\t}\n\t\tGameState game = new GameState(deck, new ArrayList<>(), new ArrayList<>());\n\n\t\tMap<String, Integer> dictionary = new HashMap<>();\n\t\tfor (int i = 0; i < q; i++) {\n\t\t\tString word = in.next();\n\t\t\tint score = in.nextInt();\n\t\t\tdictionary.put(word, score);\n\t\t}\n\t\tGameState.setDictionary(dictionary);\n\n\t\tNode root = new Node(-1, null, game);\n\t\tNode minimax = root.getMinimaxChild(Integer.MIN_VALUE, Integer.MAX_VALUE);\n\n\t\treturn minimax.getResult();\n\t}\n}\n",
+      "statement": "At the beginning the 2 players see a pile of letters, all different. In turns they can choose to get <<the first or the second letter>> of the pile. At the last turn, the last player has no choice but getting the last letter.\nThen, the players score according to the words they can build with their collected letters. A dictionary gives the possible words with their associated gains. Letters can be used several times to form several words.\n\nYou have to advise the first player for its first turn: what letter is best to choose, and what scores are expected for each player, when the two players play their best choice at each turn.\n\nFor the player 1, the purpose is to have the higher positive difference between its score and the opponent's score. For example, '10-2' is a better result than '15-14', which is better than '20-25'.\n\nThis puzzle is a simple game to implement a <<minimax>> algorithm. You may need to optimize your code with <<alpha-beta pruning>> for some tests.",
+      "testCases": [
+        {
+          "title": "4 turns",
+          "isTest": true,
+          "testIn": "4 4\nA S R E\nSA 2\nSE 4\nRE 1\nA 1",
+          "testOut": "S 4-1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4 turns",
+          "isTest": false,
+          "testIn": "4 4\nO N I T\nON 2\nIT 4\nIN 1\nI 1",
+          "testOut": "N 0-1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "2 turns",
+          "isTest": true,
+          "testIn": "2 2\nA B\nA 10\nB 5",
+          "testOut": "A 10-5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "2 turns",
+          "isTest": false,
+          "testIn": "2 2\nX Y\nX 10\nY 15",
+          "testOut": "Y 15-10",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "8 turns",
+          "isTest": true,
+          "testIn": "8 11\nE S R I A C P T\nTSAR 20\nCARE 18\nSTEP 15\nRICE 14\nACT 12\nPIC 11\nSEA 8\nSIR 6\nPA 3\nIS 3\nAT 1",
+          "testOut": "S 3-3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "8 turns",
+          "isTest": false,
+          "testIn": "8 11\nC E H R A T S U\nCRUE 15\nCHAT 10\nCHAS 10\nRASE 8\nCRU 7\nSUR 5\nTAS 5\nSAC 5\nTU 3\nSA 2\nSU 1",
+          "testOut": "C 10-2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "16 turns",
+          "isTest": true,
+          "testIn": "16 73\nI T E C G F L R P A S M O D N H\nHELIPORT 42\nLEOPARDS 41\nDECIGRAM 40\nPLATFORM 40\nHANDSOME 39\nREACTION 38\nATHEISM 33\nIRELAND 31\nINSPECT 31\nDIAMOND 30\nPALMIER 30\nPRIMATE 29\nARTICLE 28\nMONSTER 27\nFISHER 26\nDOLMEN 26\nPORTAL 25\nFLIGHT 25\nPRINCE 24\nCASINO 24\nCHORAL 23\nNECTAR 22\nRATION 22\nSTREAM 21\nPLANET 21\nGIFTED 20\nDETAIL 19\nMASTER 18\nSTORE 18\nTIGER 18\nCANOE 17\nSTOLE 17\nCLOTH 16\nCORPS 16\nSEPIA 16\nCHILD 15\nSINCE 15\nPEACH 14\nDRONE 14\nSLIDE 14\nDRAFT 13\nMEDIC 13\nMAPLE 12\nCHAIN 12\nAGILE 11\nGAME 11\nTHIS 11\nLOFT 10\nSING 10\nRAID 9\nSTEP 9\nTHIN 8\nROLE 7\nLIFE 7\nHELP 6\nMICE 6\nGRID 6\nEAST 6\nEARS 5\nSAID 5\nINFO 5\nLIST 4\nLIME 4\nLEFT 4\nOIL 5\nTEA 4\nNOT 4\nOAF 4\nMAD 3\nTIC 2\nACT 2\nMAP 2\nTHE 1",
+          "testOut": "I 29-14",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "18 turns - 100 words",
+          "isTest": false,
+          "testIn": "18 100\nE O H A L T M G F I Y R S C P N U D\nCOSTUMING 100\nPULMONARY 99\nCENSORIAL 98\nSURFACING 97\nSIMPLETON 96\nHECTOGRAM 95\nSUPERCITY 94\nHYPNOTISM 93\nALGORITHM 92\nROMANTICS 91\nPRINCEDOM 90\nSLAUGHTER 89\nPRUDENTLY 88\nLIGHTFACE 87\nDECLARING 86\nORGANISED 85\nPNEUMATIC 84\nIDEOGRAPH 83\nCERTAINLY 82\nREPULSION 81\nSTUPIDLY 80\nFLUORINE 79\nCONTRAIL 78\nCONSULAR 77\nSTROPHIC 76\nPRINCELY 75\nMARIGOLD 74\nURGENTLY 73\nTHOUSAND 72\nFOCUSING 71\nSOCIETAL 70\nFORENSIC 69\nCHARMING 68\nPODIATRY 67\nCRAFTING 66\nFLAMENCO 65\nDIPLOMA 64\nDAEMONS 63\nTHORIUM 62\nSMOLDER 61\nOUTLAID 60\nSOCIETY 59\nSECTION 58\nSECULAR 57\nFLORINS 56\nTOPSIDE 55\nHEARING 54\nFRUITED 53\nRECLAIM 52\nNASTILY 51\nREALISM 50\nCHOLERA 49\nGAINFUL 48\nROMAINE 47\nCAPTURE 46\nHOLIDAY 45\nUTOPIAS 44\nYOGURTS 43\nTSUNAMI 42\nGRYPHON 41\nINDULGE 40\nSOLACE 39\nENIGMA 38\nFLUIDS 37\nPLAYER 36\nPONDER 35\nPHYSIC 34\nMETHYL 33\nMETHOD 32\nRECTUM 31\nMETALS 30\nMELODY 29\nSTIFLE 28\nPURIFY 27\nNECTAR 26\nMORTAL 25\nEPILOG 24\nFOREST 23\nGARDEN 22\nLOCATE 21\nPIGEON 20\nOPERA 19\nIDEAL 18\nGHOST 17\nRECTO 16\nTANGO 15\nFILET 14\nNACRE 13\nPACER 12\nUSAGE 11\nPERIL 10\nMACHO 9\nSPORE 8\nOPIUM 7\nMINUS 6\nCHIEF 5\nLUNGS 4\nFAROE 3\nLAGER 2\nMODAL 1",
+          "testOut": "E 61-0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "24 turns - 100 words",
+          "isTest": true,
+          "testIn": "24 100\nO A S U W J N F X E M K Y L G C I B R P V H T D\nEXPURGATIONS 100\nLAWRENCIUMS 99\nJUXTAPOSING 98\nWORKMANSHIP 97\nJOURNALISED 96\nDECATHLONS 95\nMETHODICAL 94\nNIGHTCLUBS 93\nPLAYGROUND 92\nFLYWEIGHTS 91\nDISCOURAGE 90\nDUPLICATOR 89\nHEADSTRONG 88\nFLUORIDATE 87\nFORMIDABLY 86\nIMPORTANCE 85\nOLIGARCHS 84\nTAXIDERMY 83\nSUPREMACY 82\nSINGAPORE 81\nCOMPARING 80\nSYMPHONIC 79\nSTRANGELY 78\nMOUNTABLE 77\nROMANTICS 76\nJUDGMENTS 75\nTRIANGLES 74\nPHARYNGES 73\nOBSCURITY 72\nSLAUGHTER 71\nSKEPTICAL 70\nPRUDENTLY 69\nLIGHTFACE 68\nDECLARING 67\nORGANISED 66\nPNEUMATIC 65\nAUDITORY 64\nHOMESPUN 63\nPINOCHLE 62\nAUCTIONS 61\nMONSIEUR 60\nSOCIETAL 59\nFORENSIC 58\nCHARMING 57\nPODIATRY 56\nBEGONIAS 55\nCLARINET 54\nBREAKOUT 53\nCRAFTING 52\nLADYSHIP 51\nOBLIGATE 50\nSPOILAGE 49\nBACHELOR 48\nSONGBIRD 47\nHORNLIKE 46\nCHOLERA 45\nGAINFUL 44\nROMAINE 43\nCAPTURE 42\nMUSTARD 41\nDUCTILE 40\nHOLIDAY 39\nUTOPIAS 38\nPRUDENT 37\nPROTEIN 36\nYOGURTS 35\nTSUNAMI 34\nGRYPHON 33\nBRIEFLY 32\nINDULGE 31\nTHINKS 30\nMELODY 29\nSTIFLE 28\nCASKET 27\nPOLICY 26\nMORTAL 25\nEPILOG 24\nLOCKER 23\nGARDEN 22\nLOCATE 21\nWHITEN 20\nVERMIN 19\nFOREST 18\nPONDER 17\nBEYOND 16\nDETOUR 15\nFILET 14\nPRUNE 13\nPACER 12\nUSAGE 11\nCRISE 10\nBRUIT 9\nBUSHY 8\nFORAY 7\nFLANK 6\nPEDAL 5\nSKIER 4\nFAROE 3\nLAGER 2\nMODAL 1",
+          "testOut": "A 5-0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "24 turns - 100 words",
+          "isTest": false,
+          "testIn": "24 100\nE A R P B G I V S C T F O K D L H N Y U M W J X\nEXPURGATIONS 100\nLAWRENCIUMS 99\nJUXTAPOSING 98\nWORKMANSHIP 97\nJOURNALISED 96\nDECATHLONS 95\nMETHODICAL 94\nNIGHTCLUBS 93\nPLAYGROUND 92\nFLYWEIGHTS 91\nDISCOURAGE 90\nDUPLICATOR 89\nHEADSTRONG 88\nFLUORIDATE 87\nFORMIDABLY 86\nIMPORTANCE 85\nOLIGARCHS 84\nTAXIDERMY 83\nSUPREMACY 82\nSINGAPORE 81\nCOMPARING 80\nSYMPHONIC 79\nSTRANGELY 78\nMOUNTABLE 77\nROMANTICS 76\nJUDGMENTS 75\nTRIANGLES 74\nPHARYNGES 73\nOBSCURITY 72\nSLAUGHTER 71\nSKEPTICAL 70\nPRUDENTLY 69\nLIGHTFACE 68\nDECLARING 67\nORGANISED 66\nPNEUMATIC 65\nAUDITORY 64\nHOMESPUN 63\nPINOCHLE 62\nAUCTIONS 61\nMONSIEUR 60\nSOCIETAL 59\nFORENSIC 58\nCHARMING 57\nPODIATRY 56\nBEGONIAS 55\nCLARINET 54\nBREAKOUT 53\nCRAFTING 52\nLADYSHIP 51\nOBLIGATE 50\nSPOILAGE 49\nBACHELOR 48\nSONGBIRD 47\nHORNLIKE 46\nCHOLERA 45\nGAINFUL 44\nROMAINE 43\nCAPTURE 42\nMUSTARD 41\nDUCTILE 40\nHOLIDAY 39\nUTOPIAS 38\nPRUDENT 37\nPROTEIN 36\nYOGURTS 35\nTSUNAMI 34\nGRYPHON 33\nBRIEFLY 32\nINDULGE 31\nTHINKS 30\nMELODY 29\nSTIFLE 28\nCASKET 27\nPOLICY 26\nMORTAL 25\nEPILOG 24\nLOCKER 23\nGARDEN 22\nLOCATE 21\nWHITEN 20\nVERMIN 19\nFOREST 18\nPONDER 17\nBEYOND 16\nDETOUR 15\nFILET 14\nPRUNE 13\nPACER 12\nUSAGE 11\nCRISE 10\nBRUIT 9\nBUSHY 8\nFORAY 7\nFLANK 6\nPEDAL 5\nSKIER 4\nFAROE 3\nLAGER 2\nMODAL 1",
+          "testOut": "A 6-0",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "2 <= [[N]] <= 26\n1 <= [[Q]] <= 100\nAll input letters are different.\nWords in dictionary do not contain duplicate letters.\nThe tests are designed to have a unique best solution.",
+      "stubGenerator": "read n:int q:int\nloopline n letter:word(1)\nloop q read word:word(12) score:int\nwrite choice score1-score2",
+      "inputDescription": "<<Line 1 :>> Two integers [[N]] the number of letters in the pile and [[Q]] the number of scoring words.\n<<Line 2 :>> [[N]] letters separated by space.\n<<[[Q]] next lines :>> A [[word]] and its associated [[score]].",
+      "solutionLanguage": "Java",
+      "outputDescription": "<<Line 1 :>> [[C]] the best choice for the first turn, a space, and [[S1]]{{-}}[[S2]] the expected final scores for the player 1 and 2."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">At the beginning the 2 players see a pile of letters, all different. In turns they can choose to get <strong>the first or the second letter</strong> of the pile. At the last turn, the last player has no choice but getting the last letter.<br>Then, the players score according to the words they can build with their collected letters. A dictionary gives the possible words with their associated gains. Letters can be used several times to form several words.<br><br>You have to advise the first player for its first turn: what letter is best to choose, and what scores are expected for each player, when the two players play their best choice at each turn.<br><br>For the player 1, the purpose is to have the higher positive difference between its score and the opponent's score. For example, '10-2' is a better result than '15-14', which is better than '20-25'.<br><br>This puzzle is a simple game to implement a <strong>minimax</strong> algorithm. You may need to optimize your code with <strong>alpha-beta pruning</strong> for some tests.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1 :</strong> Two integers <var>N</var> the number of letters in the pile and <var>Q</var> the number of scoring words.<br><strong>Line 2 :</strong> <var>N</var> letters separated by space.<br><strong><var>Q</var> next lines :</strong> A <var>word</var> and its associated <var>score</var>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1 :</strong> <var>C</var> the best choice for the first turn, a space, and <var>S1</var><const>-</const><var>S2</var> the expected final scores for the player 1 and 2.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &lt;= <var>N</var> &lt;= 26<br>1 &lt;= <var>Q</var> &lt;= 100<br>All input letters are different.<br>Words in dictionary do not contain duplicate letters.<br>The tests are designed to have a unique best solution.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4 4\nA S R E\nSA 2\nSE 4\nRE 1\nA 1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">S 4-1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 255751705103,
+  "avatar": 14934574494306,
+  "commentCount": 15,
+  "upVotes": 8,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 178344,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,131 @@
+{
+  "id": 4337,
+  "activeVersion": 28,
+  "score": 23,
+  "votableId": 10765406,
+  "codingamerId": 569247,
+  "views": 1264,
+  "commentableId": 10694906,
+  "title": "Nonogram inversor",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "LaurentBouvier",
+  "publicHandle": "4337e2ae08d6c7ab791a1d92ea2f7f437842",
+  "codingamerHandle": "6061d439c21bc69dacb351d2dae6ccda742965",
+  "lastVersion": {
+    "version": 28,
+    "autocloseTime": 1561835852017,
+    "data": {
+      "title": "Nonogram inversor",
+      "topics": [],
+      "solution": "import sys\r\nimport codecs\r\nimport platform\r\nfrom itertools import product,groupby\r\nfrom heapq import *\r\n\r\nc_debug=\"Windows\" in platform.platform()\r\nc_unknown=\"u\"\r\nc_white=\"w\"\r\nc_black=\"b\"\r\n\r\nc_solved =0\r\nc_init   =1\r\nc_pending=2\r\n\r\nclass ImpossibleError(Exception):\r\n    pass\r\n\r\nclass HTMLLogFile:\r\n    def __init__(self,filename):\r\n        self.n=0\r\n        self.fileid=0\r\n        self.fileprefix=filename\r\n        self.f=None\r\n\r\n    def write(self,content1, content2):\r\n        if not c_debug:return\r\n        if self.n>100: self.close()\r\n        if self.f==None: self.open()\r\n        self.f.write(\"<tr><td>\"+content1+\"</td><td>\"+content2+\"</td></tr>\")\r\n\r\n    def open(self):\r\n        if not c_debug:return\r\n        self.fileid+=1\r\n        self.filename0=str(self.fileid-1)+\".html\"\r\n        self.filename1=str(self.fileid)+\".html\"\r\n        self.filename2=str(self.fileid+1)+\".html\"\r\n        f=self.f=codecs.open(self.fileprefix+self.filename1,\"w\",\"utf-8\")\r\n        f.write(\"\"\"<!DOCTYPE html>\r\n<html>\r\n<head>\r\n<style>\r\ntable {\r\n  border-collapse: collapse;\r\n}\r\n\r\ntable.board, table.log, td.log {\r\n  border: 1px solid black;\r\n}\r\ntd.border {\r\n border: 1px solid black;\r\n background-color: white;\r\n}\r\n\r\ntd.fu2u {\r\n border: 1px solid black;\r\n background-color: grey;\r\n}\r\n\r\ntd.fu2w {\r\n border: 1px solid black;\r\n background-color: yellow;\r\n}\r\ntd.fw2w {\r\n border: 1px solid black;\r\n background-color: white;\r\n}\r\ntd.fu2b {\r\n border: 1px solid black;\r\n background-color: blue;\r\n color: white;\r\n}\r\ntd.fb2b {\r\n border: 1px solid white;\r\n background-color: black;\r\n color: white;\r\n \r\n}\r\n</style>\r\n</head>\r\n<body>\r\n<table class='log'>\"\"\")\r\n        f.write(f\"<tr><td><a href='{self.filename0}'>&lt;&lt;</a></td><td><a href='{self.filename2}'>&gt;&gt;</a></td></tr>\\n\")\r\n\r\n    def close(self):\r\n        if self.f==None:return\r\n        self.f.write(f\"<tr><td><a href='{self.filename0}'>&lt;&lt;</a></td><td><a href='{self.filename2}'>&gt;&gt;</a></td></tr>\\n\")\r\n        self.f.write(\"\"\"</table>\r\n</body>\r\n</html>\"\"\")\r\n        self.f.close()\r\n\r\nclass Cell:\r\n    def __init__(self, color):\r\n        self.color=color\r\n        self.print_color=c_unknown\r\n        self.last_change=-1\r\n    def print_html(self, content=None):\r\n        if not c_debug:return \"\"\r\n        res=self.html(content)\r\n        self.print_color=self.color\r\n        return res\r\n    def set_color(self,color,loop):\r\n        self.color=color\r\n        self.last_change=loop\r\n    def html(self, content=None):\r\n        if not c_debug:return \"\"\r\n        if content!=None:\r\n            content1=content\r\n        elif self.color==c_white:\r\n            content1=\"O\"\r\n        elif self.color==c_black:\r\n            content1=\"X\"\r\n        else:\r\n            content1=\"?\"\r\n        return f\"<td class='f{self.print_color}2{self.color}'>{content1}</td>\"\r\n    def __repr__(self):\r\n        return self.color\r\n        \r\nclass Group:\r\n    idx=0\r\n    def __init__(self,color,val,valmax=None):\r\n        self.idx=Group.idx\r\n        Group.idx+=1\r\n        self.color=color\r\n        val1=val if valmax==None else valmax\r\n        self.val=val\r\n        self.valmax=val1\r\n        self.found=val==val1\r\n        self.name=str(self.idx)\r\n    def __repr__(self):\r\n        return (\"B\" if self.color==c_black else \"W\")+str(self.idx)+ (\"/\"+str(self.val) if self.found else f\"({self.val},{self.valmax})\")\r\n\r\nclass Line:\r\n    def __init__(self,idx,xgrp,xcell):\r\n        self.idx=idx\r\n        self.xgrp=xgrp\r\n        self.xcell=xcell\r\n        self.last_eval=-2\r\n        self.status=c_init\r\n        self.debug=False\r\n        self.last=len(self.xcell)-1\r\n    def worth(self):\r\n        return self.last_eval<max([c.last_change for c in self.xcell])\r\n    def sort(self):\r\n        return (max([s.valmax-s.val for s in self.xgrp]), self.status, self.last_eval, self)\r\n    def __lt__(self,other):\r\n        return self.idx<other.idx\r\n    def __repr__(self):\r\n        return repr(self.idx).replace(\"'\",\"\").replace(\" \",\"\")\r\n    def solve(self,loop):\r\n        found=False\r\n        #self.debug=self.idx== ('C', 3)#and loop==286 #ici debug\r\n        if self.debug:\r\n            print(self.idx, loop, \"== debug==\", file=sys.stderr)\r\n            print(self.idx, loop, self.xgrp, file=sys.stderr)\r\n            print(self.idx, loop, self.xcell,file=sys.stderr)\r\n\r\n        #Rule 1: If the cell belong to the same group when we adjust to the left or the right, this cell belong to that group\r\n        xleft=self.align_left(self.xgrp, self.xcell)\r\n        if self.debug:print(self.idx, \"Left:\",xleft, file=sys.stderr)\r\n        xright=self.align_left(self.xgrp[::-1], self.xcell[::-1])[::-1]\r\n        if self.debug:print(self.idx, \"Right:\",xright, file=sys.stderr)\r\n        \r\n        c_old=\"<tr>\"+\"\".join(c.html() for c in self.xcell)+\"</tr>\\n\"\r\n        for c,l,r in zip(self.xcell,xleft,xright):\r\n            if c.color==c_unknown and l==r:\r\n                c.set_color(l.color,loop)\r\n                found=True\r\n\r\n        \r\n        #Rule 2: check if connecting to black groups would create a too big group\r\n        for i in [i+1 for i,c1,c2,c3 in zip(range(len(self.xcell)),self.xcell,self.xcell[1:],self.xcell[2:]) if c1.color==c_black and c2.color==c_unknown and c3.color==c_black]:            \r\n            l=i-1\r\n            r=i+1\r\n            while l>0 and self.xcell[l-1].color==c_black:l-=1\r\n            while r<self.last and self.xcell[r+1].color==c_black:r+=1\r\n            length=r-l+1\r\n            if length>max([g.val for g in self.xgrp if g.color==c_black]):\r\n                self.xcell[i].set_color(c_white,loop)\r\n                found=True\r\n        #Rule 3: have we found a whole group?\r\n        d={}\r\n        for i,l,r,c in zip(range(len(self.xcell)),xleft,xright,self.xcell):\r\n            if c.color!=c_black or l==r: continue\r\n            k=(l,r)\r\n            if not k in d:d[k]=[]\r\n            d[k]+=[i]\r\n        for (g1,g2),v in d.items():\r\n            gmin,gmax=min(g1.idx,g2.idx),max(g1.idx,g2.idx)\r\n            glen=max([g.val for g in self.xgrp if gmin<=g.idx<=gmax and g.color==c_black])\r\n            if glen==len(v):\r\n                gmin1=min(v)-1\r\n                if gmin1>0 and self.xcell[gmin1].color==c_unknown:\r\n                    self.xcell[gmin1].set_color(c_white,loop)\r\n                    found=True\r\n                gmax1=max(v)+1\r\n                if gmax1<self.last and self.xcell[gmax1].color==c_unknown:\r\n                    self.xcell[gmax1].set_color(c_white,loop)\r\n                    found=True\r\n        \r\n        if found:\r\n            line_log=f\"Line {self.idx} changed!<br/>\"\r\n        else:\r\n            line_log=f\"Line {self.idx} tested <br/>\"\r\n        if (found or self.debug) and c_debug:\r\n            line_log+=f\"loop={loop}<br/>\"\r\n            line_log+=\" \".join(str(g) for g in self.xgrp)+\"<br/>\"\r\n            line_log+=\"<table>\"\r\n            line_log+=c_old \r\n            line_log+=\"<tr>\"+\"\".join(f\"<td class='f{l.color}2{l.color}'>{l.idx}</td>\" for l in xleft)+\"</tr>\\n\"\r\n            line_log+=\"<tr>\"+\"\".join(f\"<td class='f{r.color}2{r.color}'>{r.idx}</td>\" for r in xright)+\"</tr>\\n\"\r\n            line_log+=\"<tr>\"+\"\".join(c.html() for c in self.xcell)+\"</tr>\\n\"\r\n            line_log+=\"</table>\"\r\n        return not c_unknown in [c.color for c in self.xcell], found, line_log\r\n    def align_left(self, xgrp, xcell):\r\n        try:\r\n            res= self.align_left1([],xgrp,xcell)\r\n        except ImpossibleError as e:\r\n            raise ImpossibleError(self.idx)\r\n            \r\n        assert res!=None and len(xcell)==len(res), (self.idx, res, len(xcell),len(res))\r\n        return res\r\n    def align_left1(self, res, xgrp, xcell):\r\n        if self.debug:print(self.idx, res, xgrp, xcell, file=sys.stderr)\r\n\r\n        if not xgrp:return res\r\n        g,*xgrp1=xgrp\r\n        if xgrp1:\r\n            valmin=g.val\r\n        elif g.valmax<len(xcell):\r\n            raise ImpossibleError((1,xgrp1))\r\n        else:\r\n            valmin=len(xcell)\r\n        for l in range(valmin,g.valmax+1):\r\n            try:\r\n                if l>0 and not all([c.color in [c_unknown, g.color] for c in xcell[:l]]):continue\r\n                    \r\n                return self.align_left1(res[:]+[g]*l,xgrp1,xcell[l:])\r\n            except ImpossibleError as e:\r\n                if self.debug:print(self.idx, \"Exception!\", e, file=sys.stderr)\r\n        raise ImpossibleError(3)\r\n            \r\n\r\nclass Game(dict):\r\n    def __init__(self):\r\n        self.w,self.h=map(int,input().split())\r\n        self.xcol=[]\r\n        for x in range(self.w):\r\n            xval=list(map(int,input().split()))\r\n            nb_white=self.h-sum(xval)-len(xval)+1\r\n            xgrp=[Group(c_white,0,nb_white)]\r\n            while xval:\r\n                xgrp.append(Group(c_black,xval.pop(0)))\r\n                x0=1 if xval else 0\r\n                xgrp.append(Group(c_white,x0,x0+nb_white))\r\n            self.xcol.append(xgrp)\r\n\r\n        self.xrow=[]\r\n        for y in range(self.h):\r\n            xval=list(map(int,input().split()))\r\n            nb_white=self.w-sum(xval)-len(xval)+1\r\n            xgrp=[Group(c_white,0,nb_white)]\r\n            while xval:\r\n                xgrp.append(Group(c_black,xval.pop(0)))\r\n                y0=1 if xval else 0\r\n                xgrp.append(Group(c_white,y0,y0+nb_white))\r\n            self.xrow.append(xgrp)\r\n        \r\n        assert sum([v.val for xv in self.xcol for v in xv if v.color==c_black])==sum([v.val for xv in self.xrow for v in xv if v.color==c_black]), \"CheckSum\"\r\n        for x,y in product(range(self.w), range(self.h)):self[x,y]=Cell(c_unknown)\r\n        log.write(\"Initial position:\", self.html())\r\n    def html(self):\r\n        if not c_debug:return \"\"\r\n        res=\"<table class='board'>\"\r\n        res+=f\"<tr><td>{self.w}/{self.h}</td>\"\r\n        for xv in self.xcol:\r\n            res+=\"<td class=border'><table>\"+\"\".join([f\"<tr><td>{v.val}</td></tr>\" for v in xv if v.color==c_black])+ \"</table></td>\"\r\n        res+=\"</tr>\\n\"\r\n        for y,row in enumerate(self.xrow):\r\n            res+=\"<tr>\"\r\n            res+=\"<td class=border'><table><tr>\"+\"\".join([f\"<td>{v.val}</td>\" for v in row if v.color==c_black])+ \"</tr></table></td>\"\r\n            res+=\"\".join([self[x,y].print_html() for x in range(self.w)])\r\n            res+=\"</tr>\\n\"\r\n        res+=\"</table>\"\r\n        return res\r\n    def solve(self):\r\n        q=[]\r\n        for y,xgrp in enumerate(self.xrow):\r\n            heappush(q, Line((\"R\",y), xgrp, [self[x,y] for x in range(self.w)]).sort())\r\n        for x,xgrp in enumerate(self.xcol):\r\n            heappush(q, Line((\"C\",x), xgrp, [self[x,y] for y in range(self.h)]).sort())\r\n        loop=0\r\n        q_next=[]\r\n        game_changed=True\r\n        while game_changed:\r\n            game_changed=False\r\n            while q_next:\r\n                line=heappop(q_next)[-1]\r\n                heappush(q,line.sort()) # We reevaluate\r\n            while q:\r\n                #log.write(\"loop:\"+str(loop), \"<br/>\".join([repr(v) for v in q]))\r\n                line=heappop(q)[-1]\r\n                if not line.worth():\r\n                    heappush(q_next, line.sort())\r\n                    continue\r\n                loop+=1\r\n                #print(line.idx, line.xgrp, line.xcell, file=sys.stderr)\r\n                line_solved,line_changed,line_log= line.solve(loop)\r\n                log.write(line_log, (self.html() if line_changed else \"\") )\r\n                if not line_solved:\r\n                    heappush(q_next, line.sort())\r\n                game_changed|=line_changed\r\n            log.write(\"==> End of queue:<==<BR/>loop:\"+str(loop), \"-\")\r\n        xres=[]\r\n        for x in range(self.w):\r\n            r=\" \".join([str(len(list(v)))for k,v in groupby([self[x,y].color for y in range(self.h)]) if k==c_white])\r\n            xres.append(0 if r==\"\" else r)\r\n        for y in range(self.h):\r\n            r=\" \".join([str(len(list(v)))for k,v in groupby([self[x,y].color for x in range(self.w)]) if k==c_white])\r\n            xres.append(0 if r==\"\" else r)\r\n        return xres\r\n        \r\n\r\nlog=HTMLLogFile(\"logs/\")\r\nprint(*Game().solve(),sep=\"\\n\")\r\nlog.close()\r\n\r\n        \r\n                    \r\n            \r\n        \r\n",
+      "statement": "<<Nonograms>> are also know as Hanjie, Picross or Griddlers.\nTo solve one, you are given the number of contiguous cells of the same color in rows and columns. \nProgressively you can see what the pixelized picture looks like.\n\nYou can check for more information: https://en.wikipedia.org/wiki/Nonogram.\n\nIn this version, we have only two colors, {{black}} and {{white}}.\nYou will be given the length of all {{black}} groups.\nYour work is to describe the puzzle by the length of all {{white}} groups.\n\n<<Example>>\n```\nInput:\n─────\n4 4\n1 1\n2\n3\n4\n4\n3\n2\n1 1\n\nLooks like:\n──────────\n    1\n    1 2 3 4\n   ┌─┬─┬─┬─┐\n  4│■│■│■│■│\n   ├─┼─┼─┼─┤\n  3│ │■│■│■│\n   ├─┼─┼─┼─┤\n  2│ │ │■│■│\n   ├─┼─┼─┼─┤\n1 1│■│ │ │■│\n   └─┴─┴─┴─┘\n\nInversor:\n────────\n    2 2 1 0\n   ┌─┬─┬─┬─┐\n  0│ │ │ │ │\n   ├─┼─┼─┼─┤\n  1│■│ │ │ │\n   ├─┼─┼─┼─┤\n  2│■│■│ │ │\n   ├─┼─┼─┼─┤\n  2│ │■│■│ │\n   └─┴─┴─┴─┘\n\nOutput:\n──────\n2\n2\n1\n0\n0\n1\n2\n2       \n```\nNote: All puzzles have one solution that can be deduced logically.",
+      "testCases": [
+        {
+          "title": "Test 1 - Dog",
+          "isTest": true,
+          "testIn": "5 5\n1\n3\n2\n5\n1\n1\n1 3\n3\n1 1\n1 1",
+          "testOut": "1 3\n2\n1 2\n0\n1 3\n3 1\n1\n1 1\n1 1 1\n1 1 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1 - Tower",
+          "isTest": false,
+          "testIn": "5 5\n2\n4\n3 1\n4\n2\n1 1 1\n5\n3\n1 1\n3",
+          "testOut": "3\n1\n1\n1\n3\n1 1\n0\n1 1\n1 1 1\n1 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2 - Music",
+          "isTest": true,
+          "testIn": "10 10\n2\n4\n4\n8\n1 1\n1 1\n1 1 2\n1 1 4\n1 1 4\n8\n4\n3 1\n1 3\n4 1\n1 1\n1 3\n3 4\n4 4\n4 2\n2",
+          "testOut": "7 1\n6\n6\n1 1\n1 1 6\n1 1 6\n2 2 2\n1 2 1\n1 2 1\n2\n6\n3 3\n3 3\n3 2\n3 5\n3 3\n1 2\n2\n3 1\n1 7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2 - TV",
+          "isTest": false,
+          "testIn": "10 10\n7\n1 1 4\n1 7\n3 2\n1 1\n1 1\n2 1\n1 1 1\n2 3\n7\n1 1\n1 1\n10\n1 2 2\n3 1\n1 1 1\n3 1\n4 2\n10\n1 1",
+          "testOut": "2 1\n2 1 1\n1 1\n1 3 1\n2 5 1\n2 5 1\n1 5 1\n1 5 1\n2 3\n2 1\n2 4 2\n3 2 3\n0\n1 4\n6\n1 6\n6\n4\n0\n1 6 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3 - Africa",
+          "isTest": true,
+          "testIn": "15 15\n3\n4\n1 4 3\n1 4\n7 5\n2 4\n4 4\n2 6\n4\n1 4 3\n1 4\n7 2\n2 4 1\n4 3 1\n2 7\n1 1 1 1\n1 3 1 3\n5 5\n1 2 1 2\n1 1\n2 2\n2 2\n2 2\n2 2 1\n3 4 3\n3 6 4\n2 5 4\n2 6 1 1\n1 2 1 1 1\n1 1 1 1 3",
+          "testOut": "9 3\n9 2\n1 5 1\n2 2 6\n3\n1 7 1\n5 2\n2 5\n9 2\n1 5 1\n2 2 6\n3 3\n1 6 1\n5 2\n2 4\n4 1 4 1 1\n2 1 2 1 1\n3 2\n4 1 3 1\n4 6 3\n3 5 3\n3 5 3\n2 5 4\n2 5 3\n3 2\n1 1\n2 2\n1 1 2 1\n2 1 1 1 4\n2 1 2 1 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3 - Turtle",
+          "isTest": false,
+          "testIn": "15 15\n2 2 3\n2 1 2 1\n3 5 3\n1 5 3\n3 7 1\n3 7\n1 1 5\n2 4\n2 5 2\n3 6 3\n13\n2 1 2\n3\n3 3\n1 1 1\n1 2 2 1\n5 3\n1 2 2\n2\n2 4 2\n6 4\n5 3 2\n14\n9 2\n11\n2 4 3\n2 1\n1 2 2 2\n5 3 1\n1 2 2",
+          "testOut": "4 3 1\n4 1 1 2 1\n2 2\n1 3 2\n1 2 1\n1 4\n1 2 1 4\n4 1 4\n3 3\n2 1\n1 1\n3 2 2 3\n6 6\n6 2 1\n6 4 2\n2 1 2 4\n2 1 4\n2 1 3 4\n10 3\n2 2 3\n1 4\n2 1 1 1\n1\n2 1 1\n4\n2 1 3\n10 1 1\n1 5 2\n3 2 1\n1 4 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4 - Cat",
+          "isTest": true,
+          "testIn": "15 20\n2 6 3\n4 6 1\n7 1\n6 9 1\n6 12\n2 12 2\n14 1 1\n4 7 2 2\n3 8 3\n7 6 4\n3 2 4 1 2\n2 3 3 1 1\n1 2 3 2 2 2\n1 8 1 1 3\n1 2 2 2 2\n1 1 1 1\n2 2 1 1\n7 2 1\n8 3\n2 2 2 1\n1 8 1\n2 3 2 3\n1 4 4\n1 10\n2 9 1\n1 8 1\n1 9\n11 3\n8 4 1\n7 2 1\n7 2 1\n5 4 3\n2 2 1 2 1 1\n1 1 2 4 2\n2 5 4",
+          "testOut": "5 2 2\n6 2 1\n10 1 1\n3 1\n1 1\n2 1 1\n2 1 1\n2 1 1 1\n1 1 3 1\n1 2\n3 2 1 1 1\n1 4 3 1 1\n1 2 3 1 1\n1 1 1 1 1 1\n1 2 4 1 3\n3 5 2 1\n3 3 1 1 1\n3 1 1\n3 1\n3 1 1 2 1\n2 2 1\n2 1 2\n1 3 2\n1 2 1\n1 1 1\n1 3 1\n1 4\n1\n1 1\n3 1 1\n1 3 1\n1 1 1\n1 1 1 1 1 1\n1 1 1 1 1\n1 1 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4 - Dinosaur",
+          "isTest": false,
+          "testIn": "20 15\n2 1 2 1\n3 3 4\n1 2 5 1\n1 3 1 1\n2 3 3\n4 2 1 1\n2 2 3\n2 1 1\n3 3\n2 4 2\n2 3 1\n2 1 2\n1 5\n1 3 2 2\n2 4 1\n1 2\n2 4\n2 3 1\n3 2 1\n6 2\n4\n2 2 5\n3 1 3 3\n2 1 2 2\n1 2 1 2\n2 3 1\n2 1 1 1 2\n2 2 1 1 1 1\n4 2 1 2 1 1\n1 1 4 1 1 2 1\n1 1 3 3 2 1\n2 1 3 1 3 1 2\n1 1 1 1 1 1 1 1\n1 3 1 1 1 1 1 1\n4 3 3 2",
+          "testOut": "1 3 1 4\n3 2\n1 3 2\n2 2 5\n3 3 1\n1 2 1 2 1\n4 2 1 1\n5 2 1 3\n3 3 3\n2 3 2\n1 7 1\n1 4 5\n1 6 2\n1 4 1 1\n1 6 1\n2 10\n2 5 2\n3 3 2 1\n4 4 1\n6 1\n1 15\n2 4 5\n2 3 2 3\n2 1 2 6 2\n3 1 1 8 1\n3 1 9 1\n2 2 5 4\n1 1 3 1 1 5\n1 2 2 3 1\n1 3 2 1 1 1\n2 2 2 1 1 1\n1 1 1 1 1 1 1\n1 2 1 3 1 1 1 1 1\n1 2 2 1 1 1 1 1\n5 1 2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5 - Dolphin",
+          "isTest": true,
+          "testIn": "20 20\n1 1\n1 2 1\n3 2\n1 1 1 6\n3 4\n3 2\n3 1 2 2\n1 2 1 2 3\n2 3 3 4\n4 2 9\n7 9\n4 2 9\n3 1 9\n3 2 8\n4 5 3\n10 1\n10\n10\n9\n3\n1 6\n1 8\n1 10\n3 3\n3 1 1 1 3\n15\n8 5\n7\n1 9\n12\n6 4\n8 3\n2 7 3\n2 1 6 3\n4 6 2\n3 6\n9\n7\n3\n4",
+          "testOut": "14 4\n1 11 4\n13 2\n1 2 8\n4 8 1\n4 9 2\n4 1 3 2 2\n2 2 2 1 2 2\n1 1 2 2 2\n1 2 2\n1 3\n1 1 3\n2 1 4\n1 1 5\n1 1 6\n1 1 7\n2 8\n4 6\n6 5\n12 5\n3 5 5\n1 6 4\n3 3 3\n9 2 3\n4 1 1 2 1 2\n3 2\n4 2 1\n12 1\n6 3 1\n7 1\n8 1 1\n7 1 1\n6 1 1\n1 3 2 2\n4 4\n2 2 7\n3 8\n3 10\n2 15\n16",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5 - Butterfly",
+          "isTest": false,
+          "testIn": "20 20\n7\n4 4 3\n4 2 4 6\n3 1 1 3 2 3\n3 1 1 3 1 2 2\n3 2 3 2 2 2\n1 3 4 3 3\n1 8 7\n1 4 5\n15\n15\n1 4 5\n1 8 7\n1 3 4 3 3\n3 2 3 2 2 2\n3 1 1 3 1 2 2\n3 1 1 3 2 3\n4 2 4 5\n4 4 2\n7\n3 1 1 3\n5 1 1 5\n7 1 1 7\n3 3 2 3 3\n2 2 2 2 2 2 2\n1 1 1 1 2 1 1 1 1\n1 1 1 6 1 1 1\n2 2 8 2 2\n3 10 3\n18\n7 2 7\n3 4 3\n10\n15\n2 8 2\n2 2 6 2 1\n2 2 1 2 1 2 2\n3 2 2 2 3\n6 6\n4 4",
+          "testOut": "2 11\n1 2 4 2\n1 1 1 1\n1 2 1 1 2\n1 2 1 1 1 1\n1 1 1 1 1 1\n1 2 1 2\n1 1 1 1\n2 3 1 4\n3 2\n3 2\n2 3 1 4\n1 1 1 1\n1 2 1 2\n1 1 1 1 1 1\n1 2 1 1 1 1\n1 2 1 1 2\n1 1 2 1\n1 2 5 2\n2 11\n2 1 6 1 2\n1 1 4 1 1\n1 2 1\n2 1 1 2\n1 1 1 1 1 1\n1 2 1 1 1 1 2 1\n1 2 1 1 2 1\n1 1 1 1\n2 2\n1 1\n1 1 1 1\n2 3 3 2\n5 5\n2 3\n2 2 2 2\n1 1 1 1 1 2\n1 1 1 1 1 1 1 1\n1 2 1 1 2 1\n2 4 2\n3 6 3",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "1<[[width]]<21\n1<[[height]]<21",
+      "coverBinaryId": 29513486992917,
+      "stubGenerator": "read width:int height:int\nloop width read BlackGroups:string(256)\n\nloop height read BlackGroups:string(256)\n\nloop width write WhiteGroups\nloop height write WhiteGroups\n",
+      "inputDescription": "<<Line 1:>> Two space-separated integers for the [[width]] and [[height]] of the grid\n<<Next [[width]] lines:>> length of adjacent black cells in the columns from left to right\n<<Next [[height]] lines:>> length of adjacent black cells in the rows from top to bottom",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<First [[width]] lines:>> length of adjacent white cells in the columns from left to right\n<<Last [[height]] lines:>> length of adjacent white cells in the rows from top to bottom"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><strong>Nonograms</strong> are also know as Hanjie, Picross or Griddlers.<br>To solve one, you are given the number of contiguous cells of the same color in rows and columns. <br>Progressively you can see what the pixelized picture looks like.<br><br>You can check for more information: https://en.wikipedia.org/wiki/Nonogram.<br><br>In this version, we have only two colors, <const>black</const> and <const>white</const>.<br>You will be given the length of all <const>black</const> groups.<br>Your work is to describe the puzzle by the length of all <const>white</const> groups.<br><br><strong>Example</strong><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>Input:<br>─────<br>4 4<br>1 1<br>2<br>3<br>4<br>4<br>3<br>2<br>1 1<br><br>Looks like:<br>──────────<br>    1<br>    1 2 3 4<br>   ┌─┬─┬─┬─┐<br>  4│■│■│■│■│<br>   ├─┼─┼─┼─┤<br>  3│ │■│■│■│<br>   ├─┼─┼─┼─┤<br>  2│ │ │■│■│<br>   ├─┼─┼─┼─┤<br>1 1│■│ │ │■│<br>   └─┴─┴─┴─┘<br><br>Inversor:<br>────────<br>    2 2 1 0<br>   ┌─┬─┬─┬─┐<br>  0│ │ │ │ │<br>   ├─┼─┼─┼─┤<br>  1│■│ │ │ │<br>   ├─┼─┼─┼─┤<br>  2│■│■│ │ │<br>   ├─┼─┼─┼─┤<br>  2│ │■│■│ │<br>   └─┴─┴─┴─┘<br><br>Output:<br>──────<br>2<br>2<br>1<br>0<br>0<br>1<br>2<br>2       <br></pre><pre style=\"font-family: monospace\"></pre><br>Note: All puzzles have one solution that can be deduced logically.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Two space-separated integers for the <var>width</var> and <var>height</var> of the grid<br><strong>Next <var>width</var> lines:</strong> length of adjacent black cells in the columns from left to right<br><strong>Next <var>height</var> lines:</strong> length of adjacent black cells in the rows from top to bottom</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>First <var>width</var> lines:</strong> length of adjacent white cells in the columns from left to right<br><strong>Last <var>height</var> lines:</strong> length of adjacent white cells in the rows from top to bottom</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1&lt;<var>width</var>&lt;21<br>1&lt;<var>height</var>&lt;21</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5 5\n1\n3\n2\n5\n1\n1\n1 3\n3\n1 1\n1 1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1 3\n2\n1 2\n0\n1 3\n3 1\n1\n1 1\n1 1 1\n1 1 1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 209419695998,
+  "avatar": 16324240302815,
+  "commentCount": 43,
+  "upVotes": 25,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 352914,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

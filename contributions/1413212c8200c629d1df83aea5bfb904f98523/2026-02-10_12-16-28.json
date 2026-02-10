@@ -1,0 +1,173 @@
+{
+  "id": 141321,
+  "activeVersion": 8,
+  "score": 3,
+  "votableId": 38962808,
+  "codingamerId": 5405857,
+  "views": 113,
+  "commentableId": 38795987,
+  "title": "ChronoRail — Earliest Arrival",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "vaclavjr",
+  "publicHandle": "1413212c8200c629d1df83aea5bfb904f98523",
+  "codingamerHandle": "57f506a03fcacc3cbdd411124fab34737585045",
+  "lastVersion": {
+    "version": 8,
+    "autocloseTime": 1770862736404,
+    "data": {
+      "title": "ChronoRail — Earliest Arrival",
+      "topics": [],
+      "solution": "import sys\nimport heapq\n\n\nINF = 10**30\n\n\ndef build_next_offsets(mask: bytes, p: int):\n    \"\"\"\n    For each phase x in [0..p-1], compute the minimal k >= 0 such that\n    mask[(x+k) % p] == '1'. If none exists, set INF.\n    Runs in O(p) time for a given mask.\n    \"\"\"\n    ones = [i for i, b in enumerate(mask) if b == 49]\n    if not ones:\n        return [INF] * p\n\n    ones2 = ones + [i + p for i in ones]\n    res = [0] * p\n    j = 0\n    for x in range(p):\n        while ones2[j] < x:\n            j += 1\n        res[x] = ones2[j] - x\n    return res\n\n\ndef main():\n    data = sys.stdin.buffer.read().split()\n    if not data:\n        return\n\n    it = iter(data)\n    n = int(next(it))\n    m = int(next(it))\n    p = int(next(it))\n\n    adj = [[] for _ in range(n + 1)]\n    next_map = {}\n\n    for _ in range(m):\n        u = int(next(it))\n        v = int(next(it))\n        d = int(next(it))\n        s = next(it)\n\n        adj[u].append((v, d, s))\n        if s not in next_map:\n            next_map[s] = build_next_offsets(s, p)\n\n    dist = [INF] * (n + 1)\n    dist[1] = 0\n    pq = [(0, 1)]\n\n    while pq:\n        t, u = heapq.heappop(pq)\n        if t != dist[u]:\n            continue\n        if u == n:\n            break\n\n        phase = t % p\n        for v, d, s in adj[u]:\n            off = next_map[s][phase]\n            if off >= INF:\n                continue\n            nt = t + off + d\n            if nt < dist[v]:\n                dist[v] = nt\n                heapq.heappush(pq, (nt, v))\n\n    if dist[n] >= INF // 2:\n        sys.stdout.write(\"IMPOSSIBLE\")\n    else:\n        sys.stdout.write(str(dist[n]))\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "statement": "Compute the earliest arrival time from station {{1}} to station [[N]] in a directed network.\n\nEach directed track ([[u]], [[v]], [[d]], [[s]]) has a travel time [[d]] and may only be departed at times allowed by its repeating schedule [[s]] of length [[P]].\n\n<<Rules>>\n- Time is measured in integer minutes.\n- Start at station {{1}} at time {{0}}.\n- Waiting at a station for any non-negative number of minutes is allowed.\n- Each directed track is defined by ([[u]], [[v]], [[d]], [[s]]):\n  - The track goes from station [[u]] to station [[v]].\n  - [[d]] is the travel time in minutes.\n  - [[s]] is a binary word of length [[P]].\n- A track may be departed at time [[t]] if and only if the digit of [[s]] at index ([[t]] mod [[P]]) equals {{1}} (0-based index).\n  (The first character of [[s]] corresponds to the start of every cycle, i.e. times [[t]] where [[t]] mod [[P]] = {{0}}.)\n- If a track is departed at time [[t]], arrival at station [[v]] occurs at time [[t]] + [[d]].\n\n<<Goal>>\nOutput the minimal possible arrival time at station [[N]].\nIf station [[N]] cannot be reached, output {{IMPOSSIBLE}}.\n\n<<Example track input>>\nIf a track is given as {{1 2 5 1010}}, then:\n- The track goes from station {{1}} to station {{2}}.\n- The travel time is {{5}} minutes.\n- The departure schedule has cycle length {{4}} and repeats indefinitely.\n- The schedule {{1010}} means a track is departed at times [[t]] such that [[t]] mod {{4}} = {{0}} or {{2}}.\n- Valid departure times include [[t]] = {{0}}, {{2}}, {{4}}, {{6}}, …\n- The corresponding arrival times are [[t]] + {{5}}, i.e. {{5}}, {{7}}, {{9}}, {{11}}, …\n\n<<Performance note>>\nThe official test set includes stress cases close to the constraints (large [[N]] and [[M]] with many branches). Solutions that simulate time minute-by-minute will not pass.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "3 3 4\n1 2 5 1000\n2 3 3 0010\n1 3 20 1111",
+          "testOut": "9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3 3 4\n1 2 4 0100\n2 3 1 0001\n1 3 10 1111",
+          "testOut": "8",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "4 4 6\n1 2 2 001000\n2 4 2 000001\n1 3 1 111111\n3 4 10 100000",
+          "testOut": "7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "4 5 6\n1 2 3 000100\n2 4 4 010000\n1 3 1 111111\n3 2 1 001001\n3 4 9 100000",
+          "testOut": "11",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "5 6 5\n1 2 100 10000\n2 5 100 00001\n1 3 1 11111\n3 4 1 01000\n4 5 1 00100\n3 5 1000 00010",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "5 6 5\n1 2 100 10000\n2 5 1 00001\n1 3 1 11111\n3 4 1 00010\n4 5 1 01000\n3 5 50 00100",
+          "testOut": "7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "3 2 3\n1 2 5 000\n2 3 5 111",
+          "testOut": "IMPOSSIBLE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "4 4 4\n1 2 1 1000\n2 3 1 0100\n3 2 1 0100\n3 4 1 0000",
+          "testOut": "IMPOSSIBLE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "3 5 4\n1 2 5 1010\n1 2 3 1010\n1 2 3 0101\n1 2 2 0001\n2 3 1 1111",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "3 5 4\n1 2 5 1010\n1 2 3 1010\n1 2 3 0101\n1 2 2 0001\n2 3 1 0100",
+          "testOut": "6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "3 3 4\n1 2 1 1000\n2 1 1 0100\n2 3 1 0010",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "3 3 4\n1 2 1 0100\n2 1 1 1000\n2 3 1 0001",
+          "testOut": "4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 7",
+          "isTest": true,
+          "testIn": "12 18 12\n1 2 4 111111111111\n2 12 20 111111111111\n1 3 1 100000000000\n3 4 3 001000000000\n4 12 5 000010000000\n1 5 2 010000000000\n5 6 2 000100000000\n6 12 2 000001000000\n2 3 2 111111111111\n3 6 6 111111111111\n3 5 2 111111111111\n5 12 20 111111111111\n2 5 1 111111111111\n1 7 10 111111111111\n7 12 1 100000000000\n4 6 1 111111111111\n6 4 1 111111111111\n5 4 2 111111111111",
+          "testOut": "7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "25 35 20\n1 2 1 10000000000000000000\n2 3 1 01000000000000000000\n3 4 1 00100000000000000000\n4 5 1 00010000000000000000\n5 6 1 00001000000000000000\n6 7 1 00000100000000000000\n7 8 1 00000010000000000000\n8 9 1 00000001000000000000\n9 10 1 00000000100000000000\n10 11 1 10000000000000000000\n11 12 1 01000000000000000000\n12 13 1 00100000000000000000\n13 14 1 00010000000000000000\n14 15 1 00001000000000000000\n15 16 1 00000100000000000000\n16 17 1 00000010000000000000\n17 18 1 00000001000000000000\n18 19 1 00000000100000000000\n19 20 1 00000000010000000000\n20 21 1 00000000001000000000\n21 22 1 00000000000100000000\n22 23 1 00000000000010000000\n23 24 1 00000000000001000000\n24 25 1 00000000000000100000\n1 15 25 11111111111111111111\n15 25 25 11111111111111111111\n7 18 4 11111111111111111111\n18 25 25 11111111111111111111\n5 14 10 11111111111111111111\n14 25 30 11111111111111111111\n3 16 8 11111111111111111111\n16 25 30 11111111111111111111\n12 6 2 11111111111111111111\n20 10 2 11111111111111111111\n1 25 1000000 11111111111111111111",
+          "testOut": "35",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 8",
+          "isTest": true,
+          "testIn": "8 10 60\n1 3 5 111111111111111111111111111111111111111111111111111111111111\n3 4 5 000000010000000000000000000000000000000000000000000000000000\n4 8 5 000000000000100000000000000000000000000000000000000000000000\n1 2 1 100000000000000000000000000000000000000000000000000000000000\n2 8 20 010000000000000000000000000000000000000000000000000000000000\n2 8 1000000 111111111111111111111111111111111111111111111111111111111111\n1 6 3 111111111111111111111111111111111111111111111111111111111111\n6 7 3 111111111111111111111111111111111111111111111111111111111111\n7 8 50 111111111111111111111111111111111111111111111111111111111111\n3 8 100 111111111111111111111111111111111111111111111111111111111111",
+          "testOut": "17",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "10 14 60\n1 2 5 111111111111111111111111111111111111111111111111111111111111\n2 10 5 000000000000000000000000000000100000000000000000000000000000\n1 3 2 100000000000000000000000000000000000000000000000000000000000\n3 4 3 001000000000000000000000000000000000000000000000000000000000\n4 10 5 000001000000000000000000000000000000000000000000000000000000\n1 7 1 111111111111111111111111111111111111111111111111111111111111\n7 8 1 010000000000000000000000000000000000000000000000000000000000\n8 10 7 111111111111111111111111111111111111111111111111111111111111\n1 6 1 111111111111111111111111111111111111111111111111111111111111\n6 10 1000000 111111111111111111111111111111111111111111111111111111111111\n3 8 2 111111111111111111111111111111111111111111111111111111111111\n2 3 1 111111111111111111111111111111111111111111111111111111111111\n4 8 1 111111111111111111111111111111111111111111111111111111111111\n8 4 1 111111111111111111111111111111111111111111111111111111111111",
+          "testOut": "9",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "- {{2}} ≤ [[N]] ≤ {{20000}}\n- {{1}} ≤ [[M]] ≤ {{50000}}\n- {{1}} ≤ [[P]] ≤ {{60}}\n- For each track: {{1}} ≤ [[u]] ≤ [[N]] and {{1}} ≤ [[v]] ≤ [[N]]\n- For each track: [[u]] ≠ [[v]]\n- {{1}} ≤ [[d]] ≤ {{1000000}}\n- [[s]] is a binary word of length [[P]] (only {{0}}/{{1}})",
+      "coverBinaryId": 157679981981816,
+      "stubGenerator": "read N:int M:int P:int\nloop M read u:int v:int d:long s:word(60)\nwrite answer\n\nINPUT\nN: number of stations (stations are 1..N)\nM: number of directed tracks\nP: cycle length in minutes\nu: departure station id (integer)\nv: arrival station id (integer)\nd: travel time in minutes (integer)\ns: binary word of length P; s[i] = 1 means the track can be departed when currentTime mod P == i (0-based)\n\nOUTPUT\nanswer: IMPOSSIBLE if station N is unreachable, otherwise the earliest arrival time at station N",
+      "inputDescription": "<<Line 1:>> Three space-separated integers [[N]] [[M]] [[P]]\n- [[N]]: number of stations, labeled {{1}}..[[N]]\n- [[M]]: number of directed tracks\n- [[P]]: cycle length (minutes)\n\n<<Next [[M]] lines:>> Four space-separated values [[u]] [[v]] [[d]] [[s]]\n- [[u]] (integer): departure station\n- [[v]] (integer): arrival station\n- [[d]] (integer): travel time in minutes\n- [[s]]: a binary word of length [[P]] consisting only of {{0}} and {{1}}",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>>\n- {{IMPOSSIBLE}} if station [[N]] is unreachable\n- otherwise: the earliest arrival time at station [[N]] (integer)"
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Compute the earliest arrival time from station <const>1</const> to station <var>N</var> in a directed network.<br><br>Each directed track (<var>u</var>, <var>v</var>, <var>d</var>, <var>s</var>) has a travel time <var>d</var> and may only be departed at times allowed by its repeating schedule <var>s</var> of length <var>P</var>.<br><br><strong>Rules</strong><br>- Time is measured in integer minutes.<br>- Start at station <const>1</const> at time <const>0</const>.<br>- Waiting at a station for any non-negative number of minutes is allowed.<br>- Each directed track is defined by (<var>u</var>, <var>v</var>, <var>d</var>, <var>s</var>):<br>  - The track goes from station <var>u</var> to station <var>v</var>.<br>  - <var>d</var> is the travel time in minutes.<br>  - <var>s</var> is a binary word of length <var>P</var>.<br>- A track may be departed at time <var>t</var> if and only if the digit of <var>s</var> at index (<var>t</var> mod <var>P</var>) equals <const>1</const> (0-based index).<br>  (The first character of <var>s</var> corresponds to the start of every cycle, i.e. times <var>t</var> where <var>t</var> mod <var>P</var> = <const>0</const>.)<br>- If a track is departed at time <var>t</var>, arrival at station <var>v</var> occurs at time <var>t</var> + <var>d</var>.<br><br><strong>Goal</strong><br>Output the minimal possible arrival time at station <var>N</var>.<br>If station <var>N</var> cannot be reached, output <const>IMPOSSIBLE</const>.<br><br><strong>Example track input</strong><br>If a track is given as <const>1 2 5 1010</const>, then:<br>- The track goes from station <const>1</const> to station <const>2</const>.<br>- The travel time is <const>5</const> minutes.<br>- The departure schedule has cycle length <const>4</const> and repeats indefinitely.<br>- The schedule <const>1010</const> means a track is departed at times <var>t</var> such that <var>t</var> mod <const>4</const> = <const>0</const> or <const>2</const>.<br>- Valid departure times include <var>t</var> = <const>0</const>, <const>2</const>, <const>4</const>, <const>6</const>, &hellip;<br>- The corresponding arrival times are <var>t</var> + <const>5</const>, i.e. <const>5</const>, <const>7</const>, <const>9</const>, <const>11</const>, &hellip;<br><br><strong>Performance note</strong><br>The official test set includes stress cases close to the constraints (large <var>N</var> and <var>M</var> with many branches). Solutions that simulate time minute-by-minute will not pass.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Three space-separated integers <var>N</var> <var>M</var> <var>P</var><br>- <var>N</var>: number of stations, labeled <const>1</const>..<var>N</var><br>- <var>M</var>: number of directed tracks<br>- <var>P</var>: cycle length (minutes)<br><br><strong>Next <var>M</var> lines:</strong> Four space-separated values <var>u</var> <var>v</var> <var>d</var> <var>s</var><br>- <var>u</var> (integer): departure station<br>- <var>v</var> (integer): arrival station<br>- <var>d</var> (integer): travel time in minutes<br>- <var>s</var>: a binary word of length <var>P</var> consisting only of <const>0</const> and <const>1</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong><br>- <const>IMPOSSIBLE</const> if station <var>N</var> is unreachable<br>- otherwise: the earliest arrival time at station <var>N</var> (integer)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">- <const>2</const> &le; <var>N</var> &le; <const>20000</const><br>- <const>1</const> &le; <var>M</var> &le; <const>50000</const><br>- <const>1</const> &le; <var>P</var> &le; <const>60</const><br>- For each track: <const>1</const> &le; <var>u</var> &le; <var>N</var> and <const>1</const> &le; <var>v</var> &le; <var>N</var><br>- For each track: <var>u</var> &ne; <var>v</var><br>- <const>1</const> &le; <var>d</var> &le; <const>1000000</const><br>- <var>s</var> is a binary word of length <var>P</var> (only <const>0</const>/<const>1</const>)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3 3 4\n1 2 5 1000\n2 3 3 0010\n1 3 20 1111</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">9</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 150933785183003,
+  "commentCount": 7,
+  "upVotes": 3,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}

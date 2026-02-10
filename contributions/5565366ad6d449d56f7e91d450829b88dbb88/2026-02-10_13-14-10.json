@@ -1,0 +1,174 @@
+{
+  "id": 55653,
+  "activeVersion": 16,
+  "score": 28,
+  "votableId": 29148922,
+  "codingamerId": 5271147,
+  "views": 769,
+  "commentableId": 29016264,
+  "title": "25x25 Sudoku",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "yoch",
+  "publicHandle": "5565366ad6d449d56f7e91d450829b88dbb88",
+  "codingamerHandle": "14a6f9fb972f723d06789c969370ff2e7411725",
+  "lastVersion": {
+    "version": 16,
+    "autocloseTime": 1687808443355,
+    "data": {
+      "title": "25x25 Sudoku",
+      "topics": [
+        {
+          "id": 56,
+          "handle": "backtracking",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Retour sur trace",
+            "2": "Backtracking"
+          },
+          "pageTitle": "Backtracking: exercises and theory",
+          "puzzleCount": 20,
+          "parentTopicId": 41,
+          "contentDetailsId": 80
+        },
+        {
+          "labelMap": {
+            "2": "Algorithm X"
+          }
+        }
+      ],
+      "solution": "#include <cstdlib>\n#include <cstdio>\n#include <cstdint>\n#include <cstring>\n#include <cassert>\n#include <random>\n#include <chrono>\n#include <algorithm>\n\n\n#define N       5\n#define N_2     (N*N)\n#define base    'A'\n#define vide    '.'\n\nchar solution[N_2][N_2+1] = {0};\n\ntypedef union\n{\n    uint16_t size;  // for headers\n\tuint16_t head;\t// for cells\n} dlx_t;\n\ntypedef struct _node\n{\n\tdlx_t data;\n    uint16_t left;\n    uint16_t right;\n    uint16_t up;\n    uint16_t down;\n} Node;\n\n\nstatic Node pool[1+4*N_2*N_2+4*N_2*N_2*N_2];\nNode * root_    = &pool[0];\nNode * headers_ = &pool[1];\nNode * nodes_   = &pool[1+4*N_2*N_2];  // pool of nodes\n\n\nvoid InitRoot (Node* root)\n{\n    root->left = root->right = 0;\n}\n\nvoid InitNode (Node* header, Node* last, Node* node)\n{\n    const uint16_t hidx = header - root_;\n    const uint16_t lidx = last - root_;\n    const uint16_t idx  = node - root_;\n\n    // gestion des liens up & down\n    node->data.head = hidx;\n    node->down = hidx;\n    node->up = header->up;\n    pool[header->up].down = idx;\n    header->up = idx;\n\n    // gestion des liens right & left\n    if (last == NULL)\n    {\n        node->left = node->right = idx;\n    }\n    else\n    {\n        node->left = lidx;\n        node->right = last->right;\n        pool[last->right].left = idx;\n        last->right = idx;\n    }\n    // incremente nbElements du header\n    header->data.size++;\n}\n\nvoid cover (Node* header)\n{\n    // supprime le header\n    pool[header->left].right = header->right;\n    pool[header->right].left = header->left;\n    // traitement des noeuds\n    for (Node* iter = &pool[header->down]; iter != header; iter = &pool[iter->down])\n    {\n        for (Node* iter2 = &pool[iter->right]; iter2 != iter; iter2 = &pool[iter2->right])\n        {\n            pool[iter2->up].down = iter2->down;\n            pool[iter2->down].up = iter2->up;\n            pool[iter2->data.head].data.size--;\n        }\n    }\n}\n\nvoid uncover (Node* header)\n{\n    // traitement des noeuds\n    for (Node* iter = &pool[header->up]; iter != header; iter = &pool[iter->up])\n    {\n        for (Node* iter2 = &pool[iter->left]; iter2 != iter; iter2 = &pool[iter2->left])\n        {\n            pool[iter2->up].down = iter2 - root_;\n            pool[iter2->down].up = iter2 - root_;\n            pool[iter2->data.head].data.size++;\n        }\n    }\n    // restaure le header\n    pool[header->left].right = header - root_;\n    pool[header->right].left = header - root_;\n}\n\nbool search (Node* root)\n{\n    if (root->right == 0)\n        return true;\n\n    // recherche la colonne avec le moins de noeuds\n    Node* header = &pool[root->right];\n    for (Node* iter = header; iter != root; iter = &pool[iter->right])\n    {\n        //hack: si une colonne est vide, aucune solution n'est possible\n        if (iter->data.size == 0)\n        {\n            return false;\n        }\n        if (iter->data.size < header->data.size)  // first comparison is useless\n        {\n            header = iter;\n        }\n    }\n\n    bool ret = false;\n\n    // procedure\n    cover(header);\n    for (Node* iter = &pool[header->down]; iter != header; iter = &pool[iter->down])\n    {\n        for (Node* iter2 = &pool[iter->right]; iter2 != iter; iter2 = &pool[iter2->right])\n            cover(&pool[iter2->data.head]);\n\n        if (search(root))\n        {\n            ret = true;\n            // Hack: the node relative address gives the answer\n\t\t\tuint16_t x = (iter - nodes_) / 4;\n\t\t\tuint16_t i = x / (N_2*N_2);\n\t\t\tuint16_t j = (x % (N_2*N_2)) / N_2;\n\t\t\tuint16_t val = (x % N_2) + base;\n\t\t\tsolution[i][j] = val;\n        }\n\n        for (Node* iter2 = &pool[iter->left]; iter2 != iter; iter2 = &pool[iter2->left])\n            uncover(&pool[iter2->data.head]);\n\n        if (ret)\n            break;\n    }\n    uncover(header);\n\n    return ret;\n}\n\nvoid affichage (char g[N_2][N_2+1], FILE *stream)\n{\n    for (int i=0; i<N_2; i++)\n    {\n        fputs(g[i], stream);\n        fputc('\\n', stream);\n    }\n}\n\nvoid add_row (unsigned l, unsigned c, char val)\n{\n    unsigned pos[4];\n    unsigned k = val-base;\n    // calcule les positions pour les contraintes\n    pos[0] = (l*N_2)+c;\n    pos[1] = (l*N_2)+k;\n    pos[2] = (c*N_2)+k;\n    pos[3] = ((N*(l/N)+c/N)*N_2)+k;\n    // ajoute les contraintes au dancing links\n    Node* last = NULL;\n    for (unsigned i=0; i < 4; i++)\n    {\n        Node* nd = &nodes_[(l*N_2*N_2+c*N_2+k)*4+i];\n        InitNode(&headers_[i*N_2*N_2+pos[i]], last, nd);\n        last = nd;\n    }\n}\n\nNode* init(char g[N_2][N_2+1]) {\n    // cree la racine\n    Node* root = root_;\n    InitRoot(root);\n\n    // cree les headers\n    unsigned i;\n    for (i=1; i <= 4*N_2*N_2; ++i)\n    {\n        Node * header = &pool[i];\n        header->left = i - 1;\n        header->up = header->down = i;\n        // initialise nbElements\n        header->data.size = 0;\n        pool[i-1].right = i;\n    }\n    pool[i].right = 0;  // root\n    root->left = i;\n\n    for (unsigned l=0; l < N_2; l++)\n    {\n        for (unsigned c=0; c < N_2; c++)\n        {\n            const char v = g[l][c];\n            if (v != vide)\n                add_row(l, c, v);\n            else for (char val=base; val < base+N_2; val++)\n                add_row(l, c, val);\n        }\n    }\n\n    return root;\n}\n\nint main (void)\n{\n    char grille[N_2][N_2+1];\n\n    for (unsigned l=0; l < N_2; l++)\n    {\n        char line[N_2 + 1];\n        scanf(\"%[^\\n]\", line);\n        fgetc(stdin);\n        strncpy(grille[l], line, N_2 + 1 );\n        //grille[l][N_2] = '\\0';\n    }\n\n    //affichage(grille, stderr);\n\n    Node *root = init(grille);\n    bool ok = search(root);\n\n    affichage(solution, stdout);\n\n    return 0;\n}\n",
+      "statement": "<<You have to solve a 25x25 sudoku grid!>>\n\nAn empty cell is represented by {{.}} and the letters {{A}} to {{Y}} are used to fill the grid.\n\n<<RULES>>:\nEach <<line>> contains exactly one occurrence of each letter.\nEach <<column>> contains exactly one occurrence of each letter.\nEach <<block>> (5x5 cells) contains exactly one occurrence of each letter.\n\n<<NOTE>>: This puzzle is considerably more difficult than a classic sudoku puzzle like https://www.codingame.com/training/medium/sudoku-solver. Simple backtracking will not be enough, knowing that there can be more than 300 unrevealed cells.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": ".FLJ...D..O.E..GM.KSNRQXA\n...HK.CXROUV...QF.BESJP..\nRNMY.BQETA.F...XOVP.W.HD.\nQO..PMK.SYN.IAR.L.C....EB\n.E...L..G.BPHQD.RN.TYO...\nYT..JI..UVG..BL.E.XOCM..R\nHS....A.KLC..O..PF.W.I.VY\nX.FR...OQ.IKWTPYD.U.A.EH.\nN....PYSFX.UQ..BVGHC.KJO.\n...LC...WDH..VM.T.I....NX\n...B..IYH.DLAX..SKW.O....\n..HP..NA.....IQTGU..XYSWE\nK.O.YGSQDBW......XE..LMRP\nUQNWR.PTLEY.O.VAH...KCI..\nT..XDOW....E.PN..I.LGU.BH\n..R.NDGC....MEJUKOS...FYW\n..GDH..R..V..NCL.M.QE.XJ.\n..J.F....QAW....XR.PMHO.I\n.U.S.JEK.N.R.LI.WTYBV..A.\nVW....OL...HDK.....I.NRQU\n....T.BHN.JDCW.O.EL...V..\n.L..BFX.AGP...KM..VH..T..\n...O.Y..E..NVFB...TX..LK.\nE.K...LI...S...F...AD.YG.\nDXYVQ.JPOT.ML.A.ISNGH.B.F",
+          "testOut": "BFLJUHVDPIOCEYTGMWKSNRQXA\nADTHKNCXROUVGMWQFYBESJPIL\nRNMYIBQETALFKJSXOVPUWGHDC\nQOVGPMKWSYNXIARDLHCJTFUEB\nSEXCWLFJGUBPHQDIRNATYOKMV\nYTDKJIHNUVGAFBLSEQXOCMWPR\nHSBQETAGKLCJNOXRPFMWUIDVY\nXGFRVCMOQJIKWTPYDLUNABEHS\nNIWMAPYSFXRUQDEBVGHCLKJOT\nOPULCERBWDHYSVMJTAIKFQGNX\nJCEBGUIYHMDLAXFPSKWROVNTQ\nFMHPLVNACRKBJIQTGUODXYSWE\nKAOIYGSQDBWTUCHVNXEFJLMRP\nUQNWRXPTLEYGOSVAHBJMKCIFD\nTVSXDOWFJKMERPNCYIQLGUABH\nLBRANDGCIHXQMEJUKOSVPTFYW\nIYGDHWURBPVOTNCLAMFQESXJK\nCKJEFSTVYQAWBGUNXRDPMHOLI\nMUQSOJEKXNFRPLIHWTYBVDCAG\nVWPTXAOLMFSHDKYECJGIBNRQU\nPRAFTKBHNSJDCWGOQELYIXVUM\nWLCNBFXUAGPIYRKMJDVHQETSO\nGHIOSYDMECQNVFBWUPTXRALKJ\nEJKUMQLIVWTSXHOFBCRADPYGN\nDXYVQRJPOTEMLUAKISNGHWBCF",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "F...AO.E...H.U...CW.SKPIV\n..U..WVI.P.MBATY.DQS..F.G\nYNS.DFXK.H...W....V....Q.\nPEWT..NALB..QJD..GRH....C\nJV.IGUYQ..RE..S.K.TNL...X\n..KP.MJXG...SDEU..H.ICL.W\n.J.B.LQTW...V.C..FKP.NYMS\n.XT.MC.B.RUYLF....I.D.A..\nD.IC.EOS.....KNTM.LJ..GV.\n.WQNY.D.FIJGOX...EAB.H.R.\n.MJHND..E.....Q..RB.KYX.P\nW.RQ.NA.OK.T.MJX.S.Y..VL.\n.G...JIW.FDU..Y.PO..B....\nKY.EXGB.QMCPRLVW...T...O.\n.IO..TC.Y.XSA..NH.MDQ..E.\n.CLAJ..FHDPX.EB..WY.VO...\nG..OEBP.N.HW.S..AUXVF.I.T\nS..U.AEG.OM.T.ICB...RW..N\n...WV...I.L.G...S..F.B.PY\nRT.Y.Q.LS.O...KJN.DI.ACGM\n.RVGLY.DP.FNJIO...SXMUTCA\n.....HSM....DP.B.JN..XRYI\n.S..WI...LQ..R..VTC...DNE\n..CDI.G..QSL..W...FAHVJ.B\nN...U...TAYB.C.PD...WQSF.",
+          "testOut": "FQBRAOTEDGNHYUXMJCWLSKPIV\nOLUXCWVIRPKMBATYEDQSNJFHG\nYNSMDFXKJHGCPWLIUBVOATEQR\nPEWTKSNALBIVQJDFXGRHYMOUC\nJVHIGUYQMCREFOSAKPTNLDBWX\nAFKPOMJXGNTQSDEUYVHRICLBW\nEJGBRLQTWUAIVHCDOFKPXNYMS\nVXTSMCHBKRUYLFPGQNIWDEAJO\nDUICHEOSAYBRWKNTMXLJPFGVQ\nLWQNYPDVFIJGOXMSCEABTHURK\nTMJHNDLUESWOIGQVFRBCKYXAP\nWBRQFNAPOKETHMJXGSUYCIVLD\nCGAVSJIWXFDUKNYLPOEQBRMTH\nKYDEXGBHQMCPRLVWIAJTUSNOF\nUIOLPTCRYVXSABFNHKMDQGWEJ\nICLAJKMFHDPXNEBRTWYGVOQSU\nGKMOEBPYNJHWCSRQAUXVFLIDT\nSDFUQAEGVOMJTYICBLPKRWHXN\nXHNWVRUCITLDGQAESMOFJBKPY\nRTPYBQWLSXOFUVKJNHDIEACGM\nBRVGLYKDPEFNJIOHWQSXMUTCA\nQAEFTHSMCWVKDPGBLJNUOXRYI\nHSYJWIFOBLQAXRUKVTCMGPDNE\nMPCDIXGNUQSLETWORYFAHVJKB\nNOXKUVRJTAYBMCHPDIGEWQSFL",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "E.....QRB..W...SOC.G..NMU\nQHT.G.YDUFLOBN..I.AP...R.\n...C.E.P....AK...X.U.HT.F\nPRK..H.O..Q..U..DL.N.....\n.Y..DJ.NTLC.VXE.R.....I..\nJ..EY.WXNKSV.IQ..U..HTBLM\n.TIMV......G.....P.W.S...\nNKC......QU...B.YIL.W.R..\n...HRTA.C..KLJFE.VS.D...I\nFGB....V.ST.R..OHM..A..KJ\n.Q...D...TI....MN...EF..C\nW.M..R....D.Q....B...VLNK\n.C.....I.A.PMYV....ETWO..\n.I.AONX..B......PFQ.R...D\n.F.K..M....NT...AS.J.IXHB\nS.....P.W.X.OR.KJ.....V..\n...Y......BU...P..ERC...Q\nIN.RC..QJ.EA.FGB.T..SK...\nKA.V.FR.....J..I...S.U...\n...U.V.CO..Y..H.WD.QP.E.R\n.BQ.P.OJI.F...KU.G..V...N\nM.NLT.KA...C.QI.EY.X.P.F.\nG..O.U..LC...BN.F..A...W.\nY..JKQ...XW.EL.NSO.IUMHAG\nRU.IA..HVP.X.S..MQB.L....",
+          "testOut": "EJXFIAQRBVYWPHDSOCTGKLNMU\nQHTSGKYDUFLOBNMJIEAPXCWRV\nOVLCNEIPSMGJAKRQBXWUYHTDF\nPRKBMHCOXWQIFUTYDLVNJESGA\nAYUWDJGNTLCSVXEHRKMFOBIQP\nJOAEYPWXNKSVCIQFGURDHTBLM\nUTIMVLEBRHAGNDOXKPJWFSQCY\nNKCDSOJFMQUHXPBAYILTWGRVE\nXPWHRTAYCGMKLJFEQVSBDNUOI\nFGBQLIUVDSTERWYOHMNCAXPKJ\nLQRGJDVUKTIBSOXMNWYHEFAPC\nWXMPERHSYJDFQCATUBIOGVLNK\nHCDNBGFIQAJPMYVLXRKETWOUS\nTISAONXWEBKLHGUCPFQVRJMYD\nVFYKUCMLPORNTEWDASGJQIXHB\nSEHTFBPGWDXQORCKJAUMNYVIL\nDMGYWXTKANBUIVSPLHERCOFJQ\nINPRCMLQJUEAWFGBVTOYSKDXH\nKAOVQFREHYPDJTLICNXSMUGBW\nBLJUXVSCOINYKMHGWDFQPAETR\nCBQXPWOJIEFMDAKUTGHLVRYSN\nMWNLTSKAGRHCUQIVEYDXBPJFO\nGSEOHUDMLCVTYBNRFJPAIQKWX\nYDVJKQBTFXWRELPNSOCIUMHAG\nRUFIAYNHVPOXGSJWMQBKLDCET",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "PM.T..H...WGSC.A.RNDK.E..\n.QBL.M...C.RN.F...Y..SO.W\n.V..R..F.DQKLI.B..CP.MT.Y\nSX.IC..JPN..VA..F.M....RB\n.H..G.R.L...J.PW..I.NCA..\nMN..WP..D.IVQR.GA.F.U..Y.\nF.QKHN.....JAGMO.L.....ER\nY.EVLRAUM.K.B.SQ.W.N.IPC.\n..U.XQ...I.WO.CKVEHRTA...\n...A..LV.KX.UE..CB.Y...O.\n...EP.........Y.H..UR.N.O\n..C..BI.....MD.X.O.A.YSW.\nR.GS.OE...A.W.IP.D.JC.K.M\nN..H.WJCAYS.X.K......EU.V\nXD.Q.VKS...N.O.L...C.FJ..\nD.KOQ.GR...LC..YX.SH...UA\nU.X.V.MOTQ..KH.IBC..EN...\nC....L.DU...IXJRMQ.O.PY..\nTLFRM..N.......VKA..JH...\n..H...CIVA.Y....E..T...LQ\nOP...J.H.MCXD.GTR.A..VWN.\n.F...X..E...HN.DWP.GAR.K.\n.....DPBW.T.Y.AN.VL.IO.FE\n.A.X.GN....E...C..O.Q...P\nWU.YNCV..F..P.Q....EX....",
+          "testOut": "PMYTJIHQBOWGSCXALRNDKUEVF\nAQBLDMXKGCERNUFHJTYVPSOIW\nEVNURAWFSDQKLIHBOXCPGMTJY\nSXWICUYJPNDTVAOEFGMKLQHRB\nKHOFGTRELVBMJYPWSUIQNCADX\nMNTCWPOXDEIVQRLGAJFSUKBYH\nFSQKHNTWCBYJAGMOPLUIVDXER\nYOEVLRAUMJKHBTSQDWXNFIPCG\nBJUDXQSGYIPWOFCKVEHRTALMN\nGRPAIHLVFKXDUENMCBTYSWQOJ\nLWIEPFDMQXJCTBYSHKVURGNAO\nVKCJFBIPNGUQMDRXTOEAHYSWL\nRBGSYOELHUAFWVIPNDQJCTKXM\nNTMHOWJCAYSPXLKFGIRBDEUQV\nXDAQUVKSRTHNGOELYMWCBFJPI\nDIKOQEGRJWNLCPTYXFSHMBVUA\nUYXPVSMOTQFAKHWIBCJLENRGD\nCESNALFDUHVBIXJRMQGOWPYTK\nTLFRMYBNXPGOEQUVKADWJHISC\nJGHWBKCIVAMYRSDUENPTOXFLQ\nOPLBEJQHIMCXDKGTRSAFYVWNU\nQFJMTXUYELOIHNVDWPBGARCKS\nHCRGKDPBWSTUYJANQVLXIOMFE\nIAVXSGNTKRLEFWBCUYOMQJDHP\nWUDYNCVAOFRSPMQJIHKEXLGBT",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "..I..N....QR.....V.LWU..D\nDX.P.EFU..T.N.I..W...O..B\n..NVSC......KOF..A.......\nT..OEV..WKU.JLX...Y..G.P.\n...RLM.OGX..BDPI..NH..K..\nWA...IG.P...QCT.B....H...\nHSDX.KOQ.EA...W..IL.YTPUG\nR.L.C..NM.HG..S....J.WB.X\n.JUT.D.B.CR..M..G..WAIF.Q\n.YG...WT...U.K....D.SC.VJ\n..M....E.ROW.IV.SGC..A..P\n...BK.N.VMS...HD.EJ..QUT.\nEGT......F..D.J.WMR.O...V\n.VQ.FXD.....PT....BO....Y\nUOXW.ASH.IY..G..P.T.JREB.\n.K.G..Q...J..PDCA..U..O.R\n..JU.F.CB...E.GS.K.TP.I.M\nF....G..YS..T...H.P..V.A.\n....MU....C.S..Q.....KJF.\n.T...PL.JDF.R.M..NEVGB.WS\nJ.V.....E.GBW.K.IFANUY...\n.M..Q.I..YNF...L..WK....O\nA.RDGJ...QIS.HOP.YVBEF...\nY.O...BP...MXJAR..H.K..Q.\n.IW...C.OVP.L.YG.XM...H.A",
+          "testOut": "KBIMHNJSAPQRGYCFOVXLWUTED\nDXYPJEFUHLTVNSIKMWGRQOACB\nGWNVSCTDQBMHKOFJEAUPRXYIL\nTCFOEVRIWKUAJLXBDQYSNGMPH\nQUARLMYOGXWEBDPICTNHVSKJF\nWAKFNIGVPJXDQCTUBRSYMHLOE\nHSDXBKOQREAJFNWMVILCYTPUG\nRELICYANMUHGOVSTFPQJDWBKX\nOJUTVDXBSCRPYMLEGHKWAIFNQ\nMYGQPLWTFHBUIKEXNODASCRVJ\nLHMJYBKETROWUIVNSGCQFADXP\nCRPBKONGVMSXAFHDYEJILQUTW\nEGTAIQPYUFLKDBJHWMRXONCSV\nSVQNFXDJLWECPTRAKUBOIMGHY\nUOXWDASHCIYQMGNVPLTFJREBK\nVKSGWTQMINJYHPDCABFUXEOLR\nXQJURFHCBAVNEWGSLKOTPDIYM\nFDBLOGERYSKITXQWHJPMCVNAU\nPNEYMUVWXOCLSABQRDIGHKJFT\nITHCAPLKJDFORUMYXNEVGBQWS\nJPVHXRMLETGBWQKOIFANUYSDC\nBMCEQHIADYNFVRULJSWKTPXGO\nALRDGJUXKQISCHOPTYVBEFWMN\nYFOSTWBPNGDMXJARUCHEKLVQI\nNIWKUSCFOVPTLEYGQXMDBJHRA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "...X.M.FTN.Q.J..UE..CIK..\nC..I.J...WXE..GO..M.H..U.\nN...AX.H..I.U..D...L.S.GW\n.J.UD.E.GBSP..O...V....Q.\n..F..R.LSUH.BTKWP....AJ.E\nSED..OUKW.P..H..NX.JBVG..\nUY.H.......ICG.....PQ...L\n.Q.R...EPIM.VB.U.F....D.Y\nGC.J.HDR.LU.KX.B...Y..F.S\n.F...SCGXQJ..YN.HT...PE..\nVP.K.BX.LRGHEFQ.I.ONA...D\n..UA.PH.........BY....V..\nRDC.LTV.....J.M.KP.WSHI.N\n.NJBTI...A..S.PV....F....\nFH.S.CW.O..Y.K.JLU.T.MRB.\n.G.PC..O.E.K.I.QRB...T...\n.....WFU.T.J.SBC..KE....Q\n.AQ......X..YDHFTLN..CMWK\n..KMEQ.....NFP.X..U.D.YIB\n....N.B.M..OXQ.Y.V.SEGL.H\n...N...IC.D.P...O..FML...\n.IW..A..QHFURC.L...M....V\n.R.EJV.......OWK...C..U..\n....SDR..PNM.E..VW.GKBHA.\n.....EMW....TA..Y..U..Q..",
+          "testOut": "WLSXRMPFTNYQAJDHUEGBCIKVO\nCKPIYJQVDWXENLGOFSMAHRBUT\nNBEQAXOHKCIVUMFDJRTLYSPGW\nTJHUDYEAGBSPWRONCKVILFXQM\nOMFGVRILSUHCBTKWPQYXNAJDE\nSEDTMOUKWYPFQHLINXRJBVGCA\nUYVHXFTBAMOICGRESDWPQKNJL\nLQARONJEPIMWVBSUGFCKTXDHY\nGCNJPHDRVLUTKXEBQOAYIWFMS\nKFIWBSCGXQJADYNMHTLVUPEOR\nVPYKWBXJLRGHEFQSIMONAUCTD\nEXUAIPHMFSTLONCGBYDRWQVKJ\nRDCOLTVQEGBXJUMAKPFWSHIYN\nMNJBTIKYUARDSWPVXCHQFEOLG\nFHGSQCWNODAYIKVJLUETXMRBP\nYGXPCLNOHEWKMIAQRBJDVTSFU\nDORLHWFUYTVJGSBCMIKEPNAXQ\nBAQVUGSPIXERYDHFTLNOJCMWK\nJSKMEQACRVLNFPTXWGUHDOYIB\nIWTFNKBDMJCOXQUYAVPSEGLRH\nATBNGUYICKDSPVJROHQFMLWEX\nPIWYKAGSQHFURCXLEJBMODTNV\nXRMEJVLTNFQBHOWKDASCGYUPI\nQUOCSDRXJPNMLEYTVWIGKBHAF\nHVLDFEMWBOKGTAIPYNXURJQSC",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "JV...H..YB.S.XRT..CNGLA..\nR..K...UOCL.QYP.JBXH.FTIV\nW...PF.D..A.B.K..GR.OXJMS\nU.FSYJ..XLD.N.TVI...B.CK.\n..N.BTP.QM..FV...S..UER.Y\n.......PSOBL....X.D.H.U..\nH.....JF....PAEK...RV..N.\n..UL...VN..T.....IO.AJ.YK\nDJV.QA.T...I...HE..S....X\n.YRT.LQ...H.JKWU.PN....G.\n.XWF....HPO..E.I..Q.S..V.\nO.....IYRXU..WQ...H.F....\nE.HRUGOBLA..S.C.M.......I\n.Q.YD....W...J.E.RS..CL..\nGTJ.I.SQ...NKF.B...L..X..\n.O.DNX.RTH.B..U.SFIM..Q.W\nM.....V.I.XY.S..R.KT.ONUE\n...HFO..W..R.TNDBA...P...\nT.P.S..E..J.WI..V.G.D..HC\nX..UV.BS..CO.MDN...PTRIFJ\nSPG.R..A...FD...HN...UVC.\nA......N.F.X...R.....GY.M\nI.X......T.K.G.SAQ....E.R\nNE...I....R.V.....FK...SP\nY.DV..XH.S.M.QJGTE...A.LO",
+          "testOut": "JVQEOHKWYBISMXRTFUCNGLAPD\nRDMKGSAUOCLEQYPWJBXHNFTIV\nWHTIPFNDEVACBUKLYGRQOXJMS\nUAFSYJRGXLDWNOTVIMPEBQCKH\nLCNXBTPIQMGJFVHOKSADUERWY\nFIKNECGPSOBLYRVAXJDWHMUTQ\nHSCOXBJFDYQUPAEKGTMRVIWNL\nPWULMEHVNRSTXCGFQIOBAJDYK\nDJVGQAWTKUFIONMHELYSCBPRX\nBYRTALQXMIHDJKWUCPNVESOGF\nKXWFLDTJHPOGREBIUCQASYMVN\nOMSBCNIYRXUVLWQPDKHJFTGEA\nENHRUGOBLAYPSDCXMVTFQWKJI\nVQAYDKFMUWTHIJXENRSGPCLOB\nGTJPIVSQCEMNKFABOYWLRHXDU\nCOEDNXLRTHKBGPUJSFIMYVQAW\nMGBWJPVCIDXYASFQRHKTLONUE\nQLIHFOYKWJVRETNDBAUCMPSXG\nTRPASUMEFNJQWILYVOGXDKBHC\nXKYUVQBSAGCOHMDNLWEPTRIFJ\nSPGQRYEABKWFDLIMHNJOXUVCT\nABOJKWCNVFEXTHSRPDLUIGYQM\nIFXCHMDLJTPKUGOSAQVYWNEBR\nNELMTIUOGQRAVBYCWXFKJDHSP\nYUDVWRXHPSNMCQJGTEBIKAFLO",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "A..R..O..XE.DL..IG...FK..\n..KW.RCSE....Y.D.Q....LV.\n...E..Y...G.F.TBU...N....\n.FL.PJI..NHBK.RMAC...Y..U\n.O..S...L.....WE....AGR.J\nQ.TX....IROF....CJ.U..B.W\nB.ENI.T..U.L.DJ..F.OXRCS.\nKCY.MQN..DS...BAXIVWG.UPT\n..HF..JCX.Q..NG.B...I.VO.\n.GU.R.V.O....WM.YT..F.AQ.\nP..B....RCAXTGH..LY.....D\nI.V..O.GKH...J..WXMQY.TUR\nC.F.O.AXJ.WQ.V..R..BL.P..\n..D.J..MVB.O.R.H....K...G\n.XRT.....L..S.NOF...C..H.\n.N.IQ.EBCJ..GU.L.OPY.W...\nE........AJ..SQWG.N.PI..X\n.SGMT..P.OYD.B...RC.HA.F.\n.P.YLXQWS.N..TVFED.HJ..GC\n.J..D..N..P..CO...S.UQ...\nLMIABC.O..VJH.....XE..W.S\n.E..........YF.IP.B.VT..H\nF....VBAH...CEI..W...NXK.\nNR.H...T.E.WOAX..V.GQMI.F\n.U...SXRY...N.L....FEC...",
+          "testOut": "AYNRCHOUBXEVDLPJIGWSMFKTQ\nGIKWHRCSETUMJYADNQFXBPLVO\nMVJEXAYQWPGSFOTBUKRLNDHCI\nTFLQPJIDGNHBKXRMACOVSYEWU\nDOBUSKMFLVCNQIWEHYTPAGRXJ\nQLTXVMGKIROFAPYSCJEUDHBNW\nBWENIPTYAUKLVDJGQFHOXRCSM\nKCYOMQNLFDSREHBAXIVWGJUPT\nSDHFAEJCXWQTUNGRBPLMIKVOY\nJGUPRBVHOSICXWMNYTDKFLAQE\nPKMBUFSERCAXTGHVJLYNWOQID\nIAVLNODGKHFEBJCPWXMQYSTUR\nCHFGOTAXJYWQIVDURSKBLEPMN\nYQDSJNWMVBLOPRUHTEICKXFAG\nWXRTEUPIQLMYSKNOFAGDCVJHB\nHNAIQDEBCJXKGUFLMOPYTWSRV\nEBCKFYRVMAJHLSQWGUNTPIODX\nXSGMTILPUOYDWBEQVRCJHANFK\nUPOYLXQWSKNIRTVFEDAHJBMGC\nRJWVDGHNTFPAMCOXKBSIUQYEL\nLMIABCFOPGVJHQKTDNXERUWYS\nOEXCKWUJNQRGYFSIPMBAVTDLH\nFTSJGVBAHMDUCEIYLWQRONXKP\nNRPHYLKTDEBWOAXCSVUGQMIJF\nVUQDWSXRYITPNMLKOHJFECGBA",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "LE..SO.A..CX.DRH.BVM.IQ.U\n.RUPCFJX.T.B..K......A.VL\n....YH..M.T....O.JC.G.R.K\nMH....E..CJ.AW..K.XG.YS.N\nV.J.XLQ.KDY..UPAEFT...HM.\n.O.J.XG..A..DIML..H..RWB.\nE...K.....G....JC.ANF..L.\n...RD....U..B.L.YMEVI.TO.\n.YAW..L.OQVKSR.FX.I...D.E\nFLBX...P...J.CN.......K.V\n..XFLQMEV...G..IHDRY.....\nJNHI.B...Y..RMV.T.....G.D\n..GY....JPL..A.....XEV.K.\n...MET...X.IN..BV.WC.LYHJ\nK..CP..N.SOYW.XEG..FT....\nX...WM..BG.......U..ONL..\nY.C.J..K...DM..N..P.V....\nB......Y...Q.L..M.FDK.I.R\nTM.....D.LR.J.H...YI...W.\nRD...WP..I..K...S.QOHFM.C\nC..V.PD.S.K.Q.....UE...NH\nD...R..TE.W..P..OH.JYQVG.\n.GLUICKHA..SV.E....TB...F\n..YE.VU.I....B..DR.Q....T\n..W..GR..O...J.V..BKDUP..",
+          "testOut": "LEKGSOYAPNCXFDRHWBVMJIQTU\nIRUPCFJXGTMBOHKQNYDSWAEVL\nAQFBYHVUMWTLENSOIJCPGDRXK\nMHTDOIEBRCJVAWQUKLXGPYSFN\nVWJNXLQSKDYGIUPAEFTRCBHMO\nNOPJVXGCTAFEDIMLQKHUSRWBY\nEUIQKYBRDVGWPOTJCSANFHXLM\nGCSRDKNFWUHABXLPYMEVIJTOQ\nHYAWTJLMOQVKSRUFXGIBNPDCE\nFLBXMSIPHEQJYCNDRTOWUGKAV\nUTXFLQMEVKBCGSJIHDRYAONPW\nJNHIABWOFYEURMVKTPSLXCGQD\nWBGYQRCIJPLHTADMUONXEVFKS\nOSDMETAGUXPINKFBVQWCRLYHJ\nKVRCPDHNLSOYWQXEGAJFTMUIB\nXIQHWMFVBGSTCEYRJUKAONLDP\nYACOJESKQRIDMFWNLXPHVTBUG\nBPVSGATYNHUQXLOCMWFDKEIJR\nTMNKFUODCLRPJVHGBEYIQSAWX\nRDELUWPJXIANKGBTSVQOHFMYC\nCFOVBPDWSMKRQTGYAIUELXJNH\nDKMARNXTEBWFUPCSOHLJYQVGI\nQGLUICKHAJDSVYEXPNMTBWORF\nPJYENVULIFXOHBAWDRGQMKCST\nSXWTHGRQYONMLJIVFCBKDUPEA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": ".E...PQDI.WTU.SCB.RKM.L..\n.AX..ECT....I.Y.PMDGV....\nR..PWLX.U.........HITC..Q\nC...N..R..DQVFH.SAU.JK.P.\n..D...A..OM..PXQ...F.YEGN\n.P...RL..M...OK.J.A.C.N.U\n....H....A.N.L.Y..VB..XI.\n.V..T..E..RGP.UO.NL..B.AD\n.FUX.N.C.....Y.D..GM...R.\nNY.OLD.UJ.....C...QP.GT..\nYIN..GT..D.X.WQM..BHK....\n......K.B.T....W.R.U.QHN.\nHQ..C.E.SU.D....V.X.B.OTW\nT.K..OM..XU..H.G.C..IDA..\n...R.H..QV..BSJ...TNGFYX.\nL.IQG.Y..H.JNT........PKV\nUHFKJ.D........S.........\n.S.MAU..O.LWKV.JX.YD.R.C.\nW.C.BK.F..YI.A..HQNLOTJ.S\n.RVN..S....EHU.KIG.CX...B\nIN.U.CF.DGV.JQ.T.Y.R.X..A\nF..W.XNPM...TE.HD..O...JG\nM..V.WJ.YKIOXD..G..AF.CHT\n....DIB......CPXNJ..Y..L.\n.J.YK....E.FWMNBL.C.DOR..",
+          "testOut": "GEYHVPQDINWTUJSCBORKMALFX\nSAXFQECTKJNBIRYLPMDGVUWOH\nRMJPWLXBUFOAEKGNYVHITCDSQ\nCTOLNMWRGYDQVFHESAUXJKBPI\nBKDIUSAVHOMCLPXQWTJFRYEGN\nQPBSIRLGTMXVDOKFJWAECHNYU\nDWRGHQOKFAJNMLTYCUVBSPXIE\nJVMCTYHEXWRGPIUOKNLSQBFAD\nKFUXENICPBASQYWDTHGMLJVRO\nNYAOLDVUJSEHFBCIRXQPWGTMK\nYINEPGTARDCXOWQMFLBHKSUVJ\nVDSJXFKYBCTMAGEWORIUPQHNL\nHQGACJELSUFDRNIPVKXYBMOTW\nTLKBFOMWNXUPYHVGQCSJIDAER\nOUWRMHPIQVKLBSJAEDTNGFYXC\nLOIQGBYXCHSJNTDRUFMWAEPKV\nUHFKJVDMLQPRCXOSABETNIGWY\nESTMAUGNOILWKVBJXPYDHRQCF\nWXCDBKRFEPYIGAMVHQNLOTJUS\nPRVNYASJWTQEHUFKIGOCXLMDB\nINPUOCFHDGVKJQLTMYWREXSBA\nFCQWRXNPMLBYTEAHDSKOUVIJG\nMBLVSWJQYKIOXDRUGEPAFNCHT\nAGETDIBOVRHUSCPXNJFQYWKLM\nXJHYKTUSAEGFWMNBLICVDORQP",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "Every grid has a unique solution.",
+      "coverBinaryId": 103416268059570,
+      "stubGenerator": "loop 25 read ROW:string(25)\nwrite answer",
+      "inputDescription": "<<Line 1>> to <<Line 25>> : {{25}} characters in the range {{A}}..{{Y}} or {{.}} (empty cell)",
+      "solutionLanguage": "C++",
+      "outputDescription": "<<Line 1>> to <<Line 25>> : {{25}} characters in the range {{A}}..{{Y}}"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><strong>You have to solve a 25x25 sudoku grid!</strong><br><br>An empty cell is represented by <const>.</const> and the letters <const>A</const> to <const>Y</const> are used to fill the grid.<br><br><strong>RULES</strong>:<br>Each <strong>line</strong> contains exactly one occurrence of each letter.<br>Each <strong>column</strong> contains exactly one occurrence of each letter.<br>Each <strong>block</strong> (5x5 cells) contains exactly one occurrence of each letter.<br><br><strong>NOTE</strong>: This puzzle is considerably more difficult than a classic sudoku puzzle like https://www.codingame.com/training/medium/sudoku-solver. Simple backtracking will not be enough, knowing that there can be more than 300 unrevealed cells.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong> to <strong>Line 25</strong> : <const>25</const> characters in the range <const>A</const>..<const>Y</const> or <const>.</const> (empty cell)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1</strong> to <strong>Line 25</strong> : <const>25</const> characters in the range <const>A</const>..<const>Y</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Every grid has a unique solution.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">.FLJ...D..O.E..GM.KSNRQXA\n...HK.CXROUV...QF.BESJP..\nRNMY.BQETA.F...XOVP.W.HD.\nQO..PMK.SYN.IAR.L.C....EB\n.E...L..G.BPHQD.RN.TYO...\nYT..JI..UVG..BL.E.XOCM..R\nHS....A.KLC..O..PF.W.I.VY\nX.FR...OQ.IKWTPYD.U.A.EH.\nN....PYSFX.UQ..BVGHC.KJO.\n...LC...WDH..VM.T.I....NX\n...B..IYH.DLAX..SKW.O....\n..HP..NA.....IQTGU..XYSWE\nK.O.YGSQDBW......XE..LMRP\nUQNWR.PTLEY.O.VAH...KCI..\nT..XDOW....E.PN..I.LGU.BH\n..R.NDGC....MEJUKOS...FYW\n..GDH..R..V..NCL.M.QE.XJ.\n..J.F....QAW....XR.PMHO.I\n.U.S.JEK.N.R.LI.WTYBV..A.\nVW....OL...HDK.....I.NRQU\n....T.BHN.JDCW.O.EL...V..\n.L..BFX.AGP...KM..VH..T..\n...O.Y..E..NVFB...TX..LK.\nE.K...LI...S...F...AD.YG.\nDXYVQ.JPOT.ML.A.ISNGH.B.F</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">BFLJUHVDPIOCEYTGMWKSNRQXA\nADTHKNCXROUVGMWQFYBESJPIL\nRNMYIBQETALFKJSXOVPUWGHDC\nQOVGPMKWSYNXIARDLHCJTFUEB\nSEXCWLFJGUBPHQDIRNATYOKMV\nYTDKJIHNUVGAFBLSEQXOCMWPR\nHSBQETAGKLCJNOXRPFMWUIDVY\nXGFRVCMOQJIKWTPYDLUNABEHS\nNIWMAPYSFXRUQDEBVGHCLKJOT\nOPULCERBWDHYSVMJTAIKFQGNX\nJCEBGUIYHMDLAXFPSKWROVNTQ\nFMHPLVNACRKBJIQTGUODXYSWE\nKAOIYGSQDBWTUCHVNXEFJLMRP\nUQNWRXPTLEYGOSVAHBJMKCIFD\nTVSXDOWFJKMERPNCYIQLGUABH\nLBRANDGCIHXQMEJUKOSVPTFYW\nIYGDHWURBPVOTNCLAMFQESXJK\nCKJEFSTVYQAWBGUNXRDPMHOLI\nMUQSOJEKXNFRPLIHWTYBVDCAG\nVWPTXAOLMFSHDKYECJGIBNRQU\nPRAFTKBHNSJDCWGOQELYIXVUM\nWLCNBFXUAGPIYRKMJDVHQETSO\nGHIOSYDMECQNVFBWUPTXRALKJ\nEJKUMQLIVWTSXHOFBCRADPYGN\nDXYVQRJPOTEMLUAKISNGHWBCF</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 83193223251,
+  "avatar": 96235642204607,
+  "commentCount": 47,
+  "upVotes": 28,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 810221,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1685214337001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1685216443355,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1687536026071,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

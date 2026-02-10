@@ -1,0 +1,273 @@
+{
+  "id": 125844,
+  "activeVersion": 35,
+  "score": 13,
+  "votableId": 37277210,
+  "codingamerId": 3589590,
+  "views": 168,
+  "commentableId": 37116522,
+  "title": "N-dimensional maze",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Edjy",
+  "publicHandle": "1258448ac16376b47315eb1baa28acc378862b",
+  "codingamerHandle": "674fbda5df945919eb37269de9e598e10959853",
+  "lastVersion": {
+    "version": 35,
+    "autocloseTime": 1758352929266,
+    "freezeTime": 1750258633962,
+    "data": {
+      "title": "N-dimensional maze",
+      "topics": [
+        {
+          "id": 47,
+          "handle": "arrays",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Tableaux",
+            "2": "Arrays"
+          },
+          "pageTitle": "Arrays: exercises and theory",
+          "puzzleCount": 42,
+          "parentTopicId": 40,
+          "contentDetailsId": 78
+        },
+        {
+          "id": 46,
+          "handle": "loops",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 117,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        },
+        {
+          "id": 68,
+          "handle": "pathfinding",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Recherche de chemins",
+            "2": "Pathfinding"
+          },
+          "pageTitle": "Pathfinding: exercises and theory",
+          "puzzleCount": 53,
+          "parentTopicId": 41,
+          "contentDetailsId": 69
+        },
+        {
+          "id": 54,
+          "handle": "BFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en largeur",
+            "2": "BFS"
+          },
+          "pageTitle": "BFS: exercises and theory",
+          "puzzleCount": 35,
+          "parentTopicId": 41,
+          "contentDetailsId": 84
+        }
+      ],
+      "solution": "class Obstacle:\n    def __init__(self, co1, co2):\n        self.co1 = co1\n        self.co2 = co2\n    \n    def intersect(self, co):\n        for comp, compmin, compmax in zip(co, self.co1, self.co2):\n            if not compmin <= comp <= compmax:\n                return False\n        return True\n\nn = int(input())\nmaze_size = [int(i) for i in input().split(\",\")]\nstarting_position = tuple(int(i) for i in input().split(\",\"))\ndestination = tuple(int(i) for i in input().split(\",\"))\nb = int(input())\nobstacles = set()\nfor i in range(b):\n    co1, co2 = input().split()\n    co1 = tuple(int(i) for i in co1.split(\",\"))\n    co2 = tuple(int(i) for i in co2.split(\",\"))\n    obstacles.add(Obstacle(co1, co2))\n\ndef get_neighbors(pos):\n    neighbors = set()\n    for d in range(n):\n        if pos[d] > 0:\n            ne = (*pos[:d], pos[d]-1, *pos[d+1:])\n            neighbors.add(ne)\n        if pos[d] < maze_size[d]-1:\n            ne = (*pos[:d], pos[d]+1, *pos[d+1:])\n            neighbors.add(ne)\n    return neighbors\n\ndef path(starting_position, destination):\n    queue = [(starting_position, 0)]\n    visited = {starting_position}\n    while queue:\n        pos, l = queue.pop(0)\n        if pos == destination:\n            return l\n        for neigh in get_neighbors(pos):\n            if not any(ob.intersect(neigh) for ob in obstacles) and neigh not in visited:\n                queue.append((neigh, l+1))\n                visited.add(neigh)\n    else:\n        return -1\n\nl = path(starting_position, destination)\nif l == -1:\n    print(\"NO PATH\")\nelse:\n    print(l)\n",
+      "statement": "While travelling with your spacetime machine, you accidentally discover new dimensions to explore. The n-dimensional space is represented by an n-dimensional grid of cells. You can move to any free neighboring cell, in any direction. Two cells are neighbors if their coordinates differ by one, in exactly one direction. For example, (1, 4, 6, 2, 0) and (1, 4, 6, 1, 0) are neighbors. A cell has 2 neighbors in 1D, 4 in 2D, 6 in 3D, and 2n in nD.\n\nYou are given the size of the space in each dimension and a list of obstacles, each defined by two opposite corners of an axis-aligned n-dimensional hyperrectangle. For example, with n=4, the obstacle going from (3, 1, 6, 4) to (3, 2, 8, 4) includes the cells (3, 1, 6, 4), (3, 1, 7, 4), (3, 1, 8, 4), (3, 2, 6, 4), (3, 2, 7, 4) and (3, 2, 8, 4). Obstacles may intersect each other (the intersections remain obstacles).\n\nGiven your starting position and your destination, output the total length of the shortest path from one point to the other. If no path exists between the two points, output {{NO PATH}}.\n\n\nExample :\n3\n3,3,3\n1,2,0\n2,0,0\n3\n0,1,0 0,1,0\n0,1,2 0,1,2\n1,1,0 2,1,2\n\nLet's represent this maze ({{.}} is a free space, {{#}} is an obstacle, {{S}} and {{D}} are your start position and destination). It is a cube of size 3. We can see it as a three-floor maze (z=0 to z=2), with a wall at position y=1, with only one free cell (0,1,1).\n```   z=0   z=1   z=2\n\n   x->   x->   x->\n\ny  ..D   ...   ...\n|  ###   .##   ###\nV  .S.   ...   ...```\nOne of the shortest possible paths is shown below, with each step numbered from 0 (start) to 7 (destination).\n```   z=0   z=1   z=2\n\n   x->   x->   x->\n\ny  ..7   456   ...\n|  ###   3##   ###\nV  10.   2..   ...```\nTherefore, the output should be 7.",
+      "testCases": [
+        {
+          "title": "Simple 3D",
+          "isTest": true,
+          "testIn": "3\n3,3,3\n1,2,0\n2,0,0\n3\n0,1,0 0,1,0\n0,1,2 0,1,2\n1,1,0 2,1,2",
+          "testOut": "7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple 3D",
+          "isTest": false,
+          "testIn": "3\n3,3,3\n2,0,1\n2,2,2\n3\n0,1,1 2,1,2\n0,1,0 0,1,0\n2,1,0 2,1,0",
+          "testOut": "7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simple 2D",
+          "isTest": true,
+          "testIn": "2\n10,7\n9,0\n1,3\n11\n0,1 3,2\n1,4 1,4\n2,3 2,4\n3,5 3,5\n4,0 4,0\n4,4 4,4\n5,2 5,2\n6,1 6,5\n7,1 8,1\n7,5 8,5\n8,3 9,3",
+          "testOut": "21",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple 2D",
+          "isTest": false,
+          "testIn": "2\n8,10\n2,9\n6,6\n13\n0,8 0,9\n1,9 1,9\n1,1 1,4\n2,4 3,4\n2,6 5,6\n2,8 4,8\n3,1 3,1\n3,2 4,2\n5,2 6,4\n5,5 5,5\n6,0 7,0\n6,7 6,9\n7,6 7,6",
+          "testOut": "31",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4D",
+          "isTest": true,
+          "testIn": "4\n5,5,4,4\n1,1,1,1\n2,3,1,1\n78\n0,0,1,1 3,0,1,1\n0,0,3,3 0,1,3,3\n0,1,0,1 0,1,0,1\n0,1,0,3 1,1,0,3\n0,1,2,0 0,1,2,1\n0,1,3,1 0,1,3,1\n0,2,1,0 1,2,1,2\n0,2,2,2 0,3,2,2\n0,2,3,0 0,2,3,0\n0,2,3,2 0,2,3,2\n0,3,0,1 0,3,1,1\n0,3,0,3 0,3,3,3\n0,3,2,0 0,4,2,0\n0,3,3,1 0,4,3,1\n0,4,0,0 0,4,0,0\n0,4,0,2 0,4,0,2\n0,4,1,1 0,4,2,1\n0,4,1,2 1,4,1,2\n1,0,2,1 1,0,2,1\n1,0,2,2 1,1,3,2\n1,0,3,0 1,1,3,0\n1,1,0,0 2,2,0,0\n1,1,2,0 1,1,2,0\n1,2,0,1 2,2,0,2\n1,2,1,3 1,2,3,3\n1,2,2,1 1,2,3,1\n1,3,0,0 1,3,2,2\n1,3,3,2 1,4,3,2\n1,4,1,0 3,4,1,1\n1,4,2,1 1,4,2,1\n1,4,3,0 3,4,3,1\n2,0,1,2 3,0,2,2\n2,0,2,3 2,3,3,3\n2,0,3,0 2,1,3,1\n2,1,1,0 2,2,2,1\n2,1,1,2 2,1,1,2\n2,2,0,3 2,3,0,3\n2,2,1,3 4,2,1,3\n2,2,3,0 2,2,3,0\n2,3,0,1 3,3,0,1\n2,3,0,2 2,3,1,2\n2,3,2,0 2,3,2,0\n2,3,3,1 2,3,3,1\n2,4,0,0 2,4,0,0\n2,4,2,2 3,4,2,3\n2,4,3,3 2,4,3,3\n3,0,0,0 3,0,0,0\n3,0,1,3 4,0,1,3\n3,0,2,0 3,0,2,0\n3,0,3,1 3,0,3,1\n3,1,0,2 3,1,0,3\n3,1,1,0 3,1,1,0\n3,1,2,1 3,1,2,1\n3,1,2,2 3,3,3,2\n3,1,2,3 3,1,3,3\n3,2,0,0 3,3,0,0\n3,2,0,1 4,2,1,1\n3,2,1,2 3,2,1,2\n3,2,2,0 3,2,2,0\n3,2,3,1 3,2,3,1\n3,3,0,3 3,3,1,3\n3,3,1,0 3,3,2,1\n3,3,3,3 3,3,3,3\n3,4,0,2 3,4,0,2\n4,0,0,1 4,0,0,3\n4,0,2,1 4,0,2,1\n4,0,2,2 4,1,3,2\n4,0,3,0 4,0,3,0\n4,0,3,3 4,0,3,3\n4,1,0,0 4,1,1,2\n4,1,1,3 4,1,1,3\n4,1,2,3 4,4,2,3\n4,2,2,1 4,2,3,1\n4,3,0,2 4,3,0,3\n4,3,1,1 4,3,3,2\n4,4,1,2 4,4,1,2\n4,4,2,0 4,4,2,1\n4,4,3,2 4,4,3,2",
+          "testOut": "29",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4D",
+          "isTest": false,
+          "testIn": "4\n5,5,4,4\n4,0,2,3\n3,0,2,1\n78\n0,0,1,1 3,0,1,1\n0,0,3,3 0,1,3,3\n0,1,0,1 0,1,0,1\n0,1,0,3 1,1,0,3\n0,1,2,0 0,1,2,1\n0,1,3,1 0,1,3,1\n0,2,1,0 1,2,1,2\n0,2,2,2 0,3,2,2\n0,2,3,0 0,2,3,0\n0,2,3,2 0,2,3,2\n0,3,0,1 0,3,1,1\n0,3,0,3 0,3,3,3\n0,3,2,0 0,4,2,0\n0,3,3,1 0,4,3,1\n0,4,0,0 0,4,0,0\n0,4,0,2 0,4,0,2\n0,4,1,1 0,4,2,1\n0,4,1,2 1,4,1,2\n1,0,2,1 1,0,2,1\n1,0,2,2 1,1,3,2\n1,0,3,0 1,1,3,0\n1,1,0,0 2,2,0,0\n1,1,2,0 1,1,2,0\n1,2,0,1 2,2,0,2\n1,2,1,3 1,2,3,3\n1,2,2,1 1,2,3,1\n1,3,0,0 1,3,2,2\n1,3,3,2 1,4,3,2\n1,4,1,0 3,4,1,1\n1,4,2,1 1,4,2,1\n1,4,3,0 3,4,3,1\n2,0,1,2 3,0,2,2\n2,0,2,3 2,3,3,3\n2,0,3,0 2,1,3,1\n2,1,1,0 2,2,2,1\n2,1,1,2 2,1,1,2\n2,2,0,3 2,3,0,3\n2,2,1,3 4,2,1,3\n2,2,3,0 2,2,3,0\n2,3,0,1 3,3,0,1\n2,3,0,2 2,3,1,2\n2,3,2,0 2,3,2,0\n2,3,3,1 2,3,3,1\n2,4,0,0 2,4,0,0\n2,4,2,2 3,4,2,3\n2,4,3,3 2,4,3,3\n3,0,0,0 3,0,0,0\n3,0,1,3 4,0,1,3\n3,0,2,0 3,0,2,0\n3,0,3,1 3,0,3,1\n3,1,0,2 3,1,0,3\n3,1,1,0 3,1,1,0\n3,1,2,1 3,1,2,1\n3,1,2,2 3,3,3,2\n3,1,2,3 3,1,3,3\n3,2,0,0 3,3,0,0\n3,2,0,1 4,2,1,1\n3,2,1,2 3,2,1,2\n3,2,2,0 3,2,2,0\n3,2,3,1 3,2,3,1\n3,3,0,3 3,3,1,3\n3,3,1,0 3,3,2,1\n3,3,3,3 3,3,3,3\n3,4,0,2 3,4,0,2\n4,0,0,1 4,0,0,3\n4,0,2,1 4,0,2,1\n4,0,2,2 4,1,3,2\n4,0,3,0 4,0,3,0\n4,0,3,3 4,0,3,3\n4,1,0,0 4,1,1,2\n4,1,1,3 4,1,1,3\n4,1,2,3 4,4,2,3\n4,2,2,1 4,2,3,1\n4,3,0,2 4,3,0,3\n4,3,1,1 4,3,3,2\n4,4,1,2 4,4,1,2\n4,4,2,0 4,4,2,1\n4,4,3,2 4,4,3,2",
+          "testOut": "39",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Hyper-hypercube",
+          "isTest": true,
+          "testIn": "5\n8,8,8,8,8\n1,7,0,0,6\n2,1,7,6,7\n1\n3,3,3,3,3 5,5,5,5,5",
+          "testOut": "21",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Hyper-hyper-hypercube",
+          "isTest": false,
+          "testIn": "6\n7,7,7,7,7,7\n1,2,1,6,2,0\n2,6,6,1,1,5\n1\n3,3,3,3,3,3 4,4,4,4,4,4",
+          "testOut": "21",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "1D",
+          "isTest": true,
+          "testIn": "1\n12\n2\n6\n2\n7 9\n11 11",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "1D",
+          "isTest": false,
+          "testIn": "1\n19\n11\n4\n2\n14 17\n3 3",
+          "testOut": "7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3D NO PATH",
+          "isTest": true,
+          "testIn": "3\n4,4,4\n0,0,0\n3,3,3\n2\n0,2,0 3,2,3\n1,0,0 1,3,2",
+          "testOut": "NO PATH",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3D NO PATH",
+          "isTest": false,
+          "testIn": "3\n4,4,4\n0,3,0\n3,0,3\n2\n0,0,1 3,3,1\n0,2,0 2,2,2",
+          "testOut": "NO PATH",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Blocked",
+          "isTest": true,
+          "testIn": "4\n5,5,5,5\n2,3,4,4\n2,0,1,2\n6\n1,3,4,4 1,3,4,4\n2,0,4,4 2,2,4,4\n2,3,2,3 2,3,4,3\n1,3,3,4 2,3,3,4\n2,4,3,4 2,4,4,4\n3,3,4,4 3,3,4,4",
+          "testOut": "NO PATH",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Blocked",
+          "isTest": false,
+          "testIn": "4\n5,5,5,5\n4,4,3,2\n2,2,2,4\n7\n0,2,2,2 1,2,2,4\n2,1,2,4 2,1,2,4\n2,2,1,3 2,2,1,4\n2,2,2,0 2,2,2,3\n2,2,3,3 2,2,3,4\n2,3,2,4 2,3,4,4\n3,0,0,0 3,2,2,4",
+          "testOut": "NO PATH",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "7D",
+          "isTest": true,
+          "testIn": "7\n5,5,5,8,8,8,8\n1,2,3,4,3,2,1\n1,2,0,4,3,2,6\n2\n0,0,2,3,3,0,3 1,2,2,7,7,2,7\n1,1,0,2,1,1,3 1,3,4,5,5,7,3",
+          "testOut": "10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "7D",
+          "isTest": false,
+          "testIn": "7\n5,5,5,8,8,8,5\n1,2,3,4,3,2,0\n1,2,0,4,3,2,4\n3\n1,2,2,4,3,2,0 1,2,2,4,3,2,0\n1,2,4,4,3,2,0 1,2,4,4,3,2,0\n1,2,3,4,3,2,1 1,2,3,4,3,2,1",
+          "testOut": "9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "8D",
+          "isTest": true,
+          "testIn": "8\n4,5,6,5,3,5,5,3\n1,3,2,3,0,0,4,2\n3,3,1,4,2,2,2,0\n3\n0,0,1,0,0,3,0,0 2,3,5,0,2,4,4,0\n1,3,1,2,1,0,2,0 3,3,3,4,1,2,4,2\n2,3,0,2,0,0,0,0 2,4,3,4,2,2,4,2",
+          "testOut": "14",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "8D",
+          "isTest": false,
+          "testIn": "8\n5,5,5,4,4,6,3,5\n4,4,4,3,0,2,2,2\n4,4,3,2,2,2,2,4\n2\n0,2,3,2,2,1,2,4 1,3,3,3,2,5,2,4\n3,4,3,0,0,2,1,3 4,4,4,3,3,2,2,3",
+          "testOut": "8",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ [[n]] ≤ 8\n0 ≤ [[b]] ≤ 100\n0 ≤ All coordinates ≤ 20\nValid coordinate values in each dimension range from 0 to size of that dimension - 1.\nStarting position and destination are not located inside of obstacles.",
+      "coverBinaryId": 145611949632971,
+      "stubGenerator": "read n:int\nread mazeSize:string(200)\nread startingPosition:string(200)\nread destination:string(200)\nread b:int\nloop b read obstacle:string(200)\nwrite 42",
+      "inputDescription": "<<Line 1:>> An integer [[n]], the number of dimensions of the maze.\n<<Line 2:>> [[n]] comma-separated integers, the size of the maze in every direction.\n<<Line 3:>> [[n]] comma-separated integers, the coordinates of your starting position.\n<<Line 4:>> [[n]] comma-separated integers, the coordinates of your destination.\n<<Line 5:>> An integer [[b]], the number of obstacles.\n<<Next [[b]] lines:>> 2 space-separated sequences of [[n]] comma-separated integers, representing two opposite corners of an obstacle. Every coordinate of the first corner is less than or equal to its corresponding counterpart in the second corner.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<One line:>> An integer, the length of the shortest possible path from your position to your destination, or {{NO PATH}} if no such path exists."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">While travelling with your spacetime machine, you accidentally discover new dimensions to explore. The n-dimensional space is represented by an n-dimensional grid of cells. You can move to any free neighboring cell, in any direction. Two cells are neighbors if their coordinates differ by one, in exactly one direction. For example, (1, 4, 6, 2, 0) and (1, 4, 6, 1, 0) are neighbors. A cell has 2 neighbors in 1D, 4 in 2D, 6 in 3D, and 2n in nD.<br><br>You are given the size of the space in each dimension and a list of obstacles, each defined by two opposite corners of an axis-aligned n-dimensional hyperrectangle. For example, with n=4, the obstacle going from (3, 1, 6, 4) to (3, 2, 8, 4) includes the cells (3, 1, 6, 4), (3, 1, 7, 4), (3, 1, 8, 4), (3, 2, 6, 4), (3, 2, 7, 4) and (3, 2, 8, 4). Obstacles may intersect each other (the intersections remain obstacles).<br><br>Given your starting position and your destination, output the total length of the shortest path from one point to the other. If no path exists between the two points, output <const>NO PATH</const>.<br><br><br>Example :<br>3<br>3,3,3<br>1,2,0<br>2,0,0<br>3<br>0,1,0 0,1,0<br>0,1,2 0,1,2<br>1,1,0 2,1,2<br><br>Let's represent this maze (<const>.</const> is a free space, <const>#</const> is an obstacle, <const>S</const> and <const>D</const> are your start position and destination). It is a cube of size 3. We can see it as a three-floor maze (z=0 to z=2), with a wall at position y=1, with only one free cell (0,1,1).<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">   z=0   z=1   z=2<br><br>   x-&gt;   x-&gt;   x-&gt;<br><br>y  ..D   ...   ...<br>|  ###   .##   ###<br>V  .S.   ...   ...</pre><pre style=\"font-family: monospace\"></pre><br>One of the shortest possible paths is shown below, with each step numbered from 0 (start) to 7 (destination).<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">   z=0   z=1   z=2<br><br>   x-&gt;   x-&gt;   x-&gt;<br><br>y  ..7   456   ...<br>|  ###   3##   ###<br>V  10.   2..   ...</pre><pre style=\"font-family: monospace\"></pre><br>Therefore, the output should be 7.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>n</var>, the number of dimensions of the maze.<br><strong>Line 2:</strong> <var>n</var> comma-separated integers, the size of the maze in every direction.<br><strong>Line 3:</strong> <var>n</var> comma-separated integers, the coordinates of your starting position.<br><strong>Line 4:</strong> <var>n</var> comma-separated integers, the coordinates of your destination.<br><strong>Line 5:</strong> An integer <var>b</var>, the number of obstacles.<br><strong>Next <var>b</var> lines:</strong> 2 space-separated sequences of <var>n</var> comma-separated integers, representing two opposite corners of an obstacle. Every coordinate of the first corner is less than or equal to its corresponding counterpart in the second corner.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>One line:</strong> An integer, the length of the shortest possible path from your position to your destination, or <const>NO PATH</const> if no such path exists.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>n</var> &le; 8<br>0 &le; <var>b</var> &le; 100<br>0 &le; All coordinates &le; 20<br>Valid coordinate values in each dimension range from 0 to size of that dimension - 1.<br>Starting position and destination are not located inside of obstacles.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\n3,3,3\n1,2,0\n2,0,0\n3\n0,1,0 0,1,0\n0,1,2 0,1,2\n1,1,0 2,1,2</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">7</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 13131274911,
+  "avatar": 43965748895173,
+  "commentCount": 12,
+  "upVotes": 13,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1211570,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1752246337005,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1755760929266,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1757597043969,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

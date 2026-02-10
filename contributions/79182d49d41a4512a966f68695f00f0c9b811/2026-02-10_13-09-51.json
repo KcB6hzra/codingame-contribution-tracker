@@ -1,0 +1,255 @@
+{
+  "id": 79182,
+  "activeVersion": 24,
+  "score": 14,
+  "votableId": 31955594,
+  "codingamerId": 1036092,
+  "views": 243,
+  "commentableId": 31813689,
+  "title": "Decimal numbers to floating numbers",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "JDOnline",
+  "publicHandle": "79182d49d41a4512a966f68695f00f0c9b811",
+  "codingamerHandle": "6aed1b19fc10b92d8f1d78dce39fb7592906301",
+  "lastVersion": {
+    "version": 24,
+    "autocloseTime": 1706942982511,
+    "data": {
+      "title": "Decimal numbers to floating numbers",
+      "topics": [
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 36,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "id": 112,
+          "handle": "string-manipulation",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "String manipulation",
+            "2": "String manipulation"
+          },
+          "puzzleCount": 61,
+          "parentTopicId": 93
+        },
+        {
+          "id": 211,
+          "handle": "numbers",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Numbers",
+            "2": "Numbers"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "def str_to_ieee754(str_float):\n    \n    try:\n        # Sign \n        if str_float[0] == '+':\n            sign, str_float = ( 0, str_float[1:] )\n        else:\n            sign, str_float = ( 0, str_float ) if str_float[0] != '-' else ( 1, str_float[1:] )        \n\n        # Special check for 0\n        if str_float.lstrip('0') == '':\n            sign = '0'\n            exponent = '00000000'\n            mantissa = '00000000000000000000000'\n            encoded = '0x00000000'\n        else:\n            # Preprocessing for decimal numbers with scientific notation\n            idx = str_float.find('e')\n            if idx != -1:\n                exp = int(str_float[idx+1:])\n                str_float = str_float[:idx]\n                dec = str_float.find(\".\")\n                if exp > 0:\n                    if dec == -1:\n                        str_float += '0' * exp\n                    else:\n                        exp2 = exp - ( len(str_float) - dec ) + 1\n                        str_float += '0' * exp2\n                        str_float = str_float[:dec+exp+1] + '.' + str_float[dec+exp+1:]\n                        str_float = str_float[:dec] + str_float[dec+1:]\n                        if str_float[-1] == '.':\n                            str_float = str_float[:-1]\n                else:                \n                    if dec == -1:\n                        if len(str_float) + exp < 0:\n                            str_float = '0' * ( len(str_float) + exp ) + str_float                    \n                        str_float = str_float[:len(str_float)+exp] + '.' + str_float[len(str_float)+exp:]\n                    else:\n                        exp2 = dec + exp\n                        if exp2 < 0:\n                            str_float = '.' + '0' * -exp2 + str_float[:dec] + str_float[dec+1:]\n                        else:\n                            str_float = str_float[:exp2] + \".\" + str_float[exp2:dec] + str_float[dec+1:]\n\n            # Identify whole and fractional parts\n            str_float = str_float.lstrip('0')\n            dec = str_float.find(\".\")\n            if dec == -1:\n                # Not a decimal, number is an integer\n                whole_bin = bin(int(str_float))[2:]\n                fractional_str = ''\n                max_length = 0\n            elif dec == 0:\n                # Whole part is 0\n                whole_bin = ''\n                fractional_str = str_float[1:]             \n                max_length = 23\n            else:\n                whole_bin = bin(int(str_float[0:dec]))[2:]\n                fractional_str = str_float[dec+1:]\n                max_length = 23 - len(whole_bin) + 1                \n            fractional_part = 0 if fractional_str == '' else float(f\"0.{fractional_str}\")  \n\n            # Convert to binary the fractional part\n            fractional_bits = []        \n            shift = -1 if whole_bin == '' else 0\n            sig = False if whole_bin == '' else True\n            roundNeeded = False\n            while fractional_part != 0:\n                fractional_part = fractional_part * 2\n                \n                if len(fractional_bits) == max_length:\n                    # We have reached the max number of bits\n                    if fractional_part >= 1:\n                        # Next bit (24th bit is one, so we need to round)\n                        roundNeeded = True\n                    break\n                \n                if fractional_part >= 1:\n                    if sig:\n                        fractional_bits.append(1)\n                    fractional_part -= 1\n                    sig = True\n                else:                \n                    if not sig:\n                        shift -= 1\n                    else:\n                        fractional_bits.append(0)\n\n            # Manage rounding\n            if roundNeeded:\n                idx = len(fractional_bits) - 1\n                while True:\n                    if fractional_bits[idx] == 0:\n                        fractional_bits[idx] = 1\n                        break\n                    else:\n                        fractional_bits[idx] = 0\n                        idx -= 1\n            fractional_bin = ''.join(str(e) for e in fractional_bits)\n\n            # Compute exponent shift based on whole part if there is one\n            if whole_bin != '':\n                shift = len(whole_bin) - 1\n            \n            # Compute encoding parts\n            exponent = bin(127 + shift)[2:]\n            exponent = '0' * (8-len(exponent)) + exponent\n\n            mantissa = whole_bin[1:] + fractional_bin   \n            mantissa = mantissa + '0' * ( 23 - len(mantissa) )\n\n            encoded = '0x'+hex(int(f\"{sign}{exponent}{mantissa}\",2))[2:].upper()\n\n    except ValueError:\n        # Not a number case\n        sign = '0'\n        exponent = '11111111'\n        mantissa = '11111111111111111111111'\n        encoded = \"NaN\"\n\n    return f'[{sign}][{exponent}][{mantissa}]', encoded\n\ndecimal = input()\ndetails, hexa = str_to_ieee754(decimal)\n\nprint(details)\nprint(hexa)",
+      "statement": "You may wonder how a computer is storing decimal numbers ? Not so trivial, let's have a look !\n\n<<Decimal numbers>> are managed as <<floating numbers>> on computers, which is a way to approximate as best as possible the decimal values.  The most commonly used standard for floating numbers is the <<IEEE 754 standard>> (used in many programming languages such as C, C++, Python etc...)\n\nIn this puzzle, you will implement the algorithm to encode a decimal number from its literal format using the IEEE 754 (Single Precision 32 bits).\n\nSo, how does it work ? We need first to convert the decimal number from its base 10 (denoted b10) to base 2 (denoted b2). Then, we will encode the result using the IEEE 754 standard.\n\n<<Convert a decimal number from base 10 to base 2>>\n\nFor a decimal number there are two parts, the <<whole part>> and the <<fractional part>>.\n\nFor the <<whole part, we simply convert it to a binary number>>\nFor the <<fractional part>>:\nStep 1: we multiply the fractional part by 2\nStep 2: if the result = 0, the conversion to base 2 is done, go to Step 3\n   . if result < 1, we store 0 as bit value for this round. We use the result as new value for fractional part and we restart at Step 1\n   . if result ≥ 1, we store 1 as bit value for this round, we substract 1 from result,  and we use this value for fractional part and we restart at Step 1\nStep 3: we list all bits we stored and we have our result\n\nExample: 15.5: the whole part = 15, the fractional part = .5 (if we include the decimal point).\n\nWhole part: 15\n(b10) 15 => (b2) 1111\n\nFractional part: 0.5\n0.5 * 2 = 1, we get 1, substract 1 and get 0 (1-1)\n0 * 2 = 0  we are done\n\nResult: (b10) 15.5 = (b2) 1111.1\n\nIn the same way:  (b10) 0.125 = (b2) 0.001\n\nUnfortunately, not all base 10 numbers have a perfect match with base 2 numbers when we talk about fractional parts... To illustrate it, let's convert a very simple number: 1.1\n\nwhole part: 1\nfractional part: \n`\n0.1 x 2 = 0.2 -> 0\n0.2 x 2 = 0.4 -> 0   <------+ We are looping with the same result\n0.4 x 2 = 0.8 -> 0          |\n0.8 x 2 = 1.6 -> 1          |\n0.6 x 2 = 1.2 -> 1          |\n0.2 x 2 = 0.4 -> 0    ------+\n`\n\nHere, there is no end and the conversion can only be an approximation. So, we need to stop when we reached the maximum length of the bits which can be stored. This maximum length is described in IEEE 754. \n    \n<<Encoding a decimal number (b2) with IEEE 754>>\n\nWe are going to encode only using the single precision method which is using 32 bits, this is the classical 'float' in programming languages. IEEE 754 introduces other precisions like 64 bits or 128 bits. The principle is exactly the same, so we will only do the 32 bits version.\n\nFor 32 bits, the general format is the following:\n\n[ [[s]] = 1 bit for the sign ] [ [[e]] = 8 bits for the biased exponent ] [ [[m]] = 23 bits for the mantissa ]\n\nTo perform the encoding, we need to adapt the number to match the following format: <<(1.xxxxx) * 2^[[exp]]>>\n\nWe then reformat our previous results:\n    (b10) 15.5 = (b2) 1111.1 = (b2) 1.1111 * 2^3\n    (b10) 0.125 = (b2) 0.001 = (b2) 1 * 2^-3\n\n<<IEEE 754 rules:>>\n\n<<[[s]] sign rule>> \n    [[s]]=0 for positive, [[s]]=1 for negative numbers.\n\n<<[[e]] biased exponent rule>>\n    <<[[e]] = 127+[[exp]]>> (this is only true for denormalized numbers which is the generic approach we use in this puzzle, check the IEEE 754 reference for more info)\n    [[e]] is then converted to binary format on 8 bits.\n\n<<[[m]] mantissa rule>>\n    We simply take all bits after the decimal point with max 23 bits:\n    - If less than 23 bits we fill the remaining ending bits with 0\n    - If more than 23 bits, we truncate to 23 bits and we round the binary number if needed.\n\nThen:\n\n<<(b10) 15.5>> = (b2) 1111.1 = (b2) 1.1111x2^3\n[[s]] = 0, [[e]] = 127 + 3 (b10) = (b2) 10000010\n[[m]] = 11110000000000000000000\n\n<<(b10) -0.125>> = (b2) 0.001 = (b2) 1x2^-3\n[[s]] = 1,  [[e]] = 127 - 3 (b10) = (b2) 01111100\n[[m]] = 00000000000000000000000 \n\nLet's now look at number with more than 23 bits for the mantissa, such as (b10) 1.1\n\n`\n(b10) 1.1 = (b2) 1.0001100110011001100110011...x2^0\n                                         ^\nWe need to truncate at <<23 bits>>\n`\n\nIf <<next bit (24th) is 1>>, we need to round the number. \nThe rule is simple:\n- if the bit in the previous position equals 0, we put it to 1 and this is finished.\n- if the bit in the previous position equals 1, we replace it by 0 and we continue to round by moving 1 position before.\n\nOnce, rounded we have (b10) 1.1 = (b2) 1.00011001100110011001101\n    \n<<Special cases>>\n0 is encoded as a normalized number: [[s]] = 0 / [[e]] = 00000000 / [[m]] = 00000000000000000000000 = <<0x00000000>>\nInvalid numbers are called NaN (Not a Number): [[s]] = 0 / [[e]] = 11111111 / [[m]] = 11111111111111111111111 = <<NaN>>\n\n<<External reference>>\nhttps://en.wikipedia.org/wiki/Single-precision_floating-point_format",
+      "testCases": [
+        {
+          "title": "Zero",
+          "isTest": true,
+          "testIn": "0",
+          "testOut": "[0][00000000][00000000000000000000000]\n0x00000000",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Zero",
+          "isTest": false,
+          "testIn": "0",
+          "testOut": "[0][00000000][00000000000000000000000]\n0x00000000",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simple integer",
+          "isTest": true,
+          "testIn": "1",
+          "testOut": "[0][01111111][00000000000000000000000]\n0x3F800000",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple integer",
+          "isTest": false,
+          "testIn": "10",
+          "testOut": "[0][10000010][01000000000000000000000]\n0x41200000",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Invalid number",
+          "isTest": true,
+          "testIn": "3:4",
+          "testOut": "[0][11111111][11111111111111111111111]\nNaN",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Invalid number",
+          "isTest": false,
+          "testIn": "-5&8",
+          "testOut": "[0][11111111][11111111111111111111111]\nNaN",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simple decimal",
+          "isTest": true,
+          "testIn": "+10.375",
+          "testOut": "[0][10000010][01001100000000000000000]\n0x41260000",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple decimal",
+          "isTest": false,
+          "testIn": "-118.625",
+          "testOut": "[1][10000101][11011010100000000000000]\n0xC2ED4000",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Decimal with rounding (1)",
+          "isTest": true,
+          "testIn": "0.1",
+          "testOut": "[0][01111011][10011001100110011001101]\n0x3DCCCCCD",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Decimal with rounding (1)",
+          "isTest": false,
+          "testIn": "0.110",
+          "testOut": "[0][01111011][11000010100011110101110]\n0x3DE147AE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Decimal with rounding (2)",
+          "isTest": true,
+          "testIn": "0.15",
+          "testOut": "[0][01111100][00110011001100110011010]\n0x3E19999A",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Decimal with rounding (2)",
+          "isTest": false,
+          "testIn": "0.0001",
+          "testOut": "[0][01110001][10100011011011100010111]\n0x38D1B717",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Scientific notation (1)",
+          "isTest": true,
+          "testIn": "15e0",
+          "testOut": "[0][10000010][11100000000000000000000]\n0x41700000",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Scientific notation  (1)",
+          "isTest": false,
+          "testIn": "8e5",
+          "testOut": "[0][10010010][10000110101000000000000]\n0x49435000",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Scientific notation  (2)",
+          "isTest": true,
+          "testIn": "1.2e+5",
+          "testOut": "[0][10001111][11010100110000000000000]\n0x47EA6000",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Scientific notation (2)",
+          "isTest": false,
+          "testIn": "255e-2",
+          "testOut": "[0][10000000][01000110011001100110011]\n0x40233333",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Scientific notation (3)",
+          "isTest": true,
+          "testIn": "3.5e-5",
+          "testOut": "[0][01110000][00100101100110011110111]\n0x3812CCF7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Scientific notation  (3)",
+          "isTest": false,
+          "testIn": "1.23569e+2",
+          "testOut": "[0][10000101][11101110010001101010100]\n0x42F72354",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Scientific notation  (4)",
+          "isTest": true,
+          "testIn": "-1.875e-4",
+          "testOut": "[1][01110010][10001001001101110100110]\n0xB9449BA6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Scientific notation  (4)",
+          "isTest": false,
+          "testIn": "-19.651e-4",
+          "testOut": "[1][01110110][00000001100100011101000]\n0xBB00C8E8",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "[[N]] is maximum 20 characters",
+      "coverBinaryId": 117354106845523,
+      "stubGenerator": "read N:string(20)\nwrite [0][00000000][00000000000000000000000]\n0x00000000",
+      "inputDescription": "A string [[N]] which may or may not be a valid decimal number. It may have a prefix of {{+}} or {{-}} to indicate its sign, and it may be expressed in scientific notation (such as {{5.63e15}}, {{3.14e+5}}).",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> the formatted result of the conversion {{[}}[[s]]{{][}}[[e]]{{][}}[[m]]{{]}}\n<<Line 2:>> the hexadecimal value of the converted number (as we could see it in computer memory dump)"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You may wonder how a computer is storing decimal numbers ? Not so trivial, let's have a look !<br><br><strong>Decimal numbers</strong> are managed as <strong>floating numbers</strong> on computers, which is a way to approximate as best as possible the decimal values.  The most commonly used standard for floating numbers is the <strong>IEEE 754 standard</strong> (used in many programming languages such as C, C++, Python etc...)<br><br>In this puzzle, you will implement the algorithm to encode a decimal number from its literal format using the IEEE 754 (Single Precision 32 bits).<br><br>So, how does it work ? We need first to convert the decimal number from its base 10 (denoted b10) to base 2 (denoted b2). Then, we will encode the result using the IEEE 754 standard.<br><br><strong>Convert a decimal number from base 10 to base 2</strong><br><br>For a decimal number there are two parts, the <strong>whole part</strong> and the <strong>fractional part</strong>.<br><br>For the <strong>whole part, we simply convert it to a binary number</strong><br>For the <strong>fractional part</strong>:<br>Step 1: we multiply the fractional part by 2<br>Step 2: if the result = 0, the conversion to base 2 is done, go to Step 3<br>   . if result &lt; 1, we store 0 as bit value for this round. We use the result as new value for fractional part and we restart at Step 1<br>   . if result &ge; 1, we store 1 as bit value for this round, we substract 1 from result,  and we use this value for fractional part and we restart at Step 1<br>Step 3: we list all bits we stored and we have our result<br><br>Example: 15.5: the whole part = 15, the fractional part = .5 (if we include the decimal point).<br><br>Whole part: 15<br>(b10) 15 =&gt; (b2) 1111<br><br>Fractional part: 0.5<br>0.5 * 2 = 1, we get 1, substract 1 and get 0 (1-1)<br>0 * 2 = 0  we are done<br><br>Result: (b10) 15.5 = (b2) 1111.1<br><br>In the same way:  (b10) 0.125 = (b2) 0.001<br><br>Unfortunately, not all base 10 numbers have a perfect match with base 2 numbers when we talk about fractional parts... To illustrate it, let's convert a very simple number: 1.1<br><br>whole part: 1<br>fractional part: <br><pre style=\"font-family: monospace\"><br>0.1 x 2 = 0.2 -&gt; 0<br>0.2 x 2 = 0.4 -&gt; 0   &lt;------+ We are looping with the same result<br>0.4 x 2 = 0.8 -&gt; 0          |<br>0.8 x 2 = 1.6 -&gt; 1          |<br>0.6 x 2 = 1.2 -&gt; 1          |<br>0.2 x 2 = 0.4 -&gt; 0    ------+<br></pre><br><br>Here, there is no end and the conversion can only be an approximation. So, we need to stop when we reached the maximum length of the bits which can be stored. This maximum length is described in IEEE 754. <br>    <br><strong>Encoding a decimal number (b2) with IEEE 754</strong><br><br>We are going to encode only using the single precision method which is using 32 bits, this is the classical 'float' in programming languages. IEEE 754 introduces other precisions like 64 bits or 128 bits. The principle is exactly the same, so we will only do the 32 bits version.<br><br>For 32 bits, the general format is the following:<br><br>[ <var>s</var> = 1 bit for the sign ] [ <var>e</var> = 8 bits for the biased exponent ] [ <var>m</var> = 23 bits for the mantissa ]<br><br>To perform the encoding, we need to adapt the number to match the following format: <strong>(1.xxxxx) * 2^<var>exp</var></strong><br><br>We then reformat our previous results:<br>    (b10) 15.5 = (b2) 1111.1 = (b2) 1.1111 * 2^3<br>    (b10) 0.125 = (b2) 0.001 = (b2) 1 * 2^-3<br><br><strong>IEEE 754 rules:</strong><br><br><strong><var>s</var> sign rule</strong> <br>    <var>s</var>=0 for positive, <var>s</var>=1 for negative numbers.<br><br><strong><var>e</var> biased exponent rule</strong><br>    <strong><var>e</var> = 127+<var>exp</var></strong> (this is only true for denormalized numbers which is the generic approach we use in this puzzle, check the IEEE 754 reference for more info)<br>    <var>e</var> is then converted to binary format on 8 bits.<br><br><strong><var>m</var> mantissa rule</strong><br>    We simply take all bits after the decimal point with max 23 bits:<br>    - If less than 23 bits we fill the remaining ending bits with 0<br>    - If more than 23 bits, we truncate to 23 bits and we round the binary number if needed.<br><br>Then:<br><br><strong>(b10) 15.5</strong> = (b2) 1111.1 = (b2) 1.1111x2^3<br><var>s</var> = 0, <var>e</var> = 127 + 3 (b10) = (b2) 10000010<br><var>m</var> = 11110000000000000000000<br><br><strong>(b10) -0.125</strong> = (b2) 0.001 = (b2) 1x2^-3<br><var>s</var> = 1,  <var>e</var> = 127 - 3 (b10) = (b2) 01111100<br><var>m</var> = 00000000000000000000000 <br><br>Let's now look at number with more than 23 bits for the mantissa, such as (b10) 1.1<br><br><pre style=\"font-family: monospace\"><br>(b10) 1.1 = (b2) 1.0001100110011001100110011...x2^0<br>                                         ^<br>We need to truncate at <strong>23 bits</strong><br></pre><br><br>If <strong>next bit (24th) is 1</strong>, we need to round the number. <br>The rule is simple:<br>- if the bit in the previous position equals 0, we put it to 1 and this is finished.<br>- if the bit in the previous position equals 1, we replace it by 0 and we continue to round by moving 1 position before.<br><br>Once, rounded we have (b10) 1.1 = (b2) 1.00011001100110011001101<br>    <br><strong>Special cases</strong><br>0 is encoded as a normalized number: <var>s</var> = 0 / <var>e</var> = 00000000 / <var>m</var> = 00000000000000000000000 = <strong>0x00000000</strong><br>Invalid numbers are called NaN (Not a Number): <var>s</var> = 0 / <var>e</var> = 11111111 / <var>m</var> = 11111111111111111111111 = <strong>NaN</strong><br><br><strong>External reference</strong><br>https://en.wikipedia.org/wiki/Single-precision_floating-point_format</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">A string <var>N</var> which may or may not be a valid decimal number. It may have a prefix of <const>+</const> or <const>-</const> to indicate its sign, and it may be expressed in scientific notation (such as <const>5.63e15</const>, <const>3.14e+5</const>).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> the formatted result of the conversion <const>[</const><var>s</var><const>][</const><var>e</var><const>][</const><var>m</var><const>]</const><br><strong>Line 2:</strong> the hexadecimal value of the converted number (as we could see it in computer memory dump)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><var>N</var> is maximum 20 characters</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">0</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">[0][00000000][00000000000000000000000]\n0x00000000</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 63841451962,
+  "avatar": 117815661507237,
+  "commentCount": 23,
+  "upVotes": 14,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 907175,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1706887538497,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

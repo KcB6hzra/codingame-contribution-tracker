@@ -1,0 +1,177 @@
+{
+  "id": 306,
+  "activeVersion": 25,
+  "score": 4,
+  "votableId": 2386965,
+  "codingamerId": 1336464,
+  "views": 276,
+  "commentableId": 2335494,
+  "title": "Misère Nim",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "magaiti",
+  "publicHandle": "306a6dfa34dd91d2152103a1d5f36e2215d",
+  "codingamerHandle": "eec8bff1779e6e64b0ce890f0d5f53e64646331",
+  "lastVersion": {
+    "version": 25,
+    "data": {
+      "title": "Misère Nim",
+      "topics": [],
+      "solution": "#include <stdlib.h>\n#include <stdio.h>\n#include <string.h>\n/* -------------------------- *\n    misere nim\n * -------------------------- */\n#define MAX_ITEMS       51\n#define MAX_N_HEAPS     3\n\nstruct BOARD {\n    int h[MAX_N_HEAPS];\n};\n\nenum OUTCOME {\n    O_UNKNOWN = 0,\n    O_WIN,\n    O_LOSS,\n};\n\nchar Outcomes[MAX_ITEMS][MAX_ITEMS][MAX_ITEMS];\n\nvoid Outcomes_Init(void) {\n    for     (int i = 0; i < MAX_ITEMS; i++) {\n        for (int j = 0; j < MAX_ITEMS; j++) {\n            memset(&(Outcomes[i][j][0]), O_UNKNOWN, MAX_ITEMS * sizeof(char));\n        }\n    }\n    Outcomes[0][0][0] = O_WIN;\n}\n\nchar GetOutcome(struct BOARD *bp) {\n    return Outcomes [bp->h[0]] [bp->h[1]] [bp->h[2]];\n}\n\nvoid SetOutcome(struct BOARD *bp, char outcome) {\n    Outcomes [bp->h[0]] [bp->h[1]] [bp->h[2]] = outcome;\n}\n\n#define SORT_PAIR(a,b) \\\nif (*(a) > *(b)) { int t = *(a); *(a) = *(b); *(b) = t; }\n\nvoid sort(struct BOARD *bp) {\n    int *a = bp->h, *b = a + 1, *c = a + 2;\n    SORT_PAIR(a, c);\n    SORT_PAIR(b, c);\n    SORT_PAIR(a, b);\n}\n\nint winning_move(struct BOARD Board, int P1, int P2)\n{\n    sort(&Board);\n\n    char o = GetOutcome(&Board);\n    if (o == O_UNKNOWN) {\n        o = O_LOSS;\n        for (int h = 0; h < MAX_N_HEAPS; h++)\n        {\n            for (int m = Board.h[h]; m >= 1; m--)\n            {\n                struct BOARD NewBoard = Board;\n                NewBoard.h[h] -= m;\n                if (winning_move(NewBoard, P2, P1) == P1)\n                {\n                    o = O_WIN;\n                }\n            }\n        }\n        SetOutcome(&Board, o);\n    }\n    switch (o) {\n        case O_WIN:  return P1;\n        case O_LOSS: return P2;\n    }\n}\n\nint main()\n{\n    Outcomes_Init();\n\n    struct BOARD Board;\n\n    int N, K;\n    scanf(\"%d%d\", &N, &K);\n\n    for (int k = 0; k < K; k++)\n    {\n        for (int i = 0; i < MAX_N_HEAPS; i++)\n        {\n            if (i < MAX_N_HEAPS - N) {\n                Board.h[i] = 0;\n            } else {\n                scanf(\"%d\", &(Board.h[i]));\n            }\n        }\n    \n        if (winning_move(Board, O_WIN, O_LOSS) == O_LOSS) {\n            printf(\"CONCEDE\");\n        } else {\n            char* pad = \"\";\n            for (int h = 0; h < MAX_N_HEAPS; h++)\n            {\n                for (int m = 1; m <= Board.h[h]; m++)\n                {\n                    struct BOARD Move = Board; Move.h[h] -= m;\n                    sort(&Move);\n                    if (GetOutcome(&Move) == O_LOSS) {\n                        printf(\"%s%d:%d\", pad, (h + N - 2), m);\n                        pad = \" \";\n                    }\n                }\n            }\n        }\n        printf(\"\\n\");\n    }\n}\n",
+      "statement": "In a game of <<Nim>>, two players take turns removing objects from distinct heaps. On each turn, a player must remove at least one object, and may remove any number of objects provided they all come from the same heap. The goal of the normal game is to be the player to remove the last object.\n\nIn the <<Misère Nim>> variant of the game, the player who takes the last object loses.\n\nGiven a list of starting game positions, for each position find all possible moves that will ensure your victory.",
+      "testCases": [
+        {
+          "title": "One heap",
+          "isTest": true,
+          "testIn": "1 3\n5\n1\n7",
+          "testOut": "1:4\nCONCEDE\n1:6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "One heap",
+          "isTest": false,
+          "testIn": "1 3\n8\n3\n1",
+          "testOut": "1:7\n1:2\nCONCEDE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two heaps, simple",
+          "isTest": true,
+          "testIn": "2 4\n1 3\n1 7\n2 2\n1 1",
+          "testOut": "2:3\n2:7\nCONCEDE\n1:1 2:1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Two heaps, simple",
+          "isTest": false,
+          "testIn": "2 4\n1 6\n3 3\n1 1\n1 2",
+          "testOut": "2:6\nCONCEDE\n1:1 2:1\n2:2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two heaps",
+          "isTest": true,
+          "testIn": "2 3\n2 7\n5 5\n7 9",
+          "testOut": "2:5\nCONCEDE\n2:2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Two heaps",
+          "isTest": false,
+          "testIn": "2 3\n3 8\n4 7\n9 9",
+          "testOut": "2:5\n2:3\nCONCEDE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Three heaps, simple",
+          "isTest": true,
+          "testIn": "3 5\n1 1 1\n1 2 2\n1 2 3\n1 3 7\n2 3 7",
+          "testOut": "CONCEDE\n1:1\nCONCEDE\n3:5\n3:6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Three heaps, simple",
+          "isTest": false,
+          "testIn": "3 3\n1 3 7\n2 3 7\n1 1 1",
+          "testOut": "3:5\n3:6\nCONCEDE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple possibilities",
+          "isTest": true,
+          "testIn": "3 5\n1 3 3\n2 3 3\n3 5 7\n2 6 7\n2 5 7",
+          "testOut": "1:1 2:1 3:1\n1:2 2:2 3:2\n1:1 2:1 3:1\n1:1 2:1 3:3\nCONCEDE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple possibilities",
+          "isTest": false,
+          "testIn": "3 2\n7 7 7\n1 6 7",
+          "testOut": "1:7 2:7 3:7\nCONCEDE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Three heaps",
+          "isTest": true,
+          "testIn": "3 5\n3 3 7\n2 7 13\n3 4 7\n4 7 8\n3 4 5",
+          "testOut": "3:7\n3:8\nCONCEDE\n3:5\n1:2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Three heaps",
+          "isTest": false,
+          "testIn": "3 4\n5 5 9\n5 9 9\n4 7 13\n3 9 14",
+          "testOut": "3:9\n1:5\n3:10\n3:4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Hard",
+          "isTest": true,
+          "testIn": "3 5\n3 7 11\n5 8 11\n7 9 14\n9 23 24\n25 29 34",
+          "testOut": "3:7\n1:2\nCONCEDE\n2:6\n3:30",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Hard",
+          "isTest": false,
+          "testIn": "3 2\n9 23 44\n25 31 47",
+          "testOut": "3:14\n3:41",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Hard, multiple moves",
+          "isTest": true,
+          "testIn": "3 4\n19 23 24\n6 30 31\n22 25 27\n33 38 41",
+          "testOut": "1:4 2:12 3:20\n1:5 2:5 3:7\n1:20 2:12 3:12\n1:18 2:30 3:34",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Hard, multiple moves",
+          "isTest": false,
+          "testIn": "3 2\n37 39 41\n26 27 31",
+          "testOut": "1:23 2:27 3:39\n1:22 2:22 3:30",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "1 ≤ [[N]] ≤ 3\n1 ≤ [[Mi]] ≤ 50\n1 ≤ [[K]] ≤ 5\nThe positions are provided in ascending order of initial heap size.",
+      "stubGenerator": "read N:int K:int\nloop K loopline N Heap:int\nloop K write 1:4",
+      "inputDescription": "<<Line 1:>> Two space separated Integers [[N]] and [[K]].\n[[N]] is the number of heaps; it is shared between all of the following positions.\n[[K]] is number of positions.\n<<Next [[K]] Lines:>> [[N]] space separated integers [[Mi]], the number of objects in each heap.",
+      "solutionLanguage": "C",
+      "outputDescription": "<<[[K]] lines>>: Solutions for each board position, in the order they were given.\nIf the position has no winning moves, its solution is the word {{CONCEDE}}.\nIf the position has winning moves, its solution is a line of one or more space-separated moves. Each move is a colon-separated pair of integers [[i]]{{:}}[[a]], where:\n- [[i]] is the number of the heap to remove objects from: 1 ≤[[i]] ≤ [[N]].\n- [[a]] is the amount of objects to take: 1 ≤ [[a]] ≤ [[Mi]].\nMoves must be sorted by heap number [[i]] first, number of objects [[a]] second."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">In a game of <strong>Nim</strong>, two players take turns removing objects from distinct heaps. On each turn, a player must remove at least one object, and may remove any number of objects provided they all come from the same heap. The goal of the normal game is to be the player to remove the last object.<br><br>In the <strong>Mis&egrave;re Nim</strong> variant of the game, the player who takes the last object loses.<br><br>Given a list of starting game positions, for each position find all possible moves that will ensure your victory.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Two space separated Integers <var>N</var> and <var>K</var>.<br><var>N</var> is the number of heaps; it is shared between all of the following positions.<br><var>K</var> is number of positions.<br><strong>Next <var>K</var> Lines:</strong> <var>N</var> space separated integers <var>Mi</var>, the number of objects in each heap.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>K</var> lines</strong>: Solutions for each board position, in the order they were given.<br>If the position has no winning moves, its solution is the word <const>CONCEDE</const>.<br>If the position has winning moves, its solution is a line of one or more space-separated moves. Each move is a colon-separated pair of integers <var>i</var><const>:</const><var>a</var>, where:<br>- <var>i</var> is the number of the heap to remove objects from: 1 &le;<var>i</var> &le; <var>N</var>.<br>- <var>a</var> is the amount of objects to take: 1 &le; <var>a</var> &le; <var>Mi</var>.<br>Moves must be sorted by heap number <var>i</var> first, number of objects <var>a</var> second.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 3<br>1 &le; <var>Mi</var> &le; 50<br>1 &le; <var>K</var> &le; 5<br>The positions are provided in ascending order of initial heap size.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1 3\n5\n1\n7</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1:4\nCONCEDE\n1:6</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 292378268302,
+  "avatar": 4034881109815,
+  "commentCount": 11,
+  "upVotes": 4,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 42760,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

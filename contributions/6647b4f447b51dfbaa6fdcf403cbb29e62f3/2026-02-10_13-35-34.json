@@ -1,0 +1,180 @@
+{
+  "id": 6647,
+  "activeVersion": 25,
+  "score": 4,
+  "votableId": 18078850,
+  "codingamerId": 862888,
+  "views": 279,
+  "commentableId": 17983455,
+  "title": "Longest Road",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Jumpmaster",
+  "publicHandle": "6647b4f447b51dfbaa6fdcf403cbb29e62f3",
+  "codingamerHandle": "e00b62711a420d53e2e9a245d1d0636c888268",
+  "lastVersion": {
+    "version": 25,
+    "autocloseTime": 1622661695113,
+    "data": {
+      "title": "Longest Road",
+      "topics": [
+        {
+          "id": 128,
+          "handle": "ascii-art",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Ascii Art",
+            "2": "Ascii Art"
+          },
+          "puzzleCount": 11,
+          "parentTopicId": 93
+        },
+        {
+          "id": 55,
+          "handle": "DFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en profondeur",
+            "2": "DFS"
+          },
+          "pageTitle": "DFS: exercises and theory",
+          "puzzleCount": 19,
+          "parentTopicId": 41,
+          "contentDetailsId": 79
+        }
+      ],
+      "solution": "import sys\nimport math\n\nn = int(input())\nboard = []\nplayers= []\nfor i in range(n):\n    line = input()\n    board.append(line)\n    for j in line:\n        if(not j == \"#\" and not j.upper() in players):\n            players.append(j.upper())\n\nfor line in board:\n    print(line, file=sys.stderr, flush=True)\nprint(\"\", file=sys.stderr, flush=True)\n\ndef getTiles(i, j, path):\n    this = board[i][j].lower()\n\n    tiles = [(i+1, j), (i-1, j), (i, j+1), (i, j-1)]\n    if(i == 0):\n        tiles.remove((i-1, j))\n    elif(i == n-1):\n        tiles.remove((i+1, j))\n    if(j == 0):\n        tiles.remove((i, j-1))\n    elif(j == n-1):\n        tiles.remove((i, j+1))\n\n    k = 0\n    while(k < len(tiles)):\n        tile = tiles[k]\n        if(board[tile[0]][tile[1]] == \"#\"):\n            tiles.remove(tile)\n            k = 0\n        elif( not (board[tile[0]][tile[1]] == this or board[tile[0]][tile[1]] == this.upper()) ):\n            tiles.remove(tile)\n            k = 0\n        elif(tile in path):\n            tiles.remove(tile)\n            k = 0\n        else:\n            k += 1\n\n    return tiles\n\n\n\ndef roadType(i, j, path):\n    tiles = getTiles(i, j, path)\n    return len(tiles)\n\n\n\ndef getRoad(start, end, path, p, maxL, longest):\n    # print(\"\", file=sys.stderr, flush=True)\n\n    path.append(start)\n\n    tiles = getTiles(start[0], start[1], path)\n    # print(\"current position: \" + str(start) + \" \" + str(path), file=sys.stderr, flush=True)\n    # print(\"options: \" + str(tiles), file=sys.stderr, flush=True)\n\n    if(len(tiles) == 0):\n        # print(\"  \" + str((len(path), path)), file=sys.stderr, flush=True)\n        if(path[len(path)-1] == end):\n            return path\n    else:\n        for tile in tiles:\n\n            newPath = []\n            for k in path:\n                newPath.append(k)\n            newPath = getRoad(tile, end, newPath, p, maxL, longest)\n\n            if(len(newPath) > maxL):\n                maxL = len(newPath)\n                longest = newPath\n\n        path = longest\n        return path\n\n    return path\n\n\n\n\n\n\nlongestRoad = 0\nwinner = \"#\"\n\nfor player in players:\n    # print(\"player: \" + player, file=sys.stderr, flush=True)\n    roadStarts = []\n    loops = []\n    for i in range(n):\n        for j in range(n):\n\n            # find all beginnings/ends of roads\n            if(board[i][j] == player.lower() or board[i][j] == player.upper()):\n                loops.append((i, j))\n                rCount = roadType(i, j, [])\n                if(rCount == 1):\n                    roadStarts.append((i, j))\n\n    # roadStarts = [(1, 4), (2, 3)]\n    # print(roadStarts, file=sys.stderr, flush=True)\n\n    if(len(roadStarts) > 1):\n        for i in range(len(roadStarts)):\n            start = roadStarts[i]\n            for j in range(i, len(roadStarts)):\n                end = roadStarts[j]\n                if(not start == end):\n                    # print(\"from \" + str(start) + \" to \" + str(end), file=sys.stderr, flush=True)\n                    l = getRoad(start, end, [], player.lower(), 0, [])\n                    for point in l:\n                        if(board[point[0]][point[1]] == player):\n                            l.remove(point)\n                    l = len(l)\n                    if(l > longestRoad):\n                        longestRoad = l\n                        winner = player\n    else:\n        roadStarts = loops\n        for i in range(len(roadStarts)):\n            start = roadStarts[i]\n            for j in range(i, len(roadStarts)):\n                end = roadStarts[j]\n                if(not start == end):\n                    # print(\"from \" + str(start) + \" to \" + str(end), file=sys.stderr, flush=True)\n                    l = getRoad(start, end, [], player.lower(), 0, [])\n                    for point in l:\n                        if(board[point[0]][point[1]] == player):\n                            l.remove(point)\n                    l = len(l)\n                    if(l > longestRoad):\n                        longestRoad = l\n                        winner = player\n\n\nif(longestRoad >= 5):\n    print(winner, longestRoad)\nelse:\n    print(0)\n",
+      "statement": "Determine which player in a <<rectangular>> \"Settlers of Catan\" themed game board has the longest road.\n\nGiven an ascii game board:\n`aa##b\n#A##B\n#aa#b\n##a##`\nThe lower case letters \"{{a}}\" denote a road belonging to player {{A}}.\nUppercase letters denote a settlement.\n\nIf a player has at least 5 consecutive (non-repeating) roads then they can be awarded the \"longest road\" victory points.\nRoads connected diagonally are not considered consecutive. Roads can be linked together by settlements, but the settlements do not count towards the total length of the player's roads. In the above example player {{A}} would have the longest road with a length of 5.\n\nThe input will never include the case where multiple players are tied for longest road.\n\n<<Loops and branches>>\nA road may form a loop or branch out in multiple directions. In all cases the longest possible consecutive link of roads is used to determine the players' longest roads.\n\nInspired by the board game \"Settlers of Catan\" by Klaus Teuber.\nImage by dograapps from Pixabay.",
+      "testCases": [
+        {
+          "title": "One player, only roads",
+          "isTest": true,
+          "testIn": "5\n#a###\n#a###\n#a###\n#aa##\n##a##",
+          "testOut": "A 6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "5\naa###\n#a###\n#a###\n#aa##\n##a##",
+          "testOut": "A 7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "One player",
+          "isTest": true,
+          "testIn": "5\naa#a#\n#A#aA\n#a##a\n#aa##\n##a##",
+          "testOut": "A 6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "5\naa#a#\n#A#aA\n#a##a\n#aa##\n##aa#",
+          "testOut": "A 7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Not long enough",
+          "isTest": true,
+          "testIn": "5\n#####\n#A###\n#a###\n#aA##\n##aa#",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "5\n#####\n#A###\n#a###\n#aA##\n##aa#",
+          "testOut": "0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two players",
+          "isTest": true,
+          "testIn": "5\n#A#bb\n#a##b\n####B\n#Aa#b\n##abb",
+          "testOut": "B 6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "5\n#A##b\n#a##b\n####B\n#Aa#b\n##abb",
+          "testOut": "B 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Four players and overlapping roads",
+          "isTest": true,
+          "testIn": "10\nBb###aA###\nb#Cc#a####\n###c#a####\n###ccCccc#\n#####a####\n#####aAaaa\n######d###\n#dBbb#D###\n#d####d###\n#D####d###",
+          "testOut": "C 7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "10\nBb###cC###\nb#Aa#c####\n###a#c####\n###aaAaaa#\n#####c####\n#####cCccc\n######d###\n#dBbb#D###\n#d####d###\n#D####d###",
+          "testOut": "A 7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Loops and branches",
+          "isTest": true,
+          "testIn": "5\naaaaa\nA#a#a\naaaa#\n#a###\naaaaa",
+          "testOut": "A 13",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "5\nbbbbb\nb#b#B\n#bbbb\n###b#\n#bbb#",
+          "testOut": "B 12",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "5 ≤ [[n]] ≤ 10",
+      "coverBinaryId": 63211004851615,
+      "stubGenerator": "read n:int\nloop n read line:string(n)\nwrite answer",
+      "inputDescription": "<<Line 1:>> Integer [[n]] the length of the square board.\n<<Next [[n]] lines:>> String of characters representing the game board. {{#}} represents an open space. Lowercase letters represent roads, and uppercase letters represent settlements.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "Output the capital letter of the player with the longest road, and the length of the road, e.g. {{A 6}}.\nIf no player has the longest road then output the number {{0}}."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Determine which player in a <strong>rectangular</strong> &quot;Settlers of Catan&quot; themed game board has the longest road.<br><br>Given an ascii game board:<br><pre style=\"font-family: monospace\">aa##b<br>#A##B<br>#aa#b<br>##a##</pre><br>The lower case letters &quot;<const>a</const>&quot; denote a road belonging to player <const>A</const>.<br>Uppercase letters denote a settlement.<br><br>If a player has at least 5 consecutive (non-repeating) roads then they can be awarded the &quot;longest road&quot; victory points.<br>Roads connected diagonally are not considered consecutive. Roads can be linked together by settlements, but the settlements do not count towards the total length of the player's roads. In the above example player <const>A</const> would have the longest road with a length of 5.<br><br>The input will never include the case where multiple players are tied for longest road.<br><br><strong>Loops and branches</strong><br>A road may form a loop or branch out in multiple directions. In all cases the longest possible consecutive link of roads is used to determine the players' longest roads.<br><br>Inspired by the board game &quot;Settlers of Catan&quot; by Klaus Teuber.<br>Image by dograapps from Pixabay.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Integer <var>n</var> the length of the square board.<br><strong>Next <var>n</var> lines:</strong> String of characters representing the game board. <const>#</const> represents an open space. Lowercase letters represent roads, and uppercase letters represent settlements.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Output the capital letter of the player with the longest road, and the length of the road, e.g. <const>A 6</const>.<br>If no player has the longest road then output the number <const>0</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">5 &le; <var>n</var> &le; 10</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5\n#a###\n#a###\n#a###\n#aa##\n##a##</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">A 6</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 149898042491,
+  "avatar": 61974182334796,
+  "commentCount": 22,
+  "upVotes": 7,
+  "downVotes": 3,
+  "validateAction": {
+    "actionId": 553198,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1620832490952,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

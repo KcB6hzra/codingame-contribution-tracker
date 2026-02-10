@@ -1,0 +1,167 @@
+{
+  "id": 37075,
+  "activeVersion": 33,
+  "score": 23,
+  "votableId": 25983904,
+  "codingamerId": 2064637,
+  "views": 595,
+  "commentableId": 25860784,
+  "title": "Cylinders",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "java_coffee_cup",
+  "publicHandle": "3707585c94aaefcd3dbdeb2b4b105ced2bad2",
+  "codingamerHandle": "f4c116cad137a7eee91b727ff6fe53597364602",
+  "lastVersion": {
+    "version": 33,
+    "autocloseTime": 1674221917975,
+    "data": {
+      "title": "Cylinders",
+      "topics": [
+        {
+          "id": 95,
+          "handle": "geometry",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Geometry",
+            "2": "Geometry"
+          },
+          "puzzleCount": 19,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import java.util.*;\n\npublic class Solution {\n\n\tpublic static void main(String[] args) {\n\t\tScanner in = new Scanner(System.in);\n\t\tint N = in.nextInt();\n\t\tin.nextLine();\n\t\tfor (int i = 0; i < N; i++) {\n\t\t\tString str = in.nextLine();\n\t\t\tString[] ss = str.split(\"\\\\s\");\n\t\t\tint n = Integer.parseInt(ss[0]);\n\t\t\t// a box to keep n cylinders\n\t\t\tBox b = new Box(n);\n\t\t\tfor (int j = 0; j < n; j++) {\n\t\t\t\tint r = Integer.parseInt(ss[j + 1]);\n\t\t\t\tb.addRadius(r);\n\t\t\t}\n\t\t\tb.ans();\n\t\t}\n\t\tin.close();\n\t}\n}\n\nclass Box {\n\tstatic boolean isDebug = false;\n\n\tint n;\n\tList<Integer> rList; // list of radius\n\n\tpublic Box(int n) {\n\t\tthis.n = n;\n\t\trList = new ArrayList<>();\n\t}\n\n\tpublic void ans() {\n\t\tList<List<Integer>> llist = Perm.listPermutations(rList);\n\t\t\n\t\tdouble min = Double.MAX_VALUE;\n\n\t\tfor (List<Integer> rList : llist) {\n\t\t\tList<Circle> cList = new ArrayList<>();\n\t\t\tdouble dist = calc(rList, cList);\n\n\t\t\tif (dist < min) {\n\t\t\t\tmin = dist;\n\t\t\t}\n\t\t}\n\t\tSystem.out.printf(\"%.3f\\n\", min);\n\t}\n\n\tprivate double calc(List<Integer> rList, List<Circle> cList) {\n\t\tfor (int r : rList) {\n\t\t\tcList.add(new Circle(r));\n\t\t}\n\n\t\tCircle c0 = cList.get(0);\n\t\tc0.setCenterAt(c0.r);\n\n\t\tdouble maxCenter2 = 0.0;\n\n\t\tfor (int i = 1; i < n; i++) {\n\t\t\tCircle c2 = cList.get(i);\n\t\t\tfor (int j = i - 1; j >= 0; j--) {\n\t\t\t\tCircle c1 = cList.get(j);\n\t\t\t\tdouble hori = horiDistanceBetweenCenters(c1, c2);\n\t\t\t\tdouble center2 = c1.getCenterAt() + hori;\n\n\t\t\t\tif (center2 > maxCenter2) {\n\t\t\t\t\tmaxCenter2 = center2;\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tif (maxCenter2 < c2.r) {\n\t\t\t\tc2.setCenterAt(c2.r);\n\t\t\t} else {\n\t\t\t\tc2.setCenterAt(maxCenter2);\n\t\t\t}\n\t\t} // for\n\n\t\tdouble max = Double.MIN_VALUE;\n\t\tfor (Circle cx : cList) {\n\t\t\tdouble rhs = cx.getRHS();\n\t\t\tif (rhs > max) {\n\t\t\t\tmax = rhs;\n\t\t\t}\n\t\t}\n\t\treturn max;\n\t}\n\n\tprivate double horiDistanceBetweenCenters(Circle c1, Circle c2) {\n\t\tint r1 = c1.r;\n\t\tint r2 = c2.r;\n\t\tdouble hori = 2.0 * Math.sqrt(r1 * r2);\n\t\treturn hori;\n\t}\n\n\tpublic void addRadius(int r) {\n\t\trList.add(r);\n\t}\n}\n\nclass Circle {\n\tint r;\n\tdouble centerAt;\n\tdouble rhs;\n\n\tpublic Circle(int r) {\n\t\tthis.r = r;\n\t}\n\n\tpublic double getRHS() {\n\t\tthis.rhs = this.centerAt + this.r;\n\t\treturn rhs;\n\t}\n\n\tpublic double getCenterAt() {\n\t\treturn centerAt;\n\t}\n\n\tpublic void setCenterAt(double centerAt) {\n\t\tthis.centerAt = centerAt;\n\t}\n}\n\nclass Perm {\n\tpublic static List<List<Integer>> listPermutations(List<Integer> list) {\n\t\tif (list.size() == 0) {\n\t\t\tList<List<Integer>> result = new ArrayList<List<Integer>>();\n\t\t\tresult.add(new ArrayList<Integer>());\n\t\t\treturn result;\n\t\t}\n\t\tList<List<Integer>> returnMe = new ArrayList<List<Integer>>();\n\t\tInteger firstElement = list.remove(0);\n\t\tList<List<Integer>> recursiveReturn = listPermutations(list);\n\t\tfor (List<Integer> li : recursiveReturn) {\n\t\t\tfor (int index = 0; index <= li.size(); index++) {\n\t\t\t\tList<Integer> temp = new ArrayList<>(li);\n\t\t\t\ttemp.add(index, firstElement);\n\t\t\t\treturnMe.add(temp);\n\t\t\t}\n\t\t}\n\t\treturn returnMe;\n\t}\n}\n",
+      "statement": "I have a bunch of cylinders of various diameters needing to pack in a box. All cylinders must lay flat in the box without stacking over the others. It was found that by arranging the cylinders in different orders, the total width of the cylinders can be different.\n\nThe diagram in the banner shows an example how nine cylinders (radii from 1 to 9) can be tightly packed.\n\nGiven an array of cylinders, find out how small the box can be to best fit all cylinders properly.",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "5\n3 2 1 2\n4 3 3 3 3\n4 900 970 567 965\n7 3 380 135 150 542 93 10\n8 13 8 2 1 3 1 5 2",
+          "testOut": "9.657\n24.000\n6696.314\n2163.508\n53.811",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Example Validator",
+          "isTest": false,
+          "testIn": "5\n3 18 22 28\n4 1 1 1 1\n5 259 56 31 129 190\n6 778 3000 5974 8034 42 246\n7 15 23 319 15 170 40 32",
+          "testOut": "134.539\n8.000\n1131.739\n32293.634\n954.747",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Caves to fill in",
+          "isTest": true,
+          "testIn": "9\n1 500\n2 5 500\n3 5 10 15\n4 20 1 2 3\n5 2 3 2 3 3\n6 121 6 3 12 28 17\n7 60 70 80 10 30 40 300\n8 4137 183 51 96 109 99 183 10\n9 3 4 3 3 200 2 400 4 11",
+          "testOut": "1000.000\n1000.000\n56.463\n40.000\n25.596\n265.413\n886.430\n8274.000\n1165.685",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Caves Validator",
+          "isTest": false,
+          "testIn": "9\n1 3\n2 2 4\n3 3 5 7\n4 60 1 3 1\n5 2 2 2 2 2\n6 107 38 17 4 5 12\n7 68 249 32 78 13 62 44\n8 183 1437 51 69 118 1 100 138\n9 5 6 5 5 198 1 2 242 1",
+          "testOut": "6.000\n11.657\n28.911\n120.000\n20.000\n272.530\n866.549\n2874.000\n877.794",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Harsh",
+          "isTest": true,
+          "testIn": "10\n1 687\n2 580 431\n3 326 14 549\n4 518 47 784 308\n5 114 473 562 318 573\n6 985 305 540 647 367 866\n6 135 13 57 943 900 9\n7 914 398 108 36 688 846 231\n8 739 211 458 965 253 492 587 174\n9 279 496 796 644 602 765 723 715 85",
+          "testOut": "1374.000\n2010.960\n1721.106\n3083.334\n3775.436\n6855.840\n3685.498\n5589.961\n6719.488\n9713.968",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Harsh Validator",
+          "isTest": false,
+          "testIn": "10\n4 513 95 71 931\n2 87 873\n5 519 988 988 192 43\n8 808 61 269 17 524 405 914 868\n2 449 893\n7 347 451 141 893 640 621 59\n9 777 636 994 881 143 648 743 892 527\n3 480 238 765\n3 1 434 80\n4 994 346 593 635",
+          "testOut": "2826.177\n1746.000\n4910.586\n6999.872\n2608.423\n5644.504\n11983.894\n2774.381\n886.666\n4873.868",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Optimize your code",
+          "isTest": true,
+          "testIn": "10\n5 677 976 287 977 213\n9 1 2 3 4 5 6 7 8 9\n8 287 326 905 539 993 159 665 152\n4 180 574 839 223\n5 481 947 358 911 426\n9 442 721 165 672 157 346 696 767 269\n5 377 250 727 905 452\n7 432 647 785 609 875 339 76\n4 940 303 590 92\n7 106 945 643 685 882 929 863",
+          "testOut": "5442.404\n80.103\n6821.069\n3082.189\n5807.919\n7472.313\n4947.659\n7046.834\n3442.995\n9804.265",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Optimize Validator",
+          "isTest": false,
+          "testIn": "10\n9 2 3 5 7 11 13 17 19 23\n6 17 669 372 220 860 156\n5 39 63 953 687 134\n4 439 39 991 633\n4 912 998 656 783\n9 455 479 283 329 945 146 981 103 853\n6 450 374 291 660 235 291\n7 942 981 246 619 249 392 36\n8 25 284 750 629 648 599 662 499\n7 534 54 473 207 540 706 651",
+          "testOut": "170.975\n3892.577\n3258.284\n3975.214\n6628.192\n7807.671\n4363.073\n5945.274\n7915.095\n5918.495",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ [[n]] ≤ 10\n1 ≤ [[m]] ≤ 9\n1 ≤ each radius ≤ 10000",
+      "coverBinaryId": 92507547660203,
+      "stubGenerator": "read n:int\nloop n read line:string(100)\nwrite answer",
+      "inputDescription": "There are multiple tests in each test case.\n\n<<Line 1:>> An integer [[n]] for the number of tests. \n\n<<The following [[n]] lines:>> Each line is an independent test. A line starts with integer [[m]], for the number of cylinders, followed by [[m]] integers, for the radius of each cylinder. The numbers are space separated with the radii in no special order.\n\nAll cylinders have the same height. You do not need to care about it. You just need to consider how all the cylinders can be packed together tightly to the minimum width by factoring in the radii only.",
+      "solutionLanguage": "Java",
+      "outputDescription": "<<Write [[n]] lines :>> Corresponding to each input line, output the minimum width of the box good enough to put all these cylinders in.\n\nThe output has to be decimal numbers, with 3 places after the decimal point. For example, value of 3.14159 has to be rounded to 3.142. Value of 3.1414 should be written as 3.141. Value of 3 should be written as 3.000\n\nAll given radii and your output are assumed to be using the same unit."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">I have a bunch of cylinders of various diameters needing to pack in a box. All cylinders must lay flat in the box without stacking over the others. It was found that by arranging the cylinders in different orders, the total width of the cylinders can be different.<br><br>The diagram in the banner shows an example how nine cylinders (radii from 1 to 9) can be tightly packed.<br><br>Given an array of cylinders, find out how small the box can be to best fit all cylinders properly.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">There are multiple tests in each test case.<br><br><strong>Line 1:</strong> An integer <var>n</var> for the number of tests. <br><br><strong>The following <var>n</var> lines:</strong> Each line is an independent test. A line starts with integer <var>m</var>, for the number of cylinders, followed by <var>m</var> integers, for the radius of each cylinder. The numbers are space separated with the radii in no special order.<br><br>All cylinders have the same height. You do not need to care about it. You just need to consider how all the cylinders can be packed together tightly to the minimum width by factoring in the radii only.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Write <var>n</var> lines :</strong> Corresponding to each input line, output the minimum width of the box good enough to put all these cylinders in.<br><br>The output has to be decimal numbers, with 3 places after the decimal point. For example, value of 3.14159 has to be rounded to 3.142. Value of 3.1414 should be written as 3.141. Value of 3 should be written as 3.000<br><br>All given radii and your output are assumed to be using the same unit.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>n</var> &le; 10<br>1 &le; <var>m</var> &le; 9<br>1 &le; each radius &le; 10000</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5\n3 2 1 2\n4 3 3 3 3\n4 900 970 567 965\n7 3 380 135 150 542 93 10\n8 13 8 2 1 3 1 5 2</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">9.657\n24.000\n6696.314\n2163.508\n53.811</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 97089003214,
+  "avatar": 13281799951852,
+  "commentCount": 28,
+  "upVotes": 24,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 746587,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1669021537001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1669021611820,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1671617137001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1671629834060,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1673640531760,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,356 @@
+{
+  "id": 46053,
+  "activeVersion": 26,
+  "score": 17,
+  "votableId": 28136118,
+  "codingamerId": 4806550,
+  "views": 432,
+  "commentableId": 28007864,
+  "title": "Fix the spaces",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Rafarafa",
+  "publicHandle": "46053956831b4324bf2a6e36521916e52a727",
+  "codingamerHandle": "68977779383d7e4ea558c7a5446487f40556084",
+  "lastVersion": {
+    "version": 26,
+    "autocloseTime": 1681449130757,
+    "data": {
+      "title": "Fix the spaces",
+      "topics": [
+        {
+          "id": 56,
+          "handle": "backtracking",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Retour sur trace",
+            "2": "Backtracking"
+          },
+          "pageTitle": "Backtracking: exercises and theory",
+          "puzzleCount": 16,
+          "parentTopicId": 41,
+          "contentDetailsId": 80
+        },
+        {
+          "id": 112,
+          "handle": "string-manipulation",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "String manipulation",
+            "2": "String manipulation"
+          },
+          "puzzleCount": 45,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "\n(* Utility function: same as python startswith *)\nlet startswith word sentence = \n  let word_len = String.length word in\n  (word_len <= String.length sentence) && String.sub sentence 0 word_len = word\n\n(* Utility function: removes the first occurence of \"item\" from the list *)\nlet remove_item item lst =\n  let rec aux lst item newlst =\n    match lst with\n      | [] -> List.rev newlst\n      | hd :: tl ->\n      if hd = item then List.rev_append newlst tl\n      else aux tl item (hd :: newlst)\n  in\n  aux lst item []\n\nlet find_all_solutions original words =\n  let solutions = ref [] in\n\n  let rec solve original words solution =\n    match original, words with\n      | \"\", [] -> \n        (* Here we found a solution. We have no \"original\" nor \"words\" left to decypher *)\n        let sol = String.concat \" \" (List.rev solution) in\n        solutions := sol :: !solutions;\n        (* More than one solution means unsolvable *)\n        if List.length !solutions > 1 then begin\n          print_endline \"Unsolvable\";\n          exit 0\n        end\n      | _ ->\n        let set_words = List.sort_uniq compare words in\n        (* We only iterate over the set of words to avoid duplicates and extra iterations *)\n        List.iter (fun word -> \n          (* If it matches the beggining of \"original\" we try the current word *)\n          if startswith word original then\n            let word_len = String.length word in\n            let ori_len = String.length original in\n            let next_ori = String.sub original word_len (ori_len - word_len) in\n            (* We pass a copy of \"words\" where we removed only one instance of the chosen word *)\n            let new_words = remove_item word words in\n            solve next_ori new_words (word :: solution)\n        ) set_words\n  in\n  \n  solve original words [];\n  !solutions\n\nlet () = \n  let original = read_line () in\n  let words = read_line() |> String.split_on_char ' ' in\n  print_endline (List.hd (find_all_solutions original words))\n",
+      "statement": "You are given two strings, the first contains the [[original]] sentence, with words in the right order but no spaces. The second has the [[words]] in random order but with spaces to differentiate them. Fix the original sentence by adding spaces where they should be.\n\nEvery test has <<at least>> one solution, but there are some cases where the original sentence <<can not unambiguously>> be deciphered. In those cases print {{Unsolvable}}.\n\n<<NB:>> Tests 1-14 cover simple cases and should help you debug your program. Tests 15-16 check the performance.",
+      "testCases": [
+        {
+          "title": "1 Starters",
+          "isTest": true,
+          "testIn": "ABCDEFGHIJ\nDEF J ABC GHI",
+          "testOut": "ABC DEF GHI J",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "1 Starters val",
+          "isTest": false,
+          "testIn": "CODINGAME\nING COD AM E",
+          "testOut": "COD ING AM E",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "2 Prefix letter",
+          "isTest": true,
+          "testIn": "ABCAFEAHI\nAHI AFE ABC",
+          "testOut": "ABC AFE AHI",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "2 Prefix letter val",
+          "isTest": false,
+          "testIn": "CODCINGCAME\nCOD CING CAME",
+          "testOut": "COD CING CAME",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3 Suffix letter",
+          "isTest": true,
+          "testIn": "ABCDFCGHC\nABC GHC DFC",
+          "testOut": "ABC DFC GHC",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3 Suffix letter val",
+          "isTest": false,
+          "testIn": "CODINGDGAMED\nINGD COD GAMED",
+          "testOut": "COD INGD GAMED",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4 Prefix words",
+          "isTest": true,
+          "testIn": "ABCDEABABCABCD\nABCD AB ABC ABCDE",
+          "testOut": "ABCDE AB ABC ABCD",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4 Prefix words val",
+          "isTest": false,
+          "testIn": "CODINGAMECODINGCCOD\nCODING CODINGAME COD C",
+          "testOut": "CODINGAME CODING C COD",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5 Suffix words",
+          "isTest": true,
+          "testIn": "ABCDBCDCD\nCD ABCD BCD",
+          "testOut": "ABCD BCD CD",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5 Suffix words val",
+          "isTest": false,
+          "testIn": "CODINGINGDING\nDING ING CODING",
+          "testOut": "CODING ING DING",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6 Repeated",
+          "isTest": true,
+          "testIn": "ABCEDFEDFABC\nEDF EDF ABC ABC",
+          "testOut": "ABC EDF EDF ABC",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "6 Repeated val",
+          "isTest": false,
+          "testIn": "GHIBOBOBO\nBO GHI BO BO",
+          "testOut": "GHI BO BO BO",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "7 Combo",
+          "isTest": true,
+          "testIn": "ABABCDCDEABCDEABCD\nCDE AB ABCD CDE AB ABCD",
+          "testOut": "AB ABCD CDE AB CDE ABCD",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "7 Combo val",
+          "isTest": false,
+          "testIn": "CODINGCODINCOCODINDING\nCODIN CO DING DING CO CODIN",
+          "testOut": "CO DING CODIN CO CODIN DING",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "8 Unsolvable",
+          "isTest": true,
+          "testIn": "STARSTARSTAR\nSTARS TAR STAR",
+          "testOut": "Unsolvable",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "8 Unsolvable val",
+          "isTest": false,
+          "testIn": "ABCEABCE\nAB ABCE CE",
+          "testOut": "Unsolvable",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "9 Actually solvable",
+          "isTest": true,
+          "testIn": "SAPIENSAPIENPURUSPURUS\nPURUS SAPIEN SAPIENPURUS",
+          "testOut": "SAPIEN SAPIENPURUS PURUS",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "9 Actually solvable val",
+          "isTest": false,
+          "testIn": "ABABCECE\nABCE AB CE",
+          "testOut": "AB ABCE CE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "10 Actually solvable 2",
+          "isTest": true,
+          "testIn": "ABCABABC\nAB ABC CAB",
+          "testOut": "AB CAB ABC",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "10 Actually solvable 2 val",
+          "isTest": false,
+          "testIn": "DEDDE\nD DE ED",
+          "testOut": "D ED DE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "11 Actually solvable 3",
+          "isTest": true,
+          "testIn": "AABABA\nAB A ABA",
+          "testOut": "A AB ABA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "11 Actually solvable 3 val",
+          "isTest": false,
+          "testIn": "CCFFCFFC\nC CFF CFFC",
+          "testOut": "C CFF CFFC",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "12 Actually solvable 4",
+          "isTest": true,
+          "testIn": "ABABABA\nBA AB ABA",
+          "testOut": "AB ABA BA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "12 Actually solvable 4 val",
+          "isTest": false,
+          "testIn": "AACAACAACAA\nCAA AAC AACAA",
+          "testOut": "AAC AACAA CAA",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "13 Actually solvable 5",
+          "isTest": true,
+          "testIn": "ABABABA\nABA ABA B",
+          "testOut": "ABA B ABA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "13 Actually solvable 5 val",
+          "isTest": false,
+          "testIn": "MOMOMOM\nMOM O MOM",
+          "testOut": "MOM O MOM",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "14 Actually solvable 6 (Count well)",
+          "isTest": true,
+          "testIn": "AABABAA\nAA B A B AA",
+          "testOut": "AA B A B AA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "14 Actually solvable 6 (Count well) val",
+          "isTest": false,
+          "testIn": "ABAABAABA\nA B AA B AA B A",
+          "testOut": "A B AA B AA B A",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "15 Performance 1 (70 words)",
+          "isTest": true,
+          "testIn": "LOREMIPSUMDOLORSITAMETCONSECTETURADIPISCINGELITSEDDOEIUSMODTEMPORINCIDIDUNTUTLABOREETDOLOREMAGNAALIQUAUTENIMADMINIMVENIAMQUISNOSTRUDEXERCITATIONULLAMCOLABORISNISIUTALIQUIPEXEACOMMODOCONSEQUATDUISAUTEIRUREDOLORINREPREHENDERITINVOLUPTATEVELITESSECILLUMDOLOREEUFUGIATNULLAPARIATUREXCEPTEURSINTOCCAECATCUPIDATATNONPROIDENTSUNTINCULPAQUIOFFICIADESERUNTMOLLITANIMIDESTLABORUM\nQUI IN CILLUM AUTE ULLAMCO ESSE INCIDIDUNT EA LABORUM ET NULLA ELIT MINIM IN EIUSMOD ALIQUA DESERUNT QUIS VOLUPTATE MOLLIT DOLOR OFFICIA UT ANIM DOLORE TEMPOR EU UT LABORIS SIT UT VENIAM PARIATUR SUNT CUPIDATAT CONSEQUAT CONSECTETUR OCCAECAT ENIM CULPA IPSUM AMET EXCEPTEUR EXERCITATION ADIPISCING COMMODO LOREM FUGIAT MAGNA NON VELIT AD PROIDENT LABORE DOLOR EST NOSTRUD DUIS SED IRURE NISI ALIQUIP IN DO ID EX DOLORE SINT REPREHENDERIT",
+          "testOut": "LOREM IPSUM DOLOR SIT AMET CONSECTETUR ADIPISCING ELIT SED DO EIUSMOD TEMPOR INCIDIDUNT UT LABORE ET DOLORE MAGNA ALIQUA UT ENIM AD MINIM VENIAM QUIS NOSTRUD EXERCITATION ULLAMCO LABORIS NISI UT ALIQUIP EX EA COMMODO CONSEQUAT DUIS AUTE IRURE DOLOR IN REPREHENDERIT IN VOLUPTATE VELIT ESSE CILLUM DOLORE EU FUGIAT NULLA PARIATUR EXCEPTEUR SINT OCCAECAT CUPIDATAT NON PROIDENT SUNT IN CULPA QUI OFFICIA DESERUNT MOLLIT ANIM ID EST LABORUM",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "15 Performance 1 (70 words) val",
+          "isTest": false,
+          "testIn": "LOREMIPSUMDOLORSITAMETCONSECTETURADIPISCINGELITSEDDOEIUSMODTEMPORINCIDIDUNTUTLABOREETDOLOREMAGNAALIQUAUTENIMADMINIMVENIAMQUISNOSTRUDEXERCITATIONULLAMCOLABORISNISIUTALIQUIPEXEACOMMODOCONSEQUATDUISAUTEIRUREDOLORINREPREHENDERITINVOLUPTATEVELITESSECILLUMDOLOREEUFUGIATNULLAPARIATUREXCEPTEURSINTOCCAECATCUPIDATATNONPROIDENTSUNTINCULPAQUIOFFICIADESERUNTMOLLITANIMIDESTLABORUM\nMAGNA AD LABORE QUIS EA DOLOR IN NON UT VENIAM AMET ALIQUA ID NULLA IRURE CUPIDATAT EXERCITATION CONSECTETUR COMMODO VELIT UT TEMPOR VOLUPTATE NISI ADIPISCING QUI IN MINIM ENIM DO SED NOSTRUD DOLORE SIT DOLORE ESSE EU OCCAECAT ALIQUIP CULPA OFFICIA PROIDENT ET REPREHENDERIT EIUSMOD DESERUNT ANIM ELIT LABORUM EXCEPTEUR SINT EX MOLLIT IPSUM IN PARIATUR DOLOR DUIS CONSEQUAT ULLAMCO LABORIS LOREM SUNT AUTE EST INCIDIDUNT FUGIAT CILLUM UT",
+          "testOut": "LOREM IPSUM DOLOR SIT AMET CONSECTETUR ADIPISCING ELIT SED DO EIUSMOD TEMPOR INCIDIDUNT UT LABORE ET DOLORE MAGNA ALIQUA UT ENIM AD MINIM VENIAM QUIS NOSTRUD EXERCITATION ULLAMCO LABORIS NISI UT ALIQUIP EX EA COMMODO CONSEQUAT DUIS AUTE IRURE DOLOR IN REPREHENDERIT IN VOLUPTATE VELIT ESSE CILLUM DOLORE EU FUGIAT NULLA PARIATUR EXCEPTEUR SINT OCCAECAT CUPIDATAT NON PROIDENT SUNT IN CULPA QUI OFFICIA DESERUNT MOLLIT ANIM ID EST LABORUM",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "16 Performance 2 (140 words)",
+          "isTest": true,
+          "testIn": "LOREMIPSUMDOLORSITAMETCONSECTETURADIPISCINGELITSEDDOEIUSMODTEMPORINCIDIDUNTUTLABOREETDOLOREMAGNAALIQUAESTLIBEROMOLESTIEACCUMSANDUIACRISUSINCEPTOSHABITASSEHABITASSEFINIBUSAORNAREINTERDUMVITAEHIMENAEOSAUGUEPHASELLUSSAPIENSITSOCIOSQUPHARETRAFINIBUSMORBIALIQUETTINCIDUNTCLASSESTDIAMHABITASSEFEUGIATMAGNAPROINMAURISVIVAMUSTINCIDUNTALIQUETNIBHALIQUAMACUBILIATELLUSLEOFELISALIQUAMVOLUTPATANTENAMVITAEDOLORPRETIUMTELLUSGRAVIDACONGUEALIQUETFAMESCONDIMENTUMNUNCNULLADIAMPRAESENTEGESTASTORTORALIQUETCONDIMENTUMFUSCEVULPUTATEPURUSINTERDUMMAURISULTRICESPULVINARFINIBUSNEQUELIGULALUCTUSNULLAMDAPIBUSBLANDITACDOLORVEHICULAMOLESTIELAOREETPLATEATINCIDUNTSAPIENPURUSNISLMOLLISIPSUMMINISIVELITHENDRERITSEDELEMENTUMCURABITURMAURISPHARETRAUTARCUSUSCIPITQUISVENENATISFAMESFEUGIATVELITNETUSBLANDITCONUBIAVELPROINPOSUEREVEHICULALAOREETCRASSEMPERMAXIMUSFINIBUS\nPRETIUM DOLORE VEHICULA FINIBUS ET ALIQUAM VELIT MOLESTIE ALIQUET CONDIMENTUM MAURIS CONDIMENTUM PROIN LIBERO CRAS MI AC TINCIDUNT NISL HABITASSE VITAE EST MOLESTIE VEHICULA MOLLIS FAMES AMET NAM UT CLASS ANTE HIMENAEOS DIAM NUNC BLANDIT NETUS NIBH IPSUM SED A QUIS NEQUE SAPIENPURUS ULTRICES AC LOREM FAMES UT LAOREET SUSCIPIT ALIQUET VULPUTATE SEMPER ALIQUAM FELIS TELLUS NULLA TINCIDUNT INTERDUM CONGUE ALIQUET MAXIMUS NISI LEO POSUERE LIGULA FEUGIAT HABITASSE RISUS TEMPOR INTERDUM PROIN ADIPISCING FINIBUS PHARETRA TORTOR ELEMENTUM VELIT INCEPTOS VEL ELIT DOLOR A DO CONSECTETUR LUCTUS BLANDIT VENENATIS FEUGIAT MAGNA TELLUSGRAVIDA MAURIS VITAE PHARETRA SAPIEN ALIQUA CUBILIA DOLOR PULVINAR DUI LAOREET FINIBUS PURUS DIAM MORBI EIUSMOD PLATEA MAGNA CURABITUR ORNARE PRAESENT DOLOR NULLAM EGESTAS TINCIDUNT LABORE IPSUM CONUBIA FUSCE INCIDIDUNT SIT FINIBUS MAURIS VOLUTPAT ARCU AUGUE HENDRERIT SOCIOSQU HABITASSE SIT EST ACCUMSAN PHASELLUS SED ALIQUET VIVAMUS DAPIBUS",
+          "testOut": "LOREM IPSUM DOLOR SIT AMET CONSECTETUR ADIPISCING ELIT SED DO EIUSMOD TEMPOR INCIDIDUNT UT LABORE ET DOLORE MAGNA ALIQUA EST LIBERO MOLESTIE ACCUMSAN DUI AC RISUS INCEPTOS HABITASSE HABITASSE FINIBUS A ORNARE INTERDUM VITAE HIMENAEOS AUGUE PHASELLUS SAPIEN SIT SOCIOSQU PHARETRA FINIBUS MORBI ALIQUET TINCIDUNT CLASS EST DIAM HABITASSE FEUGIAT MAGNA PROIN MAURIS VIVAMUS TINCIDUNT ALIQUET NIBH ALIQUAM A CUBILIA TELLUS LEO FELIS ALIQUAM VOLUTPAT ANTE NAM VITAE DOLOR PRETIUM TELLUSGRAVIDA CONGUE ALIQUET FAMES CONDIMENTUM NUNC NULLA DIAM PRAESENT EGESTAS TORTOR ALIQUET CONDIMENTUM FUSCE VULPUTATE PURUS INTERDUM MAURIS ULTRICES PULVINAR FINIBUS NEQUE LIGULA LUCTUS NULLAM DAPIBUS BLANDIT AC DOLOR VEHICULA MOLESTIE LAOREET PLATEA TINCIDUNT SAPIENPURUS NISL MOLLIS IPSUM MI NISI VELIT HENDRERIT SED ELEMENTUM CURABITUR MAURIS PHARETRA UT ARCU SUSCIPIT QUIS VENENATIS FAMES FEUGIAT VELIT NETUS BLANDIT CONUBIA VEL PROIN POSUERE VEHICULA LAOREET CRAS SEMPER MAXIMUS FINIBUS",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "16 Performance 2 (140 words) val",
+          "isTest": false,
+          "testIn": "LOREMIPSUMDOLORSITAMETCONSECTETURADIPISCINGELITSEDDOEIUSMODTEMPORINCIDIDUNTUTLABOREETDOLOREMAGNAALIQUAESTLIBEROMOLESTIEACCUMSANDUIACRISUSINCEPTOSHABITASSEHABITASSEFINIBUSAORNAREINTERDUMVITAEHIMENAEOSAUGUEPHASELLUSSAPIENSITSOCIOSQUPHARETRAFINIBUSMORBIALIQUETTINCIDUNTCLASSESTDIAMHABITASSEFEUGIATMAGNAPROINMAURISVIVAMUSTINCIDUNTALIQUETNIBHALIQUAMACUBILIATELLUSLEOFELISALIQUAMVOLUTPATANTENAMVITAEDOLORPRETIUMTELLUSGRAVIDACONGUEALIQUETFAMESCONDIMENTUMNUNCNULLADIAMPRAESENTEGESTASTORTORALIQUETCONDIMENTUMFUSCEVULPUTATEPURUSINTERDUMMAURISULTRICESPULVINARFINIBUSNEQUELIGULALUCTUSNULLAMDAPIBUSBLANDITACDOLORVEHICULAMOLESTIELAOREETPLATEATINCIDUNTSAPIENPURUSNISLMOLLISIPSUMMINISIVELITHENDRERITSEDELEMENTUMCURABITURMAURISPHARETRAUTARCUSUSCIPITQUISVENENATISFAMESFEUGIATVELITNETUSBLANDITCONUBIAVELPROINPOSUEREVEHICULALAOREETCRASSEMPERMAXIMUSFINIBUS\nFUSCE VITAE TINCIDUNT MOLESTIE ELEMENTUM LAOREET ALIQUA NISI FEUGIAT AUGUE FEUGIAT VULPUTATE IPSUM PURUS TINCIDUNT ALIQUET ULTRICES IPSUM VELIT DOLOR DAPIBUS LABORE ALIQUET NUNC SIT DIAM PULVINAR MAURIS VEHICULA TINCIDUNT SEMPER VENENATIS FINIBUS AC SAPIENPURUS VOLUTPAT NETUS AMET PRAESENT ELIT TELLUS PRETIUM NULLAM CONUBIA CUBILIA INTERDUM NEQUE FINIBUS CRAS VELIT CONSECTETUR FINIBUS HIMENAEOS FINIBUS TELLUSGRAVIDA MAURIS A NULLA SOCIOSQU MAXIMUS LOREM BLANDIT ET HABITASSE HABITASSE LEO EIUSMOD DOLOR NISL BLANDIT ORNARE DO PHARETRA UT POSUERE VITAE CURABITUR ALIQUAM NIBH LIBERO CLASS FAMES ADIPISCING LIGULA A MOLESTIE SIT INCEPTOS SED VEHICULA DOLORE TORTOR ALIQUET AC PROIN PROIN RISUS EGESTAS EST HENDRERIT ANTE LAOREET NAM PHARETRA CONGUE HABITASSE MOLLIS DUI QUIS EST ACCUMSAN TEMPOR MI ALIQUET PHASELLUS INCIDIDUNT SAPIEN CONDIMENTUM LUCTUS SUSCIPIT INTERDUM ARCU SED FAMES ALIQUAM PLATEA DIAM MAGNA VEL MORBI FELIS VIVAMUS CONDIMENTUM MAGNA DOLOR UT MAURIS",
+          "testOut": "LOREM IPSUM DOLOR SIT AMET CONSECTETUR ADIPISCING ELIT SED DO EIUSMOD TEMPOR INCIDIDUNT UT LABORE ET DOLORE MAGNA ALIQUA EST LIBERO MOLESTIE ACCUMSAN DUI AC RISUS INCEPTOS HABITASSE HABITASSE FINIBUS A ORNARE INTERDUM VITAE HIMENAEOS AUGUE PHASELLUS SAPIEN SIT SOCIOSQU PHARETRA FINIBUS MORBI ALIQUET TINCIDUNT CLASS EST DIAM HABITASSE FEUGIAT MAGNA PROIN MAURIS VIVAMUS TINCIDUNT ALIQUET NIBH ALIQUAM A CUBILIA TELLUS LEO FELIS ALIQUAM VOLUTPAT ANTE NAM VITAE DOLOR PRETIUM TELLUSGRAVIDA CONGUE ALIQUET FAMES CONDIMENTUM NUNC NULLA DIAM PRAESENT EGESTAS TORTOR ALIQUET CONDIMENTUM FUSCE VULPUTATE PURUS INTERDUM MAURIS ULTRICES PULVINAR FINIBUS NEQUE LIGULA LUCTUS NULLAM DAPIBUS BLANDIT AC DOLOR VEHICULA MOLESTIE LAOREET PLATEA TINCIDUNT SAPIENPURUS NISL MOLLIS IPSUM MI NISI VELIT HENDRERIT SED ELEMENTUM CURABITUR MAURIS PHARETRA UT ARCU SUSCIPIT QUIS VENENATIS FAMES FEUGIAT VELIT NETUS BLANDIT CONUBIA VEL PROIN POSUERE VEHICULA LAOREET CRAS SEMPER MAXIMUS FINIBUS",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "The [[original]] string only contains uppercase letters.\nThe [[words]] string only contains uppercase letters and spaces.\nEach word in [[words]] appears the same number of times in [[words]] and in [[original]].\nEach string is at most {{1000}} characters long.\nThe number of words is at most {{200}}.",
+      "coverBinaryId": 100528566836661,
+      "stubGenerator": "read original:string(1000)\nread words:string(1000)\n\nwrite original sentence with spaces",
+      "inputDescription": "<<Line 1 :>> A string. The [[original]] sentence, with words in the right order but no spaces.\n<<Line 2 :>> A string containing the [[words]] in random order but with spaces to differentiate them.",
+      "solutionLanguage": "OCaml",
+      "outputDescription": "The [[original]] sentence with the necessary spaces added to it or the string {{Unsolvable}}."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are given two strings, the first contains the <var>original</var> sentence, with words in the right order but no spaces. The second has the <var>words</var> in random order but with spaces to differentiate them. Fix the original sentence by adding spaces where they should be.<br><br>Every test has <strong>at least</strong> one solution, but there are some cases where the original sentence <strong>can not unambiguously</strong> be deciphered. In those cases print <const>Unsolvable</const>.<br><br><strong>NB:</strong> Tests 1-14 cover simple cases and should help you debug your program. Tests 15-16 check the performance.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1 :</strong> A string. The <var>original</var> sentence, with words in the right order but no spaces.<br><strong>Line 2 :</strong> A string containing the <var>words</var> in random order but with spaces to differentiate them.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The <var>original</var> sentence with the necessary spaces added to it or the string <const>Unsolvable</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">The <var>original</var> string only contains uppercase letters.<br>The <var>words</var> string only contains uppercase letters and spaces.<br>Each word in <var>words</var> appears the same number of times in <var>words</var> and in <var>original</var>.<br>Each string is at most <const>1000</const> characters long.<br>The number of words is at most <const>200</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">ABCDEFGHIJ\nDEF J ABC GHI</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">ABC DEF GHI J</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 91740743849,
+  "avatar": 80946308795008,
+  "commentCount": 25,
+  "upVotes": 17,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 775324,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1678820737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1678857130757,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1678988676464,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

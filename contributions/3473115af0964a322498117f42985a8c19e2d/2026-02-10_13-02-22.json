@@ -1,0 +1,228 @@
+{
+  "id": 34731,
+  "activeVersion": 85,
+  "score": 9,
+  "votableId": 25706725,
+  "codingamerId": 1983963,
+  "views": 260,
+  "commentableId": 25584599,
+  "title": "Reconstruct a Tree",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "pluieciel",
+  "publicHandle": "3473115af0964a322498117f42985a8c19e2d",
+  "codingamerHandle": "3ae5608cc0aec3a2d51efd34cade51cb3693891",
+  "lastVersion": {
+    "version": 85,
+    "autocloseTime": 1737987347336,
+    "data": {
+      "title": "Reconstruct a Tree",
+      "topics": [
+        {
+          "id": 178,
+          "handle": "trees",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Trees",
+            "2": "Trees"
+          },
+          "puzzleCount": 5,
+          "parentTopicId": 93
+        },
+        {
+          "id": 71,
+          "handle": "recursion",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Récursion",
+            "2": "Recursion"
+          },
+          "pageTitle": "Recursion: exercises and theory",
+          "puzzleCount": 26,
+          "parentTopicId": 41,
+          "contentDetailsId": 77
+        }
+      ],
+      "solution": "(ns Solution\n  (:require [clojure.string :as str] [clojure.set])\n  (:gen-class))\n\n(defn -main [& args]\n  (let [l (->> (str/split (read-line) #\" \") (map read-string))\n        R (read-string (read-line))\n        n (+ 2 (count l))\n        dic (merge-with + (frequencies l) (zipmap (range 1 (inc n)) (repeat 1)))]\n    (defn make-tree [l]\n      (let [r (atom #{})]\n        (defn addnode [root]\n          (swap! r conj root)\n          (let [cand (clojure.set/difference (set (apply concat (filter #((set %) root) l))) @r)]\n            (if (empty? cand) (list root)\n              (apply list root (map addnode (sort cand)))))))\n      (println (addnode R)))\n      \n    (loop [pr l dd dic fin #{}]\n      (if (empty? pr) (make-tree (conj fin (mapv first (filter #(= 1 (val %)) dd))))\n        (let [parent (first pr)\n              cand (filter #(= 1 (val %)) dd)\n              leaf (apply min (map first cand))]\n          (recur (rest pr) (update (update dd parent dec) leaf dec) (conj fin [parent leaf])))))))",
+      "statement": "Every tree has a unique \"prufer code\".\nFor example, the following tree has prufer code of <<2 2 1 3 3>>.\n\n`     1          or     4 - 2 - 1 - 3 - 6\n    /  \\                   |       |\n   2    3                  5       7\n  / \\  / \\  \n 4  5  6  7 `\nWe can get the code from the following procedure:\n<<Step 1>>: from all the nodes which only have one connection to the other nodes (the ending points; could include the root, in case it only has one branch), choose the node with smallest number, trim it and record its \"neighbor node\" (its only neighbor, could be in reverse hierarchy) in the code.\n<<Step 2>>: repeat step 1 until there are only 2 nodes and stop.\n\nFor the example tree:\n<<step 1>>: cut 4 (from 4 5 6 7) and record <<2>>\n<<step 2>>: cut 5 (from 5 6 7) and record <<2 2>>\n<<step 3>>: cut 2 (from 2 6 7) and record <<2 2 1>>\n<<step 4>>: cut 1 (from 1 6 7) and record <<2 2 1 3>>\n<<step 5>>: cut 6 (from 6 7) and record <<2 2 1 3 3>> and stop.\n\nNow, given a [[prufer code]], can you reconstruct the tree?\nPlease use the following list format for a tree (in case we choose 1 as root):\n<<(1 (2 (4) (5)) (3 (6) (7)))>>\n\nnote:\n1. The nodes are labelled with natural numbers starting from 1 and increasing consecutively. For example, a tree with 5 nodes will have nodes 1, 2, 3, 4 and 5.\n2. A list format tree is represented by its nodes/elements enclosed within brackets. In every list/sublist, first element is the node and rest elements are its children node(s) (or sublists); leaf is a sublist with only one element.\n3. Same level nodes follows the order from small to large.\n4. Use one space to separate the elements/lists.\n5. We fix node [[R]] as the root to present the tree.\n\nOne more example for the list format:\n`      ___1___         \n     /   |   \\       \n    2    5    9    \n  / |  / | \\   \\ \n 3  4 6  7  8   10`\nif we choose [[R]]=1 as root, the list will be:\n<<(1 (2 (3) (4)) (5 (6) (7) (8)) (9 (10)))>>\nif we choose [[R]]=5 as root, the list will be:\n<<(5 (1 (2 (3) (4)) (9 (10))) (6) (7) (8))>>",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "2 2 1 3 3\n1",
+          "testOut": "(1 (2 (4) (5)) (3 (6) (7)))",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "5 5 6 6 7\n1",
+          "testOut": "(1 (5 (2) (7 (6 (3) (4)))))",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "5 5 6 6 7\n7",
+          "testOut": "(7 (5 (1) (2)) (6 (3) (4)))",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "2 2 1 3 3\n3",
+          "testOut": "(3 (1 (2 (4) (5))) (6) (7))",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "2 2 4 1 5 6 8\n6",
+          "testOut": "(6 (5 (1 (4 (2 (3) (7))))) (8 (9)))",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "2 2 5 4 2 9 9\n9",
+          "testOut": "(9 (2 (1) (3) (4 (5 (6)))) (7) (8))",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "1 2 2 4 4 6 6 8 8\n1",
+          "testOut": "(1 (2 (4 (6 (8 (10) (11)) (9)) (7)) (5)) (3))",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "1 3 3 5 5 7 7 9 9\n1",
+          "testOut": "(1 (2) (3 (4) (5 (6) (7 (8) (9 (10) (11))))))",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "2 2 5 4 2 9 9\n1",
+          "testOut": "(1 (2 (3) (4 (5 (6))) (9 (7) (8))))",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "2 2 4 1 5 6 8\n1",
+          "testOut": "(1 (4 (2 (3) (7))) (5 (6 (8 (9)))))",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "1 3 3 5 5 7 7 9 9\n4",
+          "testOut": "(4 (3 (1 (2)) (5 (6) (7 (8) (9 (10) (11))))))",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "1 2 2 4 4 6 6 8 8\n3",
+          "testOut": "(3 (1 (2 (4 (6 (8 (10) (11)) (9)) (7)) (5))))",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 7",
+          "isTest": true,
+          "testIn": "2 2 2 2 2 1 3 3 3 3 3 1 4 4 4 4 4 1 5 5 5 5 5\n1",
+          "testOut": "(1 (2 (6) (7) (8) (9) (10)) (3 (11) (12) (13) (14) (15)) (4 (16) (17) (18) (19) (20)) (5 (21) (22) (23) (24) (25)))",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "21 21 21 21 21 22 22 22 22 22 23 23 23 23 23 24 24 24 24 24 25 25 25\n1",
+          "testOut": "(1 (21 (2) (3) (4) (5) (25 (22 (6) (7) (8) (9) (10)) (23 (11) (12) (13) (14) (15)) (24 (16) (17) (18) (19) (20)))))",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 8",
+          "isTest": true,
+          "testIn": "23 23 23 23 23 24 24 21 21 21 21 21 22 22 22 22 22 24 24 24 25 25 25\n4",
+          "testOut": "(4 (23 (1) (2) (3) (5) (25 (21 (8) (9) (10) (11) (12)) (22 (13) (14) (15) (16) (17)) (24 (6) (7) (18) (19) (20)))))",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "3 3 3 3 3 1 4 4 4 4 4 1 2 2 2 2 2 1 5 5 5 5 5\n8",
+          "testOut": "(8 (3 (1 (2 (16) (17) (18) (19) (20)) (4 (11) (12) (13) (14) (15)) (5 (21) (22) (23) (24) (25))) (6) (7) (9) (10)))",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "",
+      "coverBinaryId": 91280705093071,
+      "stubGenerator": "read pruferCode:string(256)\nread R:int\nwrite answer",
+      "inputDescription": "<<Line 1:>> The [[prufer code]] of a tree, a list of natural numbers, separated by space.\n<<Line 2:>> The [[R]], the root to present the tree.",
+      "solutionLanguage": "Clojure",
+      "outputDescription": "A tree, in a list format, with [[R]] as root."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Every tree has a unique &quot;prufer code&quot;.<br>For example, the following tree has prufer code of <strong>2 2 1 3 3</strong>.<br><br><pre style=\"font-family: monospace\">     1          or     4 - 2 - 1 - 3 - 6<br>    /  \\                   |       |<br>   2    3                  5       7<br>  / \\  / \\  <br> 4  5  6  7 </pre><br>We can get the code from the following procedure:<br><strong>Step 1</strong>: from all the nodes which only have one connection to the other nodes (the ending points; could include the root, in case it only has one branch), choose the node with smallest number, trim it and record its &quot;neighbor node&quot; (its only neighbor, could be in reverse hierarchy) in the code.<br><strong>Step 2</strong>: repeat step 1 until there are only 2 nodes and stop.<br><br>For the example tree:<br><strong>step 1</strong>: cut 4 (from 4 5 6 7) and record <strong>2</strong><br><strong>step 2</strong>: cut 5 (from 5 6 7) and record <strong>2 2</strong><br><strong>step 3</strong>: cut 2 (from 2 6 7) and record <strong>2 2 1</strong><br><strong>step 4</strong>: cut 1 (from 1 6 7) and record <strong>2 2 1 3</strong><br><strong>step 5</strong>: cut 6 (from 6 7) and record <strong>2 2 1 3 3</strong> and stop.<br><br>Now, given a <var>prufer code</var>, can you reconstruct the tree?<br>Please use the following list format for a tree (in case we choose 1 as root):<br><strong>(1 (2 (4) (5)) (3 (6) (7)))</strong><br><br>note:<br>1. The nodes are labelled with natural numbers starting from 1 and increasing consecutively. For example, a tree with 5 nodes will have nodes 1, 2, 3, 4 and 5.<br>2. A list format tree is represented by its nodes/elements enclosed within brackets. In every list/sublist, first element is the node and rest elements are its children node(s) (or sublists); leaf is a sublist with only one element.<br>3. Same level nodes follows the order from small to large.<br>4. Use one space to separate the elements/lists.<br>5. We fix node <var>R</var> as the root to present the tree.<br><br>One more example for the list format:<br><pre style=\"font-family: monospace\">      ___1___         <br>     /   |   \\       <br>    2    5    9    <br>  / |  / | \\   \\ <br> 3  4 6  7  8   10</pre><br>if we choose <var>R</var>=1 as root, the list will be:<br><strong>(1 (2 (3) (4)) (5 (6) (7) (8)) (9 (10)))</strong><br>if we choose <var>R</var>=5 as root, the list will be:<br><strong>(5 (1 (2 (3) (4)) (9 (10))) (6) (7) (8))</strong></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> The <var>prufer code</var> of a tree, a list of natural numbers, separated by space.<br><strong>Line 2:</strong> The <var>R</var>, the root to present the tree.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">A tree, in a list format, with <var>R</var> as root.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2 2 1 3 3\n1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">(1 (2 (4) (5)) (3 (6) (7)))</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 33105717276,
+  "avatar": 12585096610807,
+  "commentCount": 22,
+  "upVotes": 10,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 1064034,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1667675137001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1735395347336,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1737622824015,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

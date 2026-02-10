@@ -1,0 +1,195 @@
+{
+  "id": 130266,
+  "activeVersion": 31,
+  "score": 3,
+  "votableId": 37617713,
+  "codingamerId": 6098116,
+  "views": 159,
+  "commentableId": 37455470,
+  "title": "Table Solver",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Delicious31415",
+  "publicHandle": "130266db6c6333748aadb210c9a144deaf8fa6",
+  "codingamerHandle": "6fc5bad6d87584d4100190a570f4e37c6118906",
+  "lastVersion": {
+    "version": 31,
+    "autocloseTime": 1755697244293,
+    "freezeTime": 1753710044293,
+    "data": {
+      "title": "Table Solver",
+      "topics": [
+        {
+          "id": 94,
+          "handle": "mathematics",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Mathematics",
+            "2": "Mathematics"
+          },
+          "puzzleCount": 72,
+          "parentTopicId": 93
+        },
+        {
+          "id": 117,
+          "handle": "logic",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Logic",
+            "2": "Logic"
+          },
+          "puzzleCount": 31,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "def apply(op, row, col):\n    if op == '+':\n        return row + col\n    elif op == '-':\n        return col - row\n    elif op == 'x':\n        return row * col\n\ndef reverse_row(op, cell, col):\n    if op == '+':\n        return cell - col\n    elif op == '-':\n        return col - cell\n    elif op == 'x':\n        return cell // col if col != 0 and cell % col == 0 else None\n\ndef reverse_col(op, cell, row):\n    if op == '+':\n        return cell - row\n    elif op == '-':\n        return cell + row\n    elif op == 'x':\n        return cell // row if row != 0 and cell % row == 0 else None\n\ndef parse_row(row, width):\n    items = row.strip().split('|')\n    parsed = []\n    for item in items:\n        s = item.strip()\n        if s == '':\n            parsed.append(None)\n        elif s in '+-x':\n            parsed.append(s)\n        else:\n            parsed.append(int(s))\n    while len(parsed) < width:\n        parsed.append(None)\n    return parsed\n\ndef format_row(row, width):\n    return '|'.join(f'{str(x):<{width}}' if x is not None else ' ' * width for x in row)\n\n\ndef solve(grid, op):\n    H = len(grid)\n    W = len(grid[0])\n\n    for _ in range(20):\n        for i in range(1, H):\n            for j in range(1, W):\n                cell = grid[i][j]\n                row_header = grid[i][0]\n                col_header = grid[0][j]\n\n                if cell is None and row_header is not None and col_header is not None:\n                    grid[i][j] = apply(op, row_header, col_header)\n                elif row_header is None and col_header is not None and cell is not None:\n                    row_val = reverse_row(op, cell, col_header)\n                    if row_val is not None:\n                        grid[i][0] = row_val\n                elif col_header is None and row_header is not None and cell is not None:\n                    col_val = reverse_col(op, cell, row_header)\n                    if col_val is not None:\n                        grid[0][j] = col_val\n    return grid\n\n\ninputLines = int(input())\nlines = [input().rstrip() for _ in range(inputLines)]\ndata_lines = [lines[i] for i in range(0, inputLines, 2)]\n\nmax_cols = max(len(line.split('|')) for line in data_lines)\ngrid = [parse_row(line, max_cols) for line in data_lines]\nop = grid[0][0]\n\ngrid = solve(grid, op)\n\ncell_width = max(len(str(x)) for row in grid for x in row if x is not None)\n\nfor r, row in enumerate(grid):\n    print(format_row(row, cell_width))\n    if r < len(grid) - 1:\n        print('_' * ((cell_width + 1) * len(row) - 1))\n",
+      "statement": "You are given a table like this:\n\n```+ |  |7 |  |14\n______________\n9 |  |  |  |  \n______________\n5 |10|  |  |19\n______________\n  |  |  |  |16\n______________\n11|  |18|22|  ```\n\nThe character {{|}} is used to separate table cells in the same row, and the character {{_}} is used to draw horizontal separators between rows.\n\nThe symbol in the top-left corner indicates an operation: {{+}}, {{-}}, or {{x}} (multiplication).\nEvery cell in the table—except those in the topmost row or leftmost column—must equal the result of applying that operation to the corresponding row header (the leftmost cell in its row) and column header (the topmost cell in its column).\n\nSome cells in the table are already filled in, while others are left blank. Your goal is to fill in all missing values so that the entire table strictly follows the operation rule. Headers themselves may also be partially missing and might need to be deduced from the known values within the grid.\n\nEach number in the grid is formatted to occupy a space equal to the length of the longest number (including a negative sign if present), ensuring neat alignment. Each number is left-aligned and padded with spaces on the right, if necessary.\n\nNote: Every provided grid is guaranteed to be solvable logically—no guesswork or trial-and-error is needed.\nNote: Subtraction is subtracting the leftmost column from the topmost row.",
+      "testCases": [
+        {
+          "title": "Addition",
+          "isTest": true,
+          "testIn": "7\n+ |  |5 |  \n___________\n9 |11|  |  \n___________\n  |  |9 |  \n___________\n11|  |  |24",
+          "testOut": "+ |2 |5 |13\n___________\n9 |11|14|22\n___________\n4 |6 |9 |17\n___________\n11|13|16|24",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Addition.1",
+          "isTest": false,
+          "testIn": "5\n+ |  |  |13\n___________\n6 |  |11|  \n___________\n12|17|  |  ",
+          "testOut": "+ |5 |5 |13\n___________\n6 |11|11|19\n___________\n12|17|17|25",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Subtraction",
+          "isTest": true,
+          "testIn": "7\n-  |   |-5 |15 \n_______________\n-8 |16 |   |   \n_______________\n   |   |   |6  \n_______________\n   |   |-6 |   ",
+          "testOut": "-  |8  |-5 |15 \n_______________\n-8 |16 |3  |23 \n_______________\n9  |-1 |-14|6  \n_______________\n1  |7  |-6 |14 ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Subtraction.1",
+          "isTest": false,
+          "testIn": "7\n-  |   |4  |8  |-1 \n___________________\n7  |   |   |   |   \n___________________\n   |11 |   |   |12 \n___________________\n   |   |   |10 |   ",
+          "testOut": "-  |-2 |4  |8  |-1 \n___________________\n7  |-9 |-3 |1  |-8 \n___________________\n-13|11 |17 |21 |12 \n___________________\n-2 |0  |6  |10 |1  ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiplication",
+          "isTest": true,
+          "testIn": "9\nx    |14   |     |16   |     \n_____________________________\n     |     |-25  |80   |     \n_____________________________\n     |     |250  |     |     \n_____________________________\n     |924  |     |     |5610 \n_____________________________\n     |     |     |     |4930 ",
+          "testOut": "x    |14   |-5   |16   |85   \n_____________________________\n5    |70   |-25  |80   |425  \n_____________________________\n-50  |-700 |250  |-800 |-4250\n_____________________________\n66   |924  |-330 |1056 |5610 \n_____________________________\n58   |812  |-290 |928  |4930 ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiplication.1",
+          "isTest": false,
+          "testIn": "7\nx    |     |-9   |13   |     |-45  \n___________________________________\n-12  |     |     |     |648  |     \n___________________________________\n     |-468 |     |676  |     |     \n___________________________________\n15   |     |-135 |     |     |     ",
+          "testOut": "x    |-9   |-9   |13   |-54  |-45  \n___________________________________\n-12  |108  |108  |-156 |648  |540  \n___________________________________\n52   |-468 |-468 |676  |-2808|-2340\n___________________________________\n15   |-135 |-135 |195  |-810 |-675 ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "small",
+          "isTest": true,
+          "testIn": "3\n- |6 \n_____\n  |13",
+          "testOut": "- |6 \n_____\n-7|13",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "small.1",
+          "isTest": false,
+          "testIn": "3\nx |6 \n_____\n  |66",
+          "testOut": "x |6 \n_____\n11|66",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "BIG",
+          "isTest": true,
+          "testIn": "15\n+    |     |1111 |     |     |-98  |     |     |     |845  \n___________________________________________________________\n     |     |4687 |     |     |     |     |     |     |     \n___________________________________________________________\n     |     |     |-780 |     |     |     |     |-845 |     \n___________________________________________________________\n99   |     |     |     |120  |     |     |     |     |944  \n___________________________________________________________\n-123 |     |     |     |     |     |     |6845 |     |     \n___________________________________________________________\n     |-1   |     |     |9887 |     |     |     |4000 |     \n___________________________________________________________\n     |     |     |487  |     |     |-744 |     |     |     \n___________________________________________________________\n     |     |     |     |1230 |     |     |     |     |     ",
+          "testOut": "+    |-9867|1111 |-5801|21   |-98  |-7032|6968 |-5866|845  \n___________________________________________________________\n3576 |-6291|4687 |-2225|3597 |3478 |-3456|10544|-2290|4421 \n___________________________________________________________\n5021 |-4846|6132 |-780 |5042 |4923 |-2011|11989|-845 |5866 \n___________________________________________________________\n99   |-9768|1210 |-5702|120  |1    |-6933|7067 |-5767|944  \n___________________________________________________________\n-123 |-9990|988  |-5924|-102 |-221 |-7155|6845 |-5989|722  \n___________________________________________________________\n9866 |-1   |10977|4065 |9887 |9768 |2834 |16834|4000 |10711\n___________________________________________________________\n6288 |-3579|7399 |487  |6309 |6190 |-744 |13256|422  |7133 \n___________________________________________________________\n1209 |-8658|2320 |-4592|1230 |1111 |-5823|8177 |-4657|2054 ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "BIG.1",
+          "isTest": false,
+          "testIn": "11\n+     |      |-854  |      |      |546   |      |3645  |      \n______________________________________________________________\n8445  |      |      |      |      |      |-1    |      |      \n______________________________________________________________\n      |      |      |8465  |9457  |      |      |      |      \n______________________________________________________________\n      |      |12345 |      |874   |      |      |      |      \n______________________________________________________________\n-945  |      |      |      |      |      |      |      |4168  \n______________________________________________________________\n      |9888  |      |6     |      |      |      |      |      ",
+          "testOut": "+     |-3435 |-854  |-13317|-12325|546   |-8446 |3645  |5113  \n______________________________________________________________\n8445  |5010  |7591  |-4872 |-3880 |8991  |-1    |12090 |13558 \n______________________________________________________________\n21782 |18347 |20928 |8465  |9457  |22328 |13336 |25427 |26895 \n______________________________________________________________\n13199 |9764  |12345 |-118  |874   |13745 |4753  |16844 |18312 \n______________________________________________________________\n-945  |-4380 |-1799 |-14262|-13270|-399  |-9391 |2700  |4168  \n______________________________________________________________\n13323 |9888  |12469 |6     |998   |13869 |4877  |16968 |18436 ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "CG",
+          "isTest": true,
+          "testIn": "23\n- |  |-5|  |  \n______________\n  |  |1 |1 |1 \n______________\n  |1 |  |  |  \n______________\n  |1 |  |  |  \n______________\n  |1 |  |  |  \n______________\n  |  |1 |1 |1 \n______________\n-8|  |  |  |  \n______________\n  |  |1 |1 |1 \n______________\n  |1 |  |  |  \n______________\n  |1 |  |1 |1 \n______________\n  |1 |  |  |1 \n______________\n  |  |1 |1 |  ",
+          "testOut": "- |-5|-5|-5|-5\n______________\n-6|1 |1 |1 |1 \n______________\n-6|1 |1 |1 |1 \n______________\n-6|1 |1 |1 |1 \n______________\n-6|1 |1 |1 |1 \n______________\n-6|1 |1 |1 |1 \n______________\n-8|3 |3 |3 |3 \n______________\n-6|1 |1 |1 |1 \n______________\n-6|1 |1 |1 |1 \n______________\n-6|1 |1 |1 |1 \n______________\n-6|1 |1 |1 |1 \n______________\n-6|1 |1 |1 |1 ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "CG.1",
+          "isTest": false,
+          "testIn": "23\n- |  |  |  |-7\n______________\n  |  |2 |2 |2 \n______________\n  |2 |  |  |  \n______________\n  |2 |  |  |  \n______________\n  |2 |  |  |  \n______________\n  |  |2 |2 |2 \n______________\n  |  |  |2 |  \n______________\n  |  |1 |1 |1 \n______________\n  |1 |  |  |  \n______________\n  |1 |  |1 |1 \n______________\n  |1 |  |  |1 \n______________\n  |  |1 |1 |  ",
+          "testOut": "- |-7|-7|-7|-7\n______________\n-9|2 |2 |2 |2 \n______________\n-9|2 |2 |2 |2 \n______________\n-9|2 |2 |2 |2 \n______________\n-9|2 |2 |2 |2 \n______________\n-9|2 |2 |2 |2 \n______________\n-9|2 |2 |2 |2 \n______________\n-8|1 |1 |1 |1 \n______________\n-8|1 |1 |1 |1 \n______________\n-8|1 |1 |1 |1 \n______________\n-8|1 |1 |1 |1 \n______________\n-8|1 |1 |1 |1 ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "0",
+          "isTest": true,
+          "testIn": "9\n+  |11 |0  |   |-6 \n___________________\n6  |   |   |   |   \n___________________\n   |6  |   |0  |   \n___________________\n12 |   |   |   |   \n___________________\n   |   |   |-2 |   ",
+          "testOut": "+  |11 |0  |5  |-6 \n___________________\n6  |17 |6  |11 |0  \n___________________\n-5 |6  |-5 |0  |-11\n___________________\n12 |23 |12 |17 |6  \n___________________\n-7 |4  |-7 |-2 |-13",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "0.1",
+          "isTest": false,
+          "testIn": "9\n+  |10 |0  |   |-6 \n___________________\n6  |   |   |   |   \n___________________\n   |6  |   |0  |   \n___________________\n12 |   |   |   |   \n___________________\n   |   |   |-2 |   ",
+          "testOut": "+  |10 |0  |4  |-6 \n___________________\n6  |16 |6  |10 |0  \n___________________\n-4 |6  |-4 |0  |-10\n___________________\n12 |22 |12 |16 |6  \n___________________\n-6 |4  |-6 |-2 |-12",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "2 ≤ Number of columns, Number of rows ≤ 15\nEvery number in the completed table is an integer between -10⁵ and 10⁵.",
+      "coverBinaryId": 147633346808805,
+      "stubGenerator": "read inputLines:int\nloop inputLines read s:string(1000)\n\nwrite The finished table",
+      "inputDescription": "<<Line 1:>> An integer [[inputLines]] — the total number of lines of the table\n<<Next [[inputLines]] lines:>> A string [[s]] — a row in the table, including the horizontal separators.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[inputLines]] lines:>> The completed table.\nThe trailing spaces in each line should not be removed."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are given a table like this:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">+ |  |7 |  |14<br>______________<br>9 |  |  |  |  <br>______________<br>5 |10|  |  |19<br>______________<br>  |  |  |  |16<br>______________<br>11|  |18|22|  </pre><pre style=\"font-family: monospace\"></pre><br><br>The character <const>|</const> is used to separate table cells in the same row, and the character <const>_</const> is used to draw horizontal separators between rows.<br><br>The symbol in the top-left corner indicates an operation: <const>+</const>, <const>-</const>, or <const>x</const> (multiplication).<br>Every cell in the table&mdash;except those in the topmost row or leftmost column&mdash;must equal the result of applying that operation to the corresponding row header (the leftmost cell in its row) and column header (the topmost cell in its column).<br><br>Some cells in the table are already filled in, while others are left blank. Your goal is to fill in all missing values so that the entire table strictly follows the operation rule. Headers themselves may also be partially missing and might need to be deduced from the known values within the grid.<br><br>Each number in the grid is formatted to occupy a space equal to the length of the longest number (including a negative sign if present), ensuring neat alignment. Each number is left-aligned and padded with spaces on the right, if necessary.<br><br>Note: Every provided grid is guaranteed to be solvable logically&mdash;no guesswork or trial-and-error is needed.<br>Note: Subtraction is subtracting the leftmost column from the topmost row.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>inputLines</var> &mdash; the total number of lines of the table<br><strong>Next <var>inputLines</var> lines:</strong> A string <var>s</var> &mdash; a row in the table, including the horizontal separators.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>inputLines</var> lines:</strong> The completed table.<br>The trailing spaces in each line should not be removed.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &le; Number of columns, Number of rows &le; 15<br>Every number in the completed table is an integer between -10⁵ and 10⁵.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">7\n+ |  |5 |  \n___________\n9 |11|  |  \n___________\n  |  |9 |  \n___________\n11|  |  |24</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">+ |2 |5 |13\n___________\n9 |11|14|22\n___________\n4 |6 |9 |17\n___________\n11|13|16|24</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 15915394705,
+  "avatar": 154204769409682,
+  "commentCount": 18,
+  "upVotes": 3,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1186064,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1754812954203,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

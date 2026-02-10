@@ -1,0 +1,167 @@
+{
+  "id": 33708,
+  "activeVersion": 27,
+  "score": 18,
+  "votableId": 25612155,
+  "codingamerId": 4436271,
+  "views": 401,
+  "commentableId": 25490384,
+  "title": "Video comments",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Ayza",
+  "publicHandle": "33708296d4618547e0f762e112882e26b6593",
+  "codingamerHandle": "e91a7a998d46a397213f2be1e32ed8701726344",
+  "lastVersion": {
+    "version": 27,
+    "autocloseTime": 1666871583662,
+    "data": {
+      "title": "Video comments",
+      "topics": [
+        {
+          "id": 142,
+          "handle": "sorting",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Sorting",
+            "2": "Sorting"
+          },
+          "puzzleCount": 7,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "inp = [input() for _ in range(int(input()))]\n\npinned = False\ncomments = []\nc = 0\n\nreplies = {}\n\nfor comment in inp:\n    comment = comment.split(\"|\")\n    \n    if not comment[0][0].isspace():\n        c += 1\n\n        if comment[3] == \"Pinned\":\n            pinned = comment+[c]\n        else:\n            comments.append(comment+[c])\n    else:\n        replies.setdefault(c, []).append(comment)\n\ndef sort(k):\n    k.sort(key=lambda x: (int(x[2]), int(x[1].replace(\":\",\"\"))), reverse=1)\n    k.sort(key=lambda x: x[3] == \"Followed\", reverse=1)\n\n    return k\n\ndef print_replies(k):\n    if k[-1] in replies:\n        for reply in sort(replies[k[-1]]):\n            print(\"|\".join(reply))\n        \nif pinned:\n    print(\"|\".join(pinned[:-1]))\n    print_replies(pinned)\n\nfor k in sort(comments):\n    print(\"|\".join(k[:-1]))\n    print_replies(k)",
+      "statement": "You are responsible for the making of a comments system for a newly made videos app. There is one problem, what's the point if comments are randomly shown? And here comes your job, <<you need to design a priority system for comments.>>\n\nThere are [[n]] comments given to you in random order. Each comment contains comment data (name, date, likes, priority) separated by a {{|}} character. You are not given the content for comments because it is unnecessary for the sorting process. And for simplicity, we are going to assume all comments are made in the same day, so you only have to look at the time in <<24-hour format>>.\n\nYou need to sort the comments in a way such that:\n- Pinned comment appears first, there is only one of such comment, and its priority is {{Pinned}}.\n- Followed people's comments appear second, and their priority is {{Followed}}.\n- Comments with most likes appear third, regardless of their date, they have priority {{none}}.\n- Newer comments appear fourth, they have priority {{none}}.\n- in a case of more than 1 followed accounts, they would be ordered by their likes and date as said.\n- in case of a tie between two users, the one given in input first is outputted first, e.g. user1 is given before user2, so you output user1 then user2.\n\n{{none}} priority means it is not a pinned nor followed comment.\n\nComments may contain replies, <<A reply starts with 4 spaces, and is under the comment it belongs to.>>\n\nThe replies of a comment are also sorted based on the above said priorities, there will not be a pinned reply.",
+      "testCases": [
+        {
+          "title": "Time example",
+          "isTest": true,
+          "testIn": "3\nuser1|05:34|0|none\nuser2|05:36|0|none\nuser3|05:35|0|none",
+          "testOut": "user2|05:36|0|none\nuser3|05:35|0|none\nuser1|05:34|0|none",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3\nuser2|06:32|0|none\nuser1|04:00|0|none\nuser3|06:34|0|none",
+          "testOut": "user3|06:34|0|none\nuser2|06:32|0|none\nuser1|04:00|0|none",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Likes count",
+          "isTest": true,
+          "testIn": "3\nuser3|12:00|0|none\nuser2|15:00|1|none\nuser1|13:00|2|none",
+          "testOut": "user1|13:00|2|none\nuser2|15:00|1|none\nuser3|12:00|0|none",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "3\nuser2|19:00|5|none\nuser1|20:00|6|none\nuser3|21:00|7|none",
+          "testOut": "user3|21:00|7|none\nuser1|20:00|6|none\nuser2|19:00|5|none",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Tie - Followed",
+          "isTest": true,
+          "testIn": "5\nuser1|10:50|6|none\nuser9|09:12|4|Followed\nuser3|10:50|6|none\nuser10|21:32|10|none\nuser8|19:58|3|Followed",
+          "testOut": "user9|09:12|4|Followed\nuser8|19:58|3|Followed\nuser10|21:32|10|none\nuser1|10:50|6|none\nuser3|10:50|6|none",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "5\nuser2|10:13|12|none\nuser1|10:12|12|Followed\nuser7|21:32|11|none\nuser20|21:32|11|none\nuser4|20:32|11|Followed",
+          "testOut": "user1|10:12|12|Followed\nuser4|20:32|11|Followed\nuser2|10:13|12|none\nuser7|21:32|11|none\nuser20|21:32|11|none",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Pinned - All priorities",
+          "isTest": true,
+          "testIn": "3\nuser5|11:00|10|Followed\nuser6|10:00|0|Pinned\nuser4|11:00|0|none",
+          "testOut": "user6|10:00|0|Pinned\nuser5|11:00|10|Followed\nuser4|11:00|0|none",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "3\nuser1|10:00|9|Followed\nuser3|10:00|9|none\nuser2|10:00|9|Pinned",
+          "testOut": "user2|10:00|9|Pinned\nuser1|10:00|9|Followed\nuser3|10:00|9|none",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Replies",
+          "isTest": true,
+          "testIn": "7\nuser1|20:00|1|none\n    user2|22:21|2|none\n    user3|21:22|3|none\nuser5|12:00|2|none\n    user1|12:01|0|none\n    user2|12:02|0|none\nuser2|09:00|0|Pinned",
+          "testOut": "user2|09:00|0|Pinned\nuser5|12:00|2|none\n    user2|12:02|0|none\n    user1|12:01|0|none\nuser1|20:00|1|none\n    user3|21:22|3|none\n    user2|22:21|2|none",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "6\nuser1|12:00|1|Followed\n    user5|12:01|0|none\n    user6|12:02|0|none\nuser5|12:05|1|Pinned\n    user1|12:06|6|none\n    user2|12:08|5|none",
+          "testOut": "user5|12:05|1|Pinned\n    user1|12:06|6|none\n    user2|12:08|5|none\nuser1|12:00|1|Followed\n    user6|12:02|0|none\n    user5|12:01|0|none",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Followed in replies",
+          "isTest": true,
+          "testIn": "7\nuser1|12:00|5|Pinned\n    user102|22:53|94|none\n    user2|12:00|4|Followed\n    user2|13:00|5|Followed\nuser102|12:12|9|Followed\n    user102|12:12|9|Followed\n    user3|17:43|10|Followed",
+          "testOut": "user1|12:00|5|Pinned\n    user2|13:00|5|Followed\n    user2|12:00|4|Followed\n    user102|22:53|94|none\nuser102|12:12|9|Followed\n    user3|17:43|10|Followed\n    user102|12:12|9|Followed",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "13\nuser2|17:53|5|Followed\n    user3|17:54|10|none\n    user5|17:55|9|Followed\n    user6|17:56|111|none\nuser1|05:00|10|Pinned\n    user3|05:00|11|Followed\n    user2|05:02|9|Followed\n    user1|05:01|10|Followed\nuser5|19:59|0|none\n    user6|20:00|10|Followed\n    user2|21:00|10|none\n    user3|22:00|10|none\n    user4|22:01|9|Followed",
+          "testOut": "user1|05:00|10|Pinned\n    user3|05:00|11|Followed\n    user1|05:01|10|Followed\n    user2|05:02|9|Followed\nuser2|17:53|5|Followed\n    user5|17:55|9|Followed\n    user6|17:56|111|none\n    user3|17:54|10|none\nuser5|19:59|0|none\n    user6|20:00|10|Followed\n    user4|22:01|9|Followed\n    user3|22:00|10|none\n    user2|21:00|10|none",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "2 ≤ [[n]] ≤ 13\nThere will not be nested replies, i.e. a reply to another reply\nNames will only consist of {{user}} and a number, and are not necessarily in order",
+      "coverBinaryId": 133552460185647,
+      "stubGenerator": "read n:int\nloop n read comment:string(1024)\nwrite answer",
+      "inputDescription": "<<Line 1:>> An integer [[n]] for the amount of comments\n<<Next [[n]] lines:>> A comment, split by a vertical bar ({{|}}): name, date, likes, priority",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The comments after being sorted"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are responsible for the making of a comments system for a newly made videos app. There is one problem, what's the point if comments are randomly shown? And here comes your job, <strong>you need to design a priority system for comments.</strong><br><br>There are <var>n</var> comments given to you in random order. Each comment contains comment data (name, date, likes, priority) separated by a <const>|</const> character. You are not given the content for comments because it is unnecessary for the sorting process. And for simplicity, we are going to assume all comments are made in the same day, so you only have to look at the time in <strong>24-hour format</strong>.<br><br>You need to sort the comments in a way such that:<br>- Pinned comment appears first, there is only one of such comment, and its priority is <const>Pinned</const>.<br>- Followed people's comments appear second, and their priority is <const>Followed</const>.<br>- Comments with most likes appear third, regardless of their date, they have priority <const>none</const>.<br>- Newer comments appear fourth, they have priority <const>none</const>.<br>- in a case of more than 1 followed accounts, they would be ordered by their likes and date as said.<br>- in case of a tie between two users, the one given in input first is outputted first, e.g. user1 is given before user2, so you output user1 then user2.<br><br><const>none</const> priority means it is not a pinned nor followed comment.<br><br>Comments may contain replies, <strong>A reply starts with 4 spaces, and is under the comment it belongs to.</strong><br><br>The replies of a comment are also sorted based on the above said priorities, there will not be a pinned reply.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>n</var> for the amount of comments<br><strong>Next <var>n</var> lines:</strong> A comment, split by a vertical bar (<const>|</const>): name, date, likes, priority</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The comments after being sorted</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &le; <var>n</var> &le; 13<br>There will not be nested replies, i.e. a reply to another reply<br>Names will only consist of <const>user</const> and a number, and are not necessarily in order</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\nuser1|05:34|0|none\nuser2|05:36|0|none\nuser3|05:35|0|none</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">user2|05:36|0|none\nuser3|05:35|0|none\nuser1|05:34|0|none</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 104147130062,
+  "avatar": 92655986267164,
+  "commentCount": 24,
+  "upVotes": 19,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 717307,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1666582512506,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

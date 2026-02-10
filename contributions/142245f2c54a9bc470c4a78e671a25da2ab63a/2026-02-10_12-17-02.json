@@ -1,0 +1,254 @@
+{
+  "id": 142245,
+  "activeVersion": 4,
+  "score": -3,
+  "votableId": 39089753,
+  "codingamerId": 5377868,
+  "views": 109,
+  "commentableId": 38922381,
+  "title": "Chaos Protocol",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "YALOKGAR",
+  "publicHandle": "142245f2c54a9bc470c4a78e671a25da2ab63a",
+  "codingamerHandle": "71ce77dc02b52055debde214148067dc8687735",
+  "lastVersion": {
+    "version": 4,
+    "autocloseTime": 1772720214151,
+    "freezeTime": 1770733014151,
+    "data": {
+      "title": "Chaos Protocol",
+      "topics": [
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 46,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "id": 48,
+          "handle": "graphs",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Graphes",
+            "2": "Graphs"
+          },
+          "pageTitle": "Graphs: exercises and theory",
+          "puzzleCount": 44,
+          "parentTopicId": 40,
+          "contentDetailsId": 75
+        },
+        {
+          "id": 60,
+          "handle": "dynamic-programming",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Programmation dynamique",
+            "2": "Dynamic programming"
+          },
+          "pageTitle": "Dynamic programming: exercises and theory",
+          "puzzleCount": 36,
+          "parentTopicId": 41,
+          "contentDetailsId": 85
+        },
+        {
+          "id": 86,
+          "handle": "simulation",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Simulation",
+            "2": "Simulation"
+          },
+          "pageTitle": "Simulation: exercises and theory",
+          "puzzleCount": 51,
+          "parentTopicId": 42,
+          "contentDetailsId": 72
+        },
+        {
+          "id": 122,
+          "handle": "string",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "string",
+            "2": "string"
+          },
+          "puzzleCount": 1,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <limits.h>\n#include <ctype.h>\n\n#define MAX_BUF 16384\n#define MOD_FIB 1000000007LL\n\nint b64val(char c) {\n    if (c >= 'A' && c <= 'Z') return c - 'A';\n    if (c >= 'a' && c <= 'z') return c - 'a' + 26;\n    if (c >= '0' && c <= '9') return c - '0' + 52;\n    if (c == '+') return 62;\n    return c == '/' ? 63 : -1;\n}\n\nint decodeBase64(const char *src, char *dst) {\n    int len = 0, acc = 0, bits = 0;\n    for (int i = 0; src[i] && src[i] != '='; i++) {\n        int v = b64val(src[i]);\n        if (v < 0) continue;\n        acc = (acc << 6) | v;\n        bits += 6;\n        if (bits >= 8) {\n            bits -= 8;\n            dst[len++] = (acc >> bits) & 0xFF;\n        }\n    }\n    dst[len] = 0;\n    return len;\n}\n\nchar *findKeyValue(char *data, const char *key) {\n    char needle[64];\n    sprintf(needle, \"\\n%s:\", key);\n    char *hit = strstr(data, needle);\n    if (hit) return hit + strlen(needle);\n    sprintf(needle, \"%s:\", key);\n    if (strncmp(data, needle, strlen(needle)) == 0)\n        return data + strlen(needle);\n    return NULL;\n}\n\nvoid extractLine(char *src, char *dst) {\n    int i = 0;\n    while (src[i] && src[i] != '\\n') {\n        dst[i] = src[i];\n        i++;\n    }\n    dst[i] = 0;\n}\n\ntypedef struct { int to, weight; } Edge;\ntypedef struct { Edge edges[512]; int count; } AdjList;\n\nint nodeIndex(char *name, char nodeNames[][32], int *total) {\n    for (int i = 0; i < *total; i++)\n        if (strcmp(nodeNames[i], name) == 0) return i;\n    strcpy(nodeNames[*total], name);\n    return (*total)++;\n}\n\nlong long dijkstra(AdjList *adj, int nodeCount, int src, int dst) {\n    int dist[64], visited[64] = {0};\n    for (int i = 0; i < nodeCount; i++) dist[i] = 0x3f3f3f3f;\n    dist[src] = 0;\n\n    for (int iter = 0; iter < nodeCount; iter++) {\n        int u = -1, best = 0x3f3f3f3f;\n        for (int i = 0; i < nodeCount; i++) {\n            if (!visited[i] && dist[i] < best) {\n                best = dist[i];\n                u = i;\n            }\n        }\n        if (u < 0 || u == dst) break;\n        visited[u] = 1;\n        for (int i = 0; i < adj[u].count; i++) {\n            int v = adj[u].edges[i].to;\n            int w = adj[u].edges[i].weight;\n            if (dist[u] + w < dist[v])\n                dist[v] = dist[u] + w;\n        }\n    }\n    return dist[dst];\n}\n\nlong long solveKnapsack(int *weights, int *values, int n, int capacity) {\n    int *dp = calloc(capacity + 1, sizeof(int));\n    for (int i = 0; i < n; i++)\n        for (int w = capacity; w >= weights[i]; w--)\n            if (dp[w - weights[i]] + values[i] > dp[w])\n                dp[w] = dp[w - weights[i]] + values[i];\n    int result = dp[capacity];\n    free(dp);\n    return result;\n}\n\nint editDistance(const char *s1, const char *s2) {\n    int len1 = strlen(s1), len2 = strlen(s2);\n    int *prev = malloc((len2 + 1) * sizeof(int));\n    int *curr = malloc((len2 + 1) * sizeof(int));\n    for (int j = 0; j <= len2; j++) prev[j] = j;\n\n    for (int i = 1; i <= len1; i++) {\n        curr[0] = i;\n        for (int j = 1; j <= len2; j++) {\n            int cost = s1[i-1] != s2[j-1];\n            int del = prev[j] + 1;\n            int ins = curr[j-1] + 1;\n            int sub = prev[j-1] + cost;\n            curr[j] = del < ins ? del : ins;\n            if (sub < curr[j]) curr[j] = sub;\n        }\n        int *tmp = prev; prev = curr; curr = tmp;\n    }\n    int r = prev[len2];\n    free(prev);\n    free(curr);\n    return r;\n}\n\nlong long extendedGcd(long long a, long long b, long long *x, long long *y) {\n    if (a == 0) { *x = 0; *y = 1; return b; }\n    long long x1, y1;\n    long long g = extendedGcd(b % a, a, &x1, &y1);\n    *x = y1 - (b / a) * x1;\n    *y = x1;\n    return g;\n}\n\nlong long solveCRT(int *remainders, int *moduli, int n) {\n    long long product = 1;\n    for (int i = 0; i < n; i++) product *= moduli[i];\n\n    long long solution = 0;\n    for (int i = 0; i < n; i++) {\n        long long partial = product / moduli[i];\n        long long xi, yi;\n        extendedGcd(partial % moduli[i], moduli[i], &xi, &yi);\n        solution += remainders[i] * partial * ((xi % moduli[i] + moduli[i]) % moduli[i]);\n    }\n    return ((solution % product) + product) % product;\n}\n\nlong long sumPrimeFactors(long long n) {\n    long long total = 0;\n    while (n % 2 == 0) { total += 2; n /= 2; }\n    for (long long d = 3; d * d <= n; d += 2)\n        while (n % d == 0) { total += d; n /= d; }\n    if (n > 1) total += n;\n    return total;\n}\n\nint longestPalindrome(const char *s) {\n    int n = strlen(s), best = 1;\n    for (int center = 0; center < n; center++) {\n        for (int r = 0; center - r >= 0 && center + r < n && s[center-r] == s[center+r]; r++)\n            if (2*r+1 > best) best = 2*r+1;\n        for (int r = 0; center - r >= 0 && center + r + 1 < n && s[center-r] == s[center+r+1]; r++)\n            if (2*r+2 > best) best = 2*r+2;\n    }\n    return best;\n}\n\ntypedef struct { long long m[2][2]; } Mat;\n\nMat matMul(Mat A, Mat B) {\n    Mat C;\n    for (int i = 0; i < 2; i++)\n        for (int j = 0; j < 2; j++) {\n            C.m[i][j] = 0;\n            for (int k = 0; k < 2; k++)\n                C.m[i][j] = (C.m[i][j] + A.m[i][k] * B.m[k][j]) % MOD_FIB;\n        }\n    return C;\n}\n\nMat matPow(Mat base, long long exp) {\n    Mat result = {{{1, 0}, {0, 1}}};\n    while (exp > 0) {\n        if (exp & 1) result = matMul(result, base);\n        base = matMul(base, base);\n        exp >>= 1;\n    }\n    return result;\n}\n\nlong long fibonacci(long long n) {\n    if (n <= 0) return 0;\n    if (n == 1) return 1;\n    Mat base = {{{1, 1}, {1, 0}}};\n    Mat result = matPow(base, n);\n    return result.m[0][1];\n}\n\nint bracketsBalanced(const char *s) {\n    char stack[2048];\n    int top = 0;\n    for (int i = 0; s[i]; i++) {\n        char c = s[i];\n        if (c == '(' || c == '[' || c == '{') {\n            stack[top++] = c;\n        } else if (c == ')' || c == ']' || c == '}') {\n            if (top == 0) return 0;\n            char open = stack[--top];\n            if ((c == ')' && open != '(') ||\n                (c == ']' && open != '[') ||\n                (c == '}' && open != '{'))\n                return 0;\n        }\n    }\n    return top == 0;\n}\n\nint luhnCheckDigit(const char *digits) {\n    int n = strlen(digits), sum = 0;\n    for (int i = 0; i < n; i++) {\n        int d = digits[n - 1 - i] - '0';\n        if (i % 2 == 1) {\n            d *= 2;\n            if (d > 9) d -= 9;\n        }\n        sum += d;\n    }\n    return (10 - (sum % 10)) % 10;\n}\n\nint main(void) {\n    char encoded[MAX_BUF], decoded[MAX_BUF];\n    if (!fgets(encoded, sizeof(encoded), stdin)) return 0;\n    encoded[strcspn(encoded, \"\\n\")] = 0;\n    decodeBase64(encoded, decoded);\n\n    char nodeNames[64][32];\n    int nodeCount = 0;\n    AdjList adj[64] = {0};\n    int startNode = -1, endNode = -1;\n\n    char *graphPtr = findKeyValue(decoded, \"GRAPH\");\n    if (graphPtr) {\n        char graphStr[4096];\n        extractLine(graphPtr, graphStr);\n        char *tok = strtok(graphStr, \",\");\n        while (tok) {\n            char n1[32], n2[32];\n            int w;\n            if (sscanf(tok, \"%[^-]-%[^:]:%d\", n1, n2, &w) == 3) {\n                int id1 = nodeIndex(n1, nodeNames, &nodeCount);\n                int id2 = nodeIndex(n2, nodeNames, &nodeCount);\n                adj[id1].edges[adj[id1].count++] = (Edge){id2, w};\n                adj[id2].edges[adj[id2].count++] = (Edge){id1, w};\n                if (!strcmp(n1, \"S\")) startNode = id1;\n                if (!strcmp(n2, \"S\")) startNode = id2;\n                if (!strcmp(n1, \"E\")) endNode = id1;\n                if (!strcmp(n2, \"E\")) endNode = id2;\n            }\n            tok = strtok(NULL, \",\");\n        }\n    }\n    long long rGraph = (startNode >= 0 && endNode >= 0)\n        ? dijkstra(adj, nodeCount, startNode, endNode) : 0;\n\n    int itemWeights[64], itemValues[64], itemCount = 0, capacity = 0;\n    char *itemsPtr = findKeyValue(decoded, \"ITEMS\");\n    if (itemsPtr) {\n        char itemStr[4096];\n        extractLine(itemsPtr, itemStr);\n        char *tok = strtok(itemStr, \";\");\n        while (tok && itemCount < 64) {\n            char nm[64]; int w, v;\n            if (sscanf(tok, \"%[^,],%d,%d\", nm, &w, &v) == 3) {\n                itemWeights[itemCount] = w;\n                itemValues[itemCount] = v;\n                itemCount++;\n            }\n            tok = strtok(NULL, \";\");\n        }\n    }\n    char *capPtr = findKeyValue(decoded, \"CAP\");\n    if (capPtr) sscanf(capPtr, \"%d\", &capacity);\n    long long rKnapsack = solveKnapsack(itemWeights, itemValues, itemCount, capacity);\n\n    int guardX[16], guardY[16], guardCount = 0;\n    char guardPath[16][128];\n    char *guardsPtr = findKeyValue(decoded, \"GUARDS\");\n    if (guardsPtr) {\n        char guardsStr[4096];\n        extractLine(guardsPtr, guardsStr);\n        if (strlen(guardsStr) > 0) {\n            char *tok = strtok(guardsStr, \";\");\n            while (tok && guardCount < 16) {\n                if (sscanf(tok, \"%d,%d,%s\", &guardX[guardCount],\n                           &guardY[guardCount], guardPath[guardCount]) == 3) {\n                    guardCount++;\n                }\n                tok = strtok(NULL, \";\");\n            }\n        }\n    }\n    int targetX = 0, targetY = 0;\n    char *txPtr = findKeyValue(decoded, \"TX\");\n    char *tyPtr = findKeyValue(decoded, \"TY\");\n    if (txPtr) sscanf(txPtr, \"%d\", &targetX);\n    if (tyPtr) sscanf(tyPtr, \"%d\", &targetY);\n\n    long long rGuards = 0;\n    for (int t = 0; t < 100000; t++) {\n        int safe = 1;\n        for (int g = 0; g < guardCount && safe; g++) {\n            int cx = guardX[g], cy = guardY[g];\n            int pathLen = strlen(guardPath[g]);\n            if (pathLen == 0) continue;\n            for (int step = 0; step < t; step++) {\n                char move = guardPath[g][step % pathLen];\n                if (move == 'U') cy++;\n                else if (move == 'D') cy--;\n                else if (move == 'L') cx--;\n                else if (move == 'R') cx++;\n            }\n            if (abs(cx - targetX) + abs(cy - targetY) <= 1)\n                safe = 0;\n        }\n        if (safe) { rGuards = t; break; }\n    }\n\n    int moduli[16], remainders[16], eqCount = 0;\n    char *safePtr = findKeyValue(decoded, \"SAFE\");\n    if (safePtr) {\n        char safeStr[512];\n        extractLine(safePtr, safeStr);\n        char *tok = strtok(safeStr, \";\");\n        while (tok && eqCount < 16) {\n            int m, r;\n            if (sscanf(tok, \"x mod %d = %d\", &m, &r) == 2) {\n                moduli[eqCount] = m;\n                remainders[eqCount] = r;\n                eqCount++;\n            }\n            tok = strtok(NULL, \";\");\n        }\n    }\n    long long rCRT = eqCount > 0 ? solveCRT(remainders, moduli, eqCount) : 0;\n\n    char target[256] = {0};\n    char candidates[32][256];\n    int candidateCount = 0;\n    char *patternPtr = findKeyValue(decoded, \"PATTERN\");\n    if (patternPtr) {\n        char patStr[4096];\n        extractLine(patternPtr, patStr);\n        char *tok = strtok(patStr, \",\");\n        if (tok) {\n            strcpy(target, tok);\n            tok = strtok(NULL, \",\");\n        }\n        while (tok && candidateCount < 32) {\n            strcpy(candidates[candidateCount++], tok);\n            tok = strtok(NULL, \",\");\n        }\n    }\n    char bestMatch[256] = {0};\n    int bestDist = INT_MAX;\n    for (int i = 0; i < candidateCount; i++) {\n        int d = editDistance(target, candidates[i]);\n        if (d < bestDist || (d == bestDist && strcmp(candidates[i], bestMatch) < 0)) {\n            bestDist = d;\n            strcpy(bestMatch, candidates[i]);\n        }\n    }\n\n    long long factorNum = 0;\n    char *factorPtr = findKeyValue(decoded, \"FACTOR\");\n    if (factorPtr) sscanf(factorPtr, \"%lld\", &factorNum);\n    long long rFactor = sumPrimeFactors(factorNum);\n\n    char palStr[1024] = {0};\n    char *palPtr = findKeyValue(decoded, \"PALSTR\");\n    if (palPtr) extractLine(palPtr, palStr);\n    long long rPalindrome = longestPalindrome(palStr);\n\n    long long fibN = 0;\n    char *fibPtr = findKeyValue(decoded, \"FIB\");\n    if (fibPtr) sscanf(fibPtr, \"%lld\", &fibN);\n    long long rFib = fibonacci(fibN);\n\n    char bracketsStr[2048] = {0};\n    char *brPtr = findKeyValue(decoded, \"BRACKETS\");\n    if (brPtr) extractLine(brPtr, bracketsStr);\n    long long rBrackets = bracketsBalanced(bracketsStr);\n\n    char luhnStr[64] = {0};\n    char *luhnPtr = findKeyValue(decoded, \"LUHN\");\n    if (luhnPtr) extractLine(luhnPtr, luhnStr);\n    long long rLuhn = luhnCheckDigit(luhnStr);\n\n    long long numericSum = rGraph + rKnapsack + rGuards + rCRT +\n                           rFactor + rPalindrome + rFib +\n                           rBrackets + rLuhn;\n\n    long long asciiSum = 0;\n    for (int i = 0; bestMatch[i]; i++)\n        asciiSum += (unsigned char)bestMatch[i];\n\n    printf(\"%lld\\n\", numericSum ^ asciiSum);\n    return 0;\n}",
+      "statement": "You're hacking the NEXUS mainframe. Decode the input and solve 10 independent tasks to get the access code.\n\n<<DECODE>>: Input is a Base64-encoded string. Decode it to get mission data.\n<<PARSE>>: Decoded text is KEY:VALUE format, one per line. All tasks below read from this parsed data.\n\n<<TASKS>> (all independent):\n\n{{GRAPH}}: comma-separated edges [[A]]-[[B]]:[[W]] (bidirectional). Find shortest path weight from node S to node E using Dijkstra or similar.\n\n{{ITEMS}}: semicolon-separated items [[NAME]],[[WEIGHT]],[[VALUE]]. {{CAP}}: max weight capacity. Solve 0/1 Knapsack, return max value. Up to 25 items.\n\n{{GUARDS}}: semicolon-separated [[X]],[[Y]],[[PATH]]. PATH is UDLR moves repeating cyclically. U:Y+1, D:Y-1, R:X+1, L:X-1. {{TX}},{{TY}}: target coords. Find earliest T (from 0) where target is safe (Manhattan distance > 1 from all guards). Empty guards = 0.\n\n{{SAFE}}: semicolon-separated equations \"x mod [[M]] = [[R]]\". Solve using Chinese Remainder Theorem. Return smallest positive x.\n\n{{PATTERN}}: comma-separated strings. First is target, rest are candidates. Find closest by Levenshtein (edit) distance. Ties: lexicographically smallest. Return the string itself.\n\n{{FACTOR}}: integer N (up to 10^15). Sum all prime factors with multiplicity.\n\n{{PALSTR}}: string (up to 1000 chars). Return length of longest palindromic substring.\n\n{{FIB}}: integer N (up to 10^18). Return F(N) mod 10^9+7 where F(0)=0, F(1)=1. Matrix exponentiation required for large N.\n\n{{BRACKETS}}: string of ()[]{}. Return 1 if balanced, 0 otherwise.\n\n{{LUHN}}: digit string. Compute Luhn checksum digit (0-9).\n\n<<FINAL>>: Sum all numeric results. XOR that sum with ASCII sum of the PATTERN result string.",
+      "testCases": [
+        {
+          "title": "Breach",
+          "isTest": true,
+          "testIn": "R1JBUEg6Uy1BOjMsUy1COjcsQS1DOjIsQi1DOjEsQS1FOjE1LEMtRTo4LFMtRDo0LEQtQzozLEQtRToxMixCLUQ6MgpJVEVNUzpjaGlwLDMsNDA7YmxhZGUsNSw3MDtrZXksMiwzMDtkcml2ZSw3LDkwO3dpcmUsNCw1MDttZW0sNiw2NTtyb20sMSwxNTtodWIsOCw5NQpDQVA6MjAKR1VBUkRTOjEsMCxSUjswLDEsVVUKVFg6MgpUWToxClNBRkU6eCBtb2QgNyA9IDM7eCBtb2QgMTEgPSA1O3ggbW9kIDEzID0gNwpQQVRURVJOOmFsZ29yaXRobSxhbGdvcml0bSxhbGdhcml0aG0sYWxnb3J5dGhtLGFsb2dyaXRtCkZBQ1RPUjoyMzEwClBBTFNUUjp4eXphYmFjYWJhZGFiYWNhYmF4eXoKRklCOjEwMDAwMDAwMDAwMDAwMDAwMDAKQlJBQ0tFVFM6KHtbKHtbKHtbKHtbKCldfSldfSldfSldfSkKTFVITjo3OTkyNzM5ODcxMA==",
+          "testOut": "209784368",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Infiltration",
+          "isTest": false,
+          "testIn": "R1JBUEg6Uy1BOjQsUy1COjYsQS1DOjMsQi1DOjIsQS1FOjE0LEMtRTo5LFMtRDo1LEQtQzo0LEQtRToxMSxCLUQ6MwpJVEVNUzpyb20sNCw0NTtkaXNrLDYsODA7dXNiLDIsMzU7Y2FyZCw4LDEwMDt0YXBlLDMsNDA7cGx1Zyw1LDU1O3BvcnQsNyw3NTtzbG90LDEsMTIKQ0FQOjIyCkdVQVJEUzoyLDEsUlJVVUxMREQ7MCwyLEREUlJVVUxMClRYOjMKVFk6MgpTQUZFOnggbW9kIDcgPSA0O3ggbW9kIDExID0gNjt4IG1vZCAxMyA9IDkKUEFUVEVSTjpkYXRhYmFzZSxkYXRhYnNlLGRhdGJhc2UsZHRhYmFzZSxkYXRhYmFzLGRhdGFhc2UKRkFDVE9SOjQ2MjAKUEFMU1RSOm1ub3BhYmFjYWJhZGFiYWNhYmFrbG1uCkZJQjo1MDAwMDAwMDAwMDAwMDAwMDAKQlJBQ0tFVFM6KHtbKCldfSkoe1soKV19KSh7WygpXX0pCkxVSE46ODk5MjczOTg3MQ==",
+          "testOut": "2178409",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Firewall",
+          "isTest": true,
+          "testIn": "R1JBUEg6Uy1BOjIsUy1COjUsUy1DOjksQS1EOjMsQS1FOjgsQi1EOjEsQi1GOjYsQy1GOjIsQy1HOjcsRC1IOjQsRS1IOjIsRi1IOjUsRy1IOjMsSC1JOjEsSS1KOjMsSi1FOjIsRC1HOjQsRS1GOjMsSS1FOjYsSi1LOjIsSy1MOjEsTC1FOjQKSVRFTVM6cmFtLDQsNTU7Y3B1LDgsMTIwO2dwdSw2LDk1O3NzZCwzLDQwO2ZhbiwyLDI1O3BzdSw1LDY1O21vYm8sOSwxMzA7Y29vbCw3LDg1O3JnYiwxLDEwO2Nhc2UsMTAsMTQwO2R2ZCwzLDMwO2JhdCw0LDQ1O25ldCw2LDcwO21pYywyLDIwO2NhbSw1LDU1CkNBUDozNQpHVUFSRFM6MywzLFJSUlJERERETExMTFVVVVU7OCwyLExMTExEREREUlJSUlVVVVU7NSw3LFVVVVVSUlJSRERERExMTEwKVFg6NQpUWTo1ClNBRkU6eCBtb2QgMTcgPSA1O3ggbW9kIDE5ID0gMTE7eCBtb2QgMjMgPSA3ClBBVFRFUk46Y3J5cHRvZ3JhcGh5LGNyeXB0Z3JhcGh5LGN5cHRvZ3JhcGh5LGNyeXB0b2dycGh5LGNyeXB0b2dyYXBoaSxjcnlwdG9ncmFweQpGQUNUT1I6OTk5OTk5OTk5OTk5OTM3ClBBTFNUUjpxd2VydHlhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5enp5eHd2dXRzcnFwb25tbGtqaWhnZmVkY2JhcXdlcnR5CkZJQjo1NzY0NjA3NTIzMDM0MjM0ODgKQlJBQ0tFVFM6e1soe1soe1soe1soe1soKV19KV19KV19KV19KV19KCgoKCkpKSlbW1tbXV1dXXt7e3t9fX19CkxVSE46NDk5MjczOTg3MTY=",
+          "testOut": "15264971588",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Backdoor",
+          "isTest": false,
+          "testIn": "R1JBUEg6Uy1BOjMsUy1COjQsQS1DOjIsQi1DOjMsQS1EOjYsQi1EOjEsQy1FOjUsRC1FOjQsQy1EOjIsUy1DOjgsQS1FOjEyLEItRToxMCxTLUQ6NyxTLUU6MTUsQS1COjUsQy1FOjMsRC1FOjIKSVRFTVM6bWVtLDUsNjA7cHJvYyw3LDExMDtkaXNwLDQsNTA7cG9ydCwzLDM1O2h1Yiw2LDc1O2N0cmwsOCwxMjU7YnVzLDIsMjg7cmFtLDksMTE1O2dwdSwxMCwxNDA7c3NkLDQsNTI7bmljLDYsNzI7cGNpLDMsMzg7ZG1hLDUsNTg7dXNiLDcsODg7aWRlLDgsOTgKQ0FQOjQwCkdVQVJEUzo0LDIsUlJSUkRERERMTExMVVVVVTs2LDQsTExMTERERERSUlJSVVVVVTsyLDYsVVVVVVJSUlJERERETExMTApUWDo0ClRZOjQKU0FGRTp4IG1vZCAxNyA9IDg7eCBtb2QgMTkgPSAzO3ggbW9kIDIzID0gMTQKUEFUVEVSTjplbmNyeXB0aW9uLGVuY3J5cGlvbixlbmNyeXB0b24sZW5jcnlwdGluLGVuY3JwdGlvbixlbmN5cnB0aW9uCkZBQ1RPUjoyMzQ1Njc4OTEwMTExMjEKUEFMU1RSOnh5enF3ZWFiY2RlZWRjYmFxd2V4eXoKRklCOjc3Nzc3Nzc3Nzc3Nzc3Nzc3NwpCUkFDS0VUUzp7Wyh7Wyh7WygpXX0pXX0pXX0oKCkpW1tdXXt7fX0oKCkpW1tdXQpMVUhOOjU5OTI3Mzk4NzE2",
+          "testOut": "78190030098778",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Minimal",
+          "isTest": true,
+          "testIn": "R1JBUEg6Uy1FOjEKSVRFTVM6eCwxLDEKQ0FQOjEKR1VBUkRTOgpUWDowClRZOjAKU0FGRTp4IG1vZCAyID0gMQpQQVRURVJOOmEsYixjCkZBQ1RPUjoyClBBTFNUUjphCkZJQjowCkJSQUNLRVRTOigpCkxVSE46MA==",
+          "testOut": "101",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Ghost",
+          "isTest": false,
+          "testIn": "R1JBUEg6Uy1FOjUKSVRFTVM6eSwyLDMKQ0FQOjIKR1VBUkRTOgpUWDowClRZOjAKU0FGRTp4IG1vZCAzID0gMgpQQVRURVJOOmIsYSxjCkZBQ1RPUjozClBBTFNUUjpiYgpGSUI6MQpCUkFDS0VUUzpbXQpMVUhOOjE=",
+          "testOut": "123",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Labyrinth",
+          "isTest": true,
+          "testIn": "R1JBUEg6Uy1BOjEsUy1COjQsUy1DOjcsQS1EOjMsQS1FOjEwLEItRDoxLEItRjo1LEMtRjoyLEQtRzo2LEUtRzoxLEYtRzozLEctSDoyLEgtSTo4LEktSjoxLEotSzoyLEstRToxLEYtSDo0LEEtRjo5LEItRzo4LEMtSDo2LEQtSTo1LEUtSjozLEYtSzo3CklURU1TOnAxLDIsMjM7cDIsMywyOTtwMyw1LDMxO3A0LDcsMzc7cDUsMTEsNDE7cDYsNCwzMztwNyw2LDM1O3A4LDgsMzk7cDksMSwxNTtwMTAsMywyNztwMTEsOSw0MztwMTIsMiwxOTtwMTMsNCwzMjtwMTQsNiwzODtwMTUsMywyNTtwMTYsNSwzNDtwMTcsNyw0MDtwMTgsOCw0NDtwMTksMSwxMjtwMjAsMiwxOApDQVA6NTAKR1VBUkRTOjEsMSxSUlJVVVVMTExERERSUlVVTExERDszLDAsRERERERSUlJSUlVVVVVVTExMTEwKVFg6MgpUWToyClNBRkU6eCBtb2QgNyA9IDM7eCBtb2QgMTEgPSA1O3ggbW9kIDEzID0gNzt4IG1vZCAxNyA9IDIKUEFUVEVSTjphdXRoZW50aWNhdGlvbixhdXRoZW50Y2F0aW9uLGF1dGhhbnRpY2F0aW9uLGF1dGVudGljYXRpb24sYXV0aGVudGljYXRvbixhdXRoZW50aWZpY2F0aW9uCkZBQ1RPUjo5OTk5OTk5OTk5OTk4OTMKUEFMU1RSOmFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6YWJjcmFjZWNhcmJheHl6d3Z1dHNycXBvbm1sa2ppaGdmZWRjYmEKRklCOjEyMzQ1Njc4OTAxMjM0NTY3OApCUkFDS0VUUzooeyh7KHsoeyh7KHsoeygpfSl9KX0pfSl9KX0pfSlbKFsoWyhbKFsoWyhbXSldKV0pXSldKV0pXQpMVUhOOjEyMzQ1Njc4OTAz",
+          "testOut": "4600867951",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Maze",
+          "isTest": false,
+          "testIn": "R1JBUEg6Uy1BOjIsUy1COjMsUy1DOjgsQS1EOjQsQS1FOjksQi1EOjIsQi1GOjYsQy1GOjEsRC1HOjUsRS1HOjIsRi1HOjQsRy1IOjMsSC1JOjcsSS1KOjIsSi1LOjMsSy1FOjIsRi1IOjMsQS1GOjEwLEItRzo5LEMtSDo3LEQtSTo2LEUtSjo0CkNBUDo1NQpHVUFSRFM6MiwyLFJSUlVVVUxMTERERFJSVVVMTEREOzQsMSxERERERFJSUlJSVVVVVVVMTExMTApUWDozClRZOjMKU0FGRTp4IG1vZCA3ID0gNDt4IG1vZCAxMSA9IDY7eCBtb2QgMTMgPSA5O3ggbW9kIDE3ID0gMwpQQVRURVJOOmF1dGhvcml6YXRpb24sYXV0aG9yaXphdG9uLGF1dGhvcml6dGlvbixhdXRocml6YXRpb24sYXV0aG9yaXphaW9uLGF1dGhlbnRpemF0aW9uCkZBQ1RPUjo5OTk5OTk5OTk5OTg5ODcKUEFMU1RSOnFyc3R1dnd4eXp3YXNpdGFjYXJvcmFjYXRpc2F3enl4d3Z1dHNycQpGSUI6MjM0NTY3ODkwMTIzNDU2Nzg5CkJSQUNLRVRTOih7KHsoeyh7KHsoeyh7KCl9KX0pfSl9KX0pfSl9KVsoWyhbKFsoWyhbKFtdKV0pXSldKV0pXSldCkxVSE46MjM0NTY3ODkwMTMKSVRFTVM6cTEsMywyNTtxMiw0LDMwO3EzLDYsMzU7cTQsOCw0MDtxNSwxMCw0NTtxNiw1LDM4O3E3LDcsNDI7cTgsOSw0ODtxOSwyLDE4O3ExMCw0LDI4O3ExMSw4LDQ2O3ExMiwzLDIyO3ExMyw1LDM2O3ExNCw3LDQ0O3ExNSwyLDE2O3ExNiw0LDI2O3ExNyw2LDM0O3ExOCw4LDQyO3ExOSwxLDEwO3EyMCwzLDI0",
+          "testOut": "76923266172841",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Cipher",
+          "isTest": true,
+          "testIn": "R1JBUEg6Uy1OMTo1LFMtTjI6OCxTLU4zOjEyLE4xLU40OjMsTjEtTjU6NyxOMi1ONDoyLE4yLU42OjYsTjMtTjY6MSxONC1ONzo0LE41LU43OjIsTjYtTjc6NSxONy1OODozLE44LU45OjEsTjktRToyLE41LUU6MTUsTjgtRTo2LE4xLU42OjksTjItTjU6NCxOMy1ONzo4LE40LU44OjYsTjUtTjk6MwpJVEVNUzphbHBoYSw1LDYwO2JldGEsOCw5NTtnYW1tYSwzLDM1O2RlbHRhLDEyLDE1MDtlcHNpbG9uLDYsNzU7emV0YSw0LDUwO2V0YSw3LDg1O3RoZXRhLDEwLDEyMDtpb3RhLDIsMjU7a2FwcGEsOSwxMTA7bGFtYmRhLDExLDEzNTttdSwxLDE1O251LDMsNDA7eGksNiw3MDtvbWljciw4LDEwMApDQVA6NDUKR1VBUkRTOjQsNCxSUkREVVVMTFJSRERVVUxMOzcsMixMTEREUlJVVTsxLDYsVVVSUkRETEwKVFg6NQpUWTo1ClNBRkU6eCBtb2QgMzEgPSA3O3ggbW9kIDM3ID0gMTE7eCBtb2QgNDEgPSAyMwpQQVRURVJOOnZ1bG5lcmFiaWxpdHksdnVsbmVyYWJpbHR5LHZ1bG5hcmFiaWxpdHksdnVubGVyYWJpbGl0eSx2dWxuZXJiaWxpdHksdnVsbmVyYWJpbGl5CkZBQ1RPUjo5OTk5OTk5OTk5OTk5NzMKUEFMU1RSOm1ub3BxcnN0dXZ3eHl6YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp6eXh3dnV0c3JxcG9ubWxramloZ2ZlZGNiYXp5eHd2dXRzcnFwb25tCkZJQjo5OTk5OTk5OTk5OTk5OTk5OTkKQlJBQ0tFVFM6e1soe30pXX17Wyh7fSldfXtbKHt9KV19e1soe30pXX17Wyh7fSldfXtbKHt9KV19e1soe30pXX17Wyh7fSldfXtbKHt9KV19e1soe30pXX0KTFVITjo1Mjg0OTE2Mzcw",
+          "testOut": "470627511",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Vault",
+          "isTest": false,
+          "testIn": "R1JBUEg6Uy1OMTo0LFMtTjI6OSxTLU4zOjExLE4xLU40OjIsTjEtTjU6OCxOMi1ONDozLE4yLU42OjUsTjMtTjY6MixONC1ONzo1LE41LU43OjMsTjYtTjc6NCxONy1OODoyLE44LU45OjMsTjktRToxLE41LUU6MTQsTjgtRTo3LE4xLU42OjEwLE4yLU41OjYsTjMtTjc6OSxONC1OODo3LE41LU45OjQKSVRFTVM6YjEsNCw1NTtiMiw5LDEwMDtiMywzLDQwO2I0LDExLDE0MDtiNSw3LDgwO2I2LDUsNjA7YjcsOCw5MDtiOCwxMCwxMzA7YjksMiwzMDtiMTAsNiw3MDtiMTEsMTIsMTU1O2IxMiwxLDE4O2IxMyw0LDUyO2IxNCw3LDgyO2IxNSwzLDM4CkNBUDo0MgpHVUFSRFM6MywzLFJSRERVVUxMUlJERFVVTEw7NiwxLExMRERSUlVVOzEsNSxVVVJSRERMTApUWDo0ClRZOjQKU0FGRTp4IG1vZCAzMSA9IDEyO3ggbW9kIDM3ID0gMTg7eCBtb2QgNDEgPSAyOQpQQVRURVJOOmF1dGhlbnRpY2F0aW9uLGF1dGhlbnRjYXRpb24sYXV0aG50aWNhdGlvbixhdXRlbnRpY2F0aW9uLGF1dGhlbnRpY2Fpb24sYXV0aGVudGlhY3Rpb24KRkFDVE9SOjk5OTk5OTk5OTk5OTk4OQpQQUxTVFI6enl4d3Z1dHNycXBvbm1sa2ppaGdmZWRjYmFhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5egpGSUI6ODc2NTQzMjEwOTg3NjU0MzIxCkJSQUNLRVRTOntbKHt9KV19e1soe30pXX17Wyh7fSldfXtbKHt9KV19e1soe30pXX17Wyh7fSldfXtbKHt9KV19e1soe30pXX17Wyh7fSldfQpMVUhOOjYyODQ5MTYzNzA=",
+          "testOut": "1000000154154925",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Omega",
+          "isTest": true,
+          "testIn": "R1JBUEg6Uy1BOjIsUy1COjUsQS1COjEsQS1DOjQsQi1EOjMsQy1EOjIsQy1FOjcsRC1FOjEsRC1GOjUsRS1GOjIsRi1HOjMsRy1IOjEsSC1JOjQsSS1KOjYsSi1FOjgsRy1FOjksQS1FOjIwLEItRjoxMixDLUc6MTAsRC1IOjgKSVRFTVM6bzEsMywyODtvMiw1LDQyO28zLDcsNTU7bzQsMiwyMDtvNSw0LDM1O282LDYsNDg7bzcsOCw2MjtvOCwxLDEyO285LDksNzA7bzEwLDMsMzA7bzExLDUsNDU7bzEyLDcsNTg7bzEzLDQsMzg7bzE0LDYsNTI7bzE1LDIsMjI7bzE2LDgsNjQ7bzE3LDEsMTQ7bzE4LDMsMzI7bzE5LDUsNDY7bzIwLDcsNjAKQ0FQOjQwCkdVQVJEUzoyLDIsUlJERFVVTExSUkREVVVMTDs1LDEsRERERFJSUlJVVVVVTExMTDsxLDUsVVVVVVJSUlJERERETExMTApUWDozClRZOjMKU0FGRTp4IG1vZCA1ID0gMjt4IG1vZCA3ID0gMzt4IG1vZCAxMSA9IDU7eCBtb2QgMTMgPSA4ClBBVFRFUk46aW5mcmFzdHJ1Y3R1cmUsaW5mYXN0cnVjdHVyZSxpbmZyYXN0cnVjdXJlLGluZnJhc3R1Y3R1cmUsaW5mcmFzdHJ1Y3RyZSxpbmZyYXN0cmN0dXJlCkZBQ1RPUjo5ODc2NTQzMjEwOTg3NjUKUEFMU1RSOnRhdHRhcnJhdHRhdHh5emFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6CkZJQjo3Nzc3Nzc3Nzc3Nzc3Nzc3NzcKQlJBQ0tFVFM6KCh7W119KSl7KCh7W119KSl9KCh7W119KSl7KCh7W119KSl9KCh7W119KSl7KCh7W119KSl9CkxVSE46NjAxMTExMTExMTExMTExNw==",
+          "testOut": "1395933192\n",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Sigma",
+          "isTest": false,
+          "testIn": "R1JBUEg6Uy1BOjMsUy1COjQsQS1COjIsQS1DOjUsQi1EOjQsQy1EOjEsQy1FOjgsRC1FOjIsRC1GOjYsRS1GOjEsRi1HOjQsRy1IOjIsSC1JOjMsSS1KOjUsSi1FOjcsRy1FOjksQS1FOjE4LEItRjoxNCxDLUc6MTEsRC1IOjkKSVRFTVM6djEsNCwzMjt2Miw2LDQ4O3YzLDgsNjA7djQsMiwyMjt2NSw1LDQwO3Y2LDcsNTQ7djcsOSw2ODt2OCwxLDE0O3Y5LDMsMjY7djEwLDUsNDI7djExLDcsNTY7djEyLDQsMzQ7djEzLDYsNTA7djE0LDgsNjQ7djE1LDMsMjg7djE2LDksNzI7djE3LDEsMTY7djE4LDMsMzA7djE5LDUsNDQ7djIwLDcsNTgKQ0FQOjQyCkdVQVJEUzozLDEsUlJERFVVTExSUkREVVVMTDs2LDMsRERERFJSUlJVVVVVTExMTDsxLDYsVVVVVVJSUlJERERETExMTApUWDo0ClRZOjQKU0FGRTp4IG1vZCA1ID0gMzt4IG1vZCA3ID0gNDt4IG1vZCAxMSA9IDY7eCBtb2QgMTMgPSAxMApQQVRURVJOOm9wdGltaXphdGlvbixvcHRpbWl6YXRvbixvcHRpbXphdGlvbixvcHRpbWlzYXRvbixvcHRpbWl6dGlvbixvcHRtaXphdGlvbgpGQUNUT1I6ODc2NTQzMjEwOTg3NjU0ClBBTFNUUjphbWFuYXBsYW5hY2FuYWxwYW5hbWF4eXp0YXR0YXJyYXR0YXQKRklCOjY1NDMyMTA5ODc2NTQzMjEwOQpCUkFDS0VUUzooKHtbXX0pKXsoKHtbXX0pKX0oKHtbXX0pKXsoKHtbXX0pKX0oKHtbXX0pKXsoKHtbXX0pKX0KTFVITjo1MDExMTExMTExMTExMTE3",
+          "testOut": "20870355761451",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Storm",
+          "isTest": true,
+          "testIn": "R1JBUEg6Uy1BOjEwLFMtQjozLEItQToxLEEtQzo1LEItQzo4LEItRDoyLEQtQzoxLEMtRTo0LEQtRTo3LEEtRToxNSxTLUM6MTEsUy1EOjYsQS1EOjQsQi1FOjEzLEMtRDozCklURU1TOnMxLDQsNTA7czIsNiw3MDtzMyw4LDkwO3M0LDMsMzU7czUsNSw2MDtzNiw3LDgwO3M3LDIsMjU7czgsMTAsMTEwO3M5LDEsMTU7czEwLDQsNDg7czExLDYsNjg7czEyLDgsODg7czEzLDMsMzM7czE0LDUsNTg7czE1LDcsNzgKQ0FQOjM1CkdVQVJEUzozLDMsUlJVVUxMREQ7NSw1LExMRERSUlVVOzcsMSxVVVJSRERMTApUWDo0ClRZOjQKU0FGRTp4IG1vZCAyOSA9IDEzO3ggbW9kIDMxID0gMTc7eCBtb2QgMzcgPSAyMgpQQVRURVJOOnN5bmNocm9uaXphdGlvbixzeW5jaHJvbml6YXRvbixzeW5jcm9uaXphdGlvbixzeWNocm9uaXphdGlvbixzeW5jaHJvbmlzYXRpb24sc3luY2hybml6YXRpb24KRkFDVE9SOjMxNDE1OTI2NTM1ODk3OQpQQUxTVFI6a2F5YWt4eXpyYWNlY2FyYWJjYWlib2hwaG9iaWFxd2VydHkKRklCOjUwMDAwMDAwMDAwMDAwMDAwMApCUkFDS0VUUzpbeyh7W3soe1t7KHtbeygpfV19KX1dfSl9XX0pfV1beyh7W3soe1t7KHtbeygpfV19KX1dfSl9XX0pfV0KTFVITjozNzgyODIyNDYzMTAwMDU=",
+          "testOut": "69963926",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Thunder",
+          "isTest": false,
+          "testIn": "R1JBUEg6Uy1BOjgsUy1COjQsQi1BOjIsQS1DOjYsQi1DOjcsQi1EOjMsRC1DOjIsQy1FOjUsRC1FOjYsQS1FOjE0LFMtQzoxMCxTLUQ6NSxBLUQ6MyxCLUU6MTIsQy1EOjQKSVRFTVM6dDEsNSw1NTt0Miw3LDc1O3QzLDksOTU7dDQsNCw0MDt0NSw2LDY1O3Q2LDgsODU7dDcsMywzMDt0OCwxMSwxMTU7dDksMiwyMDt0MTAsNSw1Mzt0MTEsNyw3Mzt0MTIsOSw5Mzt0MTMsNCwzODt0MTQsNiw2Mzt0MTUsOCw4MwpDQVA6MzgKR1VBUkRTOjQsMyxSUlVVTExERDs2LDYsTExERFJSVVU7Miw1LFVVUlJERExMClRYOjUKVFk6NQpTQUZFOnggbW9kIDI5ID0gMTU7eCBtb2QgMzEgPSAxOTt4IG1vZCAzNyA9IDI1ClBBVFRFUk46cGFyYWxsZWxpemF0aW9uLHBhcmFsbGVsaXphdG9uLHBhcmFsbGVsaXp0aW9uLHBhcmFsbGVsemF0aW9uLHBhcmFsZWxpemF0aW9uLHBhcmVsbGVsaXphdGlvbgpGQUNUT1I6MjcxODI4MTgyODQ1OTA0ClBBTFNUUjp4eXpxd2VrYXlha2FiY3JhY2VjYXJkZWYKRklCOjQzMjEwOTg3NjU0MzIxMDk4NwpCUkFDS0VUUzpbeyh7W3soe1t7KHtbeygpfV19KX1dfSl9XX0pfV1beyh7W3soe1t7KHtbeygpfV19KX1dfSl9XX0pfV0KTFVITjo0NzgyODIyNDYzMTAwMDU=",
+          "testOut": "995789011",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Nova",
+          "isTest": true,
+          "testIn": "R1JBUEg6Uy1QOjEsUC1ROjIsUS1SOjMsUi1UOjQsVC1VOjUsVS1WOjYsVi1XOjcsVy1YOjgsWC1ZOjksWS1FOjEwLFMtUToxMCxTLVI6MTUsUC1UOjEyLFEtVToxMSxSLVY6OSxULVc6OCxVLVg6NyxWLVk6NixXLUU6NSxTLVQ6MjAsUC1WOjE4LFEtVzoxNixSLVg6MTQKSVRFTVM6bjEsMyw0NTtuMiw1LDY1O24zLDcsODU7bjQsMiwzMDtuNSw0LDU1O242LDYsNzU7bjcsOCw5NTtuOCwxLDIwO245LDksMTAwO24xMCwzLDUwO24xMSw1LDcwO24xMiw3LDkwO24xMyw0LDYwO24xNCw2LDgwO24xNSw4LDEwNTtuMTYsMiwzNTtuMTcsMTAsMTE1O24xOCwxLDE4O24xOSwzLDQyO24yMCw1LDYyO24yMSw3LDgyO24yMiw0LDUyO24yMyw2LDcyO24yNCw4LDkyO24yNSw5LDEwOApDQVA6NjAKR1VBUkRTOjEsMSxSUlVVTExERDszLDAsTExERFJSVVU7MCwzLFVVUlJERExMOzIsMixERFJSVUxMUgpUWDoyClRZOjEKU0FGRTp4IG1vZCA0MyA9IDE3O3ggbW9kIDQ3ID0gMjM7eCBtb2QgNTMgPSAzMQpQQVRURVJOOmVsZWN0cm9tYWduZXRpYyxlbGVjdG9tYWduZXRpYyxlbGVjdHJvbWFnbmV0YyxlbGVjdHJvbWFnbnRpYyxlbGV0cm9tYWduZXRpYyxlbGN0cm9tYWduZXRpYwpGQUNUT1I6MTIzNDU2Nzg5MDEyMzQ1ClBBTFNUUjp4eXphYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5enJhY2VjYXJ6eXh3dnV0c3JxcG9ubWxramloZ2ZlZGNiYXp5eApGSUI6ODg4ODg4ODg4ODg4ODg4ODg4CkJSQUNLRVRTOigpW117fSgpW117fSgpW117fSgpW117fSgpW117fSgpW117fSgpW117fSgpW117fSgpW117fSgpW117fQpMVUhOOjMwNTY5MzA5MDI1OTA0",
+          "testOut": "1005708619",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Pulse",
+          "isTest": false,
+          "testIn": "R1JBUEg6Uy1QOjIsUC1ROjMsUS1SOjQsUi1UOjUsVC1VOjYsVS1WOjcsVi1XOjgsVy1YOjksWC1ZOjEwLFktRToxMSxTLVE6OSxTLVI6MTQsUC1UOjExLFEtVToxMCxSLVY6OCxULVc6NyxVLVg6NixWLVk6NSxXLUU6NCxTLVQ6MTksUC1WOjE3LFEtVzoxNSxSLVg6MTMKSVRFTVM6bTEsNCw1MDttMiw2LDcwO20zLDgsOTA7bTQsMiwzNTttNSw1LDYwO202LDcsODA7bTcsOSwxMDA7bTgsMSwyNTttOSwzLDQ1O20xMCw1LDY1O20xMSw3LDg1O20xMiw0LDU1O20xMyw2LDc1O20xNCw4LDk1O20xNSw5LDExMDttMTYsMyw0MDttMTcsMTEsMTIwO20xOCwxLDE4O20xOSwzLDQyO20yMCw1LDYyO20yMSw3LDgyO20yMiw0LDUyO20yMyw2LDcyO20yNCw4LDkyO20yNSwxMCwxMTIKQ0FQOjY1CkdVQVJEUzoyLDEsUlJVVUxMREQ7NCwzLExMRERSUlVVOzEsNCxVVVJSRERMTDszLDIsRERSUlVMTFIKVFg6MwpUWToyClNBRkU6eCBtb2QgNDMgPSAyMDt4IG1vZCA0NyA9IDI4O3ggbW9kIDUzID0gMzUKUEFUVEVSTjppbXBsZW1lbnRhdGlvbixpbXBsZW1lbnRhdG9uLGltcGxtZW50YXRpb24saW1wbGVtZW50dGlvbixpbWxlbWVudGF0aW9uLGltcGxlbW50YXRpb24KRkFDVE9SOjIzNDU2Nzg5MDEyMzQ1NgpQQUxTVFI6eHl6cmFjZWNhcnJhY2VjYXJ4eXphYmNkZWZnaGlqa2xtbm9wcXBvbm1sa2ppaGdmZWRjYmEKRklCOjc2NTQzMjEwOTg3NjU0MzIxMApCUkFDS0VUUzooKVtde30oKVtde30oKVtde30oKVtde30oKVtde30oKVtde30oKVtde30oKVtde30oKVtde30oKVtde30KTFVITjo0MDU2OTMwOTAyNTkwNA==",
+          "testOut": "378029915",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Apex",
+          "isTest": true,
+          "testIn": "R1JBUEg6Uy1BOjEsUy1COjIsQS1DOjMsQi1DOjEsQy1EOjQsRC1GOjUsRi1HOjYsRy1IOjcsSC1JOjgsSS1KOjksSi1LOjEwLEstTDoxMSxMLU06MTIsTS1OOjEzLE4tTzoxNCxPLUU6MTUsQS1EOjIwLEItRjoxOCxDLUc6MTYsRC1IOjE0LEYtSToxMixHLUo6MTAsSC1LOjgsSS1MOjYsSi1NOjQsSy1OOjIsTC1POjEsTS1FOjMsUy1DOjUsQS1GOjE1LEItRzoxMyxDLUg6MTEsRC1JOjksRi1KOjcsRy1LOjUsSC1MOjMKSVRFTVM6YTEsMSwxMDthMiwyLDIwO2EzLDMsMzA7YTQsNCw0MDthNSw1LDUwO2E2LDYsNjA7YTcsNyw3MDthOCw4LDgwO2E5LDksOTA7YTEwLDEwLDEwMDthMTEsMSwxNTthMTIsMiwyNTthMTMsMywzNTthMTQsNCw0NTthMTUsNSw1NTthMTYsNiw2NTthMTcsNyw3NTthMTgsOCw4NTthMTksOSw5NTthMjAsMTAsMTA1O2EyMSwxLDEyO2EyMiwyLDIyO2EyMywzLDMyO2EyNCw0LDQyO2EyNSw1LDUyCkNBUDo2NQpHVUFSRFM6MSwwLFJVUkRSVUxETFU7MCwxLFVMRExVUkRSVVI7MiwxLERSRExVTERSVUwKVFg6MQpUWToxClNBRkU6eCBtb2QgMyA9IDE7eCBtb2QgNSA9IDI7eCBtb2QgNyA9IDM7eCBtb2QgMTEgPSA0O3ggbW9kIDEzID0gNQpQQVRURVJOOmludGVybmF0aW9uYWxpemF0aW9uLGludGVybmF0b25hbGl6YXRpb24saW50ZXJuYXRpb25hbGl6YXRvbixpbnRlcm5hdGlvbmxpemF0aW9uLGludGVybmF0aW9uYWx6YXRpb24saW50ZXJuYXRpb25hbGl6dGlvbgpGQUNUT1I6OTk5OTk5OTk5OTk5OTk5ClBBTFNUUjphYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5emFiY2RlZmdoaWprbG1ub3BxcG9ubWxramloZ2ZlZGNiYXp5eHd2dXRzcnFwb25tbGtqaWhnZmVkY2JhCkZJQjoxMDAwMDAwMDAwMDAwMDAwMDAwCkJSQUNLRVRTOih7Wyh7Wyh7Wyh7Wyh7Wyh7Wyh7WygpXX0pXX0pXX0pXX0pXX0pXX0pXX0pXX0pCkxVSE46NDExMTExMTExMTExMTExMQ==",
+          "testOut": "212702999",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Zenith",
+          "isTest": false,
+          "testIn": "R1JBUEg6Uy1BOjIsUy1COjMsQS1DOjQsQi1DOjIsQy1EOjUsRC1GOjYsRi1HOjcsRy1IOjgsSC1JOjksSS1KOjEwLEotSzoxMSxLLUw6MTIsTC1NOjEzLE0tTjoxNCxOLU86MTUsTy1FOjE2LEEtRDoxOSxCLUY6MTcsQy1HOjE1LEQtSDoxMyxGLUk6MTEsRy1KOjksSC1LOjcsSS1MOjUsSi1NOjMsSy1OOjEsTC1POjIsTS1FOjQsUy1DOjYsQS1GOjE2LEItRzoxNCxDLUg6MTIsRC1JOjEwLEYtSjo4LEctSzo2LEgtTDo0CklURU1TOnoxLDIsMTI7ejIsMywyMjt6Myw0LDMyO3o0LDUsNDI7ejUsNiw1Mjt6Niw3LDYyO3o3LDgsNzI7ejgsOSw4Mjt6OSwxMCw5Mjt6MTAsMSw4O3oxMSwyLDE4O3oxMiwzLDI4O3oxMyw0LDM4O3oxNCw1LDQ4O3oxNSw2LDU4O3oxNiw3LDY4O3oxNyw4LDc4O3oxOCw5LDg4O3oxOSwxMCw5ODt6MjAsMSwxNDt6MjEsMiwyNDt6MjIsMywzNDt6MjMsNCw0NDt6MjQsNSw1NDt6MjUsNiw2NApDQVA6NzAKR1VBUkRTOjIsMCxSVVJEUlVMRExVOzAsMixVTERMVVJEUlVSOzEsMixEUkRMVUxEUlVMClRYOjEKVFk6MQpTQUZFOnggbW9kIDMgPSAyO3ggbW9kIDUgPSAzO3ggbW9kIDcgPSA0O3ggbW9kIDExID0gNTt4IG1vZCAxMyA9IDYKUEFUVEVSTjppbnRlcm5hdGlvbmFsaXphdGlvbixpbnRlcm5hdG9uYWxpemF0aW9uLGludGVybmF0aW9uYWxpemF0b24saW50ZXJuYXRpb25saXphdGlvbixpbnRlcm5hdGlvbmFsemF0aW9uLGludGVybmF0aW9uYWxpenRpb24KRkFDVE9SOjg4ODg4ODg4ODg4ODg4OApQQUxTVFI6eHl6YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXphYmNkZWZnaGlqa2xtbm9wcXBvbm1sa2ppaGdmZWRjYmF6eXh3dnV0c3JxcG9ubWxramloZ2ZlZGNiYXp5eApGSUI6OTk5OTk5OTk5OTk5OTk5OTM3CkJSQUNLRVRTOih7Wyh7Wyh7Wyh7Wyh7Wyh7Wyh7WygpXX0pXX0pXX0pXX0pXX0pXX0pXX0pXX0pCkxVSE46NTExMTExMTExMTExMTExMQ==",
+          "testOut": "2923672",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "1 ≤ length of [[encoded]] ≤ 2000\nAll numeric results fit in 64-bit signed integer\nGraph nodes ≤ 50, edges ≤ 200\n1 ≤ [[FACTOR]] ≤ 10^15\n0 ≤ [[FIB N]] ≤ 10^18\nItems ≤ 25, capacity ≤ 5000\nGuards ≤ 4\nPALSTR length ≤ 1000",
+      "coverBinaryId": 157524348218478,
+      "stubGenerator": "read encoded:string(2000)\nwrite answer\n\nSTATEMENT\nDecode and execute the Chaos Protocol to obtain the master access code.\n\nINPUT\nencoded: Base64-encoded mission data containing 10 independent tasks\n\nOUTPUT\nPrint the final access code after solving all tasks",
+      "inputDescription": "<<Line 1:>> A Base64-encoded string [[encoded]] containing all mission parameters",
+      "solutionLanguage": "C",
+      "outputDescription": "<<Line 1:>> A single integer [[accessCode]] representing the final access code"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You're hacking the NEXUS mainframe. Decode the input and solve 10 independent tasks to get the access code.<br><br><strong>DECODE</strong>: Input is a Base64-encoded string. Decode it to get mission data.<br><strong>PARSE</strong>: Decoded text is KEY:VALUE format, one per line. All tasks below read from this parsed data.<br><br><strong>TASKS</strong> (all independent):<br><br><const>GRAPH</const>: comma-separated edges <var>A</var>-<var>B</var>:<var>W</var> (bidirectional). Find shortest path weight from node S to node E using Dijkstra or similar.<br><br><const>ITEMS</const>: semicolon-separated items <var>NAME</var>,<var>WEIGHT</var>,<var>VALUE</var>. <const>CAP</const>: max weight capacity. Solve 0/1 Knapsack, return max value. Up to 25 items.<br><br><const>GUARDS</const>: semicolon-separated <var>X</var>,<var>Y</var>,<var>PATH</var>. PATH is UDLR moves repeating cyclically. U:Y+1, D:Y-1, R:X+1, L:X-1. <const>TX</const>,<const>TY</const>: target coords. Find earliest T (from 0) where target is safe (Manhattan distance &gt; 1 from all guards). Empty guards = 0.<br><br><const>SAFE</const>: semicolon-separated equations &quot;x mod <var>M</var> = <var>R</var>&quot;. Solve using Chinese Remainder Theorem. Return smallest positive x.<br><br><const>PATTERN</const>: comma-separated strings. First is target, rest are candidates. Find closest by Levenshtein (edit) distance. Ties: lexicographically smallest. Return the string itself.<br><br><const>FACTOR</const>: integer N (up to 10^15). Sum all prime factors with multiplicity.<br><br><const>PALSTR</const>: string (up to 1000 chars). Return length of longest palindromic substring.<br><br><const>FIB</const>: integer N (up to 10^18). Return F(N) mod 10^9+7 where F(0)=0, F(1)=1. Matrix exponentiation required for large N.<br><br><const>BRACKETS</const>: string of ()[]{}. Return 1 if balanced, 0 otherwise.<br><br><const>LUHN</const>: digit string. Compute Luhn checksum digit (0-9).<br><br><strong>FINAL</strong>: Sum all numeric results. XOR that sum with ASCII sum of the PATTERN result string.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> A Base64-encoded string <var>encoded</var> containing all mission parameters</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> A single integer <var>accessCode</var> representing the final access code</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; length of <var>encoded</var> &le; 2000<br>All numeric results fit in 64-bit signed integer<br>Graph nodes &le; 50, edges &le; 200<br>1 &le; <var>FACTOR</var> &le; 10^15<br>0 &le; <var>FIB N</var> &le; 10^18<br>Items &le; 25, capacity &le; 5000<br>Guards &le; 4<br>PALSTR length &le; 1000</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">R1JBUEg6Uy1BOjMsUy1COjcsQS1DOjIsQi1DOjEsQS1FOjE1LEMtRTo4LFMtRDo0LEQtQzozLEQtRToxMixCLUQ6MgpJVEVNUzpjaGlwLDMsNDA7YmxhZGUsNSw3MDtrZXksMiwzMDtkcml2ZSw3LDkwO3dpcmUsNCw1MDttZW0sNiw2NTtyb20sMSwxNTtodWIsOCw5NQpDQVA6MjAKR1VBUkRTOjEsMCxSUjswLDEsVVUKVFg6MgpUWToxClNBRkU6eCBtb2QgNyA9IDM7eCBtb2QgMTEgPSA1O3ggbW9kIDEzID0gNwpQQVRURVJOOmFsZ29yaXRobSxhbGdvcml0bSxhbGdhcml0aG0sYWxnb3J5dGhtLGFsb2dyaXRtCkZBQ1RPUjoyMzEwClBBTFNUUjp4eXphYmFjYWJhZGFiYWNhYmF4eXoKRklCOjEwMDAwMDAwMDAwMDAwMDAwMDAKQlJBQ0tFVFM6KHtbKHtbKHtbKHtbKCldfSldfSldfSldfSkKTFVITjo3OTkyNzM5ODcxMA==</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">209784368</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 157535060876255,
+  "commentCount": 23,
+  "upVotes": 0,
+  "downVotes": 3,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

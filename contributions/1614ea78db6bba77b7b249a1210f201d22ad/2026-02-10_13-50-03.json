@@ -1,0 +1,175 @@
+{
+  "id": 1614,
+  "activeVersion": 42,
+  "score": 7,
+  "votableId": 8898173,
+  "codingamerId": 2007852,
+  "views": 416,
+  "commentableId": 8833427,
+  "title": "Dice probability calculator",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Zorg1",
+  "publicHandle": "1614ea78db6bba77b7b249a1210f201d22ad",
+  "codingamerHandle": "ae4dcda11ac0f4cc7369e049d99e90652587002",
+  "lastVersion": {
+    "version": 42,
+    "autocloseTime": 1540640795938,
+    "data": {
+      "title": "Dice probability calculator",
+      "topics": [
+        {
+          "id": 110,
+          "handle": "probability",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Probability",
+            "2": "Probability"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "package main\n\nimport (\n\t\"bufio\"\n\t\"bytes\"\n\t\"fmt\"\n\t\"os\"\n\t\"sort\"\n\t\"strconv\"\n\t\"strings\"\n)\n\nvar priorities = map[string]int{\n\t\"(\": 0,\n\t\")\": 1,\n\t\">\": 2,\n\t\"+\": 3,\n\t\"-\": 3,\n\t\"*\": 4,\n}\n\n//\nfunc ScanExpr(data []byte, atEOF bool) (advance int, token []byte, err error) {\n\tif atEOF && len(data) == 0 {\n\t\treturn 0, nil, nil\n\t}\n\tidx := bytes.IndexAny(data, \"+->*()\")\n\tif idx == 0 {\n\t\treturn 1, data[0:1], nil\n\t} else if idx > 0 {\n\t\treturn idx, data[0:idx], nil\n\t}\n\t// If we're at EOF, we have a final, non-terminated line. Return it.\n\tif atEOF {\n\t\treturn len(data), data, nil\n\t}\n\t// Request more data.\n\treturn 0, nil, nil\n}\n\ntype Value map[int]float64\n\nfunc newValue(val int) Value {\n\tresult := make(Value, 1)\n\tresult[val] = 1.0\n\treturn result\n}\n\nfunc newDice(sides int) Value {\n\tresult := make(Value, sides)\n\tproba := 1.0 / float64(sides)\n\tfor i := 0; i < sides; i++ {\n\t\tresult[i+1] = proba\n\t}\n\treturn result\n}\n\nfunc doOperation(a, b Value, opfunc func(x, y int) int) Value {\n\tresult := make(Value)\n\tfor ak, av := range a {\n\t\tfor bk, bv := range b {\n\t\t\tresult[opfunc(ak, bk)] += av * bv\n\t\t}\n\t}\n\treturn result\n}\n\ntype Calc struct {\n\tvstack []Value\n\tostack []string\n}\n\nfunc (c *Calc) PushOperand(val Value) {\n\tc.vstack = append(c.vstack, val)\n}\n\nfunc (c *Calc) PopOperand() Value {\n\ti := len(c.vstack) - 1\n\tv := c.vstack[i]\n\tc.vstack = c.vstack[0:i]\n\treturn v\n}\n\nfunc (c *Calc) pushOp(op string) {\n\tc.ostack = append(c.ostack, op)\n}\n\nfunc (c *Calc) popOp() string {\n\ti := len(c.ostack) - 1\n\tv := c.ostack[i]\n\tc.ostack = c.ostack[0:i]\n\treturn v\n}\n\nfunc (c *Calc) compute(op string) {\n\n\t//fmt.Fprintln(os.Stderr,\"execute\",op)\n\n\tb := c.PopOperand()\n\ta := c.PopOperand()\n\tswitch op {\n\tcase \"+\":\n\t\tc.PushOperand(doOperation(a, b, func(x, y int) int { return x + y }))\n\tcase \"-\":\n\t\tc.PushOperand(doOperation(a, b, func(x, y int) int { return x - y }))\n\tcase \"*\":\n\t\tc.PushOperand(doOperation(a, b, func(x, y int) int { return x * y }))\n\tcase \">\":\n\t\tc.PushOperand(doOperation(a, b, func(x, y int) int {\n\t\t\tif x > y {\n\t\t\t\treturn 1\n\t\t\t} else {\n\t\t\t\treturn 0\n\t\t\t}\n\t\t}))\n\t}\n\n}\n\nfunc (c *Calc) condPop(cprio int) {\n\tfor len(c.ostack) > 0 {\n\t\ttop := c.popOp()\n\t\tif priorities[top] >= cprio {\n\t\t\tc.compute(top)\n\t\t} else {\n\t\t\tc.pushOp(top)\n\t\t\tbreak\n\t\t}\n\t}\n}\n\nfunc (c *Calc) Process(op string) {\n\tif op == \"(\" {\n\t\tc.pushOp(op)\n\t} else if op == \")\" {\n\t\tc.condPop(priorities[op])\n\t\tc.popOp()\n\t} else {\n\t\tc.condPop(priorities[op])\n\t\tc.pushOp(op)\n\t}\n}\n\nfunc main() {\n\tscanner := bufio.NewScanner(os.Stdin)\n\tscanner.Split(ScanExpr)\n\tvar c Calc\n\tfor scanner.Scan() {\n\t\ttok := strings.TrimSpace(scanner.Text())\n\t\tif _, ok := priorities[tok]; ok {\n\t\t\tc.Process(tok)\n\t\t} else if len(tok) > 0 {\n\t\t\tif tok[0] == 'd' {\n\t\t\t\tnb, _ := strconv.Atoi(tok[1:])\n\t\t\t\tc.PushOperand(newDice(nb))\n\t\t\t} else {\n\t\t\t\tnb, _ := strconv.Atoi(tok)\n\t\t\t\tc.PushOperand(newValue(nb))\n\t\t\t}\n\t\t}\n\t}\n\tc.condPop(0)\n\n\tresult := c.PopOperand()\n\tvalues := make([]int, 0, len(result))\n\tfor k := range result {\n\t\tvalues = append(values, k)\n\t}\n\tsort.Ints(values)\n\tfor _, k := range values {\n\t\tfmt.Printf(\"%d %.02f\\n\", k, result[k]*100.0)\n\t}\n\t// fmt.Fprintln(os.Stderr, \"Debug messages...\")\n}\n\n",
+      "statement": "Each Friday, you play the famous 'Fix your Dungeon' RPG with friends. You'd like to optimize your character: you need to know the probability of success of each test involving dice throws.\n\nYour program takes in input an expression (possibly with dice throws) and must print all possible outcomes along with their probabilities.\n\nThe expression is an arithmetic expression <<with parentheses>> and the following operators, from highest to lowest precedence:\n{{*}} multiplication\n{{+}} and {{-}} addition and subtraction\n{{>}} greater-than comparison: evaluates to 1 if true, 0 if false\n\nThe operands are one of:\n[[n]]: a decimal positive integer\n{{d}}[[n]]: a 'd' followed by a strict positive number, representing a die throw from 1 to [[n]] by a uniform distribution\n\nExamples of expressions:\n   {{3*2+5}} evaluates to 11 \n   {{d6}}: evaluates to an integer from 1 to 6, uniform\n   {{d6+d6}}: represents a double-dice throw\n   {{5>2}}: evaluates to 1",
+      "testCases": [
+        {
+          "title": "A die and two additions",
+          "isTest": true,
+          "testIn": "1+d4+1",
+          "testOut": "3 25.00\n4 25.00\n5 25.00\n6 25.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "A die and two additions",
+          "isTest": false,
+          "testIn": "1+d5+2",
+          "testOut": "4 20.00\n5 20.00\n6 20.00\n7 20.00\n8 20.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Comparison",
+          "isTest": true,
+          "testIn": "(2>5)+2*(5>2)+4*(10>5)",
+          "testOut": "6 100.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Comparison",
+          "isTest": false,
+          "testIn": "(10>4)+2*(9>2)+4*(5>8)",
+          "testOut": "3 100.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Addition of two dice",
+          "isTest": true,
+          "testIn": "d6+d6",
+          "testOut": "2 2.78\n3 5.56\n4 8.33\n5 11.11\n6 13.89\n7 16.67\n8 13.89\n9 11.11\n10 8.33\n11 5.56\n12 2.78",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Addition of two dice",
+          "isTest": false,
+          "testIn": "d4+d6",
+          "testOut": "2 4.17\n3 8.33\n4 12.50\n5 16.67\n6 16.67\n7 16.67\n8 12.50\n9 8.33\n10 4.17",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Comparaison with sum of dice",
+          "isTest": true,
+          "testIn": "8>d6+d6",
+          "testOut": "0 41.67\n1 58.33",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Comparaison with sum of dice",
+          "isTest": false,
+          "testIn": "5>d4+d6",
+          "testOut": "0 75.00\n1 25.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Subtraction of dice",
+          "isTest": true,
+          "testIn": "d9-2*d4",
+          "testOut": "-7 2.78\n-6 2.78\n-5 5.56\n-4 5.56\n-3 8.33\n-2 8.33\n-1 11.11\n0 11.11\n1 11.11\n2 8.33\n3 8.33\n4 5.56\n5 5.56\n6 2.78\n7 2.78",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Subtraction of dice",
+          "isTest": false,
+          "testIn": "d6-d6",
+          "testOut": "-5 2.78\n-4 5.56\n-3 8.33\n-2 11.11\n-1 13.89\n0 16.67\n1 13.89\n2 11.11\n3 8.33\n4 5.56\n5 2.78",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiplication of dice",
+          "isTest": true,
+          "testIn": "12-d2*d6",
+          "testOut": "0 8.33\n2 8.33\n4 8.33\n6 16.67\n7 8.33\n8 16.67\n9 8.33\n10 16.67\n11 8.33",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiplication of dice",
+          "isTest": false,
+          "testIn": "10-d5*d2",
+          "testOut": "0 10.00\n2 10.00\n4 10.00\n5 10.00\n6 20.00\n7 10.00\n8 20.00\n9 10.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "FIX IT !",
+          "isTest": true,
+          "testIn": "2*d6*d3-(3+d3)*d5>0",
+          "testOut": "0 59.63\n1 40.37",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "FIX IT !",
+          "isTest": false,
+          "testIn": "2*d5*d3-(3+d4)*d6>0",
+          "testOut": "0 73.33\n1 26.67",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "The inputs are all valid expressions: no error handling is needed.\nMaximum length of expression: {{100}} chars",
+      "coverBinaryId": 28831224468843,
+      "stubGenerator": "read expr:string(100)\nwrite answer",
+      "inputDescription": "A unique line containing the input expression.\nThe expression contains no spaces.",
+      "solutionLanguage": "Go",
+      "outputDescription": "[[N]] <<lines>>: an integer (outcome), a space and a float (percent probability of this outcome)\n\nOutcomes are sorted in ascending order.\nFloats are formatted with 2 decimal figures, rounded."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Each Friday, you play the famous 'Fix your Dungeon' RPG with friends. You'd like to optimize your character: you need to know the probability of success of each test involving dice throws.<br><br>Your program takes in input an expression (possibly with dice throws) and must print all possible outcomes along with their probabilities.<br><br>The expression is an arithmetic expression <strong>with parentheses</strong> and the following operators, from highest to lowest precedence:<br><const>*</const> multiplication<br><const>+</const> and <const>-</const> addition and subtraction<br><const>&gt;</const> greater-than comparison: evaluates to 1 if true, 0 if false<br><br>The operands are one of:<br><var>n</var>: a decimal positive integer<br><const>d</const><var>n</var>: a 'd' followed by a strict positive number, representing a die throw from 1 to <var>n</var> by a uniform distribution<br><br>Examples of expressions:<br>   <const>3*2+5</const> evaluates to 11 <br>   <const>d6</const>: evaluates to an integer from 1 to 6, uniform<br>   <const>d6+d6</const>: represents a double-dice throw<br>   <const>5&gt;2</const>: evaluates to 1</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">A unique line containing the input expression.<br>The expression contains no spaces.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><var>N</var> <strong>lines</strong>: an integer (outcome), a space and a float (percent probability of this outcome)<br><br>Outcomes are sorted in ascending order.<br>Floats are formatted with 2 decimal figures, rounded.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">The inputs are all valid expressions: no error handling is needed.<br>Maximum length of expression: <const>100</const> chars</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1+d4+1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">3 25.00\n4 25.00\n5 25.00\n6 25.00</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 232644199588,
+  "avatar": 16542412157988,
+  "commentCount": 7,
+  "upVotes": 7,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 266183,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

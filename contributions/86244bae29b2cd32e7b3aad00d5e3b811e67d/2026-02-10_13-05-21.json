@@ -1,0 +1,296 @@
+{
+  "id": 86244,
+  "activeVersion": 13,
+  "score": 5,
+  "votableId": 32881199,
+  "codingamerId": 491254,
+  "views": 384,
+  "commentableId": 32736331,
+  "title": "Swatch Internet Time",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Cakeisalie5",
+  "publicHandle": "86244bae29b2cd32e7b3aad00d5e3b811e67d",
+  "codingamerHandle": "26bc712b959a94dd2cd3c4b55b10484f452194",
+  "lastVersion": {
+    "version": 13,
+    "autocloseTime": 1724319614510,
+    "freezeTime": 1716041210917,
+    "data": {
+      "title": "Swatch Internet Time",
+      "topics": [
+        {
+          "id": 195,
+          "handle": "data-types",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Data Types",
+            "2": "Data Types"
+          },
+          "puzzleCount": 4,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "from datetime import datetime, timedelta\nfrom decimal import Decimal, ROUND_HALF_UP\nimport re\n\n# Decode the line.\nline = input()\nm = re.match(r\"([0-9]{2}):([0-9]{2}):([0-9]{2}) UTC([+-])([0-9]{2}):([0-9]{2})\", line)\nassert m is not None, line\n\nhours, minutes, seconds, tzsign, tzhours, tzminutes = m.groups()\n\n# Compute the timezone as a time delta to bring the time to UTC+01:00,\n# hence the '+ 1' in the hours calculation.\ntzsign_int = 1 if tzsign == \"+\" else -1\ntz = timedelta(\n    hours=-tzsign_int * int(tzhours) + 1,\n    minutes=-tzsign_int * int(tzminutes),\n)\n\n# Compute the time and add the time delta representing the difference\n# to get to UTC+01:00.\n# Note that we use a datetime instead of a time here, because Python\n# doesn't allow timedeltas to be added to time objects, which is\n# unfortunate.\nt = datetime(10, 1, 1, int(hours), int(minutes), int(seconds)) + tz\n\n# Convert the time to beats.\nbeats = Decimal(3600 * t.hour + 60 * t.minute + t.second) / Decimal(\"86.4\")\nbeats = beats.quantize(Decimal(\"0.01\"), rounding=ROUND_HALF_UP)\n\n# Present the computed beats.\n# Note that the rounding is done by the formatting here.\nprint(f\"@{beats}\")",
+      "statement": "Swatch Internet Time is a decimal time system introduced in 1998 by Swatch. It is a universal time, expressed as a number between 0 and 1000 named <<beats>> representing the time in Biel (UTC+01:00), prefixed by the {{@}} sign.\n\n<<You are provided with a time and associated timezone>>, of the format [[HH]]{{:}}[[MM]]{{:}}[[SS]] {{UTC}}[{{+}}/{{-}}][[hh]]{{:}}[[mm]] (e.g. {{01:23:45 UTC+04:30}}), <<and must provide the equivalent in beats>>, with the format {{@}}[[B]]{{.}}[[BB]] (e.g. {{@123.45}}). The steps to achieve this are the following:\n\n<<Step 1.>> You must obtain the Biel (UTC+01:00) local time from the original time and timezone.\n<<Step 2.>> You must convert the resulting Biel local time to beats, using the following formula:\n\n{{(3600 * }}[[HH]]{{ + 60 * }}[[MM]]{{ + }}[[SS]]{{) / 86.4}}\n\n<<Step 3.>> You must round the result to two decimal places (using half-up rounding), and always present the two decimal digits, e.g. {{@12.34}} and {{@12.00}}.\n\nAs an example, let's try to convert {{21:29:42 UTC+05:30}} into beats:\n\n<<Step 1.>> We need to convert the time from UTC+05:30 to UTC+01:00. In order to do this, we need to remove 4:30 from the original time, which means we obtain {{16:59:42 UTC+01:00}}.\n<<Step 2.>> We compute the number of beats, by computing {{(3600 * 16 + 60 * 59 + 42) / 86.4}}, which gives us {{708.125}}.\n<<Step 3.>> We round the result to two decimal places using half-up rounding, which gives us {{708.13}}.\n\nThe expected result with this example is {{@708.13}}.\n\n<<Note:>> Beware of rounding! Your language likely does not use half-up rounding by default, but half-even a.k.a banker's rounding (C/C++, Python, Lua), half-down (JavaScript), and so on, and some tests require the correct rounding algorithm to be set!\n\n<<Note:>> Forget about shenanigans such as leap seconds, daylight savings or any other timezone weirdness, stick to the steps presented above!",
+      "testCases": [
+        {
+          "title": "At UTC+01:00",
+          "isTest": true,
+          "testIn": "02:24:00 UTC+01:00",
+          "testOut": "@100.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "At UTC+01:00",
+          "isTest": false,
+          "testIn": "09:36:00 UTC+01:00",
+          "testOut": "@400.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "At UTC+01:00, with decimals",
+          "isTest": true,
+          "testIn": "16:23:41 UTC+01:00",
+          "testOut": "@683.11",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "At UTC+01:00, with decimals",
+          "isTest": false,
+          "testIn": "18:24:41 UTC+01:00",
+          "testOut": "@767.14",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "At other positive timezones",
+          "isTest": true,
+          "testIn": "07:01:05 UTC+07:00",
+          "testOut": "@42.42",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "At other positive timezones",
+          "isTest": false,
+          "testIn": "05:56:49 UTC+05:00",
+          "testOut": "@81.12",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "At negative timezones",
+          "isTest": true,
+          "testIn": "17:57:46 UTC-08:00",
+          "testOut": "@123.45",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "At negative timezones",
+          "isTest": false,
+          "testIn": "09:59:59 UTC-05:00",
+          "testOut": "@666.66",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "At positive timezones with minutes",
+          "isTest": true,
+          "testIn": "01:23:45 UTC+11:25",
+          "testOut": "@624.13",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "At positive timezones with minutes",
+          "isTest": false,
+          "testIn": "23:59:59 UTC+00:02",
+          "testOut": "@40.27",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "At negative timezones with minutes",
+          "isTest": true,
+          "testIn": "12:24:48 UTC-02:05",
+          "testOut": "@645.69",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "At negative timezones with minutes",
+          "isTest": false,
+          "testIn": "15:25:35 UTC-09:44",
+          "testOut": "@89.99",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "With half-up rounding (odd)",
+          "isTest": true,
+          "testIn": "19:09:18 UTC+01:00",
+          "testOut": "@798.13",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "With half-up rounding (odd)",
+          "isTest": false,
+          "testIn": "20:21:18 UTC+01:00",
+          "testOut": "@848.13",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "With half-up rounding (even)",
+          "isTest": true,
+          "testIn": "03:32:42 UTC-07:30",
+          "testOut": "@501.88",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "With half-up rounding (even)",
+          "isTest": false,
+          "testIn": "17:26:42 UTC+05:30",
+          "testOut": "@539.38",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "With decimal rounding <.1",
+          "isTest": true,
+          "testIn": "04:19:40 UTC-09:49",
+          "testOut": "@631.02",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "With decimal rounding <.1",
+          "isTest": false,
+          "testIn": "05:04:57 UTC-01:23",
+          "testOut": "@311.08",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Loop",
+          "isTest": true,
+          "testIn": "20:00:00 UTC-03:00",
+          "testOut": "@0.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Loop",
+          "isTest": false,
+          "testIn": "00:00:00 UTC+01:00",
+          "testOut": "@0.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "From Amsterdam with love",
+          "isTest": true,
+          "testIn": "00:03:05 UTC+01:00",
+          "testOut": "@2.14",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "From Vegas with love",
+          "isTest": false,
+          "testIn": "15:11:11 UTC-08:00",
+          "testOut": "@7.77",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "length([[rawtime]]) = 18",
+      "coverBinaryId": 119562884886036,
+      "stubGenerator": "read rawtime:string(20)\nwrite answer",
+      "inputDescription": "<<First line:>> [[rawtime]] being the time with timezone relative to UTC.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<First line:>> Time in beats, of the format {{@}}[[B]]{{.}}[[BB]]."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Swatch Internet Time is a decimal time system introduced in 1998 by Swatch. It is a universal time, expressed as a number between 0 and 1000 named <strong>beats</strong> representing the time in Biel (UTC+01:00), prefixed by the <const>@</const> sign.<br><br><strong>You are provided with a time and associated timezone</strong>, of the format <var>HH</var><const>:</const><var>MM</var><const>:</const><var>SS</var> <const>UTC</const>[<const>+</const>/<const>-</const>]<var>hh</var><const>:</const><var>mm</var> (e.g. <const>01:23:45 UTC+04:30</const>), <strong>and must provide the equivalent in beats</strong>, with the format <const>@</const><var>B</var><const>.</const><var>BB</var> (e.g. <const>@123.45</const>). The steps to achieve this are the following:<br><br><strong>Step 1.</strong> You must obtain the Biel (UTC+01:00) local time from the original time and timezone.<br><strong>Step 2.</strong> You must convert the resulting Biel local time to beats, using the following formula:<br><br><const>(3600 * </const><var>HH</var><const> + 60 * </const><var>MM</var><const> + </const><var>SS</var><const>) / 86.4</const><br><br><strong>Step 3.</strong> You must round the result to two decimal places (using half-up rounding), and always present the two decimal digits, e.g. <const>@12.34</const> and <const>@12.00</const>.<br><br>As an example, let's try to convert <const>21:29:42 UTC+05:30</const> into beats:<br><br><strong>Step 1.</strong> We need to convert the time from UTC+05:30 to UTC+01:00. In order to do this, we need to remove 4:30 from the original time, which means we obtain <const>16:59:42 UTC+01:00</const>.<br><strong>Step 2.</strong> We compute the number of beats, by computing <const>(3600 * 16 + 60 * 59 + 42) / 86.4</const>, which gives us <const>708.125</const>.<br><strong>Step 3.</strong> We round the result to two decimal places using half-up rounding, which gives us <const>708.13</const>.<br><br>The expected result with this example is <const>@708.13</const>.<br><br><strong>Note:</strong> Beware of rounding! Your language likely does not use half-up rounding by default, but half-even a.k.a banker's rounding (C/C++, Python, Lua), half-down (JavaScript), and so on, and some tests require the correct rounding algorithm to be set!<br><br><strong>Note:</strong> Forget about shenanigans such as leap seconds, daylight savings or any other timezone weirdness, stick to the steps presented above!</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>First line:</strong> <var>rawtime</var> being the time with timezone relative to UTC.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>First line:</strong> Time in beats, of the format <const>@</const><var>B</var><const>.</const><var>BB</var>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">length(<var>rawtime</var>) = 18</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">02:24:00 UTC+01:00</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">@100.00</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 48783560009,
+  "avatar": 93798463743273,
+  "commentCount": 25,
+  "upVotes": 7,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 978172,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1711184737000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1715436375327,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1718031937003,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1719092418166,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1721685937000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1721727614510,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1721945159867,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

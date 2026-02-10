@@ -1,0 +1,145 @@
+{
+  "id": 249,
+  "activeVersion": 17,
+  "score": 8,
+  "votableId": 2068781,
+  "codingamerId": 155929,
+  "views": 1181,
+  "commentableId": 2018214,
+  "title": "Haunted Manor",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "[CG]jupoulton",
+  "publicHandle": "249f25d745b9a997c0a2d677b702ef86b8a",
+  "codingamerHandle": "d39436e9a23b5060ed3efaf1c24b4ba8929551",
+  "lastVersion": {
+    "version": 17,
+    "data": {
+      "title": "Haunted Manor",
+      "topics": [],
+      "solution": "import java.util.HashMap;\r\nimport java.util.Map;\r\nimport java.util.Map.Entry;\r\nimport java.util.Scanner;\r\n\r\nclass Cell extends Coord {\r\n\tboolean vampire, zombie, ghost;\r\n\tString mirror;\r\n\r\n\tpublic Cell(int x, int y, String c) {\r\n\t\tsuper(x, y);\r\n\t\tif (!\".\".equals(c)) {\r\n\t\t\tmirror = c;\r\n\t\t}\r\n\t}\r\n\r\n\tpublic Cell(Cell c) {\r\n\t\tsuper(c.x, c.y);\r\n\t\tvampire = c.vampire;\r\n\t\tzombie = c.zombie;\r\n\t\tghost = c.ghost;\r\n\t\tmirror = c.mirror;\r\n\t}\r\n\r\n\tpublic String toString() {\r\n\t\treturn x + \" \" + y;\r\n\t}\r\n\r\n\tpublic boolean empty() {\r\n\t\treturn mirror == null && !ghost && !vampire && !zombie;\r\n\t}\r\n}\r\n\r\nclass Manor {\r\n\tint size, vampires, zombies, ghosts, foundVampires, foundGhosts, foundZombies;\r\n\tint[] top, bottom, left, right;\r\n\tString[][] grid;\r\n\tMap<Coord, Cell> cells;\r\n\tCell nextEmptyCell;\r\n\r\n\tpublic Manor(Scanner s) {\r\n\t\tvampires = s.nextInt();\r\n\t\tzombies = s.nextInt();\r\n\t\tghosts = s.nextInt();\r\n\t\tsize = s.nextInt();\r\n\t\ts.nextLine();\r\n\t\ttop = parseSightings(s.nextLine());\r\n\t\tbottom = parseSightings(s.nextLine());\r\n\t\tleft = parseSightings(s.nextLine());\r\n\t\tright = parseSightings(s.nextLine());\r\n\t\tgrid = new String[size][];\r\n\t\tcells = new HashMap<>();\r\n\t\tfor (int y = 0; y < size; ++y) {\r\n\t\t\tgrid[y] = s.nextLine().split(\"\");\r\n\t\t\tfor (int x = 0; x < size; ++x) {\r\n\t\t\t\tCell c = new Cell(x, y, grid[y][x]);\r\n\t\t\t\tcells.put(new Coord(x, y), c);\r\n\t\t\t\tif (nextEmptyCell == null && c.mirror == null) {\r\n\t\t\t\t\tnextEmptyCell = c;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t\tfoundVampires = 0;\r\n\t\tfoundGhosts = 0;\r\n\t\tfoundZombies = 0;\r\n\t}\r\n\r\n\tpublic Manor(Manor manor) {\r\n\t\tcells = new HashMap<>();\r\n\t\tfor (Entry<Coord, Cell> e : manor.cells.entrySet()) {\r\n\t\t\tCell c = new Cell(e.getValue());\r\n\t\t\tif ((manor.nextEmptyCell != null && !manor.nextEmptyCell.equals(c)) && nextEmptyCell == null && c.empty()) {\r\n\t\t\t\tnextEmptyCell = c;\r\n\t\t\t}\r\n\r\n\t\t\tcells.put(e.getKey(), c);\r\n\t\t}\r\n\t\ttop = manor.top;\r\n\t\tbottom = manor.bottom;\r\n\t\tleft = manor.left;\r\n\t\tright = manor.right;\r\n\t\tghosts = manor.ghosts;\r\n\t\tvampires = manor.vampires;\r\n\t\tzombies = manor.zombies;\r\n\t\tsize = manor.size;\r\n\t\tfoundVampires = manor.foundVampires;\r\n\t\tfoundGhosts = manor.foundGhosts;\r\n\t\tfoundZombies = manor.foundZombies;\r\n\t}\r\n\r\n\tprivate int[] parseSightings(String line) {\r\n\t\tint[] res = new int[size];\r\n\t\tString[] vals = line.split(\" \");\r\n\t\tfor (int i = 0; i < size; ++i) {\r\n\t\t\tres[i] = Integer.parseInt(vals[i]);\r\n\t\t}\r\n\t\treturn res;\r\n\t}\r\n\r\n\tpublic String toString() {\r\n\t\tStringBuilder sb = new StringBuilder();\r\n\t\tfor (int y = 0; y < size; ++y) {\r\n\t\t\tfor (int x = 0; x < size; ++x) {\r\n\t\t\t\tCell c = cells.get(new Coord(x, y));\r\n\t\t\t\tif (c.zombie) {\r\n\t\t\t\t\tsb.append(\"Z\");\r\n\t\t\t\t} else if (c.ghost) {\r\n\t\t\t\t\tsb.append(\"G\");\r\n\t\t\t\t} else if (c.vampire) {\r\n\t\t\t\t\tsb.append(\"V\");\r\n\t\t\t\t} else if (c.mirror != null) {\r\n\t\t\t\t\tsb.append(c.mirror);\r\n\t\t\t\t} else {\r\n\t\t\t\t\tsb.append(\"?\");\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\tif (y < size - 1) {\r\n\t\t\t    sb.append('\\n');\r\n\t\t\t}\r\n\t\t}\r\n\t\treturn sb.toString();\r\n\t}\r\n}\r\n\r\npublic class Solution {\r\n\r\n\tpublic static void main(String args[]) {\r\n\t\tnew Solution();\r\n\t}\r\n\r\n\tpublic Solution() {\r\n\t\tScanner s = new Scanner(System.in);\r\n\t\tManor manor = new Manor(s);\r\n\t\tManor solution = testManor(manor);\r\n\t\tSystem.out.println(solution);\r\n\r\n\t}\r\n\r\n\tprivate Manor testManor(Manor manor) {\r\n\t\tif (isImpossible(manor)) {\r\n\t\t\treturn null;\r\n\t\t} else if (manor.nextEmptyCell == null) {\r\n\t\t\treturn manor;\r\n\t\t}\r\n\r\n\t\tCell c = manor.nextEmptyCell;\r\n\t\tManor solution;\r\n\r\n\t\tManor m = new Manor(manor);\r\n\t\tm.cells.get(c).ghost = true;\r\n\t\tm.foundGhosts++;\r\n\t\tsolution = testManor(m);\r\n\r\n\t\tif (solution == null) {\r\n\t\t\tm = new Manor(manor);\r\n\t\t\tm.cells.get(c).vampire = true;\r\n\t\t\tm.foundVampires++;\r\n\t\t\tsolution = testManor(m);\r\n\t\t}\r\n\r\n\t\tif (solution == null) {\r\n\t\t\tm = new Manor(manor);\r\n\t\t\tm.cells.get(c).zombie = true;\r\n\t\t\tm.foundZombies++;\r\n\t\t\tsolution = testManor(m);\r\n\t\t}\r\n\t\treturn solution;\r\n\t}\r\n\r\n\tstatic int[] dxs = { 0, 0, 1, -1 };\r\n\tstatic int[] dys = { 1, -1, 0, 0 };\r\n\r\n\tprivate boolean isImpossible(Manor manor) {\r\n\t\tif (manor.foundVampires > manor.vampires || manor.foundZombies > manor.zombies || manor.foundGhosts > manor.ghosts) {\r\n\t\t\treturn true;\r\n\t\t}\r\n\t\tint[][] windows = { manor.top, manor.bottom, manor.left, manor.right };\r\n\t\tfor (int direction = 0; direction < 4; ++direction) {\r\n\t\t\tfor (int colOrRow = 0; colOrRow < manor.size; ++colOrRow) {\r\n\t\t\t\tCoord c;\r\n\t\t\t\tif (direction < 2)\r\n\t\t\t\t\tc = new Coord(colOrRow, direction % 2 == 0 ? 0 : manor.size - 1);\r\n\t\t\t\telse\r\n\t\t\t\t\tc = new Coord(direction % 2 == 0 ? 0 : manor.size - 1, colOrRow);\r\n\t\t\t\tint dx = dxs[direction];\r\n\t\t\t\tint dy = dys[direction];\r\n\t\t\t\tint saw = 0;\r\n\t\t\t\tint max = 0;\r\n\t\t\t\tboolean inMirror = false;\r\n\t\t\t\tCell curr = manor.cells.get(c);\r\n\t\t\t\twhile (curr != null) {\r\n\t\t\t\t\tif (\"\\\\\".equals(curr.mirror)) {\r\n\t\t\t\t\t\tint t = dx;\r\n\t\t\t\t\t\tdx = dy;\r\n\t\t\t\t\t\tdy = t;\r\n\t\t\t\t\t\tinMirror = true;\r\n\t\t\t\t\t} else if (\"/\".equals(curr.mirror)) {\r\n\t\t\t\t\t\tint t = dx;\r\n\t\t\t\t\t\tdx = -dy;\r\n\t\t\t\t\t\tdy = -t;\r\n\t\t\t\t\t\tinMirror = true;\r\n\t\t\t\t\t} else {\r\n\t\t\t\t\t\tboolean cannotSee = curr.ghost && !inMirror || curr.vampire && inMirror;\r\n\t\t\t\t\t\tif (!cannotSee) {\r\n\t\t\t\t\t\t\tmax++;\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t\tif (curr.zombie || curr.ghost && inMirror || curr.vampire && !inMirror) {\r\n\t\t\t\t\t\t\tsaw++;\r\n\t\t\t\t\t\t\tif (saw > windows[direction][colOrRow]) {\r\n\t\t\t\t\t\t\t\treturn true;\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\r\n\t\t\t\t\tc.x += dx;\r\n\t\t\t\t\tc.y += dy;\r\n\t\t\t\t\tcurr = manor.cells.get(c);\r\n\t\t\t\t}\r\n\t\t\t\tif (windows[direction][colOrRow] > max) {\r\n\t\t\t\t\treturn true;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t\treturn false;\r\n\t}\r\n}\r\n\r\nclass Coord {\r\n\tint x, y;\r\n\r\n\tpublic Coord(int x, int y) {\r\n\t\tthis.x = x;\r\n\t\tthis.y = y;\r\n\t}\r\n\r\n\t@Override\r\n\tpublic int hashCode() {\r\n\t\tfinal int prime = 31;\r\n\t\tint result = 1;\r\n\t\tresult = prime * result + x;\r\n\t\tresult = prime * result + y;\r\n\t\treturn result;\r\n\t}\r\n\r\n\t@Override\r\n\tpublic boolean equals(Object obj) {\r\n\t\tif (this == obj)\r\n\t\t\treturn true;\r\n\t\tif (obj == null)\r\n\t\t\treturn false;\r\n\t\tCoord other = (Coord) obj;\r\n\t\tif (x != other.x)\r\n\t\t\treturn false;\r\n\t\tif (y != other.y)\r\n\t\t\treturn false;\r\n\t\treturn true;\r\n\t}\r\n\r\n\tpublic String toString() {\r\n\t\treturn x + \" \" + y;\r\n\t}\r\n\r\n}\r\n",
+      "statement": "Given a grid representing a haunted manor filled with mirrors, empty cells, and cells containing different types of monsters, you must determine the type and position of each monster.\n\nThe different types of monsters are:\n- {{V}}: Vampire, who can be seen directly, but not inside a mirror.\n- {{Z}}: Zombie, who can be seen both directly and in a mirror.\n- {{G}}: Ghost, who cannot be seen directly but can be seen in a mirror.\n\nEach cell on the border of the grid has a window through which you can peer into the manor. For each border, you are given the number of monsters seen through that window. Line of sight will bounce off the mirrors, making it possible or impossible to see certain monsters.\n\nThere are two types of mirror:\n-{{\\}}: Diagonal down. \n-{{/}}: Diagonal up.\n\n\nIf your reflected line of sight crosses the same monster more than once, the number will count it each time it is visible, not just once.\n\nThe manor is always a square grid. None of the cells are empty.\n\nExample:\nThis 3 by 3 manor has 0 vampires, 4 zombies and 2 ghosts. 3 mirrors are present.\n\n`   0   0   0\n ┌───┬───┬───┐\n0│ / │ \\ │ / │2\n ├───┼───┼───┤\n1│   │   │   │1\n ├───┼───┼───┤\n3│   │   │   │3\n └───┴───┴───┘\n   3   3   2`\nNo monster can be seen from the top because of the mirrors.\nThe middle row seems to contain the two ghosts since only 1 monster is visible from either side.\nUsing all the reported sightings of monsters through the windows, we can easily come to the configuration below.\n\n`   0   0   0\n ┌───┬───┬───┐\n0│ / │ \\ │ / │2\n ├───┼───┼───┤\n1│ G │ G │ Z │1\n ├───┼───┼───┤\n3│ Z │ Z │ Z │3\n └───┴───┴───┘\n   3   3   2`\nThe input for this case would be:\n`0 4 2\n3\n0 0 0\n3 3 2\n0 1 3\n2 1 3\n/\\/\n...\n...`\nAnd the required output would be:\n`/\\/\nGGZ\nZZZ`",
+      "testCases": [
+        {
+          "title": "3x3 manor",
+          "isTest": true,
+          "testIn": "0 3 3\n3\n2 1 2\n2 1 0\n1 2 2\n2 2 0\n../\n...\n/./",
+          "testOut": "ZG/\nZZG\n/G/",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3x3 manor",
+          "isTest": false,
+          "testIn": "0 4 2\n3\n2 1 2\n2 1 0\n1 2 2\n2 2 0\n../\n...\n/./",
+          "testOut": "ZG/\nZGZ\n/Z/",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4x4 manor",
+          "isTest": true,
+          "testIn": "2 3 4\n4\n3 3 3 0\n1 1 0 0\n3 1 3 1\n0 3 2 0\n\\.\\\\\n.../\n../.\n.\\./",
+          "testOut": "\\Z\\\\\nGGZ/\nGV/V\nZ\\G/",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4x4 manor",
+          "isTest": false,
+          "testIn": "3 2 7\n4\n3 2 2 1\n0 2 0 1\n3 3 3 0\n0 3 2 1\n\\...\n....\n\\...\n\\./.",
+          "testOut": "\\GGG\nZZVG\n\\VGG\n\\G/V",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5x5 manor",
+          "isTest": true,
+          "testIn": "9 3 4\n5\n3 0 3 0 3\n1 2 1 4 0\n3 4 1 0 2\n1 0 5 0 0\n.\\./.\n..../\n\\....\n.\\/.\\\n./../",
+          "testOut": "V\\V/G\nZVZG/\n\\VZVV\nG\\/V\\\nV/GV/",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5x5 manor",
+          "isTest": false,
+          "testIn": "6 4 5\n5\n1 0 3 2 0\n3 3 0 3 3\n3 0 0 3 3\n0 1 3 3 1\n.\\\\.\\\n/./..\n/....\n..\\\\\\\n/....",
+          "testOut": "V\\\\Z\\\n/V/GZ\n/ZVGZ\nVV\\\\\\\n/GGVG",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "7x7 manor",
+          "isTest": true,
+          "testIn": "16 8 7\n7\n2 2 4 2 1 1 4\n0 3 3 4 4 0 2\n4 0 0 4 0 1 0\n0 8 6 4 5 1 7\n...../.\n\\..\\./.\n///\\/..\n../\\...\n/.\\../.\n...../\\\n\\..\\...",
+          "testOut": "VVVVG/G\n\\VV\\V/V\n///\\/ZV\nVZ/\\ZZV\n/V\\ZZ/V\nGGGVG/\\\n\\VZ\\ZGV",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "7x7 manor",
+          "isTest": false,
+          "testIn": "5 14 5\n7\n0 0 0 4 0 0 0\n2 4 2 7 4 6 2\n5 1 4 4 2 4 4\n0 1 1 1 0 4 2\n.\\/.\\/.\n/.../\\\\\n\\.\\\\.\\\\\n.\\\\/.\\/\n\\.\\//./\n../....\n....\\..",
+          "testOut": "G\\/G\\/G\n/ZZG/\\\\\n\\Z\\\\Z\\\\\nZ\\\\/Z\\/\n\\Z\\//V/\nZZ/VVGV\nZZZZ\\ZV",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Another 7x7 manor",
+          "isTest": true,
+          "testIn": "5 14 5\n7\n2 6 4 7 2 4 2\n0 0 0 4 0 0 0\n2 4 0 1 1 1 0\n4 4 2 4 4 1 5\n..\\....\n..../..\n/.//\\.\\\n/\\./\\\\.\n\\\\.\\\\.\\\n\\\\/.../\n./\\./\\.",
+          "testOut": "VZ\\ZZZZ\nVGVV/ZZ\n/V//\\Z\\\n/\\Z/\\\\Z\n\\\\Z\\\\Z\\\n\\\\/GZZ/\nG/\\G/\\G",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Another 7x7 manor",
+          "isTest": false,
+          "testIn": "5 14 5\n7\n4 4 2 4 4 1 5\n2 4 0 1 1 1 0\n2 4 2 7 4 6 2\n0 0 0 4 0 0 0\n.././\\.\n.../../\n.\\///.\\\n..\\\\/..\n/.\\..\\/\n...///\\\n..\\\\//.",
+          "testOut": "ZZ/Z/\\G\nZZZ/ZZ/\nZ\\///Z\\\nZV\\\\/GG\n/V\\ZZ\\/\nZGV///\\\nVV\\\\//G",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Not much of a manor",
+          "isTest": true,
+          "testIn": "0 1 0\n1\n1\n1\n1\n1\n.",
+          "testOut": "Z",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Not much of a manor",
+          "isTest": false,
+          "testIn": "0 0 1\n1\n0\n0\n0\n0\n.",
+          "testOut": "G",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "1 ≤ [[size]] ≤ 7\n0 ≤ [[vampireCount]] ≤ [[size]]\n0 ≤ [[zombieCount]] ≤ [[size]]\n0 ≤ [[ghostCount]] ≤ [[size]]",
+      "stubGenerator": "read vampireCount:int zombieCount:int ghostCount:int\nread size:int\nloopline size canSeeFromTop:int\nloopline size canSeeFromBottom:int\nloopline size canSeeFromLeft:int\nloopline size canSeeFromRight:int\nloop size read row:string(size)\nwrite answer",
+      "inputDescription": "<<Line 1>>:  Three integers [[vampireCount]], [[zombieCount]], [[ghostCount]], the number of each type of monster in the grid.\n<<Line 2>>:  One integer [[size]], the number of cells in each row/column of the grid.\n<<Line 3>>: [[size]] integers, each for the number of visible monsters from the top of the grid, from left to right.\n<<Line 4>>: [[size]] integers, each for the number of visible monsters from the bottom of the grid, from left to right.\n<<Line 5>>: [[size]] integers, each for the number of visible monsters from the left of the grid, from top to bottom.\n<<Line 6>>: [[size]] integers, each for the number of visible monsters from the right of the grid, from top to bottom.\n<<Next [[size]] lines:>> A string containing [[size]] characters. {{.}} containing one of the monsters. {{\\}} or {{/}} for a mirror.",
+      "solutionLanguage": "Java",
+      "outputDescription": "<<Exactly [[size]] lines:>> [[size]] characters for one row of the grid, with each monster in its place. {{V}} for a vampire, {{Z}} for a zombie, {{G}} for a ghost. {{\\}} or {{/}} for a mirror."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Given a grid representing a haunted manor filled with mirrors, empty cells, and cells containing different types of monsters, you must determine the type and position of each monster.<br><br>The different types of monsters are:<br>- <const>V</const>: Vampire, who can be seen directly, but not inside a mirror.<br>- <const>Z</const>: Zombie, who can be seen both directly and in a mirror.<br>- <const>G</const>: Ghost, who cannot be seen directly but can be seen in a mirror.<br><br>Each cell on the border of the grid has a window through which you can peer into the manor. For each border, you are given the number of monsters seen through that window. Line of sight will bounce off the mirrors, making it possible or impossible to see certain monsters.<br><br>There are two types of mirror:<br>-<const>\\</const>: Diagonal down. <br>-<const>/</const>: Diagonal up.<br><br><br>If your reflected line of sight crosses the same monster more than once, the number will count it each time it is visible, not just once.<br><br>The manor is always a square grid. None of the cells are empty.<br><br>Example:<br>This 3 by 3 manor has 0 vampires, 4 zombies and 2 ghosts. 3 mirrors are present.<br><br><pre style=\"font-family: monospace\">   0   0   0<br> ┌───┬───┬───┐<br>0│ / │ \\ │ / │2<br> ├───┼───┼───┤<br>1│   │   │   │1<br> ├───┼───┼───┤<br>3│   │   │   │3<br> └───┴───┴───┘<br>   3   3   2</pre><br>No monster can be seen from the top because of the mirrors.<br>The middle row seems to contain the two ghosts since only 1 monster is visible from either side.<br>Using all the reported sightings of monsters through the windows, we can easily come to the configuration below.<br><br><pre style=\"font-family: monospace\">   0   0   0<br> ┌───┬───┬───┐<br>0│ / │ \\ │ / │2<br> ├───┼───┼───┤<br>1│ G │ G │ Z │1<br> ├───┼───┼───┤<br>3│ Z │ Z │ Z │3<br> └───┴───┴───┘<br>   3   3   2</pre><br>The input for this case would be:<br><pre style=\"font-family: monospace\">0 4 2<br>3<br>0 0 0<br>3 3 2<br>0 1 3<br>2 1 3<br>/\\/<br>...<br>...</pre><br>And the required output would be:<br><pre style=\"font-family: monospace\">/\\/<br>GGZ<br>ZZZ</pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>:  Three integers <var>vampireCount</var>, <var>zombieCount</var>, <var>ghostCount</var>, the number of each type of monster in the grid.<br><strong>Line 2</strong>:  One integer <var>size</var>, the number of cells in each row/column of the grid.<br><strong>Line 3</strong>: <var>size</var> integers, each for the number of visible monsters from the top of the grid, from left to right.<br><strong>Line 4</strong>: <var>size</var> integers, each for the number of visible monsters from the bottom of the grid, from left to right.<br><strong>Line 5</strong>: <var>size</var> integers, each for the number of visible monsters from the left of the grid, from top to bottom.<br><strong>Line 6</strong>: <var>size</var> integers, each for the number of visible monsters from the right of the grid, from top to bottom.<br><strong>Next <var>size</var> lines:</strong> A string containing <var>size</var> characters. <const>.</const> containing one of the monsters. <const>\\</const> or <const>/</const> for a mirror.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Exactly <var>size</var> lines:</strong> <var>size</var> characters for one row of the grid, with each monster in its place. <const>V</const> for a vampire, <const>Z</const> for a zombie, <const>G</const> for a ghost. <const>\\</const> or <const>/</const> for a mirror.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>size</var> &le; 7<br>0 &le; <var>vampireCount</var> &le; <var>size</var><br>0 &le; <var>zombieCount</var> &le; <var>size</var><br>0 &le; <var>ghostCount</var> &le; <var>size</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">0 3 3\n3\n2 1 2\n2 1 0\n1 2 2\n2 2 0\n../\n...\n/./</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">ZG/\nZZG\n/G/</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 312579386277,
+  "avatar": 9399538004630,
+  "commentCount": 5,
+  "upVotes": 8,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 38,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

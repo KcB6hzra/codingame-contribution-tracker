@@ -1,0 +1,220 @@
+{
+  "id": 4902,
+  "activeVersion": 12,
+  "score": 8,
+  "votableId": 12820459,
+  "codingamerId": 1443538,
+  "views": 389,
+  "commentableId": 12744480,
+  "title": "A Game of Go",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Tux4711",
+  "publicHandle": "490262463abc03f5fb6808695fadc178476e",
+  "codingamerHandle": "a9f4f4250f0d322ce4853c1cf536ad228353441",
+  "lastVersion": {
+    "version": 12,
+    "autocloseTime": 1589880177665,
+    "data": {
+      "title": "A Game of Go",
+      "topics": [
+        {
+          "id": 107,
+          "handle": "classic-board-games",
+          "labelMap": {
+            "1": "Classic board games",
+            "2": "Classic board games"
+          },
+          "puzzleCount": 7,
+          "parentTopicId": 93
+        },
+        {
+          "id": 62,
+          "handle": "flood-fill",
+          "labelMap": {
+            "1": "Remplissage par diffusion",
+            "2": "Flood fill"
+          },
+          "pageTitle": "Flood fill: exercises and theory",
+          "puzzleCount": 11,
+          "parentTopicId": 41,
+          "contentDetailsId": 81
+        },
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 7,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import java.io.PrintStream;\nimport java.util.ArrayList;\nimport java.util.Arrays;\nimport java.util.Collection;\nimport java.util.HashSet;\nimport java.util.List;\nimport java.util.Scanner;\nimport java.util.Set;\nimport java.util.stream.Collectors;\n\npublic class Solution {\n\t\n\tprivate PlayerColor[][] board;\n\tprivate List<Move> moves;\n\t\n\tprivate boolean invalidMove = false;\n\t\n\tprivate int boardSize;\n\t\n\tpublic static void main(String args[]) {\n\t\tnew Solution();\n\t}\n\t\n\tpublic Solution() {\n\t\t//read the input\n\t\treadInput();\n\t\t//execute the moves\n\t\texecuteMoves();\n\t\t//print the result\n\t\tprintResult();\n\t}\n\t\n\t/**\n\t * Read the inputs from System.in and parse them\n\t */\n\tprivate void readInput() {\n\t\tScanner in = new Scanner(System.in);\n\t\t//read board size and number of moves\n\t\tint S = in.nextInt();\n\t\tint M = in.nextInt();\n\t\t\n\t\tboardSize = S;\n\t\tboard = new PlayerColor[boardSize][boardSize];\n\t\tmoves = new ArrayList<Move>(M);\n\t\t\n\t\t//read the board's lines\n\t\tif (in.hasNextLine()) {\n\t\t\tin.nextLine();\n\t\t}\n\t\tfor (int i = 0; i < S; i++) {\n\t\t\tString row = in.nextLine();\n\t\t\tfor (int j = 0; j < boardSize; j++) {\n\t\t\t\tchar c = row.charAt(j);\n\t\t\t\tswitch (c) {\n\t\t\t\t\tcase '.'://empty field\n\t\t\t\t\t\tboard[i][j] = null;\n\t\t\t\t\t\tbreak;\n\t\t\t\t\tcase 'B'://black stone\n\t\t\t\t\t\tboard[i][j] = PlayerColor.BLACK;\n\t\t\t\t\t\tbreak;\n\t\t\t\t\tcase 'W'://white stone\n\t\t\t\t\t\tboard[i][j] = PlayerColor.WHITE;\n\t\t\t\t\t\tbreak;\n\t\t\t\t\tdefault:\n\t\t\t\t\t\tthrow new IllegalStateException(\"Unknown character in input: \" + c);\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\t//read the list of moves\n\t\tfor (int i = 0; i < M; i++) {\n\t\t\tString move = in.nextLine();\n\t\t\tmoves.add(Move.fromInputString(move));\n\t\t}\n\t\t\n\t\tin.close();\n\t}\n\t\n\t/**\n\t * Execute the moves on the board (if they are valid)\n\t */\n\tprivate void executeMoves() {\n\t\tReferee referee = new Referee(this);\n\t\treferee.executeMoves(moves);\n\t\tboard = referee.getBoardCopy();\n\t}\n\t\n\t/**\n\t * Print the result board (or NOT_VALID if the moves couldn't be executed)\n\t */\n\tprivate void printResult() {\n\t\tif (invalidMove) {\n\t\t\tSystem.out.println(\"NOT_VALID\");\n\t\t}\n\t\telse {\n\t\t\tprintField(false);\n\t\t}\n\t}\n\t\n\t/**\n\t * Print the current field (for debugging or as solution)\n\t * \n\t * @param debug\n\t *        If debug is true: System.err.print... will be used.<br>\n\t *        If debug is false: System.out.print... will be used.\n\t */\n\tprivate void printField(boolean debug) {\n\t\tprintField(this.board, debug);\n\t}\n\tprivate void printField(PlayerColor[][] board, boolean debug) {\n\t\tPrintStream stream = null;\n\t\tif (debug) {\n\t\t\tstream = System.err;\n\t\t}\n\t\telse {\n\t\t\tstream = System.out;\n\t\t}\n\t\tString solutionString = getBoardAsString();\n\t\tstream.print(solutionString);\n\t}\n\tpublic String getBoardAsString() {\n\t\tStringBuilder sb = new StringBuilder();\n\t\tif (invalidMove) {\n\t\t\tsb.append(\"NOT_VALID\");\n\t\t}\n\t\telse {\n\t\t\tfor (int i = 0; i < boardSize; i++) {\n\t\t\t\tfor (int j = 0; j < boardSize; j++) {\n\t\t\t\t\tif (board[i][j] == null) {\n\t\t\t\t\t\tsb.append('.');\n\t\t\t\t\t}\n\t\t\t\t\telse {\n\t\t\t\t\t\tswitch (board[i][j]) {\n\t\t\t\t\t\t\tcase BLACK:\n\t\t\t\t\t\t\t\tsb.append('B');\n\t\t\t\t\t\t\t\tbreak;\n\t\t\t\t\t\t\tcase WHITE:\n\t\t\t\t\t\t\t\tsb.append('W');\n\t\t\t\t\t\t\t\tbreak;\n\t\t\t\t\t\t\tdefault:\n\t\t\t\t\t\t\t\tthrow new IllegalStateException(\"unknown board type\" + board[i][j]);\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\tsb.append(\"\\n\");\n\t\t\t}\n\t\t}\n\t\t\n\t\treturn sb.toString();\n\t}\n\t\n\t@Override\n\tpublic String toString() {\n\t\treturn \"Solution [board=\" + Arrays.toString(board) + \", moves=\" + moves + \", invalidMove=\" + invalidMove + \", boardSize=\" + boardSize + \"]\";\n\t}\n\t\n\t@Override\n\tpublic int hashCode() {\n\t\tfinal int prime = 31;\n\t\tint result = 1;\n\t\tresult = prime * result + Arrays.deepHashCode(board);\n\t\tresult = prime * result + boardSize;\n\t\tresult = prime * result + (invalidMove ? 1231 : 1237);\n\t\tresult = prime * result + ((moves == null) ? 0 : moves.hashCode());\n\t\treturn result;\n\t}\n\t\n\t@Override\n\tpublic boolean equals(Object obj) {\n\t\tif (this == obj)\n\t\t\treturn true;\n\t\tif (obj == null)\n\t\t\treturn false;\n\t\tif (getClass() != obj.getClass())\n\t\t\treturn false;\n\t\tSolution other = (Solution) obj;\n\t\tif (!Arrays.deepEquals(board, other.board))\n\t\t\treturn false;\n\t\tif (boardSize != other.boardSize)\n\t\t\treturn false;\n\t\tif (invalidMove != other.invalidMove)\n\t\t\treturn false;\n\t\tif (moves == null) {\n\t\t\tif (other.moves != null)\n\t\t\t\treturn false;\n\t\t}\n\t\telse if (!moves.equals(other.moves))\n\t\t\treturn false;\n\t\treturn true;\n\t}\n\t\n\tpublic PlayerColor[][] getBoard() {\n\t\treturn board;\n\t}\n\tpublic void setBoard(PlayerColor[][] board) {\n\t\tthis.board = board;\n\t}\n\t\n\tpublic List<Move> getMoves() {\n\t\treturn moves;\n\t}\n\t\n\tpublic boolean isInvalidMove() {\n\t\treturn invalidMove;\n\t}\n\tpublic void setInvalidMove(boolean invalidMove) {\n\t\tthis.invalidMove = invalidMove;\n\t}\n\t\n\tpublic int getBoardSize() {\n\t\treturn boardSize;\n\t}\n\t\n\t/**\n\t * A referee class that decides whether moves are valid and executes the moves (if they are valid)\n\t */\n\tpublic static class Referee {\n\t\t\n\t\t//a board and the previous board for the ko-rule\n\t\tprivate PlayerColor[][] board;\n\t\tprivate PlayerColor[][] previousBoard;\n\t\t\n\t\tprivate PlayerColor lastMoveColor;\n\t\tprivate Solution solution;\n\t\t\n\t\tpublic Referee(Solution solution) {\n\t\t\tthis.solution = solution;\n\t\t\t\n\t\t\t//black starts -> assume the last move was from white player\n\t\t\tlastMoveColor = PlayerColor.WHITE;\n\t\t\t\n\t\t\t//to load the move list from the string representation\n\t\t\tboard = solution.getBoard();\n\t\t}\n\t\t\n\t\t/**\n\t\t * Execute a list of moves (if at least one move is not possible the execution stops and sets a flag in the Solution class).\n\t\t */\n\t\tpublic void executeMoves(List<Move> moves) {\n\t\t\tfor (Move move : moves) {\n\t\t\t\tif (isValidMove(move)) {\n\t\t\t\t\t//the move seems to be valid -> go on and execute it\n\t\t\t\t\taddMove(move);\n\t\t\t\t\t//System.out.println(\"\\n\\n\");\n\t\t\t\t\t//solution.printField(board, false);\n\t\t\t\t}\n\t\t\t\telse {\n\t\t\t\t\t//invalid move found -> set the flag in the Solution class\n\t\t\t\t\tsolution.setInvalidMove(true);\n\t\t\t\t\t//no need to test the other moves\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\t\n\t\t/**\n\t\t * A deep copy of the current board\n\t\t */\n\t\tprivate PlayerColor[][] getBoardCopy() {\n\t\t\tPlayerColor[][] newBoard = new PlayerColor[getBoardSize()][getBoardSize()];\n\t\t\tfor (int i = 0; i < getBoardSize(); i++) {\n\t\t\t\tfor (int j = 0; j < getBoardSize(); j++) {\n\t\t\t\t\tnewBoard[i][j] = board[i][j];\n\t\t\t\t}\n\t\t\t}\n\t\t\treturn newBoard;\n\t\t}\n\t\t\n\t\t/**\n\t\t * Check whether the move is valid\n\t\t * \n\t\t * Checked are:\n\t\t * <ul>\n\t\t * <li>color (players turn)</li>\n\t\t * <li>position (on field and empty)</li>\n\t\t * <li>no suicidal move (placed stone is not directly beaten)</li>\n\t\t * <li>ko rule (move doesn't create the same board that was there in the last move)</li>\n\t\t * </ul>\n\t\t */\n\t\tpublic boolean isValidMove(Move move) {\n\t\t\tif (move.getColor() != PlayerColor.getOpposizeColor(lastMoveColor)) {\n\t\t\t\t//wrong color\n\t\t\t\treturn false;\n\t\t\t}\n\t\t\tif (!move.getPos().exists(getBoardSize())) {\n\t\t\t\t//position doesn't exist\n\t\t\t\treturn false;\n\t\t\t}\n\t\t\tif (getStoneColor(move.getPos()) != null) {\n\t\t\t\t//field not empty\n\t\t\t\treturn false;\n\t\t\t}\n\t\t\t\n\t\t\t//execute the move and check whether the state is valid\n\t\t\tPlayerColor[][] tmpBoard = getBoardCopy();//keep a copy of the board for a rollback\n\t\t\t//make the move\n\t\t\tboard[move.getPos().getRow()][move.getPos().getCol()] = move.getColor();\n\t\t\tremoveBeaten(move);\n\t\t\t\n\t\t\t//check the group of the new stone\n\t\t\tGroup group = Group.findGroup(this, move.getPos());\n\t\t\tif (group.isBeaten(this)) {\n\t\t\t\t//added stone is directly beaten\n\t\t\t\tboard = tmpBoard;\n\t\t\t\treturn false;\n\t\t\t}\n\t\t\t\n\t\t\tif (boardsEqual(board, previousBoard)) {\n\t\t\t\t//restores the board from the last move (ko rule violated)\n\t\t\t\tboard = tmpBoard;\n\t\t\t\treturn false;\n\t\t\t}\n\t\t\t\n\t\t\tboard = tmpBoard;\n\t\t\treturn true;\n\t\t}\n\t\t\n\t\tprivate static boolean boardsEqual(PlayerColor[][] board, PlayerColor[][] previousBoard) {\n\t\t\tif (previousBoard == null) {\n\t\t\t\t//previousBoard can be null if there was no previous move\n\t\t\t\t//in this case the ko-rule can't be violated and the boards are treated as not equal (so false is returned)\n\t\t\t\treturn false;\n\t\t\t}\n\t\t\tboolean equal = true;\n\t\t\tfor (int i = 0; i < board.length; i++) {\n\t\t\t\tfor (int j = 0; j < board[0].length; j++) {\n\t\t\t\t\tequal &= board[i][j] == previousBoard[i][j];\n\t\t\t\t}\n\t\t\t}\n\t\t\treturn equal;\n\t\t}\n\t\t\n\t\t/**\n\t\t * Execute a move without checking whether it's valid. The new stone is added and beaten ones are removed\n\t\t */\n\t\tpublic void addMove(Move move) {\n\t\t\t//copy the board to the previous board field\n\t\t\tpreviousBoard = getBoardCopy();\n\t\t\t\n\t\t\t//set the new stone\n\t\t\tboard[move.getPos().getRow()][move.getPos().getCol()] = move.getColor();\n\t\t\t//remove beaten stones (if any)\n\t\t\tremoveBeaten(move);\n\t\t\t\n\t\t\t//set the last move color\n\t\t\tlastMoveColor = move.getColor();\n\t\t}\n\t\t\n\t\t/**\n\t\t * Remove all stones that were beaten by the move\n\t\t */\n\t\tprivate void removeBeaten(Move move) {\n\t\t\t//find the fields near to the move field\n\t\t\tList<FieldPosition> near = move.getPos().getFieldsNear(solution.getBoardSize());\n\t\t\tfor (FieldPosition pos : near) {\n\t\t\t\t//check whether the field has a stone of the different color on it\n\t\t\t\tif (getStoneColor(pos) == PlayerColor.getOpposizeColor(move.getColor())) {\n\t\t\t\t\tGroup group = Group.findGroup(this, pos);\n\t\t\t\t\tif (group.isBeaten(this)) {\n\t\t\t\t\t\tremoveStones(group.getStones());\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\t\n\t\t/**\n\t\t * Remove all stones in the collection from the field\n\t\t */\n\t\tprivate void removeStones(Collection<FieldPosition> stones) {\n\t\t\tfor (FieldPosition pos : stones) {\n\t\t\t\tboard[pos.getRow()][pos.getCol()] = null;\n\t\t\t}\n\t\t}\n\t\t\n\t\t@Override\n\t\tpublic String toString() {\n\t\t\treturn \"Referee [board=\" + Arrays.toString(board) + \", previousBoard=\" + Arrays.toString(previousBoard) + \", lastMoveColor=\"\n\t\t\t\t\t+ lastMoveColor + \", solution=\" + solution + \"]\";\n\t\t}\n\t\t\n\t\t@Override\n\t\tpublic int hashCode() {\n\t\t\tfinal int prime = 31;\n\t\t\tint result = 1;\n\t\t\tresult = prime * result + Arrays.deepHashCode(board);\n\t\t\tresult = prime * result + ((lastMoveColor == null) ? 0 : lastMoveColor.hashCode());\n\t\t\tresult = prime * result + Arrays.deepHashCode(previousBoard);\n\t\t\tresult = prime * result + ((solution == null) ? 0 : solution.hashCode());\n\t\t\treturn result;\n\t\t}\n\t\t\n\t\t@Override\n\t\tpublic boolean equals(Object obj) {\n\t\t\tif (this == obj)\n\t\t\t\treturn true;\n\t\t\tif (obj == null)\n\t\t\t\treturn false;\n\t\t\tif (getClass() != obj.getClass())\n\t\t\t\treturn false;\n\t\t\tReferee other = (Referee) obj;\n\t\t\tif (!Arrays.deepEquals(board, other.board))\n\t\t\t\treturn false;\n\t\t\tif (lastMoveColor != other.lastMoveColor)\n\t\t\t\treturn false;\n\t\t\tif (!Arrays.deepEquals(previousBoard, other.previousBoard))\n\t\t\t\treturn false;\n\t\t\tif (solution == null) {\n\t\t\t\tif (other.solution != null)\n\t\t\t\t\treturn false;\n\t\t\t}\n\t\t\telse if (!solution.equals(other.solution))\n\t\t\t\treturn false;\n\t\t\treturn true;\n\t\t}\n\t\t\n\t\tpublic PlayerColor getLastMoveColor() {\n\t\t\treturn lastMoveColor;\n\t\t}\n\t\tpublic PlayerColor getNextMoveColor() {\n\t\t\treturn PlayerColor.getOpposizeColor(lastMoveColor);\n\t\t}\n\t\t\n\t\tpublic boolean isFieldEmpty(FieldPosition pos) {\n\t\t\treturn board[pos.getRow()][pos.getCol()] == null;\n\t\t}\n\t\t\n\t\tpublic PlayerColor getStoneColor(FieldPosition pos) {\n\t\t\treturn board[pos.getRow()][pos.getCol()];\n\t\t}\n\t\tpublic int getBoardSize() {\n\t\t\treturn solution.getBoardSize();\n\t\t}\n\t}\n\t\n\t/**\n\t * A group of stones (stones of the same color that are placed beneath each other)\n\t */\n\tpublic static class Group {\n\t\t\n\t\tprivate Set<FieldPosition> stones;\n\t\t\n\t\tpublic Group(Set<FieldPosition> stones, PlayerColor color) {\n\t\t\tthis.stones = stones;\n\t\t}\n\t\tpublic Group(PlayerColor color) {\n\t\t\tthis.stones = new HashSet<FieldPosition>();\n\t\t}\n\t\t\n\t\tpublic static Group findGroup(Referee ref, FieldPosition startingPosition) {\n\t\t\tPlayerColor groupColor = ref.getStoneColor(startingPosition);\n\t\t\tfinal int boardSize = ref.getBoardSize();\n\t\t\tif (groupColor == null) {\n\t\t\t\tthrow new IllegalArgumentException(\"The field of the starting position is empty (position was: \" + startingPosition + \")\");\n\t\t\t}\n\t\t\t\n\t\t\t//complete the group by adding stones using a flood fill\n\t\t\tSet<FieldPosition> allStones = new HashSet<FieldPosition>();\n\t\t\t\n\t\t\t//initialize the current queue and the next step queue\n\t\t\tSet<FieldPosition> currentStones = new HashSet<FieldPosition>();\n\t\t\tSet<FieldPosition> nextStones = new HashSet<FieldPosition>();\n\t\t\t\n\t\t\t//add the starting position\n\t\t\tcurrentStones.add(startingPosition);\n\t\t\t\n\t\t\t//add the fields with the iterative flood fill till the queues are empty \n\t\t\twhile (!currentStones.isEmpty()) {\n\t\t\t\tfor (FieldPosition currentField : currentStones) {\n\t\t\t\t\tfor (FieldPosition near : currentField.getFieldsNear(boardSize)) {\n\t\t\t\t\t\tif (near.exists(boardSize) && //the field exists on the board\n\t\t\t\t\t\t\t\tref.getStoneColor(near) != null && //prevent NPE \n\t\t\t\t\t\t\t\tref.getStoneColor(near).equals(groupColor) && //the field contains a stone of the group color\n\t\t\t\t\t\t\t\t!allStones.contains(near) && !currentStones.contains(near)) {//the field is not already added\n\t\t\t\t\t\t\tnextStones.add(near);\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\t//add the current stones to the group, copy the next steps to the queue and clear next steps\n\t\t\t\tallStones.addAll(currentStones);\n\t\t\t\tcurrentStones = nextStones;\n\t\t\t\tnextStones = new HashSet<FieldPosition>();\n\t\t\t}\n\t\t\t\n\t\t\treturn new Group(allStones, groupColor);\n\t\t}\n\t\t\n\t\tpublic boolean isBeaten(Referee ref) {\n\t\t\tfinal int boardSize = ref.getBoardSize();\n\t\t\tSet<FieldPosition> nearFreeFields = stones.stream().flatMap(s -> s.getFieldsNear(boardSize).stream()) //all fields near\n\t\t\t\t\t.filter(field -> field.exists(boardSize) && ref.isFieldEmpty(field)) //existing and empty\n\t\t\t\t\t.collect(Collectors.toSet());\n\t\t\t\n\t\t\treturn nearFreeFields.isEmpty();\n\t\t}\n\t\t\n\t\t@Override\n\t\tpublic String toString() {\n\t\t\treturn \"Group [stones=\" + stones + \"]\";\n\t\t}\n\t\t\n\t\t@Override\n\t\tpublic int hashCode() {\n\t\t\tfinal int prime = 31;\n\t\t\tint result = 1;\n\t\t\tresult = prime * result + ((stones == null) ? 0 : stones.hashCode());\n\t\t\treturn result;\n\t\t}\n\t\t\n\t\t@Override\n\t\tpublic boolean equals(Object obj) {\n\t\t\tif (this == obj)\n\t\t\t\treturn true;\n\t\t\tif (obj == null)\n\t\t\t\treturn false;\n\t\t\tif (getClass() != obj.getClass())\n\t\t\t\treturn false;\n\t\t\tGroup other = (Group) obj;\n\t\t\tif (stones == null) {\n\t\t\t\tif (other.stones != null)\n\t\t\t\t\treturn false;\n\t\t\t}\n\t\t\telse if (!stones.equals(other.stones))\n\t\t\t\treturn false;\n\t\t\treturn true;\n\t\t}\n\t\t\n\t\tpublic Set<FieldPosition> getStones() {\n\t\t\treturn stones;\n\t\t}\n\t}\n\t\n\t/**\n\t * A class that represents a move from the input\n\t */\n\tpublic static class Move {\n\t\t\n\t\tprivate final PlayerColor color;\n\t\tprivate final FieldPosition pos;\n\t\t\n\t\tpublic Move(PlayerColor color, FieldPosition pos) {\n\t\t\tthis.color = color;\n\t\t\tthis.pos = pos;\n\t\t}\n\t\t\n\t\t/**\n\t\t * Create a move object from a line of input\n\t\t */\n\t\tpublic static Move fromInputString(String input) {\n\t\t\tPlayerColor color;\n\t\t\tint row;\n\t\t\tint col;\n\t\t\t\n\t\t\t//read the color of the move ('B' for black or 'W' for white)\n\t\t\tchar colorChar = input.charAt(0);\n\t\t\tif (colorChar == 'B') {\n\t\t\t\tcolor = PlayerColor.BLACK;\n\t\t\t}\n\t\t\telse if (colorChar == 'W') {\n\t\t\t\tcolor = PlayerColor.WHITE;\n\t\t\t}\n\t\t\telse {\n\t\t\t\tthrow new IllegalStateException(\"Unexpected color character in input: \" + colorChar);\n\t\t\t}\n\t\t\t\n\t\t\t//the coordinate of the move\n\t\t\tString moveCoord = input.substring(2);\n\t\t\tString[] coords = moveCoord.split(\" \");\n\t\t\ttry {\n\t\t\t\trow = Integer.parseInt(coords[0]);\n\t\t\t\tcol = Integer.parseInt(coords[1]);\n\t\t\t}\n\t\t\tcatch (NumberFormatException nfe) {\n\t\t\t\tthrow new IllegalStateException(\"unexpected characters in input (expected integer coordinates): \" + moveCoord);\n\t\t\t}\n\t\t\t\n\t\t\treturn new Move(color, new FieldPosition(row, col));\n\t\t}\n\t\t\n\t\t@Override\n\t\tpublic String toString() {\n\t\t\treturn \"Move [color=\" + color + \", pos=\" + pos + \"]\";\n\t\t}\n\t\t\n\t\t@Override\n\t\tpublic int hashCode() {\n\t\t\tfinal int prime = 31;\n\t\t\tint result = 1;\n\t\t\tresult = prime * result + ((color == null) ? 0 : color.hashCode());\n\t\t\tresult = prime * result + ((pos == null) ? 0 : pos.hashCode());\n\t\t\treturn result;\n\t\t}\n\t\t\n\t\t@Override\n\t\tpublic boolean equals(Object obj) {\n\t\t\tif (this == obj)\n\t\t\t\treturn true;\n\t\t\tif (obj == null)\n\t\t\t\treturn false;\n\t\t\tif (getClass() != obj.getClass())\n\t\t\t\treturn false;\n\t\t\tMove other = (Move) obj;\n\t\t\tif (color != other.color)\n\t\t\t\treturn false;\n\t\t\tif (pos == null) {\n\t\t\t\tif (other.pos != null)\n\t\t\t\t\treturn false;\n\t\t\t}\n\t\t\telse if (!pos.equals(other.pos))\n\t\t\t\treturn false;\n\t\t\treturn true;\n\t\t}\n\t\t\n\t\tpublic PlayerColor getColor() {\n\t\t\treturn color;\n\t\t}\n\t\tpublic FieldPosition getPos() {\n\t\t\treturn pos;\n\t\t}\n\t}\n\t\n\t/**\n\t * A position on the field (identified by a row and a column)\n\t */\n\tpublic static class FieldPosition {\n\t\t\n\t\tprivate final int row;\n\t\tprivate final int col;\n\t\t\n\t\tpublic FieldPosition(int row, int col) {\n\t\t\tthis.row = row;\n\t\t\tthis.col = col;\n\t\t}\n\t\t\n\t\tpublic List<FieldPosition> getFieldsNear(int boardSize) {\n\t\t\tint[][] near = new int[][] {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};\n\t\t\tList<FieldPosition> nearFields = new ArrayList<FieldPosition>();\n\t\t\tfor (int[] nearDiff : near) {\n\t\t\t\tFieldPosition position = new FieldPosition(row + nearDiff[0], col + nearDiff[1]);\n\t\t\t\tif (position.exists(boardSize)) {\n\t\t\t\t\tnearFields.add(position);\n\t\t\t\t}\n\t\t\t}\n\t\t\treturn nearFields;\n\t\t}\n\t\t\n\t\tpublic boolean exists(int boardSize) {\n\t\t\treturn row >= 0 && col >= 0 && row < boardSize && col < boardSize;\n\t\t}\n\t\t\n\t\t@Override\n\t\tpublic String toString() {\n\t\t\treturn \"FieldPosition [row=\" + row + \", col=\" + col + \"]\";\n\t\t}\n\t\t\n\t\t@Override\n\t\tpublic int hashCode() {\n\t\t\tfinal int prime = 31;\n\t\t\tint result = 1;\n\t\t\tresult = prime * result + col;\n\t\t\tresult = prime * result + row;\n\t\t\treturn result;\n\t\t}\n\t\t\n\t\t@Override\n\t\tpublic boolean equals(Object obj) {\n\t\t\tif (this == obj)\n\t\t\t\treturn true;\n\t\t\tif (obj == null)\n\t\t\t\treturn false;\n\t\t\tif (getClass() != obj.getClass())\n\t\t\t\treturn false;\n\t\t\tFieldPosition other = (FieldPosition) obj;\n\t\t\tif (col != other.col)\n\t\t\t\treturn false;\n\t\t\tif (row != other.row)\n\t\t\t\treturn false;\n\t\t\treturn true;\n\t\t}\n\t\t\n\t\tpublic int getRow() {\n\t\t\treturn row;\n\t\t}\n\t\t\n\t\tpublic int getCol() {\n\t\t\treturn col;\n\t\t}\n\t}\n\t\n\t/**\n\t * A simple enum for player colors.\n\t */\n\tpublic static enum PlayerColor {\n\t\t\n\t\tBLACK, WHITE;\n\t\t\n\t\tpublic static PlayerColor getOpposizeColor(PlayerColor lastMove) {\n\t\t\tswitch (lastMove) {\n\t\t\t\tcase BLACK:\n\t\t\t\t\treturn WHITE;\n\t\t\t\tcase WHITE:\n\t\t\t\t\treturn BLACK;\n\t\t\t\tdefault:\n\t\t\t\t\treturn null;\n\t\t\t}\n\t\t}\n\t}\n}",
+      "statement": "Go is an abstract strategy board game for two players, in which the aim is to surround more territory than the opponent.\nGiven a board (where some stones are already added) and a list of moves to be executed next, check whether the moves are valid and (if they are valid) execute them.\nThe initial board state in the input is always valid.\n\nAfter executing all moves in the list the expected output is either {{NOT_VALID}} if at least one of the moves is invalid, or the new state of the board after all moves were executed.\n\n<<Rules of Go:>>\n- Two players place stones of their color (by turns)\n- If a stone is completely surrounded by stones of the other player (or by the edge of the field) this stone is beaten and is removed from the board\n- If stones of the same color are placed next to each other they build a group\n- If the group is completely surrounded by stones of the other player (or by the edge of the fields) this group is beaten and all of its stones are removed from the board\n- A stone can be placed on every free field on the board except for:\n    --- A position in which it would be completely surrounded by the stones of the other player (no suicidal moves allowed). Except this move beats some other stones which leads to it not being surrounded anymore\n    --- A position that would create the same board that was there before the other player made his move (to prevent an infinite loop of killing stones) which is named KO-rule (see a test case for an example)\n\n- Points (which are not important for this puzzle) are made by empty fields that are surrounded by the stones of a player or by enemy stones that are beaten\n\nFor a more detailed description please visit wikipedia:\nhttps://en.wikipedia.org/wiki/Go_(game)#Rules",
+      "testCases": [
+        {
+          "title": "Some stones on an empty field",
+          "isTest": true,
+          "testIn": "5\n5\n.....\n.....\n.....\n.....\n.....\nB 2 2\nW 2 3\nB 3 2\nW 3 4\nB 4 3",
+          "testOut": ".....\n.....\n..BW.\n..B.W\n...B.",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Some stones on an empty field [validator]",
+          "isTest": false,
+          "testIn": "5\n5\n.....\n.....\n.....\n.....\n.....\nB 2 2\nW 2 4\nB 3 2\nW 3 3\nB 4 3",
+          "testOut": ".....\n.....\n..B.W\n..BW.\n...B.",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Stones get removed",
+          "isTest": true,
+          "testIn": "5\n7\nBB...\nB....\n.....\n...W.\n.....\nB 3 2\nW 0 2\nB 3 4\nW 2 0\nB 2 3\nW 1 1\nB 4 3",
+          "testOut": "..W..\n.W...\nW..B.\n..B.B\n...B.",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Stones get removed [validator]",
+          "isTest": false,
+          "testIn": "5\n7\nB....\nB....\n.....\n...W.\n....W\nB 3 2\nW 0 1\nB 3 4\nW 2 0\nB 2 3\nW 1 1\nB 4 3",
+          "testOut": ".W...\n.W...\nW..B.\n..B.B\n...B.",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Field not free",
+          "isTest": true,
+          "testIn": "5\n1\n.....\n.....\n..B..\n.....\n.....\nB 2 2",
+          "testOut": "NOT_VALID",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Field not free [validator]",
+          "isTest": false,
+          "testIn": "5\n1\n.B...\n.....\n.....\n.....\n.....\nB 0 1",
+          "testOut": "NOT_VALID",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Suicidal move",
+          "isTest": true,
+          "testIn": "5\n5\n.BW..\nBW...\n.W...\n.....\n.....\nB 3 4\nW 4 4\nB 3 3\nW 2 0\nB 0 0",
+          "testOut": "NOT_VALID",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Suicidal move [validator]",
+          "isTest": false,
+          "testIn": "5\n5\n.BBW.\nBWW..\n.WW..\n.....\n.....\nB 3 4\nW 2 0\nB 0 0\nW 4 4\nB 3 3",
+          "testOut": "NOT_VALID",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Non-Suicidal move",
+          "isTest": true,
+          "testIn": "5\n7\n.B...\nBW...\nWB..W\n...W.\n...BW\nB 3 4\nW 0 2\nB 0 3\nW 0 0\nB 1 2\nW 0 1\nB 1 0",
+          "testOut": "...B.\nB.B..\nWB..W\n...WB\n...B.",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Non-Suicidal move [validator]",
+          "isTest": false,
+          "testIn": "5\n9\n.B...\nBW...\nWB..W\n...W.\n...BW\nB 3 4\nW 0 2\nB 0 3\nW 0 0\nB 1 2\nW 0 1\nB 1 0\nW 0 0\nB 0 2",
+          "testOut": "W.BB.\nB.B..\nWB..W\n...WB\n...B.",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Ko rule violated",
+          "isTest": true,
+          "testIn": "5\n3\n..B..\n.B.B.\n.WBW.\n.BW..\n.....\nB 3 3\nW 1 2\nB 2 2",
+          "testOut": "NOT_VALID",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Ko rule violated [validator]",
+          "isTest": false,
+          "testIn": "5\n3\n.....\n..B..\n.B.B.\n.WBW.\n.BW..\nB 4 3\nW 2 2\nB 3 2",
+          "testOut": "NOT_VALID",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Bigger field",
+          "isTest": true,
+          "testIn": "9\n10\n....WWB..\n...WWB.B.\n.W.WBBB..\nW.WBWWWB.\nBWWB...B.\nBBBBW.WB.\n...BBW.W.\nWBW.BBW..\n.WB...W..\nB 4 4\nW 4 5\nB 4 6\nW 6 6\nB 5 5\nW 7 3\nB 8 0\nW 2 7\nB 2 8\nW 8 1",
+          "testOut": "....WWB..\n...WWB.B.\n.W.WBBB.B\nW.WB...B.\nBWWBB.BB.\nBBBB.BWB.\n...BBWWW.\nWBWWBBW..\n.WB...W..",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Bigger field [validator]",
+          "isTest": false,
+          "testIn": "9\n10\nB..WWWB..\n...WWB.B.\n.W.WBBB..\nW.WBWWWB.\nBWWB...B.\nBBBBW.WB.\n...BBW.W.\nWBW.BBW..\n.WB...W..\nB 4 4\nW 4 5\nB 4 6\nW 6 6\nB 5 5\nW 7 3\nB 8 0\nW 2 7\nB 2 8\nW 8 1",
+          "testOut": "B..WWWB..\n...WWB.B.\n.W.WBBB.B\nW.WB...B.\nBWWBB.BB.\nBBBB.BWB.\n...BBWWW.\nWBWWBBW..\n.WB...W..",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "[[S]] ≤ 19\n[[S lines]] contain only {{'.'}}, {{'B'}} or {{'W'}}.\n[[M]] ≤ 15\nA [[Move]] input starts with either {{B}} or {{W}} followed by two integers [[i]] and [[j]] that define the position of the placed stone (separated by a {{space}} character). The integers to define the positions can be 0 ≤ [[i]] < [[S]] (from 0 (included) to the size of the board (not included)).",
+      "coverBinaryId": 41379205660870,
+      "stubGenerator": "read S:int\nread M:int\n\nloop S read row:string(S)\nloop M read move:string(7) \n\nwrite NOT_VALID | <<the_board_after_the_moves>>\n\nINPUT\nS: the size of the board\nM: the number of moves to be made\nrow: a single row in the input board\nmove: a strng representation of a move\n",
+      "inputDescription": "<<Line 1:>> An integer [[S]] for the size of the field (the field is a square of [[S]]×[[S]]).\n<<Line 2:>> An integer [[M]] for the number of moves that are to be made on the board.\n<<Next [[S]] lines:>> A line of the board where {{.}} is an empty field, {{B}} is a field with a black stone and {{W}} is a field with a white stone on it (each line contains [[S]] characters).\n<<Next [[M]] lines:>> A move that is described by the player color, and the position (separated by a {{space}} character). \nExample: {{B 0 11}} means a black stone on the 1st line and the 12th column.",
+      "solutionLanguage": "Java",
+      "outputDescription": "If at least one of the moves in the list is not valid just print: {{NOT_VALID}}.\nIf all moves from the input list are valid you have to output the board after the execution of all moves, just like in the input. So a line of output could look like this:\n{{.BW.}} which means the first and the last field in this line is empty and in between there is a black and a white stone."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Go is an abstract strategy board game for two players, in which the aim is to surround more territory than the opponent.<br>Given a board (where some stones are already added) and a list of moves to be executed next, check whether the moves are valid and (if they are valid) execute them.<br>The initial board state in the input is always valid.<br><br>After executing all moves in the list the expected output is either <const>NOT_VALID</const> if at least one of the moves is invalid, or the new state of the board after all moves were executed.<br><br><strong>Rules of Go:</strong><br>- Two players place stones of their color (by turns)<br>- If a stone is completely surrounded by stones of the other player (or by the edge of the field) this stone is beaten and is removed from the board<br>- If stones of the same color are placed next to each other they build a group<br>- If the group is completely surrounded by stones of the other player (or by the edge of the fields) this group is beaten and all of its stones are removed from the board<br>- A stone can be placed on every free field on the board except for:<br>    --- A position in which it would be completely surrounded by the stones of the other player (no suicidal moves allowed). Except this move beats some other stones which leads to it not being surrounded anymore<br>    --- A position that would create the same board that was there before the other player made his move (to prevent an infinite loop of killing stones) which is named KO-rule (see a test case for an example)<br><br>- Points (which are not important for this puzzle) are made by empty fields that are surrounded by the stones of a player or by enemy stones that are beaten<br><br>For a more detailed description please visit wikipedia:<br>https://en.wikipedia.org/wiki/Go_(game)#Rules</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>S</var> for the size of the field (the field is a square of <var>S</var>&times;<var>S</var>).<br><strong>Line 2:</strong> An integer <var>M</var> for the number of moves that are to be made on the board.<br><strong>Next <var>S</var> lines:</strong> A line of the board where <const>.</const> is an empty field, <const>B</const> is a field with a black stone and <const>W</const> is a field with a white stone on it (each line contains <var>S</var> characters).<br><strong>Next <var>M</var> lines:</strong> A move that is described by the player color, and the position (separated by a <const>space</const> character). <br>Example: <const>B 0 11</const> means a black stone on the 1st line and the 12th column.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">If at least one of the moves in the list is not valid just print: <const>NOT_VALID</const>.<br>If all moves from the input list are valid you have to output the board after the execution of all moves, just like in the input. So a line of output could look like this:<br><const>.BW.</const> which means the first and the last field in this line is empty and in between there is a black and a white stone.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><var>S</var> &le; 19<br><var>S lines</var> contain only <const>'.'</const>, <const>'B'</const> or <const>'W'</const>.<br><var>M</var> &le; 15<br>A <var>Move</var> input starts with either <const>B</const> or <const>W</const> followed by two integers <var>i</var> and <var>j</var> that define the position of the placed stone (separated by a <const>space</const> character). The integers to define the positions can be 0 &le; <var>i</var> &lt; <var>S</var> (from 0 (included) to the size of the board (not included)).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5\n5\n.....\n.....\n.....\n.....\n.....\nB 2 2\nW 2 3\nB 3 2\nW 3 4\nB 4 3</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">.....\n.....\n..BW.\n..B.W\n...B.</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 181171405833,
+  "avatar": 82852165040194,
+  "commentCount": 24,
+  "upVotes": 9,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 460246,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1586279137000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1587288034638,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1589559668389,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

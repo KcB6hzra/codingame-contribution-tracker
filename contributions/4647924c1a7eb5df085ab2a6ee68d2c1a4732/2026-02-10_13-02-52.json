@@ -1,0 +1,196 @@
+{
+  "id": 46479,
+  "activeVersion": 25,
+  "score": 26,
+  "votableId": 28168990,
+  "codingamerId": 2636031,
+  "views": 541,
+  "commentableId": 28040597,
+  "title": "Fussy Fuzzy Matching",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "21stCenturyPeon",
+  "publicHandle": "4647924c1a7eb5df085ab2a6ee68d2c1a4732",
+  "codingamerHandle": "5a5e7379052be6d44f313c66917fee1e1306362",
+  "lastVersion": {
+    "version": 25,
+    "autocloseTime": 1734797243121,
+    "data": {
+      "title": "Fussy Fuzzy Matching",
+      "topics": [
+        {
+          "id": 73,
+          "handle": "strings",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Chaînes de caractères",
+            "2": "Strings"
+          },
+          "pageTitle": "Strings: exercises and theory",
+          "puzzleCount": 42,
+          "parentTopicId": 41,
+          "contentDetailsId": 73
+        },
+        {
+          "id": 98,
+          "handle": "regular-expressions",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Regular expressions",
+            "2": "Regular expressions"
+          },
+          "puzzleCount": 6,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import java.util.*;\n\nclass Solution {\n\n    public static void main(String args[]) {\n        Scanner in = new Scanner(System.in);\n        String letterCase = in.nextLine();\n        int letterFuzz = in.nextInt();\n        int numberFuzz = in.nextInt();\n        if (in.hasNextLine()) {\n            in.nextLine();\n        }\n        String otherFuzz = in.nextLine();\n        String a = in.nextLine();\n        int n = in.nextInt();\n        if (in.hasNextLine()) {\n            in.nextLine();\n        }\n\n        a=tidy(a,letterCase, otherFuzz);\n        String[]aWords=split(a);\n        \n        for (int i = 0; i < n; i++) {\n            String b = in.nextLine();\n            // System.err.println(\"-----\");\n            // System.err.println(b);\n            b=tidy(b,letterCase, otherFuzz);\n            // System.err.println(b);\n            String[]bWords=split(b);\n            boolean match = aWords.length == bWords.length;\n            \n            for(int w = 0; match && w < aWords.length; w++){\n                // System.err.print(aWords[w]+\" x \"+bWords[w]+\" >> \");\n                match = getType(aWords[w]) == getType(bWords[w]);\n                if(match){\n                    switch (getType(aWords[w])){\n                        case 1:\n                            int aVal = Integer.parseInt(aWords[w]);\n                            int bVal = Integer.parseInt(bWords[w]);\n                            int valDiff = Math.abs(aVal - bVal);\n                            match = valDiff <= numberFuzz;\n                            // if(!match)System.err.println(aVal+\", \"+bVal + \" >> num \"+numberFuzz);\n                            break;\n                        case 2:\n                        case 3:\n                            match = aWords[w].length() == bWords[w].length();\n                            char[]aChars = aWords[w].toCharArray();\n                            char[]bChars = bWords[w].toCharArray();\n                            for(int c = 0; match && c < aChars.length; c++){\n                                int charDiff = Math.abs(aChars[c] - bChars[c]);\n                                match = charDiff <= letterFuzz;\n                                // if(!match)System.err.println(aChars[c]+\", \"+bChars[c] + \" >> ltr \"+letterFuzz);\n                            }\n                            break;\n                        case 4:\n                            match = aWords[w].equals(bWords[w]);\n                            // if(!match)System.err.println(\"\\\"\"+aWords[w] + \"\\\", \\\"\"+bWords[w] + \"\\\" >> oth \"+otherFuzz);\n                            break;\n                        default:\n                            System.out.println(\"error: \"+ getType(aWords[w]));\n                            System.out.println(aWords[w]);\n                    }\n                }\n            }\n            System.out.println(match);\n        }\n    }\n\n    static int getType(String w){\n        if(w.matches(\"[0-9]+\"))return 1;\n        if(w.matches(\"[a-z]+\"))return 2;\n        if(w.matches(\"[A-Z]+\"))return 3;\n        if(w.matches(\"[^a-zA-Z0-9]+\"))return 4;\n        return -1;\n    }\n\n    static String[]split(String a){\n        return a.split(\"(?<=[0-9])(?=[^0-9])|(?<=[a-z])(?=[^a-z])|(?<=[A-Z])(?=[^A-Z])|(?<=[^a-zA-Z0-9])(?=[a-zA-Z0-9])\");\n    }\n\n    static String tidy(String a, String letterCase, String otherFuzz){\n        if(letterCase.equals(\"false\"))a=a.toLowerCase();\n        if(otherFuzz.equals(\"false\"))a=a.replaceAll(\"[^a-zA-Z0-9]\",\"~\");\n        return a;\n    }\n\n}",
+      "statement": "Determine which [[candidate]] strings (if any) match the given [[template]] string according to the stated rules.\nThe following rules must be applied in order to match:\n\n[[<<letterCase>>]]\n{{false}} = case doesn't matter - {{Abc}} matches {{abc}}, {{aBc}}, {{ABC}}, etc.\n{{true}} = case must match\n\n[[<<letterFuzz>>]]\nThe alphabetical distance a letter character in [[candidate]] is permitted to stray from its counterpart in [[template]]. If [[letterFuzz]]=0, the letters must match precisely.\nFor example, if [[letterFuzz]]=1, {{ejk}} can match any of {{fjk}}, {{dil}}, etc, but not {{ejm}}, since {{m}} is 2 letters away from {{k}}.\n<<Note:>> Fuzziness does <<not>> wrap around the ends of the alphabet - if [[letterFuzz]]=3, {{B}} only matches any of { {{A}},{{B}},{{C}},{{D}},{{E}} } but not {{Y}} or {{Z}}\n\n[[<<numberFuzz>>]] \nThe maximum permitted difference between an integer value - not the individual digits -  in [[candidate]] and its counterpart in [[template]].\nIf [[numberFuzz]]=1, {{p25q}} matches {{p24q}}, {{p25q}} and {{p26q}} but not {{p27q}} or {{p35q}}; also note that {{e99f}} matches {{e100f}}.\nNumbers are never negative, and never have leading zeroes or decimal places.\n\n[[<<otherFuzz>>]]\n{{false}} = positions of non-alphanumeric characters (i.e. not a-zA-Z0-9) must match in both strings, but the specific character in each position doesn't matter, as long as it's not alphanumeric. \nFor example, {{ab,c}} matches {{ab c}} and {{ab?c}}, but not {{a,bc}}, {{abc}}, {{ab1c}} or {{ab,,c}}.\n{{true}} = the exact non-alphanumeric characters must match in both strings\n\n<<Example:>>\n`false\n2\n1\nfalse\nApple10,Orange9\n1\napple9?pramed7`\n{{A}} v {{a}}: matches ([[letterCase]] is {{false}}; alphabetical distance = {{0}})\n{{p}} v {{p}}: matches (exact match)\n{{p}} v {{p}}: matches (exact match)\n{{l}} v {{l}}: matches (exact match)\n{{e}} v {{e}}: matches (exact match)\n{{10}} v {{9}}: matches ([[numberFuzz]]={{1}}, difference = {{1}})\n{{,}} v {{?}}: matches ([[otherFuzz]]={{false}}, both characters are non-alphanumeric)\n{{O}} v {{p}}: matches ([[letterCase]] is {{false}}; [[letterFuzz]]={{2}}, alphabetical distance = {{1}})\n{{r}} v {{r}}: matches (exact match)\n{{a}} v {{a}}: matches (exact match)\n{{n}} v {{m}}: matches (case matches; [[letterFuzz]]={{2}}, alphabetical distance = {{1}})\n{{g}} v {{e}}: matches (case matches; [[letterFuzz]]={{2}}, alphabetical distance = {{2}})\n{{e}} v {{d}}: matches (case matches; [[letterFuzz]]={{2}}, alphabetical distance = {{1}})\n{{9}} v {{7}}: <<does not match>> ([[numberFuzz]]={{1}}, difference = {{2}})\n\n<<Output>>:\n`false`",
+      "testCases": [
+        {
+          "title": "Strict",
+          "isTest": true,
+          "testIn": "true\n0\n0\ntrue\nSome1thing?\n6\nsome1thing?\nSome1thing?\nSome1thing!\nSome thing?\nSome2thing?\nSome1thang?",
+          "testOut": "false\ntrue\nfalse\nfalse\nfalse\nfalse",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Strict validator",
+          "isTest": false,
+          "testIn": "true\n0\n0\ntrue\nSomeb0dy!\n6\nsomeb0dy!\nSomeb0dy.\nSome b0dy!\nSomeb1dy!\nSomeb0dy!\nSameb0dy!",
+          "testOut": "false\nfalse\nfalse\nfalse\ntrue\nfalse",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "letterCase=false, letterFuzz=2",
+          "isTest": true,
+          "testIn": "false\n2\n0\ntrue\nCorrect Horse Battery Staple\n4\nDotteds Hoste Battery STAPLE\nCorrupt Horse Batters Stable\nCorrect HORSE basterz urbond\nCorrect Battery Horse Staple",
+          "testOut": "true\nfalse\ntrue\nfalse",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "letterCase=false, letterFuzz=2 validator",
+          "isTest": false,
+          "testIn": "false\n2\n0\ntrue\nCorrect Staple Horse Battery\n4\nCorrect urbond HORSE basterz\nDotteds STAPLE Hoste Battery\nCorrupt Stable Horse Batters\nCorrect Staple Battery Horse",
+          "testOut": "true\ntrue\nfalse\nfalse",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "numberFuzz",
+          "isTest": true,
+          "testIn": "true\n0\n50\ntrue\nThe 82nd Airborne\n6\nThe 132nd Airborne\nThe 82nd Airborn\nThe 32nd Airborne\nThe 31nd Airborne\nthe 101nd Airborne\nThe 50nd Airborne",
+          "testOut": "true\nfalse\ntrue\nfalse\nfalse\ntrue",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "numberFuzz validator",
+          "isTest": false,
+          "testIn": "true\n0\n50\ntrue\n100 bottles of beer on the wall\n6\n100 bottles of beer\n99 bottles of beer on the wall\n50 bottles of beer on the wall\n144 bottles of Beer on the wall\n151 bottles of beer on the wall\n126 bottles of beer on the wall",
+          "testOut": "false\ntrue\ntrue\nfalse\nfalse\ntrue",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "otherFuzz=false",
+          "isTest": true,
+          "testIn": "true\n0\n0\nfalse\nI wish I cou'd be smart\" like, her; (Punctuation, is; fun!)\"\n4\nI wish I cou?d be smart? like? her$ [Punctuation- is? fun$]?\nI wish I could be smart. like, her; (Punctuation, is; fun!).\nI wish I cou-d be smart# like| her_ (Punctuation, is; fun^*<\ni wish i cou'd be smart\" like, her; (punctuation, is; fun!)\"",
+          "testOut": "true\nfalse\ntrue\nfalse",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "otherFuzz=false validator",
+          "isTest": false,
+          "testIn": "true\n0\n0\nfalse\n?asdf\n3\n!asdf\nxasdf\n5asdf",
+          "testOut": "true\nfalse\nfalse",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Put It All Together",
+          "isTest": true,
+          "testIn": "true\n5\n100\nfalse\nAb100-500,EfG?h1jK 50.1000n0p. Qr5; tU5-WxYz\n7\nAb6-432,EfG?h75jK 144.911n0p. Qr35; tU56-WxYz\nAb0?576!EfG.h101jK{69}1066n100p+(Qr7)*tU102?WxYz\nEa0?576!BcD.m101kJ{79}1066o100q+(Uv7)*rV102?ZyXw\nEa8?444!BcD.m2kJ{88}988o80q+(Uv8)*rV98?ZyXw\nAb300-500,EfG?h1jK 50.1000n0p. Qr5; tU5-WxYz\nAb100-500,EfG?h1jK 50.1000n0p. qR5; tU5-WxYz\nAb100.500.EfG.h1jK.92..960n0p..Qr5.-tU5-WxYz",
+          "testOut": "true\ntrue\ntrue\ntrue\nfalse\nfalse\nfalse",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Put It All Together validator",
+          "isTest": false,
+          "testIn": "true\n5\n100\nfalse\nAb100-500,EfG?h1jK 50.1000n0p. Qr5; tU5-WxYz\n7\nAb300-500,EfG?h1jK 50.1000n0p. Qr5; tU5-WxYz\nAb100-500,EfG?h1jK 50.1000n0p. qR5; tU5-WxYz\nAb100.500.EfG.hIjK.92..960n0p..Qr5.-tU5-WxYz\nAb6-432,EfG?h75jK 144.911n0p. Qr35; tU56-WxYz\nAb0?576!EfG.h101jK{69}1066n100p+(Qr7)*tU102?WxYz\nEa0?576!BcD.m101kJ{79}1066o100q+(Uv7)*rV102?ZyXw\nEa8?444!BcD.m2kJ{88}988o80q+(Uv8)*rV98?ZyXw",
+          "testOut": "false\nfalse\nfalse\ntrue\ntrue\ntrue\ntrue",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "[[letterCase]] = {{true}} or {{false}}\n0 <= [[letterFuzz]] <= 25\n0 <= [[numberFuzz]] <= 100\n[[otherFuzz]] = {{true}} or {{false}}\n1 <= [[n]] <= 20\n1 <= length of [[template]], length of [[candidate]] <= 100\n0 <= (any number value in [[template]] or [[candidate]]) < 2^31",
+      "coverBinaryId": 136023329935838,
+      "stubGenerator": "read letterCase:string(5)\nread letterFuzz:int\nread numberFuzz:int\nread otherFuzz:string(5)\nread template:string(100)\nread n:int\nloop n read candidate:string(100)\nloop n write true/false",
+      "inputDescription": "<<Line 1:>> string [[letterCase]]\n<<Line 2:>> integer [[letterFuzz]]\n<<Line 3:>> integer [[numberFuzz]]\n<<Line 4:>> string [[otherFuzz]]\n<<Line 5:>> string [[template]], the string to compare other strings against\n<<Line 6:>> integer [[n]], the number of strings to compare to [[template]]\n<<Next [[n]] lines:>> string [[candidate]]",
+      "solutionLanguage": "Java",
+      "outputDescription": "<<[[n]] lines:>> {{true}} (if [[template]] matches [[candidate]] according to the rules), or {{false}}"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Determine which <var>candidate</var> strings (if any) match the given <var>template</var> string according to the stated rules.<br>The following rules must be applied in order to match:<br><br><var><strong>letterCase</strong></var><br><const>false</const> = case doesn't matter - <const>Abc</const> matches <const>abc</const>, <const>aBc</const>, <const>ABC</const>, etc.<br><const>true</const> = case must match<br><br><var><strong>letterFuzz</strong></var><br>The alphabetical distance a letter character in <var>candidate</var> is permitted to stray from its counterpart in <var>template</var>. If <var>letterFuzz</var>=0, the letters must match precisely.<br>For example, if <var>letterFuzz</var>=1, <const>ejk</const> can match any of <const>fjk</const>, <const>dil</const>, etc, but not <const>ejm</const>, since <const>m</const> is 2 letters away from <const>k</const>.<br><strong>Note:</strong> Fuzziness does <strong>not</strong> wrap around the ends of the alphabet - if <var>letterFuzz</var>=3, <const>B</const> only matches any of { <const>A</const>,<const>B</const>,<const>C</const>,<const>D</const>,<const>E</const> } but not <const>Y</const> or <const>Z</const><br><br><var><strong>numberFuzz</strong></var> <br>The maximum permitted difference between an integer value - not the individual digits -  in <var>candidate</var> and its counterpart in <var>template</var>.<br>If <var>numberFuzz</var>=1, <const>p25q</const> matches <const>p24q</const>, <const>p25q</const> and <const>p26q</const> but not <const>p27q</const> or <const>p35q</const>; also note that <const>e99f</const> matches <const>e100f</const>.<br>Numbers are never negative, and never have leading zeroes or decimal places.<br><br><var><strong>otherFuzz</strong></var><br><const>false</const> = positions of non-alphanumeric characters (i.e. not a-zA-Z0-9) must match in both strings, but the specific character in each position doesn't matter, as long as it's not alphanumeric. <br>For example, <const>ab,c</const> matches <const>ab c</const> and <const>ab?c</const>, but not <const>a,bc</const>, <const>abc</const>, <const>ab1c</const> or <const>ab,,c</const>.<br><const>true</const> = the exact non-alphanumeric characters must match in both strings<br><br><strong>Example:</strong><br><pre style=\"font-family: monospace\">false<br>2<br>1<br>false<br>Apple10,Orange9<br>1<br>apple9?pramed7</pre><br><const>A</const> v <const>a</const>: matches (<var>letterCase</var> is <const>false</const>; alphabetical distance = <const>0</const>)<br><const>p</const> v <const>p</const>: matches (exact match)<br><const>p</const> v <const>p</const>: matches (exact match)<br><const>l</const> v <const>l</const>: matches (exact match)<br><const>e</const> v <const>e</const>: matches (exact match)<br><const>10</const> v <const>9</const>: matches (<var>numberFuzz</var>=<const>1</const>, difference = <const>1</const>)<br><const>,</const> v <const>?</const>: matches (<var>otherFuzz</var>=<const>false</const>, both characters are non-alphanumeric)<br><const>O</const> v <const>p</const>: matches (<var>letterCase</var> is <const>false</const>; <var>letterFuzz</var>=<const>2</const>, alphabetical distance = <const>1</const>)<br><const>r</const> v <const>r</const>: matches (exact match)<br><const>a</const> v <const>a</const>: matches (exact match)<br><const>n</const> v <const>m</const>: matches (case matches; <var>letterFuzz</var>=<const>2</const>, alphabetical distance = <const>1</const>)<br><const>g</const> v <const>e</const>: matches (case matches; <var>letterFuzz</var>=<const>2</const>, alphabetical distance = <const>2</const>)<br><const>e</const> v <const>d</const>: matches (case matches; <var>letterFuzz</var>=<const>2</const>, alphabetical distance = <const>1</const>)<br><const>9</const> v <const>7</const>: <strong>does not match</strong> (<var>numberFuzz</var>=<const>1</const>, difference = <const>2</const>)<br><br><strong>Output</strong>:<br><pre style=\"font-family: monospace\">false</pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> string <var>letterCase</var><br><strong>Line 2:</strong> integer <var>letterFuzz</var><br><strong>Line 3:</strong> integer <var>numberFuzz</var><br><strong>Line 4:</strong> string <var>otherFuzz</var><br><strong>Line 5:</strong> string <var>template</var>, the string to compare other strings against<br><strong>Line 6:</strong> integer <var>n</var>, the number of strings to compare to <var>template</var><br><strong>Next <var>n</var> lines:</strong> string <var>candidate</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>n</var> lines:</strong> <const>true</const> (if <var>template</var> matches <var>candidate</var> according to the rules), or <const>false</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><var>letterCase</var> = <const>true</const> or <const>false</const><br>0 &lt;= <var>letterFuzz</var> &lt;= 25<br>0 &lt;= <var>numberFuzz</var> &lt;= 100<br><var>otherFuzz</var> = <const>true</const> or <const>false</const><br>1 &lt;= <var>n</var> &lt;= 20<br>1 &lt;= length of <var>template</var>, length of <var>candidate</var> &lt;= 100<br>0 &lt;= (any number value in <var>template</var> or <var>candidate</var>) &lt; 2^31</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">true\n0\n0\ntrue\nSome1thing?\n6\nsome1thing?\nSome1thing?\nSome1thing!\nSome thing?\nSome2thing?\nSome1thang?</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">false\ntrue\nfalse\nfalse\nfalse\nfalse</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 36271837727,
+  "avatar": 115818227951264,
+  "commentCount": 26,
+  "upVotes": 28,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 1051136,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1708855537001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1708948685818,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1711541137014,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1732205243121,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1734456733788,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

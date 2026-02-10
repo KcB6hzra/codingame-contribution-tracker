@@ -1,0 +1,389 @@
+{
+  "id": 29649,
+  "activeVersion": 61,
+  "score": 17,
+  "votableId": 25135988,
+  "codingamerId": 4806550,
+  "views": 640,
+  "commentableId": 25015819,
+  "title": "Grid climbing",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Rafarafa",
+  "publicHandle": "29649c6f594e71b69c8ca2567c8acfa06e207",
+  "codingamerHandle": "68977779383d7e4ea558c7a5446487f40556084",
+  "lastVersion": {
+    "version": 61,
+    "autocloseTime": 1686296133056,
+    "data": {
+      "title": "Grid climbing",
+      "topics": [
+        {
+          "id": 68,
+          "handle": "pathfinding",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Recherche de chemins",
+            "2": "Pathfinding"
+          },
+          "pageTitle": "Pathfinding: exercises and theory",
+          "puzzleCount": 40,
+          "parentTopicId": 41,
+          "contentDetailsId": 69
+        },
+        {
+          "labelMap": {
+            "2": "Dijkstra"
+          }
+        },
+        {
+          "id": 65,
+          "handle": "memoization",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Mémoïsation",
+            "2": "Memoization"
+          },
+          "pageTitle": "Memoization: exercises and theory",
+          "puzzleCount": 15,
+          "parentTopicId": 41,
+          "contentDetailsId": 76
+        },
+        {
+          "id": 71,
+          "handle": "recursion",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Récursion",
+            "2": "Recursion"
+          },
+          "pageTitle": "Recursion: exercises and theory",
+          "puzzleCount": 36,
+          "parentTopicId": 41,
+          "contentDetailsId": 77
+        },
+        {
+          "id": 60,
+          "handle": "dynamic-programming",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Programmation dynamique",
+            "2": "Dynamic programming"
+          },
+          "pageTitle": "Dynamic programming: exercises and theory",
+          "puzzleCount": 26,
+          "parentTopicId": 41,
+          "contentDetailsId": 85
+        }
+      ],
+      "solution": "# Thanks to @cedricdd and @timinator for their tips\n\nfrom functools import wraps\nfrom time import time\nimport sys\nimport heapq\n\nINF = float(\"inf\")\n\n\ndef E(*a): print(*a, file=sys.stderr)\n\n\ndef timing(f):\n    @wraps(f)\n    def wrap(*args, **kw):\n        ts = time()\n        result = f(*args, **kw)\n        te = time()\n        print(f'Took: {te-ts:2.4f}sec\\n', file=sys.stderr, flush=True)\n        return result\n    return wrap\n\n\ndef dist(p1, p2):\n    return max(abs(p1[1] - p2[1]), abs(p1[0] - p2[0]))\n\n\n@timing\ndef dijkstra(start, end, grid, costs, n):\n    solutions = []\n\n    memo = {point: INF for point in grid}\n    seen = set()\n    h = [(grid[start], start, [start])]\n    while h:\n        cost, cur, path = heapq.heappop(h)\n        if cur in seen:\n            continue\n        seen.add(cur)\n        if cur == end:\n            solutions.append(path)\n\n        for p in grid:\n            d = dist(p, cur)\n            ncost = cost + costs[d-1] + grid[p]\n            if memo[p] > ncost:\n                memo[p] = ncost\n                nnode = (ncost, p, path + [p])\n                heapq.heappush(h, nnode)\n\n    print(memo[end])\n\n    # Visualization\n    s = solutions[0]\n    for y in range(n):\n        row = \"\"\n        for x in range(n):\n            row += \"X\" if (y, x) in s else \".\"\n        E(row)\n\n\ndef main():\n    n = int(input())\n    costs = list(map(int, input().split()))\n    g = dict()\n    for y in range(n):\n        for x, c in enumerate(input()):\n            g[(y, x)] = int(c)\n\n    start = (0, 0)\n    end = (n - 1, n - 1)\n\n    st = time()\n    dijkstra(start, end, g, costs, n)\n    ellapsed = time() - st\n    if ellapsed > 2:\n        print(f\"Timeout: {ellapsed}\")\n\n\nmain()\n",
+      "statement": "You are given an integer [[n]], an array [[costs]] of [[n-1]] integers and a [[n]] times [[n]] grid of digits. You start at {{(0, 0)}} with a starting cost equal to <<grid(0, 0)>> and you want to <<reach the bottom right (n-1, n-1) with minimal cost.>> \n\nAt any turn you can move from <<(i, j) to (i', j') (different of (i, j))>> with a cost equal to the sum of:\n\n<<(1)>> the value of the grid at (i', j'), <<grid(i', j')>>\n<<(2)>> the integer at the <<(d-1)>>-th index in [[costs]] table, where <<d>> = max(abs(i-i'), abs(j-j')).\n\nFind the minimum cost.\n\n`Example:\n3\n1 5\n132     X..\n053  -> X..\n011     .XX\n\nstarting cost = grid(0, 0) = 1\n(0, 0) -> (1, 0) = costs[1-1] + grid(1, 0) = 1 + 0 = 1\n(1, 0) -> (2, 1) = costs[1-1] + grid(2, 1) = 1 + 1 = 2\n(2, 1) -> (2, 2) = costs[1-1] + grid(2, 2) = 1 + 1 = 2\ntotal = 1 + 1 + 2 + 2 = 6`",
+      "testCases": [
+        {
+          "title": "1. N = 3 (Example)",
+          "isTest": true,
+          "testIn": "3\n1 5\n132\n053\n011",
+          "testOut": "6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "1. Val. N = 3 (Example)",
+          "isTest": false,
+          "testIn": "3\n1 5\n132\n053\n031",
+          "testOut": "7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "2. N = 4 (Special)",
+          "isTest": true,
+          "testIn": "4\n2 3 10\n0099\n9990\n9999\n0000",
+          "testOut": "8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "2. Val. N = 4 (Special)",
+          "isTest": false,
+          "testIn": "4\n1 3 8\n0009\n2993\n9999\n0000",
+          "testOut": "7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3. N = 5 (Special)",
+          "isTest": true,
+          "testIn": "5\n1 3 7 8\n00009\n99990\n90009\n09999\n90000",
+          "testOut": "6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3. Val. N = 5 (Special)",
+          "isTest": false,
+          "testIn": "5\n1 4 5 10\n00009\n99990\n90909\n99999\n90000",
+          "testOut": "9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4. N = 5 (Special bis)",
+          "isTest": true,
+          "testIn": "5\n1 20 21 22\n00009\n99990\n90009\n09999\n90000",
+          "testOut": "12",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4. Val. N = 5 (Special bis)",
+          "isTest": false,
+          "testIn": "5\n1 20 21 22\n00009\n99990\n90079\n99999\n90000",
+          "testOut": "22",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5. You actually can go back",
+          "isTest": true,
+          "testIn": "6\n1 20 21 22 23\n000009\n999990\n990090\n909909\n990999\n999000",
+          "testOut": "14",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5. Val. You actually can go back",
+          "isTest": false,
+          "testIn": "6\n1 20 21 22 23\n099009\n090990\n099090\n909090\n990990\n999990",
+          "testOut": "14",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6. N = 6",
+          "isTest": true,
+          "testIn": "6\n2 6 10 14 18\n622474\n008140\n242202\n206800\n111023\n060400",
+          "testOut": "22",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "6. Val. N = 6",
+          "isTest": false,
+          "testIn": "6\n2 6 10 14 18\n035600\n642220\n532205\n512311\n412401\n550513",
+          "testOut": "19",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "7. N = 7",
+          "isTest": true,
+          "testIn": "7\n2 6 11 15 19 23\n2310005\n3037470\n4042735\n5066450\n2403174\n1310240\n0030501",
+          "testOut": "21",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "7. Val. N = 7",
+          "isTest": false,
+          "testIn": "7\n2 7 11 15 19 24\n0000240\n0762020\n0622865\n0445300\n5104861\n5042140\n0405000",
+          "testOut": "21",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "8. N = 8",
+          "isTest": true,
+          "testIn": "8\n2 7 11 16 21 25 30\n06006131\n50004030\n06135764\n03025100\n10628045\n04704532\n51536020\n02440050",
+          "testOut": "24",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "8. Val. N = 8",
+          "isTest": false,
+          "testIn": "8\n2 7 12 16 20 24 29\n02100445\n30005741\n03700430\n46732422\n60821360\n05236100\n06003232\n20000100",
+          "testOut": "23",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "9. N = 9",
+          "isTest": true,
+          "testIn": "9\n2 6 11 16 21 25 29 33\n005300005\n550046360\n420107223\n344803050\n045081020\n204067030\n003142603\n200441332\n050001000",
+          "testOut": "22",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "9. Val. N = 9",
+          "isTest": false,
+          "testIn": "9\n2 6 10 15 20 24 29 33\n555041000\n150503000\n000205001\n100501410\n130744000\n032206630\n060074014\n015032123\n005000323",
+          "testOut": "33",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "10. N = 10",
+          "isTest": true,
+          "testIn": "10\n2 7 12 17 22 26 30 35 39\n0401050000\n4030013050\n1027053520\n2060020130\n0570385400\n3007373010\n0231152534\n5000005101\n5550500003\n0010204003",
+          "testOut": "30",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "10. Val. N = 10",
+          "isTest": false,
+          "testIn": "10\n2 7 11 15 20 24 28 32 36\n3120002404\n2016221101\n0052031500\n2304270004\n5445334430\n1601150002\n3002010401\n0006305300\n0300030040\n0340030222",
+          "testOut": "33",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "11. N = 15",
+          "isTest": true,
+          "testIn": "15\n2 7 12 17 22 26 30 35 40 44 49 53 58 62\n660610625100200\n032406110420354\n306610566602102\n042000103402610\n057403873242000\n007514768254010\n510188052387314\n363331447883220\n006717915145015\n042225685731545\n621211300806505\n651127600200103\n013517520056400\n022026263002300\n261042160030502",
+          "testOut": "55",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "11. N = 15 val",
+          "isTest": false,
+          "testIn": "15\n2 6 11 16 20 25 30 35 39 44 48 52 57 62\n156220300022010\n300050100311404\n460004400515030\n107367030000500\n422054286160300\n516148100012711\n020358766006500\n044706740443026\n000425460735403\n206415167470202\n134754236087154\n001705113310060\n214417470606705\n424014030001525\n420306240002263",
+          "testOut": "50",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "12. N = 20, no obstacles",
+          "isTest": true,
+          "testIn": "20\n2 6 10 15 20 25 29 34 39 44 48 52 57 61 65 70 74 79 83\n00002000500000010000\n50050520335020411042\n13062400056205202431\n00304103605333103520\n11401522365156256410\n02640620217420003004\n05000147075807720540\n04004650820655516230\n01637348107263300000\n00003010557160000000\n40261286645347613142\n00645061512352260000\n00413002083860012002\n00007000231050440141\n25200705023334004252\n23141040256200031050\n04340050061334110023\n02000245003130450021\n05252422140042502002\n00210001340000300030",
+          "testOut": "54",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "12. N = 20, no obstacles val",
+          "isTest": false,
+          "testIn": "20\n2 6 11 16 21 25 30 34 39 43 47 52 57 62 66 70 74 78 83\n52000300010004040003\n05020431120322000032\n00005000003100630100\n02365500336522010050\n03401304107510045033\n34110436036366350110\n00047102325725704020\n03507025837706003504\n32401036673404200000\n50202048919120730020\n30206613532001101010\n22562705270083060004\n00000708760840016004\n45456364440205602504\n50001011604404524501\n05002201000000306511\n10630154140100000032\n00201000430440030012\n04520010300200201100\n00000300240000000000",
+          "testOut": "62",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "13. N = 20, obstacles",
+          "isTest": true,
+          "testIn": "20\n2 7 11 15 19 23 28 33 37 42 46 50 55 59 63 67 71 76 80\n12004001000050005100\n20500044042000004400\n00040499999999061300\n04054699999999641030\n00032299999999001100\n40017499999999005501\n01013499999999740000\n01000699999999742003\n13656399999999331500\n02620099999999662120\n45002700949122100300\n20000334214856530054\n00116388436606404531\n20545130215076004420\n54304320035266210100\n40026300351142013200\n00511422516204020510\n30101010020220341123\n00003101010400111123\n23004102030033000304",
+          "testOut": "66",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "13. N = 20, obstacles val",
+          "isTest": false,
+          "testIn": "20\n2 7 12 16 20 25 29 34 38 43 48 53 57 62 66 70 74 78 82\n04040000020501003000\n14000020453002001020\n53006506515030004000\n30200001301150005521\n00306203664017400099\n00130255405253450099\n45066160742800423199\n35007032815563042099\n00100217463067005099\n50031001197604104099\n41000521344330105313\n00002567481240405002\n03363727025855521500\n00260014074700030010\n13301302603600341103\n00342010530030344500\n00560265563261215400\n20205012005200440020\n02045999999040001054\n01344999999103100340",
+          "testOut": "61",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "14. N = 30",
+          "isTest": true,
+          "testIn": "30\n2 6 11 15 19 24 29 34 38 43 47 52 57 61 66 71 76 80 85 89 93 98 102 107 111 115 119 124 128\n000000000101020002000000001001\n003100010000100000000012000220\n200200203020001100032020002000\n103300300000142400400031223011\n101003003232000040300000201101\n011002054122200400340001400000\n010030502011020444000220001010\n000000020400402533031203300002\n022420555624056036210030000000\n103120040600042710052303010020\n000000103460100722170640000000\n201042000233604483234505000020\n013025105355707047600403000002\n000031054073273450161050400010\n003343020226866452703542020001\n002002405313872837405035002320\n020200440240501060770210000000\n100205526050700627060050030000\n032010000240330107000233040000\n230301215100600160553000420220\n103015203220035060620305320000\n000014432005034602630300000000\n001001420005000052500303100100\n100035002002305001000103420310\n100000010410003101004140202021\n000231000001041004013000300002\n010000133210330000001000100000\n021003002002030003000000000002\n000000020000000000000200021100\n202000020000001200000000000000",
+          "testOut": "78",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "14. N = 30 val",
+          "isTest": false,
+          "testIn": "30\n2 7 12 16 21 26 31 36 40 45 50 54 59 63 68 73 77 81 86 91 96 100 104 109 113 117 121 125 129\n010200200220020000101000000210\n000000100000023000320330003020\n100000000003000000201300000000\n113002004000032210300020041001\n000000230102003000003000000010\n001002030002300010100000000000\n010025020502410000005540040200\n000340000560232064000505000000\n000034000030640340020133000021\n010001440300714667473000000110\n000000406262200060723033330100\n100300265307303328313420420000\n000203014022882862210020000001\n010042046524079175003210000022\n001020065223883361150522002100\n003001061702438156140300101000\n200330020105623468314605103000\n100030560425074626430055201002\n000405243650324274660000001000\n000000034776013501042010320001\n000405024204526004116105002000\n000022005314004000003030000000\n001000200500050220152520200300\n200300000331000003050540010000\n000400000000203022020001330321\n002000043020000000010100002002\n210000002000200200000100101020\n001000010000000032303030030000\n000000000002001000010121000000\n000200000020000000000000000000",
+          "testOut": "79",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "15. N = 40",
+          "isTest": true,
+          "testIn": "40\n2 6 10 15 19 23 27 32 37 41 44 47 50 53 57 60 64 67 70 73 75 77 80 83 85 88 90 92 95 97 99 101 102 103 105 106 107 109 110\n0009000000909000000000000000000000000000\n0009000000909000000000000000000000000000\n0009000000919000000000000000010001000000\n0009000000909000000000000010000100000000\n0009020100909002000200002000000210000000\n0019000010909200000000000000122000000000\n0009001010909002000101020300200000000000\n0009000000929001000102000110302001010000\n0009000030909030010000020020000330201000\n0009020203949004003200000234003000000000\n0009002002909120004042000540002000000000\n9999999999999999999999999999999999999999\n0019200020909605462060006200010000000000\n0009000320909660230130004013400002000000\n0009000011909065300042075550300020000000\n0009003003939010476232700013002110100000\n0009001000919001173807307000230000000000\n0009010300939175145817765000102000011000\n0009010011909500146523857040000130000000\n0009000001959045485030560202400000200000\n0009000001949002501692020000540010000000\n0009000021929650075277150230000110000000\n0009010003919330550656346330041001200000\n0009003003909031201510072004033000000000\n0009002211919152561111050460000000000000\n0009000000909402002404102000410000000000\n0019103030919002034164510500000010000000\n0009200000929120040253240400010000000000\n0009000004909100025050020034033011000000\n0009002100929020300004300012020001000000\n0009000004919200440204140030010010000000\n0019000201909300200020000023000000000000\n0009010000909100000202010021003000000000\n0009000000909010020000000200002000100000\n0019000201909000100010201101000001010000\n0009000000909001010000000000010000000000\n0019000000909100000000000000000000010000\n9999999999999999999999999999999999999999\n0009000000909000000000000000000000000000\n9999999999999999999999999999999999999999",
+          "testOut": "113",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "15. N = 40 val",
+          "isTest": false,
+          "testIn": "40\n2 7 12 17 21 26 30 34 39 43 47 51 54 57 61 65 68 72 76 80 82 84 87 89 91 93 96 99 102 105 107 108 110 111 113 115 117 119 121\n0000000009999999900000000000090000000990\n0000000009999999900000000000090000000990\n0000100009999999900000000010090000000990\n0010010009999999900000010000091000100990\n9999999999999999999999999999999999999999\n0010022109999999900001000002090002009999\n0000002009999999902002300001090000009999\n0000200009999999930300300000090030019999\n0000202000001042201003040200492101209999\n0000000004000411999999990132290330009999\n0000000330000520999999990330094031009999\n0001000300004000999999990400390020009999\n0000000100000520999999995340090300009999\n0001002001005343999999990053590002000990\n0000000000001332999999997415090030101990\n0000000021510070999999990521090000201990\n9999999999999999999999999999999999999999\n0000220003445272407876600060092020000990\n0000000040104200523720462001090102001990\n0000000240506212009690707460090010000990\n0000000310253300228244601060590000000990\n0000000033125336184730050520093212000990\n0000200002500045708401163200490000110990\n0001121300024501064500307002091100000990\n0000212000056320730152501501090001000990\n0000223002141640060006000544492000000990\n0011003001540200621262000002090012000990\n0010000003300002000000033000090000000990\n0000000003000310300001530050190000000990\n0010003000124241300102102040393002100990\n0000100000004000000400003401090000000990\n0000001300000012000120000100090000000990\n0010000003030001000203030003290212010990\n0000000020200002202000200001190000001990\n0000020002000002000020020000090000000990\n0000000100010000000000000000090000100990\n9999999999999999999999999999999999999999\n0000000000000000000000000000090000000990\n0000000000000000000000000000090000000990\n0000000000000000000000000000090000000990",
+          "testOut": "115",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "15. N = 40, the biggest jump",
+          "isTest": true,
+          "testIn": "40\n2 7 12 16 20 24 28 33 36 40 43 46 50 53 56 60 63 66 69 72 74 77 80 83 85 87 88 90 91 93 95 97 98 99 100 101 101 101 102\n0000000000000000000000000000000000000000\n0000000000000000000000000000000000000000\n0000000000001000000000000000000000010000\n0000000000000000000010000000000000000000\n0000220000012200002000000000000020000000\n0000000002010012000020000220002200000000\n0000010012233001100000030000230000000000\n0000000102110000000302230000010302100000\n0000000000000103000100000420003000000000\n0000000243000400320010400100020000100000\n0000003003434320400000002142400030100000\n0000100000050130100340230452400300000000\n0010020002134000460050200230000100000000\n0000000000032110102462205300001030200000\n0001000000200136371056710602504200010000\n0010002114050202452001607000100300000000\n0000010131342153732305604202500100000000\n0000200000035270102168122030004200000000\n0000100022005150764652660005040020210000\n0000000312250470468967751060030010000000\n0000012000453076270072006143432000000000\n0001020020026260172056850030000200000000\n0000000010046030354640037030010202000000\n0000000003405012635656641301110300000000\n0010000321000231274154102110001002000000\n0000000022016252054310631000400100000000\n0000001004313000011012012045000000010000\n0000003302200251404000040241120000000000\n0010223001000340055550022005300301100000\n0000200000000030404020300303003030000000\n0001001020410000000000011034200000200000\n0000001000001000000001000001000030000000\n0000000120112020001000000002200200000000\n0000000000002020000000000000000200110000\n0000100000000002000000000000010001200000\n0001001100000000011000000000010001000000\n0000000000100000000000000110000100110000\n0000000000000000000000000000000000000000\n0000000000000000000000000000000000000000\n0000000000000000000000000000000000000000",
+          "testOut": "102",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "15. N = 40, the biggest jump val",
+          "isTest": false,
+          "testIn": "40\n2 7 12 17 21 25 30 34 38 41 45 48 52 56 60 64 66 69 72 75 77 79 81 83 85 86 88 89 91 92 94 95 96 96 97 97 97 98 98\n0000000000000000000000000000000000000000\n0000000000000000000000000000000000000000\n0010000000000000000000000000000000000000\n0000010000100000000100100000000000010000\n0000100000002011001101000020000000000000\n0000000020010200002120010100110010000000\n0000000000310200000330010000000001200000\n0011200010000200003000030100020000000000\n0000000001003400424020424040340000100000\n0000000040300200031044040100300001200000\n0010003024053000020051002210404200001000\n0000001034200103020140000030532000000000\n0000020103331500033310010555030000010000\n0010000230426063021022130221020301100000\n0000002120306443440640740350030002000000\n0000003200046143600560025400000000200000\n0000100301024041853400405160304000000000\n0000020000315526006743613100000000001000\n0000000200010616083002667301422000000000\n0000202002025051359322102000400000000000\n0000000001130300675135871301014000000000\n0000000141005566122888665630200220000000\n0010000000303003145554152010212000000000\n0000000000404041007577047202401000000000\n0001020040340360007067047051110300000000\n0000020000203031414655011013000000000000\n0000000140500024460006204433044300000000\n0000000220500051540000502200500100000000\n0000010010000130422100500010003000000000\n0000000040010302230110303030024100000000\n0001000020433100000000300023024230000000\n0001003030001000132300022000200000200000\n0000000011002010000003000032000210100000\n0000000002000010020000000000120000000000\n0000100020000000200000020000200000000000\n0000000000000000110000100000000000000000\n0000000000000000000000010100000100000000\n0000000000000000000000000000000000000000\n0000000000000000000000000000000000000000\n0000000000000000000000000000000000000000",
+          "testOut": "98",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "In [[costs]], the [[n-1]] integers satisfy: 0 < [[c_1]] < [[c_2]] < ... < [[c_(n-1)]]\n3 <= [[n]] <= 40",
+      "coverBinaryId": 96072165482354,
+      "stubGenerator": "read n:int\nread costs:string(256)\nloop n read row:string(n)\n\nwrite min_cost",
+      "inputDescription": "<<Line 1:>> An integer [[n]] for the number of points to compare.\n<<Line 2:>> A space separated string [[costs]] with [[n-1]] elements, representing the cost of the distance.\n<<Next [[n]] lines:>> The rows of the [[n]] times [[n]] grid",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> An integer for the minimum cost required to reach the target."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are given an integer <var>n</var>, an array <var>costs</var> of <var>n-1</var> integers and a <var>n</var> times <var>n</var> grid of digits. You start at <const>(0, 0)</const> with a starting cost equal to <strong>grid(0, 0)</strong> and you want to <strong>reach the bottom right (n-1, n-1) with minimal cost.</strong> <br><br>At any turn you can move from <strong>(i, j) to (i', j') (different of (i, j))</strong> with a cost equal to the sum of:<br><br><strong>(1)</strong> the value of the grid at (i', j'), <strong>grid(i', j')</strong><br><strong>(2)</strong> the integer at the <strong>(d-1)</strong>-th index in <var>costs</var> table, where <strong>d</strong> = max(abs(i-i'), abs(j-j')).<br><br>Find the minimum cost.<br><br><pre style=\"font-family: monospace\">Example:<br>3<br>1 5<br>132     X..<br>053  -&gt; X..<br>011     .XX<br><br>starting cost = grid(0, 0) = 1<br>(0, 0) -&gt; (1, 0) = costs[1-1] + grid(1, 0) = 1 + 0 = 1<br>(1, 0) -&gt; (2, 1) = costs[1-1] + grid(2, 1) = 1 + 1 = 2<br>(2, 1) -&gt; (2, 2) = costs[1-1] + grid(2, 2) = 1 + 1 = 2<br>total = 1 + 1 + 2 + 2 = 6</pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>n</var> for the number of points to compare.<br><strong>Line 2:</strong> A space separated string <var>costs</var> with <var>n-1</var>&nbsp;elements, representing the cost of the distance.<br><strong>Next <var>n</var> lines:</strong> The rows of the <var>n</var> times <var>n</var>&nbsp;grid</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> An integer for the minimum cost required to reach the target.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">In <var>costs</var>, the <var>n-1</var> integers satisfy: 0 &lt; <var>c_1</var> &lt; <var>c_2</var> &lt; ... &lt; <var>c_(n-1)</var><br>3 &lt;= <var>n</var> &lt;= 40</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\n1 5\n132\n053\n011</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">6</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 86474979777,
+  "avatar": 80946308795008,
+  "commentCount": 45,
+  "upVotes": 17,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 746302,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1665335137000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1672334052857,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1684254335584,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

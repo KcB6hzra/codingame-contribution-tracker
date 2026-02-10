@@ -1,0 +1,211 @@
+{
+  "id": 118023,
+  "activeVersion": 21,
+  "score": 8,
+  "votableId": 36355404,
+  "codingamerId": 1093968,
+  "views": 210,
+  "commentableId": 36197955,
+  "title": "Shape Outline",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "milosMATRIXrepic",
+  "publicHandle": "118023d04a8141bb6c38329d453898cd497c82",
+  "codingamerHandle": "228f67aeb45255c7de13fe03b1f0a8458693901",
+  "lastVersion": {
+    "version": 21,
+    "autocloseTime": 1741720606754,
+    "freezeTime": 1739733406754,
+    "data": {
+      "title": "Shape Outline",
+      "topics": [
+        {
+          "id": 128,
+          "handle": "ascii-art",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Ascii Art",
+            "2": "Ascii Art"
+          },
+          "puzzleCount": 51,
+          "parentTopicId": 93
+        },
+        {
+          "id": 95,
+          "handle": "geometry",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Geometry",
+            "2": "Geometry"
+          },
+          "puzzleCount": 28,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "const dirs = [{row:-1, col:0}, {row:0, col:1}, {row:1, col:0}, {row:0, col:-1}];\n\nfunction getDirIndex(dir){\n\tfor (let i=0; i<dirs.length; i++) {\n\t\tif (dirs[i].row == dir.row && dirs[i].col == dir.col) {\n\t\t\treturn i;\n\t\t}\n\t}\n\treturn -1;\n}\n\nfunction setCorner(r, c, outlineShape, dirIndex){\n\t\n\tlet total = 0, index = 0;\n\tconst usedDirs = Array(dirs.length).fill(0);\n\tusedDirs[dirIndex] = 1;\n\t\n\tfor (const dir of dirs) {\n\t\tconst row = r + dir.row;\n\t\tconst col = c + dir.col;\n\t\tconst value = outlineShape[row]?.[col];\n\t\t\n\t\tif (value != WALL) {\n\t\t\ttotal++;\n\t\t\tusedDirs[index] = 1;\n\t\t}\n\t\tindex++;\n\n\t}\n\t\n\tif (total == 0) {\n\t\tindex = 0;\n\t\tfor (let i=0; i<dirs.length; i++) {\n\t\t\tconst dirA = dirs[i];\n\t\t\tconst dirB = dirs[ ( i + 1 ) % dirs.length];\n\t\t\tconst row = r + dirA.row + dirB.row;\n\t\t\tconst col = c + dirA.col + dirB.col;\n\t\t\tconst value = outlineShape[row]?.[col];\n\t\t\t\n\t\t\tif (value != WALL) {\n\t\t\t\tindex = (index + 1)%dirs.length;\n\t\t\t\ttotal = 2;\n\t\t\t\treturn {total, dirIndex:index};\n\t\t\t}\n\t\t\tindex++;\n\n\t\t}\n\t}\n\treturn {total, dirIndex:usedDirs.indexOf(0)}\n}\n\nclass Shape{\n\tconstructor(h, w){\n\t\tthis.h = h;\n\t\tthis.w = w;\n\t\tthis.shape = [];\n\t\tthis.shape.length = this.h;\n\t\tfor (let i=0; i<this.h; i++) {\n\t\t\tthis.shape[i] = readline();\n\t\t}\n\t\tthis.createOutline();\n\t}\n\n\tcreateOutline(){\n\t\t\n\t\tconst outlineShape2 = Array(this.h * 2 + 1).fill(1).map(a=>Array(this.w * 2 + 1));\n\t\tfor (let i=0; i<4; i++) {\n\t\t\tconst dR = i / 2 | 0;\n\t\t\tconst dC = i % 2;\n\t\t\tfor (let r=0; r<this.h; r++) {\n\t\t\t\tfor (let c=0; c<this.w; c++) {\n\t\t\t\t\toutlineShape2[r * 2 + dR][c * 2 + dC] = this.shape[r][c];\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\t\n\t\tconst outlineShape = outlineShape2.map(a=>a.slice());\n\n\t\tfor (let i=3; i>0; i--) {\n\t\t\tconst dR = i>>1;\n\t\t\tconst dC = i % 2;\n\t\t\tfor (let r=0; r<this.h*2; r++) {\n\t\t\t\tfor (let c=0; c<this.w*2; c++) {\n\t\t\t\t\tif (outlineShape2[r][c] == WALL) {\n\t\t\t\t\t\toutlineShape[r+dR][c+dC] = WALL;\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\n\t\tconst startCell= this.getStartCorner(outlineShape);\n\t\tconst outlineCells = [startCell];\n\t\t\n\t\tlet dir = dirs[1];\n\t\t\n\t\tlet row = startCell.row;\n\t\tlet col = startCell.col;\n        \n\t\twhile(true){\n\t\t\trow += dir.row;\n\t\t\tcol += dir.col;\n\t\t\t\n\t\t\tconst corner = setCorner(row, col, outlineShape, getDirIndex({row:-dir.row,col:-dir.col}));\n\t\t\t\n\t\t\tif (corner.total == 2) {\n\t\t\t\tdir = dirs[corner.dirIndex];\n\t\t\t\tif (row == startCell.row && col == startCell.col) {\n\t\t\t\t\tconst outlinePoints = outlineCells.map(a=>{return {y:a.row * S / 2, x:a.col * S / 2}});\n\t\t\t\t\tconsole.log(outlinePoints.map(a=>[a.x,a.y].join(' ')).join('\\n'));\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t\toutlineCells.push({row, col});\n            }\n\t\t}\n\t\t\n\t}\n\tgetStartCorner(outlineShape){\n\t\tfor (let r=0; r < this.h * 2; r++) {\n\t\t\tfor (let c=0; c < this.w * 2; c++) {\n\t\t\t\tif (outlineShape[r][c] == WALL) {\n\t\t\t\t\treturn {row:r, col:c};\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}\n\nconst WALL = '#', EMPTY = '.';\nconst [H, W, S] = [+readline(), +readline(), +readline()];\nconst shape = new Shape(H, W);",
+      "statement": "Given a shape in an [[H]] x [[W]] pixel grid, where {{#}} represents a part of the shape, and {{.}} represents an empty space, you need to output the outline of the shape as a sequence of vertices. Start from the top-leftmost point of first line of text and follow the shape's boundary in a clockwise direction. Multiply vertex X and Y with pixel size [[S]] to get the final coordinates.\n\nThe top-leftmost vertex of the grid is (0, 0), with the X-coordinate increasing towards the right and Y-coordinate increasing downwards. A single square represented in the input is made of [[S]] units of length.\n\nEvery shape can be drown with a single stroke. There are no hollow spaces or diagonally touching squares (forming the shape), only one path can be followed.",
+      "testCases": [
+        {
+          "title": "Triangle",
+          "isTest": true,
+          "testIn": "2\n2\n10\n.#\n##",
+          "testOut": "10 0\n20 0\n20 20\n0 20\n0 10\n10 10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Rectangle",
+          "isTest": false,
+          "testIn": "2\n2\n10\n##\n##",
+          "testOut": "0 0\n20 0\n20 20\n0 20",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "X",
+          "isTest": true,
+          "testIn": "5\n5\n9\n#...#\n##.##\n.###.\n##.##\n#...#",
+          "testOut": "0 0\n9 0\n9 9\n18 9\n18 18\n27 18\n27 9\n36 9\n36 0\n45 0\n45 18\n36 18\n36 27\n45 27\n45 45\n36 45\n36 36\n27 36\n27 27\n18 27\n18 36\n9 36\n9 45\n0 45\n0 27\n9 27\n9 18\n0 18",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Y",
+          "isTest": false,
+          "testIn": "5\n5\n8\n#...#\n##.##\n.###.\n##...\n#....",
+          "testOut": "0 0\n8 0\n8 8\n16 8\n16 16\n24 16\n24 8\n32 8\n32 0\n40 0\n40 16\n32 16\n32 24\n16 24\n16 32\n8 32\n8 40\n0 40\n0 24\n8 24\n8 16\n0 16",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Play",
+          "isTest": true,
+          "testIn": "5\n3\n4\n#..\n##.\n###\n##.\n#..",
+          "testOut": "0 0\n4 0\n4 4\n8 4\n8 8\n12 8\n12 12\n8 12\n8 16\n4 16\n4 20\n0 20",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Play",
+          "isTest": false,
+          "testIn": "5\n3\n4\n..#\n.##\n###\n.##\n..#",
+          "testOut": "8 0\n12 0\n12 20\n8 20\n8 16\n4 16\n4 12\n0 12\n0 8\n4 8\n4 4\n8 4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Plus",
+          "isTest": true,
+          "testIn": "5\n5\n17\n..#..\n..#..\n#####\n..#..\n..#..",
+          "testOut": "34 0\n51 0\n51 34\n85 34\n85 51\n51 51\n51 85\n34 85\n34 51\n0 51\n0 34\n34 34",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Plus bold",
+          "isTest": false,
+          "testIn": "5\n6\n19\n..##..\n..##..\n######\n..##..\n..##..",
+          "testOut": "38 0\n76 0\n76 38\n114 38\n114 57\n76 57\n76 95\n38 95\n38 57\n0 57\n0 38\n38 38",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Heart",
+          "isTest": true,
+          "testIn": "11\n13\n10\n..###...###..\n.#####.#####.\n#############\n#############\n#############\n.###########.\n..#########..\n...#######...\n....#####....\n.....###.....\n......#......",
+          "testOut": "20 0\n50 0\n50 10\n60 10\n60 20\n70 20\n70 10\n80 10\n80 0\n110 0\n110 10\n120 10\n120 20\n130 20\n130 50\n120 50\n120 60\n110 60\n110 70\n100 70\n100 80\n90 80\n90 90\n80 90\n80 100\n70 100\n70 110\n60 110\n60 100\n50 100\n50 90\n40 90\n40 80\n30 80\n30 70\n20 70\n20 60\n10 60\n10 50\n0 50\n0 20\n10 20\n10 10\n20 10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Diamond",
+          "isTest": false,
+          "testIn": "9\n13\n10\n..####.####..\n.###########.\n#############\n.###########.\n..#########..\n...#######...\n....#####....\n.....###.....\n......#......",
+          "testOut": "20 0\n60 0\n60 10\n70 10\n70 0\n110 0\n110 10\n120 10\n120 20\n130 20\n130 30\n120 30\n120 40\n110 40\n110 50\n100 50\n100 60\n90 60\n90 70\n80 70\n80 80\n70 80\n70 90\n60 90\n60 80\n50 80\n50 70\n40 70\n40 60\n30 60\n30 50\n20 50\n20 40\n10 40\n10 30\n0 30\n0 20\n10 20\n10 10\n20 10",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Codin Game",
+          "isTest": true,
+          "testIn": "6\n32\n99\n###.....#.......###.............\n#.......#.......#.#.............\n#.......#.......#...............\n#..##.###.#.###.###..#...#.#.##.\n#..##.###.#.#.#.###.###.####.###\n#############.##################",
+          "testOut": "0 0\n297 0\n297 99\n99 99\n99 495\n297 495\n297 297\n495 297\n495 495\n594 495\n594 297\n792 297\n792 0\n891 0\n891 495\n990 495\n990 297\n1089 297\n1089 495\n1188 495\n1188 297\n1485 297\n1485 495\n1584 495\n1584 0\n1881 0\n1881 198\n1782 198\n1782 99\n1683 99\n1683 297\n1881 297\n1881 495\n1980 495\n1980 396\n2079 396\n2079 297\n2178 297\n2178 396\n2277 396\n2277 495\n2376 495\n2376 396\n2475 396\n2475 297\n2574 297\n2574 396\n2673 396\n2673 297\n2772 297\n2772 495\n2871 495\n2871 297\n3069 297\n3069 396\n3168 396\n3168 594\n1386 594\n1386 396\n1287 396\n1287 594\n0 594",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Codin Game",
+          "isTest": false,
+          "testIn": "5\n28\n101\n###............###..........\n#......#.......#.#..........\n#......#.......#............\n#..##.##.#.###.###.##.###.##\n############.###############",
+          "testOut": "0 0\n303 0\n303 101\n101 101\n101 404\n303 404\n303 303\n505 303\n505 404\n606 404\n606 303\n707 303\n707 101\n808 101\n808 404\n909 404\n909 303\n1010 303\n1010 404\n1111 404\n1111 303\n1414 303\n1414 404\n1515 404\n1515 0\n1818 0\n1818 202\n1717 202\n1717 101\n1616 101\n1616 303\n1818 303\n1818 404\n1919 404\n1919 303\n2121 303\n2121 404\n2222 404\n2222 303\n2525 303\n2525 404\n2626 404\n2626 303\n2828 303\n2828 505\n1313 505\n1313 404\n1212 404\n1212 505\n0 505",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Maze",
+          "isTest": true,
+          "testIn": "19\n18\n1\n########.#########\n#......#.........#\n#.#.####.#.#####.#\n###.#....#..#..#.#\n#...#.####.###.#.#\n#.#.#....#...#.#.#\n###.#.##.###.#.###\n#...#..#.#.#.#...#\n#.######.#.#.###.#\n#...#......#...#.#\n#.#.##.###.#.#.#.#\n#.#....#.#.###.#.#\n#.######.#.#.#...#\n#........#.#.#.#.#\n#.########...#####\n#...#......#.....#\n##.####.##.#####.#\n#..#....#..#.....#\n##################",
+          "testOut": "0 0\n8 0\n8 3\n5 3\n5 8\n7 8\n7 7\n6 7\n6 6\n8 6\n8 9\n5 9\n5 10\n6 10\n6 11\n4 11\n4 9\n2 9\n2 8\n4 8\n4 2\n7 2\n7 1\n1 1\n1 3\n2 3\n2 2\n3 2\n3 4\n1 4\n1 6\n2 6\n2 5\n3 5\n3 7\n1 7\n1 16\n2 16\n2 17\n1 17\n1 18\n3 18\n3 16\n4 16\n4 15\n2 15\n2 14\n9 14\n9 11\n8 11\n8 13\n2 13\n2 10\n3 10\n3 12\n7 12\n7 10\n10 10\n10 15\n5 15\n5 16\n7 16\n7 17\n4 17\n4 18\n8 18\n8 16\n10 16\n10 17\n9 17\n9 18\n11 18\n11 15\n12 15\n12 16\n16 16\n16 17\n12 17\n12 18\n17 18\n17 15\n13 15\n13 12\n12 12\n12 14\n11 14\n11 7\n10 7\n10 9\n9 9\n9 5\n6 5\n6 4\n9 4\n9 2\n10 2\n10 6\n12 6\n12 11\n13 11\n13 10\n14 10\n14 14\n15 14\n15 13\n16 13\n16 14\n17 14\n17 7\n15 7\n15 3\n13 3\n13 4\n14 4\n14 8\n16 8\n16 12\n15 12\n15 9\n13 9\n13 5\n11 5\n11 4\n12 4\n12 3\n11 3\n11 2\n16 2\n16 6\n17 6\n17 1\n9 1\n9 0\n18 0\n18 19\n0 19",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Maze",
+          "isTest": false,
+          "testIn": "19\n18\n1\n##################\n#......#.......#.#\n#.####.###.#####.#\n###....#...#.#.#.#\n....######.#.#.#.#\n#.#.#....#...#.#.#\n#.#.####.#.###.#.#\n#.#......#.#.#...#\n#.######.#.#.#.#.#\n#.#.#..........#.#\n#.#.##.###.#.#.#.#\n#.#....#.#.#.#.###\n####.###.#.#.#.#.#\n#........#.###.#.#\n##########...#.#.#\n#..........#.#...#\n###.###.####.###.#\n#....#.....#.#...#\n##################",
+          "testOut": "0 0\n18 0\n18 19\n0 19\n0 5\n1 5\n1 12\n2 12\n2 5\n3 5\n3 8\n8 8\n8 9\n5 9\n5 10\n6 10\n6 11\n4 11\n4 9\n3 9\n3 12\n4 12\n4 13\n1 13\n1 14\n9 14\n9 11\n8 11\n8 13\n5 13\n5 12\n7 12\n7 10\n10 10\n10 15\n1 15\n1 16\n3 16\n3 17\n1 17\n1 18\n5 18\n5 17\n4 17\n4 16\n7 16\n7 17\n6 17\n6 18\n11 18\n11 17\n8 17\n8 16\n11 16\n11 15\n12 15\n12 18\n13 18\n13 14\n11 14\n11 10\n12 10\n12 13\n13 13\n13 10\n14 10\n14 16\n16 16\n16 17\n14 17\n14 18\n17 18\n17 12\n16 12\n16 15\n15 15\n15 8\n16 8\n16 11\n17 11\n17 1\n16 1\n16 7\n15 7\n15 3\n14 3\n14 9\n13 9\n13 7\n12 7\n12 9\n11 9\n11 6\n13 6\n13 3\n12 3\n12 5\n11 5\n11 2\n15 2\n15 1\n8 1\n8 2\n10 2\n10 3\n8 3\n8 4\n10 4\n10 9\n9 9\n9 5\n5 5\n5 6\n8 6\n8 7\n4 7\n4 4\n7 4\n7 1\n1 1\n1 3\n2 3\n2 2\n6 2\n6 3\n3 3\n3 4\n0 4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Dark Night",
+          "isTest": true,
+          "testIn": "11\n25\n15\n#########.......#########\n.########..#.#..########.\n..########.###.########..\n...###################...\n....#################....\n....#################....\n....#################....\n.......###########.......\n.........#######.........\n...........###...........\n............#............",
+          "testOut": "0 0\n135 0\n135 30\n150 30\n150 45\n165 45\n165 15\n180 15\n180 30\n195 30\n195 15\n210 15\n210 45\n225 45\n225 30\n240 30\n240 0\n375 0\n375 15\n360 15\n360 30\n345 30\n345 45\n330 45\n330 60\n315 60\n315 105\n270 105\n270 120\n240 120\n240 135\n210 135\n210 150\n195 150\n195 165\n180 165\n180 150\n165 150\n165 135\n135 135\n135 120\n105 120\n105 105\n60 105\n60 60\n45 60\n45 45\n30 45\n30 30\n15 30\n15 15\n0 15",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Night Dark",
+          "isTest": false,
+          "testIn": "11\n25\n14\n............#............\n...........###...........\n.........#######.........\n.......###########.......\n....#################....\n....#################....\n....#################....\n...###################...\n..########.###.########..\n.########..#.#..########.\n#########.......#########",
+          "testOut": "168 0\n182 0\n182 14\n196 14\n196 28\n224 28\n224 42\n252 42\n252 56\n294 56\n294 98\n308 98\n308 112\n322 112\n322 126\n336 126\n336 140\n350 140\n350 154\n224 154\n224 126\n210 126\n210 112\n196 112\n196 140\n182 140\n182 126\n168 126\n168 140\n154 140\n154 112\n140 112\n140 126\n126 126\n126 154\n0 154\n0 140\n14 140\n14 126\n28 126\n28 112\n42 112\n42 98\n56 98\n56 56\n98 56\n98 42\n126 42\n126 28\n154 28\n154 14\n168 14",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "2 ≤ [[H]] ≤ 19\n2 ≤ [[W]] ≤ 32\n4 ≤ [[N]] ≤ 140",
+      "coverBinaryId": 138316446738395,
+      "stubGenerator": "read H:int\nread W:int\nread S:int\n\nloop H read line:string(W)\n\nwrite Shape vertex X Y",
+      "inputDescription": "<<Line 1>>: [[H]] height of the pixel art grid\n<<Line 2>>: [[W]] width of the pixel art grid\n<<Line 3>>: [[S]] pixel size\n<<Next [[H]] lines>>: pixel art line",
+      "solutionLanguage": "Javascript",
+      "outputDescription": "<<[[N]] lines>>: Two space-separated integers, representing the X and Y coordinates of a vertex of the shape's outline (and there are [[N]] vertices in total)."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Given a shape in an <var>H</var> x <var>W</var> pixel grid, where <const>#</const> represents a part of the shape, and <const>.</const> represents an empty space, you need to output the outline of the shape as a sequence of vertices. Start from the top-leftmost point of first line of text and follow the shape's boundary in a clockwise direction. Multiply vertex X and Y with pixel size <var>S</var> to get the final coordinates.<br><br>The top-leftmost vertex of the grid is (0, 0), with the X-coordinate increasing towards the right and Y-coordinate increasing downwards. A single square represented in the input is made of <var>S</var> units of length.<br><br>Every shape can be drown with a single stroke. There are no hollow spaces or diagonally touching squares (forming the shape), only one path can be followed.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: <var>H</var> height of the pixel art grid<br><strong>Line 2</strong>: <var>W</var> width of the pixel art grid<br><strong>Line 3</strong>: <var>S</var> pixel size<br><strong>Next <var>H</var> lines</strong>: pixel art line</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>N</var> lines</strong>: Two space-separated integers, representing the X and Y coordinates of a vertex of the shape's outline (and there are <var>N</var> vertices in total).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &le; <var>H</var> &le; 19<br>2 &le; <var>W</var> &le; 32<br>4 &le; <var>N</var> &le; 140</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\n2\n10\n.#\n##</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">10 0\n20 0\n20 20\n0 20\n0 10\n10 10</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 29020549696,
+  "avatar": 117470302748056,
+  "commentCount": 18,
+  "upVotes": 8,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1095849,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1741707947009,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,221 @@
+{
+  "id": 47535,
+  "activeVersion": 72,
+  "score": 8,
+  "votableId": 28309251,
+  "codingamerId": 4471038,
+  "views": 359,
+  "commentableId": 28180173,
+  "title": "Remove insert statements",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "nguyen.lam",
+  "publicHandle": "4753572d07b3784ccf2961540cb55c232f60e",
+  "codingamerHandle": "a9fd64833d93b2840c44b26d9d84493e8301744",
+  "lastVersion": {
+    "version": 72,
+    "autocloseTime": 1684440483067,
+    "data": {
+      "title": "Remove insert statements",
+      "topics": [
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 32,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "labelMap": {
+            "2": "sql"
+          }
+        }
+      ],
+      "solution": "import java.util.Scanner;\n\npublic class Solution {\t\n\tpublic static void main(String args[]) {\t\n\t\tScanner in = new Scanner(System.in);\n\t    int n = in.nextInt();\n\t    if (in.hasNextLine()) {\n            in.nextLine();\n        }\n\t    boolean bypass=false;\n        int j=0;\n\t    while(j<n) {\n\t    \t String result = in.nextLine();\n\t    \t if(result.strip().matches(\"[B|b][E|e][G|g][I|i][N|n]\")) bypass = true;\n\t    \t if(result.strip().matches(\"[E|e][N|n][D|d];\")) bypass = false;\n\t    \t \n\t    \t String comment = \"\";\n\t    \t if(result.indexOf(\"--\")>-1) {\n\t    \t\t comment = result.substring(result.indexOf(\"--\")+2);\n\t    \t\t result = result.substring(0,result.indexOf(\"--\")+2);\n\t    \t }\n\t    \t int tailleInit = result.length();\n\t    \t if(!bypass) {\n\t\t    \t if( result.toUpperCase().indexOf(\"INSERT \") >-1 && result.toUpperCase().indexOf(\" INTO \") >-1) { \n\t\t    \t\t if( result.contains(\";\") ) { \n\t\t\t    \t\t result = result.replaceAll(\"[I|i][N|n][S|s][E|e][R|r][T|t] [^;]*;\", \"\");\n\t\t    \t\t } else { \n\t\t    \t\t\t while(!result.contains(\";\") || !result.equals(\"\")) {\n\t\t    \t\t\t\t if(j<n) result = in.nextLine();\n\t\t    \t\t\t\t else return;\n\t\t\t    \t\t\t j++;\n\t\t\t    \t\t\t if( result.contains(\";\") ) {\n\t\t\t    \t\t\t\t result = \"\";\n                                 break;\n\t\t\t    \t\t\t }\n\t\t    \t\t\t }\n\t\t    \t\t }\n\t\t    \t }\n\t    \t }\n\t    \t if( !(tailleInit != result.length() && result.equals(\"\"))) {\n\t\t    \t result += comment;\n\t\t    \t System.out.println(result);\n\t    \t }\n\t    \t j++;\n\t    }\n\t}\n}",
+      "statement": "Given a SQL file, you must:\n- remove the INSERT statements that are actually inserting data in the database\n- keep the INSERT statements that are embedded in functions.\n- All others statements must remains the same \n\nSQL syntax to consider:\n- INSERT statement is a statement that starts with the {{INSERT}} keyword and ends with the semicolon {{;}}. It can be written anywhere in the SQL file, it can be written on one or many lines. There is no constraint on where {{INSERT}} keyword appears first. It can start a new line or after spaces or it may have some indentation before the {{INSERT}} keyword\n- comments begin with {{--}} and comments must be kept in the script. Comments end at the EOL.\n- the syntax used to denote the body  of functions: \n`  {{BEGIN}} start of body\n  {{END}} end of body\n  {{BEGIN}} and {{END}} keywords are always at the start of a line.`\n\nBody is the main part of the function where SQL statements must be checked. If INSERT statements are written in this part, INSERT statements must be kept.\n- {{INSERT}}, {{BEGIN}} and {{END}} are keywords, keywords are case-insensitive\n\nEXAMPLES:\n- Example of INSERT statement that must be removed:\n`  <<INSERT INTO ref_metric \n  VALUES (767, 'make it clear', 'some description', 2, 'LOW');>>`\n  => VALUES are hardcoded values or string literals\n\n- Example of INSERT statement that must be kept:\n`  <<CREATE FUNCTION my_function(pObj integer, pUser integer) \n  LANGUAGE plpgsql\n  AS $$\n  declare\n  begin \n    INSERT INTO lk_table(nb_object, id_user, stat) \n    VALUES ( pObj, pUser);\n  end;>>`\n  => VALUES are variables, INSERT is embedded in the body of a function. The body is defined by {{BEGIN}} and {{END}} keywords.\n\n\nTIP: \n- You can copy/paste input file on some sql beautifier tools online to help you to identify relevant lines to remove.\n- SQL statements are real statements that can be executed in SQL tools.",
+      "testCases": [
+        {
+          "title": "1-1) simple insert statement",
+          "isTest": true,
+          "testIn": "8\nCREATE TABLE vendeur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\ninsert into vendeur(id,date_creation, name, id_createur, amount) values(1,'12/08/2020','John',1,100);",
+          "testOut": "CREATE TABLE vendeur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "1-2) simple insert statement val",
+          "isTest": false,
+          "testIn": "8\nCREATE TABLE acheteur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\ninsert into acheteur(id,date_creation, name, id_createur, amount) values(1,'12/08/2020','John',1,100);",
+          "testOut": "CREATE TABLE acheteur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "2-1) simple commented statement",
+          "isTest": true,
+          "testIn": "8\nCREATE TABLE acheteur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\n--insert into acheteur(id,date_creation, name, id_createur, amount) values(1,'12/08/2020','John',1,100);",
+          "testOut": "CREATE TABLE acheteur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\n--insert into acheteur(id,date_creation, name, id_createur, amount) values(1,'12/08/2020','John',1,100);",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "2-2) simple commented statement val",
+          "isTest": false,
+          "testIn": "9\nCREATE TABLE vendeur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\n--insert into vendeur(id,date_creation, name, id_createur, amount) values(1,'12/05/2020','Johnny',1,100);\n--insert into vendeur(id,date_creation, name, id_createur, amount) values(1,'01/08/2022','Bill',1,100);",
+          "testOut": "CREATE TABLE vendeur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\n--insert into vendeur(id,date_creation, name, id_createur, amount) values(1,'12/05/2020','Johnny',1,100);\n--insert into vendeur(id,date_creation, name, id_createur, amount) values(1,'01/08/2022','Bill',1,100);",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3-1) insert + comment",
+          "isTest": true,
+          "testIn": "9\nCREATE TABLE acheteur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\n--insertion of data\ninsert into acheteur(id,date_creation, name, id_createur, amount) values(2,'12/08/2020','Johnny',2,120);",
+          "testOut": "CREATE TABLE acheteur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\n--insertion of data",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3-2) insert + comment val",
+          "isTest": false,
+          "testIn": "11\nCREATE TABLE acheteur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\n-- data insertion starting here\ninsert into acheteur(id,date_creation, name, id_createur, amount) values(2,'11/08/2020','Dan',1,100);\ninsert into acheteur(id,date_creation, name, id_createur, amount) values(3,'12/08/2020','Marcel',1,100);\ninsert into acheteur(id,date_creation, name, id_createur, amount) values(4,'12/08/2020','Annie',2,120);",
+          "testOut": "CREATE TABLE acheteur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\n-- data insertion starting here",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4-1) with function",
+          "isTest": true,
+          "testIn": "12\nCREATE FUNCTION benchmark.fs_insertcheckmarxactionplan(pid_app integer, nb_object integer, pmetric_id integer, id_snapshot integer, status text) RETURNS integer\n    LANGUAGE plpgsql\n    AS $$\ndeclare\n\tv_metric_id integer;\nbegin \n\tv_metric_id := 0;\n    set search_path=benchmark;\n    Select metric_id into v_metric_id from ref_metric rm where rm.metric_id = pMetric_id;\n    insert into action_plan(id_application, nb_object, id_metric, comment_action, id_snapshot, status, id_outil) values ( pid_app, nb_object, v_metric_id, 'N/A', id_snapshot, status, 2);\nreturn 1;\nend;",
+          "testOut": "CREATE FUNCTION benchmark.fs_insertcheckmarxactionplan(pid_app integer, nb_object integer, pmetric_id integer, id_snapshot integer, status text) RETURNS integer\n    LANGUAGE plpgsql\n    AS $$\ndeclare\n\tv_metric_id integer;\nbegin \n\tv_metric_id := 0;\n    set search_path=benchmark;\n    Select metric_id into v_metric_id from ref_metric rm where rm.metric_id = pMetric_id;\n    insert into action_plan(id_application, nb_object, id_metric, comment_action, id_snapshot, status, id_outil) values ( pid_app, nb_object, v_metric_id, 'N/A', id_snapshot, status, 2);\nreturn 1;\nend;",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4-2) with function val",
+          "isTest": false,
+          "testIn": "15\nCREATE FUNCTION benchmark.fs_insertionactionplan(pid_app integer, nb_object integer, pmetric_id integer, id_snapshot integer, status text) RETURNS integer\n    LANGUAGE plpgsql\n    AS $$\ndeclare\n\tv_metric_id integer;\nbegin \n\tv_metric_id := 0;\n    set search_path=benchmark;\n    Select metric_id into v_metric_id \n\tfrom ref_metric rm \n\twhere rm.metric_id = pMetric_id;\n    insert into action_plan(id_application, nb_object, id_metric, comment_action, id_snapshot, status, id_outil) \n\tvalues ( pid_app, nb_object, v_metric_id, 'N/A', id_snapshot, status, 2);\nreturn 1;\nend;",
+          "testOut": "CREATE FUNCTION benchmark.fs_insertionactionplan(pid_app integer, nb_object integer, pmetric_id integer, id_snapshot integer, status text) RETURNS integer\n    LANGUAGE plpgsql\n    AS $$\ndeclare\n\tv_metric_id integer;\nbegin \n\tv_metric_id := 0;\n    set search_path=benchmark;\n    Select metric_id into v_metric_id \n\tfrom ref_metric rm \n\twhere rm.metric_id = pMetric_id;\n    insert into action_plan(id_application, nb_object, id_metric, comment_action, id_snapshot, status, id_outil) \n\tvalues ( pid_app, nb_object, v_metric_id, 'N/A', id_snapshot, status, 2);\nreturn 1;\nend;",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5-1) many insert statements",
+          "isTest": true,
+          "testIn": "16\nCREATE TABLE acheteur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\ninsert into acheteur(id,date_creation, name, id_createur, amount) values(1,'12/08/2020','John',1,100);\nInsert INTO benchmark.ticket VALUES (62, 21805, 51, 'SI Quality model empty', '2020-02-12 00:00:00');\nINSeRt INTO benchmark.snapshot VALUES (1615, 11, 79, '2019-11-18 13:51:20.2641', NULL, '2019-10-22 01:00:00', 1715, 5594, 3909, 0, 0, 0, 0, 3.16, 3.08, 3.22, 3.18, 3.41, 3.70, 3.25, '8.3.12.1', 'v2.5.8', 1, 15, 0, 0, 685,  'ETAT1 - v2.5.8 - dev - aip1 - e', 0);\niNSERT INTO benchmark.ticket VALUES (61, 21798, 1, 'false positive for \"Avoid unreferenced Classes\", due to FacesConverter annotation (21739 suite)', '2020-02-12 00:00:00');-- premier comment OK OK\nINSERT INTO benchmark.snapshot VALUES (500044, 26, 68, '2014-10-17 00:03:00', 0, '2014-10-17 00:03:00', 1247000, '7.3.0', 'V1.c7 (730 migrees)', 3, 1, 0, 0, 1145, 1145,  14, 194, 4136, 54947, 22, 142, 467, 3765, 0.004, 0.316, 6.9043, 92.6, 0.5, 3.2, 10.612, 85.65);\nINSERT INTO benchmark.snapshot VALUES (1170, 3, 429, '2019-02-04 00:00:00', NULL, '2019-01-16', 743428, 272, 9, 64, 3585, 1355, 7256, 3.16, 2.991, 2.91, 2.19, 3.14, 3.14, 2.956, '8.3.8.1', 'v6.0.0_reprise', 3, 0, 0, 0, 954, 1, 213, 2213,  309, 823, 1.23, '23 - v6.0 poids 0');\nINSERT INTO benchmark.ref_metric VALUES (1007248, 'Use sufficient SSL\\TLS context (PHP)', 'TQI', 1, 'NOT CRITICAL', NULL);--petit comment qu'il faut garder\nINSERT INTO benchmark.snapshot VALUES (750000, 4, 489, '2013-11-06 00:00:00', 0, '2013-11-06 00:00:00', 134674, 63542, 300698, 0, 0, 0, 0, 3.22, 3.31, 2.77, 3.5, 2.640012, 2.087, 2.95, '7.0.19.1', 'Partage V1.2 + lib',0);\nINSERT INTO benchmark.snapshot VALUES (8, 9, 780, '2022-06-29 13:49:11.8066', NULL, '2022-06-29 12:08:00', 400598, 210702, 68729, 0, 0, 0, 0, 3.27, 2.93, 3.27, 2.74, 3.64, 2.79, 3.02, '8.3.30.1', 'V3.1', 1, 12, 'exde 175 PA à la demande du projet', 6, 269, 275, 'backup.zip');",
+          "testOut": "CREATE TABLE acheteur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\n-- premier comment OK OK\n--petit comment qu'il faut garder",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5-2) many insert statements val",
+          "isTest": false,
+          "testIn": "15\nCREATE TABLE acheteur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\ninsert into acheteur(id,date_creation, name, id_createur, amount) values(1,'12/08/2020','John',1,100);\nInsert INTO benchmark.ticket VALUES (62, 21805, 51, 'SI Quality model empty', '2020-02-12 00:00:00');\nINSeRt INTO benchmark.snapshot VALUES (1615, 11, 79, '2019-11-18 13:51:20.2641', 'ETAT1 - v2.5.8 - dev - aip1 - e', 0);\nINSERT INTO benchmark.extension VALUES (3631, 555, '/com.jee', '1.0.19', NULL);\nINSERT INTO benchmark.extension VALUES (3632, 555, '/com.jquery', '1.6.0', NULL);\nINSERT INTO benchmark.extension VALUES (3633, 555, '/com.nodejs', '1.6.0', NULL);\nINSERT INTO benchmark.extension VALUES (3634, 555, '/com.php', '3.0.3-funcrel', NULL);\nINSERT INTO benchmark.extension VALUES (3635, 555, '/com.springmvc', '1.6.1', NULL);",
+          "testOut": "CREATE TABLE acheteur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6-1) functions + inserts",
+          "isTest": true,
+          "testIn": "29\n--\n-- TOC entry 49331 (class 1255 OID 11620988)\n-- Name: fs_insertcheckmarxactionplan(integer, integer, integer, text);\n--\nCREATE FUNCTION benchmark.fs_insertcheckmarxactionplan(nb_object integer, pmetric_id integer, id_snapshot integer, status text) RETURNS integer\n    LANGUAGE plpgsql\n    AS $$\ndeclare\n\tv_metric_id integer;\nbegin \n\tv_metric_id := 0;\n    set search_path=benchmark;\n    Select metric_id into v_metric_id from ref_metric rm where rm.metric_id = pMetric_id;\n    insert into action_plan(nb_object, id_metric, comment_action, id_snapshot, status, id_outil) values ( nb_object, v_metric_id, 'N/A', id_snapshot, status, 2);\nreturn 1;\nend;\n$$;\n--\n-- TOC entry 182322 (class 0 OID 11621003)\n-- Dependencies: 16626\n-- Data for Name: action_plan; Type: TABLE DATA; Schema: benchmark; Owner: -\n--\nINSERT INTO benchmark.action_plan VALUES (8911, 1, 1, 1, 1020810, 'PRESTATAIRE', 1166, 'NEW', 1);\nINSERT INTO benchmark.action_plan VALUES (100000, 1, 1, 129, 7788, 'PRESTATAIRE', 100001, 'STILL_VIOLATION', 1);\nINSERT INTO benchmark.action_plan VALUES (100001, 1, 1, 109, 8106, 'PRESTATAIRE', 100001, 'STILL_VIOLATION', 1);\nINSERT INTO benchmark.action_plan VALUES (100002, 2, 1, 37, 7670, 'PRESTATAIRE', 100001, 'STILL_VIOLATION', 1);\nINSERT INTO benchmark.action_plan VALUES (100003, 2, 1, 49, 7518, 'PRESTATAIRE', 100001, 'STILL_VIOLATION', 1);\nINSERT INTO benchmark.action_plan VALUES (100004, 2, 1, 6, 7532, 'PRESTATAIRE', 100001, 'STILL_VIOLATION', 1);\n-- END Batch",
+          "testOut": "--\n-- TOC entry 49331 (class 1255 OID 11620988)\n-- Name: fs_insertcheckmarxactionplan(integer, integer, integer, text);\n--\nCREATE FUNCTION benchmark.fs_insertcheckmarxactionplan(nb_object integer, pmetric_id integer, id_snapshot integer, status text) RETURNS integer\n    LANGUAGE plpgsql\n    AS $$\ndeclare\n\tv_metric_id integer;\nbegin \n\tv_metric_id := 0;\n    set search_path=benchmark;\n    Select metric_id into v_metric_id from ref_metric rm where rm.metric_id = pMetric_id;\n    insert into action_plan(nb_object, id_metric, comment_action, id_snapshot, status, id_outil) values ( nb_object, v_metric_id, 'N/A', id_snapshot, status, 2);\nreturn 1;\nend;\n$$;\n--\n-- TOC entry 182322 (class 0 OID 11621003)\n-- Dependencies: 16626\n-- Data for Name: action_plan; Type: TABLE DATA; Schema: benchmark; Owner: -\n--\n-- END Batch",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "6-2) functions + inserts val",
+          "isTest": false,
+          "testIn": "27\n--\n-- TOC entry 49324 (class 1255 OID 11620978)\n-- Name: fp_delete_snapshot(integer); Type: FUNCTION; Schema: benchmark; Owner: -\n--\nCREATE FUNCTION benchmark.fp_delete_snapshot(pid_snap integer) RETURNS integer\n    LANGUAGE plpgsql\n    AS $$\ndeclare\nBegin\n  set search_path=benchmark;\n  delete from action_plan where id_snapshot = pid_snap;\n  delete from snapshot where id = pid_snap;\n  return 1;\nend;\n$$;\n--\n-- TOC entry 182322 (class 0 OID 11621003)\n-- Dependencies: 16626\n-- Data for Name: action_plan; Type: TABLE DATA; Schema: benchmark; Owner: -\n--\ninsert INTO benchmark.action_plan VALUES (17849, 2, 1, 10, 7202, 'MJ SUSPENDU', 1658, 'STILL_VIOLATION', 1);\nINSERT into benchmark.action_plan VALUES (17850, 4, 0, 350, 7156, 'PRESTATAIRE', 1658, 'STILL_VIOLATION', 1);\nINSERT INTO benchmark.action_plan VALUES (17851, 2, 1, 8, 7488, 'MJ SUSPENDU', 1658, 'STILL_VIOLATION', 1);\nINSERT INTO benchmark.action_plan VALUES (17852, 3, 0, 2, 4704, 'PRESTATAIRE', 1658, 'STILL_VIOLATION', 1);\nINSERT INTO benchmark.action_plan VALUES (17853, 3, 1, 1, 7202, 'PRESTATAIRE', 1658, 'STILL_VIOLATION', 1);\nINSERT INTO benchmark.action_plan VALUES (17854, 2, 1, 77, 7722, 'PRESTATAIRE', 1658, 'STILL_VIOLATION', 1);\n-- END Batch",
+          "testOut": "--\n-- TOC entry 49324 (class 1255 OID 11620978)\n-- Name: fp_delete_snapshot(integer); Type: FUNCTION; Schema: benchmark; Owner: -\n--\nCREATE FUNCTION benchmark.fp_delete_snapshot(pid_snap integer) RETURNS integer\n    LANGUAGE plpgsql\n    AS $$\ndeclare\nBegin\n  set search_path=benchmark;\n  delete from action_plan where id_snapshot = pid_snap;\n  delete from snapshot where id = pid_snap;\n  return 1;\nend;\n$$;\n--\n-- TOC entry 182322 (class 0 OID 11621003)\n-- Dependencies: 16626\n-- Data for Name: action_plan; Type: TABLE DATA; Schema: benchmark; Owner: -\n--\n-- END Batch",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "7-1) multi-line INSERT instructions",
+          "isTest": true,
+          "testIn": "27\nCREATE TABLE acheteur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\nINSERT INTO benchmark.snapshot \nVALUES (2124, 2, 606, '2020-07-03 11:20:51.6388', NULL, '2020-07-02 00:00:00', 14478, 3036, 2570, 0, 0, 0, 0, \n3.35999999999999988, 3.25, 3.45999999999999996, 3.60000000000000009, 3.70999999999999996, 3.45999999999999996, \n3.39999999999999991, '8.3.17.1','v0.2.0', 3, 0, 0, 0, 2, NULL, 1, NULL, 104, NULL, 104,   NULL, 0);\nINSERT INTO benchmark.snapshot VALUES (2122, 2, 606, '2020-07-02 15:49:54.3911', NULL, '2020-07-02 00:00:00', \n14478, 3036, 2570, 0, 0, 0, 0, 3.35999999999999988, 3.25, 3.45999999999999996, 3.60000000000000009, 3.70999999999999996, \n3.45999999999999996, 3.39999999999999991, '8.3.17.1', 'v0.2.0', 1, 0, 0, 0, 0, NULL, 1,  NULL, NULL, NULL, NULL,  NULL, 0);\nINSERT INTO benchmark.snapshot VALUES (2121, 1, 606, '2020-07-02 11:00:08.0201', NULL, '2020-07-01 00:00:00', \n12450, 2962, 2216, 0, 0, 0, 0,3.33000000000000007, 3.2200000000000002, 3.43000000000000016, 3.58000000000000007, \n3.72999999999999998, 3.45999999999999996, 3.37999999999999989, '8.3.17.1', 'v0.1.0', 3, \n0, 0, 0, 0, NULL, 1,  NULL, NULL,  NULL, NULL, NULL, 0);\nINSERT INTO benchmark.snapshot VALUES (2206, 7, 523, '2020-09-24 15:01:16.8051', NULL, '2020-09-24 00:00:00', \n172017, 37835, 27125, 0, 0, 0, 0, 3.10000000000000009, 2.9700000000000002, 3.06999999999999984, 2.93000000000000016,\n 3.4700000000000002, 2.89999999999999991, 2.93999999999999995,'8.3.12.1', 'V1.3.10', 1, 21, 0, 0, 0, NULL, 1, 61,\n NULL, 434, 495, NULL, NULL, NULL, 0);\nCREATE TABLE benchmark.prestataire (\n    id integer NOT NULL,\n    name text,\n\tinsert_date_string_format text\n);",
+          "testOut": "CREATE TABLE acheteur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\nCREATE TABLE benchmark.prestataire (\n    id integer NOT NULL,\n    name text,\n\tinsert_date_string_format text\n);",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "7-2 ) multi-line INSERT instructions val",
+          "isTest": false,
+          "testIn": "34\nCREATE TABLE acheteur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\ninsert into acheteur(id,date_creation, name, id_createur, amount) \nvalues(1,'12/08/2020','John',1,100);\nInsert INTO benchmark.ticket VALUES (62, 21805, 51, 'SI Quality model empty', '2020-02-12 00:00:00');\n-- One comment \nINSERT INTO benchmark.snapshot VALUES (2152, 15, 371, '2020-08-05 15:47:16.737', NULL, '2020-08-05 00:00:00', \n187869, 49877, 30271, 0, 0, 0, 0, 3.35999999999999988, 3.24000000000000021, 3.58999999999999986, 3.5, 3.75, 3.41999999999999993, 3.41999999999999993, '8.2.4.1', '2.2.3-1', 2, 0, 0, 0, 36, \nNULL, 1, NULL, NULL, 929, 929,  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0);\nINSERT INTO benchmark.snapshot VALUES (1994, 25, 370, '2020-06-05 11:54:54.3106', NULL, '2020-06-04 00:00:00', \n248503, 190198, 41520, 0, 0, 115, 605, 3.45000000000000018, 2.9700000000000002, 2.87999999999999989, 2.18999999999999995, \n3.74000000000000021, 2.37999999999999989, 2.89000000000000012, '8.2.6.1', 'v2.2.4-194', 1, 146, 0, 0, 324, NULL, 1, 12, NULL,\n 1201, 1206,  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '20200605 - ETAT1 - v2.2.4-194 - dev - aip8.2.6.1 - etat1', 0);\nINSERT INTO benchmark.snapshot VALUES (2102, 1, 605, '2020-06-24 15:22:31.6365', NULL, '2020-06-24 00:00:00',\n 40922, 12930, 8520, 0, 0, 0, 0, 3.56000000000000005, 3.47999999999999998, 3.37000000000000011, 3.85999999999999988,\n 3.7799999999999998, 3.56999999999999984, 3.56999999999999984, '8.3.17.1', 'v1.1.0', 2, 0, 0, 0, 0, NULL,  1,  NULL,\n NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '20200624 - ETAT2 - v1.1.0 - dev - aip8.3.17.1 - etat2', 0);\nINSERT INTO benchmark.snapshot VALUES (2105, 6, 499, '2020-06-25 17:24:43.5093', NULL, '2020-06-24 00:00:00', 115395, 17889, \n10209, 0, 0, 0, 0, 3.20000000000000018, 2.99000000000000021, 3.45000000000000018, 3.85000000000000009, 3.2799999999999998, \n3.95999999999999996, 3.5, '8.3.12.1', 'v0.17.5', 1, 67, 0, 0, 375, NULL, 1, NULL, 9, NULL, 9,  NULL, NULL, NULL, NULL, NULL,\n NULL, NULL, NULL, '20200625 - ETAT1 - v0.17.5 - dev - aip8.3.12.1 - etat1', 0);\nINSERT INTO benchmark.snapshot VALUES (2106, 6, 499, '2020-06-25 17:29:10.5662', NULL, '2020-06-24 00:00:00', 115395, 17889, \n10209, 0, 0, 0, 0, 3.20000000000000018, 2.99000000000000021, 3.45000000000000018, 3.85000000000000009, 3.2799999999999998, \n3.95999999999999996, 3.5, '8.3.12.1', 'v0.17.5', 2, 0, 0, 0, 375, NULL, 1, NULL, 9, NULL, 9,  NULL, NULL, NULL, NULL, NULL, \nNULL, NULL, NULL, '20200625 - ETAT2 - v0.17.5 - dev - aip8.3.12.1 - etat2', 0);\nINSERT INTO benchmark.snapshot VALUES (2201, 2, 604, '2020-09-11 14:15:54.9794', NULL, '2020-09-11 00:00:00', 28740, 3758, \n2420, 0, 0, 0, 0, 3.35999999999999988, 3.08000000000000007, 3.27000000000000002, 3.16000000000000014, 3.72999999999999998,\n 2.91000000000000014, 3.12999999999999989, '8.3.17.1', 'v2.3.0', 1, 0, 0, 0, 0, NULL, 1,  NULL, NULL, NULL, NULL, NULL, NULL,\n NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0);",
+          "testOut": "CREATE TABLE acheteur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\n-- One comment ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "8-1) many insert on same line",
+          "isTest": true,
+          "testIn": "1\ndelete from lk_vendeur_acheteur;insert into lk_vendeur_acheteur(id,id_vendeur,id_acheteur) values(1,1,1);insert into lk_vendeur_acheteur(id,id_vendeur,id_acheteur) values(2,1,2);insert into lk_vendeur_acheteur(id,id_vendeur,id_acheteur) values(3,2,3);",
+          "testOut": "delete from lk_vendeur_acheteur;",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "8-2) many insert on same line val",
+          "isTest": false,
+          "testIn": "1\ndelete from lk_client_fournisseur;insert into lk_client_fournisseur(id,id_vendeur,id_acheteur) values(1,1,1);insert into lk_client_fournisseur(id,id_vendeur,id_acheteur) values(2,1,2);insert into lk_client_fournisseur(id,id_vendeur,id_acheteur) values(3,2,3);",
+          "testOut": "delete from lk_client_fournisseur;",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "coverBinaryId": 99376382855520,
+      "stubGenerator": "read N:int\nloop N read FNAME:string(500)\nwrite answer",
+      "inputDescription": "<<Line 1:>> An integer [[n]] for the number of lines to read\n<<Next [[n]] lines:>> SQL statements to parse",
+      "solutionLanguage": "Java",
+      "outputDescription": "<<[[m]] lines:>> SQL statements cleaned up without INSERT statements that are doing data insertion in the database. comments must remain in the output. [[m]] is the number of lines that remain."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Given a SQL file, you must:<br>- remove the INSERT statements that are actually inserting data in the database<br>- keep the INSERT statements that are embedded in functions.<br>- All others statements must remains the same <br><br>SQL syntax to consider:<br>- INSERT statement is a statement that starts with the <const>INSERT</const> keyword and ends with the semicolon <const>;</const>. It can be written anywhere in the SQL file, it can be written on one or many lines. There is no constraint on where <const>INSERT</const> keyword appears first. It can start a new line or after spaces or it may have some indentation before the <const>INSERT</const> keyword<br>- comments begin with <const>--</const> and comments must be kept in the script. Comments end at the EOL.<br>- the syntax used to denote the body  of functions: <br><pre style=\"font-family: monospace\">  <const>BEGIN</const> start of body<br>  <const>END</const> end of body<br>  <const>BEGIN</const> and <const>END</const> keywords are always at the start of a line.</pre><br><br>Body is the main part of the function where SQL statements must be checked. If INSERT statements are written in this part, INSERT statements must be kept.<br>- <const>INSERT</const>, <const>BEGIN</const> and <const>END</const> are keywords, keywords are case-insensitive<br><br>EXAMPLES:<br>- Example of INSERT statement that must be removed:<br><pre style=\"font-family: monospace\">  <strong>INSERT INTO ref_metric <br>  VALUES (767, 'make it clear', 'some description', 2, 'LOW');</strong></pre><br>  =&gt; VALUES are hardcoded values or string literals<br><br>- Example of INSERT statement that must be kept:<br><pre style=\"font-family: monospace\">  <strong>CREATE FUNCTION my_function(pObj integer, pUser integer) <br>  LANGUAGE plpgsql<br>  AS $$<br>  declare<br>  begin <br>    INSERT INTO lk_table(nb_object, id_user, stat) <br>    VALUES ( pObj, pUser);<br>  end;</strong></pre><br>  =&gt; VALUES are variables, INSERT is embedded in the body of a function. The body is defined by <const>BEGIN</const> and <const>END</const> keywords.<br><br><br>TIP: <br>- You can copy/paste input file on some sql beautifier tools online to help you to identify relevant lines to remove.<br>- SQL statements are real statements that can be executed in SQL tools.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>n</var> for the number of lines to read<br><strong>Next <var>n</var> lines:</strong> SQL statements to parse</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>m</var> lines:</strong> SQL statements cleaned up without INSERT statements that are doing data insertion in the database. comments must remain in the output. <var>m</var> is the number of lines that remain.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">8\nCREATE TABLE vendeur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);\ninsert into vendeur(id,date_creation, name, id_createur, amount) values(1,'12/08/2020','John',1,100);</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">CREATE TABLE vendeur (\n    id character integer NOT NULL,\n    date_creation timestamp without time zone,\n    name text,\n    id_createur character varying(32),\n    amount double precision,\n);</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 87191036902,
+  "avatar": 115730569738380,
+  "commentCount": 29,
+  "upVotes": 9,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 792183,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1680001537001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1681848243407,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1683538292553,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

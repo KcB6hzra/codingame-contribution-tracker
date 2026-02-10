@@ -1,0 +1,149 @@
+{
+  "id": 995,
+  "activeVersion": 34,
+  "score": 4,
+  "votableId": 6606168,
+  "codingamerId": 2178794,
+  "views": 527,
+  "commentableId": 6545615,
+  "title": "Depot organization",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Unihedron",
+  "publicHandle": "9958909e4fc8e92db57019fa23a1cedc2d3",
+  "codingamerHandle": "1d1729a2d8c008c6cf728ee88f1faa6d4978712",
+  "lastVersion": {
+    "version": 34,
+    "autocloseTime": 1532016703560,
+    "data": {
+      "title": "Depot organization",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Tiling"
+          }
+        },
+        {
+          "id": 59,
+          "handle": "brute-force",
+          "labelMap": {
+            "1": "Force brute",
+            "2": "Brute-force"
+          },
+          "pageTitle": "Brute-force: exercises and theory",
+          "puzzleCount": 2,
+          "parentTopicId": 41,
+          "contentDetailsId": 90
+        }
+      ],
+      "solution": "const len=7\nconst ring=6\nconst spin=(a,i)=>{\n    i+=ring*2\n    i%=ring\n    return a.slice(i).concat(a.slice(0,i))\n}\nconst arrTake=(a,v)=>{\n    g=[...a]\n    g.splice(a.indexOf(v),1)\n    return g\n}\nconst n1isE=e=>v=>e===v[1]\nconst arrTakeG=(a,d)=>{\n    g=[...a]\n    g.splice(a.findIndex(n1isE(d)),1)\n    return g\n}\nconst nXisE=(e,x=0)=>n=>n[0][x]===e\nrows = Array(len).fill(0).map(_=>readline().split` `).map((v,j)=>{\n    const min = v.slice().sort()[0]\n    const i = v.indexOf(min)\n    return [spin(v, i),j]\n})\nprintErr(rows.join`\\n`+'\\n')\nfind=(done,seg)=>{\n    const nextLevel=v=>find([...done, v], arrTakeG(seg, v[1]))\n    const matchBySpinOptional=(x,n=0)=>([v,j])=>{\n        var i = v.indexOf(x)\n        return !~i ? 0 : [spin(v,i+n),j]\n    }\n    switch(done.length){\n    case 1:\n        var target = done[0][0][0];\n        var match = seg.map(matchBySpinOptional(target,3)).filter(Boolean)\n        return match.map(nextLevel).filter(Boolean)[0];\n    case 2:\n        var target = done[0][0][1];\n        var match = seg.map(matchBySpinOptional(target,2)).filter(Boolean)\n        var target = done[1][0][2];\n        match = match.filter(nXisE(target,5))\n        return match.map(nextLevel).filter(Boolean)[0];\n    case 3:\n        var target = done[0][0][2];\n        var match = seg.map(matchBySpinOptional(target,1)).filter(Boolean)\n        var target = done[2][0][3];\n        match = match.filter(nXisE(target))\n        return match.map(nextLevel).filter(Boolean)[0];\n    case 4:\n        var target = done[0][0][3];\n        var match = seg.map(matchBySpinOptional(target)).filter(Boolean)\n        var target = done[3][0][4];\n        match = match.filter(nXisE(target,1))\n        return match.map(nextLevel).filter(Boolean)[0];\n    case 5:\n        var target = done[0][0][4];\n        var match = seg.map(matchBySpinOptional(target,-1)).filter(Boolean)\n        var target = done[4][0][5];\n        match = match.filter(nXisE(target,2))\n        return match.map(nextLevel).filter(Boolean)[0];\n    case 6:\n        var target = done[0][0][5];\n        var match = seg.map(matchBySpinOptional(target,-2)).filter(Boolean)\n        var target = done[5][0][0];\n        solution = match.filter(nXisE(target,3))[0]\n        if (solution)\n            return [...done, solution, arrTakeG(seg, solution[1])]\n    }\n}\nsolution=rows.map(v=>{\n    return find([v], arrTake(rows, v))\n}).filter(Boolean)[0].filter(v=>1 in v).map(([x,y])=>y+x[0])\nprintErr(solution.length)\nprintErr(solution.join`:`)\nprint([5,6,4,0,1,3,2].map(v=>solution[v]).join` `)",
+      "statement": "In this puzzle, there are 7 depots on a floor plan. Each depot is shown as a hexagon, and each of its 6 walls (sides) are marked with its texture (denoted by a character). We have to arrange the depots with one in the center and the other 6 surrounding it observing the following rules:\n\n<<Rules>>\n1. Each depot may be <<rotated>> clockwise or anticlockwise as many times as needed (see illustration 1 below).\n2. Depots <<may not be flipped>> as a mirror image.\n3. The <<center>> depot must be oriented such that the texture denoted by the <<alphabetically lowest character>> is on the wall to the <<right>>.\n4. Every wall shared by two depots must have a <<matching texture>>.\n\nSee illustration 2 below for a complete example.\n\n<<Illustration 1>>\nA depot may be rotated clockwise once like this:\nhttps://user-images.githubusercontent.com/5595067/32763380-4cadec04-c93a-11e7-8d52-6884c9dea40a.png\nBelow shows the same illustration:\n`      .                  .      \n     / \\                / \\\n    /   \\              /   \\\n   /     \\            /     \\  \n  / N   D \\          / G   N \\\n /         \\        /         \\\n|           |      |           |\n|           |      |           |\n|G         W|  ->  |J         D|\n|           |      |           |\n|           |      |           |\n \\         /        \\         /\n  \\ J   T /          \\ T   W /\n   \\     /            \\     /\n    \\   /              \\   /\n     \\ /                \\ /\n      v                  v\n`\n\n<<Illustration 2>>\nThis is the illustration of the solution to the Example test case:\nhttps://user-images.githubusercontent.com/5595067/32763805-ee635f64-c93c-11e7-9050-7996f726a882.png\nBelow shows the same illustration:\n`            .           .      \n           / \\         / \\\n          /   \\       /   \\\n         /     \\     /     \\  \n        / D   V \\   / C   M \\\n       /         \\ /         \\\n      |           |           |\n      |           |           |\n      |S    4    K|K    1    X|\n      |           |           |\n      |           |           |\n     / \\         / \\         / \\\n    /   \\ T   M /   \\ W   F /   \\\n   /     \\     /     \\     /     \\\n  / X   T \\   / M   W \\   / F   S \\\n /         \\ /         \\ /         \\\n|           |           |           |\n|           |           |           |\n|N    2    R|R    6    C|C    5    G|\n|           |           |           |\n|           |           |           |\n \\         / \\         / \\         /\n  \\ M   W /   \\ T   G /   \\ B   K /\n   \\     /     \\     /     \\     /\n    \\   / W   T \\   / G   B \\   /\n     \\ /         \\ /         \\ /\n      |           |           |\n      |           |           |\n      |D    0    J|J    3    C|\n      |           |           |\n      |           |           |\n       \\         / \\         /\n        \\ N   G /   \\ Q   V /\n         \\     /     \\     /\n          \\   /       \\   /\n           \\ /         \\ /\n            v           v`\n\n(Problem based on: Hexagon Puzzle (Problem 24) from HP CodeWars 2017 NA)",
+      "testCases": [
+        {
+          "title": "Example case",
+          "isTest": true,
+          "testIn": "W T J G N D\nX F W K C M\nM N X T R W\nB C V Q J G\nM T S D V K\nC F S G K B\nG T R M W C",
+          "testOut": "4K 1X 2R 6C 5G 0J 3C",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Example case, shuffled",
+          "isTest": false,
+          "testIn": "K M T S D V\nX T R W M N\nW K C M X F\nN D W T J G\nC V Q J G B\nB C F S G K\nC G T R M W",
+          "testOut": "0K 2X 1R 6C 5G 3J 4C",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Easy ring",
+          "isTest": true,
+          "testIn": "X X X H X X\nA H B Y Y Y\nB X C U U U\nC X D I I I\nD X E O O O\nE X F P P P\nF X A Q Q Q",
+          "testOut": "3C 2U 4X 0H 1Y 5F 6Q",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Easy ring: rotated",
+          "isTest": false,
+          "testIn": "X X G X X H\nA H B Y Y Y\nB X C U U U\nI I C X D I\nD G E O O O\nP E X F P P\nF X A Q Q Q",
+          "testOut": "6F 5P 1H 0G 4O 2C 3I",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Assorted ring",
+          "isTest": true,
+          "testIn": "A B C D E F\nG H I A J K\nL M N O P C\nQ R S L B I\nT U V Q H W\nX Y Z A M S\nS S S X R V",
+          "testOut": "5M 2P 6R 3B 0E 4H 1J",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Assorted ring: rotated",
+          "isTest": false,
+          "testIn": "C D E F A B\nH I A J K G\nS L B I Q R\nS S X R V S\nW T U V Q H\nL M N O P C\nY Z A M S X",
+          "testOut": "6M 5P 3R 2B 0E 4H 1J",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Random case",
+          "isTest": true,
+          "testIn": "L C B C V N\nM T K V P T\nK N K D Q W\nT H F X J D\nG Q J B X I\nW G E E Y A\nR Z W L K A",
+          "testOut": "0V 1M 6K 2D 3F 5G 4B",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Random case, shuffled",
+          "isTest": false,
+          "testIn": "D Q W K N K\nC B C V N L\nX J D T H F\nM T K V P T\nG Q J B X I\nY A W G E E\nL K A R Z W",
+          "testOut": "1V 3M 6K 0D 2F 5G 4B",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Random case, very hard",
+          "isTest": true,
+          "testIn": "Q Z A O U I\nQ C G V A G\nC O G U V E\nC F O V O V\nE C G G E H\nG E O D V G\nF E O C A D",
+          "testOut": "0A 1C 2V 3C 4E 5D 6O",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Random case, very hard 2",
+          "isTest": false,
+          "testIn": "J A Z L F R\nJ X Z T Z X\nX L T F E V\nX Z X E L T\nV X Z T V Z\nT V X W E T\nZ V L V V W",
+          "testOut": "6W 5T 4X 3E 2L 1Z 0R",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "For each case there is a unique arrangement (solution) which satisfies the rules.\n\nThe alphabetically lowest character in a depot may appear once only in that depot.",
+      "coverBinaryId": 135141947239296,
+      "stubGenerator": "loop 7\nloopline 6 letter:word(1)\nwrite 4K 1X 2R 6C 5G 0J 3C",
+      "inputDescription": "<<Lines 1 to 7:>> One line of {{6}} space-separated characters denoting the [[texture]] of the walls in clockwise order for each depot. The depots are <<ordered by their [[index]]>> from {{0}} to {{6}}, i.e. the [[n]]th line relates to depot indexed [[n - 1]].",
+      "solutionLanguage": "Javascript",
+      "outputDescription": "<<Line 1:>> One line of {{7}} space-separated pairs of the depots' [[index]] and [[texture]] on the walls to the <<right>>, after arranging the depots in a way which satisfies the rules.\nOrder the pairs by the depots' positions <<left-to-right, top-to-bottom>> (i.e. the first pair refers to the depot in the top left, and the last pair refers to the depot in the bottom right)."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">In this puzzle, there are 7 depots on a floor plan. Each depot is shown as a hexagon, and each of its 6 walls (sides) are marked with its texture (denoted by a character). We have to arrange the depots with one in the center and the other 6 surrounding it observing the following rules:<br><br><strong>Rules</strong><br>1. Each depot may be <strong>rotated</strong> clockwise or anticlockwise as many times as needed (see illustration 1 below).<br>2. Depots <strong>may not be flipped</strong> as a mirror image.<br>3. The <strong>center</strong> depot must be oriented such that the texture denoted by the <strong>alphabetically lowest character</strong> is on the wall to the <strong>right</strong>.<br>4. Every wall shared by two depots must have a <strong>matching texture</strong>.<br><br>See illustration 2 below for a complete example.<br><br><strong>Illustration 1</strong><br>A depot may be rotated clockwise once like this:<br>https://user-images.githubusercontent.com/5595067/32763380-4cadec04-c93a-11e7-8d52-6884c9dea40a.png<br>Below shows the same illustration:<br><pre style=\"font-family: monospace\">      .                  .      <br>     / \\                / \\<br>    /   \\              /   \\<br>   /     \\            /     \\  <br>  / N   D \\          / G   N \\<br> /         \\        /         \\<br>|           |      |           |<br>|           |      |           |<br>|G         W|  -&gt;  |J         D|<br>|           |      |           |<br>|           |      |           |<br> \\         /        \\         /<br>  \\ J   T /          \\ T   W /<br>   \\     /            \\     /<br>    \\   /              \\   /<br>     \\ /                \\ /<br>      v                  v<br></pre><br><br><strong>Illustration 2</strong><br>This is the illustration of the solution to the Example test case:<br>https://user-images.githubusercontent.com/5595067/32763805-ee635f64-c93c-11e7-9050-7996f726a882.png<br>Below shows the same illustration:<br><pre style=\"font-family: monospace\">            .           .      <br>           / \\         / \\<br>          /   \\       /   \\<br>         /     \\     /     \\  <br>        / D   V \\   / C   M \\<br>       /         \\ /         \\<br>      |           |           |<br>      |           |           |<br>      |S    4    K|K    1    X|<br>      |           |           |<br>      |           |           |<br>     / \\         / \\         / \\<br>    /   \\ T   M /   \\ W   F /   \\<br>   /     \\     /     \\     /     \\<br>  / X   T \\   / M   W \\   / F   S \\<br> /         \\ /         \\ /         \\<br>|           |           |           |<br>|           |           |           |<br>|N    2    R|R    6    C|C    5    G|<br>|           |           |           |<br>|           |           |           |<br> \\         / \\         / \\         /<br>  \\ M   W /   \\ T   G /   \\ B   K /<br>   \\     /     \\     /     \\     /<br>    \\   / W   T \\   / G   B \\   /<br>     \\ /         \\ /         \\ /<br>      |           |           |<br>      |           |           |<br>      |D    0    J|J    3    C|<br>      |           |           |<br>      |           |           |<br>       \\         / \\         /<br>        \\ N   G /   \\ Q   V /<br>         \\     /     \\     /<br>          \\   /       \\   /<br>           \\ /         \\ /<br>            v           v</pre><br><br>(Problem based on: Hexagon Puzzle (Problem 24) from HP CodeWars 2017 NA)</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Lines 1 to 7:</strong> One line of <const>6</const> space-separated characters denoting the <var>texture</var> of the walls in clockwise order for each depot. The depots are <strong>ordered by their <var>index</var></strong> from <const>0</const> to <const>6</const>, i.e. the <var>n</var>th line relates to depot indexed <var>n - 1</var>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> One line of <const>7</const> space-separated pairs of the depots' <var>index</var> and <var>texture</var> on the walls to the <strong>right</strong>, after arranging the depots in a way which satisfies the rules.<br>Order the pairs by the depots' positions <strong>left-to-right, top-to-bottom</strong> (i.e. the first pair refers to the depot in the top left, and the last pair refers to the depot in the bottom right).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">For each case there is a unique arrangement (solution) which satisfies the rules.<br><br>The alphabetically lowest character in a depot may appear once only in that depot.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">W T J G N D\nX F W K C M\nM N X T R W\nB C V Q J G\nM T S D V K\nC F S G K B\nG T R M W C</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">4K 1X 2R 6C 5G 0J 3C</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 240684303309,
+  "avatar": 17500773502453,
+  "commentCount": 34,
+  "upVotes": 4,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 236138,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

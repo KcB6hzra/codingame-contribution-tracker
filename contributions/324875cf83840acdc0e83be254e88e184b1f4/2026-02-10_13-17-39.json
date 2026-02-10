@@ -1,0 +1,169 @@
+{
+  "id": 32487,
+  "activeVersion": 29,
+  "score": 26,
+  "votableId": 25460718,
+  "codingamerId": 4551333,
+  "views": 512,
+  "commentableId": 25339383,
+  "title": "Hotel",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Darazdeblek",
+  "publicHandle": "324875cf83840acdc0e83be254e88e184b1f4",
+  "codingamerHandle": "5dfb815fcce07f423b3e46d7ee5faefc3331554",
+  "lastVersion": {
+    "version": 29,
+    "autocloseTime": 1678357230945,
+    "data": {
+      "title": "Hotel",
+      "topics": [
+        {
+          "id": 55,
+          "handle": "DFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en profondeur",
+            "2": "DFS"
+          },
+          "pageTitle": "DFS: exercises and theory",
+          "puzzleCount": 18,
+          "parentTopicId": 41,
+          "contentDetailsId": 79
+        }
+      ],
+      "solution": "import sys\nimport math\nimport numpy as np\nfrom copy import deepcopy\n\ndef hotel_rules_compatible(hotel, rules):\n    for rule in rules:\n        c1 = c2 = floor = -1\n        for customer in customers:\n            if customer in rule:\n                if rule.index(customer) == 0:\n                    c1 = customers.index(customer)\n                else:\n                    c2 = customers.index(customer)\n                    \n        if \"at floor\" in rule:\n            floor = int(rule[-1])            \n\n        if \"is at floor\" in rule:\n            for i in range(4):\n                if i != floor and hotel[i * c + c1] == 1:\n                    return False\n                \n        elif \"is NOT at floor\" in rule:\n            if hotel[floor * c + c1] == 1:\n                return False\n            \n        elif \"nobody\" in rule:\n            if sum(hotel[floor * c:floor * c + c]) > 0:\n                return False\n            \n        elif \"exactly\" in rule:\n            if sum(hotel[floor * c:floor * c + c]) > 2\\\n            or (sum(hotel[floor * c:floor * c + c]) < 2 and c - sum(hotel) < 2 - sum(hotel[floor * c:floor * c + c])):\n                return False\n            \n        elif \"alone\" in rule:\n            for i in range(4):\n                if hotel[i * c + c1] == 1 and sum(hotel[i * c:i * c + c]) > 1:\n                    return False\n                \n        elif \"two other\" in rule:\n            for i in range(4):\n                if hotel[i * c + c1] == 1:\n                    if sum(hotel[i * c:i * c + c]) > 3\\\n                    or (sum(hotel[i * c:i * c + c]) < 3 and c - sum(hotel) < 3 - sum(hotel[i * c:i * c + c])):\n                        return False\n                \n        elif \"just above\" in rule or \"higher\" in rule:\n            c1_floor = c2_floor = None\n            for i in range(4):\n                if hotel[i * c + c1] == 1:\n                    c1_floor = i\n                if hotel[i * c + c2] == 1:\n                    c2_floor = i\n                    \n            if (c1_floor is not None and c1_floor == 0)\\\n            or (c2_floor is not None and c2_floor == 3)\\\n            or (c1_floor is not None and c2_floor is not None and c1_floor <= c2_floor)\\\n            or (\"just above\" in rule and c1_floor is not None and c2_floor is not None and c1_floor - c2_floor != 1):\n                return False\n            \n        elif \"at the same\" in rule:\n            c1_floor = c2_floor = None\n            for i in range(4):\n                if hotel[i * c + c1] == 1:\n                    c1_floor = i\n                if hotel[i * c + c2] == 1:\n                    c2_floor = i\n            if c1_floor is not None and c2_floor is not None and c1_floor != c2_floor:\n                return False\n                \n        elif \"NOT at the same\" in rule:\n            for i in range(4):\n                if hotel[i * c + c1] == 1 or hotel[i * c + c2] == 1:\n                    return not hotel[i * c + c1] == 1 and hotel[i * c + c2] == 1\n        \n    return True\n\nc = int(input())\ncustomers = []\nfor i in range(c):\n    customer = input()\n    customers.append(customer)\n\nr = int(input())\nrules = []\nfor i in range(r):\n    rule = input()\n    rules.append(rule)\n\nsolution_found = None\n\nstack = [{\"hotel\":np.zeros((c * 4)), \"customers\":[i for i in range(len(customers))]}]\nwhile stack:\n    item = stack.pop()\n    if len(item[\"customers\"]) == 0:\n        solution_found = item[\"hotel\"]\n        break\n        \n    for customer in item[\"customers\"]:\n        for floor in range(4):\n            copy = deepcopy(item)\n            copy[\"customers\"].remove(customer)\n            copy[\"hotel\"][floor * c + customer] = 1\n            if hotel_rules_compatible(copy[\"hotel\"], rules):\n                stack.append(copy)\n\nif solution_found is not None:\n    for index, customer in enumerate(customers):\n        for floor in range(4):\n            if solution_found[floor * c + index] == 1:\n                print(f\"{customer} {floor}\")\n                break",
+      "statement": "You are at the reception desk of a 4-floor hotel and a group of [[c]] customers arrive and ask for a room.\n\nBut what should have been a routine task becomes a nightmare when you realise they have very specific demands !\n\nYour job is to assign a floor (from 0 to 3) for each of them while respecting their [[r]] rules.\n\nThere are 10 types of rules:\n\n[[customer_name]] is at floor [[y]]        \n[[customer_name]] is NOT at floor [[y]]    \nThere's nobody at floor [[y]]\nThere are exactly two customers at floor [[y]]\n[[customer_name]] is alone at his/her floor\n[[customer_name]] is with two other customers at his/her floor\n[[customer_name]] is just above [[customer_name]]   \n[[customer_name]] is higher than [[customer_name]]\n[[customer_name]] is at the same floor as [[customer_name]]\n[[customer_name]] is NOT at the same floor as [[customer_name]]\n\nThere is a unique solution for each test.\n\nThis puzzle is inspired by the boardgame Gamme Logic - Hôtel",
+      "testCases": [
+        {
+          "title": "Winter is coming",
+          "isTest": true,
+          "testIn": "3\nJon Snow\nDaenerys Targaryen\nThe Night King\n4\nThe Night King is alone at his/her floor\nThere's nobody at floor 0\nJon Snow is just above Daenerys Targaryen\nJon Snow is at floor 2",
+          "testOut": "Jon Snow 2\nDaenerys Targaryen 1\nThe Night King 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3\nJon Snow\nDaenerys Targaryen\nThe Night King\n4\nThere are exactly two customers at floor 2\nDaenerys Targaryen is alone at his/her floor\nThe Night King is NOT at floor 1\nDaenerys Targaryen is higher than Jon Snow",
+          "testOut": "Jon Snow 2\nDaenerys Targaryen 3\nThe Night King 2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Help me if you can",
+          "isTest": true,
+          "testIn": "4\nJohn\nPaul\nGeorges\nRingo\n5\nPaul is just above Ringo\nThere are exactly two customers at floor 0\nJohn is at floor 1\nJohn is higher than Georges\nPaul is NOT at floor 2",
+          "testOut": "John 1\nPaul 1\nGeorges 0\nRingo 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "4\nJohn\nPaul\nGeorges\nRingo\n5\nJohn is alone at his/her floor\nGeorges is higher than Ringo\nThere's nobody at floor 2\nRingo is just above John\nGeorges is at the same floor as Paul",
+          "testOut": "John 0\nPaul 3\nGeorges 3\nRingo 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "I am the danger",
+          "isTest": true,
+          "testIn": "5\nWalter White\nJesse Pinkman\nGus Fring\nMike Ehrmantraut\nSaul Goodman\n6\nGus Fring is just above Mike Ehrmantraut\nJesse Pinkman is NOT at floor 3\nWalter White is at the same floor as Jesse Pinkman\nSaul Goodman is higher than Jesse Pinkman\nThere are exactly two customers at floor 1\nGus Fring is at floor 2",
+          "testOut": "Walter White 0\nJesse Pinkman 0\nGus Fring 2\nMike Ehrmantraut 1\nSaul Goodman 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "5\nWalter White\nJesse Pinkman\nGus Fring\nMike Ehrmantraut\nSaul Goodman\n6\nThere are exactly two customers at floor 0\nSaul Goodman is higher than Mike Ehrmantraut\nJesse Pinkman is alone at his/her floor\nWalter White is at floor 1\nThere's nobody at floor 3\nGus Fring is at the same floor as Mike Ehrmantraut",
+          "testOut": "Walter White 1\nJesse Pinkman 2\nGus Fring 0\nMike Ehrmantraut 0\nSaul Goodman 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Guitar heroes",
+          "isTest": true,
+          "testIn": "6\nJimi Hendrix\nDavid Gilmour\nEric Clapton\nMark Knopfler\nTommy Emmanuel\nRobert Johnson\n8\nDavid Gilmour is with two other customers at his/her floor\nMark Knopfler is at the same floor as Eric Clapton\nThere's nobody at floor 0\nJimi Hendrix is alone at his/her floor\nEric Clapton is NOT at floor 1\nMark Knopfler is higher than Robert Johnson\nEric Clapton is just above David Gilmour\nDavid Gilmour is at floor 1",
+          "testOut": "Jimi Hendrix 3\nDavid Gilmour 1\nEric Clapton 2\nMark Knopfler 2\nTommy Emmanuel 1\nRobert Johnson 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "6\nJimi Hendrix\nDavid Gilmour\nEric Clapton\nMark Knopfler\nTommy Emmanuel\nRobert Johnson\n8\nEric Clapton is NOT at floor 2\nThere's nobody at floor 3\nEric Clapton is with two other customers at his/her floor\nThere are exactly two customers at floor 1\nTommy Emmanuel is higher than Mark Knopfler\nRobert Johnson is at floor 1\nRobert Johnson is just above Mark Knopfler\nDavid Gilmour is alone at his/her floor",
+          "testOut": "Jimi Hendrix 0\nDavid Gilmour 2\nEric Clapton 0\nMark Knopfler 0\nTommy Emmanuel 1\nRobert Johnson 1",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "3 <= [[c]] <= 6\n3 <= [[r]] <= 8",
+      "coverBinaryId": 90298466358337,
+      "stubGenerator": "read c:int\nloop c read customer:string(256)\nread r:int\nloop r read rule:string(1024)\nloop c write customer floor",
+      "inputDescription": "<<Line 1:>> An integer [[c]] for the number of customers.\n\n<<Next [[c]] lines:>> A string [[customer_name]]\n\n<<Next line:>> An integer [[r]] for the number of rules.\n\n<<Next [[r]] lines:>> A string [[rule]]",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[c]] lines in input order>> A string with [[customer_name]] [[floor]] separated by a space"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are at the reception desk of a 4-floor hotel and a group of <var>c</var> customers arrive and ask for a room.<br><br>But what should have been a routine task becomes a nightmare when you realise they have very specific demands !<br><br>Your job is to assign a floor (from 0 to 3) for each of them while respecting their <var>r</var> rules.<br><br>There are 10 types of rules:<br><br><var>customer_name</var> is at floor <var>y</var>        <br><var>customer_name</var> is NOT at floor <var>y</var>    <br>There's nobody at floor <var>y</var><br>There are exactly two customers at floor <var>y</var><br><var>customer_name</var> is alone at his/her floor<br><var>customer_name</var> is with two other customers at his/her floor<br><var>customer_name</var> is just above <var>customer_name</var>   <br><var>customer_name</var> is higher than <var>customer_name</var><br><var>customer_name</var> is at the same floor as <var>customer_name</var><br><var>customer_name</var> is NOT at the same floor as <var>customer_name</var><br><br>There is a unique solution for each test.<br><br>This puzzle is inspired by the boardgame Gamme Logic - H&ocirc;tel</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>c</var> for the number of customers.<br><br><strong>Next <var>c</var> lines:</strong> A string <var>customer_name</var><br><br><strong>Next line:</strong> An integer <var>r</var> for the number of rules.<br><br><strong>Next <var>r</var> lines:</strong> A string <var>rule</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>c</var> lines in input order</strong> A string with <var>customer_name</var> <var>floor</var> separated by a space</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">3 &lt;= <var>c</var> &lt;= 6<br>3 &lt;= <var>r</var> &lt;= 8</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\nJon Snow\nDaenerys Targaryen\nThe Night King\n4\nThe Night King is alone at his/her floor\nThere's nobody at floor 0\nJon Snow is just above Daenerys Targaryen\nJon Snow is at floor 2</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Jon Snow 2\nDaenerys Targaryen 1\nThe Night King 3</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 93524567807,
+  "avatar": 71740209396076,
+  "commentCount": 28,
+  "upVotes": 28,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 761194,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1667466337000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1668331094531,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1670925937001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1675765230945,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1677204890077,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

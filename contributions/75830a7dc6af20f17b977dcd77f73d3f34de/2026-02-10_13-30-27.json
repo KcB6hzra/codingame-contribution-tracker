@@ -1,0 +1,195 @@
+{
+  "id": 7583,
+  "activeVersion": 12,
+  "score": 15,
+  "votableId": 20668218,
+  "codingamerId": 2613890,
+  "views": 321,
+  "commentableId": 20563396,
+  "title": "Snooker Ball Collision",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Loufouh",
+  "publicHandle": "75830a7dc6af20f17b977dcd77f73d3f34de",
+  "codingamerHandle": "bb9321a23cf9fbdf9937ad6d32e97a5e0983162",
+  "lastVersion": {
+    "version": 12,
+    "autocloseTime": 1638456379053,
+    "data": {
+      "title": "Snooker Ball Collision",
+      "topics": [
+        {
+          "id": 86,
+          "handle": "simulation",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Simulation",
+            "2": "Simulation"
+          },
+          "pageTitle": "Simulation: exercises and theory",
+          "puzzleCount": 29,
+          "parentTopicId": 42,
+          "contentDetailsId": 72
+        },
+        {
+          "id": 154,
+          "handle": "physics",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Physics",
+            "2": "Physics"
+          },
+          "puzzleCount": 13,
+          "parentTopicId": 93
+        },
+        {
+          "id": 138,
+          "handle": "collision-detection",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Collision Detection",
+            "2": "Collision Detection"
+          },
+          "puzzleCount": 1,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import sys\nfrom math import e, log\nimport numpy as np\n\n# Auto-generated code below aims at helping you parse\n# the standard input according to the problem statement.\n\nposA = []\nposB = []\nvel = []\n\nfor i in input().split():\n    component_p0 = float(i)\n    posA.append(component_p0)\n\nfor i in input().split():\n    component_p1 = float(i)\n    posB.append(component_p1)\n\nfor i in input().split():\n    component_v = float(i)\n    vel.append(component_v)\n\nposA = np.array(posA)\nposB = np.array(posB)\nvel = np.array(vel)\n\ndef velocity(vel, t):\n    return vel*e**(-.8*t)\n    \ndef position(pos, vel, t):\n    return pos + vel*(1 - e**(-.8*t))/.8\n\ndef stop_time(vel):\n    a = np.abs(vel).max()\n\n    if a == 0:\n        return 0\n    else:\n        return (log(a) - log(1/1000))/0.8\n\ndef stop_pos(pos, vel):\n    return position(pos, vel, stop_time(vel))\n\ndef collision_pos(posA, posB, vel):\n    pos = posB - posA\n\n    a = vel@vel\n    b = -2*pos@vel\n    c = pos@pos - 4*(.03075**2)\n\n    if b**2 - 4*a*c >= 0:\n        t_lcollision = (-b - (b**2 - 4*a*c)**.5)/(2*a)\n        return posA + t_lcollision*vel\n\n    return None\n\nif vel@vel != 0:\n    collisionPos = collision_pos(posA, posB, vel)\n    stopPos = stop_pos(posA, vel)\n\n    if collisionPos is not None and (stopPos - collisionPos)@vel >= 0:\n        i = np.argmax(np.abs(vel))\n\n        t_collision = -log(1 - .8*(collisionPos[i] - posA[i])/vel[i])/.8\n\n        posA = collisionPos\n        vel = velocity(vel, t_collision)\n\n        pos_sub = posB - posA\n        N_unit = pos_sub/(pos_sub@pos_sub)**.5\n\n        velB = N_unit*(N_unit@vel)\n        velA = vel - velB\n\n        posA_f = stop_pos(posA, velA)\n        posB_f = stop_pos(posB, velB)\n    else:\n        posA_f = stopPos\n        posB_f = posB\n\nelse:\n    posA_f = posA\n    posB_f = posB\n\nprint(' '.join([str(round(a, 2)) for a in posA_f]))\nprint(' '.join([str(round(a, 2)) for a in posB_f]))\n",
+      "statement": "The goal is to predict the position of two balls after stopping (at the beginning: one is moving, the other is immobile).\n- The radius of the balls is <<30.75mm>>\n- We consider there is <<no borders>>.\n- Any collision is perfectly elastic.\n- The formula of the acceleration induced by the frictions is: <<a_d(t) = -0.8*v(t)>>\nWith <<v(t)>> the speed of the ball (in meters per second) and <<t>> the time (in seconds)",
+      "testCases": [
+        {
+          "title": "Static",
+          "isTest": true,
+          "testIn": "1.24 0.34\n0.29 1.05\n0 0",
+          "testOut": "1.24 0.34\n0.29 1.05",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Static Validator",
+          "isTest": false,
+          "testIn": "0.01 0.71\n1.16 0.68\n0 0",
+          "testOut": "0.01 0.71\n1.16 0.68",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No collision (wrong direction)",
+          "isTest": true,
+          "testIn": "2.52 0.03\n2.07 0.43\n-0.1 0.62",
+          "testOut": "2.4 0.8\n2.07 0.43",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "No collision (wrong direction) Validator",
+          "isTest": false,
+          "testIn": "1.01 0.68\n1.6 0.78\n0.03 -0.11",
+          "testOut": "1.05 0.54\n1.6 0.78",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No collision (speed too low)",
+          "isTest": true,
+          "testIn": "0.34 1\n0.66 0.13\n0.24 -0.64",
+          "testOut": "0.64 0.2\n0.66 0.13",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "No collision (speed too low) Validator",
+          "isTest": false,
+          "testIn": "0.11 0.65\n0.45 0.93\n0.23 0.19",
+          "testOut": "0.4 0.89\n0.45 0.93",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Horizontal movement",
+          "isTest": true,
+          "testIn": "1.65 0.42\n0.66 0.42\n-1.4 0",
+          "testOut": "0.72 0.42\n-0.16 0.42",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Horizontal movement Validator",
+          "isTest": false,
+          "testIn": "1.6 0.95\n2.33 0.95\n0.6 0",
+          "testOut": "2.27 0.95\n2.41 0.95",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Vertical movement",
+          "isTest": true,
+          "testIn": "2.32 1\n2.32 0.84\n0 -0.38",
+          "testOut": "2.32 0.9\n2.32 0.46",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Vertical movement Validator",
+          "isTest": false,
+          "testIn": "0.84 0.31\n0.84 0.41\n0.00 0.21",
+          "testOut": "0.84 0.35\n0.84 0.63",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Normal movement",
+          "isTest": true,
+          "testIn": "1.73 0.7\n1.29 0.56\n-0.72 -0.27",
+          "testOut": "1.34 0.35\n0.78 0.58",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Normal movement Validator",
+          "isTest": false,
+          "testIn": "1.56 1.15\n1.8 0.61\n0.48 -0.89",
+          "testOut": "2.32 0.5\n1.64 0.15",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "",
+      "stubGenerator": "read x0:float y0:float\nread x1:float y1:float\nread vx:float vy:float\n\nwrite x0_f y0_f\n      x1_f y1_f",
+      "inputDescription": "<<Line 1:>> Two real numbers [[x0]] and [[y0]] (separated by a space), the position of the moving ball (in meters).\n<<Line 2:>> Two real numbers [[x1]] and [[y1]] (separated by a space), the position of the static ball (in meters).\n<<Line 3:>> Two real numbers [[vx]] and [[vy]] (separated by a space), the components of the velocity (in meters per second).",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> [[x0_f]] and [[y0_f]] (separated by a space), the components of the position of the moving ball when stopped <<rounded to two decimals>> (in meters).\n<<Line 2:>> [[x1_f]] and [[y1_f]] (separated by a space), the components of the position  of the static ball when stopped <<rounded to two decimals>> (in meters)."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">The goal is to predict the position of two balls after stopping (at the beginning: one is moving, the other is immobile).<br>- The radius of the balls is <strong>30.75mm</strong><br>- We consider there is <strong>no borders</strong>.<br>- Any collision is perfectly elastic.<br>- The formula of the acceleration induced by the frictions is: <strong>a_d(t) = -0.8*v(t)</strong><br>With <strong>v(t)</strong> the speed of the ball (in meters per second) and <strong>t</strong> the time (in seconds)</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Two real numbers <var>x0</var> and <var>y0</var> (separated by a space), the position of the moving ball (in meters).<br><strong>Line 2:</strong> Two real numbers <var>x1</var> and <var>y1</var> (separated by a space), the position of the static ball (in meters).<br><strong>Line 3:</strong> Two real numbers <var>vx</var> and <var>vy</var> (separated by a space), the components of the velocity (in meters per second).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> <var>x0_f</var> and <var>y0_f</var> (separated by a space), the components of the position of the moving ball when stopped <strong>rounded to two decimals</strong> (in meters).<br><strong>Line 2:</strong> <var>x1_f</var> and <var>y1_f</var> (separated by a space), the components of the position  of the static ball when stopped <strong>rounded to two decimals</strong> (in meters).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1.24 0.34\n0.29 1.05\n0 0</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1.24 0.34\n0.29 1.05</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 132442723427,
+  "avatar": 99923522752361,
+  "commentCount": 27,
+  "upVotes": 16,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 607526,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "denyAction": {
+    "actionId": 607664,
+    "progress": 0,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1638287502606,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

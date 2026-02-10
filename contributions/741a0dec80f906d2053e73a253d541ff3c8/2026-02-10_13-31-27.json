@@ -1,0 +1,238 @@
+{
+  "id": 741,
+  "activeVersion": 34,
+  "score": 26,
+  "votableId": 5216146,
+  "codingamerId": 878974,
+  "views": 814,
+  "commentableId": 5158415,
+  "title": "Simple AI duels",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "nicola",
+  "publicHandle": "741a0dec80f906d2053e73a253d541ff3c8",
+  "codingamerHandle": "21bf42f790de293c3aef398f18cd2627479878",
+  "lastVersion": {
+    "version": 34,
+    "autocloseTime": 1634214122721,
+    "data": {
+      "title": "Simple AI duels",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Game theory"
+          }
+        },
+        {
+          "id": 45,
+          "handle": "conditions",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 15,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        },
+        {
+          "labelMap": {
+            "2": "Random number generator"
+          }
+        },
+        {
+          "id": 87,
+          "handle": "state-machine",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Machine à états",
+            "2": "State machine"
+          },
+          "pageTitle": "State machine: exercises and theory",
+          "puzzleCount": 7,
+          "parentTopicId": 42,
+          "contentDetailsId": 94
+        }
+      ],
+      "solution": "c,d,t,f=2,1,3,0\nx=12\nmatrix={\"C\":{\"C\":(c,c),\"D\":(f,t)},\"D\":{\"C\":(t,f),\"D\":(d,d)}}\n\ndef next(x):\n    return (137*x+187)%256\n\nnbturns=int(input())\nai=dict()\n\nn,ai1=input().split()\nai[ai1]={\"score\":0,\"commands\":[],\"actions\":[]}\nn=int(n)\nfor _ in range(n):\n    ai[ai1][\"commands\"].append(input().split())\n    \nm,ai2=input().split()\nai[ai2]={\"score\":0,\"commands\":[],\"actions\":[]}\nm=int(m)\nfor _ in range(m):\n    ai[ai2][\"commands\"].append(input().split())\n\ndef choose(ai,nbt,p1,p2):\n    ais={\"ME\":p1,\"OPP\":p2}\n    oppai={p1:p2,p2:p1}\n    for c in ai[p1][\"commands\"]:\n        if c[0]==\"*\":\n            return c[1]\n        if c[0]==\"START\" and nbt==0:\n            return c[1]\n        if c[1]==\"-1\":\n            if ai[ais[c[0]]][\"actions\"][-1]==c[2]:\n                return c[3]\n        if c[1]==\"WIN\":\n            if ai[ais[c[0]]][\"score\"]>ai[oppai[ais[c[0]]]][\"score\"]:\n                return c[2]\n        if c[1]==\"MAX\":\n            actions=ai[ais[c[0]]][\"actions\"]\n            if actions.count(c[2])>len(actions)//2:\n                return c[3]\n        if c[1]==\"LAST\":\n            actions=ai[ais[c[0]]][\"actions\"][:-int(c[2])]\n            if type(actions) is not list:\n                actions=list(actions)\n            if actions.count(c[3])>len(actions)//2:\n                return c[4]\n\nfor i in range(nbturns):\n    c1=choose(ai,i,ai1,ai2)\n    if c1==\"RAND\":\n        x=next(x)\n        c1=\"DC\"[bin(x).count(\"1\")%2]\n    c2=choose(ai,i,ai2,ai1)\n    if c2==\"RAND\":\n        x=next(x)\n        c2=\"DC\"[bin(x).count(\"1\")%2]\n    ai[ai1][\"actions\"].append(c1)\n    ai[ai2][\"actions\"].append(c2)\n    points=matrix[c1][c2]\n    ai[ai1][\"score\"]+=points[0]\n    ai[ai2][\"score\"]+=points[1]\n\nif ai[ai1][\"score\"]>ai[ai2][\"score\"]:\n    print(ai1)\nelif ai[ai1][\"score\"]<ai[ai2][\"score\"]:\n    print(ai2)\nelse:\n    print(\"DRAW\")",
+      "statement": "You have to simulate a duel where two simple AI can either cooperate or defect in each turn, and determine which AI has won a duel (earned a higher total reward).\n\nIf they both cooperate ({{C}}), they both earn a reward of [[c]] each.\nIf they both defect ({{D}}), they both earn a reward of [[d]] each.\nElse, the one that defects earns a reward of [[t]] and the one that cooperates earns a reward of [[f]].\nFor the purpose of this puzzle, these four values will be fixed: [[c=2]], [[d=1]], [[t=3]] and [[f=0]].\n\nEach AI has its own strategy. A strategy is a set of commands, each of which is a condition followed by an action ({{C}}, {{D}} or {{RAND}}). In each turn, the conditions are evaluated one by one. The action associated with the first true condition is chosen. For example:\n{{OPP -1 C C}}\n{{* D}}\nThis means if the previous action of the opponent is {{C}}, then cooperate too.\nElse, defect.\n\nBelow are the codes used to describe a strategy. They generally follow the global syntax of {{Who}} {{What}} {{Action}}.\n(Assume it is the turn for Mya now. The opponent is called Opal.)\n• {{* Y}}: In all cases, do {{Y}}.\n• {{OPP -1 X Y}}: If the previous action of Opal is {{X}}, do {{Y}}.\n• {{ME MAX X Y}}: If {{X}} occurs <<more than half of the time>> in Mya's past actions, do {{Y}}.\n• {{OPP LAST N X Y}}: If {{X}} occurs <<more than half of the time>> in Opal's past {{N}} actions, do {{Y}}. (You may think of {{LAST}} as {{MAX}} with a short memory.) If less than {{N}} turns have been played, consider all the turns played (excluding the current turn).\n• {{START Y}}: At the start of a duel, do {{Y}}.\n• {{ME WIN Y}}: If Mya has earned a higher total reward than Opal, do {{Y}}.\n\n{{ME}} or {{OPP}} indicates whose actions you should to check, so for example strategy can be {{OPP -1 X Y}} or {{ME -1 X Y}}.\nPrevious action(s) refer to action(s) up to the last turn. For example, in the first turn, if Mya plays first, Opal does not treat Mya's first chosen action as a previous action.\n\nX may be {{C}} or {{D}} but Y may be {{C}}, {{D}} or {{RAND}}.\n\n{{RAND}} means that the AI acts pseudo randomly. The random choice is given by a linear congruential generator (LCG) (Knuth’s pseudo random number generator) for which a, b and the modulus m are given.\nThe very first x = 12, which is not used for the first pseudo-random value.\nIf the current value in the LCG is x, the next one is 137*x+187 mod 256→x.\nIf the binary decomposition of the calculated x has an even number of 1, choose {{D}}. Else, choose {{C}}.\nBoth AI use the same LCG throughout all the turns.",
+      "testCases": [
+        {
+          "title": "Nice guys",
+          "isTest": true,
+          "testIn": "100\n1 NiceGuy1\n* C\n1 NiceGuy2\n* C",
+          "testOut": "DRAW",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Bad guys",
+          "isTest": false,
+          "testIn": "1000\n1 BadGuy1\n* D\n1 BadGuy2\n* D",
+          "testOut": "DRAW",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No more Mr nice guy",
+          "isTest": true,
+          "testIn": "1000\n4 MrNiceGuy\nSTART C\nME -1 D D\nOPP -1 D D\n* C\n1 BadGuy\n* D",
+          "testOut": "BadGuy",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "No more Mr bad guy",
+          "isTest": false,
+          "testIn": "100\n4 MrBadGuy\nSTART D\nME -1 C C\nOPP -1 C C\n* D\n3 FlipFlop\nSTART C\nME -1 D C\nME -1 C D",
+          "testOut": "FlipFlop",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two Jokers",
+          "isTest": true,
+          "testIn": "100\n1 Joker1\n* RAND\n1 Joker2\n* RAND",
+          "testOut": "Joker2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Joker versus Flip flop",
+          "isTest": false,
+          "testIn": "100\n1 Joker\n* RAND\n3 FlipFlop\nSTART C\nME -1 D C\nME -1 C D",
+          "testOut": "Joker",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Tit for tat",
+          "isTest": true,
+          "testIn": "100\n1 Joker\n* RAND\n3 TitForTat\nSTART C\nOPP -1 C C\nOPP -1 D D",
+          "testOut": "Joker",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Tit for tat versus Flip flop",
+          "isTest": false,
+          "testIn": "100\n3 TitForTat\nSTART C\nOPP -1 C C\nOPP -1 D D\n3 FlipFlop\nSTART C\nME -1 D C\nME -1 C D",
+          "testOut": "FlipFlop",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Nice guy but don’t fool me",
+          "isTest": true,
+          "testIn": "100\n3 NiceGuyBut\nSTART C\nOPP MAX D D\n* C\n3 FlipFlop\nSTART RAND\nME -1 D C\nME -1 C D",
+          "testOut": "DRAW",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Not so nice",
+          "isTest": false,
+          "testIn": "100\n3 NotSoNice\nSTART C\nME MAX C D\n* C\n1 Joker\n* RAND",
+          "testOut": "Joker",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Short memory nice guy",
+          "isTest": true,
+          "testIn": "100\n3 BirdyNiceGuy\nSTART C\nOPP LAST 3 D D\n* C\n3 TitForTat\nSTART RAND\nOPP -1 D C\nOPP -1 C D",
+          "testOut": "BirdyNiceGuy",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Short memory nice guy",
+          "isTest": false,
+          "testIn": "100\n3 BirdyNiceGuy\nSTART C\nOPP LAST 5 D D\n* C\n3 TitForTat\nSTART D\nOPP -1 D C\nOPP -1 C D",
+          "testOut": "BirdyNiceGuy",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Machiavel",
+          "isTest": true,
+          "testIn": "100\n3 Machiavel\nSTART C\nME WIN D\n* C\n3 FlipFlop\nSTART RAND\nME -1 D C\nME -1 C D",
+          "testOut": "FlipFlop",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Machiavel",
+          "isTest": false,
+          "testIn": "100\n3 Machiavel1\nSTART C\nME WIN D\n* C\n4 Machiavel2\nSTART RAND\nME WIN D\nOPP MAX D D\n* C",
+          "testOut": "Machiavel2",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "coverBinaryId": 61658482684181,
+      "stubGenerator": "read nbturns:int\nread n:int AI1:word(20)\nloop n read player1:string(20)\nread m:int AI2:word(20)\nloop m read player2:string(20)\nwrite winner",
+      "inputDescription": "<<Line 1:>> The number of turns\n<<Line 2:>> The number [[n]] of commands for the first AI and its name\n<<Next [[n]] lines:>> The first AI’s strategy\n<<Next line:>> The number [[m]] of commands for the second AI and its name\n<<Next [[m]] lines:>> The second AI’s strategy",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The name of the winner AI, or [[DRAW]] in case of equality, after the specified number of turns have been played"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You have to simulate a duel where two simple AI can either cooperate or defect in each turn, and determine which AI has won a duel (earned a higher total reward).<br><br>If they both cooperate (<const>C</const>), they both earn a reward of <var>c</var> each.<br>If they both defect (<const>D</const>), they both earn a reward of <var>d</var> each.<br>Else, the one that defects earns a reward of <var>t</var> and the one that cooperates earns a reward of <var>f</var>.<br>For the purpose of this puzzle, these four values will be fixed: <var>c=2</var>, <var>d=1</var>, <var>t=3</var> and <var>f=0</var>.<br><br>Each AI has its own strategy. A strategy is a set of commands, each of which is a condition followed by an action (<const>C</const>, <const>D</const> or <const>RAND</const>). In each turn, the conditions are evaluated one by one. The action associated with the first true condition is chosen. For example:<br><const>OPP -1 C C</const><br><const>* D</const><br>This means if the previous action of the opponent is <const>C</const>, then cooperate too.<br>Else, defect.<br><br>Below are the codes used to describe a strategy. They generally follow the global syntax of <const>Who</const> <const>What</const> <const>Action</const>.<br>(Assume it is the turn for Mya now. The opponent is called Opal.)<br>&bull; <const>* Y</const>: In all cases, do <const>Y</const>.<br>&bull; <const>OPP -1 X Y</const>: If the previous action of Opal is <const>X</const>, do <const>Y</const>.<br>&bull; <const>ME MAX X Y</const>: If <const>X</const> occurs <strong>more than half of the time</strong> in Mya's past actions, do <const>Y</const>.<br>&bull; <const>OPP LAST N X Y</const>: If <const>X</const> occurs <strong>more than half of the time</strong> in Opal's past <const>N</const> actions, do <const>Y</const>. (You may think of <const>LAST</const> as <const>MAX</const> with a short memory.) If less than <const>N</const> turns have been played, consider all the turns played (excluding the current turn).<br>&bull; <const>START Y</const>: At the start of a duel, do <const>Y</const>.<br>&bull; <const>ME WIN Y</const>: If Mya has earned a higher total reward than Opal, do <const>Y</const>.<br><br><const>ME</const> or <const>OPP</const> indicates whose actions you should to check, so for example strategy can be <const>OPP -1 X Y</const> or <const>ME -1 X Y</const>.<br>Previous action(s) refer to action(s) up to the last turn. For example, in the first turn, if Mya plays first, Opal does not treat Mya's first chosen action as a previous action.<br><br>X may be <const>C</const> or <const>D</const> but Y may be <const>C</const>, <const>D</const> or <const>RAND</const>.<br><br><const>RAND</const> means that the AI acts pseudo randomly. The random choice is given by a linear congruential generator (LCG) (Knuth&rsquo;s pseudo random number generator) for which a, b and the modulus m are given.<br>The very first x = 12, which is not used for the first pseudo-random value.<br>If the current value in the LCG is x, the next one is 137*x+187 mod 256&rarr;x.<br>If the binary decomposition of the calculated x has an even number of 1, choose <const>D</const>. Else, choose <const>C</const>.<br>Both AI use the same LCG throughout all the turns.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> The number of turns<br><strong>Line 2:</strong> The number <var>n</var> of commands for the first AI and its name<br><strong>Next <var>n</var> lines:</strong> The first AI&rsquo;s strategy<br><strong>Next line:</strong> The number <var>m</var> of commands for the second AI and its name<br><strong>Next <var>m</var> lines:</strong> The second AI&rsquo;s strategy</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The name of the winner AI, or <var>DRAW</var> in case of equality, after the specified number of turns have been played</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">100\n1 NiceGuy1\n* C\n1 NiceGuy2\n* C</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">DRAW</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 136760900504,
+  "avatar": 26090852120005,
+  "commentCount": 34,
+  "upVotes": 32,
+  "downVotes": 6,
+  "validateAction": {
+    "actionId": 597004,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1571242995996,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1617904253282,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1620497137003,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1631622122720,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1633969385778,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

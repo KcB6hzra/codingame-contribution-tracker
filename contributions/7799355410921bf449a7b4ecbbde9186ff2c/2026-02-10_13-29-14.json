@@ -1,0 +1,161 @@
+{
+  "id": 7799,
+  "activeVersion": 34,
+  "score": 13,
+  "votableId": 21247467,
+  "codingamerId": 4081634,
+  "views": 462,
+  "commentableId": 21140521,
+  "title": "Markov Text Generation",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Wontonimo",
+  "publicHandle": "7799355410921bf449a7b4ecbbde9186ff2c",
+  "codingamerHandle": "d0699d9a8e4995e142b0a5cf6a16e1934361804",
+  "lastVersion": {
+    "version": 34,
+    "autocloseTime": 1644109651464,
+    "data": {
+      "title": "Markov Text Generation",
+      "topics": [
+        {
+          "id": 110,
+          "handle": "probability",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Probability",
+            "2": "Probability"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        },
+        {
+          "id": 49,
+          "handle": "hash-tables",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Tables de hachage",
+            "2": "Hash tables"
+          },
+          "pageTitle": "Hash tables: exercises and theory",
+          "puzzleCount": 1,
+          "parentTopicId": 40,
+          "contentDetailsId": 95
+        },
+        {
+          "id": 87,
+          "handle": "state-machine",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Machine à états",
+            "2": "State machine"
+          },
+          "pageTitle": "State machine: exercises and theory",
+          "puzzleCount": 10,
+          "parentTopicId": 42,
+          "contentDetailsId": 94
+        }
+      ],
+      "solution": "import sys\n\ntext = input().split()\ndepth = int(input())\nlength = int(input())\nseed = input().split()\n\nrandom_seed = 0\ndef pick_option_index( num_of_options ):\n    global random_seed\n    random_seed += 7\n    return random_seed % num_of_options\n\nmarkov = {}\nfor i in range(len(text)-depth):\n    key = \" \".join(text[i:i+depth])\n    if key not in markov:\n        markov[key] = []\n    markov[key].append(text[i+depth])\n\nwhile len(seed) < length:\n    options = markov[ \" \".join(seed[-depth:]) ]\n    seed.append( options[pick_option_index(len(options))] )\n\nprint( \" \".join(seed) )",
+      "statement": "You have made a game, and want the NPCs to talk, even if it is non-sensical.  Being lazy you don't want to write out all the non-sensical statements so you've decided to create a text generator.  Fortunately you have a bunch of text to use as training data.\n\nYou will build a classic n-gram Markov chain using sample text.  Researching online what a Markov chain is, what an n-gram is, and how to apply this to text is part of your quest.\n\n<<EXAMPLE ONE>>\nGiven the text [[t]]=`one fish is good and no fish is bad and that is it`\nAnd an n-gram depth [[d]]=2 we iterate over the text and generate the Markov chain like so\n`Step 1 : 'one fish' => ['is']\nStep 2 : 'fish is' => ['good']\nStep 3 : 'is good' => ['and']\nStep 4 : 'good and' => ['no']\nStep 5 : 'and no' => ['fish']\nStep 6 : 'no fish' => ['is']\nWe saw  'fish is' in step 2, so in step 7 we append the new value\nStep 7 : 'fish is' => ['good','bad']\nStep 8 : 'is bad => ['and']\nand so on until all the text is processed and added to the lookup`\n\nWe now can generate text.  For a phrase of output length [[l]]=5 starting with the seed text [[s]]=`fish is` we may generate one of the two follow phrases randomly\n`fish is good and no\nfish is bad and that`\nBecause when 'fish is' looked up, we choose either 'good' or 'bad' randomly.  All the rest of the text is deterministic.\n\n<<REPRODUCIBILITY>>\nFor random selection you will use the following pseudo code for 'randomly' picking from options for the next state even if there only exists 1 options.\n`\n--------------------------------------------------------\nrandom_seed = 0\nfunction pick_option_index( num_of_options ) {\n    random_seed += 7\n    return random_seed % num_of_options\n}\n--------------------------------------------------------\n`\nIn the above example, the first lookup returns ['good','bad'].  There are 2 options.  Call pick_option_index(2) which will return 7%2 = 1.  Therefor we append 'bad' to our output sentence and continue from there calling pick_option_index for every lookup even if there is only 1 option.\n\n<<REFERENCE>>\nhttps://www.codingame.com/blog/markov-chain-automaton2000/\nhttps://analyticsindiamag.com/hands-on-guide-to-markov-chain-for-text-generation/\nhttps://www.codingame.com/training/hard/code-your-own-automaton2000-step-1",
+      "testCases": [
+        {
+          "title": "Fish Example depth 2",
+          "isTest": true,
+          "testIn": "one fish is good and no fish is bad and that is it\n2\n4\nfish is",
+          "testOut": "fish is bad and",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Fish Example depth 2 (different length)",
+          "isTest": false,
+          "testIn": "one fish is good and no fish is bad and that is it\n2\n5\nfish is",
+          "testOut": "fish is bad and that",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Fish Example depth 1",
+          "isTest": true,
+          "testIn": "one fish is good and no fish is bad and that is it\n1\n4\none",
+          "testOut": "one fish is good",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Fish Example depth 1 (different length)",
+          "isTest": false,
+          "testIn": "one fish is good and no fish is bad and that is it\n1\n6\none",
+          "testOut": "one fish is good and that",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Width 2",
+          "isTest": true,
+          "testIn": "stop there once was a girl named dorothy stop dorothy had a dog named toto stop dorothy lived with her aunt and uncle with her dog named toto stop she was a girl of who dreamed of traveling stop\n2\n10\ndorothy was a",
+          "testOut": "dorothy was a girl named dorothy stop dorothy had a",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Width 2",
+          "isTest": false,
+          "testIn": "period there once was a creature named dylan period dylan had a dog named toto period dylan lived with her aunt and uncle with her dog named toto period she was a creature of who dreamed of traveling period\n2\n10\nperiod dylan",
+          "testOut": "period dylan lived with her aunt and uncle with her",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Width 3",
+          "isTest": true,
+          "testIn": "stop there once was a girl named dorothy stop dorothy had a dog named toto stop dorothy lived with her aunt and uncle with her dog named toto stop she was a girl of who dreamed of traveling stop\n3\n10\nstop dorothy had",
+          "testOut": "stop dorothy had a dog named toto stop dorothy lived",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Width 3",
+          "isTest": false,
+          "testIn": "period there once was a creature named dylan period dylan had a dog named toto period dylan lived with her aunt and uncle with her dog named toto period she was a creature of who dreamed of traveling period\n3\n10\nthere once was",
+          "testOut": "there once was a creature of who dreamed of traveling",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "[[text]] length in characters ≤ 1000\n1 ≤ [[depth]] ≤ 10\n[[depth]] ≤ [[length]] ≤ 100\n[[seed]] length in characters ≤ 1000",
+      "coverBinaryId": 75114048042237,
+      "stubGenerator": "read t:string(1000)\nread d:int\nread l:int\nread s:string(1000)\nwrite fish is bad and",
+      "inputDescription": "<<Line 1:>> The [[text]] which contains only the letters from a-z and spaces.\n<<Line 2:>> n-gram [[depth]] , an integer value from 1 to 10\n<<Line 3:>> The desired output [[length]] , an integer value from 1 to 100\n<<Line 4:>> The [[seed]] text",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> The text starting with the [[seed]] text and in total will have [[length]] words separated by spaces"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You have made a game, and want the NPCs to talk, even if it is non-sensical.  Being lazy you don't want to write out all the non-sensical statements so you've decided to create a text generator.  Fortunately you have a bunch of text to use as training data.<br><br>You will build a classic n-gram Markov chain using sample text.  Researching online what a Markov chain is, what an n-gram is, and how to apply this to text is part of your quest.<br><br><strong>EXAMPLE ONE</strong><br>Given the text <var>t</var>=<pre style=\"font-family: monospace\">one fish is good and no fish is bad and that is it</pre><br>And an n-gram depth <var>d</var>=2 we iterate over the text and generate the Markov chain like so<br><pre style=\"font-family: monospace\">Step 1 : 'one fish' =&gt; ['is']<br>Step 2 : 'fish is' =&gt; ['good']<br>Step 3 : 'is good' =&gt; ['and']<br>Step 4 : 'good and' =&gt; ['no']<br>Step 5 : 'and no' =&gt; ['fish']<br>Step 6 : 'no fish' =&gt; ['is']<br>We saw  'fish is' in step 2, so in step 7 we append the new value<br>Step 7 : 'fish is' =&gt; ['good','bad']<br>Step 8 : 'is bad =&gt; ['and']<br>and so on until all the text is processed and added to the lookup</pre><br><br>We now can generate text.  For a phrase of output length <var>l</var>=5 starting with the seed text <var>s</var>=<pre style=\"font-family: monospace\">fish is</pre> we may generate one of the two follow phrases randomly<br><pre style=\"font-family: monospace\">fish is good and no<br>fish is bad and that</pre><br>Because when 'fish is' looked up, we choose either 'good' or 'bad' randomly.  All the rest of the text is deterministic.<br><br><strong>REPRODUCIBILITY</strong><br>For random selection you will use the following pseudo code for 'randomly' picking from options for the next state even if there only exists 1 options.<br><pre style=\"font-family: monospace\"><br>--------------------------------------------------------<br>random_seed = 0<br>function pick_option_index( num_of_options ) {<br>    random_seed += 7<br>    return random_seed % num_of_options<br>}<br>--------------------------------------------------------<br></pre><br>In the above example, the first lookup returns ['good','bad'].  There are 2 options.  Call pick_option_index(2) which will return 7%2 = 1.  Therefor we append 'bad' to our output sentence and continue from there calling pick_option_index for every lookup even if there is only 1 option.<br><br><strong>REFERENCE</strong><br>https://www.codingame.com/blog/markov-chain-automaton2000/<br>https://analyticsindiamag.com/hands-on-guide-to-markov-chain-for-text-generation/<br>https://www.codingame.com/training/hard/code-your-own-automaton2000-step-1</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> The <var>text</var> which contains only the letters from a-z and spaces.<br><strong>Line 2:</strong> n-gram <var>depth</var> , an integer value from 1 to 10<br><strong>Line 3:</strong> The desired output <var>length</var> , an integer value from 1 to 100<br><strong>Line 4:</strong> The <var>seed</var> text</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> The text starting with the <var>seed</var> text and in total will have <var>length</var> words separated by spaces</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><var>text</var> length in characters &le; 1000<br>1 &le; <var>depth</var> &le; 10<br><var>depth</var> &le; <var>length</var> &le; 100<br><var>seed</var> length in characters &le; 1000</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">one fish is good and no fish is bad and that is it\n2\n4\nfish is</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">fish is bad and</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 127688085623,
+  "avatar": 54970169109216,
+  "commentCount": 21,
+  "upVotes": 15,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 625445,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1643042066933,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,187 @@
+{
+  "id": 5359,
+  "activeVersion": 28,
+  "score": 7,
+  "votableId": 14782402,
+  "codingamerId": 186405,
+  "views": 644,
+  "commentableId": 14701434,
+  "title": "The Electrician Apprentice",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "d-mark",
+  "publicHandle": "53596adfab1e911132d74e0ca17640d0f5c1",
+  "codingamerHandle": "8685a88755dd21f4c90403c0e5ff72c0504681",
+  "lastVersion": {
+    "version": 28,
+    "autocloseTime": 1600775853209,
+    "data": {
+      "title": "The Electrician Apprentice",
+      "topics": [],
+      "solution": "using System.Collections.Generic;\nusing System.Linq;\nusing System;\n\nclass Solution {\n    static void Main(string[] args) {\n        var equipments = new List<Equipent>();\n\n        var N = int.Parse(Console.ReadLine());\n        for (var i = 0; i < N; i++) {\n            var inputs = Console.ReadLine().Split(' ');\n            var equipment = new Equipent() { Name = inputs[0] };\n            equipments.Add(equipment);\n            foreach (var s in inputs.Skip(1)) {\n                if (s == \"=\" || s == \"-\") {\n                    equipment.SwitchMode = s;\n                } else {\n                    allSwitches[s] = false;\n                    equipment.AddSwitch(s);\n                }\n            }\n        }\n\n        var A = int.Parse(Console.ReadLine());\n        for (var i = 0; i < A; i++) ToggleSwitch(Console.ReadLine());\n\n        foreach (var circuit in equipments) Console.WriteLine($\"{circuit.Name} is {(circuit.On ? \"ON\" : \"OFF\")}\");\n    }\n\n    static readonly Dictionary<string, bool> allSwitches = new Dictionary<string, bool>();\n    static void ToggleSwitch(string id) => allSwitches[id] = !allSwitches[id];\n\n    class Equipent {\n        public string Name;\n        readonly List<List<string>> switches = new List<List<string>>();\n\n        public bool On => switches.All(_ => _.Any(id => allSwitches[id]));\n\n        string mode;\n        public string SwitchMode {\n            get { return mode; }\n            set { if ((mode = value) == \"=\") switches.Add(new List<string>()); }\n        }\n\n        public void AddSwitch(string id) {\n            if (mode == \"-\") switches.Add(new List<string>() { id });\n                        else switches.Last().Add(id);\n        }\n    }\n\n    static void Main_Alternative(string[] args) {\n        var switches = new Dictionary<string, bool>();\n        var equipments = new List<string[]>();\n\n        var C = int.Parse(Console.ReadLine());\n        for (var i = 0; i < C; i++) {\n            equipments.Add(Console.ReadLine().Split(' '));\n        }\n\n        var A = int.Parse(Console.ReadLine());\n        for (var i = 0; i < A; i++) {\n            var sw = Console.ReadLine();\n            switches[sw] = !(switches.TryGetValue(sw, out bool v) && v);\n        }\n\n        foreach (var eq in equipments) {\n            bool? allOn = null;\n            for (var i = 1; i < eq.Length; ) {\n                var on = (eq[i] == \"-\");\n                if (on) {\n                    while (++i < eq.Length && eq[i] != \"-\" && eq[i] != \"=\")\n                        on &= (switches.TryGetValue(eq[i], out bool v) && v);\n                } else {\n                    while (++i < eq.Length && eq[i] != \"-\" && eq[i] != \"=\")\n                        on |= (switches.TryGetValue(eq[i], out bool v) && v);\n                }\n                if (!allOn.HasValue) allOn = on; else allOn &= on;\n            }\n            Console.WriteLine($\"{eq[0]} is {(allOn.Value ? \"ON\" : \"OFF\")}\");\n        }\n    }\n}",
+      "statement": "After working with your apprentice Tom on a very bizarre electrical installation, you are about to turn on the power to carry out the final checks. As a professional, you labelled all switches beforehand and made sure they were off before you disconnected the power supply.\n\nHowever during the intervention, Tom flipped the switches all over the place! Fortunately, you had asked him to take notes, so you should be able to find out which equipment will trigger when the power supply is turned back on.\n\nSwitches can be mounted in series or in parallel. For a circuit to be on, all switches in series must be on and at least one switch for each parallel derivation must be on.\n\nWiring description is a space-delimited sequence of:\n   • the {{-}} character followed by the identifiers of the switches mounted in series  \n   • the {{=}} character followed by the identifiers of the switches mounted in parallel\nEach [[SWITCH]] has a unique label.\n\nEg. for the following circuit:\n\n\n`                      +-[A1]-+        +-[A4]--[RADIO]---+\n                      |      |        |                 |\n                      |      +--[A3]--+----------[TV]---+\n                   +--+      |        |                 |\n                   |  |      |        +-----[CONSOLE]---+\n                   |  |      |                          |\n                   |  +-[A2]-+                          |\n                   |                                    |\n                   +------------[POWER SUPPLY]----------+\n                   |                                    |\n                   +--[B1]--[B2]-------------[LIGHTS]---+`\n\nThe wiring description is:\n\n`    TV = A1 A2 - A3\n    RADIO = A1 A2 - A3 A4\n    CONSOLE = A1 A2 - A3\n    LIGHTS - B1 B2`",
+      "testCases": [
+        {
+          "title": "1 switch 1 light",
+          "isTest": true,
+          "testIn": "1\nLIGHT - A1\n1\nA1",
+          "testOut": "LIGHT is ON",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "1 switch 1 light",
+          "isTest": false,
+          "testIn": "1\nLIGHT - A1\n4\nA1\nA1\nA1\nA1",
+          "testOut": "LIGHT is OFF",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "2 parallel switches 1 light",
+          "isTest": true,
+          "testIn": "1\nLIGHT = A1 A2\n1\nA2",
+          "testOut": "LIGHT is ON",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "2 parallel switches 1 light",
+          "isTest": false,
+          "testIn": "1\nLIGHT = A1 A2\n3\nA2\nA1\nA2",
+          "testOut": "LIGHT is ON",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "2 series switches 1 light",
+          "isTest": true,
+          "testIn": "1\nLIGHT - A1 A2\n3\nA1\nA2\nA1",
+          "testOut": "LIGHT is OFF",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "2 series switches 1 light",
+          "isTest": false,
+          "testIn": "1\nLIGHT - A1 A2\n2\nA1\nA2",
+          "testOut": "LIGHT is ON",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Two lights",
+          "isTest": true,
+          "testIn": "2\nLIGHT1 - A1\nLIGHT2 - B1\n2\nA1\nB1",
+          "testOut": "LIGHT1 is ON\nLIGHT2 is ON",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Two lights",
+          "isTest": false,
+          "testIn": "2\nLIGHT1 - A1\nLIGHT2 - B1\n0",
+          "testOut": "LIGHT1 is OFF\nLIGHT2 is OFF",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Series and parallel",
+          "isTest": true,
+          "testIn": "1\nLIGHT - A1 = A2 A3\n6\nA1\nA1\nA2\nA2\nA3\nA1",
+          "testOut": "LIGHT is ON",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Series and parallel",
+          "isTest": false,
+          "testIn": "1\nLIGHT - A1 = A2 A3 - A4\n7\nA1\nA4\nA2\nA2\nA3\nA1\nA4",
+          "testOut": "LIGHT is OFF",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Mixed",
+          "isTest": true,
+          "testIn": "2\nLIGHT1 - A1 = A2 A3\nLIGHT2 - B1 = B2 B3 = B4 B5\n6\nA1\nB1\nB2\nA3\nB5\nB4",
+          "testOut": "LIGHT1 is ON\nLIGHT2 is ON",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Mixed",
+          "isTest": false,
+          "testIn": "2\nLIGHT1 - A1 = A2 A3\nLIGHT2 - A1 B1 = B2 B3 = B4 B5\n7\nA1\nB1\nB2\nA3\nB5\nB4\nA1",
+          "testOut": "LIGHT1 is OFF\nLIGHT2 is OFF",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Weird Home",
+          "isTest": true,
+          "testIn": "6\nTV = A1 A2 - A3\nBOX = A1 A2 = A3 A4\nCONSOLE = A1 A2\nLIGHTS = B1 B2\nOVEN - KITCHEN = C1 C2 C3 - C4\nDISHWASHER - KITCHEN D1 D2 = D3 D4\n19\nA1\nB1\nA3\nC2\nC4\nA4\nA4\nA4\nA4\nD1\nKITCHEN\nD2\nA4\nA2\nKITCHEN\nD4\nA3\nC4\nKITCHEN",
+          "testOut": "TV is OFF\nBOX is ON\nCONSOLE is ON\nLIGHTS is ON\nOVEN is OFF\nDISHWASHER is ON",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Weird Home",
+          "isTest": false,
+          "testIn": "6\nTV - MAIN = A1 A2 - A3\nBOX - MAIN = A1 A2 = A3 A4\nCONSOLE - MAIN = A1 A2\nLIGHTS - MAIN = B1 B2\nOVEN - MAIN KITCHEN = C1 C2 C3 - C4\nDISHWASHER - MAIN KITCHEN D1 D2 = D3 D4\n21\nA1\nB1\nA3\nMAIN\nC2\nC4\nA4\nA4\nA4\nA4\nD1\nKITCHEN\nD2\nA4\nA2\nKITCHEN\nD4\nA3\nC4\nMAIN\nKITCHEN",
+          "testOut": "TV is OFF\nBOX is OFF\nCONSOLE is OFF\nLIGHTS is OFF\nOVEN is OFF\nDISHWASHER is OFF",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Regular Home",
+          "isTest": true,
+          "testIn": "24\nRoom1-Light - Main Room1-Sw-L\nRoom1-Radio - Main Room1-Sw-R\nRoom1-PC - Main Room1-Sw-PC\nRoom2-Light - Main Room2-Sw-L\nRoom2-TV - Main Room2-Sw-TV\nRoom2-Console - Main Room2-Sw-TV\nBathroom-Light - Main Bathroom-CB Bathroom-Sw-L\nBathroom-Vent - Main Bathroom-CB Bathroom-Sw-L\nBathroom-WashingMachine - Main Bathroom-CB\nBathroom-ElectricDryer - Main Bathroom-CB\nKitchen-Light - Main Kitchen-Sw-L\nKitchen-Oven - Main Kitchen-CB1 Kitchen-Sw-O\nKitchen-Cooktop - Main Kitchen-CB1 Kitchen-Sw-CT\nKitchen-Hood - Main Kitchen-CB1 Kitchen-Sw-CT\nKitchen-DishWasher - Main Kitchen-CB1 Kitchen-Sw-CT\nKitchen-Fridge - Main Kitchen-CB2\nKitchen-Freezer - Main Kitchen-CB2\nInternetBox - Main\nLiving-Light1 - Main Living-Sw-L1\nLiving-Light2 - Main Living-Sw-L2\nLiving-TV - Main Living-Sw-TV\nLiving-Console - Main Living-Sw-TV\nLiving-PC - Main Living-Sw-PC\nLiving-Printer - Main Living-Sw-PC\n4\nMain\nBathroom-CB\nKitchen-CB1\nKitchen-CB2",
+          "testOut": "Room1-Light is OFF\nRoom1-Radio is OFF\nRoom1-PC is OFF\nRoom2-Light is OFF\nRoom2-TV is OFF\nRoom2-Console is OFF\nBathroom-Light is OFF\nBathroom-Vent is OFF\nBathroom-WashingMachine is ON\nBathroom-ElectricDryer is ON\nKitchen-Light is OFF\nKitchen-Oven is OFF\nKitchen-Cooktop is OFF\nKitchen-Hood is OFF\nKitchen-DishWasher is OFF\nKitchen-Fridge is ON\nKitchen-Freezer is ON\nInternetBox is ON\nLiving-Light1 is OFF\nLiving-Light2 is OFF\nLiving-TV is OFF\nLiving-Console is OFF\nLiving-PC is OFF\nLiving-Printer is OFF",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Regular Home",
+          "isTest": false,
+          "testIn": "23\nRoom1-Light - Main Room1-Sw-L\nRoom1-Radio - Main Room1-Sw-R\nRoom1-PC - Main Room1-Sw-PC\nRoom2-Light - Main Room2-Sw-L\nRoom2-TV - Main Room2-Sw-TV\nRoom2-Console - Main Room2-Sw-TV\nBathroom-Light - Main Bathroom-CB Bathroom-Sw-L\nBathroom-Vent - Main Bathroom-CB Bathroom-Sw-L\nBathroom-WashingMachine - Main Bathroom-CB\nBathroom-ElectricDryer - Main Bathroom-CB\nKitchen-Light - Main Kitchen-Sw-L\nKitchen-Oven - Main Kitchen-CB1 Kitchen-Sw-O\nKitchen-Cooktop - Main Kitchen-CB1 Kitchen-Sw-CT\nKitchen-Hood - Main Kitchen-CB1 Kitchen-Sw-CT\nKitchen-Fridge - Main Kitchen-CB2\nKitchen-Freezer - Main Kitchen-CB2\nInternetBox - Main\nLiving-Light1 - Main Living-Sw-L1\nLiving-Light2 - Main Living-Sw-L2\nLiving-TV - Main Living-Sw-TV\nLiving-Console - Main Living-Sw-TV\nLiving-PC - Main Living-Sw-PC\nLiving-Printer - Main Living-Sw-PC\n6\nBathroom-CB\nKitchen-CB1\nKitchen-CB2\nMain\nLiving-Sw-L2\nLiving-Sw-PC",
+          "testOut": "Room1-Light is OFF\nRoom1-Radio is OFF\nRoom1-PC is OFF\nRoom2-Light is OFF\nRoom2-TV is OFF\nRoom2-Console is OFF\nBathroom-Light is OFF\nBathroom-Vent is OFF\nBathroom-WashingMachine is ON\nBathroom-ElectricDryer is ON\nKitchen-Light is OFF\nKitchen-Oven is OFF\nKitchen-Cooktop is OFF\nKitchen-Hood is OFF\nKitchen-Fridge is ON\nKitchen-Freezer is ON\nInternetBox is ON\nLiving-Light1 is OFF\nLiving-Light2 is ON\nLiving-TV is OFF\nLiving-Console is OFF\nLiving-PC is ON\nLiving-Printer is ON",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "1 ≤ [[C]] ≤ 25\n0 ≤ [[A]] ≤ 25\nLength of [[SWITCH]] ≤ 20\nLength of [[EQUIPMENT]] ≤ 40\nMax input line length = 1024",
+      "coverBinaryId": 136557900512250,
+      "stubGenerator": "read C:int\nloop C read WIRING:string(1024)\nread A:int\nloop A read SWITCH:string(20)\nloop C write ANSWER",
+      "inputDescription": "<<First line:>> the number of circuits [[C]]\n<<Next [[C]] lines:>> name of the [[EQUIPMENT]] and wiring description\n<<Next line:>> the number of Tom's actions [[A]]\n<<Next [[A]] lines:>> the [[SWITCH]] that Tom toggled",
+      "solutionLanguage": "C#",
+      "outputDescription": "<<[[C]] lines>>, one for each equipment in the same order.\nEach line should read {{[[EQUIPMENT]] is ON}} or {{[[EQUIPMENT]] is OFF}}"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">After working with your apprentice Tom on a very bizarre electrical installation, you are about to turn on the power to carry out the final checks. As a professional, you labelled all switches beforehand and made sure they were off before you disconnected the power supply.<br><br>However during the intervention, Tom flipped the switches all over the place! Fortunately, you had asked him to take notes, so you should be able to find out which equipment will trigger when the power supply is turned back on.<br><br>Switches can be mounted in series or in parallel. For a circuit to be on, all switches in series must be on and at least one switch for each parallel derivation must be on.<br><br>Wiring description is a space-delimited sequence of:<br>   &bull; the <const>-</const> character followed by the identifiers of the switches mounted in series  <br>   &bull; the <const>=</const> character followed by the identifiers of the switches mounted in parallel<br>Each <var>SWITCH</var> has a unique label.<br><br>Eg. for the following circuit:<br><br><br><pre style=\"font-family: monospace\">                      +-[A1]-+        +-[A4]--[RADIO]---+<br>                      |      |        |                 |<br>                      |      +--[A3]--+----------[TV]---+<br>                   +--+      |        |                 |<br>                   |  |      |        +-----[CONSOLE]---+<br>                   |  |      |                          |<br>                   |  +-[A2]-+                          |<br>                   |                                    |<br>                   +------------[POWER SUPPLY]----------+<br>                   |                                    |<br>                   +--[B1]--[B2]-------------[LIGHTS]---+</pre><br><br>The wiring description is:<br><br><pre style=\"font-family: monospace\">    TV = A1 A2 - A3<br>    RADIO = A1 A2 - A3 A4<br>    CONSOLE = A1 A2 - A3<br>    LIGHTS - B1 B2</pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>First line:</strong> the number of circuits <var>C</var><br><strong>Next <var>C</var> lines:</strong> name of the <var>EQUIPMENT</var> and wiring description<br><strong>Next line:</strong> the number of Tom's actions <var>A</var><br><strong>Next <var>A</var> lines:</strong> the <var>SWITCH</var> that Tom toggled</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>C</var> lines</strong>, one for each equipment in the same order.<br>Each line should read <const><var>EQUIPMENT</var> is ON</const> or <const><var>EQUIPMENT</var> is OFF</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>C</var> &le; 25<br>0 &le; <var>A</var> &le; 25<br>Length of <var>SWITCH</var> &le; 20<br>Length of <var>EQUIPMENT</var> &le; 40<br>Max input line length = 1024</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1\nLIGHT - A1\n1\nA1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">LIGHT is ON</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 171909919362,
+  "avatar": 7899805743942,
+  "commentCount": 20,
+  "upVotes": 8,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 487273,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1598821038235,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

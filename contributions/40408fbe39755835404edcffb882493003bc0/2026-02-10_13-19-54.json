@@ -1,0 +1,463 @@
+{
+  "id": 40408,
+  "activeVersion": 57,
+  "score": 7,
+  "votableId": 26465456,
+  "codingamerId": 4433844,
+  "views": 372,
+  "commentableId": 26340831,
+  "title": "The logo beyond C++ and C#",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Lisa-Has-Ideas",
+  "publicHandle": "40408fbe39755835404edcffb882493003bc0",
+  "codingamerHandle": "6057618d773e6e27a20abefa031c4e674483344",
+  "lastVersion": {
+    "version": 57,
+    "autocloseTime": 1672366955233,
+    "data": {
+      "title": "The logo beyond C++ and C#",
+      "topics": [
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 41,
+          "parentTopicId": 93
+        },
+        {
+          "id": 128,
+          "handle": "ascii-art",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Ascii Art",
+            "2": "Ascii Art"
+          },
+          "puzzleCount": 29,
+          "parentTopicId": 93
+        },
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 29,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        }
+      ],
+      "solution": "using System; using System.Linq; using System.IO; using System.Text; using System.Collections; using System.Collections.Generic;\n\npublic class Program\n{\n\tpublic static char[,] cRay;//do it like reading, first lin, then pos\n\tpublic static int outerPlusHiWi;\n\tpublic static int innerPlusHiWi;\n\tpublic static int thickness;\n\tpublic static LogoModel TheLogo;\n\tpublic static int RayLinTotal;\n\tpublic static int RayPosTotal;\n\t\n\tpublic static void Main()\n\t{\n\n        int size = int.Parse(Console.ReadLine());\n        outerPlusHiWi = size;\n\n        thickness = int.Parse(Console.ReadLine());\n\n        int N = int.Parse(Console.ReadLine());\n\n        var inputList = new List<string>();\n        for (int i = 0; i < N; i++)\n        {\n            string logoLine = Console.ReadLine();\n            inputList.Add(logoLine);\n        }\n\n\t\tinnerPlusHiWi = outerPlusHiWi - 2;\n\t\t\n\t\tTheLogo = new LogoModel();\n\t\t\n\t\tint longestInputLine = 0;\n\t\tforeach (var item in inputList)\n\t\t{\n\t\t\tif (item.Length > longestInputLine) longestInputLine = item.Length;\n\t\t}\n\t\t\n\t\tfor (int i = 0 ; i < inputList.Count() ; i++)\n\t\t{\n\t\t\tif (inputList[i].Length < longestInputLine)\n\t\t\t{\n\t\t\t\tstring padding = new string(' ', longestInputLine - inputList[i].Length);\n\t\t\t\tinputList[i] = inputList[i] + padding;\n\t\t\t}\n\t\t}\n\t\t\n\t\tRayPosTotal = outerPlusHiWi * longestInputLine ; \n\t\tRayLinTotal = outerPlusHiWi * inputList.Count()  ;\n\t\tcRay = new char[RayLinTotal, RayPosTotal];//do it like reading, first you care about lin, then about pos in lin\n\t\tInitcRay();\n\n\t\tfor (int inputLin = 0 ; inputLin <  inputList.Count() ; inputLin++) //this way because like reading, line after line\n\t\t{\n\t\t\tstring thisinputLin = inputList[inputLin];\n\t\t\tfor (int inputPos = 0 ; inputPos < longestInputLine; inputPos++)\n\t\t\t{\n\t\t\t\tif (thisinputLin[inputPos] == '+')\n\t\t\t\t{\n\t\t\t\t\tPlusModel plus = new PlusModel(inputLin * outerPlusHiWi, inputPos * outerPlusHiWi);\n\t\t\t\t\tplus.CarveIt();\n\t\t\t\t\tTheLogo.AddAPlus(plus);\n\t\t\t\t}\t\n\t\t\t}\n\t\t}\n\t\tTheLogo.SurroundThem();\n\t\tTheLogo.RemoveBorders();\n\t\tPrintcRay();\n\t}\n\t\n\tpublic class PlusModel\n\t{\n\t\tpublic int centerLin ;\n\t\tpublic int centerPos ;\n\t\tpublic int topLin;\n\t\tpublic int topPos;\n\t\tpublic int a, b, c, d;      //top left and bottom right of vertical   part of the plus-sign \n\t\tpublic int aa, bb, cc, dd;  //top left and bottom right of horizontal part of the plus-sign \n\t\t\n\t\tpublic PlusModel( int topLin, int topPos)\n\t\t{\n\t\t\tthis.topLin = topLin;\n\t\t\tthis.topPos = topPos;\n\t\t\tint halfSize = (outerPlusHiWi - thickness) / 2;\n\t\t\tint innerThickness = thickness - 2;\n\n\t\t\ta = topLin + 1;\n\t\t\tb = topPos + halfSize + 1;\n\t\t\tc = a + innerPlusHiWi - 1;\n\t\t\td = b + innerThickness - 1;\n\t\t\t\n\t\t\taa = topLin + halfSize + 1;\n\t\t\tbb = topPos + 1;\n\t\t\tcc = aa + innerThickness - 1;\n\t\t\tdd = bb + innerPlusHiWi - 1;\n\n\t\t}\n\t\tpublic void CarveIt()\n\t\t{\n\t\t\tDrawInRay(a,   b,   c,   d, 'e');//\"e\" for end part.  Then will check if there are 2 ends close together and if so remove their border\n\t\t\tDrawInRay(a+1, b,   c-1, d, 's');//\"s\" for save.  (aka: Dont put + here)\n\n            DrawInRay(aa,  bb,     cc,  dd,   'e');\n\t\t\tDrawInRay(aa,  bb+1,   cc,  dd-1, 's');\n\t\t}\n\t}\n\t\n\tpublic static void DrawInRay(int lin1, int pos1, int lin2, int pos2, char symbol)\n\t{\n\t\tfor (int lin = lin1 ; lin <= lin2 ; lin++)\n\t\t{\n\t\t\tfor (int pos = pos1 ; pos <= pos2 ; pos++)\n\t\t\t{\n\t\t\t\tcRay[lin,pos] = symbol;\n\t\t\t}\n\t\t}\n\t}\n\t\n\tpublic class LogoModel\n\t{\n\t\tpublic List<PlusModel> PlusList;\n\t\tpublic LogoModel()\n\t\t{\n\t\t\tPlusList= new List<PlusModel>();\n\t\t}\n\t\n\t\tpublic void AddAPlus(PlusModel aPlus)\n\t\t{\n\t\t\tPlusList.Add(aPlus);\n\t\t}\n\t\t\n\t\tpublic void RemoveBorders()\n\t\t{\n\t\t\tfor (int lin = 0; lin < RayLinTotal; lin++)\n        \t{\n\t\t\t\tstring thisRow = \"\";\n            \tfor (int pos = 0; pos < RayPosTotal; pos++)\n            \t{\n\t\t\t\t\tchar ch = cRay[lin, pos];\n\t\t\t        if (ch =='e' && pos + 3 < RayPosTotal)// There is enough room to the right\n\t\t\t\t\t{\n\t\t\t\t\t\tbool fitsPatternOnLin = cRay[lin, pos+1] == '+' &&\n\t\t\t\t\t\t\t\t\t\t\t\tcRay[lin, pos+2] == '+' &&\n\t\t\t\t\t\t\t\t\t\t\t\tcRay[lin, pos+3] == 'e';\n\t\t\t\t\t\tif (fitsPatternOnLin) \n\t\t\t\t\t\t{\n\t\t\t\t\t\t\tcRay[lin, pos+1] = 's' ;\n\t\t\t\t\t\t\tcRay[lin, pos+2] = 's' ;\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t\t\n\t\t\t\t\tif (ch =='e' && lin + 3 < RayLinTotal)// There is enough room going down\n\t\t\t\t\t{\n\t\t\t\t\t\tbool fitsPatternOnPos = cRay[lin+1, pos] == '+' &&\n\t\t\t\t\t\t\t\t\t\t\t\tcRay[lin+2, pos] == '+' &&\n\t\t\t\t\t\t\t\t\t\t\t\tcRay[lin+3, pos] == 'e';\n\t\t\t\t\t\tif (fitsPatternOnPos) \n\t\t\t\t\t\t{\n\t\t\t\t\t\t\tcRay[lin+1, pos] = 's' ;\n\t\t\t\t\t\t\tcRay[lin+2, pos] = 's' ;\n\t\t\t\t\t\t}\t\n\t\t\t\t\t}\t\t\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\n\t\tpublic void SurroundThem()\n\t\t{\n\t\t\tfor (int LIN = 0; LIN < RayLinTotal; LIN++)\n\t\t\t{\n\t\t\t\tfor (int POS = 0; POS < RayPosTotal; POS++)\n\t\t\t\t{\n\t\t\t\t\tchar ch = cRay[LIN,POS];\n\t\t\t\t\tif (ch == 's' || ch == 'e')\n\t\t\t\t\t{\n\t\t\t\t\t\tfor (int lin = 0; lin < RayLinTotal; lin++)\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\tfor (int pos = 0; pos < RayPosTotal; pos++)\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\tbool b1 = Math.Abs(POS-pos) <= 1;\n\t\t\t\t\t\t\t\tbool b2 = Math.Abs(LIN-lin) <= 1;\n\t\t\t\t\t\t\t\tbool b3 = b1 && b2;                                    // if its close by \n\t\t\t\t\t\t\t\tbool b4 = cRay[lin,pos] != 's' && cRay[lin,pos] != 'e';//if its not saved or end\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\tif (b3 && b4)\n\t\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t\tcRay[lin,pos] = '+';\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\t\n\t\t\t}\n\t\t}\n\t}\n\t    \n\tpublic static void PrintcRay()\n    {\n\t\tint numChars = 0;\n        for (int lin = 0; lin < RayLinTotal; lin++)\n        {\n\t\t\tstring thisLin = \"\";\n            for (int pos = 0; pos < RayPosTotal; pos++)\n            {\n\t\t\t\tchar ch = cRay[lin, pos];\n                if (ch == 's' || ch == 'e' || ch == '.')\n                {\n                    thisLin = thisLin + ' ';\n                }\n\t\t\t\telse\n\t\t\t\t{\n                    thisLin = thisLin + ch;\n\t\t\t\t}\n            }\n            Console.WriteLine(thisLin.TrimEnd());\n        }\n    }\n\t\t    \n\tpublic static void InitcRay()\n    {\n        for (int lin = 0; lin < RayLinTotal; lin++)\n        {\n            for (int pos = 0; pos < RayPosTotal; pos++)\n            {\n                cRay[lin,pos] = '.';\n            }\n        }\n    }\n}\n",
+      "statement": "Legend has it that the origin of the name \"C#\" was really just two \"++\" stacked on top of each other, like this\n++\n++ \n...and that formed a \"sharp\" (musical note symbol).  Cool, right?\n\nC-Enterprises is considering releasing yet another programming language and their Marketing Department is in need of a logo for it that will play off that history, so it too will consist solely of plus-signs.  They have asked you to do some rough drafts for them.\n\nHere is what they know they want:\n~ They want just the <<outline>> of plus-signs\n~ The outline itself will be done in plus-signs characters ({{+}})\n~ When 2 plus-signs touch each other, the outlines separating the touching parts should disappear, so that it all \"flows together\"\n\nThey have not decided the following so these will be inputs in the various cases:\n~ The [[size]] of the plus-signs\n~ The [[thickness]] of the two-lines that form each plus-sign\n~ The number and arrangement of the plus-signs\n\n(You explain you are a programmer -- not a graphic artist -- but alas they insist.  So you just do your best, knowing the console application output will make the proportions appear a bit elongated.)",
+      "testCases": [
+        {
+          "title": "C Sharp Plus Test 1",
+          "isTest": true,
+          "testIn": "13\n5\n2\n+++\n++",
+          "testOut": "    +++++        +++++        +++++\n    +   +        +   +        +   +\n    +   +        +   +        +   +\n    +   +        +   +        +   +\n+++++   ++++++++++   ++++++++++   +++++\n+                                     +\n+                                     +\n+                                     +\n+++++   ++++++++++   ++++++++++   +++++\n    +   +        +   +        +   +\n    +   +        +   +        +   +\n    +   +        +   +        +   +\n    +   +        +   +        +++++\n    +   +        +   +\n    +   +        +   +\n    +   +        +   +\n    +   +        +   +\n+++++   ++++++++++   +++++\n+                        +\n+                        +\n+                        +\n+++++   ++++++++++   +++++\n    +   +        +   +\n    +   +        +   +\n    +   +        +   +\n    +++++        +++++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C Sharp Plus Validator 1",
+          "isTest": false,
+          "testIn": "13\n5\n2\n++\n+++",
+          "testOut": "    +++++        +++++\n    +   +        +   +\n    +   +        +   +\n    +   +        +   +\n+++++   ++++++++++   +++++\n+                        +\n+                        +\n+                        +\n+++++   ++++++++++   +++++\n    +   +        +   +\n    +   +        +   +\n    +   +        +   +\n    +   +        +   +\n    +   +        +   +        +++++\n    +   +        +   +        +   +\n    +   +        +   +        +   +\n    +   +        +   +        +   +\n+++++   ++++++++++   ++++++++++   +++++\n+                                     +\n+                                     +\n+                                     +\n+++++   ++++++++++   ++++++++++   +++++\n    +   +        +   +        +   +\n    +   +        +   +        +   +\n    +   +        +   +        +   +\n    +++++        +++++        +++++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "C Venn Test 2",
+          "isTest": true,
+          "testIn": "11\n3\n3\n++\n+++\n ++",
+          "testOut": "    +++        +++\n    + +        + +\n    + +        + +\n    + +        + +\n+++++ ++++++++++ +++++\n+                    +\n+++++ ++++++++++ +++++\n    + +        + +\n    + +        + +\n    + +        + +\n    + +        + +\n    + +        + +        +++\n    + +        + +        + +\n    + +        + +        + +\n    + +        + +        + +\n+++++ ++++++++++ ++++++++++ +++++\n+                               +\n+++++ ++++++++++ ++++++++++ +++++\n    + +        + +        + +\n    + +        + +        + +\n    + +        + +        + +\n    +++        + +        + +\n               + +        + +\n               + +        + +\n               + +        + +\n               + +        + +\n           +++++ ++++++++++ +++++\n           +                    +\n           +++++ ++++++++++ +++++\n               + +        + +\n               + +        + +\n               + +        + +\n               +++        +++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C Venn Validator 2",
+          "isTest": false,
+          "testIn": "11\n3\n3\n ++\n+++\n++",
+          "testOut": "               +++        +++\n               + +        + +\n               + +        + +\n               + +        + +\n           +++++ ++++++++++ +++++\n           +                    +\n           +++++ ++++++++++ +++++\n               + +        + +\n               + +        + +\n               + +        + +\n               + +        + +\n    +++        + +        + +\n    + +        + +        + +\n    + +        + +        + +\n    + +        + +        + +\n+++++ ++++++++++ ++++++++++ +++++\n+                               +\n+++++ ++++++++++ ++++++++++ +++++\n    + +        + +        + +\n    + +        + +        + +\n    + +        + +        + +\n    + +        + +        +++\n    + +        + +\n    + +        + +\n    + +        + +\n    + +        + +\n+++++ ++++++++++ +++++\n+                    +\n+++++ ++++++++++ +++++\n    + +        + +\n    + +        + +\n    + +        + +\n    +++        +++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "C Plus Plus and Plus Test 3",
+          "isTest": true,
+          "testIn": "12\n4\n3\n +\n+++\n +",
+          "testOut": "                ++++\n                +  +\n                +  +\n                +  +\n            +++++  +++++\n            +          +\n            +          +\n            +++++  +++++\n                +  +\n                +  +\n                +  +\n                +  +\n    ++++        +  +        ++++\n    +  +        +  +        +  +\n    +  +        +  +        +  +\n    +  +        +  +        +  +\n+++++  ++++++++++  ++++++++++  +++++\n+                                  +\n+                                  +\n+++++  ++++++++++  ++++++++++  +++++\n    +  +        +  +        +  +\n    +  +        +  +        +  +\n    +  +        +  +        +  +\n    ++++        +  +        ++++\n                +  +\n                +  +\n                +  +\n                +  +\n            +++++  +++++\n            +          +\n            +          +\n            +++++  +++++\n                +  +\n                +  +\n                +  +\n                ++++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C Plus Plus and Plus Validator 3",
+          "isTest": false,
+          "testIn": "12\n4\n3\n++\n+++\n++",
+          "testOut": "    ++++        ++++\n    +  +        +  +\n    +  +        +  +\n    +  +        +  +\n+++++  ++++++++++  +++++\n+                      +\n+                      +\n+++++  ++++++++++  +++++\n    +  +        +  +\n    +  +        +  +\n    +  +        +  +\n    +  +        +  +\n    +  +        +  +        ++++\n    +  +        +  +        +  +\n    +  +        +  +        +  +\n    +  +        +  +        +  +\n+++++  ++++++++++  ++++++++++  +++++\n+                                  +\n+                                  +\n+++++  ++++++++++  ++++++++++  +++++\n    +  +        +  +        +  +\n    +  +        +  +        +  +\n    +  +        +  +        +  +\n    +  +        +  +        ++++\n    +  +        +  +\n    +  +        +  +\n    +  +        +  +\n    +  +        +  +\n+++++  ++++++++++  +++++\n+                      +\n+                      +\n+++++  ++++++++++  +++++\n    +  +        +  +\n    +  +        +  +\n    +  +        +  +\n    ++++        ++++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "C-hi Test 4",
+          "isTest": true,
+          "testIn": "9\n3\n3\n+\n+++ +\n+ + +",
+          "testOut": "   +++\n   + +\n   + +\n++++ ++++\n+       +\n++++ ++++\n   + +\n   + +\n   + +\n   + +      +++      +++               +++\n   + +      + +      + +               + +\n   + +      + +      + +               + +\n++++ ++++++++ ++++++++ ++++         ++++ ++++\n+                         +         +       +\n++++ ++++++++ ++++++++ ++++         ++++ ++++\n   + +      + +      + +               + +\n   + +      + +      + +               + +\n   + +      +++      + +               + +\n   + +               + +               + +\n   + +               + +               + +\n   + +               + +               + +\n++++ ++++         ++++ ++++         ++++ ++++\n+       +         +       +         +       +\n++++ ++++         ++++ ++++         ++++ ++++\n   + +               + +               + +\n   + +               + +               + +\n   +++               +++               +++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C-hi Validator 4",
+          "isTest": false,
+          "testIn": "9\n3\n3\n+  +\n++ +\n++ +",
+          "testOut": "   +++                        +++\n   + +                        + +\n   + +                        + +\n++++ ++++                  ++++ ++++\n+       +                  +       +\n++++ ++++                  ++++ ++++\n   + +                        + +\n   + +                        + +\n   + +                        + +\n   + +      +++               + +\n   + +      + +               + +\n   + +      + +               + +\n++++ ++++++++ ++++         ++++ ++++\n+                +         +       +\n++++ ++++++++ ++++         ++++ ++++\n   + +      + +               + +\n   + +      + +               + +\n   + +      + +               + +\n   + +      + +               + +\n   + +      + +               + +\n   + +      + +               + +\n++++ ++++++++ ++++         ++++ ++++\n+                +         +       +\n++++ ++++++++ ++++         ++++ ++++\n   + +      + +               + +\n   + +      + +               + +\n   +++      +++               +++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "C Climb Test 5",
+          "isTest": true,
+          "testIn": "13\n7\n3\n+\n++\n+++",
+          "testOut": "   +++++++\n   +     +\n   +     +\n++++     ++++\n+           +\n+           +\n+           +\n+           +\n+           +\n++++     ++++\n   +     +\n   +     +\n   +     +\n   +     +      +++++++\n   +     +      +     +\n   +     +      +     +\n++++     ++++++++     ++++\n+                        +\n+                        +\n+                        +\n+                        +\n+                        +\n++++     ++++++++     ++++\n   +     +      +     +\n   +     +      +     +\n   +     +      +     +\n   +     +      +     +      +++++++\n   +     +      +     +      +     +\n   +     +      +     +      +     +\n++++     ++++++++     ++++++++     ++++\n+                                     +\n+                                     +\n+                                     +\n+                                     +\n+                                     +\n++++     ++++++++     ++++++++     ++++\n   +     +      +     +      +     +\n   +     +      +     +      +     +\n   +++++++      +++++++      +++++++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C Climb Validator 5",
+          "isTest": false,
+          "testIn": "12\n6\n3\n+\n++\n+++",
+          "testOut": "   ++++++\n   +    +\n   +    +\n++++    ++++\n+          +\n+          +\n+          +\n+          +\n++++    ++++\n   +    +\n   +    +\n   +    +\n   +    +      ++++++\n   +    +      +    +\n   +    +      +    +\n++++    ++++++++    ++++\n+                      +\n+                      +\n+                      +\n+                      +\n++++    ++++++++    ++++\n   +    +      +    +\n   +    +      +    +\n   +    +      +    +\n   +    +      +    +      ++++++\n   +    +      +    +      +    +\n   +    +      +    +      +    +\n++++    ++++++++    ++++++++    ++++\n+                                  +\n+                                  +\n+                                  +\n+                                  +\n++++    ++++++++    ++++++++    ++++\n   +    +      +    +      +    +\n   +    +      +    +      +    +\n   ++++++      ++++++      ++++++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "C-Cliff Test 6",
+          "isTest": true,
+          "testIn": "10\n4\n3\n+++\n ++\n  +",
+          "testOut": "   ++++      ++++      ++++\n   +  +      +  +      +  +\n   +  +      +  +      +  +\n++++  ++++++++  ++++++++  ++++\n+                            +\n+                            +\n++++  ++++++++  ++++++++  ++++\n   +  +      +  +      +  +\n   +  +      +  +      +  +\n   ++++      +  +      +  +\n             +  +      +  +\n             +  +      +  +\n             +  +      +  +\n          ++++  ++++++++  ++++\n          +                  +\n          +                  +\n          ++++  ++++++++  ++++\n             +  +      +  +\n             +  +      +  +\n             ++++      +  +\n                       +  +\n                       +  +\n                       +  +\n                    ++++  ++++\n                    +        +\n                    +        +\n                    ++++  ++++\n                       +  +\n                       +  +\n                       ++++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C-Cliff Validator 6",
+          "isTest": false,
+          "testIn": "10\n4\n3\n  +\n ++\n+++",
+          "testOut": "                       ++++\n                       +  +\n                       +  +\n                    ++++  ++++\n                    +        +\n                    +        +\n                    ++++  ++++\n                       +  +\n                       +  +\n                       +  +\n             ++++      +  +\n             +  +      +  +\n             +  +      +  +\n          ++++  ++++++++  ++++\n          +                  +\n          +                  +\n          ++++  ++++++++  ++++\n             +  +      +  +\n             +  +      +  +\n             +  +      +  +\n   ++++      +  +      +  +\n   +  +      +  +      +  +\n   +  +      +  +      +  +\n++++  ++++++++  ++++++++  ++++\n+                            +\n+                            +\n++++  ++++++++  ++++++++  ++++\n   +  +      +  +      +  +\n   +  +      +  +      +  +\n   ++++      ++++      ++++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "C-X Test 7",
+          "isTest": true,
+          "testIn": "7\n3\n3\n+ +\n +\n+ +",
+          "testOut": "  +++           +++\n  + +           + +\n+++ +++       +++ +++\n+     +       +     +\n+++ +++       +++ +++\n  + +           + +\n  +++           +++\n         +++\n         + +\n       +++ +++\n       +     +\n       +++ +++\n         + +\n         +++\n  +++           +++\n  + +           + +\n+++ +++       +++ +++\n+     +       +     +\n+++ +++       +++ +++\n  + +           + +\n  +++           +++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C-X Validator 7",
+          "isTest": false,
+          "testIn": "9\n5\n3\n+ +\n +\n+ +",
+          "testOut": "  +++++             +++++\n  +   +             +   +\n+++   +++         +++   +++\n+       +         +       +\n+       +         +       +\n+       +         +       +\n+++   +++         +++   +++\n  +   +             +   +\n  +++++             +++++\n           +++++\n           +   +\n         +++   +++\n         +       +\n         +       +\n         +       +\n         +++   +++\n           +   +\n           +++++\n  +++++             +++++\n  +   +             +   +\n+++   +++         +++   +++\n+       +         +       +\n+       +         +       +\n+       +         +       +\n+++   +++         +++   +++\n  +   +             +   +\n  +++++             +++++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Tic Tac C Test 8",
+          "isTest": true,
+          "testIn": "10\n6\n3\n+++\n+++\n+++",
+          "testOut": "  ++++++    ++++++    ++++++\n  +    +    +    +    +    +\n+++    ++++++    ++++++    +++\n+                            +\n+                            +\n+                            +\n+                            +\n+++    ++++++    ++++++    +++\n  +    +    +    +    +    +\n  +    +    +    +    +    +\n  +    +    +    +    +    +\n  +    +    +    +    +    +\n+++    ++++++    ++++++    +++\n+                            +\n+                            +\n+                            +\n+                            +\n+++    ++++++    ++++++    +++\n  +    +    +    +    +    +\n  +    +    +    +    +    +\n  +    +    +    +    +    +\n  +    +    +    +    +    +\n+++    ++++++    ++++++    +++\n+                            +\n+                            +\n+                            +\n+                            +\n+++    ++++++    ++++++    +++\n  +    +    +    +    +    +\n  ++++++    ++++++    ++++++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Tic Tac C Validator 8",
+          "isTest": false,
+          "testIn": "8\n4\n4\n++++\n++++\n++++\n+++",
+          "testOut": "  ++++    ++++    ++++    ++++\n  +  +    +  +    +  +    +  +\n+++  ++++++  ++++++  ++++++  +++\n+                              +\n+                              +\n+++  ++++++  ++++++  ++++++  +++\n  +  +    +  +    +  +    +  +\n  +  +    +  +    +  +    +  +\n  +  +    +  +    +  +    +  +\n  +  +    +  +    +  +    +  +\n+++  ++++++  ++++++  ++++++  +++\n+                              +\n+                              +\n+++  ++++++  ++++++  ++++++  +++\n  +  +    +  +    +  +    +  +\n  +  +    +  +    +  +    +  +\n  +  +    +  +    +  +    +  +\n  +  +    +  +    +  +    +  +\n+++  ++++++  ++++++  ++++++  +++\n+                              +\n+                              +\n+++  ++++++  ++++++  ++++++  +++\n  +  +    +  +    +  +    +  +\n  +  +    +  +    +  +    ++++\n  +  +    +  +    +  +\n  +  +    +  +    +  +\n+++  ++++++  ++++++  +++\n+                      +\n+                      +\n+++  ++++++  ++++++  +++\n  +  +    +  +    +  +\n  ++++    ++++    ++++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "C-Check Test 9",
+          "isTest": true,
+          "testIn": "8\n4\n4\n    +\n   +\n+ +\n +",
+          "testOut": "                                  ++++\n                                  +  +\n                                +++  +++\n                                +      +\n                                +      +\n                                +++  +++\n                                  +  +\n                                  ++++\n                          ++++\n                          +  +\n                        +++  +++\n                        +      +\n                        +      +\n                        +++  +++\n                          +  +\n                          ++++\n  ++++            ++++\n  +  +            +  +\n+++  +++        +++  +++\n+      +        +      +\n+      +        +      +\n+++  +++        +++  +++\n  +  +            +  +\n  ++++            ++++\n          ++++\n          +  +\n        +++  +++\n        +      +\n        +      +\n        +++  +++\n          +  +\n          ++++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C-Check Validator 9",
+          "isTest": false,
+          "testIn": "9\n3\n4\n+\n +\n  + +\n   +",
+          "testOut": "   +++\n   + +\n   + +\n++++ ++++\n+       +\n++++ ++++\n   + +\n   + +\n   +++\n            +++\n            + +\n            + +\n         ++++ ++++\n         +       +\n         ++++ ++++\n            + +\n            + +\n            +++\n                     +++               +++\n                     + +               + +\n                     + +               + +\n                  ++++ ++++         ++++ ++++\n                  +       +         +       +\n                  ++++ ++++         ++++ ++++\n                     + +               + +\n                     + +               + +\n                     +++               +++\n                              +++\n                              + +\n                              + +\n                           ++++ ++++\n                           +       +\n                           ++++ ++++\n                              + +\n                              + +\n                              +++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "C-Checkers Test 10",
+          "isTest": true,
+          "testIn": "9\n3\n4\n++\n++\n  ++\n  ++",
+          "testOut": "   +++      +++\n   + +      + +\n   + +      + +\n++++ ++++++++ ++++\n+                +\n++++ ++++++++ ++++\n   + +      + +\n   + +      + +\n   + +      + +\n   + +      + +\n   + +      + +\n   + +      + +\n++++ ++++++++ ++++\n+                +\n++++ ++++++++ ++++\n   + +      + +\n   + +      + +\n   +++      +++\n                     +++      +++\n                     + +      + +\n                     + +      + +\n                  ++++ ++++++++ ++++\n                  +                +\n                  ++++ ++++++++ ++++\n                     + +      + +\n                     + +      + +\n                     + +      + +\n                     + +      + +\n                     + +      + +\n                     + +      + +\n                  ++++ ++++++++ ++++\n                  +                +\n                  ++++ ++++++++ ++++\n                     + +      + +\n                     + +      + +\n                     +++      +++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C-Checkers Validator 10",
+          "isTest": false,
+          "testIn": "9\n3\n4\n  ++\n  ++\n++\n++",
+          "testOut": "                     +++      +++\n                     + +      + +\n                     + +      + +\n                  ++++ ++++++++ ++++\n                  +                +\n                  ++++ ++++++++ ++++\n                     + +      + +\n                     + +      + +\n                     + +      + +\n                     + +      + +\n                     + +      + +\n                     + +      + +\n                  ++++ ++++++++ ++++\n                  +                +\n                  ++++ ++++++++ ++++\n                     + +      + +\n                     + +      + +\n                     +++      +++\n   +++      +++\n   + +      + +\n   + +      + +\n++++ ++++++++ ++++\n+                +\n++++ ++++++++ ++++\n   + +      + +\n   + +      + +\n   + +      + +\n   + +      + +\n   + +      + +\n   + +      + +\n++++ ++++++++ ++++\n+                +\n++++ ++++++++ ++++\n   + +      + +\n   + +      + +\n   +++      +++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "C Sharp Sharp Test 11",
+          "isTest": true,
+          "testIn": "9\n5\n2\n++ ++\n++ ++",
+          "testOut": "  +++++    +++++             +++++    +++++\n  +   +    +   +             +   +    +   +\n+++   ++++++   +++         +++   ++++++   +++\n+                +         +                +\n+                +         +                +\n+                +         +                +\n+++   ++++++   +++         +++   ++++++   +++\n  +   +    +   +             +   +    +   +\n  +   +    +   +             +   +    +   +\n  +   +    +   +             +   +    +   +\n  +   +    +   +             +   +    +   +\n+++   ++++++   +++         +++   ++++++   +++\n+                +         +                +\n+                +         +                +\n+                +         +                +\n+++   ++++++   +++         +++   ++++++   +++\n  +   +    +   +             +   +    +   +\n  +++++    +++++             +++++    +++++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C Sharp Sharp Validator 11",
+          "isTest": false,
+          "testIn": "8\n6\n2\n++ ++\n++ ++",
+          "testOut": " ++++++  ++++++          ++++++  ++++++\n++    ++++    ++        ++    ++++    ++\n+              +        +              +\n+              +        +              +\n+              +        +              +\n+              +        +              +\n++    ++++    ++        ++    ++++    ++\n +    +  +    +          +    +  +    +\n +    +  +    +          +    +  +    +\n++    ++++    ++        ++    ++++    ++\n+              +        +              +\n+              +        +              +\n+              +        +              +\n+              +        +              +\n++    ++++    ++        ++    ++++    ++\n ++++++  ++++++          ++++++  ++++++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "C Sharp Plus Sharp Test 12",
+          "isTest": true,
+          "testIn": "9\n3\n3\n++\n+++++\n   ++",
+          "testOut": "   +++      +++\n   + +      + +\n   + +      + +\n++++ ++++++++ ++++\n+                +\n++++ ++++++++ ++++\n   + +      + +\n   + +      + +\n   + +      + +\n   + +      + +      +++      +++      +++\n   + +      + +      + +      + +      + +\n   + +      + +      + +      + +      + +\n++++ ++++++++ ++++++++ ++++++++ ++++++++ ++++\n+                                           +\n++++ ++++++++ ++++++++ ++++++++ ++++++++ ++++\n   + +      + +      + +      + +      + +\n   + +      + +      + +      + +      + +\n   +++      +++      +++      + +      + +\n                              + +      + +\n                              + +      + +\n                              + +      + +\n                           ++++ ++++++++ ++++\n                           +                +\n                           ++++ ++++++++ ++++\n                              + +      + +\n                              + +      + +\n                              +++      +++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C Sharp Plus Sharp Validator 12",
+          "isTest": false,
+          "testIn": "8\n4\n3\n   ++\n+++++\n++",
+          "testOut": "                          ++++    ++++\n                          +  +    +  +\n                        +++  ++++++  +++\n                        +              +\n                        +              +\n                        +++  ++++++  +++\n                          +  +    +  +\n                          +  +    +  +\n  ++++    ++++    ++++    +  +    +  +\n  +  +    +  +    +  +    +  +    +  +\n+++  ++++++  ++++++  ++++++  ++++++  +++\n+                                      +\n+                                      +\n+++  ++++++  ++++++  ++++++  ++++++  +++\n  +  +    +  +    +  +    +  +    +  +\n  +  +    +  +    ++++    ++++    ++++\n  +  +    +  +\n  +  +    +  +\n+++  ++++++  +++\n+              +\n+              +\n+++  ++++++  +++\n  +  +    +  +\n  ++++    ++++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "C Pyramid Test 13",
+          "isTest": true,
+          "testIn": "8\n4\n3\n  +\n +++\n+++++",
+          "testOut": "                  ++++\n                  +  +\n                +++  +++\n                +      +\n                +      +\n                +++  +++\n                  +  +\n                  +  +\n          ++++    +  +    ++++\n          +  +    +  +    +  +\n        +++  ++++++  ++++++  +++\n        +                      +\n        +                      +\n        +++  ++++++  ++++++  +++\n          +  +    +  +    +  +\n          +  +    +  +    +  +\n  ++++    +  +    +  +    +  +    ++++\n  +  +    +  +    +  +    +  +    +  +\n+++  ++++++  ++++++  ++++++  ++++++  +++\n+                                      +\n+                                      +\n+++  ++++++  ++++++  ++++++  ++++++  +++\n  +  +    +  +    +  +    +  +    +  +\n  ++++    ++++    ++++    ++++    ++++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C Pyramid Validator 13",
+          "isTest": false,
+          "testIn": "8\n4\n3\n+++++\n +++\n  +",
+          "testOut": "  ++++    ++++    ++++    ++++    ++++\n  +  +    +  +    +  +    +  +    +  +\n+++  ++++++  ++++++  ++++++  ++++++  +++\n+                                      +\n+                                      +\n+++  ++++++  ++++++  ++++++  ++++++  +++\n  +  +    +  +    +  +    +  +    +  +\n  ++++    +  +    +  +    +  +    ++++\n          +  +    +  +    +  +\n          +  +    +  +    +  +\n        +++  ++++++  ++++++  +++\n        +                      +\n        +                      +\n        +++  ++++++  ++++++  +++\n          +  +    +  +    +  +\n          ++++    +  +    ++++\n                  +  +\n                  +  +\n                +++  +++\n                +      +\n                +      +\n                +++  +++\n                  +  +\n                  ++++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Greater Than C Test 14",
+          "isTest": true,
+          "testIn": "10\n4\n5\n+\n +\n  +\n +\n+",
+          "testOut": "   ++++\n   +  +\n   +  +\n++++  ++++\n+        +\n+        +\n++++  ++++\n   +  +\n   +  +\n   ++++\n             ++++\n             +  +\n             +  +\n          ++++  ++++\n          +        +\n          +        +\n          ++++  ++++\n             +  +\n             +  +\n             ++++\n                       ++++\n                       +  +\n                       +  +\n                    ++++  ++++\n                    +        +\n                    +        +\n                    ++++  ++++\n                       +  +\n                       +  +\n                       ++++\n             ++++\n             +  +\n             +  +\n          ++++  ++++\n          +        +\n          +        +\n          ++++  ++++\n             +  +\n             +  +\n             ++++\n   ++++\n   +  +\n   +  +\n++++  ++++\n+        +\n+        +\n++++  ++++\n   +  +\n   +  +\n   ++++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Less Than C Validator 14",
+          "isTest": false,
+          "testIn": "8\n4\n5\n  +\n +\n+\n +\n  +",
+          "testOut": "                  ++++\n                  +  +\n                +++  +++\n                +      +\n                +      +\n                +++  +++\n                  +  +\n                  ++++\n          ++++\n          +  +\n        +++  +++\n        +      +\n        +      +\n        +++  +++\n          +  +\n          ++++\n  ++++\n  +  +\n+++  +++\n+      +\n+      +\n+++  +++\n  +  +\n  ++++\n          ++++\n          +  +\n        +++  +++\n        +      +\n        +      +\n        +++  +++\n          +  +\n          ++++\n                  ++++\n                  +  +\n                +++  +++\n                +      +\n                +      +\n                +++  +++\n                  +  +\n                  ++++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Giant C Test 15",
+          "isTest": true,
+          "testIn": "31\n13\n1\n+",
+          "testOut": "         +++++++++++++\n         +           +\n         +           +\n         +           +\n         +           +\n         +           +\n         +           +\n         +           +\n         +           +\n++++++++++           ++++++++++\n+                             +\n+                             +\n+                             +\n+                             +\n+                             +\n+                             +\n+                             +\n+                             +\n+                             +\n+                             +\n+                             +\n++++++++++           ++++++++++\n         +           +\n         +           +\n         +           +\n         +           +\n         +           +\n         +           +\n         +           +\n         +           +\n         +++++++++++++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Giant C Validator 15",
+          "isTest": false,
+          "testIn": "34\n14\n1\n+",
+          "testOut": "          ++++++++++++++\n          +            +\n          +            +\n          +            +\n          +            +\n          +            +\n          +            +\n          +            +\n          +            +\n          +            +\n+++++++++++            +++++++++++\n+                                +\n+                                +\n+                                +\n+                                +\n+                                +\n+                                +\n+                                +\n+                                +\n+                                +\n+                                +\n+                                +\n+                                +\n+++++++++++            +++++++++++\n          +            +\n          +            +\n          +            +\n          +            +\n          +            +\n          +            +\n          +            +\n          +            +\n          +            +\n          ++++++++++++++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "One Thick C Test 16",
+          "isTest": true,
+          "testIn": "30\n24\n1\n+",
+          "testOut": "   ++++++++++++++++++++++++\n   +                      +\n   +                      +\n++++                      ++++\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n+                            +\n++++                      ++++\n   +                      +\n   +                      +\n   ++++++++++++++++++++++++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "One Thick C Validator 16",
+          "isTest": false,
+          "testIn": "29\n25\n1\n+",
+          "testOut": "  +++++++++++++++++++++++++\n  +                       +\n+++                       +++\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+                           +\n+++                       +++\n  +                       +\n  +++++++++++++++++++++++++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "C-U Test 17",
+          "isTest": true,
+          "testIn": "7\n3\n5\n+  +\n+  +\n+  +\n+  +\n++++",
+          "testOut": "  +++                  +++\n  + +                  + +\n+++ +++              +++ +++\n+     +              +     +\n+++ +++              +++ +++\n  + +                  + +\n  + +                  + +\n  + +                  + +\n  + +                  + +\n+++ +++              +++ +++\n+     +              +     +\n+++ +++              +++ +++\n  + +                  + +\n  + +                  + +\n  + +                  + +\n  + +                  + +\n+++ +++              +++ +++\n+     +              +     +\n+++ +++              +++ +++\n  + +                  + +\n  + +                  + +\n  + +                  + +\n  + +                  + +\n+++ +++              +++ +++\n+     +              +     +\n+++ +++              +++ +++\n  + +                  + +\n  + +                  + +\n  + +    +++    +++    + +\n  + +    + +    + +    + +\n+++ ++++++ ++++++ ++++++ +++\n+                          +\n+++ ++++++ ++++++ ++++++ +++\n  + +    + +    + +    + +\n  +++    +++    +++    +++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C-U Validator 17",
+          "isTest": false,
+          "testIn": "7\n3\n4\n+  +\n+  +\n+  +\n++++",
+          "testOut": "  +++                  +++\n  + +                  + +\n+++ +++              +++ +++\n+     +              +     +\n+++ +++              +++ +++\n  + +                  + +\n  + +                  + +\n  + +                  + +\n  + +                  + +\n+++ +++              +++ +++\n+     +              +     +\n+++ +++              +++ +++\n  + +                  + +\n  + +                  + +\n  + +                  + +\n  + +                  + +\n+++ +++              +++ +++\n+     +              +     +\n+++ +++              +++ +++\n  + +                  + +\n  + +                  + +\n  + +    +++    +++    + +\n  + +    + +    + +    + +\n+++ ++++++ ++++++ ++++++ +++\n+                          +\n+++ ++++++ ++++++ ++++++ +++\n  + +    + +    + +    + +\n  +++    +++    +++    +++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "You can C forever Test 18",
+          "isTest": true,
+          "testIn": "7\n3\n20\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+",
+          "testOut": "  +++\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  +++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "You can C forever Validator 18",
+          "isTest": false,
+          "testIn": "5\n3\n25\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+",
+          "testOut": " +++\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n + +\n + +\n++ ++\n+   +\n++ ++\n +++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "I C U Test 19",
+          "isTest": true,
+          "testIn": "5\n3\n11\n +\n +\n +\n\n ++\n+\n ++\n\n+ +\n+ +\n +",
+          "testOut": "      +++\n     ++ ++\n     +   +\n     ++ ++\n      + +\n      + +\n     ++ ++\n     +   +\n     ++ ++\n      + +\n      + +\n     ++ ++\n     +   +\n     ++ ++\n      +++\n\n\n\n\n\n      +++  +++\n     ++ ++++ ++\n     +        +\n     ++ ++++ ++\n      +++  +++\n +++\n++ ++\n+   +\n++ ++\n +++\n      +++  +++\n     ++ ++++ ++\n     +        +\n     ++ ++++ ++\n      +++  +++\n\n\n\n\n\n +++       +++\n++ ++     ++ ++\n+   +     +   +\n++ ++     ++ ++\n + +       + +\n + +       + +\n++ ++     ++ ++\n+   +     +   +\n++ ++     ++ ++\n +++       +++\n      +++\n     ++ ++\n     +   +\n     ++ ++\n      +++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "I C U Validator 19",
+          "isTest": false,
+          "testIn": "6\n4\n11\n +\n +\n +\n\n ++\n+\n ++\n\n+ +\n+ +\n +",
+          "testOut": "       ++++\n      ++  ++\n      +    +\n      +    +\n      ++  ++\n       +  +\n       +  +\n      ++  ++\n      +    +\n      +    +\n      ++  ++\n       +  +\n       +  +\n      ++  ++\n      +    +\n      +    +\n      ++  ++\n       ++++\n\n\n\n\n\n\n       ++++  ++++\n      ++  ++++  ++\n      +          +\n      +          +\n      ++  ++++  ++\n       ++++  ++++\n ++++\n++  ++\n+    +\n+    +\n++  ++\n ++++\n       ++++  ++++\n      ++  ++++  ++\n      +          +\n      +          +\n      ++  ++++  ++\n       ++++  ++++\n\n\n\n\n\n\n ++++        ++++\n++  ++      ++  ++\n+    +      +    +\n+    +      +    +\n++  ++      ++  ++\n +  +        +  +\n +  +        +  +\n++  ++      ++  ++\n+    +      +    +\n+    +      +    +\n++  ++      ++  ++\n ++++        ++++\n       ++++\n      ++  ++\n      +    +\n      +    +\n      ++  ++\n       ++++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "C-Nake (Snake) Test 20",
+          "isTest": true,
+          "testIn": "7\n3\n11\n++\n +\n++\n+\n++\n +\n++\n+\n++\n +\n++",
+          "testOut": "  +++    +++\n  + +    + +\n+++ ++++++ +++\n+            +\n+++ ++++++ +++\n  + +    + +\n  +++    + +\n         + +\n         + +\n       +++ +++\n       +     +\n       +++ +++\n         + +\n         + +\n  +++    + +\n  + +    + +\n+++ ++++++ +++\n+            +\n+++ ++++++ +++\n  + +    + +\n  + +    +++\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +    +++\n  + +    + +\n+++ ++++++ +++\n+            +\n+++ ++++++ +++\n  + +    + +\n  +++    + +\n         + +\n         + +\n       +++ +++\n       +     +\n       +++ +++\n         + +\n         + +\n  +++    + +\n  + +    + +\n+++ ++++++ +++\n+            +\n+++ ++++++ +++\n  + +    + +\n  + +    +++\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +    +++\n  + +    + +\n+++ ++++++ +++\n+            +\n+++ ++++++ +++\n  + +    + +\n  +++    + +\n         + +\n         + +\n       +++ +++\n       +     +\n       +++ +++\n         + +\n         + +\n  +++    + +\n  + +    + +\n+++ ++++++ +++\n+            +\n+++ ++++++ +++\n  + +    + +\n  +++    +++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C-Nake (Snake) Validator 20",
+          "isTest": false,
+          "testIn": "7\n3\n11\n++\n+\n++\n +\n++\n+\n++\n +\n++\n+\n++",
+          "testOut": "  +++    +++\n  + +    + +\n+++ ++++++ +++\n+            +\n+++ ++++++ +++\n  + +    + +\n  + +    +++\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +    +++\n  + +    + +\n+++ ++++++ +++\n+            +\n+++ ++++++ +++\n  + +    + +\n  +++    + +\n         + +\n         + +\n       +++ +++\n       +     +\n       +++ +++\n         + +\n         + +\n  +++    + +\n  + +    + +\n+++ ++++++ +++\n+            +\n+++ ++++++ +++\n  + +    + +\n  + +    +++\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +    +++\n  + +    + +\n+++ ++++++ +++\n+            +\n+++ ++++++ +++\n  + +    + +\n  +++    + +\n         + +\n         + +\n       +++ +++\n       +     +\n       +++ +++\n         + +\n         + +\n  +++    + +\n  + +    + +\n+++ ++++++ +++\n+            +\n+++ ++++++ +++\n  + +    + +\n  + +    +++\n  + +\n  + +\n+++ +++\n+     +\n+++ +++\n  + +\n  + +\n  + +    +++\n  + +    + +\n+++ ++++++ +++\n+            +\n+++ ++++++ +++\n  + +    + +\n  +++    +++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "C-Legs Test 21",
+          "isTest": true,
+          "testIn": "7\n3\n4\n   +\n+  +\n+  ++\n++",
+          "testOut": "                       +++\n                       + +\n                     +++ +++\n                     +     +\n                     +++ +++\n                       + +\n                       + +\n  +++                  + +\n  + +                  + +\n+++ +++              +++ +++\n+     +              +     +\n+++ +++              +++ +++\n  + +                  + +\n  + +                  + +\n  + +                  + +    +++\n  + +                  + +    + +\n+++ +++              +++ ++++++ +++\n+     +              +            +\n+++ +++              +++ ++++++ +++\n  + +                  + +    + +\n  + +                  +++    +++\n  + +    +++\n  + +    + +\n+++ ++++++ +++\n+            +\n+++ ++++++ +++\n  + +    + +\n  +++    +++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C-Legs Validator 21",
+          "isTest": false,
+          "testIn": "7\n3\n4\n   +\n + +\n + ++\n++",
+          "testOut": "                       +++\n                       + +\n                     +++ +++\n                     +     +\n                     +++ +++\n                       + +\n                       + +\n         +++           + +\n         + +           + +\n       +++ +++       +++ +++\n       +     +       +     +\n       +++ +++       +++ +++\n         + +           + +\n         + +           + +\n         + +           + +    +++\n         + +           + +    + +\n       +++ +++       +++ ++++++ +++\n       +     +       +            +\n       +++ +++       +++ ++++++ +++\n         + +           + +    + +\n         + +           +++    +++\n  +++    + +\n  + +    + +\n+++ ++++++ +++\n+            +\n+++ ++++++ +++\n  + +    + +\n  +++    +++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "C You Tuesday Test 22",
+          "isTest": true,
+          "testIn": "8\n4\n5\n+ +\n+ +\n+++\n +\n +",
+          "testOut": "  ++++            ++++\n  +  +            +  +\n+++  +++        +++  +++\n+      +        +      +\n+      +        +      +\n+++  +++        +++  +++\n  +  +            +  +\n  +  +            +  +\n  +  +            +  +\n  +  +            +  +\n+++  +++        +++  +++\n+      +        +      +\n+      +        +      +\n+++  +++        +++  +++\n  +  +            +  +\n  +  +            +  +\n  +  +    ++++    +  +\n  +  +    +  +    +  +\n+++  ++++++  ++++++  +++\n+                      +\n+                      +\n+++  ++++++  ++++++  +++\n  +  +    +  +    +  +\n  ++++    +  +    ++++\n          +  +\n          +  +\n        +++  +++\n        +      +\n        +      +\n        +++  +++\n          +  +\n          +  +\n          +  +\n          +  +\n        +++  +++\n        +      +\n        +      +\n        +++  +++\n          +  +\n          ++++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "C You Next Validator 22",
+          "isTest": false,
+          "testIn": "6\n4\n6\n+  +\n ++\n+  +\n++ +\n+ ++\n+  +",
+          "testOut": " ++++              ++++\n++  ++            ++  ++\n+    +            +    +\n+    +            +    +\n++  ++            ++  ++\n ++++              ++++\n       ++++  ++++\n      ++  ++++  ++\n      +          +\n      +          +\n      ++  ++++  ++\n       ++++  ++++\n ++++              ++++\n++  ++            ++  ++\n+    +            +    +\n+    +            +    +\n++  ++            ++  ++\n +  +              +  +\n +  +  ++++        +  +\n++  ++++  ++      ++  ++\n+          +      +    +\n+          +      +    +\n++  ++++  ++      ++  ++\n +  +  ++++        +  +\n +  +        ++++  +  +\n++  ++      ++  ++++  ++\n+    +      +          +\n+    +      +          +\n++  ++      ++  ++++  ++\n +  +        ++++  +  +\n +  +              +  +\n++  ++            ++  ++\n+    +            +    +\n+    +            +    +\n++  ++            ++  ++\n ++++              ++++",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "C-Man Test 23",
+          "isTest": true,
+          "testIn": "7\n5\n4\n ++\n+  +\n+  +\n ++",
+          "testOut": "        +++++  +++++\n       ++   ++++   ++\n       +            +\n       +            +\n       +            +\n       ++   ++++   ++\n        +++++  +++++\n +++++                +++++\n++   ++              ++   ++\n+     +              +     +\n+     +              +     +\n+     +              +     +\n++   ++              ++   ++\n +   +                +   +\n +   +                +   +\n++   ++              ++   ++\n+     +              +     +\n+     +              +     +\n+     +              +     +\n++   ++              ++   ++\n +++++                +++++\n        +++++  +++++\n       ++   ++++   ++\n       +            +\n       +            +\n       +            +\n       ++   ++++   ++\n        +++++  +++++",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 23",
+          "isTest": false,
+          "testIn": "9\n3\n3\n ++\n+  +\n ++",
+          "testOut": "            +++      +++\n            + +      + +\n            + +      + +\n         ++++ ++++++++ ++++\n         +                +\n         ++++ ++++++++ ++++\n            + +      + +\n            + +      + +\n            +++      +++\n   +++                        +++\n   + +                        + +\n   + +                        + +\n++++ ++++                  ++++ ++++\n+       +                  +       +\n++++ ++++                  ++++ ++++\n   + +                        + +\n   + +                        + +\n   +++                        +++\n            +++      +++\n            + +      + +\n            + +      + +\n         ++++ ++++++++ ++++\n         +                +\n         ++++ ++++++++ ++++\n            + +      + +\n            + +      + +\n            +++      +++",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "If [[size]] is even, [[thickness]] is even\nIf [[size]] is odd, [[thickness]] is odd\n\n[[size]] ≥ 5\n[[thickness]] ≥ 3\n[[thickness]] < [[size]]",
+      "coverBinaryId": 94454183277159,
+      "stubGenerator": "read size:int\nread thickness:int\nread N:int\nloop N read logoLine:string(10)\nwrite The Logo",
+      "inputDescription": "<<Line 1:>> An integer [[size]] (both the height and width) of a single plus-sign outline\n<<Line 2:>> An integer [[thickness]] of the two lines of the plus-sign\n<<Line 3:>> An integer [[N]] for the number of rows in the proposed logo\n<<Next [[N]] lines:>> a string that constitutes a row of that logo",
+      "solutionLanguage": "C#",
+      "outputDescription": "Draw the logo\n(Trim off any white space to the right on each line)"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Legend has it that the origin of the name &quot;C#&quot; was really just two &quot;++&quot; stacked on top of each other, like this<br>++<br>++ <br>...and that formed a &quot;sharp&quot; (musical note symbol).  Cool, right?<br><br>C-Enterprises is considering releasing yet another programming language and their Marketing Department is in need of a logo for it that will play off that history, so it too will consist solely of plus-signs.  They have asked you to do some rough drafts for them.<br><br>Here is what they know they want:<br>~ They want just the <strong>outline</strong> of plus-signs<br>~ The outline itself will be done in plus-signs characters (<const>+</const>)<br>~ When 2 plus-signs touch each other, the outlines separating the touching parts should disappear, so that it all &quot;flows together&quot;<br><br>They have not decided the following so these will be inputs in the various cases:<br>~ The <var>size</var> of the plus-signs<br>~ The <var>thickness</var> of the two-lines that form each plus-sign<br>~ The number and arrangement of the plus-signs<br><br>(You explain you are a programmer -- not a graphic artist -- but alas they insist.  So you just do your best, knowing the console application output will make the proportions appear a bit elongated.)</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>size</var> (both the height and width) of a single plus-sign outline<br><strong>Line 2:</strong> An integer <var>thickness</var> of the two lines of the plus-sign<br><strong>Line 3:</strong> An integer <var>N</var> for the number of rows in the proposed logo<br><strong>Next <var>N</var> lines:</strong> a string that constitutes a row of that logo</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Draw the logo<br>(Trim off any white space to the right on each line)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">If <var>size</var> is even, <var>thickness</var> is even<br>If <var>size</var> is odd, <var>thickness</var> is odd<br><br><var>size</var> &ge; 5<br><var>thickness</var> &ge; 3<br><var>thickness</var> &lt; <var>size</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">13\n5\n2\n+++\n++</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">    +++++        +++++        +++++\n    +   +        +   +        +   +\n    +   +        +   +        +   +\n    +   +        +   +        +   +\n+++++   ++++++++++   ++++++++++   +++++\n+                                     +\n+                                     +\n+                                     +\n+++++   ++++++++++   ++++++++++   +++++\n    +   +        +   +        +   +\n    +   +        +   +        +   +\n    +   +        +   +        +   +\n    +   +        +   +        +++++\n    +   +        +   +\n    +   +        +   +\n    +   +        +   +\n    +   +        +   +\n+++++   ++++++++++   +++++\n+                        +\n+                        +\n+                        +\n+++++   ++++++++++   +++++\n    +   +        +   +\n    +   +        +   +\n    +   +        +   +\n    +++++        +++++</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 100649831037,
+  "avatar": 94714081045618,
+  "commentCount": 13,
+  "upVotes": 8,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 732711,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1670079761508,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

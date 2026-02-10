@@ -1,0 +1,146 @@
+{
+  "id": 1457,
+  "activeVersion": 17,
+  "score": 5,
+  "votableId": 8260726,
+  "codingamerId": 1931039,
+  "views": 778,
+  "commentableId": 8197025,
+  "title": "Short accounts make long friends",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "MooMooN",
+  "publicHandle": "14571873bcb6fa786c4b4db22ac7a7a6f9b5",
+  "codingamerHandle": "f1b039838b3ecdd0a39c67967cdcaa319301391",
+  "lastVersion": {
+    "version": 17,
+    "autocloseTime": 1538525773236,
+    "data": {
+      "title": "Short accounts make long friends",
+      "topics": [],
+      "solution": "\nclass Moteur {\n\n \n\n  calculate(resultat, chiffres) {\n    this.operateurs = ['+', '-', 'x', '/'];\n    this.cible = resultat;\n    this.operations_encours = [];\n    this.best_operations = [];\n    this.nb_a_tirer = chiffres.length;\n    this.best_distance = this.cible;\n    this.best_nb_op = this.nb_a_tirer;\n\n    this.recherche_arbre(chiffres);  // recherche récursive\n\n    return [this.best_distance,this.best_operations.filter(o=>o!=='')];\n  }\n\n\n   recherche_arbre(tab) {\n    const nb_nombres = tab.length;\n\n    for (let i = 0; i < nb_nombres - 1; i++) {\n      for (let j = i + 1; j < nb_nombres; j++) {\n        for (let p = 0; p < this.operateurs.length; p++) {\n          const res = this.calcule(tab[i], tab[j], this.operateurs[p]); // on calcule et on empile\n          if (res !== 0) {\n            this.compare(res);\n\n            const tab2 = [];\n            tab2.push(res);\n            for (let k = 0; k < nb_nombres; k++) {\n              if (k !== i && k !== j) {\n                tab2.push(tab[k]);\n              }\n            }\n            if (tab2.length > 1 && this.operations_encours.length < this.best_nb_op - 1) {\n              this.recherche_arbre(tab2); // appel de la fonction récursive\n            }\n          }\n          this.operations_encours.pop();\n        }\n      }\n    }\n  }\n\n   compare(n) {\n\n    if (n === this.cible && this.operations_encours.length < this.best_nb_op) {\n      this.best_distance = 0;\n      this.best_nb_op = this.operations_encours.length;\n      this.copie_vers_best_operations();\n    } else {\n      if (this.best_distance !== 0) {\n        const distance = Math.abs(n - this.cible);\n        if (distance < this.best_distance) {\n          this.best_distance = distance;\n          this.copie_vers_best_operations();\n          this.candidat = n;\n        }\n      }\n    }\n  }\n\n  copie_vers_best_operations() {\n\n    for (let i = 0; i < this.operations_encours.length; i++) {\n      this.best_operations[i] = this.operations_encours[i];\n    }\n    \n    for (let i = this.operations_encours.length; i < this.nb_a_tirer - 1; i++) {\n      this.best_operations[i] = '';\n    }\n  }\n\n  calcule(n1, n2, op) {\n    let res;\n    if (op === '+') {\n      res = n1 + n2;\n      this.operations_encours.push(n1 + op + n2 + '=' + res);\n      return res;\n    }\n    if (op === '-') {\n      if (n1 > n2) {\n        res = n1 - n2;\n        this.operations_encours.push(n1 + op + n2 + '=' + res);\n        return res;\n      } else {\n        res = n2 - n1;\n        this.operations_encours.push(n2 + op + n1 + '=' + res);\n        return res;\n      }\n    }\n    if (op === 'x') {\n      res = n1 * n2;\n      this.operations_encours.push(n1 + op + n2 + '=' + res);\n      return res;\n    }\n    if (op === '/') {\n      if (n1 >= n2) {\n        res = Math.floor(n1 / n2);\n        if (res * n2 !== n1) {\n          res = 0;\n        }\n        this.operations_encours.push(n1 + op + n2 + '=' + res);\n        return res;\n      } else {\n        res = Math.floor(n2 / n1);\n        if (res * n1 !== n2) {\n          res = 0;\n        }\n        this.operations_encours.push(n2 + op + n1 + '=' + res);\n        return res;\n      }\n    }\n  }\n}\n\n\n\nvar result = parseInt(readline());\nvar inputs = readline().split(' ');\nvar a = parseInt(inputs[0]);\nvar b = parseInt(inputs[1]);\nvar c = parseInt(inputs[2]);\nvar d = parseInt(inputs[3]);\nvar e = parseInt(inputs[4]);\nvar f = parseInt(inputs[5]);\nconst chiffres = [a,b,c,d,e,f];\n\nconst moteur = new Moteur();\nlet [distance,operations] = moteur.calculate(result,chiffres);\n\n\nprint(distance==0?'POSSIBLE':'IMPOSSIBLE');\nprint(distance==0?operations.length:distance);",
+      "statement": "The purpose of this puzzle is to find the result (profit) asked from 6 supplied figures. You have at your disposal the four standard operators: addition (bill), subtraction, multiplication (increase) and division.\n\nOnly subtractions resulting in a positive number are considered.\nOnly divisions resulting in an integer are considered.\n\n<<Example 1:>>\nif input is\n[[Result]] : {{862}}\n[[a]] : {{7}}, [[b]] : {{9}}, [[c]] : {{100}}, [[d]] : {{25}}, [[e]] : {{3}}, [[f]] : {{3}}\n\n100 - 7 = 93\n93 × 9 = 837\n837 + 25 = 862\n\noutput would be\n{{POSSIBLE\n3}}\n\n<<Example 2:>>\nif input is\n[[Result]] : {{862}}\n[[a]] : {{3}}, [[b]] : {{5}}, [[c]] : {{6}}, [[d]] : {{2}}, [[e]] : {{1}}, [[f]] : {{7}}\n\n3 × 7 = 21\n5 + 2 = 7\n7 × 6 = 42\n42 - 1 = 41\n41 × 21 = 861\n\noutput would be\n{{IMPOSSIBLE\n1}}",
+      "testCases": [
+        {
+          "title": "Very simple",
+          "isTest": true,
+          "testIn": "101\n100 5 2 3 4 1",
+          "testOut": "POSSIBLE\n1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Very Simple",
+          "isTest": false,
+          "testIn": "105\n100 5 75 50 25 10",
+          "testOut": "POSSIBLE\n1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Bad Bad Bad",
+          "isTest": true,
+          "testIn": "999\n1 2 2 3 3 1",
+          "testOut": "IMPOSSIBLE\n918",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Bad Bad Bad",
+          "isTest": false,
+          "testIn": "995\n3 3 10 5 1 2",
+          "testOut": "IMPOSSIBLE\n5",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "425",
+          "isTest": true,
+          "testIn": "425\n2 50 25 5 9 2",
+          "testOut": "POSSIBLE\n2",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "228",
+          "isTest": false,
+          "testIn": "228\n10 6 5 7 6 9",
+          "testOut": "POSSIBLE\n3",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "889",
+          "isTest": true,
+          "testIn": "889\n3 7 8 10 4 6",
+          "testOut": "POSSIBLE\n5",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "355",
+          "isTest": false,
+          "testIn": "355\n1 100 25 10 7 9",
+          "testOut": "POSSIBLE\n4",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "A division?",
+          "isTest": true,
+          "testIn": "869\n2 3 4 2 50 6",
+          "testOut": "IMPOSSIBLE\n1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "996\n50 25 100 7 75 8",
+          "testOut": "POSSIBLE\n4",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Another Division",
+          "isTest": true,
+          "testIn": "651\n8 75 25 50 5 10",
+          "testOut": "POSSIBLE\n5",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "297\n8 7 75 50 25 8",
+          "testOut": "POSSIBLE\n4",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "100 ≤ [[Result]] ≤ 999\n[[a]], [[b]], [[c]], [[d]], [[e]], [[f]] in (1,2,3,4,5,6,7,8,9,10,25,50,75,100)",
+      "stubGenerator": "read Result:int\nread a:int b:int c:int d:int e:int f:int\n\nwrite POSSIBLE/IMPOSSIBLE\nwrite value",
+      "inputDescription": "<<Line 1:>> 1 integer [[Result]] giving the expected result\n<<Line 2:>> 6 integers ([[a]], [[b]], [[c]], [[d]], [[e]], [[f]]) giving the available numbers for the operation",
+      "solutionLanguage": "Javascript",
+      "outputDescription": "<<Line 1:>> {{POSSIBLE}} or {{IMPOSSIBLE}} whether the operation is possible or not\n<<Line 2:>> min distance from result if the expected result is impossible to obtain <<or>> minimal number of operations if the expected result is possible to achieve"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">The purpose of this puzzle is to find the result (profit) asked from 6 supplied figures. You have at your disposal the four standard operators: addition (bill), subtraction, multiplication (increase) and division.<br><br>Only subtractions resulting in a positive number are considered.<br>Only divisions resulting in an integer are considered.<br><br><strong>Example 1:</strong><br>if input is<br><var>Result</var> : <const>862</const><br><var>a</var> : <const>7</const>, <var>b</var> : <const>9</const>, <var>c</var> : <const>100</const>, <var>d</var> : <const>25</const>, <var>e</var> : <const>3</const>, <var>f</var> : <const>3</const><br><br>100 - 7 = 93<br>93 &times; 9 = 837<br>837 + 25 = 862<br><br>output would be<br><const>POSSIBLE<br>3</const><br><br><strong>Example 2:</strong><br>if input is<br><var>Result</var> : <const>862</const><br><var>a</var> : <const>3</const>, <var>b</var> : <const>5</const>, <var>c</var> : <const>6</const>, <var>d</var> : <const>2</const>, <var>e</var> : <const>1</const>, <var>f</var> : <const>7</const><br><br>3 &times; 7 = 21<br>5 + 2 = 7<br>7 &times; 6 = 42<br>42 - 1 = 41<br>41 &times; 21 = 861<br><br>output would be<br><const>IMPOSSIBLE<br>1</const></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> 1 integer <var>Result</var> giving the expected result<br><strong>Line 2:</strong> 6 integers (<var>a</var>, <var>b</var>, <var>c</var>, <var>d</var>, <var>e</var>, <var>f</var>) giving the available numbers for the operation</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> <const>POSSIBLE</const> or <const>IMPOSSIBLE</const> whether the operation is possible or not<br><strong>Line 2:</strong> min distance from result if the expected result is impossible to obtain <strong>or</strong> minimal number of operations if the expected result is possible to achieve</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">100 &le; <var>Result</var> &le; 999<br><var>a</var>, <var>b</var>, <var>c</var>, <var>d</var>, <var>e</var>, <var>f</var> in (1,2,3,4,5,6,7,8,9,10,25,50,75,100)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">101\n100 5 2 3 4 1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">POSSIBLE\n1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 233021099121,
+  "avatar": 11972180817471,
+  "commentCount": 11,
+  "upVotes": 6,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 263750,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

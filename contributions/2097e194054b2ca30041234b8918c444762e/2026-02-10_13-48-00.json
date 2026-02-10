@@ -1,0 +1,218 @@
+{
+  "id": 2097,
+  "activeVersion": 26,
+  "score": 4,
+  "votableId": 10267064,
+  "codingamerId": 1390495,
+  "views": 277,
+  "commentableId": 10198224,
+  "title": "Barcode scanner",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "GeoCon",
+  "publicHandle": "2097e194054b2ca30041234b8918c444762e",
+  "codingamerHandle": "ac1ef0a310767beb1fff402fcd898fac5940931",
+  "lastVersion": {
+    "version": 26,
+    "autocloseTime": 1556042214051,
+    "data": {
+      "title": "Barcode scanner",
+      "topics": [
+        {
+          "id": 114,
+          "handle": "check-digit",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Check-digit",
+            "2": "Check-digit"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        },
+        {
+          "id": 69,
+          "handle": "pattern-recognition",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Reconnaissance de motifs",
+            "2": "Pattern recognition"
+          },
+          "pageTitle": "Pattern recognition: exercises and theory",
+          "puzzleCount": 6,
+          "parentTopicId": 41,
+          "contentDetailsId": 88
+        }
+      ],
+      "solution": "import sys \n\ndef verify_checksum(digits):\n    return sum(int(digits[i])*[1,3][i%2] for i in range(len(digits)))%10 == 0\n    \ndef get_parity(side):\n    p = ''.join('L' if p.count('1')%2 else 'G' for p in side)\n    if p == 'G'*6: return 'R'*6 # right side\n    return p    \n    \ndef get_codes(bitstream, start):\n    CODE_SIZE = 7\n    return [bitstream[i:i+CODE_SIZE] for i in range(start, start+CODE_SIZE*6, CODE_SIZE)]\n\nL = ['0001101', '0011001', '0010011', '0111101', '0100011', '0110001', '0101111', '0111011', '0110111', '0001011']\nR = [''.join('0' if i=='1' else '1' for i in l) for l in L] # deduce from L\nG = [r[::-1] for r in R] # deduce R\nparity_pattern = ['LLLLLL', 'LLGLGG', 'LLGGLG', 'LLGGGL', 'LGLLGG', 'LGGLLG', 'LGGGLL', 'LGLGLG', 'LGLGGL', 'LGGLGL']\nparity_right = 'RRRRRR'\nLG_map = {'G':G, 'L':L}\n\ndef ean13_decode(barcode):\n    error = False\n    lg, cg, rg = barcode[:3], barcode[45:50], barcode[-3:]\n    if lg+cg+rg == '10'*5+'1':       # validate guards\n        right = get_codes(barcode, 50)\n        if get_parity(right) != parity_right:  # incorrect right side - try rotation\n            barcode = barcode[::-1]\n            right = get_codes(barcode, 50)\n        if get_parity(right) != parity_right:  # if correct right parity\n            error = True\n            print('Incrrect right part parity', file=sys.stderr)\n        else:\n            left = get_codes(barcode, 3)\n            parity_left = get_parity(left)\n            digits = []\n            if parity_left in parity_pattern:\n                digits += [parity_pattern.index(parity_left)]\n                for p in parity_left:\n                    code = left.pop(0)\n                    if code in LG_map[p]:\n                        digits += [LG_map[p].index(code)]\n                    else:\n                        error = True\n                        print('Broken left part digit', file=sys.stderr)\n                        break\n                for code in right:\n                    if code in R:\n                        digits += [R.index(code)]\n                    else:\n                        error = True\n                        print('Broken right part digit', file=sys.stderr)\n                        break\n                if not error and not verify_checksum(digits):\n                    print('Checksum error', file=sys.stderr)\n                    error = True\n            else:\n                print(parity_left, 'is not supported', file=sys.stderr)\n                error = True\n    else:\n        print('Incorrect guards', file=sys.stderr)\n        error = True\n    \n    return '' if error else ''.join(map(str, digits))\n\ndef ean13_encode(digits):\n    lrg = '101'\n    cg = '01010'\n    parity = list(parity_pattern[int(digits[0])])\n    code = lrg\n    for i in digits[1:7]:\n        code += LG_map[parity.pop(0)][int(i)]\n    code += cg\n    for i in digits[7:]:\n        code += R[int(i)]\n    code += lrg\n    return code\n    \ndef ean13_test(c, name):\n    assert verify_checksum(c)\n    e = ean13_encode(c)\n    d = ean13_decode(e)\n    if name: print(name, file=sys.stderr)\n    print(d, e, e[::-1], sep='\\n', end='\\n\\n', file=sys.stderr)\n    assert d\n    r = ean13_decode(e[::-1])\n    assert r\n    assert c == d\n    assert c == r\n\n# unit tests\nean13_test('4003994155486', 'Example')\n#example = '10100011010100111011110100010110010111001110101010110011010011101001110101110010010001010000101'\n#         '101 0001101 0100111 0111101 0001011 0010111 0011101 01010 1100110 1001110 1001110 1011100 1001000 1010000 101'\nean13_test('4824004000288', 'Sample')\n\nean13_test('4820011185802', 'Ukraine')\nean13_test('4820135587520', 'Ukraine')\n\nean13_test('5011386029399', 'Great Britain (Reversed)')\nean13_test('5060036534653', 'Great Britain (Reversed)')\n\nean13_test('4012991656698', 'Germany')\nean13_test('8001348150770', 'Italy')\n\nean13_test('9785961468748', 'Book')\nean13_test('9786171210547', 'Book')\n\n# errors\nean13_test('0072512235904', 'USA for broken guards')\nean13_test('4820131391268', 'Ukraine for broken guards')\n\nean13_decode('11100011010111011001001101100010011001001001101010110110010000101001110111010011100101011100101') # Borken guard(s)\nean13_decode('10001101110011011000110100110010100001011001101000100001011101001100110110110010100001001000101') # Borken guard(s)\n\nprint('1123456789012', ean13_encode('1123456789012'), 'Wrong Checksum', sep='\\n', file=sys.stderr, end='\\n\\n')\nprint('6785946123518', ean13_encode('6785946123518'), 'Wrong Checksum', sep='\\n', file=sys.stderr, end='\\n\\n')\n#ean13_test('1123456789012', 'Wrong Checksum')\n#ean13_test('6785946123518', 'Wrong Checksum')\n\nean13_test('7622100815242', 'Broken parity')\nean13_test('4820017000574', 'Broken parity (Reversed)')\n\nean13_decode('10101011110011011001001101100110001101010011101010100100011001101001110110010010111001101100101') # Borken parity\nean13_decode('10100101010010001011100101001110100111010011101010100010011001101011000101100011011001110110101') # Borken parity (Reversed)\n\nean13_decode('10100111010010001011100101001110100111010011101010100010011001101011000101100011011001111111101') # Other error (Reversed)\nean13_decode('10101011111111011001001101100110001101010011101010100100011001101001110110110010111001101100101') # Other error \n\ndigits = ean13_decode(input())\nprint(digits if digits else 'INVALID SCAN')\n",
+      "statement": "You are given a line of 95 bits sequence [[scanline]] representing an image received from a barcode scanner.\nThe sequence is in EAN-13 format barcode.\n\n<<NOTE>> The input sequence might be given in reversed order. This relates to a real life scenario when scanning the barcode upside-down.\n\nYour mission is to decode this barcode into its decimal 13-digit representation.\n\nInput binary sequence consist of the following blocks:\n<<LEFT GUARD>> + <<LEFT PART>> + <<CENTRAL GUARD>> + <<RIGHT PART>> + <<RIGHT GUARD>>.\n\n<<LEFT GUARD>> and <<RIGHT GUARD>> are 3-bit sequences and both should be equal to {{101}}.\n<<CENTRAL GUARD>> has a length of 5, having value {{01010}}.\nGuards allow the scanner to identify the start and end of the barcode in an image as well as the width of the bits.\n\n<<LEFT PART>> and <<RIGHT PART>> each consist of 6 7-bit codes.\nLeft part may have digits coded with both <<L-code>> (which have odd parity) and <<G-code>> (even parity).\nRight part consists of only even parity <<R-codes>>. \nYou may also notice that R-code is a reversed version of G-code and an inverted version of L-code.\n```<<Digit>> <<L-code>>  <<G-code>>  <<R-code>>\n<<0>>     0001101 0100111 1110010\n<<1>>     0011001 0110011 1100110\n<<2>>     0010011 0011011 1101100\n<<3>>     0111101 0100001 1000010\n<<4>>     0100011 0011101 1011100\n<<5>>     0110001 0111001 1001110\n<<6>>     0101111 0000101 1010000\n<<7>>     0111011 0010001 1000100\n<<8>>     0110111 0001001 1001000\n<<9>>     0001011 0010111 1110100```\nPlease refer to {{https://imgur.com/3kKOkIX}} for a visual example.\n\nSo at this point you are able to reconstruct the last 12 digits.\nThe first EAN-13 digit is encoded by the pattern of L and G codes in <<LEFT PART>> using the table below.\n```<<First digit  First group of 6 digits  Last group of 6 digits>>\n<<0>>            LLLLLL                   RRRRRR\n<<1>>            LLGLGG                   RRRRRR\n<<2>>            LLGGLG                   RRRRRR\n<<3>>            LLGGGL                   RRRRRR\n<<4>>            LGLLGG                   RRRRRR\n<<5>>            LGGLLG                   RRRRRR\n<<6>>            LGGGLL                   RRRRRR\n<<7>>            LGLGLG                   RRRRRR\n<<8>>            LGLGGL                   RRRRRR\n<<9>>            LGGLGL                   RRRRRR```\n\nFinally, to verify a barcode after decoding, the following <<CHECKSUM>> calculation approach is used:\nMultiply every second digit by 3, then add up all the digits. If barcode is correct its checksum would be a multiple of 10.\n\n<<Example>>\nIt is easier to understand an example of encoding rather than decoding. \nSuppose we want to encode the number 4003994155486.\n\nThe first digit is 4, so we will use the pattern LGLLGG in the left part.\nWe then look up codes 0(L), 0(G), 3(L), 9(L), 9(G), 4(G) in the table:\n0001101 0100111 0111101 0001011 0010111 0011101\n\nFor the right part we look up 1(R), 5(R), 5(R), 4(R), 8(R), 6(R) :\n1100110 1001110 1001110 1011100 1001000 1010000\n\nFinally, add the guards.\n\n<<JFYI>>\nThe first 3 digits of EAN-13 correspond to a country code. So, by reading barcodes printed on different products you may identify the country each product was manufactured in.",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "10100011010100111011110100010110010111001110101010110011010011101001110101110010010001010000101",
+          "testOut": "4003994155486",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Sample",
+          "isTest": false,
+          "testIn": "10101101110011011010001100011010100111001110101010111001011100101110010110110010010001001000101",
+          "testOut": "4824004000288",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Ukraine",
+          "isTest": true,
+          "testIn": "10101101110011011000110100011010110011011001101010110011010010001001110100100011100101101100101",
+          "testOut": "4820011185802",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Ukraine",
+          "isTest": false,
+          "testIn": "10101101110011011000110100110010100001011100101010100111010010001000100100111011011001110010101",
+          "testOut": "4820135587520",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Great Britain (Reversed)",
+          "isTest": true,
+          "testIn": "10100101110010111010000100101110011011010011101010101000011101101011110110011011001101011000101",
+          "testOut": "5011386029399",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Great Britain (Reversed)",
+          "isTest": false,
+          "testIn": "10101000010111001000010100111010100001011100101010101000010111101011000111001010100001011000101",
+          "testOut": "5060036534653",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Germany",
+          "isTest": true,
+          "testIn": "10100011010110011001001100010110010111011001101010101000010011101010000101000011101001001000101",
+          "testOut": "4012991656698",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Italy",
+          "isTest": false,
+          "testIn": "10100011010100111001100101000010011101011011101010110011010011101110010100010010001001110010101",
+          "testOut": "8001348150770",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Wrong checksum",
+          "isTest": true,
+          "testIn": "10100110010010011010000101000110111001000010101010100010010010001110100111001011001101101100101",
+          "testOut": "INVALID SCAN",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Wrong checksum",
+          "isTest": false,
+          "testIn": "10101110110001001011100100101110100011010111101010110011011011001000010100111011001101001000101",
+          "testOut": "INVALID SCAN",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Broken guard(s)",
+          "isTest": true,
+          "testIn": "11100011010111011001001101100010011001001001101010110110010000101001110111010011100101011100101",
+          "testOut": "INVALID SCAN",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Broken guard(s)",
+          "isTest": false,
+          "testIn": "10001101110011011000110100110010100001011001101000100001011101001100110110110010100001001000101",
+          "testOut": "INVALID SCAN",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Broken parity",
+          "isTest": true,
+          "testIn": "10101011110011011001001101100110001101010011101010100100011001101001110110010010111001101100101",
+          "testOut": "INVALID SCAN",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Broken parity (Reversed)",
+          "isTest": false,
+          "testIn": "10100101010010001011100101001110100111010011101010100010011001101011000101100011011001110110101",
+          "testOut": "INVALID SCAN",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Other error (Reversed)",
+          "isTest": true,
+          "testIn": "10100111010010001011100101001110100111010011101010100010011001101011000101100011011001111111101",
+          "testOut": "INVALID SCAN",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Other error",
+          "isTest": false,
+          "testIn": "10101011111111011001001101100110001101010011101010100100011001101001110110110010111001101100101",
+          "testOut": "INVALID SCAN",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Book (Reversed)",
+          "isTest": true,
+          "testIn": "10100010010011101001000100010010000101001110101010100110010100001101000100111010010001101110101",
+          "testOut": "9785961468748",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Book",
+          "isTest": false,
+          "testIn": "10101110110001001000010100110010010001001100101010110110011001101110010100111010111001000100101",
+          "testOut": "9786171210547",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "stubGenerator": "read scanline:string(95)\nwrite 1234567890123",
+      "inputDescription": "A string [[scanline]] of 95 bits representing a scanned EAN-13 barcode line of pixels (0-white, 1-black)",
+      "solutionLanguage": "Python3",
+      "outputDescription": "A single line of <<13 decimal numbers without spaces>> representing decoded EAN-13 barcode or {{INVALID SCAN}} in case any corruption of the input sequence detected."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are given a line of 95 bits sequence <var>scanline</var> representing an image received from a barcode scanner.<br>The sequence is in EAN-13 format barcode.<br><br><strong>NOTE</strong> The input sequence might be given in reversed order. This relates to a real life scenario when scanning the barcode upside-down.<br><br>Your mission is to decode this barcode into its decimal 13-digit representation.<br><br>Input binary sequence consist of the following blocks:<br><strong>LEFT GUARD</strong> + <strong>LEFT PART</strong> + <strong>CENTRAL GUARD</strong> + <strong>RIGHT PART</strong> + <strong>RIGHT GUARD</strong>.<br><br><strong>LEFT GUARD</strong> and <strong>RIGHT GUARD</strong> are 3-bit sequences and both should be equal to <const>101</const>.<br><strong>CENTRAL GUARD</strong> has a length of 5, having value <const>01010</const>.<br>Guards allow the scanner to identify the start and end of the barcode in an image as well as the width of the bits.<br><br><strong>LEFT PART</strong> and <strong>RIGHT PART</strong> each consist of 6 7-bit codes.<br>Left part may have digits coded with both <strong>L-code</strong> (which have odd parity) and <strong>G-code</strong> (even parity).<br>Right part consists of only even parity <strong>R-codes</strong>. <br>You may also notice that R-code is a reversed version of G-code and an inverted version of L-code.<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><strong>Digit</strong> <strong>L-code</strong>  <strong>G-code</strong>  <strong>R-code</strong><br><strong>0</strong>     0001101 0100111 1110010<br><strong>1</strong>     0011001 0110011 1100110<br><strong>2</strong>     0010011 0011011 1101100<br><strong>3</strong>     0111101 0100001 1000010<br><strong>4</strong>     0100011 0011101 1011100<br><strong>5</strong>     0110001 0111001 1001110<br><strong>6</strong>     0101111 0000101 1010000<br><strong>7</strong>     0111011 0010001 1000100<br><strong>8</strong>     0110111 0001001 1001000<br><strong>9</strong>     0001011 0010111 1110100</pre><pre style=\"font-family: monospace\"></pre><br>Please refer to <const>https://imgur.com/3kKOkIX</const> for a visual example.<br><br>So at this point you are able to reconstruct the last 12 digits.<br>The first EAN-13 digit is encoded by the pattern of L and G codes in <strong>LEFT PART</strong> using the table below.<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><strong>First digit  First group of 6 digits  Last group of 6 digits</strong><br><strong>0</strong>            LLLLLL                   RRRRRR<br><strong>1</strong>            LLGLGG                   RRRRRR<br><strong>2</strong>            LLGGLG                   RRRRRR<br><strong>3</strong>            LLGGGL                   RRRRRR<br><strong>4</strong>            LGLLGG                   RRRRRR<br><strong>5</strong>            LGGLLG                   RRRRRR<br><strong>6</strong>            LGGGLL                   RRRRRR<br><strong>7</strong>            LGLGLG                   RRRRRR<br><strong>8</strong>            LGLGGL                   RRRRRR<br><strong>9</strong>            LGGLGL                   RRRRRR</pre><pre style=\"font-family: monospace\"></pre><br><br>Finally, to verify a barcode after decoding, the following <strong>CHECKSUM</strong> calculation approach is used:<br>Multiply every second digit by 3, then add up all the digits. If barcode is correct its checksum would be a multiple of 10.<br><br><strong>Example</strong><br>It is easier to understand an example of encoding rather than decoding. <br>Suppose we want to encode the number 4003994155486.<br><br>The first digit is 4, so we will use the pattern LGLLGG in the left part.<br>We then look up codes 0(L), 0(G), 3(L), 9(L), 9(G), 4(G) in the table:<br>0001101 0100111 0111101 0001011 0010111 0011101<br><br>For the right part we look up 1(R), 5(R), 5(R), 4(R), 8(R), 6(R) :<br>1100110 1001110 1001110 1011100 1001000 1010000<br><br>Finally, add the guards.<br><br><strong>JFYI</strong><br>The first 3 digits of EAN-13 correspond to a country code. So, by reading barcodes printed on different products you may identify the country each product was manufactured in.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">A string <var>scanline</var> of 95 bits representing a scanned EAN-13 barcode line of pixels (0-white, 1-black)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">A single line of <strong>13 decimal numbers without spaces</strong> representing decoded EAN-13 barcode or <const>INVALID SCAN</const> in case any corruption of the input sequence detected.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">10100011010100111011110100010110010111001110101010110011010011101001110101110010010001010000101</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">4003994155486</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 216950572977,
+  "avatar": 34638586226224,
+  "commentCount": 9,
+  "upVotes": 5,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 328491,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

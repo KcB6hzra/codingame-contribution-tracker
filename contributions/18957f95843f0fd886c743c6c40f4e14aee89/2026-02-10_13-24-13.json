@@ -1,0 +1,180 @@
+{
+  "id": 18957,
+  "activeVersion": 30,
+  "score": 13,
+  "votableId": 23900679,
+  "codingamerId": 4134943,
+  "views": 465,
+  "commentableId": 23785131,
+  "title": "Takuzu Solver",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "vinc-r",
+  "publicHandle": "18957f95843f0fd886c743c6c40f4e14aee89",
+  "codingamerHandle": "fb82e6cef7c3f73e81256761a6cac2043494314",
+  "lastVersion": {
+    "version": 30,
+    "autocloseTime": 1657196116838,
+    "data": {
+      "title": "Takuzu Solver",
+      "topics": [
+        {
+          "id": 71,
+          "handle": "recursion",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Récursion",
+            "2": "Recursion"
+          },
+          "pageTitle": "Recursion: exercises and theory",
+          "puzzleCount": 21,
+          "parentTopicId": 41,
+          "contentDetailsId": 77
+        },
+        {
+          "id": 117,
+          "handle": "logic",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Logic",
+            "2": "Logic"
+          },
+          "puzzleCount": 15,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import sys\nimport numpy as np\n\n\ndef read_inputs():\n\n    n = int(input())\n    p = int(n/2) # number of 0/1 by row/col (half of n value)\n\n    grid = np.array([list(input()) for i in range(n)])\n    grid = np.where(grid=='.', np.nan, grid).astype(np.float16)\n\n    return n, p, grid\n\n\ndef is_nan(num):\n    return num != num\n\n\n# Define grid validation functions\ndef check_col(grid, j):\n    \"\"\"return False if too many 0 or 1 in one col\"\"\"\n    return np.count_nonzero(grid[:,j]==0) <= p and np.count_nonzero(grid[:,j]==1) <= p\n\ndef check_row(grid, i):\n    \"\"\"return False if too many 0 or 1 in one row\"\"\"\n    return np.count_nonzero(grid[i,:]==0) <= p and np.count_nonzero(grid[i,:]==1) <= p\n\ndef check_row_and_col_different(grid):\n    \"\"\"\n    return True if one row is equal to another, or one col equal to another\n    \"\"\"\n    t_grid = np.transpose(grid)\n    return not( any( \n        (np.array_equal(grid[i], grid[j]) for i in range(n) for j in range(i)) \n    ) or any( \n        (np.array_equal(t_grid[i], t_grid[j]) for i in range(n) for j in range(i)) \n    ) )\n\ndef check_side_by_side_digit(grid, i, j):\n    \"\"\"\n    return False if 3 same digits aligned at a position\n    \"\"\"\n    if i >= 2 and grid[i-2,j] == grid[i-1,j] == grid[i,j]:\n        return False\n    if i < n-2 and grid[i+2,j] == grid[i+1,j] == grid[i,j]:\n        return False\n    if j >= 2 and grid[i,j-2] == grid[i,j-1] == grid[i,j]:\n        return False\n    if j < n-2 and grid[i,j+2] == grid[i,j+1] == grid[i,j]:\n        return False\n    if 1 <= i < n-1 and grid[i-1,j] == grid[i,j] == grid[i+1,j]:\n        return False\n    if 1 <= j < n-1 and grid[i,j-1] == grid[i,j] == grid[i,j+1]:\n        return False\n    return True\n\n\ndef fill_side_by_side_digit(grid):\n    \"\"\"\n    auto fill grid when there aare side by side digits in the grid\n    \"\"\"\n    for i in range(n):\n        for j in range(n):\n            if 1 <= i < n-1 and grid[i-1, j] == grid[i+1, j] and is_nan(grid[i, j]):\n                grid[i, j] = 1. - grid[i-1, j]\n            if 1 <= j < n-1 and grid[i, j-1] == grid[i, j+1] and is_nan(grid[i, j]):\n                grid[i, j] = 1. - grid[i, j-1]\n            if i >= 2 and grid[i-2,j] == grid[i-1,j] and is_nan(grid[i, j]):\n                grid[i, j] = 1. - grid[i-1, j]\n            if i < n-2 and grid[i+2,j] == grid[i+1,j] and is_nan(grid[i, j]):\n                grid[i, j] = 1. - grid[i+1, j]\n            if j >= 2 and grid[i,j-2] == grid[i,j-1] and is_nan(grid[i, j]):\n                grid[i, j] = 1. - grid[i, j-1]\n            if j < n-2 and grid[i,j+2] == grid[i,j+1] and is_nan(grid[i, j]):\n                grid[i, j] = 1. - grid[i, j+1]\n\ndef fill_row(grid):\n    \"\"\"\n    auto fill grid when a row already have his numer of 0/1\n    \"\"\"\n    for i in range(n):\n        if np.count_nonzero(grid[i,:]==0) == p:\n            grid[i,:] = np.where(np.isnan(grid[i,:]), 1., grid[i,:])\n        if np.count_nonzero(grid[i,:]==1) == p:\n            grid[i,:] = np.where(np.isnan(grid[i,:]), 0., grid[i,:])\n\ndef fill_col(grid):\n    \"\"\"\n    auto fill grid when a col already have his numer of 0/1\n    \"\"\"\n    for j in range(n):\n        if np.count_nonzero(grid[:,j]==0) == p:\n            grid[:,j] = np.where(np.isnan(grid[:,j]), 1., grid[:,j])\n        if np.count_nonzero(grid[:,j]==1) == p:\n            grid[:,j] = np.where(np.isnan(grid[:,j]), 0., grid[:,j])\n\n\ndef easy_solve(grid):\n    \"\"\"\n    complete grid with simples rules\n    \"\"\"\n    # init a max na_count\n    na_count = n**2\n\n    # try to easy solve wile the na_count is lower\n    # so while the grid is continuing to be easy solve\n    while np.isnan(grid).sum() and np.count_nonzero(np.isnan(grid)) < na_count:\n        na_count = np.count_nonzero(np.isnan(grid))\n        fill_side_by_side_digit(grid)\n        fill_row(grid)\n        fill_col(grid)\n\n\ndef recursive_solve(grid, position):\n    global r_count\n    r_count += 1\n\n    # if recuresive fucntion browsed all the grid\n    if position == n**2:\n        print(f\"End Recursive (recursive count = {r_count})\", file=sys.stderr, flush=True)\n        return True\n    \n    # extract i, j with position\n    i = int(position/n)\n    j = position%n\n\n    # if grid[i][j] already have a 0/1, go to next position\n    if grid[i][j] in [0., 1.]:\n        return recursive_solve(grid, position+1)\n\n    # try to add 0/1 at grid[i][j]\n    for v in [1., 0.]:\n        grid[i][j] = v \n        # check validity\n        if check_col(grid, j) and check_row(grid, i) and \\\n            check_side_by_side_digit(grid, i, j) and \\\n            check_row_and_col_different(grid):\n\n            # go to next position\n            if recursive_solve(grid, position+1):\n                return True\n\n    # undo grid modification if recursive funtion is false\n    grid[i][j] = np.nan\n    return False\n\n\nif __name__ == \"__main__\":\n\n    # count recursive loop\n    r_count = 0\n\n    n, p, grid = read_inputs()\n\n    # try to easy solve\n    # important to reduce number of recursive solve\n    easy_solve(grid)\n\n    print(grid, file=sys.stderr, flush=True)\n\n    # if easy solve is not enougth, do a recursive solve\n    if np.count_nonzero(np.isnan(grid)) > 0:\n        recursive_solve(grid, 0)\n\n    # grid conversion to str without decimal\n    grid = grid.astype(int).astype(str)\n\n    # display output\n    for i in range(n):\n        print(\"\".join(grid[i]))\n",
+      "statement": "Your program must output a solution to a Takuzu. \nA Takuzu, also known as Binairo, is a logic puzzle involving placement of two symbols (0 and 1) on a square grid. \n\nThe objective is to fill the grid with 1s and 0s, constraints are :\n- an equal number of 1s and 0s in each row and column\n- no more than two of either number adjacent to each other\n- no identical rows and no identical columns\n\nSimilar to Sudoku, each puzzle begins with several squares in the grid already filled. Each test has only one possible solution.",
+      "testCases": [
+        {
+          "title": "Test 4x4",
+          "isTest": true,
+          "testIn": "4\n.1.0\n..0.\n.0..\n11.0",
+          "testOut": "0110\n1001\n0011\n1100",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4x4",
+          "isTest": false,
+          "testIn": "4\n0..0\n..1.\n.101\n....",
+          "testOut": "0110\n1010\n0101\n1001",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6x6",
+          "isTest": true,
+          "testIn": "6\n.....1\n.0....\n...0..\n...00.\n.0..0.\n.0.0..",
+          "testOut": "010101\n100110\n011010\n011001\n100101\n101010",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6x6",
+          "isTest": false,
+          "testIn": "6\n.1....\n..0.1.\n.....0\n......\n..00.0\n..0..0",
+          "testOut": "011001\n010011\n101100\n001101\n110010\n100110",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 8x8",
+          "isTest": true,
+          "testIn": "8\n0..1....\n.1..0..1\n.....1.1\n1..0....\n..0..1..\n..01...0\n0..1.11.\n10...0..",
+          "testOut": "01011010\n01100101\n10010101\n10101010\n01001101\n11010010\n00110110\n10101001",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8x8",
+          "isTest": false,
+          "testIn": "8\n..00....\n.....0..\n........\n..0..00.\n........\n.1..1.1.\n..0..0.0\n...0...0",
+          "testOut": "01001101\n00110011\n10100110\n01011001\n10110100\n01001011\n11010010\n10101100",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 10x10",
+          "isTest": true,
+          "testIn": "10\n00........\n.....1....\n...0.00..0\n00.0......\n......00..\n.01..00...\n...0.....0\n.0...00..0\n..........\n.0.00.0..0",
+          "testOut": "0011011001\n0101011001\n1100100110\n0010101101\n1101010010\n1010100101\n0110011010\n1001100110\n0101101001\n1010010110",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10x10",
+          "isTest": false,
+          "testIn": "10\n...1.1....\n..0...0.0.\n00..0.0...\n0.......1.\n...1......\n....0.0..1\n...0.1..0.\n......0.0.\n..0.......\n....00...0",
+          "testOut": "0011011010\n1100100101\n0011010110\n0100101011\n1001101100\n0110010011\n1010011001\n1101100100\n0100110011\n1011001100",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 12x12",
+          "isTest": true,
+          "testIn": "12\n0....11..0..\n...1...0....\n.0....1...00\n1..1..11...1\n.........1..\n0.0...1.....\n....0.......\n....01.0....\n..00..0.0..0\n.....1....1.\n10.0........\n..1....1..00",
+          "testOut": "010101101001\n010101001011\n101010110100\n100100110011\n011011001100\n010010110011\n101100101010\n001101001101\n110010010110\n010101101010\n101010010101\n101011010100",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12x12",
+          "isTest": false,
+          "testIn": "12\n......1.1..0\n....0.1...1.\n..1.0....0.0\n00......1...\n....00...0..\n..0.0...1...\n......00.0.0\n.00..1......\n..0....1....\n00.......0..\n.......00...\n00...0......",
+          "testOut": "011010101100\n010100110011\n101101010010\n001011001101\n110100110010\n100100101101\n011011001010\n100101010101\n110010110100\n001011001011\n110101100100\n001010011011",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 8x8 Hard",
+          "isTest": true,
+          "testIn": "8\n...11..0\n.0...0..\n.00.....\n1.......\n.......1\n..1.....\n0.......\n........",
+          "testOut": "01011010\n00101011\n10010101\n11001010\n01100101\n10110010\n01001101\n10110100",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8x8 Hard",
+          "isTest": false,
+          "testIn": "8\n.0..1.0.\n.......1\n....1...\n...0....\n.....11.\n.0.1....\n..11...0\n.....0..",
+          "testOut": "10101001\n01010101\n01011010\n10100101\n01100110\n10011001\n00110110\n11001010",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "0 < [[n]] <= 20\n[[n]] is an even number",
+      "coverBinaryId": 84680085638610,
+      "stubGenerator": "read n:int\n\nloop n read input:string(40)\n\nloop n write 0101",
+      "inputDescription": "<<Line 1>> : an integer [[n]], dimension of the square grid.\n<<[[n]] lines>> : a string [[line]] with [[n]] digits corresponding to that line. A \".\" is used for an empty space.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[n]] lines>> : A string line with [[n]] digits corresponding to that line. The original numbers should not have changed, and there should be no \".\" left."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Your program must output a solution to a Takuzu. <br>A Takuzu, also known as Binairo, is a logic puzzle involving placement of two symbols (0 and 1) on a square grid. <br><br>The objective is to fill the grid with 1s and 0s, constraints are :<br>- an equal number of 1s and 0s in each row and column<br>- no more than two of either number adjacent to each other<br>- no identical rows and no identical columns<br><br>Similar to Sudoku, each puzzle begins with several squares in the grid already filled. Each test has only one possible solution.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong> : an integer <var>n</var>, dimension of the square grid.<br><strong><var>n</var> lines</strong> : a string <var>line</var> with <var>n</var> digits corresponding to that line. A &quot;.&quot; is used for an empty space.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>n</var> lines</strong> : A string line with <var>n</var> digits corresponding to that line. The original numbers should not have changed, and there should be no &quot;.&quot; left.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt; <var>n</var> &lt;= 20<br><var>n</var> is an even number</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4\n.1.0\n..0.\n.0..\n11.0</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">0110\n1001\n0011\n1100</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 113685266183,
+  "avatar": 57340707535268,
+  "commentCount": 16,
+  "upVotes": 13,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 673631,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1657044585607,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

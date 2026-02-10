@@ -1,0 +1,190 @@
+{
+  "id": 264,
+  "activeVersion": 9,
+  "score": 3,
+  "votableId": 2132381,
+  "codingamerId": 884034,
+  "views": 305,
+  "commentableId": 2081662,
+  "title": "Texas Holdem",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "AdamHill",
+  "publicHandle": "2647265b478a56360b31d3c65ecdb76f51a",
+  "codingamerHandle": "52ef2ffd7ccd5b2f9ae49fbda76ee192430488",
+  "lastVersion": {
+    "version": 9,
+    "data": {
+      "title": "Texas Holdem",
+      "topics": [
+        {
+          "id": 45,
+          "handle": "conditions",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 28,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        }
+      ],
+      "solution": "using System;\nusing System.Linq;\nusing System.IO;\nusing System.Text;\nusing System.Collections;\nusing System.Collections.Generic;\n\n/**\n * Auto-generated code below aims at helping you parse\n * the standard input according to the problem statement.\n **/\nclass Solution\n{\n    static void Main()\n    {\n        string[] holeCardsPlayer1 = Console.ReadLine().Split(' '); // 2 Hole cards for Player 1, e.g. \"AS 5D\"\n        string[] holeCardsPlayer2 = Console.ReadLine().Split(' '); // 2 Hole cards for Player 2, e.g. \"KH 6C\"\n        string[] communityCards = Console.ReadLine().Split(' '); // 5 Community cards, e.g. \"4D 4H 8S TS JH\"\n\n        string answer = new HoldemSolution().Solve(holeCardsPlayer1.ToList(), holeCardsPlayer2.ToList(), communityCards.ToList());\n        Console.WriteLine(answer); // One line containing the player number, hand type and ordered values of card in the winning hand, or \"DRAW\" if there is no winner\n    }\n}\n\n#region Solution Code\npublic enum CardValue\n{\n    Two = 2,\n    Three = 3,\n    Four = 4,\n    Five = 5,\n    Six = 6,\n    Seven = 7,\n    Eight = 8,\n    Nine = 9,\n    Ten = 10,\n    Jack = 11,\n    Queen = 12,\n    King = 13,\n    Ace = 14\n}\n\npublic enum Suit\n{\n    C,\n    D,\n    H,\n    S\n}\n\npublic enum HandType\n{\n    HIGH_CARD,\n    PAIR,\n    TWO_PAIR,\n    THREE_OF_A_KIND,\n    STRAIGHT,\n    FLUSH,\n    FULL_HOUSE,\n    FOUR_OF_A_KIND,\n    STRAIGHT_FLUSH,\n    ROYAL_FLUSH,\n}\n\npublic class Card\n{\n    private CardValue value;\n    private Suit suit;\n\n    public Card(string rawData)\n    {\n        this.value = this.ParseCardValue(rawData);\n        this.suit = this.ParseSuit(rawData);\n    }\n\n    public Card(CardValue value, Suit suit)\n    {\n        this.value = value;\n        this.suit = suit;\n    }\n\n    public Suit Suit { get { return this.suit; } }\n    public CardValue Value { get { return this.value; } }\n\n    public static List<Card> ParseCards(List<string> cards)\n    {\n        return cards.Select(i => new Card(i)).ToList();\n    }\n\n    public override string ToString()\n    {\n        return this.value.ToString() + this.suit.ToString();\n    }\n\n    public string OutputValue()\n    {\n        return (int)this.value < 10 ? ((int)this.value).ToString() :\n            (int)this.value < 11 ? \"T\" :\n            (int)this.value < 12 ? \"J\" :\n            (int)this.value < 13 ? \"Q\" :\n            (int)this.value < 14 ? \"K\" :\n            \"A\";\n    }\n\n    private CardValue ParseCardValue(string rawValue)\n    {\n        string valuestring = rawValue.Substring(0, rawValue.Length - 1);\n\n        return valuestring == \"T\" ? CardValue.Ten :\n            valuestring == \"J\" ? CardValue.Jack :\n            valuestring == \"Q\" ? CardValue.Queen :\n            valuestring == \"K\" ? CardValue.King :\n            valuestring == \"A\" ? CardValue.Ace :\n            (CardValue)int.Parse(valuestring);\n    }\n\n    private Suit ParseSuit(string rawData)\n    {\n        return (Suit)Enum.Parse(typeof(Suit), rawData.Substring(rawData.Length - 1));\n    }\n}\n\npublic class FiveCardHand\n{\n    public HandType handType;\n    public List<Card> cards;\n\n    public FiveCardHand(List<Card> cards)\n    {\n        this.cards = cards;\n        this.CalculateHand();\n    }\n\n    public List<Card> Cards { get { return this.cards; } }\n\n    public HandType HandType { get { return this.handType; } }\n\n    public override string ToString()\n    {\n        var sb = new StringBuilder();\n\n        foreach (var card in this.cards)\n        {\n            if (sb.Length > 0)\n            {\n                sb.Append(\" \");\n            }\n\n            sb.Append(card.ToString());\n        }\n\n        return sb.ToString();\n    }\n\n    public string OutputValues()\n    {\n        var sb = new StringBuilder();\n\n        foreach (var card in this.cards)\n        {\n            sb.Append(card.OutputValue());\n        }\n\n        return sb.ToString();\n    }\n\n    public bool IsDrawnWithHand(FiveCardHand otherHand)\n    {\n        if (otherHand.HandType > this.HandType)\n        {\n            return false;\n        }\n\n        if (this.HandType > otherHand.HandType)\n        {\n            return false;\n        }\n\n        return this.OutputValues() == otherHand.OutputValues();\n    }\n\n    public bool IsGreaterThanOrEqualTo(FiveCardHand otherHand)\n    {\n        if (this.IsDrawnWithHand(otherHand))\n        {\n            return true;\n        }\n\n        if (this.HandType < otherHand.HandType)\n        {\n            return false;\n        }\n\n        if (this.HandType > otherHand.HandType)\n        {\n            return true;\n        }\n\n        // Iterate ordered cards, first one that's different tells us the result\n        for (int i = 0; i < this.cards.Count(); ++i)\n        {\n            var thisCardValue = this.cards[i].Value;\n            var otherCardValue = otherHand.Cards[i].Value;\n\n            if (thisCardValue != otherCardValue)\n            {\n                return thisCardValue > otherCardValue;\n            }\n        }\n\n        // Should never get to here\n        throw new Exception(\"FiveCardHand.IsGreaterThanOrEqualTo: Could not determine equivalence.\");\n    }\n\n    private void CalculateHand()\n    {\n        this.cards = this.cards.OrderByDescending(i => i.Value).ToList();\n\n        if (this.IsRoyalFlush())\n        {\n            this.handType = HandType.ROYAL_FLUSH;\n        }\n        else if (this.IsStraightFlush())\n        {\n            this.handType = HandType.STRAIGHT_FLUSH;\n            this.ReorderStraightOrStraightFlush();\n        }\n        else if (this.IsFourOfAKind())\n        {\n            this.handType = HandType.FOUR_OF_A_KIND;\n            this.ReorderFourOfAKindOrFullHouse();\n        }\n        else if (this.IsFullHouse())\n        {\n            this.handType = HandType.FULL_HOUSE;\n            this.ReorderFourOfAKindOrFullHouse();\n        }\n        else if (this.IsFlush())\n        {\n            this.handType = HandType.FLUSH;\n        }\n        else if (this.IsStraight())\n        {\n            this.handType = HandType.STRAIGHT;\n            this.ReorderStraightOrStraightFlush();\n        }\n        else if (this.IsThreeOfAKind())\n        {\n            this.handType = HandType.THREE_OF_A_KIND;\n            this.ReorderThreeOfAKind();\n        }\n        else if (this.IsTwoPair())\n        {\n            this.handType = HandType.TWO_PAIR;\n            this.ReorderOneOrTwoPair();\n        }\n        else if (this.IsPair())\n        {\n            this.handType = HandType.PAIR;\n            this.ReorderOneOrTwoPair();\n        }\n        else\n        {\n            this.handType = HandType.HIGH_CARD;\n        }\n    }\n\n    private void ReorderOneOrTwoPair()\n    {\n        var significantValues = this.cards\n            .Select(i => new { Value = i.Value, Count = this.cards.Count(j => j.Value == i.Value) })\n            .Where(i => i.Count > 1)\n            .Select(i => i.Value);\n        var significantCards = this.cards.Where(i => significantValues.Contains(i.Value)).OrderByDescending(i => i.Value).ToList();\n        var kickers = this.cards.Where(i => !significantValues.Contains(i.Value)).OrderByDescending(i => i.Value).ToList();\n        this.SetCardsBasedOnOrderedSignificantCardsAndKickers(significantCards, kickers);\n    }\n\n    private void ReorderThreeOfAKind()\n    {\n        // Middle card in ordered list must be of the significant value e.g. 5 in 76555 or 55532\n        var significantValue = this.cards[2].Value;\n        var significantCards = this.cards.Where(i => i.Value == significantValue).ToList();\n        var kickers = this.cards.Except(significantCards).OrderByDescending(i => i.Value).ToList();\n        this.SetCardsBasedOnOrderedSignificantCardsAndKickers(significantCards, kickers);\n    }\n\n    private void ReorderFourOfAKindOrFullHouse()\n    {\n        // Middle card in ordered list must be of the significant value e.g. 5 in 65555 or 55533\n        var significantValue = this.cards[2].Value;\n\n        if (this.cards.Any(i => i.Value > significantValue))\n        {\n            this.cards = this.cards.OrderBy(i => (int)i.Value).ToList();\n        }\n    }\n\n    private void ReorderStraightOrStraightFlush()\n    {\n        // Reorder if Ace is low\n        if (this.cards.Any(i => i.Value == CardValue.Ace) && this.cards.Any(i => i.Value == CardValue.Five))\n        {\n            var ace = this.cards[0];\n            this.cards.RemoveAt(0);\n            this.cards.Add(ace);\n        }\n    }\n\n    private bool IsRoyalFlush()\n    {\n        return this.Has5OfSameSuit() && this.ToString() == \"AKQJT\";\n    }\n\n    private bool IsStraightFlush()\n    {\n        return !this.IsRoyalFlush() && this.Has5OfSameSuit() && this.Has5Consecutive();\n    }\n\n    private bool IsFourOfAKind()\n    {\n        var integerValues = this.CardsAsListOfInts().ToList();\n        var distinctValues = integerValues.Distinct().ToList();\n\n        if (distinctValues.Count() != 2)\n        {\n            return false;\n        }\n\n        return integerValues.Count(i => i == distinctValues[0]) == 4\n            || integerValues.Count(i => i == distinctValues[1]) == 4;\n    }\n\n    private bool IsFullHouse()\n    {\n        return this.CardsAsListOfInts().Distinct().Count() == 2 && !this.IsFourOfAKind();\n    }\n\n    private bool IsFlush()\n    {\n        return this.Has5OfSameSuit() && !this.IsStraightFlush() && !this.IsRoyalFlush();\n    }\n\n    private bool IsStraight()\n    {\n        return this.Has5Consecutive() && !this.IsStraightFlush() && !this.IsRoyalFlush();\n    }\n\n    private bool IsThreeOfAKind()\n    {\n        var integerValues = this.CardsAsListOfInts().ToList();\n\n        // 5 cards are in order of value, therefore middle one integerValues[2] must be value of 3 of a kind or 4 of a kind, if there is one\n        return !this.IsFourOfAKind() && integerValues.Count(i => i == integerValues[2]) == 3;\n    }\n\n    private bool IsTwoPair()\n    {\n        return !this.IsThreeOfAKind() && this.CardsAsListOfInts().Distinct().Count() == 3;\n    }\n\n    private bool IsPair()\n    {\n        return this.CardsAsListOfInts().Distinct().Count() == 4;\n    }\n\n    private bool Has5OfSameSuit()\n    {\n        var firstSuit = this.cards.First().Suit;\n\n        return this.cards.All(i => i.Suit == firstSuit);\n    }\n\n    private bool Has5Consecutive()\n    {\n        var ints = this.CardsAsListOfInts().OrderBy(i => i).ToList();\n        var altInts = this.CardsAsListOfIntsAceLow().OrderBy(i => i).ToList();\n        bool has5 = this.IsConsecutive(ints);\n        bool has5Alt = this.IsConsecutive(altInts);\n\n        if (has5Alt)\n        {\n            int i = 0;\n        }\n        return has5 || has5Alt;\n    }\n\n    private IEnumerable<int> CardsAsListOfIntsAceLow()\n    {\n        return this.cards.Select(i => i.Value == CardValue.Ace ? 1 : (int)i.Value);\n    }\n\n    private IEnumerable<int> CardsAsListOfInts()\n    {\n        return this.cards.Select(i => (int)i.Value);\n    }\n\n    private bool IsConsecutive(IEnumerable<int> integers)\n    {\n        return !integers.Select((i, j) => i - j).Distinct().Skip(1).Any();\n    }\n\n    private void SetCardsBasedOnOrderedSignificantCardsAndKickers(List<Card> significantCards, List<Card> kickers)\n    {\n        var tempList = new List<Card>();\n        tempList.AddRange(significantCards);\n        tempList.AddRange(kickers);\n        this.cards = tempList;\n    }\n}\n\npublic class HoldemSolution\n{\n    private Player player1;\n    private Player player2;\n    private Player winningPlayer;\n    private int winningPlayerId;\n\n    public string Solve(List<string> holeCardsPlayer1, List<string> holeCardsPlayer2, List<string> communityCards)\n    {\n        this.InitializePlayers(holeCardsPlayer1, holeCardsPlayer2, communityCards);\n        this.CalculateWinner();\n\n        return this.OutputWinner();\n    }\n\n    private void InitializePlayers(List<string> holeCardsPlayer1, List<string> holeCardsPlayer2, List<string> communityCards)\n    {\n        this.player1 = new Player(Card.ParseCards(holeCardsPlayer1), Card.ParseCards(communityCards));\n        this.player2 = new Player(Card.ParseCards(holeCardsPlayer2), Card.ParseCards(communityCards));\n    }\n\n    private void CalculateWinner()\n    {\n        var player1Hand = this.player1.BestFiveCardHand;\n        var player2Hand = this.player2.BestFiveCardHand;\n\n        if (this.player1.IsDrawnWith(this.player2))\n        {\n            this.winningPlayerId = 0;\n            this.winningPlayer = this.player1;\n        }\n        else if (this.player1.IsGreaterThanOrEqualTo(this.player2))\n        {\n            this.winningPlayerId = 1;\n            this.winningPlayer = this.player1;\n        }\n        else\n        {\n            this.winningPlayerId = 2;\n            this.winningPlayer = this.player2;\n        }\n    }\n\n    private string OutputWinner()\n    {\n        // e.g. \"1 PAIR AAKQJ\"\n        string answer = this.winningPlayerId == 0\n            ? answer = \"DRAW\"\n            : string.Format(\"{0} {1} {2}\", this.winningPlayerId, this.winningPlayer.HandType.ToString(), this.winningPlayer.BestFiveCardHand.OutputValues());\n\n        return answer;\n    }\n}\n\npublic class Player\n{\n    private List<Card> sevenCardHand;\n    private List<FiveCardHand> fiveCardHands;\n    private FiveCardHand bestFiveCardHand;\n\n    public Player(List<Card> holeCards, List<Card> communityCards)\n    {\n        this.sevenCardHand = holeCards.Union(communityCards).ToList();\n        this.fiveCardHands = new List<FiveCardHand>();\n        this.CalculateHands();\n        this.SelectBestFiveCardHand();\n    }\n\n    public HandType HandType { get { return this.bestFiveCardHand.HandType; } }\n\n    public FiveCardHand BestFiveCardHand { get { return this.bestFiveCardHand; } }\n\n    public bool IsGreaterThanOrEqualTo(Player otherHand)\n    {\n        return this.bestFiveCardHand.IsGreaterThanOrEqualTo(otherHand.BestFiveCardHand);\n    }\n\n    private void CalculateHands()\n    {\n        // Populate list of fiveCardHands with every 5 card combination within sevenCardHand\n        foreach (var omittedCardA in this.sevenCardHand)\n        {\n            foreach (var omittedCardB in this.sevenCardHand)\n            {\n                if (omittedCardA != omittedCardB)\n                {\n                    this.fiveCardHands.Add(new FiveCardHand(this.sevenCardHand.Except(new List<Card> { omittedCardA, omittedCardB }).OrderByDescending(i => i.Value).ToList()));\n                }\n            }\n        }\n\n        // Remove duplicates\n        this.fiveCardHands = this.fiveCardHands.Distinct().ToList();\n    }\n\n    private void SelectBestFiveCardHand()\n    {\n        this.fiveCardHands.Sort(CompareFiveCardHands);\n        this.bestFiveCardHand = this.fiveCardHands.Last();\n    }\n\n    private int CompareFiveCardHands(FiveCardHand a, FiveCardHand b)\n    {\n        return a.IsDrawnWithHand(b) ? 0 : a.IsGreaterThanOrEqualTo(b) ? 1 : -1;\n    }\n\n    public bool IsDrawnWith(Player otherHand)\n    {\n        return this.HandType == otherHand.HandType && this.bestFiveCardHand.OutputValues() == otherHand.bestFiveCardHand.OutputValues();\n    }\n}\n#endregion Solution Code",
+      "statement": "You must determine the winner of a hand in Texas Holdem Poker. Output the winning player, their hand type and the five winning card values.\n\n<<CARDS>>\nA card is represented by two characters, one for the value and one for the suit. \n• values (descending order): {{A}}, {{K}}, {{Q}}, {{J}}, {{T}}, {{9}}, {{8}}, {{7}}, {{6}}, {{5}}, {{4}}, {{3}}, {{2}}\n• suits (no order): {{C}}, {{D}}, {{H}}, {{S}}\n\n<<HANDS>>\nA player's hand is the best 5 card-card combination from the 7 card combination of their own 2 hole cards with the 5 community cards. A hand is one of the following types, in descending order of value:\n• {{STRAIGHT_FLUSH}} - 5 consecutive cards of the same suit\n• {{FOUR_OF_A_KIND}} - 4 cards of matching values and 1 kicker*\n• {{FULL_HOUSE}} - 3 cards of matching values, and 2 of a different matching value\n• {{FLUSH}} - 5 non-consecutive cards, all the same suit\n• {{STRAIGHT}} - 5 consecutive cards\n• {{THREE_OF_A_KIND}} - 3 cards of matching values and 2 kickers*\n• {{TWO_PAIR}} - 2 cards of a matching value, 2 of a different matching value and 1 kicker*\n• {{PAIR}} - 2 cards of matching values and 3 kickers*, e.g. {{66T42}}\n• {{HIGH_CARD}} - The absence of any better hand means that the highest value card counts with 4 kickers*, e.g. {{Q7432}}\n\n* = A kicker is a leftover card which does not contribute to determining the type of a hand, but is used to break ties. The highest kicker is considered first, then the next, and so on. Only if none of the kickers are larger might a hand be considered a {{DRAW}}. For convenience, we call cards in the 5 card combination that are not kicker cards, \"non-kickers\".\n\nNote that there's no need to implement a special case for a royal flush.\n\n<<DETERMINING WINNING HANDS>>\nA higher [[HandType]] beats all lower hand types. If the [[HandType]] is the same:\n• Place cards in the order given below\n• Iterate each card in turn, e.g. 1st card Player 1 vs 1st card player 2\n• If one value is higher then that player is the winner, else continue to the next card\n• If no such win is found, the hand is a {{DRAW}}\n\n<<ORDERING CARDS>>\nCards are ordered by descending non-kicker values, followed by descending kicker values. In case of a {{FULL_HOUSE}}, list the set of 3 before the pair. If an Ace counts a low in determining a hand, this is also represented in the ordering.\n\n<<WORKED EXAMPLE>>\n\n<<Line 1 :>> TC JC\n<<Line 2 :>> AD 4S\n<<Line 3 :>> 2H 7H TH QS KC\n\nPlayer 1's 7-card hand: {{TC JC}} + {{2H 7H TH QS KC}}.\nPlayer 2's 7-card hand: {{AD 4S}} + {{2H 7H TH QS KC}}.\n\nPlayer 1's best 5-card hand is a {{PAIR}} of tens ({{TC}} & {{TH}}), and the kickers are {{KC}}, {{QS}} & {{JC}}.\nPlayer 2's best 5-card hand is a {{HIGH_CARD}} ({{AD}}), and the kickers are {{KC}}, {{QS}}, {{TH}} & {{7H}}.\n\nA {{PAIR}} beats a {{HIGH_CARD}} so Player 1 wins. Thus the output would be:\n`1 PAIR TTKQJ`",
+      "testCases": [
+        {
+          "title": "Test 1 - High Card",
+          "isTest": true,
+          "testIn": "8D 7C\n7D 6C\nKS 9D 5C 3S 2D",
+          "testOut": "1 HIGH_CARD K9875",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 1 - High Card (Unordered Input)",
+          "isTest": false,
+          "testIn": "7C 8D\n7D 6C\n9D 5C KS 3S 2D",
+          "testOut": "1 HIGH_CARD K9875",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 2 - High Card, Last Kicker",
+          "isTest": true,
+          "testIn": "AD 7C\nAC 6D\n9D 8C KS 3S 2D",
+          "testOut": "1 HIGH_CARD AK987",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 2 - High Card, Last Kicker",
+          "isTest": false,
+          "testIn": "QC 6D\nQD 7C\n4D 8C KS TS 2D",
+          "testOut": "2 HIGH_CARD KQT87",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 3 - Flush",
+          "isTest": true,
+          "testIn": "2D 3D\nAC AD\n9D 6S KD 4D 2S",
+          "testOut": "1 FLUSH K9432",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 3 - Flush",
+          "isTest": false,
+          "testIn": "2C JD\n3C 4C\n2S 9C 6C KC 4D",
+          "testOut": "2 FLUSH K9643",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 4 - Straight Flush vs Flush",
+          "isTest": true,
+          "testIn": "2D 3D\n7D KD\n9D 6S AD 4D 5D",
+          "testOut": "1 STRAIGHT_FLUSH 5432A",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 4 - Straight vs Ace Low Straight",
+          "isTest": false,
+          "testIn": "3H 7D\n2H 3D\n9D 6S AD 4S 5D",
+          "testOut": "1 STRAIGHT 76543",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 5 - Full House",
+          "isTest": true,
+          "testIn": "5H 5S\n6D 5D\n9C 6C AH 6H 5C",
+          "testOut": "2 FULL_HOUSE 66655",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 5 - Full House",
+          "isTest": false,
+          "testIn": "6D 5D\nJH KS\n9C 6C AH 6H 5C",
+          "testOut": "1 FULL_HOUSE 66655",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 6 - Best Two Pair",
+          "isTest": true,
+          "testIn": "5H 5S\n6D 6H\n2C AC AH 2H 9C",
+          "testOut": "2 TWO_PAIR AA669",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 6 - Best Two Pair",
+          "isTest": false,
+          "testIn": "9H TS\n2D AH\n2C AC 6H TH 9C",
+          "testOut": "2 TWO_PAIR AA22T",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 7 - Three vs Four Of A Kind",
+          "isTest": true,
+          "testIn": "5H 2D\n6D QH\n5C 5S AH 5D 9C",
+          "testOut": "1 FOUR_OF_A_KIND 5555A",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 7 - Three vs Four Of A Kind",
+          "isTest": false,
+          "testIn": "6D TH\n5H 2D\n5C 5S AH QD 9C",
+          "testOut": "2 THREE_OF_A_KIND 555AQ",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 8 - Draw",
+          "isTest": true,
+          "testIn": "5H 2D\n8D 5D\n5C 5S AS QD 9C",
+          "testOut": "DRAW",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 8 - Draw",
+          "isTest": false,
+          "testIn": "QC 2D\n6H QH\nTS 9C KC 4C 7D",
+          "testOut": "DRAW",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "All deals are valid. (all cards exist, no duplicate cards are dealt)",
+      "stubGenerator": "read holeCardsPlayer1:string(256)\nread holeCardsPlayer2:string(256)\nread communityCards:string(256)\nwrite answer",
+      "inputDescription": "<<Line 1 :>> [[holeCardsPlayer1]], the 2 hole cards for Player 1, separated by a space.\n<<Line 2 :>> [[holeCardsPlayer2]], the 2 hole cards for Player 2, separated by a space.\n<<Line 3 :>> [[communityCards]], the 5 cards on the board, separated by a space.",
+      "solutionLanguage": "C#",
+      "outputDescription": "If there's a winner, the output is [[WinningPlayerId]] [[HandType]] [[OrderedFiveCardHand]], space-separated. If not, the output is simply {{DRAW}}.\n[[WinningPlayerId]] is {{1}} or {{2}}.\n[[HandType]] is as specified above.\n[[OrderedFiveCardHand]] is the winning 5 cards combination's values, in the order specified above."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You must determine the winner of a hand in Texas Holdem Poker. Output the winning player, their hand type and the five winning card values.<br><br><strong>CARDS</strong><br>A card is represented by two characters, one for the value and one for the suit. <br>&bull; values (descending order): <const>A</const>, <const>K</const>, <const>Q</const>, <const>J</const>, <const>T</const>, <const>9</const>, <const>8</const>, <const>7</const>, <const>6</const>, <const>5</const>, <const>4</const>, <const>3</const>, <const>2</const><br>&bull; suits (no order): <const>C</const>, <const>D</const>, <const>H</const>, <const>S</const><br><br><strong>HANDS</strong><br>A player's hand is the best 5 card-card combination from the 7 card combination of their own 2 hole cards with the 5 community cards. A hand is one of the following types, in descending order of value:<br>&bull; <const>STRAIGHT_FLUSH</const> - 5 consecutive cards of the same suit<br>&bull; <const>FOUR_OF_A_KIND</const> - 4 cards of matching values and 1 kicker*<br>&bull; <const>FULL_HOUSE</const> - 3 cards of matching values, and 2 of a different matching value<br>&bull; <const>FLUSH</const> - 5 non-consecutive cards, all the same suit<br>&bull; <const>STRAIGHT</const> - 5 consecutive cards<br>&bull; <const>THREE_OF_A_KIND</const> - 3 cards of matching values and 2 kickers*<br>&bull; <const>TWO_PAIR</const> - 2 cards of a matching value, 2 of a different matching value and 1 kicker*<br>&bull; <const>PAIR</const> - 2 cards of matching values and 3 kickers*, e.g. <const>66T42</const><br>&bull; <const>HIGH_CARD</const> - The absence of any better hand means that the highest value card counts with 4 kickers*, e.g. <const>Q7432</const><br><br>* = A kicker is a leftover card which does not contribute to determining the type of a hand, but is used to break ties. The highest kicker is considered first, then the next, and so on. Only if none of the kickers are larger might a hand be considered a <const>DRAW</const>. For convenience, we call cards in the 5 card combination that are not kicker cards, &quot;non-kickers&quot;.<br><br>Note that there's no need to implement a special case for a royal flush.<br><br><strong>DETERMINING WINNING HANDS</strong><br>A higher <var>HandType</var> beats all lower hand types. If the <var>HandType</var> is the same:<br>&bull; Place cards in the order given below<br>&bull; Iterate each card in turn, e.g. 1st card Player 1 vs 1st card player 2<br>&bull; If one value is higher then that player is the winner, else continue to the next card<br>&bull; If no such win is found, the hand is a <const>DRAW</const><br><br><strong>ORDERING CARDS</strong><br>Cards are ordered by descending non-kicker values, followed by descending kicker values. In case of a <const>FULL_HOUSE</const>, list the set of 3 before the pair. If an Ace counts a low in determining a hand, this is also represented in the ordering.<br><br><strong>WORKED EXAMPLE</strong><br><br><strong>Line 1 :</strong> TC JC<br><strong>Line 2 :</strong> AD 4S<br><strong>Line 3 :</strong> 2H 7H TH QS KC<br><br>Player 1's 7-card hand: <const>TC JC</const> + <const>2H 7H TH QS KC</const>.<br>Player 2's 7-card hand: <const>AD 4S</const> + <const>2H 7H TH QS KC</const>.<br><br>Player 1's best 5-card hand is a <const>PAIR</const> of tens (<const>TC</const> &amp; <const>TH</const>), and the kickers are <const>KC</const>, <const>QS</const> &amp; <const>JC</const>.<br>Player 2's best 5-card hand is a <const>HIGH_CARD</const> (<const>AD</const>), and the kickers are <const>KC</const>, <const>QS</const>, <const>TH</const> &amp; <const>7H</const>.<br><br>A <const>PAIR</const> beats a <const>HIGH_CARD</const> so Player 1 wins. Thus the output would be:<br><pre style=\"font-family: monospace\">1 PAIR TTKQJ</pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1 :</strong> <var>holeCardsPlayer1</var>, the 2 hole cards for Player 1, separated by a space.<br><strong>Line 2 :</strong> <var>holeCardsPlayer2</var>, the 2 hole cards for Player 2, separated by a space.<br><strong>Line 3 :</strong> <var>communityCards</var>, the 5 cards on the board, separated by a space.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">If there's a winner, the output is <var>WinningPlayerId</var> <var>HandType</var> <var>OrderedFiveCardHand</var>, space-separated. If not, the output is simply <const>DRAW</const>.<br><var>WinningPlayerId</var> is <const>1</const> or <const>2</const>.<br><var>HandType</var> is as specified above.<br><var>OrderedFiveCardHand</var> is the winning 5 cards combination's values, in the order specified above.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">All deals are valid. (all cards exist, no duplicate cards are dealt)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">8D 7C\n7D 6C\nKS 9D 5C 3S 2D</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1 HIGH_CARD K9875</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 296239900569,
+  "avatar": 1982072617460,
+  "commentCount": 13,
+  "upVotes": 3,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 41,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

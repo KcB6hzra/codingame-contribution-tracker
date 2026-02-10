@@ -1,0 +1,189 @@
+{
+  "id": 107628,
+  "activeVersion": 13,
+  "score": 3,
+  "votableId": 35163570,
+  "codingamerId": 4238671,
+  "views": 140,
+  "commentableId": 35009817,
+  "title": "Street Vendor",
+  "status": "ACCEPTED",
+  "type": "CLASHOFCODE",
+  "nickname": "DavidAugustoVilla",
+  "publicHandle": "107628824fe9d7d9bf23c5291cc2399ee8dc59",
+  "codingamerHandle": "455d71552aef838a0c75b7617e2d22d41768324",
+  "lastVersion": {
+    "version": 13,
+    "autocloseTime": 1730683152040,
+    "freezeTime": 1728695952040,
+    "data": {
+      "title": "Street Vendor",
+      "topics": [],
+      "fastest": true,
+      "reverse": false,
+      "shortest": true,
+      "solution": "using System;\nusing System.Collections.Generic;\n\nclass Solution\n{\n    static (int, int) ReadHeader()\n    {\n        string[] inputs = Console.ReadLine().Split(' ');\n        int cash = int.Parse(inputs[0]);\n        int days = int.Parse(inputs[1]);\n        return (cash, days);\n    }\n\n    static List<Commodity> ReadCommodities()\n    {\n        int N = int.Parse(Console.ReadLine());\n        \n        var result = new List<Commodity>();\n        for (int n = 0; n < N; n++)\n        {\n            string[] inputs = Console.ReadLine().Split(' ');\n            int unitCost = int.Parse(inputs[0]);\n            int streetPrice = int.Parse(inputs[1]);\n            int quantity = int.Parse(inputs[2]);\n\n            var good = new Commodity(unitCost, streetPrice, quantity);\n            result.Add(good);\n        }\n        return result;\n    }\n\n    static void Main(string[] args)\n    {\n        (int cash, int days) = Solution.ReadHeader();\n        var commodities = Solution.ReadCommodities();\n\n        for (int d = 0; d < days; d++)\n        {\n            var bestGoods = new List<Commodity>();\n            int bestProfit = 0;\n\n            foreach (Commodity good in commodities)\n            {\n                int profit = good.TotalProfit(cash);\n                if (profit == bestProfit)\n                    bestGoods.Add(good);\n                else if (profit > bestProfit)\n                {\n                    bestGoods = new List<Commodity>{good};\n                    bestProfit = profit;\n                }\n            }\n            if (bestGoods.Count == 0)\n                throw new Exception(\"no profit day \" + d);\n            if (bestGoods.Count > 1 && d < days - 1)\n            {\n                foreach (var good in bestGoods)\n                {\n                    Console.WriteLine(good.unitCost + \" \" + good.streetPrice);\n                }\n                throw new Exception(\"ambiguity day \" + d);\n            }\n            cash += bestGoods[0].TotalProfit(cash, purchase: true);\n        }\n\n        Console.WriteLine(cash);\n    }\n}\n\npublic class Commodity\n{\n    public int unitCost;\n    public int streetPrice;\n    public int available;\n\n    public Commodity(int cost, int price, int limit)\n    {\n        if (cost >= price)\n            throw new Exception(\"loss of \" + cost + \" - \" + price);\n        unitCost = cost;\n        streetPrice = price;\n        available = limit;\n    }\n    \n    public int TotalProfit(int balance, bool purchase=false)\n    {\n        int units = Math.Min(available, balance / unitCost);\n        if (purchase)\n            available -= units;\n        return units * (streetPrice - unitCost);\n    }\n}\n",
+      "statement": "A street vendor starts off with a [[cash]] balance. Early every morning for several [[days]], he chooses a <<single type of commodity>>, purchasing as many as he can, and then <<sells them all>> for a profit by late afternoon. The commodity he chooses is one that will <<maximize his balance>> at the end of the day.\n\nYou will be provided the [[unit cost]] and [[street price]] of each commodity, as well as the total [[quantity]] that can be bought over the course of the venture, as <<supplies are limited>>. Find the final cash balance.",
+      "testCases": [
+        {
+          "title": "Day one",
+          "isTest": true,
+          "testIn": "25 1\n3\n10 25 2\n12 26 2\n15 40 1",
+          "testOut": "55",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "28 1\n3\n12 30 2\n14 31 2\n15 50 1",
+          "testOut": "64",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Same best choice",
+          "isTest": true,
+          "testIn": "6 3\n3\n3 5 25\n3 6 25\n5 9 25",
+          "testOut": "48",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "8 3\n3\n4 6 25\n4 7 25\n5 8 25",
+          "testOut": "38",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Out of stock",
+          "isTest": true,
+          "testIn": "4 6\n4\n2 5 0\n3 4 5\n5 8 25\n8 12 2",
+          "testOut": "42",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "12 6\n5\n5 7 0\n6 7 25\n14 17 25\n16 23 25\n24 32 2",
+          "testOut": "60",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Suboptimal",
+          "isTest": true,
+          "testIn": "10 2\n2\n3 5 5\n2 3 5",
+          "testOut": "21",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "20 2\n2\n6 10 5\n4 6 5",
+          "testOut": "42",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Minor ambiguity",
+          "isTest": true,
+          "testIn": "7 1\n2\n4 5 1\n5 6 1",
+          "testOut": "8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "5 1\n2\n2 3 2\n5 7 1",
+          "testOut": "7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Clearance",
+          "isTest": true,
+          "testIn": "1 5\n5\n1 5 1\n5 20 1\n10 30 2\n25 40 2\n90 99 1",
+          "testOut": "99",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "1 5\n5\n1 4 1\n2 6 2\n10 19 1\n20 49 1\n25 42 2",
+          "testOut": "84",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Three weeks",
+          "isTest": true,
+          "testIn": "5 21\n8\n3 4 50\n4 6 20\n5 8 10\n6 11 15\n7 10 15\n8 10 50\n10 12 100\n10 13 100",
+          "testOut": "845",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "5 20\n8\n3 4 50\n4 6 20\n5 8 10\n6 11 15\n7 10 15\n8 10 50\n10 11 100\n10 12 100",
+          "testOut": "645",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "One month",
+          "isTest": true,
+          "testIn": "100 31\n10\n9 10 100\n12 14 20\n15 17 5\n20 24 10\n25 27 500\n30 33 50\n35 42 10\n40 48 20\n52 55 100\n100 101 200",
+          "testOut": "1935",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "99 31\n10\n9 10 100\n12 14 20\n15 17 5\n20 24 10\n25 27 500\n30 33 50\n35 45 10\n40 48 20\n50 52 100\n100 101 200",
+          "testOut": "1876",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "constraints": "[[days]] ≤ 31\n[[N]] ≤ 10",
+      "stubGenerator": "read cash:int days:int\nread N:int\nloop N read unitCost:int streetPrice:int quantity:int\nwrite balance",
+      "inputDescription": "<<Line 1:>> Two space-separated integers for the initial [[cash]] balance and number of [[days]]\n<<Line 2:>> An integer [[N]] for the number of different types of commodities\n<<Next [[N]] lines:>> Three space-separated integers for the [[unit cost]] when acquired, [[street price]] when sold, and overall [[quantity]] available",
+      "solutionLanguage": "C#",
+      "outputDescription": "<<Line 1:>> The final cash balance"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A street vendor starts off with a <var>cash</var> balance. Early every morning for several <var>days</var>, he chooses a <strong>single type of commodity</strong>, purchasing as many as he can, and then <strong>sells them all</strong> for a profit by late afternoon. The commodity he chooses is one that will <strong>maximize his balance</strong> at the end of the day.<br><br>You will be provided the <var>unit cost</var> and <var>street price</var> of each commodity, as well as the total <var>quantity</var> that can be bought over the course of the venture, as <strong>supplies are limited</strong>. Find the final cash balance.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Two space-separated integers for the initial <var>cash</var> balance and number of <var>days</var><br><strong>Line 2:</strong> An integer <var>N</var> for the number of different types of commodities<br><strong>Next <var>N</var> lines:</strong> Three space-separated integers for the <var>unit cost</var> when acquired, <var>street price</var> when sold, and overall <var>quantity</var> available</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> The final cash balance</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><var>days</var> &le; 31<br><var>N</var> &le; 10</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">25 1\n3\n10 25 2\n12 26 2\n15 40 1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">55</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 40335893072,
+  "avatar": 132419401284681,
+  "commentCount": 11,
+  "upVotes": 3,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1019465,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1730392732326,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

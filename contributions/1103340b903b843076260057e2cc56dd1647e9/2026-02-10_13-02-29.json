@@ -1,0 +1,253 @@
+{
+  "id": 110334,
+  "activeVersion": 48,
+  "score": 6,
+  "votableId": 35454887,
+  "codingamerId": 4238671,
+  "views": 326,
+  "commentableId": 35300218,
+  "title": "Simon's Oracle",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "DavidAugustoVilla",
+  "publicHandle": "1103340b903b843076260057e2cc56dd1647e9",
+  "codingamerHandle": "455d71552aef838a0c75b7617e2d22d41768324",
+  "lastVersion": {
+    "version": 48,
+    "autocloseTime": 1738354093551,
+    "freezeTime": 1731172412596,
+    "data": {
+      "title": "Simon's Oracle",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Constraint satisfaction"
+          }
+        },
+        {
+          "id": 222,
+          "handle": "xor",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "XOR",
+            "2": "XOR"
+          },
+          "puzzleCount": 1,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import sys\n\nm, n = [int(i) for i in input().split()]\noptions = set(range(1, 2**m))\nfunction = {}\n\ndef binary(value):\n    return bin(value)[2:].zfill(m)\n\ndef find_letter(letter):\n    for bits in function:\n        if function[bits] == letter:\n            return bits\n    raise\n\ndef fill_function(xor):\n    result = {}\n    for bits in function:\n        alternate = bits ^ xor\n        if alternate in result:\n            assert result[alternate] == result[bits]\n        else:\n            result[alternate] = result[bits] = function[bits]\n    return result\n\ndef set_secret(query):\n    global options, function\n    result = 'A'\n    while True:\n        bits = find_letter(result)\n        xor = query ^ bits\n        if xor not in options:\n            result = chr(ord(result) + 1)\n            continue\n        options = {xor}\n        function = fill_function(xor)\n        return result\n\ndef option_removals(query, letter):\n    assert letter not in function.values()\n    remove = set()\n    for bits in function:\n        xor = query ^ bits\n        remove.add(xor)\n    return remove\n\nnext_letter = 'A'\ndef set_function(query):\n    global next_letter\n    function[query] = next_letter\n    if len(options) == 1:\n        alternate = query ^ next(iter(options))\n        function[alternate] = next_letter\n    next_letter = chr(ord(next_letter) + 1)\n\ndef try_set_function(query):\n    global options\n    remaining = options - option_removals(query, next_letter)\n    if not remaining:\n        return False\n    options = remaining\n    set_function(query)\n    return function[query]\n\ndivulged = False\ndef divulge():\n    global divulged\n    if divulged:\n        return\n    divulged = True\n    for each in sorted(options):\n        print(binary(each), file=sys.stderr, flush=True)\n    print(file=sys.stderr, flush=True)\n\ndef determine(query):\n    if query in function:\n        return function[query]\n    result = try_set_function(query)\n    if result:\n        return result\n    divulge()\n    return set_secret(query) + ' *'\n\nresults = []\nfor _ in range(n):\n    results.append(determine(int(input(), 2)))\n\ndivulge()\nprint(binary(max(options)))\nfor each in results:\n    print(each[0])\n    if len(each) > 1:\n        print(each[1:], file=sys.stderr, flush=True)\n",
+      "statement": "Consider strings of binary bits {{0}} and {{1}}, where all bit strings are of the same length. <<Simon's problem>> is to find the secret bit string 𝒔 used in a black box function 𝓕. The function 𝓕 satisfies the following properties for any given bit strings 𝒙 and 𝒚:\n\nIf 𝒙 = 𝒚 then 𝓕(𝒙) = 𝓕(𝒚). That is, the output is consistent.\nIf 𝒙 ⊕ 𝒚 = 𝒔, 𝓕(𝒙) = 𝓕(𝒚). Here, ⊕ is the exclusive-or operator.\nOtherwise, 𝓕(𝒙) ≠ 𝓕(𝒚) is guaranteed.\n\nIn this variation of the problem, we map 𝓕 to characters, and we require that the secret string not be all {{0}}'s. Suppose 𝒔 = {{110}} and that a stochastic algorithm makes the following random queries:\n\nQuery {{011}}: 𝓕({{011}}) = {{A}}\nQuery {{001}}: 𝓕({{001}}) = {{B}}\nQuery {{110}}: 𝓕({{110}}) = {{C}}\nQuery {{100}}: 𝓕({{100}}) = {{D}}\nQuery {{101}}: 𝓕({{101}}) = {{A}}\n\nAt this point, the algorithm has encountered two different bit strings that produce the same result, namely {{A}}. Since 𝓕({{011}}) = 𝓕({{101}}), the algorithm can now deduce {{011}} ⊕ {{101}} = {{110}} as the secret string. Any subsequent queries would only serve to confirm this.\n\nIt is no accident that the queries above produced sequential results {{A}}, {{B}}, {{C}}, {{D}}. This is because the results were assigned not by a predefined function but by an oracle. The oracle waited until seeing successive queries to decide what the secret string should be. Only once it had no other choice did it relent and reduplicate an earlier outcome.\n\nIn other words, 𝓕 is ostensibly based on a bit string 𝒔, but internally the exact structure of 𝓕 may only be partially decided. The oracle keeps the secret string undetermined except insofar as the information revealed about 𝓕 requires. In this way, a definitive value for 𝒔 is avoided and unexposed for as long as possible.\n\nIf, for instance, the first two random queries had been {{011}} and {{101}}, the oracle would not have assigned {{A}} to both, so ultimately the exposed secret would have differed. In contrast, once 𝒔 is narrowed down to a single bit string, the oracle has to provide results consistent with this value.\n\nDesign an oracle to do exactly that. Given [[N]] random bit strings of length [[L]], build a function 𝓕 mapping bit strings to letters {{A}} through {{Z}}. The first query should map to {{A}}, and any subsequent queries that are likewise arbitrary should result in the next available character. At the point where the oracle has no other choice but to expose 𝒔, thereby fixing it to a single value, assign the first possible letter to that query.\n\nOutput the secret string if it is found, otherwise the largest binary value of 𝒔 still possible after all queries are answered. Also output the resulting application of 𝓕 to each query.",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "3 5\n011\n001\n110\n100\n101",
+          "testOut": "110\nA\nB\nC\nD\nA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3 5\n011\n010\n101\n100\n110",
+          "testOut": "101\nA\nB\nC\nD\nA",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Repetition",
+          "isTest": true,
+          "testIn": "4 9\n0001\n0010\n0100\n0010\n0100\n1000\n1111\n1111\n0000",
+          "testOut": "0001\nA\nB\nC\nB\nC\nD\nE\nE\nA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "4 9\n0001\n0100\n0010\n0010\n1000\n1111\n1000\n1111\n0000",
+          "testOut": "0001\nA\nB\nC\nC\nD\nE\nD\nE\nA",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Continuation",
+          "isTest": true,
+          "testIn": "3 9\n011\n001\n110\n100\n011\n101\n000\n111\n010",
+          "testOut": "110\nA\nB\nC\nD\nA\nA\nC\nB\nD",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "3 9\n011\n010\n101\n100\n011\n110\n001\n000\n111",
+          "testOut": "101\nA\nB\nC\nD\nA\nA\nD\nC\nB",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Secrecy",
+          "isTest": true,
+          "testIn": "8 29\n01010010\n01001001\n10000101\n10000110\n01101001\n10010100\n00000000\n11101101\n10110100\n10101100\n01110000\n00001111\n11110111\n10101100\n11010111\n11000101\n00000110\n00101010\n11010110\n00100001\n10100011\n00011111\n10010100\n11010100\n10010011\n00100001\n11001101\n10110001\n01010001",
+          "testOut": "11111111\nA\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nK\nL\nM\nJ\nN\nO\nP\nQ\nR\nS\nT\nU\nF\nV\nW\nS\nX\nY\nZ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "8 29\n00110010\n10001001\n01011101\n01000100\n01010000\n00001111\n10001000\n00000101\n10101111\n10000111\n01010000\n10001101\n10000011\n01101111\n00011000\n11101010\n00001001\n00111011\n11101010\n00100110\n00000111\n10101000\n11110100\n00011101\n10011110\n01100010\n10000111\n10010111\n11100101",
+          "testOut": "11111110\nA\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nE\nK\nL\nM\nN\nO\nP\nQ\nO\nR\nS\nT\nU\nV\nW\nX\nJ\nY\nZ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Saturation",
+          "isTest": true,
+          "testIn": "4 9\n0100\n0010\n0111\n0101\n0000\n1010\n1111\n1101\n1100",
+          "testOut": "1100\nA\nB\nC\nD\nE\nF\nG\nH\nE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "4 9\n1000\n1101\n0001\n0101\n0000\n1010\n0111\n1111\n0011",
+          "testOut": "0011\nA\nB\nC\nD\nE\nF\nG\nH\nE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Coincidence",
+          "isTest": true,
+          "testIn": "5 16\n10010\n01011\n01010\n00000\n00001\n00011\n00101\n11010\n01000\n10100\n10110\n11110\n01110\n10000\n11100\n11000",
+          "testOut": "00111\nA\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nK\nL\nM\nN\nO\nP",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "5 16\n11001\n10100\n11000\n00000\n00001\n10001\n00011\n11100\n01000\n00110\n10110\n11110\n11010\n00100\n01110\n01100",
+          "testOut": "10011\nA\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nK\nL\nM\nN\nO\nP",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Perpetuity",
+          "isTest": true,
+          "testIn": "7 29\n0100101\n1010110\n1111010\n1011110\n0110011\n1101001\n0101001\n1111111\n1110101\n0011101\n0000110\n1111000\n0011010\n0101001\n0000000\n1010101\n0000010\n1000001\n1101010\n1011010\n1011001\n0010010\n0011111\n0111100\n1011011\n0100111\n0000100\n0100101\n0000100",
+          "testOut": "1100011\nA\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nK\nL\nM\nG\nN\nO\nP\nQ\nR\nS\nT\nU\nV\nW\nX\nY\nZ\nA\nZ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "7 29\n1100101\n1011001\n0110101\n1000001\n1001100\n0111111\n1101010\n1100010\n0010000\n0110110\n1011000\n1011101\n1010000\n0110011\n1000110\n1110111\n1011011\n0011100\n0010111\n1111110\n1000010\n0000100\n0110010\n1011011\n1100011\n1111000\n0111010\n1100101\n0111010",
+          "testOut": "1000011\nA\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nK\nL\nM\nN\nO\nP\nQ\nR\nS\nT\nU\nV\nW\nQ\nX\nY\nZ\nA\nZ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Structure",
+          "isTest": true,
+          "testIn": "6 25\n000001\n000010\n000100\n001000\n010000\n100000\n000011\n000110\n001100\n011000\n110000\n000101\n001010\n010100\n101000\n001001\n010010\n100100\n010001\n100010\n100001\n000111\n001110\n011100\n111000",
+          "testOut": "111011\nA\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nK\nL\nM\nN\nO\nP\nQ\nR\nS\nT\nU\nV\nW\nX\nG",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "6 25\n100000\n010000\n001000\n000100\n000010\n000001\n110000\n011000\n001100\n000110\n000011\n101000\n010100\n001010\n000101\n100100\n010010\n001001\n100010\n010001\n100001\n111000\n011100\n001110\n000111",
+          "testOut": "110111\nA\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nK\nL\nM\nN\nO\nP\nQ\nR\nS\nT\nU\nV\nW\nX\nG",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Genius",
+          "isTest": true,
+          "testIn": "7 22\n0000001\n0000110\n1000000\n1000111\n0001000\n0001111\n1001011\n1001110\n1001101\n1001111\n0010011\n0010110\n0010101\n0011111\n0100110\n1100001\n0101110\n1101000\n1101111\n1110111\n0111110\n1111001",
+          "testOut": "0111110\nA\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nK\nL\nM\nN\nO\nP\nQ\nR\nS\nT\nU\nD",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "7 22\n0001111\n0011101\n0011110\n0011011\n0100101\n0100110\n0100011\n0100111\n0101000\n0101111\n0110000\n0111001\n0111110\n1000001\n1001110\n1010001\n1010111\n1100000\n1100111\n1101110\n1110001\n1111110",
+          "testOut": "1100011\nA\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nK\nL\nM\nN\nO\nP\nQ\nR\nS\nT\nU\nB",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "1 < [[L]] ≤ 8\n[[N]] < 30\nNo characters beyond {{Z}} will be required.",
+      "coverBinaryId": 132584806657012,
+      "stubGenerator": "read L:int N:int\nloop N read query:word(L)\nwrite secret\nresults",
+      "inputDescription": "<<Line 1:>> An integer [[L]] for the length of each bit string, a space, and an integer [[N]] for the number of queries\n<<Next [[N]] lines:>> A bit string [[query]] (consisting of [[L]] digits {{0}} or {{1}})",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> A bit string as the value or greatest possible value for 𝒔\n<<Next [[N]] lines:>> A single character {{A}} through {{Z}} corresponding to the result from 𝓕"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Consider strings of binary bits <const>0</const> and <const>1</const>, where all bit strings are of the same length. <strong>Simon's problem</strong> is to find the secret bit string 𝒔 used in a black box function 𝓕. The function 𝓕 satisfies the following properties for any given bit strings 𝒙 and 𝒚:<br><br>If 𝒙 = 𝒚 then 𝓕(𝒙) = 𝓕(𝒚). That is, the output is consistent.<br>If 𝒙 &oplus; 𝒚 = 𝒔, 𝓕(𝒙) = 𝓕(𝒚). Here, &oplus; is the exclusive-or operator.<br>Otherwise, 𝓕(𝒙) &ne; 𝓕(𝒚) is guaranteed.<br><br>In this variation of the problem, we map 𝓕 to characters, and we require that the secret string not be all <const>0</const>'s. Suppose 𝒔 = <const>110</const> and that a stochastic algorithm makes the following random queries:<br><br>Query <const>011</const>: 𝓕(<const>011</const>) = <const>A</const><br>Query <const>001</const>: 𝓕(<const>001</const>) = <const>B</const><br>Query <const>110</const>: 𝓕(<const>110</const>) = <const>C</const><br>Query <const>100</const>: 𝓕(<const>100</const>) = <const>D</const><br>Query <const>101</const>: 𝓕(<const>101</const>) = <const>A</const><br><br>At this point, the algorithm has encountered two different bit strings that produce the same result, namely <const>A</const>. Since 𝓕(<const>011</const>) = 𝓕(<const>101</const>), the algorithm can now deduce <const>011</const> &oplus; <const>101</const> = <const>110</const> as the secret string. Any subsequent queries would only serve to confirm this.<br><br>It is no accident that the queries above produced sequential results <const>A</const>, <const>B</const>, <const>C</const>, <const>D</const>. This is because the results were assigned not by a predefined function but by an oracle. The oracle waited until seeing successive queries to decide what the secret string should be. Only once it had no other choice did it relent and reduplicate an earlier outcome.<br><br>In other words, 𝓕 is ostensibly based on a bit string 𝒔, but internally the exact structure of 𝓕 may only be partially decided. The oracle keeps the secret string undetermined except insofar as the information revealed about 𝓕 requires. In this way, a definitive value for 𝒔 is avoided and unexposed for as long as possible.<br><br>If, for instance, the first two random queries had been <const>011</const> and <const>101</const>, the oracle would not have assigned <const>A</const> to both, so ultimately the exposed secret would have differed. In contrast, once 𝒔 is narrowed down to a single bit string, the oracle has to provide results consistent with this value.<br><br>Design an oracle to do exactly that. Given <var>N</var> random bit strings of length <var>L</var>, build a function 𝓕 mapping bit strings to letters <const>A</const> through <const>Z</const>. The first query should map to <const>A</const>, and any subsequent queries that are likewise arbitrary should result in the next available character. At the point where the oracle has no other choice but to expose 𝒔, thereby fixing it to a single value, assign the first possible letter to that query.<br><br>Output the secret string if it is found, otherwise the largest binary value of 𝒔 still possible after all queries are answered. Also output the resulting application of 𝓕 to each query.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>L</var> for the length of each bit string, a space, and an integer <var>N</var> for the number of queries<br><strong>Next <var>N</var> lines:</strong> A bit string <var>query</var> (consisting of <var>L</var> digits <const>0</const> or <const>1</const>)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> A bit string as the value or greatest possible value for 𝒔<br><strong>Next <var>N</var> lines:</strong> A single character <const>A</const> through <const>Z</const> corresponding to the result from 𝓕</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt; <var>L</var> &le; 8<br><var>N</var> &lt; 30<br>No characters beyond <const>Z</const> will be required.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3 5\n011\n001\n110\n100\n101</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">110\nA\nB\nC\nD\nA</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 33606550222,
+  "avatar": 132419401284681,
+  "commentCount": 22,
+  "upVotes": 8,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 1060234,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1733162737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1733166941916,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1735761937003,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1735762093551,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1737121997974,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

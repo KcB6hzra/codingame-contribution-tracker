@@ -1,0 +1,338 @@
+{
+  "id": 5184,
+  "activeVersion": 16,
+  "score": 12,
+  "votableId": 14414398,
+  "codingamerId": 3305510,
+  "views": 429,
+  "commentableId": 14335433,
+  "title": "Source Code Analyser",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "TBali",
+  "publicHandle": "518483e26d8ab793cf9ae496645ddd6dc11e",
+  "codingamerHandle": "08e6e13d9f7cad047d86ec4d10c777500155033",
+  "lastVersion": {
+    "version": 16,
+    "autocloseTime": 1597764550172,
+    "data": {
+      "title": "Source Code Analyser",
+      "topics": [
+        {
+          "id": 112,
+          "handle": "string-manipulation",
+          "labelMap": {
+            "1": "String manipulation",
+            "2": "String manipulation"
+          },
+          "puzzleCount": 12,
+          "parentTopicId": 93
+        },
+        {
+          "id": 67,
+          "handle": "parsing",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 6,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        }
+      ],
+      "solution": "<?php\n// --------------------------------------------------------------------\n// Source Code Analyser - sample solution for CodinGame solo puzzle candidate\n// (c) 2020 by Balint Toth\n//\n//   counts number of calls for library functions and methods in a source file\n//   https://www.codingame.com/contribute/view/518483e26d8ab793cf9ae496645ddd6dc11e\n// --------------------------------------------------------------------\n\ndefine('DEBUG', TRUE);\ndefine('SIMPLIFIED', TRUE);\n\n// is the character a valid part of a function name?\nfunction isValidIdentifier(string $s): bool\n{\n    return (($s[0] == '_')\n        or ((strtolower($s[0]) >= 'a') and (strtolower($s[0]) <= 'z'))\n        or (($s[0] >= '0') and ($s[0] <= '9')));\n}\n\n// is the character a whitespace?\nfunction isWhitespace(string $s): bool\n{\n    return (strpos(\" \\n\\r\\t\", $s[0]) !== FALSE);\n    // return (($s[0] == \" \") or ($s[0] == \"\\n\") or ($s[0] == \"\\r\") or ($s[0] == \"\\t\"));\n}\n\nif (SIMPLIFIED)\n{\n    // exclude these identifiers\n    $keyWords = [\"and\", \"array\", \"echo\", \"else\", \"elseif\", \"if\", \"for\", \"foreach\", \"function\", \"or\", \"return\", \"while\"]; \n    // exclude identifiers that are precededed by this keyword \n    $defKeyWords = [\"new\", \"function\"];\n}\nelse\n{\n    $keyWords = [\"and\", \"array\", \"as\", \"case\", \"catch\", \"echo\", \"else\", \"elseif\", \"exit\", \"if\", \"for\", \"foreach\", \n        \"function\", \"include\", \"list\", \"or\", \"return\", \"require\", \"require_once\", \"try\", \"while\", \"yield\"]; \n    $defKeyWords = [\"class\", \"function\", \"new\"];\n}\n\nfscanf(STDIN, \"%d\", $N); // number of lines to read\n$s = '';\nfor ($i = 0; $i < $N; $i++)\n    $s .= stream_get_line(STDIN, 256, \"\\n\") . \"\\n\";\n$countComments = 0;\n$inDoubleQuote = FALSE;\n$inSingleQuote = FALSE;\n$inLineComment = FALSE;\n$inMultiComment = FALSE;\n$functions = [];    // name => count\n$definitions = [];  // name => bool\n$i = -1;\nwhile ($i < strlen($s) - 1)\n{\n    $i++;\n    if ($inDoubleQuote)\n    {\n        if ($s[$i] == '\"')\n            $inDoubleQuote = FALSE;\n        continue;\n    }\n    if ($inSingleQuote)\n    {\n        if ($s[$i] == \"'\")\n            $inSingleQuote = FALSE;\n        continue;\n    }\n    if ($inLineComment)\n    {\n        if (($s[$i] == \"\\n\") or ($s[$i] == \"\\r\"))\n            $inLineComment = FALSE;\n        continue;\n    }\n    if ($inMultiComment)\n    {\n        if (($s[$i] == \"/\") and ($i > 0) and ($s[$i - 1] == \"*\"))\n            $inMultiComment = FALSE;\n        continue;\n    }\n    if ($s[$i] == '\"')\n    {\n        $inDoubleQuote = TRUE;\n        continue;\n    }\n    if ($s[$i] == \"'\")\n    {\n        $inSingleQuote = TRUE;\n        continue;\n    }\n    if (($s[$i] == \"/\") and ($i > 0) and ($s[$i - 1] == \"/\"))\n    {\n        $inLineComment = TRUE;\n        $countComments++;\n        continue;\n    }\n    if (($s[$i] == \"*\") and ($i > 0) and ($s[$i - 1] == \"/\"))\n    {\n        $inMultiComment = TRUE;\n        $countComments++;\n        continue;\n    }\n    if ($s[$i] != \"(\")\n        continue;\n    $j = $i - 1;\n    while (($j >= 0) and isValidIdentifier($s[$j]))\n        $j--;\n    $name = substr($s, $j + 1, $i - $j - 1);\n    if ($name == '')\n        continue;\n    if (($j >= 0) and ($s[$j] == \"$\"))\n        continue;\n    if (in_array(strtolower($name), $keyWords))\n        continue;\n    $functions[$name] = ($functions[$name] ?? 0) + 1;\n    $k = $j;\n    while (($k >= 0) and isWhitespace($s[$k]))\n        $k--;\n    foreach ($defKeyWords as $w)\n    {\n        if ($k < strlen($w) - 1)\n            continue;\n        if (strtolower(substr($s, $k - strlen($w) + 1, strlen($w))) == $w)\n            $definitions[$name] = TRUE;\n    }\n} // while\nksort($functions);\n$countFunctions = 0;\n$countCalls = 0;\nforeach ($functions as $name => $count)\n    if (!isset($definitions[$name]))\n    {\n        echo $name . ' ' . $count . \"\\n\";\n        $countFunctions++;\n        $countCalls += $count;\n    }\nif ($countFunctions == 0)\n    echo \"NONE\\n\";\nif (DEBUG)\n{\n    error_log('====== source code:');\n    if ($N < 100)\n        error_log($s);\n    else\n        error_log('  <omitted>');\n    error_log('====== totals:');\n    error_log(' # of source lines:  ' . $N);\n    error_log(' # of comments:      ' . $countComments);\n    error_log(' # of library calls: ' . $countCalls);\n    error_log(' # of library functions/classes/methods used: ' . $countFunctions);\n    error_log(' # of user-defined functions/classes/methods: ' . count($definitions));\n}\n?>",
+      "statement": "You are given a source code and you have to analyse it: Output the names of all the called library functions & methods, with the number of occurrences for each of them.\n\n<<Detailed rules:>> (if you are lazy reading this much, skip it and check the example & test cases...)\n\n* Source might contain multiple whitespaces: space, tab ({{\\t}}), new line ({{\\n}}) or linefeed ({{\\r}}).\n* Anything within string literals (within pair of single ({{'}}) or double ({{\"}}) quotes) shall be omitted.\n* Anything after single line comments (starting with {{//}}) or within multi-line comments (between {{/*}} and {{*/}} ) shall be omitted.\n* A function call can be identified by a valid name, immediately followed by an opening paranthesis {{(}}\n* Valid function names might contain upper and lower case letters, digits and underscore {{_}}.\n* Function names shall be treated case sensitively.\n* Following reserved words shall be not treated as function calls and omitted from output: \n\"{{and}}\", \"{{array}}\", \"{{echo}}\", \"{{else}}\", \"{{elseif}}\", \"{{if}}\", \"{{for}}\", \"{{foreach}}\", \"{{function}}\", \"{{or}}\", \"{{return}}\", \"{{while}}\", \"{{new}}\" (regardless of lower, upper or mixed case)\n* If a function name is immediately preceded by a {{$}}, it shall be omitted (a PHP-specific rule, call of function with a name stored in a variable).\n* Class names and user-defined functions shall be excluded. If the source contains \"{{function name(}}\" or \"{{new name(}}\", then the \"{{name}}\" shall be omitted from output.\n* Output lines shall be sorted by the function names (by ascending ascii values).\n* If no library call encountered, output {{NONE}}\n\n<<Notes:>>\n\n* While the provided test cases are PHP source files, knowledge of PHP is no pre-requisite at all. Of course, you can solve the puzzle in any language.\n* Solution would be very similar for analysing C, C++, C#, Java and Javascript source (only difference is the set of reserved keywords and how user-defined functions can be detected). You can easily adapt your solution to analyze your languages of choice and analyze your own source files. Analysing Python or Haskell might need a bit more change though...\n* Useless fun fact: my toplist in 98k source lines of PHP: {{fscanf}}, {{error_log}}, {{strlen}}, {{isset}}, {{ord}}\n* Puzzle was inspired by this blog post: {{https://thephp.website/en/issue/most-used-php-functions/}}",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "5\n/* test with fscanf() and strlen() */\nfscanf(STDIN, \"%s\", $s);\n$len = strlen($s); // strlen() gives the length of the string\nif(strlen($s) == $len)\n  echo \"strlen() matching\\n\";",
+          "testOut": "fscanf 1\nstrlen 2",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Example Validator",
+          "isTest": false,
+          "testIn": "5\n/* test with stream_get_line() and strlen() */\n$s = stream_get_line(STDIN, 999, \"\\n\");\n$len = strlen($s); // strlen() gives the length of the string\nif(strlen($s) == $len)\n    echo \"strlen() matching\\n\";",
+          "testOut": "stream_get_line 1\nstrlen 2",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 2: one liner",
+          "isTest": true,
+          "testIn": "1\nfscanf(STDIN, \"%d\", $n);",
+          "testOut": "fscanf 1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 2: one liner",
+          "isTest": false,
+          "testIn": "1\n$s = stream_get_line(STDIN, 999, \"\\n\");",
+          "testOut": "stream_get_line 1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 3: simple test with multiple lines, also with _ and numbers in identifiers",
+          "isTest": true,
+          "testIn": "4\n// simple test with multiple lines, also with _ and numbers in identifiers\nfscanf(STDIN, \"%s\", $s);\nfscanf(STDIN, \"%f\", $a);\n$r = str_rev($s);$t=atan2($a);",
+          "testOut": "atan2 1\nfscanf 2\nstr_rev 1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 3: simple test with multiple lines, also with _ and numbers in identifiers",
+          "isTest": false,
+          "testIn": "4\n// simple test with multiple lines, also with _ and numbers in identifiers\n$s = stream_get_line(STDIN, 999, \"\\n\");\nfscanf(STDIN, \"%f\", $a);\n$r = str_rev($s);$t=atan2($a);",
+          "testOut": "atan2 1\nfscanf 1\nstr_rev 1\nstream_get_line 1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 4: reserved keyword is not a function call",
+          "isTest": true,
+          "testIn": "5\n// reserved keyword 'if' is not a function call\nfscanf(STDIN, \"%s\", $s);\n$len = strlen($s);\nif(strlen($s) == $len)\n    echo \"surprise\\n\";",
+          "testOut": "fscanf 1\nstrlen 2",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 4: reserved keyword is not a function call",
+          "isTest": false,
+          "testIn": "5\n// reserved keyword 'if' is not a function call\n$s = stream_get_line(STDIN, 999, \"\\n\");\n$len = strlen($s);\nif(strlen($s) == $len)\n    echo \"surprise\\n\";",
+          "testOut": "stream_get_line 1\nstrlen 2",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 5: single line comment",
+          "isTest": true,
+          "testIn": "3\n// single line comment test\nfscanf(STDIN, \"%s\", $s);\n$len = strlen($s); // strlen() gives the length of the string",
+          "testOut": "fscanf 1\nstrlen 1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 5: single line comment",
+          "isTest": false,
+          "testIn": "3\n// single line comment test\n$s = stream_get_line(STDIN, 999, \"\\n\");\n$len = strlen($s); // strlen() gives the length of the string",
+          "testOut": "stream_get_line 1\nstrlen 1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 6: multi-line comment",
+          "isTest": true,
+          "testIn": "7\n// multi-line comment test\nfscanf(STDIN, \"%s\", $s);\n/* \nfscanf() reads from input stream\nstrlen() gives the length of the string\n*/\n$len = strlen($s); ",
+          "testOut": "fscanf 1\nstrlen 1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 6: multi-line comment",
+          "isTest": false,
+          "testIn": "7\n// multi-line comment test\n$s = stream_get_line(STDIN, 999, \"\\n\");\n/* \nfscanf() reads from input stream\nstrlen() gives the length of the string\n*/\n$len = strlen($s); ",
+          "testOut": "stream_get_line 1\nstrlen 1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 7: within a comment",
+          "isTest": true,
+          "testIn": "3\n// within a comment /* shall not start a comment, and a quote \" shall not start a string literal\nfscanf(STDIN, \"%s\", $s);\n$len = strlen($s); ",
+          "testOut": "fscanf 1\nstrlen 1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 7: within a comment",
+          "isTest": false,
+          "testIn": "3\n// within a comment /* shall not start a comment, and a quote \" shall not start a string literal\n$s = stream_get_line(STDIN, 999, \"\\n\");\n$len = strlen($s); ",
+          "testOut": "stream_get_line 1\nstrlen 1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 8: string literals",
+          "isTest": true,
+          "testIn": "6\n// string literals are not function calls. String literals can also span multiple lines\nfscanf(STDIN, \"%s\", $s);\n$len = strlen($s);\n$a = 'strlen()';\necho \"\nstrlen()\";",
+          "testOut": "fscanf 1\nstrlen 1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 8: string literals",
+          "isTest": false,
+          "testIn": "6\n// string literals are not function calls. String literals can also span multiple lines\n$s = stream_get_line(STDIN, 999, \"\\n\");\n$len = strlen($s);\n$a = 'strlen()';\necho \"\nstrlen()\";",
+          "testOut": "stream_get_line 1\nstrlen 1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 9: mixing quotes",
+          "isTest": true,
+          "testIn": "4\n// beware of quotes within quotes\nfscanf(STDIN, \"%s\", $s);\n$len = strlen($s);\n$a = \"mixing quotes ' \"; $b=strlen();",
+          "testOut": "fscanf 1\nstrlen 2",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 9: mixing quotes",
+          "isTest": false,
+          "testIn": "4\n// beware of quotes within quotes\n$s = stream_get_line(STDIN, 999, \"\\n\");\n$len = strlen($s);\n$a = \"mixing quotes ' \"; $b=strlen();",
+          "testOut": "stream_get_line 1\nstrlen 2",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 10: reserved keywords",
+          "isTest": true,
+          "testIn": "8\n// reserved keywords shall be excluded regardless of case\n$a = explode(' ', stream_get_line(STDIN, 999, \"\\n\"));\nForEach($a as $w)\n    for($i = 0; $i < strlen($w); $i++)\n        if(($w[$i] == 'a') And($i > 0))\n            echo('+');\n        else\n            echo($w[$i]);",
+          "testOut": "explode 1\nstream_get_line 1\nstrlen 1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 10: reserved keywords",
+          "isTest": false,
+          "testIn": "8\n// reserved keywords shall be excluded regardless of case\n$a = explode(' ', stream_get_line(STDIN, 999, \"\\n\"));\nForEach($a as $w)\n    for($i = 0; $i < strlen($w); $i++)\n        if(($w[$i] == 'a') And($i > 0))\n            echo('+');\n        else\n            echo($w[$i]);",
+          "testOut": "explode 1\nstream_get_line 1\nstrlen 1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 11: user defined function",
+          "isTest": true,
+          "testIn": "8\n// user-defined function test\nfunction lower_rev(string $s): string\n{\n    return strtolower(str_rev($s));\n} // lower_rev\n\nfscanf(STDIN, \"%s\", $s);\necho lower_rev($s) . \"\\n\";",
+          "testOut": "fscanf 1\nstr_rev 1\nstrtolower 1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 11: user defined function",
+          "isTest": false,
+          "testIn": "8\n// user-defined function test\nfunction lower_rev(string $s): string\n{\n    return strtolower(str_rev($s));\n} // lower_rev\n\n$s = stream_get_line(STDIN, 999, \"\\n\");\necho lower_rev($s) . \"\\n\";",
+          "testOut": "str_rev 1\nstream_get_line 1\nstrtolower 1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 12: no function call",
+          "isTest": true,
+          "testIn": "3\n// no function call\n$a=2;\n$b=($a*$a)+2;",
+          "testOut": "NONE",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 12: no function call",
+          "isTest": false,
+          "testIn": "3\n// no function call\n$a=2;\n$c=($a*$a)+2;",
+          "testOut": "NONE",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 13: case sensitive names",
+          "isTest": true,
+          "testIn": "5\n// in this puzzle the function names are case sensitive\nfscanf(STDIN, \"%s\", $s);\nFSCANF(STDIN, \"%f\", $a);\n$r = str_rev($s);\n$b=Str_rev($s);",
+          "testOut": "FSCANF 1\nStr_rev 1\nfscanf 1\nstr_rev 1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 13:  case sensitive names",
+          "isTest": false,
+          "testIn": "5\n// in this puzzle the function names are case sensitive\nfscanf(STDIN, \"%s\", $s);\nFSCANF(STDIN, \"%f\", $a);\n$r = Str_Rev($s);\n$b=str_rev($s);",
+          "testOut": "FSCANF 1\nStr_Rev 1\nfscanf 1\nstr_rev 1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 14: function name from variable",
+          "isTest": true,
+          "testIn": "4\n// calling function name stored in a variable shall not be counted\n$f='strlen';\nfscanf(STDIN, \"%s\", $s);\n$len = $f($s);",
+          "testOut": "fscanf 1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 14:  function name from variable",
+          "isTest": false,
+          "testIn": "4\n// calling function name stored in a variable shall not be counted\n$f='strlen';\n$s = stream_get_line(STDIN, 999, \"\\n\");\n$len = $f($s);",
+          "testOut": "stream_get_line 1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 15: multiple whitespaces",
+          "isTest": true,
+          "testIn": "10\n// multiple whitespaces test\n  function \n\tlower_rev(string $s): string\n{\n    return\t strtolower(str_rev($s));\n} // lower_rev\n\n fscanf(STDIN, \"%s\", $s);\necho\t\nlower_rev(  $s  ) . \"\\n\";",
+          "testOut": "fscanf 1\nstr_rev 1\nstrtolower 1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 15: multiple whitespaces",
+          "isTest": false,
+          "testIn": "10\n// multiple whitespaces test\n  function \n\tlower_rev(string $s): string\n{\n    return\t strtolower(str_rev($s));\n} // lower_rev\n\n\t$s   =stream_get_line(STDIN, 999, \"\\n\");\necho\t\nlower_rev(  $s  ) . \"\\n\";",
+          "testOut": "str_rev 1\nstream_get_line 1\nstrtolower 1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 16: real life example",
+          "isTest": true,
+          "testIn": "141\n<?php\n// https://www.codingame.com/training/easy/the-lost-child-episode-1\n\ndefine('DEBUG', FALSE);\n\n// --------------------------------------------------------------------\nclass Pos\n{\n    public $x;\n    public $y;\n\n    public function __construct(int $_x, int $_y)\n    {\n        $this->x = $_x;\n        $this->y = $_y;\n    }\n\n    public function isSamePlace(?Pos $pos): bool\n    {\n        if (is_null($pos))\n            return FALSE;\n        else\n            return ($this->x == $pos->x) and ($this->y == $pos->y);\n    }\n    \n    public function toString(): string\n    {\n        return '(' . $this->x . ',' . $this->y . ')';\n    }\n    \n} // class Pos\n\n// --------------------------------------------------------------------\nclass GameMap\n{\n    public $maxX = 10;\n    public $maxY = 10;\n    public $grid = array();         // array[y][x] of char .MC\n    public $startPos = NULL;        // Pos\n    public $targetPos = NULL;       // Pos\n\n    public $dist = array();         // array[y][x] of int\n\n    const Infinity = PHP_INT_MAX >> 2;  // less than PHP_INT_MAX to avoid addition overflow in some algorithms\n    const Floor = '.';\n    const Wall  = '#';\n    const Start = 'C';\n    const Target = 'M';\n\n    const Delta = array(    // dx, dy\n        [ 0, -1],\n        [ 1,  0],\n        [ 0,  1],\n        [-1,  0],\n    );\n    \n    public function readInitInput(): void\n    {\n        $this->grid = array();\n        for ($y = 0; $y < $this->maxY; $y++)\n        {\n            $this->grid[$y] = stream_get_line(STDIN, $this->maxX + 1, \"\\n\");\n            for ($x = 0; $x < $this->maxX; $x++)\n                if ($this->grid[$y][$x] == self::Start)\n                    $this->startPos = new Pos($x, $y);\n                elseif ($this->grid[$y][$x] == self::Target)\n                    $this->targetPos = new Pos($x, $y);\n        }\n    } // function readInitInput\n\n    public function logMap(): void\n    {\n        error_log('Map:');\n        foreach ($this->grid as $row)\n            error_log('  ' . $row);\n        error_log('Start: ' . $this->startPos->toString() . ', target: ' . $this->targetPos->toString());\n    } // function logMap\n\n    public function dijkstra(): void\n    {\n        $pq = new MinPriorityQueue;\n        $this->dist = array();\n        for ($y = 0; $y < $this->maxY; $y++)\n            for ($x = 0; $x < $this->maxX; $x++)\n                $this->dist[$y][$x] = self::Infinity;\n        $this->dist[$this->startPos->y][$this->startPos->x] = 0;\n        $this->pathPrev = array();\n        $pq->insert($this->startPos, 0);\n        while (!$pq->isEmpty())\n        {\n            $pos = $pq->extract();\n            if ($this->dist[$pos->y][$pos->x] == self::Infinity)\n                return;\n            foreach (self::Delta as $delta)\n            {\n                $grid1 = $this->grid[$pos->y][$pos->x];\n                $xp2 = $pos->x + $delta[0];\n                $yp2 = $pos->y + $delta[1];\n                if (($xp2 < 0) or ($xp2 >= $this->maxX) or ($yp2 < 0) or ($yp2 >= $this->maxY))\n                    continue;\n                if ($this->grid[$yp2][$xp2] == self::Wall)\n                    continue;\n                $pos2 = new Pos($xp2, $yp2);\n                $alt = $this->dist[$pos->y][$pos->x] + 1;\n                if ($alt < $this->dist[$pos2->y][$pos2->x])\n                {\n                    $this->dist[$pos2->y][$pos2->x] = $alt;\n                    $pq->insert($pos2, $alt);\n                }\n            }\n        }\n    } // function dijkstra\n\n    public function output(): void\n    {\n        $ans = $this->dist[$this->targetPos->y][$this->targetPos->x] * 10; \n        echo $ans . \"km\\n\";\n    } // function output\n\n} // class GameMap\n\n// --------------------------------------------------------------------\n// used by Dijkstra algorithm\nclass MinPriorityQueue extends SPLPriorityQueue\n{\n\tpublic function compare($a, $b)\n\t{\n\t\treturn parent::compare($b, $a);     //inverse the order\n\t}\n} // class MinPriorityQueue\n\n// ---------- main program\n$map = new GameMap;\n$map->readInitInput();\nif (DEBUG)\n    $map->logMap();\n$map->dijkstra();\n$map->output();\n// Write an answer using echo(). DON'T FORGET THE TRAILING \\n\n// To debug: error_log(var_export($var, true)); (equivalent to var_dump)\n?>",
+          "testOut": "define 1\nerror_log 3\nextract 1\ninsert 2\nisEmpty 1\nis_null 1\nstream_get_line 1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 16: real life example",
+          "isTest": false,
+          "testIn": "153\n<?php\n// --------------------------------------------------------------------\n// Source Code Analyser - sample solution for CodinGame solo puzzle candidate\n// (c) 2020 by Balint Toth\n//\n//   counts number of calls for library functions and methods in a source file\n//   https://www.codingame.com/contribute/view/518483e26d8ab793cf9ae496645ddd6dc11e\n// --------------------------------------------------------------------\n\ndefine('DEBUG', TRUE);\ndefine('SIMPLIFIED', TRUE);\n\n// is the character a valid part of a function name?\nfunction isValidIdentifier(string $s): bool\n{\n    return (($s[0] == '_')\n        or ((strtolower($s[0]) >= 'a') and (strtolower($s[0]) <= 'z'))\n        or (($s[0] >= '0') and ($s[0] <= '9')));\n}\n\n// is the character a whitespace?\nfunction isWhitespace(string $s): bool\n{\n    return (strpos(\" \\n\\r\\t\", $s[0]) !== FALSE);\n    // return (($s[0] == \" \") or ($s[0] == \"\\n\") or ($s[0] == \"\\r\") or ($s[0] == \"\\t\"));\n}\n\nif (SIMPLIFIED)\n{\n    // exclude these identifiers\n    $keyWords = [\"and\", \"array\", \"echo\", \"else\", \"elseif\", \"if\", \"for\", \"foreach\", \"function\", \"or\", \"return\", \"while\"]; \n    // exclude identifiers that are precededed by this keyword \n    $defKeyWords = [\"new\", \"function\"];\n}\nelse\n{\n    $keyWords = [\"and\", \"array\", \"as\", \"case\", \"catch\", \"echo\", \"else\", \"elseif\", \"exit\", \"if\", \"for\", \"foreach\", \n        \"function\", \"include\", \"list\", \"or\", \"return\", \"require\", \"require_once\", \"try\", \"while\", \"yield\"]; \n    $defKeyWords = [\"class\", \"function\", \"new\"];\n}\n\nfscanf(STDIN, \"%d\", $N); // number of lines to read\n$s = '';\nfor ($i = 0; $i < $N; $i++)\n    $s .= stream_get_line(STDIN, 256, \"\\n\") . \"\\n\";\n$countComments = 0;\n$inDoubleQuote = FALSE;\n$inSingleQuote = FALSE;\n$inLineComment = FALSE;\n$inMultiComment = FALSE;\n$functions = [];    // name => count\n$definitions = [];  // name => bool\n$i = -1;\nwhile ($i < strlen($s) - 1)\n{\n    $i++;\n    if ($inDoubleQuote)\n    {\n        if ($s[$i] == '\"')\n            $inDoubleQuote = FALSE;\n        continue;\n    }\n    if ($inSingleQuote)\n    {\n        if ($s[$i] == \"'\")\n            $inSingleQuote = FALSE;\n        continue;\n    }\n    if ($inLineComment)\n    {\n        if (($s[$i] == \"\\n\") or ($s[$i] == \"\\r\"))\n            $inLineComment = FALSE;\n        continue;\n    }\n    if ($inMultiComment)\n    {\n        if (($s[$i] == \"/\") and ($i > 0) and ($s[$i - 1] == \"*\"))\n            $inMultiComment = FALSE;\n        continue;\n    }\n    if ($s[$i] == '\"')\n    {\n        $inDoubleQuote = TRUE;\n        continue;\n    }\n    if ($s[$i] == \"'\")\n    {\n        $inSingleQuote = TRUE;\n        continue;\n    }\n    if (($s[$i] == \"/\") and ($i > 0) and ($s[$i - 1] == \"/\"))\n    {\n        $inLineComment = TRUE;\n        $countComments++;\n        continue;\n    }\n    if (($s[$i] == \"*\") and ($i > 0) and ($s[$i - 1] == \"/\"))\n    {\n        $inMultiComment = TRUE;\n        $countComments++;\n        continue;\n    }\n    if ($s[$i] != \"(\")\n        continue;\n    $j = $i - 1;\n    while (($j >= 0) and isValidIdentifier($s[$j]))\n        $j--;\n    $name = substr($s, $j + 1, $i - $j - 1);\n    if ($name == '')\n        continue;\n    if (($j >= 0) and ($s[$j] == \"$\"))\n        continue;\n    if (in_array(strtolower($name), $keyWords))\n        continue;\n    $functions[$name] = ($functions[$name] ?? 0) + 1;\n    $k = $j;\n    while (($k >= 0) and isWhitespace($s[$k]))\n        $k--;\n    foreach ($defKeyWords as $w)\n    {\n        if ($k < strlen($w) - 1)\n            continue;\n        if (strtolower(substr($s, $k - strlen($w) + 1, strlen($w))) == $w)\n            $definitions[$name] = TRUE;\n    }\n} // while\nksort($functions);\n$countFunctions = 0;\n$countCalls = 0;\nforeach ($functions as $name => $count)\n    if (!isset($definitions[$name]))\n    {\n        echo $name . ' ' . $count . \"\\n\";\n        $countFunctions++;\n        $countCalls += $count;\n    }\nif ($countFunctions == 0)\n    echo \"NONE\\n\";\nif (DEBUG)\n{\n    error_log('====== source code:');\n    if ($N < 100)\n        error_log($s);\n    else\n        error_log('  <omitted>');\n    error_log('====== totals:');\n    error_log(' # of source lines:  ' . $N);\n    error_log(' # of comments:      ' . $countComments);\n    error_log(' # of library calls: ' . $countCalls);\n    error_log(' # of library functions/classes/methods used: ' . $countFunctions);\n    error_log(' # of user-defined functions/classes/methods: ' . count($definitions));\n}\n?>",
+          "testOut": "count 1\ndefine 2\nerror_log 9\nfscanf 1\nin_array 1\nisset 1\nksort 1\nstream_get_line 1\nstrlen 4\nstrpos 1\nstrtolower 4\nsubstr 2",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤  [[N]] ≤  200",
+      "coverBinaryId": 46828120759089,
+      "stubGenerator": "read n:int\nloop n read line:string(256)\nwrite strlen 1",
+      "inputDescription": "<<Line 1:>> An integer [[N]] for the number of source lines.\n<<Next [[N]] lines:>> the source code to analyse (string, might contain whitespaces)\n<<IMPORTANT:>> Unlike in many other puzzles, you might need to read and process also the linefeeds at end of each line. If your input reader strips the \\n from the string, you might want to add it back manually.",
+      "solutionLanguage": "PHP",
+      "outputDescription": "<<[[??]] lines:>> separate lines for each library function/method encountered: the [[name]] of the function and the [[count]] number of calls, space separated.\nOutput lines shall be sorted by the function names (by ascending ascii values).\nIf no library call encountered, output {{NONE}}"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are given a source code and you have to analyse it: Output the names of all the called library functions &amp; methods, with the number of occurrences for each of them.<br><br><strong>Detailed rules:</strong> (if you are lazy reading this much, skip it and check the example &amp; test cases...)<br><br>* Source might contain multiple whitespaces: space, tab (<const>\\t</const>), new line (<const>\\n</const>) or linefeed (<const>\\r</const>).<br>* Anything within string literals (within pair of single (<const>'</const>) or double (<const>&quot;</const>) quotes) shall be omitted.<br>* Anything after single line comments (starting with <const>//</const>) or within multi-line comments (between <const>/*</const> and <const>*/</const> ) shall be omitted.<br>* A function call can be identified by a valid name, immediately followed by an opening paranthesis <const>(</const><br>* Valid function names might contain upper and lower case letters, digits and underscore <const>_</const>.<br>* Function names shall be treated case sensitively.<br>* Following reserved words shall be not treated as function calls and omitted from output: <br>&quot;<const>and</const>&quot;, &quot;<const>array</const>&quot;, &quot;<const>echo</const>&quot;, &quot;<const>else</const>&quot;, &quot;<const>elseif</const>&quot;, &quot;<const>if</const>&quot;, &quot;<const>for</const>&quot;, &quot;<const>foreach</const>&quot;, &quot;<const>function</const>&quot;, &quot;<const>or</const>&quot;, &quot;<const>return</const>&quot;, &quot;<const>while</const>&quot;, &quot;<const>new</const>&quot; (regardless of lower, upper or mixed case)<br>* If a function name is immediately preceded by a <const>$</const>, it shall be omitted (a PHP-specific rule, call of function with a name stored in a variable).<br>* Class names and user-defined functions shall be excluded. If the source contains &quot;<const>function name(</const>&quot; or &quot;<const>new name(</const>&quot;, then the &quot;<const>name</const>&quot; shall be omitted from output.<br>* Output lines shall be sorted by the function names (by ascending ascii values).<br>* If no library call encountered, output <const>NONE</const><br><br><strong>Notes:</strong><br><br>* While the provided test cases are PHP source files, knowledge of PHP is no pre-requisite at all. Of course, you can solve the puzzle in any language.<br>* Solution would be very similar for analysing C, C++, C#, Java and Javascript source (only difference is the set of reserved keywords and how user-defined functions can be detected). You can easily adapt your solution to analyze your languages of choice and analyze your own source files. Analysing Python or Haskell might need a bit more change though...<br>* Useless fun fact: my toplist in 98k source lines of PHP: <const>fscanf</const>, <const>error_log</const>, <const>strlen</const>, <const>isset</const>, <const>ord</const><br>* Puzzle was inspired by this blog post: <const>https://thephp.website/en/issue/most-used-php-functions/</const></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var> for the number of source lines.<br><strong>Next <var>N</var> lines:</strong> the source code to analyse (string, might contain whitespaces)<br><strong>IMPORTANT:</strong> Unlike in many other puzzles, you might need to read and process also the linefeeds at end of each line. If your input reader strips the \\n from the string, you might want to add it back manually.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>??</var> lines:</strong> separate lines for each library function/method encountered: the <var>name</var> of the function and the <var>count</var> number of calls, space separated.<br>Output lines shall be sorted by the function names (by ascending ascii values).<br>If no library call encountered, output <const>NONE</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le;  <var>N</var> &le;  200</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5\n/* test with fscanf() and strlen() */\nfscanf(STDIN, &quot;%s&quot;, $s);\n$len = strlen($s); // strlen() gives the length of the string\nif(strlen($s) == $len)\n  echo &quot;strlen() matching\\n&quot;;</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">fscanf 1\nstrlen 2</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 174545517242,
+  "avatar": 26750785092441,
+  "commentCount": 11,
+  "upVotes": 13,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 480021,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1596185504942,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

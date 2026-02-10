@@ -1,0 +1,193 @@
+{
+  "id": 7141,
+  "activeVersion": 9,
+  "score": 16,
+  "votableId": 19341753,
+  "codingamerId": 2914398,
+  "views": 335,
+  "commentableId": 19241634,
+  "title": "Sweet spot",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "BLANC",
+  "publicHandle": "714165182128bcd09939b9a86d30bc091ad9",
+  "codingamerHandle": "b12b98e075dfc70878c9c0b33f79db128934192",
+  "lastVersion": {
+    "version": 9,
+    "autocloseTime": 1631632841314,
+    "data": {
+      "title": "Sweet spot",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Chebyshev distance"
+          }
+        }
+      ],
+      "solution": "import sys\nimport math\n\n# Auto-generated code below aims at helping you parse\n# the standard input according to the problem statement.\nmonde = []\nn = int(input())\nfor i in range(n):\n    line = input()\n    monde.append(line)\n\ndef champs(genre, place, carte):\n    coor = []\n\n    if genre == \"A\" or genre == \"H\":\n        for i in range(7):\n            for j in range(7):\n                if (place[0]-3 + i) >= 0 and (place[0]-3 + i) < len(carte) and (place[1]-3 + j) >= 0 and (place[1]-3 + j) < len(carte) and not((place[0]-3 + i,place[1]-3 + j) in coor):\n                    coor.append((place[0]-3 + i,place[1]-3 + j))\n\n    if genre == \"B\":\n        for i in range(7):\n            for j in range(7):\n                if (place[0]-3 + i) >= 0 and (place[0]-3 + i) < len(carte) and (place[1]-3 + j) >= 0 and (place[1]-3 + j) < len(carte) and (i == 3 or j == 3) and not((place[0]-3 + i,place[1]-3 + j) in coor):\n                    coor.append((place[0]-3 + i,place[1]-3 + j))\n\n    return coor\n\ndef explosion(carte,active_b):\n    coor_bomb = []\n    carte_liste = []\n    sortie = []\n    \n\n    for i in range(len(carte)):\n        ligne = \"\"\n        for j in range(len(carte)):\n            if carte[i][j] in ['A','B','H']:\n                coor_bomb.append((i,j))\n                for element in champs(carte[i][j],(i,j),carte):\n                    if not(element in active_b) and (carte[i][j] != \"B\" or (carte[i][j] == \"B\" and (i,j) in active_b)):\n                        active_b.append(element)\n\n                \n    for element in carte:\n        carte_liste.append(list(element))\n\n    modification = 0\n    for i in range(len(carte)):\n        for j in range(len(carte)):\n            for coor in coor_bomb:\n                if not(carte[i][j] in [\"A\",\"H\",\"B\"]):\n                        if carte_liste[coor[0]][coor[1]] == \"A\" and int(carte_liste[i][j]) < (4 - max(abs(coor[0]-i),abs(coor[1]-j))):\n                             carte_liste[i][j] = str(4 - max(abs(coor[0]-i),abs(coor[1]-j)))\n                             modification = 1\n                        if carte_liste[coor[0]][coor[1]] == \"H\" and 0 < (4 - max(abs(coor[0]-i),abs(coor[1]-j))) and int(carte_liste[i][j]) < 5:\n                             carte_liste[i][j] = \"5\"\n                             modification = 1\n                        if carte_liste[coor[0]][coor[1]] == \"B\"  and (coor[0],coor[1]) in active_b and (coor[0] == i or coor[1] == j):\n                            if int(carte_liste[i][j]) < (4 - max(abs(coor[0]-i),abs(coor[1]-j))):\n                                carte_liste[i][j] = str(4 - max(abs(coor[0]-i),abs(coor[1]-j)))\n                                modification = 1\n                    \n\n    for element in carte_liste:\n        sortie.append(\"\".join(element))\n\n    if modification == 0 :\n        return sortie\n    else:\n        return explosion(sortie,active_b)\n\nmonde = explosion(monde,[])\nfor element in monde:\n    print(element)",
+      "statement": "The aim of this puzzle is to simulate the impact of the shock wave of bombs on a square grid. Display the greatest intensity of shockwaves felt at each cell after the bombs explode.\n\nThe grid initially contains cells labeled {{0}} along with several bombs of type {{A}}, {{H}}, or {{B}}. However, in some cases, the place may already have felt the effect of other bombs before the grid bombs exploded. In this case the number of the cell will be different from 0 as soon as the grid is given.\n\nThe three bombs have different explosion patterns. Consider the following generic configuration, where the X will be replaced by the different types of bombs. Note that for each bomb, <<the bomb's location is not replaced by a number>>.\n```000000000\n000000000\n000000000\n000000000\n0000X0000\n000000000\n000000000\n000000000\n000000000\n```\nFor the {{A}}-bomb:\n```000000000\n011111110\n012222210\n012333210\n0123A3210\n012333210\n012222210\n011111110\n000000000\n```\nFor the {{H}}-bomb:\n```000000000\n055555550\n055555550\n055555550\n0555H5550\n055555550\n055555550\n055555550\n000000000\n```\nFor the {{B}}-bomb:\n```000000000\n000010000\n000020000\n000030000\n0123B3210\n000030000\n000020000\n000010000\n000000000\n```\nUnlike the other bombs, the {{B}}-bomb will not explode unless it is within the shockwave of another exploding bomb.",
+      "testCases": [
+        {
+          "title": "First attempt with A-bomb",
+          "isTest": true,
+          "testIn": "15\n000000000000000\nA00A0000000000A\n000000000000000\n000000000000000\n000000000000000\n000000000000000\n000000000000000\n000000000000000\n0000000A0000000\n000000000000000\n000000000000000\n000000000000000\n000000000000000\n000000000000000\nA000000000000AA",
+          "testOut": "333332100001233\nA33A3210000123A\n333332100001233\n222222100001222\n111111100001111\n000011111110000\n000012222210000\n000012333210000\n0000123A3210000\n000012333210000\n000012222210000\n111111111111111\n222100000012222\n332100000012333\nA321000000123AA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator first attempt with A-bomb",
+          "isTest": false,
+          "testIn": "18\n000000000000000000\n0AAAA00000000AAAA0\n000000000000000000\n000000000000000000\n000000000000000000\n000000000000000000\nAA0000000000000000\n000000000000000000\n000000000000000000\n000000000000000000\n00000000000000A000\n000000000000000000\n000000000000000000\n00000A000000000000\n000000000000000000\n000000000000000000\n00000000000000000A\nA00A000A0000A00000",
+          "testOut": "333333210012333333\n3AAAA32100123AAAA3\n333333210012333333\n222222210012222222\n222211110011111111\n333210000000000000\nAA3210000000000000\n333210000001111111\n222210000001222221\n111110000001233321\n00111111100123A321\n001222221001233321\n001233321001222221\n00123A321001111111\n111233321111111222\n222222222222222233\n33333233322333223A\nA33A323A3223A32233",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "First attempt with H-bomb",
+          "isTest": true,
+          "testIn": "18\nH00000000000000000\n000000000000000H00\n000000000000000000\n00000000H000000000\n000000000000000000\n000000000000000000\n000000000000000000\n000000HH0000000000\n000000000000000000\n000000000000000000\n000000000000000H00\n000000000000000000\n000000000000000000\n000000000000000000\nHHH00000000H000000\n000000000000000000\n000000000000000000\n000000000000000000",
+          "testOut": "H55505555555555555\n555505555555555H55\n555505555555555555\n55550555H555555555\n000555555555555555\n000555555555000000\n000555555555000000\n000555HH5550555555\n000555555550555555\n000555555550555555\n000555555550555H55\n555555005555555555\n555555005555555555\n555555005555555555\nHHH55500555H555000\n555555005555555000\n555555005555555000\n555555005555555000",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator first attempt with H-bomb",
+          "isTest": false,
+          "testIn": "20\n00000000000000000000\n00000000000000000000\n00000000000000000000\n00000000000000000000\n0000HHHHHHHHHHHH0000\n00000000000000000000\n00000000000000000000\nH0000000000000000000\n00000000000000000000\n00000000000000000000\n00000000000000000H00\n000000000H0000000000\n00000000000000000000\n0H000000000000000000\n00000000000000000000\n00000000000000000000\n00000000000000000H00\n00000000000000000000\n00H00000000000000000\n00000000000000000000",
+          "testOut": "00000000000000000000\n05555555555555555550\n05555555555555555550\n05555555555555555550\n5555HHHHHHHHHHHH5550\n55555555555555555550\n55555555555555555550\nH5555555555555555555\n55550055555550555555\n55550055555550555555\n55555055555550555H55\n555550555H5550555555\n55555055555550555555\n5H555055555550555555\n55555055555550555555\n55555500000000555555\n55555500000000555H55\n55555500000000555555\n55H55500000000555555\n55555500000000555555",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Real case : A/H-bomb",
+          "isTest": true,
+          "testIn": "22\n0000000000000000000000\n0000000000000000000000\n0000000AAHAA0000000000\n0000000000000000000000\n0000000000000000000000\n000000000000000000000A\n0000000000000000000000\n0000000000000000000000\n000A000000000000000000\n000000000HAH0000A00000\n0000000000000000000000\nA000000000000000000000\nA000000000000000000000\n0000000000000000000000\n0000000000000000000000\n0000000000000000000000\nA000000000000000000H00\n0000000000000000000000\n0000000000A00000000000\n0000000000000000000000\n0000000000000000000000\nH00000000000000000000A",
+          "testOut": "0000125555555210000000\n0000125555555210000000\n0000125AAHAA5210001111\n0000125555555210001222\n0000125555555210001233\n111111555555511000123A\n1222225555555551111233\n1233325555555552222222\n123A325555555553332111\n223332555HAH5553A32100\n3322225555555553332100\nA321115555555552222100\nA321005555555551111100\n3321000000000000555555\n2221000000000000555555\n3321000111111100555555\nA321000122222100555H55\n3321000123332100555555\n5555000123A32100555555\n5555000123332100555555\n5555000122222100001233\nH55500011111110000123A",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator real case : A/H-bomb",
+          "isTest": false,
+          "testIn": "20\n00A00000000H00000000\n00000000000000000000\n00000000000000000000\n00000000000000000000\n00000000000000000000\n0000000000000000000A\n00000000000000000000\n00000000000000000000\n00A0000000H000000000\n00000000000000000000\n00000000000000000000\n00000000000000000000\n00000000000000000000\n00000H00000000000A00\n00000000000000000000\n00000000000000000000\n00000000000000000000\n00A00000000000000000\n00000000000000000000\nH000000000A00000000H",
+          "testOut": "23A32100555H55500000\n23332100555555500000\n22222100555555501111\n11111100555555501222\n00000000000000001233\n1111110555555500123A\n22222105555555001233\n23332105555555001222\n23A3210555H555001111\n23332105555555000000\n22555555555555111111\n11555555555555122222\n00555555500000123332\n00555H55500000123A32\n11555555500000123332\n22555555500000122222\n55555555511111115555\n55A52101222221005555\n55552101233321005555\nH555210123A32100555H",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "First attempt with B-bomb",
+          "isTest": true,
+          "testIn": "22\n000000000000000000000A\n00000B0000000000000000\n0000000000000000000000\n0B0000000000000000000B\n000000000000000000B000\n0000000000000000000000\n000000000000000000000B\n0000000000000000000000\n000000B00000000A000000\n000000000000000000000B\n0000000000000000000000\n000000B000000000000000\n000000000000000000000B\n0000000000000000000000\n000000000H000000000000\n000000000000000000000B\n0000000000000000000000\nA000000000000000000000\nA00000000000B000000000\nA000000000000000000000\nHHHH00000000000000A00H\n00000000A0000000000000",
+          "testOut": "000000000000000000123A\n00000B0000000000001233\n0000000000000000001223\n0B0000000000000000123B\n000000000000000000B003\n0000001000001111111003\n000000200000122222123B\n0000003000001233321003\n000123B32100123A321003\n000000300000123332123B\n0000003000001222221003\n000123B555555111111003\n000000555555500000123B\n0000005555555000000003\n111100555H555000000003\n222100555555500000123B\n3321005555555000000003\nA555555555555001115555\nA55555511111B001225555\nA555555222210001235555\nHHHH55533321000123A55H\n55555553A3210001235555",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator first attempt with B-bomb",
+          "isTest": false,
+          "testIn": "24\n00000000000000000000000B\n00B000000000000000000000\n000000000000000000000000\n000000000000000000000000\n0000000000A0000000000HHH\n000000000000000000000000\n0B00B0000000000000000000\n000000000000000000000000\n000000000000000000000000\n0B0000000000000000000000\n00000000000A000000000000\n0B0000000000000000000000\n0B0000000000000000000000\n000000000000000000000000\n0000000000000000000000A0\n0B0000000000H00000000000\n0B0000000000000000000000\n000000000000000000000000\n0B0000000000000000000000\n0000000000B0000000000000\n0000A0000000000000000000\n00000000000000000000H000\n000000000000000000000000\n0000000000000B0000000000",
+          "testOut": "00000000000000000000000B\n00B000011111110000555555\n000000012222210000555555\n010010012333210000555555\n0200200123A3210000555HHH\n030030012333210000555555\n3B33B3212222210000555555\n030030011111111000555555\n030020001222221000000000\n3B3210001233321000000000\n03000000123A321000000000\n3B3210001233321000011111\n3B3210001555555500012222\n030000001555555500012333\n0300000005555555000123A3\n3B3210000555H55500012333\n3B3210000555555500012222\n031111110555555500011111\n3B3222210555555505555555\n0323332100B0000005555555\n0223A3210000000005555555\n01233321000000000555H555\n012222210000000005555555\n0111111100000B0005555555",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Small map",
+          "isTest": true,
+          "testIn": "5\n00000\n00000\n00A00\n00000\n00000",
+          "testOut": "22222\n23332\n23A32\n23332\n22222",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator small map",
+          "isTest": false,
+          "testIn": "1\nH",
+          "testOut": "H",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Real case : all bombs",
+          "isTest": true,
+          "testIn": "25\n0000000000000000000000000\n00000000000HHH00000000H00\n00H0000000000000000000000\n0000000000000000000000000\n0000000000000000000000000\n00000000000000000000A0000\n000000000000000B000000000\n00000H0000A00000000000000\n00000000000000000000H0000\n0000000000000000000000000\n0000000000000000000000000\n00A0000000000000000000000\n0000000000000000000000000\n00000B0000000000000000000\n0000000000000000000000000\n0000000000000000000A00000\n00000B00BBB00000000000000\n0000000000000000000000000\n0A00000000000000000000000\n0000000000000000000000000\n0000000000000000000000000\n000000000000A000000000000\n0000000000000000000000000\n000B000000000000000000000\n000000000000000000000H000",
+          "testOut": "5555550055555555500555555\n55555500555HHH55500555H55\n55H5550055555555511555555\n5555550055555555512555555\n5555555555555555512555555\n55555555522221000555A5550\n005555555333210B055555550\n00555H5553A32100055555550\n11555555533321000555H5550\n2255555552222100055555550\n2355555551111100055555550\n23A3220000000000055555550\n2333230000000000111111100\n22223B3211100000122222100\n1111130022200000123332100\n1111130033300000123A32100\n22223B33BBB32100123332100\n3332130033300000122222100\n3A32120022211111111111100\n3332110011222221000000000\n2222100001233321000000000\n111110000123A321005555555\n0000000001233321005555555\n000B000001222221005555555\n000000000111111100555H555",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator Real case : all bombs",
+          "isTest": false,
+          "testIn": "25\nA000000000000000000000000\n0000000000000000000000000\n00B0000000000000000000000\n0000000000000A00000000000\n000000000000000000000000H\n0000000000000000000000000\n0000H0000000000B000000000\n00000BBBBBBBBBB000000000A\n000000000000000000000000A\n0000000000000000000000000\n0000000000000A00000000000\n0000000000000000000000000\n0000000000000000000000000\n00000H0000000000000000000\n0000000000000000000000000\n00000A00000000000H0000000\n00000B0000000000000000000\n0000000000000000000000000\n0A000B0000000000000000000\n0000000000000000000000000\n0000000000000000000000000\n000000000000000000000H000\n0000000000000000000000000\n0000000000000000000000000\nA00000000000A00000000H000",
+          "testOut": "A321000000111111100000000\n3331000000122222100005555\n23B3210000123332100005555\n1555555500123A32100005555\n055555551112333210000555H\n0555555522222223100005555\n0555H5553333333B321005555\n05555BBBBBBBBBB321000555A\n055555553333333210000123A\n0555555522223332100001233\n0055555551123A32100001222\n0055555550123332100001111\n0055555550122255555550000\n00555H5550111155555550000\n0055555550000055555550000\n11555A55500000555H5550000\n22555B5550000055555550000\n3332232210000055555550000\n3A323B3210000055555555555\n3332130000000000005555555\n2222120000000000005555555\n111111000111111100555H555\n2221000001222221005555555\n3321000001233321005555555\nA32100000123A32100555H555",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Damaged map",
+          "isTest": true,
+          "testIn": "15\nA07000000000000\n007000070000000\n777003009000000\n00000000000000A\n000000000000000\n000000000000000\n004000009000000\n0000A00H0000000\n006000000000000\n000000080000000\nA00000000000000\n000000000000000\n000000000000030\n000000000000000\n00100000H000000",
+          "testOut": "A37100000001111\n337100070001222\n777103009001233\n11110000000123A\n011155555551233\n012255555551222\n014355559551111\n1123A55H5550000\n226355555550000\n332255585550000\nA32155555550000\n332105555555000\n222105555555030\n111105555555000\n00100555H555000",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator damaged map",
+          "isTest": false,
+          "testIn": "17\nH0000000000A00000\n00900000000000000\n70000000000B00005\n80000000000000000\n0000A000000B000A0\n00000000000000000\n00000000000000000\nH0008000010000600\n00000000000000000\n7000A000030000A00\n00000000000040000\n00000000000000000\n0000B00B000000000\n00100000000000000\n00000000000000600\n000000A000000H000\n00000000000400000",
+          "testOut": "H5550000123A32100\n55951111123332111\n75552221123B32225\n85553321111312333\n5555A321123B323A3\n55553321000312333\n55552221000212222\nH5558221010122622\n55553321000123332\n7555A321030123A32\n55553322000143332\n01223223000122222\n0123B33B325555555\n00113223215555555\n00012333215555655\n000123A321555H555\n00012333215555555",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No explosions",
+          "isTest": true,
+          "testIn": "7\n0000000\n0000000\n0000000\n000B000\n0000000\n0000000\n0000000",
+          "testOut": "0000000\n0000000\n0000000\n000B000\n0000000\n0000000\n0000000",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator no explosions",
+          "isTest": false,
+          "testIn": "7\n0000B00\n00B0000\n000000B\n000B000\n0000000\nB000000\n00000B0",
+          "testOut": "0000B00\n00B0000\n000000B\n000B000\n0000000\nB000000\n00000B0",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "¤ 1 ≤ [[N]] ≤ 25\n¤ There are only three types of bomb: {{A}}, {{B}}, {{H}}\n¤ There may be no explosion",
+      "coverBinaryId": 67784987485673,
+      "stubGenerator": "read N:int\nloop N read line:string(30)\nwrite answer",
+      "inputDescription": "¤ <<First line>>: An integer [[N]] representing the size of the square grid\n¤ <<The following [[N]] lines>>: Strings representing each line of the grid",
+      "solutionLanguage": "Python3",
+      "outputDescription": "¤ <<[[N]] lines>>: Strings representing each line of the grid after the bombs explode. If two effects from two different bombs are felt on a square, the stronger effect is recorded on the square"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">The aim of this puzzle is to simulate the impact of the shock wave of bombs on a square grid. Display the greatest intensity of shockwaves felt at each cell after the bombs explode.<br><br>The grid initially contains cells labeled <const>0</const> along with several bombs of type <const>A</const>, <const>H</const>, or <const>B</const>. However, in some cases, the place may already have felt the effect of other bombs before the grid bombs exploded. In this case the number of the cell will be different from 0 as soon as the grid is given.<br><br>The three bombs have different explosion patterns. Consider the following generic configuration, where the X will be replaced by the different types of bombs. Note that for each bomb, <strong>the bomb's location is not replaced by a number</strong>.<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">000000000<br>000000000<br>000000000<br>000000000<br>0000X0000<br>000000000<br>000000000<br>000000000<br>000000000<br></pre><pre style=\"font-family: monospace\"></pre><br>For the <const>A</const>-bomb:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">000000000<br>011111110<br>012222210<br>012333210<br>0123A3210<br>012333210<br>012222210<br>011111110<br>000000000<br></pre><pre style=\"font-family: monospace\"></pre><br>For the <const>H</const>-bomb:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">000000000<br>055555550<br>055555550<br>055555550<br>0555H5550<br>055555550<br>055555550<br>055555550<br>000000000<br></pre><pre style=\"font-family: monospace\"></pre><br>For the <const>B</const>-bomb:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">000000000<br>000010000<br>000020000<br>000030000<br>0123B3210<br>000030000<br>000020000<br>000010000<br>000000000<br></pre><pre style=\"font-family: monospace\"></pre><br>Unlike the other bombs, the <const>B</const>-bomb will not explode unless it is within the shockwave of another exploding bomb.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">&curren; <strong>First line</strong>: An integer <var>N</var> representing the size of the square grid<br>&curren; <strong>The following <var>N</var> lines</strong>: Strings representing each line of the grid</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">&curren; <strong><var>N</var> lines</strong>: Strings representing each line of the grid after the bombs explode. If two effects from two different bombs are felt on a square, the stronger effect is recorded on the square</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">&curren; 1 &le; <var>N</var> &le; 25<br>&curren; There are only three types of bomb: <const>A</const>, <const>B</const>, <const>H</const><br>&curren; There may be no explosion</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">15\n000000000000000\nA00A0000000000A\n000000000000000\n000000000000000\n000000000000000\n000000000000000\n000000000000000\n000000000000000\n0000000A0000000\n000000000000000\n000000000000000\n000000000000000\n000000000000000\n000000000000000\nA000000000000AA</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">333332100001233\nA33A3210000123A\n333332100001233\n222222100001222\n111111100001111\n000011111110000\n000012222210000\n000012333210000\n0000123A3210000\n000012333210000\n000012222210000\n111111111111111\n222100000012222\n332100000012333\nA321000000123AA</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 139107442366,
+  "avatar": 46459187054094,
+  "commentCount": 27,
+  "upVotes": 24,
+  "downVotes": 8,
+  "validateAction": {
+    "actionId": 590154,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1631622879052,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

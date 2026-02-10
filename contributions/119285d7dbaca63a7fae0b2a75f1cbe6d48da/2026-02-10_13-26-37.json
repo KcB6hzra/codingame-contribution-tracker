@@ -1,0 +1,163 @@
+{
+  "id": 11928,
+  "activeVersion": 9,
+  "score": 6,
+  "votableId": 22596770,
+  "codingamerId": 4800481,
+  "views": 211,
+  "commentableId": 22484670,
+  "title": "10 pin Bowling Scores",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "TheCaptainCoder",
+  "publicHandle": "119285d7dbaca63a7fae0b2a75f1cbe6d48da",
+  "codingamerHandle": "eb194565c4cf5e6842f06f0319b51f751840084",
+  "lastVersion": {
+    "version": 9,
+    "autocloseTime": 1650988288758,
+    "data": {
+      "title": "10 pin Bowling Scores",
+      "topics": [
+        {
+          "id": 46,
+          "handle": "loops",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 68,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        },
+        {
+          "id": 47,
+          "handle": "arrays",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Tableaux",
+            "2": "Arrays"
+          },
+          "pageTitle": "Arrays: exercises and theory",
+          "puzzleCount": 24,
+          "parentTopicId": 40,
+          "contentDetailsId": 78
+        },
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 50,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        }
+      ],
+      "solution": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        int n = int.Parse(Console.ReadLine());\n        for (int i = 0; i < n; i++)\n        {\n            Console.WriteLine(CumSum(ScoreFrames(Console.ReadLine())));\n        }\n    }\n\n    static string CumSum(int[] frames)\n    {\n        int sum = 0;\n        string scores = \"\";\n        foreach (int s in frames)\n        {\n            sum += s;\n            scores += $\"{sum} \";\n        }\n        return scores.Trim();\n    }\n\n    static int[] ScoreFrames(string n)\n    {\n        int[] frames = new int[10];\n        int i = 0;\n        bool firstBall = true;\n        string allowed = \"-123456789X/\";\n        int[] bonuses = new int[10];\n        int lastBall = 0;\n\n        while (n.Length > 0)\n        {\n            char ch = n[0];\n            n = n.Substring(1);\n            if (ch == ' ') continue;\n            if (!allowed.Contains(ch)) throw new ArgumentException($\"Cannot score '{ch}'.\");\n\n            // Set base score\n            int score = ch == '/' ? 10 - lastBall : allowed.IndexOf(ch);\n            lastBall = score;\n            // Console.WriteLine($\"Scoring {ch}, Raw: {score}\");\n\n            // Only add points to the first 10 frames\n            if (i < 10) frames[i] += score;\n\n            // Calculate bonuses\n            for (int j = 0; j < 10; j++)\n            {\n                if (bonuses[j] > 0)\n                {\n                    frames[j] += score;\n                    bonuses[j]--;\n                }\n            }\n\n            // Check to see if we should advance to the next frame\n            if (ch == 'X' && i < 10)\n            {\n                bonuses[i] += 2;\n                i++;\n                firstBall = true;\n            }\n            else if (ch == '/' && i < 10)\n            {\n                bonuses[i]++;\n                i++;\n                firstBall = true;\n            }\n            else if (!firstBall)\n            {\n                firstBall = true;\n                i++;\n            }\n            else\n            {\n                firstBall = false;\n            }\n        }\n        return frames;\n    }\n}\n",
+      "statement": "A game of 10 pin bowling is played over the course of 10 frames. \nAt the beginning of each frame, 10 pins are arranged at the end of a bowling lane. \nEach frame, The bowler receives 2 attempts to roll a bowling ball down the lane and knock over as many pins as possible.\n\nScoring works in the following way:\n\n1. The bowler scores 1 point for each pin they knock down in a frame.\n\n2. If all of the pins are knocked down on the second attempt, the bowler receives a Spare. This is worth 10 points plus 1 point for every pin knocked down by the bowler's next ball. For example:\n\n  * In the 1st frame, a bowler knocks down 8 pins with their first ball and the remaining 2 pins with their second ball and receives a Spare. In the second frame, the bowler knocks down 6 pins with their first ball and 3 pins with their second ball. The points earned in the first frame is 16 (10 + 6). 10 from the pins from the first frame and 6 from the first ball in the second frame.\n\n3. If all of the pins are knocked down on the first attempt, the bowler receives a Strike. This is worth 10 points plus 1 point for every pin knocked down by the bowler's next two balls. For example:\n\n  * In the 1st frame, a bowler knocks down all 10 pins with their first ball and receives a Strike. In the second frame, they knock down 6 pins with their first ball and 3 pins with their second ball. The points earned from the first frame is 19 (10 + 6 + 3).\n\nAnother example:\n\n  * In the second frame, a bowler knocks down all 10 pins with their first ball and receives a Strike. In the third frame, they knock down all the pins with their first ball receiving a second Strike. In the fourth frame, they knock down 7 pins with their first ball and the remaining 3 pins with their second ball. The points earned from the second frame is 27 (10 + 10 + 7). The points earned from the third frame is 20 (10 + 7 + 3).\n\nFinal Frame:\n\nIn the 10th frame of a bowling game, there are 3 possible outcomes:\n\n1. The bowler does not knock down all of the pins with their 2 attempts. At this point, they can earn no additional points.\n\n2. The bowler scores a Spare with their second ball. This results in a new set of 10 pins being set and the bowler receives 1 bonus roll to add to their score.\n\n3. The bowler scores a Strike with their first ball. This results in a new set of 10 pins being set and the bowler receives 2 bonus rolls to add to their score.\n\n  3a. If on the first bonus ball the bowler knocks down all of the pins, they receive 10 bonus points for the 10th frame. A new set of 10 pins is set and they are allowed to roll their last bonus ball to be added to their score. The pins knocked down from this last ball are only added as a bonus once to the Strike that was thrown with the first ball in the 10th frame.\n\nExample:\n\nIn the 10th frame, a bowler scores a strike with their first ball, a strike with their first bonus ball, and 7 pins with their second bonus ball. The points earned from the 10th frame is 27 (10 + 10 + 7).\n\nTask: Write a program that can calculate the cumulative points earned for each frame in a bowling game.\n\nScore notation for each ball roll:\n\n{{X}} => Strike\n{{/}} => Spare\n{{-}} => Zero Points\n[[K]] => An integer representing the number of pins knocked down\n\nExample Input:\n\nEach frame is separated by a space:\n\n`X X 9- 7/ -1 81 -- 9/ X X7-`\n\nExample Output:\n`29 48 57 67 68 77 77 97 124 141`",
+      "testCases": [
+        {
+          "title": "No Strikes No Spares",
+          "isTest": true,
+          "testIn": "1\n32 71 23 44 5- 1- 11 15 16 7-",
+          "testOut": "5 13 18 26 31 32 34 40 47 54",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "1\n51 43 8- 72 6- 51 61 61 52 9-",
+          "testOut": "6 13 21 30 36 42 49 56 63 72",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Spares",
+          "isTest": true,
+          "testIn": "5\n32 7/ 6/ 3/ 11 9/ 1- 1/ 2/ 5-\n-/ 5- 52 52 72 71 1/ 51 3/ 3/-\n7/ -/ 5/ 72 7/ 22 6/ -7 7/ --\n44 1/ 2/ -/ -9 81 2/ 12 7/ 5/6\n1/ 1/ 5/ 2/ 3/ 5/ 5/ -/ 5/ 16",
+          "testOut": "5 21 34 45 47 58 59 71 86 91\n15 20 27 34 43 51 66 72 85 95\n10 25 42 51 63 67 77 84 94 94\n8 20 30 40 49 58 69 72 87 103\n11 26 38 51 66 81 91 106 117 124",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "5\n5/ 1/ 54 4/ 72 4/ 51 61 61 52\n3- 6/ 7/ 6- 3/ 3/ 3/ 8/ 72 -/6\n-/ 1/ 5/ 9- 36 3/ -/ 7/ 1/ -2\n7/ 7- 51 5/ 1/ 36 3/ 7/ 3/ 52\n4/ 26 4/ 34 5/ 3/ 5/ 5/ 8/ 3/4",
+          "testOut": "11 26 35 52 61 76 82 89 96 103\n3 20 36 42 55 68 86 103 112 128\n11 26 45 54 63 73 90 101 111 113\n17 24 30 41 54 63 80 93 108 115\n12 20 33 40 53 68 83 101 114 128",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Strikes",
+          "isTest": true,
+          "testIn": "5\n32 7/ 6/ X 2/ X 1/ 11 1/ X1/\n3- 6/ X 5/ 9/ X 3/ 7/ 6/ -/9\nX X X 1/ 5/ X 8/ 36 3/ XX6\n7/ 7- X 7/ X 2/ X 8/ 9- 61\nX 7/ 9- 3/ 8/ 5/ X 52 X 5/8",
+          "testOut": "5 21 41 61 81 101 112 114 134 154\n3 23 43 62 82 102 119 135 145 164\n30 51 71 86 106 126 139 148 168 194\n17 24 44 64 84 104 124 143 152 159\n20 39 48 66 81 101 118 125 145 163",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "5\n32 7/ 6/ X 2/ X 1/ 11 1/ X1/\nX X X X 8/ X 8/ 52 X 81\n7/ -/ 5/ 72 7/ 22 6/ -7 7/ --\nX 8/ 1/ X 1- X -9 81 2/ 12\n1/ 1/ 5/ 2/ 3/ 5/ 5/ X X 8/X",
+          "testOut": "5 21 41 61 81 101 112 114 134 154\n30 60 88 108 128 148 163 170 189 198\n10 25 42 51 63 67 77 84 94 94\n20 31 51 62 63 82 91 100 111 114\n11 26 38 51 66 81 101 129 149 169",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Strikes and Spares",
+          "isTest": true,
+          "testIn": "5\nX X X X X X X X X XXX\nX X X X X -/ X 4/ X 4/8\nX X X -/ X X X X X 8/5\nX X 7/ X X X X X -/ -/6\nX X X X X X X X X 2/X",
+          "testOut": "30 60 90 120 150 180 210 240 270 300\n30 60 90 110 130 150 170 190 210 228\n30 50 70 90 120 150 180 208 228 243\n27 47 67 97 127 157 177 197 207 223\n30 60 90 120 150 180 210 232 252 272",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "5\nX X X X X X -/ X 1/ 8/X\nX X 3/ X X X X X X XXX\n3/ X 7/ X X X X X X XX1\nX X X -/ X X X X X XXX\nX X X X X X X X X X-/",
+          "testOut": "30 60 90 120 140 160 180 200 218 238\n23 43 63 93 123 153 183 213 243 273\n20 40 60 90 120 150 180 210 240 261\n30 50 70 90 120 150 180 210 240 270\n30 60 90 120 150 180 210 240 260 280",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "1 <= [[N]] <= 10",
+      "coverBinaryId": 80760883854999,
+      "stubGenerator": "read N:int\nloop N read GAME:string(64)\nwrite 5 13 18 26 31 32 34 40 47 54",
+      "inputDescription": "<<Line 1:>> An integer [[N]] specifying the number of games to score\n<<Next [[N]] lines:>> A string containing 10 frames each separated by a space",
+      "solutionLanguage": "C#",
+      "outputDescription": "<<[[N]] lines:>> Each line contains 10 integers separated by a single space representing the cumulative score for each frame of that game"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A game of 10 pin bowling is played over the course of 10 frames. <br>At the beginning of each frame, 10 pins are arranged at the end of a bowling lane. <br>Each frame, The bowler receives 2 attempts to roll a bowling ball down the lane and knock over as many pins as possible.<br><br>Scoring works in the following way:<br><br>1. The bowler scores 1 point for each pin they knock down in a frame.<br><br>2. If all of the pins are knocked down on the second attempt, the bowler receives a Spare. This is worth 10 points plus 1 point for every pin knocked down by the bowler's next ball. For example:<br><br>  * In the 1st frame, a bowler knocks down 8 pins with their first ball and the remaining 2 pins with their second ball and receives a Spare. In the second frame, the bowler knocks down 6 pins with their first ball and 3 pins with their second ball. The points earned in the first frame is 16 (10 + 6). 10 from the pins from the first frame and 6 from the first ball in the second frame.<br><br>3. If all of the pins are knocked down on the first attempt, the bowler receives a Strike. This is worth 10 points plus 1 point for every pin knocked down by the bowler's next two balls. For example:<br><br>  * In the 1st frame, a bowler knocks down all 10 pins with their first ball and receives a Strike. In the second frame, they knock down 6 pins with their first ball and 3 pins with their second ball. The points earned from the first frame is 19 (10 + 6 + 3).<br><br>Another example:<br><br>  * In the second frame, a bowler knocks down all 10 pins with their first ball and receives a Strike. In the third frame, they knock down all the pins with their first ball receiving a second Strike. In the fourth frame, they knock down 7 pins with their first ball and the remaining 3 pins with their second ball. The points earned from the second frame is 27 (10 + 10 + 7). The points earned from the third frame is 20 (10 + 7 + 3).<br><br>Final Frame:<br><br>In the 10th frame of a bowling game, there are 3 possible outcomes:<br><br>1. The bowler does not knock down all of the pins with their 2 attempts. At this point, they can earn no additional points.<br><br>2. The bowler scores a Spare with their second ball. This results in a new set of 10 pins being set and the bowler receives 1 bonus roll to add to their score.<br><br>3. The bowler scores a Strike with their first ball. This results in a new set of 10 pins being set and the bowler receives 2 bonus rolls to add to their score.<br><br>  3a. If on the first bonus ball the bowler knocks down all of the pins, they receive 10 bonus points for the 10th frame. A new set of 10 pins is set and they are allowed to roll their last bonus ball to be added to their score. The pins knocked down from this last ball are only added as a bonus once to the Strike that was thrown with the first ball in the 10th frame.<br><br>Example:<br><br>In the 10th frame, a bowler scores a strike with their first ball, a strike with their first bonus ball, and 7 pins with their second bonus ball. The points earned from the 10th frame is 27 (10 + 10 + 7).<br><br>Task: Write a program that can calculate the cumulative points earned for each frame in a bowling game.<br><br>Score notation for each ball roll:<br><br><const>X</const> =&gt; Strike<br><const>/</const> =&gt; Spare<br><const>-</const> =&gt; Zero Points<br><var>K</var> =&gt; An integer representing the number of pins knocked down<br><br>Example Input:<br><br>Each frame is separated by a space:<br><br><pre style=\"font-family: monospace\">X X 9- 7/ -1 81 -- 9/ X X7-</pre><br><br>Example Output:<br><pre style=\"font-family: monospace\">29 48 57 67 68 77 77 97 124 141</pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var> specifying the number of games to score<br><strong>Next <var>N</var> lines:</strong> A string containing 10 frames each separated by a space</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>N</var> lines:</strong> Each line contains 10 integers separated by a single space representing the cumulative score for each frame of that game</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt;= <var>N</var> &lt;= 10</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1\n32 71 23 44 5- 1- 11 15 16 7-</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">5 13 18 26 31 32 34 40 47 54</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 119931590127,
+  "avatar": 80456143361167,
+  "commentCount": 21,
+  "upVotes": 8,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 656077,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1650798405458,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

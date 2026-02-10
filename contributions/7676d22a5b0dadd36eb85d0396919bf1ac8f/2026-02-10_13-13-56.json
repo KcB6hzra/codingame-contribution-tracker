@@ -1,0 +1,353 @@
+{
+  "id": 7676,
+  "activeVersion": 23,
+  "score": 15,
+  "votableId": 20909422,
+  "codingamerId": 1152991,
+  "views": 318,
+  "commentableId": 20803679,
+  "title": "Chebyshev Orbiting",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "xoposhiy",
+  "publicHandle": "7676d22a5b0dadd36eb85d0396919bf1ac8f",
+  "codingamerHandle": "324dfbaef64fca8e76f57859613e2af71992511",
+  "lastVersion": {
+    "version": 23,
+    "autocloseTime": 1688854694330,
+    "data": {
+      "title": "Chebyshev Orbiting",
+      "topics": [
+        {
+          "id": 86,
+          "handle": "simulation",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Simulation",
+            "2": "Simulation"
+          },
+          "pageTitle": "Simulation: exercises and theory",
+          "puzzleCount": 29,
+          "parentTopicId": 42,
+          "contentDetailsId": 72
+        },
+        {
+          "id": 210,
+          "handle": "coordinates",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Coordinates",
+            "2": "Coordinates"
+          },
+          "puzzleCount": 4,
+          "parentTopicId": 93
+        },
+        {
+          "id": 65,
+          "handle": "memoization",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Mémoïsation",
+            "2": "Memoization"
+          },
+          "pageTitle": "Memoization: exercises and theory",
+          "puzzleCount": 11,
+          "parentTopicId": 41,
+          "contentDetailsId": 76
+        }
+      ],
+      "solution": "using System;\nusing System.Linq;\nusing System.IO;\nusing System.Text;\nusing System.Collections;\nusing System.Collections.Generic;\n\nclass Solution\n{\n    static void Main(string[] args)\n    {\n        var inputs = Console.ReadLine().Split(' ');\n        var radius = int.Parse(inputs[0]);\n        var x = int.Parse(inputs[1]);\n        var y = int.Parse(inputs[2]);\n        var vx = int.Parse(inputs[3]);\n        var vy = int.Parse(inputs[4]);\n        var time = int.Parse(inputs[5]);\n\n        var visited = new Dictionary<(int x, int y, int vx, int vy), int>\n        {\n            [(x, y, vx, vy)] = 0\n        };\n        var t = 0;\n        var period = 0;\n        var crashed = false;\n        while (t < time && !crashed)\n        {\n            t++;\n            x += vx;\n            y += vy;\n            vx -= Math.Sign(x);\n            vy -= Math.Sign(y);\n            crashed = Math.Max(Math.Abs(x), Math.Abs(y)) <= radius;\n            var ship = (x, y, vx, vy);\n            //Console.Error.WriteLine(ship);\n            if (period == 0 && !visited.TryAdd(ship, t))\n            {\n                period = t - visited[ship];\n                t = time - (time - t) % period;\n            }\n        }\n        Console.WriteLine($\"{x} {y} {(crashed ? 1 : 0)}\");\n    }\n}",
+      "statement": "Spaceship is orbiting the planet in the <<Discrete Chebyshev 2D Space>>. By given initial spaceship position and velocity predict its position after [[time]] seconds.\n\n<<Physics>>\n\nPlanet has its center in {{(0, 0)}}. All points with Chebyshev distance to planet center less than or equal to [[radius]], belongs to planet. Chebyshev distance between (x1, y1) and (x2, y2) is Max(Abs(x1 - x2), Abs(y1 - y2))\n\nSpaceship works as follows:\n\n1. Every turn spaceship moves if it is not crashed yet: velocity vector is added to ship position.\n2. Spaceship crashed if its final position has chebyshev distance to planet center less than or equal to [[radius]].\n3. Chebyshev gravity is applied. Denote ship position as ([[x]], [[y]]) and velocity as ([[vx]] [[vy]]). Then [[vx]] (and [[vy]]) is decreased by 1 if [[x]] > 0 (respectively [[y]] > 0) and increased by 1 if [[x]] < 0 (respectively [[y]] < 0).\n\n<<Sample>>\nSpaceship coordinates sequence after simulation for planet radius 1 and start velocity (2, 0):\n\n(0; −3) → (2; −3) → (3; −2) → (3; 0) → (2; 2) → (0; 3) → (−2; 3) → (−3; 2) → (−3; 0) → (−2; −2) → ...\n\nSee image with this trajectory below.\n```\n.........\n....0.1..\n..9....2.\n...PPP...\n.8.PPP.3.\n...PPP...\n.7....4..\n..6.5....\n.........\n```\nP — is planet point, number — ship position after that number of seconds. Center of the planet is at (0; 0)",
+      "testCases": [
+        {
+          "title": "Sample",
+          "isTest": true,
+          "testIn": "1 0 -3 2 0 9",
+          "testOut": "-2 -2 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "1 1 -3 2 0 12",
+          "testOut": "1 -2 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Through the planet",
+          "isTest": true,
+          "testIn": "1 8 0 0 0 5",
+          "testOut": "-2 0 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "1 -8 1 0 0 5",
+          "testOut": "2 0 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Small orbit",
+          "isTest": true,
+          "testIn": "0 0 1 -1 0 10",
+          "testOut": "1 -1 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "0 1 0 -1 1 13",
+          "testOut": "0 1 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Small planet. Crash?",
+          "isTest": true,
+          "testIn": "1 9 9 8 9 738",
+          "testOut": "17 18 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "1 9 9 9 8 737",
+          "testOut": "26 24 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Strange orbit",
+          "isTest": true,
+          "testIn": "5 9 5 5 -2 34",
+          "testOut": "24 -6 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "4 5 5 5 -1 34",
+          "testOut": "10 4 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Elliptical orbit",
+          "isTest": true,
+          "testIn": "4 5 6 5 -5 1000",
+          "testOut": "-15 10 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "7 5 10 5 -4 1000",
+          "testOut": "-15 6 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Elliptical orbit forever",
+          "isTest": true,
+          "testIn": "4 5 6 5 -5 999999954",
+          "testOut": "-16 15 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "7 5 10 5 -4 999999998",
+          "testOut": "-10 -5 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Strange orbit forever",
+          "isTest": true,
+          "testIn": "1 0 2 10 10 999999999",
+          "testOut": "-54 -63 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "1 0 2 -11 11 999999999",
+          "testOut": "-38 62 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Launch from planet and land",
+          "isTest": true,
+          "testIn": "2 -2 -2 2 -2 5",
+          "testOut": "2 -2 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "10 -10 -10 10 -10 21",
+          "testOut": "10 -10 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Journey to the center of the planet",
+          "isTest": true,
+          "testIn": "10 0 11 0 -5 1",
+          "testOut": "0 6 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "9 10 8 -6 -6 1",
+          "testOut": "4 2 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Giant step of the humanity",
+          "isTest": true,
+          "testIn": "5 0 -6 0 12 2",
+          "testOut": "0 17 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "6 2 -7 0 14 2",
+          "testOut": "1 20 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Just crash",
+          "isTest": true,
+          "testIn": "6 14 20 14 13 59",
+          "testOut": "-1 6 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "7 15 20 14 13 1835",
+          "testOut": "0 6 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Early crash",
+          "isTest": true,
+          "testIn": "2 5 5 4 3 10005000",
+          "testOut": "0 1 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "2 5 5 3 4 812373213",
+          "testOut": "1 0 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Long-long cycle",
+          "isTest": true,
+          "testIn": "4 34 50 49 49 1000000000",
+          "testOut": "34 495 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 14",
+          "isTest": false,
+          "testIn": "5 -37 -50 -50 -49 1000000000",
+          "testOut": "1261 -495 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Long way to crash",
+          "isTest": true,
+          "testIn": "5 49 47 48 46 1000000000",
+          "testOut": "0 0 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 15",
+          "isTest": false,
+          "testIn": "1 48 -50 47 -49 1000000000",
+          "testOut": "0 0 1",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "-50 ≤ [[x]], [[y]], [[vx]], [[vy]] ≤ 50\n0 ≤ [[radius]] ≤ 10\n0 ≤ [[time]] ≤ 1000000000",
+      "coverBinaryId": 106364963474339,
+      "stubGenerator": "read radius:int x:int y:int vx:int vy:int time:int\nwrite X Y CRASH",
+      "inputDescription": "Single line with 6 space separated integers: [[radius]], [[x]], [[y]], [[vx]], [[vy]], [[time]]",
+      "solutionLanguage": "C#",
+      "outputDescription": "Single line with 3 space separated integers: [[x]] [[y]] [[crashed]]\nCrashed is 1 if spaceship is crashed in the planet and 0 otherwise."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Spaceship is orbiting the planet in the <strong>Discrete Chebyshev 2D Space</strong>. By given initial spaceship position and velocity predict its position after <var>time</var> seconds.<br><br><strong>Physics</strong><br><br>Planet has its center in <const>(0, 0)</const>. All points with Chebyshev distance to planet center less than or equal to <var>radius</var>, belongs to planet. Chebyshev distance between (x1, y1) and (x2, y2) is Max(Abs(x1 - x2), Abs(y1 - y2))<br><br>Spaceship works as follows:<br><br>1. Every turn spaceship moves if it is not crashed yet: velocity vector is added to ship position.<br>2. Spaceship crashed if its final position has chebyshev distance to planet center less than or equal to <var>radius</var>.<br>3. Chebyshev gravity is applied. Denote ship position as (<var>x</var>, <var>y</var>) and velocity as (<var>vx</var> <var>vy</var>). Then <var>vx</var> (and <var>vy</var>) is decreased by 1 if <var>x</var> &gt; 0 (respectively <var>y</var> &gt; 0) and increased by 1 if <var>x</var> &lt; 0 (respectively <var>y</var> &lt; 0).<br><br><strong>Sample</strong><br>Spaceship coordinates sequence after simulation for planet radius 1 and start velocity (2, 0):<br><br>(0; &minus;3) &rarr; (2; &minus;3) &rarr; (3; &minus;2) &rarr; (3; 0) &rarr; (2; 2) &rarr; (0; 3) &rarr; (&minus;2; 3) &rarr; (&minus;3; 2) &rarr; (&minus;3; 0) &rarr; (&minus;2; &minus;2) &rarr; ...<br><br>See image with this trajectory below.<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>.........<br>....0.1..<br>..9....2.<br>...PPP...<br>.8.PPP.3.<br>...PPP...<br>.7....4..<br>..6.5....<br>.........<br></pre><pre style=\"font-family: monospace\"></pre><br>P &mdash; is planet point, number &mdash; ship position after that number of seconds. Center of the planet is at (0; 0)</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">Single line with 6 space separated integers: <var>radius</var>, <var>x</var>, <var>y</var>, <var>vx</var>, <var>vy</var>, <var>time</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Single line with 3 space separated integers: <var>x</var> <var>y</var> <var>crashed</var><br>Crashed is 1 if spaceship is crashed in the planet and 0 otherwise.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">-50 &le; <var>x</var>, <var>y</var>, <var>vx</var>, <var>vy</var> &le; 50<br>0 &le; <var>radius</var> &le; 10<br>0 &le; <var>time</var> &le; 1000000000</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1 0 -3 2 0 9</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">-2 -2 0</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 82594555131,
+  "avatar": 117261083571823,
+  "commentCount": 17,
+  "upVotes": 16,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 822831,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1640037937001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1686259491804,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1688134680373,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

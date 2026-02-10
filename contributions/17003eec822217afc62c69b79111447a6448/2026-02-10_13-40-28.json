@@ -1,0 +1,235 @@
+{
+  "id": 1700,
+  "activeVersion": 87,
+  "score": 23,
+  "votableId": 9093992,
+  "codingamerId": 2007852,
+  "views": 770,
+  "commentableId": 9028488,
+  "title": "Obsolete Programming",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Zorg1",
+  "publicHandle": "17003eec822217afc62c69b79111447a6448",
+  "codingamerHandle": "ae4dcda11ac0f4cc7369e049d99e90652587002",
+  "lastVersion": {
+    "version": 87,
+    "autocloseTime": 1609413623479,
+    "data": {
+      "title": "Obsolete Programming",
+      "topics": [],
+      "solution": "sp=1 stack={}\nwp=1 codes={}\ndico={}\ncompile=false\ndeffunc=nil\n\n-- inner interpreter\nfunction interpret(start)\n    --io.stderr:write(\"Call at \"..start..\"\\n\")\n    --for i=1,sp-1 do io.stderr:write(\"stack #\"..i..\" \"..stack[i]..\"\\n\") end\n    local ip=start\n    while true do\n        local cmd = codes[ip]\n        ip=ip+1\n        if not cmd then break end\n        local nextip = cmd()\n        if nextip then \n            --io.stderr:write(\"@ \"..(ip-1)..\" JMP TO \".. nextip ..\"\\n\") \n            ip=nextip \n        end\n    end\nend\n\ndico[\"DEF\"]={mode=\"D\",f=function (name)\n    if dico[name] or tonumber(name) then\n        io.stderr:write(\"Cannot redefine \"..name..\"\\n\")\n    else\n        local adr=wp\n        dico[name]={f=function () interpret(adr) end}\n        compile=true\n    end\nend}\n\nfunction addImm(name,f)\n    dico[name]={mode=\"I\",f=f}\nend\n\nfunction jz(tip)\n    if sp < 2 then \n        io.stderr:write(\"IF : Stack underflow\\n\")\n    else\n        sp=sp-1\n        if stack[sp]==0 then return tip end\n    end\nend\naddImm(\"END\",function () codes[wp]=nil wp=wp+1 compile=false end)\naddImm(\"IF\",function () codes[wp]=\"IF\" stack[sp]=wp sp=sp+1 wp=wp+1 end)\naddImm(\"FI\",function ()  \n    if sp < 2 then \n        io.stderr:write(\"FI : Stack underflow\\n\") \n    else\n        local u=stack[sp-1]\n        sp=sp-1\n        if type(codes[u])==\"string\" then\n            local dip=wp\n            if codes[u]==\"IF\" then\n                codes[u]=function () return jz(dip) end\n                --io.stderr:write(\"FI : at \"..u..\" JZ \".. dip ..\"\\n\") \n            else\n                codes[u]=function () return dip end\n                --io.stderr:write(\"FI : at \"..u..\" JMP \".. dip ..\"\\n\") \n            end\n        else\n            io.stderr:write(\"FI : Invalid usage\\n\") \n        end\n    end \nend)\naddImm(\"ELS\",function ()  \n    if sp < 2 then \n        io.stderr:write(\"ELS : Stack underflow\\n\") \n    else\n        local u=stack[sp-1]\n        stack[sp-1]=wp codes[wp]=\"JMP\" wp=wp+1\n        if type(codes[u])==\"string\" and codes[u]==\"IF\" then\n            local dip=wp\n            codes[u] = function () return jz(dip) end\n            --io.stderr:write(\"ELS : at \"..u..\" JZ \".. dip ..\"\\n\") \n        else\n            io.stderr:write(\"ELS : Invalid usage\\n\") \n        end\n\n    end \nend)\n\nfunction addWord(name,f)\n    dico[name]={f=f}\nend\n\nfunction pop2()\n    if sp>2 then sp=sp-2 return stack[sp+1],stack[sp] \n    else\n        sp=1 io.stderr:write(\"Stack underflow\\n\")\n        return 0,0\n    end\nend\n\naddWord(\"ADD\",function () local x,y=pop2() stack[sp]=x+y sp=sp+1 end)\naddWord(\"MUL\",function () local x,y=pop2() stack[sp]=x*y sp=sp+1 end)\naddWord(\"SUB\",function () local x,y=pop2() stack[sp]=y-x sp=sp+1 end)\naddWord(\"DIV\",function () local x,y=pop2() stack[sp]=y//x sp=sp+1 end)\naddWord(\"MOD\",function () local x,y=pop2() stack[sp]=y%x sp=sp+1 end)\n\naddWord(\"POP\",function () \n    sp=sp-1 \n    if sp < 1 then \n        sp=1 \n        io.stderr:write(\"POP : Stack underflow\\n\") \n    end \nend)\n\naddWord(\"DUP\",function () \n    if sp == 1 then \n        io.stderr:write(\"DUP : Stack underflow\\n\") \n    else\n        stack[sp]=stack[sp-1]\n        sp=sp+1\n    end \nend)\n\naddWord(\"SWP\",function () \n    if sp < 3 then \n        io.stderr:write(\"SWP : Stack underflow\\n\") \n    else\n        stack[sp-1],stack[sp-2]=stack[sp-2],stack[sp-1]\n    end \nend)\n\naddWord(\"OVR\",function () \n    if sp < 3 then \n        io.stderr:write(\"OVR : Stack underflow\\n\") \n    else\n        stack[sp]=stack[sp-2]\n        sp=sp+1\n    end \nend)\n\naddWord(\"ROT\",function () \n    if sp < 4 then \n        io.stderr:write(\"ROT : Stack underflow\\n\") \n    else\n        stack[sp-3],stack[sp-2],stack[sp-1]=stack[sp-2],stack[sp-1],stack[sp-3]\n    end \nend)\n\naddWord(\"OUT\",function () \n    if sp < 2 then \n        io.stderr:write(\"OUT : Stack underflow\\n\") \n    else\n        print(stack[sp-1])\n        sp=sp-1\n    end \nend)\n\naddWord(\"POS\",function () \n    if sp < 2 then \n        io.stderr:write(\"POS : Stack underflow\\n\") \n    else\n        stack[sp-1] = stack[sp-1]>=0 and 1 or 0\n    end \nend)\n\naddWord(\"NOT\",function () \n    if sp < 2 then \n        io.stderr:write(\"NOT : Stack underflow\\n\") \n    else\n        stack[sp-1]=stack[sp-1]==0 and 1 or 0\n    end \nend)\n\nfunction getWord(w)\n    local wd=dico[w]\n    if wd then return wd end\n    local v=tonumber(w)\n    if v then\n        return {f=function () stack[sp]=v sp=sp+1 end}\n    end\n    io.stderr:write(\"Unknown word : \" .. w ..\"\\n\") \n    return nil\nend\n\n-- outer interpreter\nN = tonumber(io.read())\nfor i=1,N do\n    for w in io.read():gmatch(\"%S+\") do\n        if deffunc then\n            deffunc(w)\n            deffunc=nil\n        else\n            local wd = getWord(w)\n            if wd then\n                if not wd.mode then\n                    if compile then codes[wp]=wd.f wp=wp+1 else wd.f()end\n                elseif wd.mode==\"I\" then\n                    if compile then wd.f() else \n                        io.stderr:write(\"Must be called in definition : \" .. w ..\"\\n\") \n                    end\n                elseif wd.mode==\"D\" then\n                    if compile then \n                        io.stderr:write(\"Cannot be called in definition : \" .. w ..\"\\n\") \n                    else\n                        deffunc=wd.f\n                    end\n                end \n            end\n        end\n    end\nend\n",
+      "statement": "How is your CSB ? Very bad, in fact, and you have been moved from the prestigious Bot Division to the awful Legacy Softwares Division where you must maintain obsolete and crappy code that runs 90% of your corporation's business.\n\nToday you must write an interpreter for a strange and forgotten language, written in a narrow character set : only uppercase letters, digits, minus sign, space and newline.\n\nBasically the language is based on [[RPN]] (Reverse Polish Notation) with the abilty to define new instructions.\n\nLines are split in instructions separated by space(s).\n\nIf the instruction is a {{number}}, simply put in on top of the stack.\nThe operations ([[ADD]], [[SUB]], [[MUL]], [[DIV]], [[MOD]]) pop the last two numbers out of the stack and push the result back on top.\nFor example after, <<2 5 SUB 8>>, the stack is <<-3 8>>.\n[[DIV]] is the integer quotient and [[MOD]] the remainder of the division.\n\nThere are also operators that act on the stack itself:\n[[POP]] removes the top number.\n[[DUP]] duplicates the top number.\n[[SWP]] swaps the two top numbers. <<4 5 SWP 6>> swaps {{4}} and {{5}} then pushes {{6}} on top, the stack is <<5 4 6>>.\n[[ROT]] brings to the top the third number of the stack. If the stack is <<1 2 3 4>>, [[ROT]] changes it in <<1 3 4 2>>.\n[[OVR]] copies the second top number of the stack on the top. If the stack is <<1 2 3 4>>, [[OVR]] changes it in <<1 2 3 4 3>>.\n\n[[POS]] removes the top number, push 1 if this number is ≥ 0, otherwise push 0.\n[[NOT]] removes the top number, push 1 if this number is 0, otherwise push 0.\n[[OUT]] removes the top number and print it on the standard output, followed by a newline char.\n\nTo define a new instruction the syntax is :\n\n[[DEF]] {{name}} <<RPN instructions>> [[END]]\n\nThe instructions between [[DEF]] and [[END]] are not executed immediately but stored to be executed when {{name}} appears as instruction outside, after its definition.\n{{name}} must not be an already defined instruction or a number.\nNote that {{name}} can appears in its own definition (recursion is available).\n\nFor example\n<<DEF SQ DUP MUL END>> defines the instruction [[SQ]]\nwhen <<4 SQ>> appears, {{4}} is pushed on the stack, then [[DUP]] then [[MUL]] are executed.\n\nInside a definition, conditionals are available :\n\n[[IF]] <<RPN instructions>> [[FI]]\nremove the top number, if this number is not zero, the instructions between [[IF]] and [[FI]] are executed, and continue with instructions after [[FI]]. If the number is zero, the execution continues after [[FI]].\n\n[[IF]] <<RPN instructions 1>> [[ELS]] <<RPN instructions 2>> [[FI]]\nRemove the top number, if this number is not zero, the instructions between [[IF]] and [[ELS]] are executed, and continue with instructions after [[FI]]. If the number is zero, the instructions between [[ELS]] and [[FI]] are executed and continue execution after [[FI]].\n\nThe two conditional structures can be nested.",
+      "testCases": [
+        {
+          "title": "Arithmetic test",
+          "isTest": true,
+          "testIn": "6\n10 5 ADD OUT\n10 5 SUB OUT\n12 24 SUB OUT\n30 10 MUL OUT\n50 7 DIV OUT\n50 7 MOD OUT",
+          "testOut": "15\n5\n-12\n300\n7\n1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Arithmetic test",
+          "isTest": false,
+          "testIn": "6\n5 5 ADD OUT\n15 5 SUB OUT\n100 240 SUB OUT\n6 7 MUL OUT\n98 13 DIV OUT\n98 13 MOD OUT",
+          "testOut": "10\n10\n-140\n42\n7\n7",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Stack Manipulations",
+          "isTest": true,
+          "testIn": "4\n101 200 854 POP SWP DUP OUT OUT OUT\n9 76 100 ROT OUT OUT OUT\n5 4 OVR OUT OUT OUT\n0 1 4 ROT ROT DUP ROT ADD ROT OUT OUT OUT",
+          "testOut": "101\n101\n200\n9\n100\n76\n5\n4\n5\n4\n1\n1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Stack Manipulations",
+          "isTest": false,
+          "testIn": "4\n18 20 OVR OUT OUT OUT\n9 8 3 POP SWP DUP OUT OUT OUT\n1001 11 13 ROT OUT OUT OUT\n1 1 3 ROT ROT DUP ROT ADD ROT OUT OUT OUT",
+          "testOut": "18\n20\n18\n9\n9\n8\n1001\n13\n11\n3\n2\n1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "\"Logic\"",
+          "isTest": true,
+          "testIn": "5\n401 13 NOT NOT OUT OUT\n402 178 NOT OUT OUT\n403 89 POS OUT OUT\n404 0 POS OUT OUT\n405 -56 POS OUT OUT",
+          "testOut": "1\n401\n0\n402\n1\n403\n1\n404\n0\n405",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "\"Logic\"",
+          "isTest": false,
+          "testIn": "5\n-12 POS OUT\n0 POS OUT\n8 POS OUT\n96 NOT OUT\n-8 NOT NOT OUT",
+          "testOut": "0\n1\n1\n0\n1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Simple function - square",
+          "isTest": true,
+          "testIn": "2\nDEF SQ DUP MUL END\n4 SQ OUT 10 SQ OUT 71 SQ OUT",
+          "testOut": "16\n100\n5041",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Simple function - cubic",
+          "isTest": false,
+          "testIn": "2\nDEF TST DUP DUP MUL MUL END\n2 TST OUT 17 TST OUT 9 TST OUT",
+          "testOut": "8\n4913\n729",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Function and test",
+          "isTest": true,
+          "testIn": "4\nDEF MAX OVR OVR SUB POS NOT IF SWP FI POP END\n5 3 MAX 3 7 MAX MAX -2 MAX 4 MAX OUT\n-8 -3 -7 2 -4 MAX MAX MAX MAX OUT\n0 1 MAX 13 MAX DUP OUT 20 MAX 7 MAX OUT",
+          "testOut": "7\n2\n13\n20",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Function and test",
+          "isTest": false,
+          "testIn": "4\nDEF TST OVR OVR SUB POS IF SWP FI POP END\n5 3 TST 3 7 TST TST -2 TST 4 TST OUT\n-8 -3 -7 2 -4 TST TST TST TST OUT\n0 1 TST 13 TST DUP OUT 20 TST -3 TST OUT",
+          "testOut": "-2\n-8\n0\n-3",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Function calling function and nested if",
+          "isTest": true,
+          "testIn": "17\nDEF ABS DUP POS NOT IF 0 SWP SUB FI END\n51 ABS OUT -5 ABS OUT 0 ABS OUT\nDEF NZ\n  OVR ABS OVR ABS SUB\n  DUP NOT\n  IF POP DUP POS IF SWP FI\n  ELS\n    POS IF SWP FI\n  FI\n  POP\nEND\n1 -2 NZ -8 NZ 4 NZ 5 NZ OUT\n-12 -5 NZ -137 NZ OUT\n42 -5 NZ 12 NZ 21 NZ 5 NZ 24 NZ OUT\n42 5 NZ 12 NZ 21 NZ -5 NZ 24 NZ OUT\n-5 -4 NZ -2 12 NZ NZ -40 4 NZ 2 18 NZ NZ NZ\n11 5 NZ NZ OUT",
+          "testOut": "51\n5\n0\n1\n-5\n5\n5\n2",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Function calling function and nested if",
+          "isTest": false,
+          "testIn": "10\nDEF T0 DUP POS NOT IF 0 SWP SUB FI END\nDEF TST OVR T0 OVR T0 SUB\n  DUP NOT\n  IF POP DUP POS IF SWP FI\n  ELS POS IF SWP FI FI\n  POP\nEND\n7 -10 TST 13 1 TST TST -1 8 TST TST OUT\n3 -5 TST 13 4 TST TST -1 8 TST TST OUT\n4 -10 TST 13 -4 TST TST -5 8 TST TST OUT",
+          "testOut": "1\n-1\n4",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "the Queen of functions",
+          "isTest": true,
+          "testIn": "5\nDEF F1\n  DUP 2 SUB POS \n  IF DUP 1 SUB F1 MUL ELS POP 1 FI \nEND\n7 F1 OUT 10 F1 OUT 0 F1 OUT 3 F1 OUT",
+          "testOut": "5040\n3628800\n1\n6",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "the Queen of functions",
+          "isTest": false,
+          "testIn": "5\nDEF TST\n  DUP POS \n  IF DUP 1 SUB TST ADD ELS POP 0 FI \nEND\n7 TST OUT 10 TST OUT 1 TST OUT 3 TST OUT",
+          "testOut": "28\n55\n1\n6",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "I have no loop and I must iterate",
+          "isTest": true,
+          "testIn": "8\nDEF SQ DUP MUL END\nDEF PL DUP OUT SQ OUT END\nDEF PR OVR PL\n  SWP 1 ADD OVR OVR SUB POS \n  IF SWP PR ELS POP POP FI\nEND\n1 5 PR\n30 33 PR",
+          "testOut": "1\n1\n2\n4\n3\n9\n4\n16\n5\n25\n30\n900\n31\n961\n32\n1024\n33\n1089",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "I have no loop and I must iterate",
+          "isTest": false,
+          "testIn": "6\nDEF TST OVR DUP OUT DUP DUP MUL MUL OUT\n  SWP 1 ADD OVR OVR SUB POS \n  IF SWP TST ELS POP POP FI\nEND\n1 5 TST\n30 33 TST",
+          "testOut": "1\n1\n2\n8\n3\n27\n4\n64\n5\n125\n30\n27000\n31\n29791\n32\n32768\n33\n35937",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Hello Fibonacci !",
+          "isTest": true,
+          "testIn": "6\nDEF RFIB DUP \n  IF 1 SUB ROT ROT DUP ROT ADD ROT RFIB \n  ELS POP POP FI \nEND\nDEF FIB 0 1 ROT RFIB END\n5 FIB OUT 6 FIB OUT 2 FIB OUT 10 FIB OUT",
+          "testOut": "5\n8\n1\n55",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Hello Lucas !",
+          "isTest": false,
+          "testIn": "6\nDEF TST DUP IF 1 SUB ROT ROT DUP ROT \nADD ROT TST ELS POP POP FI END\n2 1 0 TST OUT\n2 1 9 TST OUT\n2 1 5 TST OUT\n2 1 7 TST OUT",
+          "testOut": "2\n76\n11\n29",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Integer square root",
+          "isTest": true,
+          "testIn": "20\nDEF ESTIM DUP 4 SUB POS \n  IF 4 DIV SWP 2 MUL SWP ESTIM\n  ELS POP\n  FI\nEND\nDEF NA SWP OVR DIV ADD 2 DIV END\nDEF RS\n  OVR OVR NA\n  OVR OVR SUB DUP 1 SUB MUL\n  IF\n    SWP POP RS\n  ELS\n    ROT POP OVR OVR SUB POS IF SWP FI POP\n  FI\nEND\nDEF ASQRT\n  DUP 1 SWP ESTIM RS\nEND\n5040 ASQRT OUT 10 ASQRT OUT\n1001 ASQRT OUT 65000 ASQRT OUT",
+          "testOut": "70\n3\n31\n254",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Integer cubic root",
+          "isTest": false,
+          "testIn": "17\nDEF T0 DUP 8 SUB POS\nIF 8 DIV SWP 2 MUL SWP T0\nELS POP FI END\nDEF T2 SWP OVR DIV OVR DIV SWP 2 MUL ADD\n3 DIV END\nDEF T1\n  OVR OVR T2\n  OVR OVR SUB DUP 1 SUB MUL\n  IF\n    SWP POP T1\n  ELS\n    ROT POP OVR OVR SUB POS IF SWP FI POP\n  FI\nEND\nDEF TST DUP 1 SWP T0 T1 END\n5040 TST OUT 10 TST OUT\n1001 TST OUT 65000 TST OUT",
+          "testOut": "17\n2\n10\n40",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "1 ≤ [[N]] ≤ 100\nAll the numbers are signed integer (minimum width : 30 bits).\nAll tests are correct (ie don't use undefined instruction) and use MOD and DIV instructions only with positive arguments.",
+      "coverBinaryId": 29920147536820,
+      "stubGenerator": "read N:int\nloop N read line:string(200)\nwrite answer",
+      "inputDescription": "<<Line 1:>> [[N]] : number of input lines of code\n<<[[N]] lines:>> Obsolete code",
+      "solutionLanguage": "Lua",
+      "outputDescription": "<<any number of lines:>> whatever the obsolet program outputs"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">How is your CSB ? Very bad, in fact, and you have been moved from the prestigious Bot Division to the awful Legacy Softwares Division where you must maintain obsolete and crappy code that runs 90% of your corporation's business.<br><br>Today you must write an interpreter for a strange and forgotten language, written in a narrow character set : only uppercase letters, digits, minus sign, space and newline.<br><br>Basically the language is based on <var>RPN</var> (Reverse Polish Notation) with the abilty to define new instructions.<br><br>Lines are split in instructions separated by space(s).<br><br>If the instruction is a <const>number</const>, simply put in on top of the stack.<br>The operations (<var>ADD</var>, <var>SUB</var>, <var>MUL</var>, <var>DIV</var>, <var>MOD</var>) pop the last two numbers out of the stack and push the result back on top.<br>For example after, <strong>2 5 SUB 8</strong>, the stack is <strong>-3 8</strong>.<br><var>DIV</var> is the integer quotient and <var>MOD</var> the remainder of the division.<br><br>There are also operators that act on the stack itself:<br><var>POP</var> removes the top number.<br><var>DUP</var> duplicates the top number.<br><var>SWP</var> swaps the two top numbers. <strong>4 5 SWP 6</strong> swaps <const>4</const> and <const>5</const> then pushes <const>6</const> on top, the stack is <strong>5 4 6</strong>.<br><var>ROT</var> brings to the top the third number of the stack. If the stack is <strong>1 2 3 4</strong>, <var>ROT</var> changes it in <strong>1 3 4 2</strong>.<br><var>OVR</var> copies the second top number of the stack on the top. If the stack is <strong>1 2 3 4</strong>, <var>OVR</var> changes it in <strong>1 2 3 4 3</strong>.<br><br><var>POS</var> removes the top number, push 1 if this number is &ge; 0, otherwise push 0.<br><var>NOT</var> removes the top number, push 1 if this number is 0, otherwise push 0.<br><var>OUT</var> removes the top number and print it on the standard output, followed by a newline char.<br><br>To define a new instruction the syntax is :<br><br><var>DEF</var> <const>name</const> <strong>RPN instructions</strong> <var>END</var><br><br>The instructions between <var>DEF</var> and <var>END</var> are not executed immediately but stored to be executed when <const>name</const> appears as instruction outside, after its definition.<br><const>name</const> must not be an already defined instruction or a number.<br>Note that <const>name</const> can appears in its own definition (recursion is available).<br><br>For example<br><strong>DEF SQ DUP MUL END</strong> defines the instruction <var>SQ</var><br>when <strong>4 SQ</strong> appears, <const>4</const> is pushed on the stack, then <var>DUP</var> then <var>MUL</var> are executed.<br><br>Inside a definition, conditionals are available :<br><br><var>IF</var> <strong>RPN instructions</strong> <var>FI</var><br>remove the top number, if this number is not zero, the instructions between <var>IF</var> and <var>FI</var> are executed, and continue with instructions after <var>FI</var>. If the number is zero, the execution continues after <var>FI</var>.<br><br><var>IF</var> <strong>RPN instructions 1</strong> <var>ELS</var> <strong>RPN instructions 2</strong> <var>FI</var><br>Remove the top number, if this number is not zero, the instructions between <var>IF</var> and <var>ELS</var> are executed, and continue with instructions after <var>FI</var>. If the number is zero, the instructions between <var>ELS</var> and <var>FI</var> are executed and continue execution after <var>FI</var>.<br><br>The two conditional structures can be nested.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> <var>N</var> : number of input lines of code<br><strong><var>N</var> lines:</strong> Obsolete code</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>any number of lines:</strong> whatever the obsolet program outputs</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 100<br>All the numbers are signed integer (minimum width : 30 bits).<br>All tests are correct (ie don't use undefined instruction) and use MOD and DIV instructions only with positive arguments.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">6\n10 5 ADD OUT\n10 5 SUB OUT\n12 24 SUB OUT\n30 10 MUL OUT\n50 7 DIV OUT\n50 7 MOD OUT</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">15\n5\n-12\n300\n7\n1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 163817603635,
+  "avatar": 16542412157988,
+  "commentCount": 32,
+  "upVotes": 23,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 515222,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1604423137003,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1606654661024,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1606913223487,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

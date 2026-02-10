@@ -1,0 +1,236 @@
+{
+  "id": 5422,
+  "activeVersion": 23,
+  "score": 31,
+  "votableId": 14947696,
+  "codingamerId": 3903847,
+  "views": 723,
+  "commentableId": 14865759,
+  "title": "Legendary Archer Octavius",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "UnicornP",
+  "publicHandle": "5422820e97ca4ecbb1acd629ac70e289bc06",
+  "codingamerHandle": "d2306f40567a276663b3ab4ebe84a3277483093",
+  "lastVersion": {
+    "version": 23,
+    "autocloseTime": 1623685824846,
+    "data": {
+      "title": "Legendary Archer Octavius",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Ballistics"
+          }
+        },
+        {
+          "id": 72,
+          "handle": "scheduling",
+          "labelMap": {
+            "1": "Ordonnancement",
+            "2": "Scheduling"
+          },
+          "pageTitle": "Scheduling: exercises and theory",
+          "puzzleCount": 1,
+          "parentTopicId": 41,
+          "contentDetailsId": 104
+        }
+      ],
+      "solution": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\n\nclass Solution\n{\n\tstatic float GRAVITY = 9.8f;\n\tstatic Point towerA = new Point(0, 80, 0);\n\tstatic Point towerB = new Point(200, 20, 0);\n\tstatic int TRAVEL_TIME = 20;\n\tstatic int BUFF_TIME = 8;\n\n\tstatic int drawTimeA = 3;\n\tstatic int fireSpdA = 60;\n\tstatic int drawTimeB = 2;\n\tstatic int fireSpdB = 80;\n\n\tstatic string bestOpt;\n\tstatic float bestOptTime = float.MaxValue;\n\tstatic List<int>[] sortedUFOs = new List<int>[3];\n\n\tstatic void Main(string[] args)\n\t{\n\t\tint N = int.Parse(Console.ReadLine());\n\t\tUFO[] ufos = new UFO[N];\n\n\t\t// Read input and also calculate how long it will take for an arrow to reach the UFO from each tower\n\t\tfor (int i = 0; i < N; i++) {\n\t\t\tstring[] sp = Console.ReadLine().Split(' ');\n\n\t\t\tufos[i] = new UFO(i);\n\t\t\tufos[i].pos = new Point(\n\t\t\t\tint.Parse(sp[0]),\n\t\t\t\tint.Parse(sp[1]),\n\t\t\t\tint.Parse(sp[2])\n\t\t\t\t);\n\n\t\t\tcalcTimes(ufos[i]);\n\t\t}\n\n\t\t// Set up the search algorithm\n\t\tList<int> actsLeft = Enumerable.Range(0, N).ToList();\n\t\t\n        // Sort based on flight times for each location\n\t\tMakeSortedLists(actsLeft, ufos);\n\n        // Start recursing for a solution\n\t\tList<int> actsTaken = new List<int>();\n\t\tFindSequence(actsTaken, actsLeft, ufos, 0, 0, 0);\n\n\t\t// Report the best results\n\t\tConsole.WriteLine($\"{bestOptTime:F2}\");\n\t}\n\tstatic void MakeSortedLists(List<int> actsLeft, UFO[] ufos)\n\t{\n\t\tsortedUFOs[0] = actsLeft.OrderByDescending(a => ufos[a].times[0]).ToList();\n\t\tsortedUFOs[1] = actsLeft.OrderByDescending(a => ufos[a].times[1]).ToList();\n\t\tsortedUFOs[2] = actsLeft.OrderByDescending(a => ufos[a].times[2]).ToList();\n\t}\n\tstatic List<int> SortActs(List<int> actions, UFO[] ufos, int state)\n\t{\n\t\t// Sort in same order as previously-sorted lists\n\t\tList<int> sortBy = sortedUFOs[state];\n\n\t\tList<int> sorted = new List<int>();\n\t\tsortBy.Where(a => actions.Contains(a)).ToList().ForEach(a => sorted.Add(a));\n\n\t\treturn sorted;\n\t}\n\t/**\n\t * actsTaken = the current sequence of actions\n\t * timeElapsed = the amount of time Octavius has spent performing this sequence\n\t * actsLeft = actions still available to be taken. -1 corresponds to ziplining and -2 is drinking a milkshake\n\t */\n\tstatic void FindSequence(List<int> actsTaken, List<int> actsLeft, UFO[] ufos, int actionTime, float flightTime, int state)\n\t{\n\t\t// Check if we're done recursing yet\n\t\tif (actsLeft.Count == 0) {\n\t\t\t// Update the puzzle answer\n\t\t\tif (flightTime < bestOptTime) {\n\t\t\t\tbestOptTime = flightTime;\n\t\t\t\tbestOpt = string.Join(\" \", actsTaken) + \" \" + string.Join(\" \", actsLeft);\n\t\t\t}\n\t\t\treturn;\n\t\t}\n\n\t\tactsLeft = SortActs(actsLeft, ufos, state);\n\t\t// If we are at Tower A, we have the option to travel to Tower B. If we are at Tower B without a buff, we have the option\n\t\t// to drink a milkshake. In code, these two are treated very similarly\n\t\tif (state != 2) {\n\t\t\t// Sort in descending order\n\t\t\t// Find the index of the first unreachable UFO in the list\n\t\t\tint lastIndex = 0;\n\t\t\tfor (;lastIndex < actsLeft.Count && ufos[actsLeft[lastIndex]].times[state] != -1; lastIndex++) {}\n\n\t\t\t// Now try putting a state transition command in this range. There are lastIndex+1 places to do so\n\t\t\tfor (int i = 0; i <= lastIndex; i++) {\n\t\t\t\t// All UFOs before i are fired at\n\t\t\t\t// A state transition command is inserted at i, which requires a recursion to further explore\n\n\t\t\t\t// Calculate the new flightTime from actions taken before i\n\t\t\t\tfloat newFlight = flightTime;\n\t\t\t\tfor (int j = 0; j < i; j++) {\n\t\t\t\t\tnewFlight = actionTime + (j + 1) * drawTimeA + ufos[actsLeft[j]].times[state];\n\t\t\t\t\tflightTime = flightTime < newFlight ? newFlight : flightTime;\n\t\t\t\t}\n\n\t\t\t\t// Take actions\n\t\t\t\tint newActTime = actionTime + drawTimeA * i;\n\t\t\t\tList<int> newActions = new List<int>(actsTaken);\n\t\t\t\tnewActions.AddRange(actsLeft.GetRange(0, i));\n\t\t\t\t// If lastIndex references outside the list, that's the same as saying not to make a state transition\n\t\t\t\tif (i != actsLeft.Count) {\n\t\t\t\t\tnewActTime += state == 0 ? TRAVEL_TIME : BUFF_TIME;\n\t\t\t\t\tnewActions.Add(-state - 1);\n\t\t\t\t}\n\n\t\t\t\t// Now we recurse with new times and a new list\n\t\t\t\tFindSequence(newActions, actsLeft.GetRange(i, actsLeft.Count - i), ufos, newActTime, flightTime, state + 1);\n\t\t\t}\n\t\t} else {\n\t\t\t// If we're already in state 2, just add up the rest of the UFOs\n\t\t\tfloat newTime = flightTime;\n\t\t\tfor (int i = 0; i < actsLeft.Count; i++) {\n\t\t\t\tnewTime = actionTime + (i + 1) * drawTimeB + ufos[actsLeft[i]].times[state];\n\t\t\t\tflightTime = flightTime < newTime ? newTime : flightTime;\n\t\t\t}\n\t\t\tactsTaken.AddRange(actsLeft);\n\n\t\t\t// I moved the end-check code to the top of the method, but that requires one more recursive call here\n\t\t\tFindSequence(actsTaken, new List<int>(), ufos, actionTime, flightTime, state);\n\t\t}\n\t}\n\tstatic void calcTimes(UFO ufo)\n\t{\n\t\tufo.times[0] = calcOneShot(ufo, 0);\n\t\tufo.times[1] = calcOneShot(ufo, 1);\n\t\tufo.times[2] = calcOneShot(ufo, 2);\n\t}\n\tprivate static float calcOneShot(UFO ufo, int type)\n\t{\n\t\t// https://en.wikipedia.org/wiki/Projectile_motion used to have a lot of equations,\n        // but they took it down on April 2021 due to the \"Not A Textbook\" convention.\n        // Here's an alternate source:\n        // https://www.forrestthewoods.com/blog/solving_ballistic_trajectories/\n\n\t\t// tan th = (v^2 +/- sqrt(v^4 - g(g(x^2 + z^2) + 2yv^2))) / (g * sqrt(x^2 + z^2))\n\t\t// The tan function increases monotonically in the interval th=(-90,90),\n\t\t// so the (-) soln of the (+/-) will always have the lower value of th,\n\t\t// which from common sense we know will take less flight time.\n\n\t\t// Type\n\t\t// 0 - From Tower A\n\t\t// 1 - From Tower B\n\t\t// 2 - From Tower B with buff\n\t\tfloat fSpd = type == 2 ? fireSpdB : fireSpdA;\n\t\tPoint pos = type == 0 ? towerA : towerB;\n\n\t\tfloat v2 = fSpd * fSpd;\n\t\tPoint disp = ufo.pos - pos;\n\n\t\t// Case 1: UFO is directly overhead\n\t\tif (disp.x == 0 && disp.z == 0) {\n\t\t\tfloat sqrt = MathF.Sqrt(v2 - 2 * GRAVITY * disp.y);\n\t\t\t// Unreachable?\n\t\t\tif (float.IsNaN(sqrt)) return -1;\n\n\t\t\t// Directly below?\n\t\t\tif (disp.y < 0) return (sqrt - fSpd) / GRAVITY;\n\n\t\t\t// Directly above?\n\t\t\treturn (fSpd - sqrt) / GRAVITY;\n\t\t}\n\t\t// Case 2: Everything else\n\t\telse {\n\t\t\t// Pre-calculate some stuff for cleanliness\n\t\t\tfloat horiz = MathF.Sqrt(disp.x * disp.x + disp.z * disp.z);\n\t\t\tfloat gg = GRAVITY * (GRAVITY * horiz*horiz + 2 * disp.y * v2);\n\t\t\tfloat sqrt = MathF.Sqrt(v2 * v2 - gg);\n\n\t\t\t// Out of range?\n\t\t\tif (float.IsNaN(sqrt)) return -1;\n\n\t\t\t// Find the angle\n\t\t\tfloat tan = (v2 - sqrt) / (GRAVITY * horiz);\n\t\t\tfloat angle = MathF.Atan(tan);\n\n\t\t\t// Calculate travel time\n\t\t\tPoint horizVector = new Point(disp.x, disp.z, 0);\n\t\t\tfloat hVel = MathF.Cos(angle) * fSpd;\n\t\t\thorizVector /= horizVector.mag();\n\t\t\treturn horiz / hVel;\n\t\t}\n\t}\n}\nclass UFO\n{\n\tpublic int id;\n\tpublic Point pos;\n\tpublic float[] times;\n\tpublic UFO(int id)\n\t{\n\t\tthis.id = id;\n\t\ttimes = new float[3];\n\t}\n\tpublic override string ToString()\n\t{\n\t\tstring A = times[0] == -1 ? \"-   \" : string.Format($\"{times[0]:F2}\");\n\t\tstring B = times[1] == -1 ? \"-   \" : string.Format($\"{times[1]:F2}\");\n\t\tstring C = times[2] == -1 ? \"-   \" : string.Format($\"{times[2]:F2}\");\n\n\t\treturn string.Format($\"UFO {id,2:D} @ {pos}:  {A}  {B}  {C}\");\n\t}\n}\n\nstruct Point\n{\n\tpublic float x, y, z;\n\tpublic Point(float x, float y, float z)\n\t{\n\t\tthis.x = x;\n\t\tthis.y = y;\n\t\tthis.z = z;\n\t}\n\tpublic static Point operator +(Point a, Point b) => new Point(a.x + b.x, a.y + b.y, a.z + b.z);\n\tpublic static Point operator -(Point a, Point b) => new Point(a.x - b.x, a.y - b.y, a.z - b.z);\n\tpublic static Point operator *(Point a, float f) => new Point(a.x * f, a.y * f, a.z * f);\n\tpublic static Point operator /(Point a, float f) => new Point(a.x / f, a.y / f, a.z / f);\n\tpublic float mag() => MathF.Sqrt(x * x + y * y + z * z);\n\tpublic override string ToString() => string.Format($\"({x, 4:F0}, {y, 4:F0}, {z, 4:F0})\");\n}\n// ------ Range Equation ------\n\n// This is just to prove that Octavius at Tower B with a milkshake can reach everything\n//   that Towers A and B w/o a milkshake can\n\n// The maximum horizontal range is v^2 / g\n// The maximum vertical range is v^2 / 2g\n// The equation describing the maximum 2D range from (0, 0)\n//   is a parabola with a peak at (0, v^2/2g) and another point at (v^2/g, 0)\n//   (not sure why, but this is easy enough to \"prove\" using excel graphs)\n// This equation is\n//   y = 1/2 * (g/v^2) * x^2 - v^2/2g\n// Change the = to < to assess if a point is in range\n// In 3D space, we substitute x^2 -> x^2 + z^2\n// Lastly, we need to shift the starting position of the arrow as well. Here is the final equation:\n//   y = 1/2 * (g/v^2) * ((x-x0)^2 + (z-z0)^2) + (y0 - v^2/2g)\n// With this equation, we can show that Tower B + milkshake reaches everything that Tower A can.\n// This knowledge makes it easier for me to formulate the logic below, but I think my\n// current solution doesn't actually care about this anyway :P\n\n// ------ Logic ------\n\n// Ideally, Octavius should shoot UFOs in descending order based on the arrow flight time.\n// For example, if UFOs A and B can be reached with 3 and 7 seconds flight time, then\n// the shortest elapsed time is to fire at B and then A.\n\n// You might think of a particular search optimization:\n// If all UFOs can be reached from Tower A, then there are two routes:\n// (1) Don't move from Tower A\n// (2) Immediately move to Tower B and chug a milkshake\n// Option (2) will happen if there are more than (20 + 8) / (5 - 3) = 14 UFOs, roughly speaking...\n//\t\t(this puzzle used to have drawTime = 5 and 3)\n// ... but it also depends on the flight times for the last few UFOs to be shot for each case.\n// For example, if there are 14 UFOs at the same position with flight times 4 from Tower A\n// and 1 from B-buffed, then it would make sense to take route (2) = 20 + 8 + 14*3 + 1 = 71,\n// instead of route (1) = 14*5 + 4 = 74. If the flight times were 1 and 4 respectively,\n// then route (1) is better.\n\n// Here's another pitfall:\n// We see that Octavius at Tower A should shoot at UFOs in descending order\n// from the POV of Tower A, but he _might_ also travel to Tower B. He _will_ travel to B if\n// one or more UFOs are unreachable from Tower A, but as illustrated in the previous paragraphs,\n// there may be edge cases for calculating when exactly Octavius should move to Tower B. A\n// similar argument follows for UFOs that are also unreachable from Tower B w/o the buff.\n\n// Therefore, I use the following algorithm, which bypasses having to think of these edge cases:\n// (1) Sort UFOs in descending order from Tower A's POV.\n// (2) Consider the ~N possibilities where Octavius moves to Tower B at some point in the sequence\n// (3) Recurse for each choice\n//   (a) If Octavius has moved in this branch, sort UFOs in descending order from Tower B's POV\n//   (b) Consider the ~N possibilities where Octavius drinks a milkshake at some point in the seq\n//   (c) ... etc\n//     (Leaf) Finally, it is straightforward to calculate the elapsed time when moving/drinking is unnecessary\n// Since there are N+1 branches for moving from A -> B (or not moving at all) and an\n// additional N+1 branches at most for drinking a milkshake, there will be O(N^2) leaves in the recursion tree.\n// This is far better than looking at (N+2)! permutations!",
+      "statement": "The Roman Empire is being attacked by UFOs! It is up to the unassuming city guardsman Octavius, son of Septimus, to defend his city with his trusty bow!\n\nOctavius begins on top of a watchtower at coordinates {{(x=0, y=80, z=0) m}}. He wields the Bow of Sagittarius, an incredible weapon that is capable of firing arrows that ignore air resistance. It takes him {{3 sec}} to draw his bow, aim, and fire an arrow with an initial speed of {{60 m/s}}. However, some UFOs may not be in range of this watchtower. Octavius may need to travel to the roof of another watchtower at coordinates {{(x = 200, y = 20, z = 0) m}} to reach these UFOs. It takes him {{20 sec}} to travel to this watchtower by zip line. Furthermore, Octavius can spend {{8 sec}} to chug an Oreo® milkshake at this watchtower, allowing him to fire arrows more quickly ({{2 sec}} draw time) and at greater speeds ({{80 m/s}}).\n\nOctavius must shoot down the [[N]] UFOs currently menacing the city. Luckily, they are busy abducting hapless civilians and are thus motionless in the sky. The Bow of Sagittarius is extremely powerful, able to take down a UFO in a single shot. To save as many people as possible, Octavius must find the optimal sequence of actions to take in order to strike down all UFOs in the least amount of time. <<Report the elapsed time to two decimal places, ending when the final UFO is struck.>>\n\nFor this puzzle, the acceleration due to gravity is {{(0, -9.8, 0) m/s^2}}. UFOs ignore gravity. Arrows and UFOs can be modeled as points for mathematics purposes.",
+      "testCases": [
+        {
+          "title": "Trivial",
+          "isTest": true,
+          "testIn": "2\n200 60 0\n30 120 0",
+          "testOut": "6.89",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator Trivial",
+          "isTest": false,
+          "testIn": "2\n100 164 0\n39 111 -180",
+          "testOut": "8.55",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Zipline Action",
+          "isTest": true,
+          "testIn": "3\n290 130 160\n90 50 20\n-60 25 -25",
+          "testOut": "31.04",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator Zipline",
+          "isTest": false,
+          "testIn": "3\n100 120 0\n15 45 -60\n360 95 -100",
+          "testOut": "31.87",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Chug, chug, chug!",
+          "isTest": true,
+          "testIn": "4\n200 250 0\n100 60 40\n-90 40 70\n-120 1 1",
+          "testOut": "37.72",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator Chug",
+          "isTest": false,
+          "testIn": "4\n230 200 30\n160 30 -20\n-140 70 -15\n0 275 0",
+          "testOut": "36.77",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Haste makes waste",
+          "isTest": true,
+          "testIn": "3\n190 200 -10\n465 60 -220\n-340 20 -105",
+          "testOut": "37.70",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator Haste",
+          "isTest": false,
+          "testIn": "3\n-220 5 -370\n220 200 0\n230 210 -25",
+          "testOut": "37.71",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Noclipping UFOs",
+          "isTest": true,
+          "testIn": "6\n200 20 0\n300 144 0\n301 144 0\n-190 180 70\n-190 181 70\n0 139 0",
+          "testOut": "38.48",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator Noclip",
+          "isTest": false,
+          "testIn": "6\n0 5 70\n333 98 -111\n333 99 -111\n200 20 0\n180 210 0\n181 210 1",
+          "testOut": "38.63",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Reinforcements",
+          "isTest": true,
+          "testIn": "14\n152 180 82\n193 156 189\n-106 166 -17\n-124 20 -152\n321 25 -103\n-272 53 265\n21 214 54\n112 169 104\n117 23 -150\n251 116 87\n63 1 -46\n-140 156 24\n122 51 -125\n-102 7 75",
+          "testOut": "43.69",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator Reinforce",
+          "isTest": false,
+          "testIn": "14\n149 58 214\n83 191 58\n-148 23 -192\n-188 53 69\n221 194 19\n51 88 -153\n310 12 -57\n187 134 -129\n-216 186 77\n-210 104 35\n150 49 62\n200 200 0\n0 49 -200\n0 9 380",
+          "testOut": "44.71",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Surrounded",
+          "isTest": true,
+          "testIn": "17\n-186 192 -169\n-272 102 -270\n193 217 -180\n114 240 150\n55 263 -151\n-30 257 214\n369 124 -196\n206 173 -201\n-199 159 -199\n75 183 259\n117 198 -265\n-7 235 -154\n-134 239 41\n0 47 434\n-163 208 153\n176 241 168\n431 10 419",
+          "testOut": "65.74",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator Surrounded",
+          "isTest": false,
+          "testIn": "17\n393 77 304\n81 301 78\n-118 43 -392\n188 253 79\n369 244 119\n96 218 -222\n499 88 -183\n302 162 -254\n217 184 -329\n0 300 0\n-291 146 47\n210 204 340\n150 299 40\n200 300 0\n0 95 -400\n0 95 400\n200 196 -194",
+          "testOut": "66.00",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Martian Invasion",
+          "isTest": true,
+          "testIn": "29\n152 180 82\n193 156 189\n-106 166 -17\n-124 20 -152\n321 25 -103\n-272 53 265\n21 214 54\n-303 30 3\n-116 82 -132\n-17 105 -281\n216 190 83\n112 169 104\n117 23 -150\n251 116 87\n63 1 -46\n-140 156 24\n122 51 -125\n-102 7 75\n391 22 57\n-183 44 67\n-3 177 4\n2 205 1\n28 41 -23\n19 191 -124\n167 70 -298\n218 19 -47\n99 99 99\n123 43 -21\n67 18 192",
+          "testOut": "86.63",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator Invasion",
+          "isTest": false,
+          "testIn": "29\n-93 9 -31\n17 107 170\n90 60 261\n-13 83 189\n276 35 75\n111 111 111\n96 81 88\n56 131 -38\n252 43 -96\n289 65 -55\n232 10 -116\n-94 9 206\n15 92 46\n10 3 22\n246 135 46\n291 88 -4\n-105 2 -20\n86 18 -240\n33 19 213\n34 105 -66\n-19 72 -46\n182 55 -205\n192 48 22\n226 130 0\n99 88 77\n160 34 -22\n-1 59 -3\n46 163 2\n0 33 -82",
+          "testOut": "86.47",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "1 ≤ [[N]] ≤ 30\n-500 ≤ [[x]],[[z]] coordinates ≤ 500\n1 ≤ [[y]] coordinates ≤ 500\nAll UFOs are possible to hit",
+      "stubGenerator": "read N:int\nloop N read x:int y:int z:int\nwrite a couple seconds",
+      "inputDescription": "<<Line 1: >> An integer [[N]], representing the number of UFOs to shoot\n<<Next [[N]] lines: >> Space separated integers [[x]], [[y]], and [[z]], representing the coordinates of a UFO",
+      "solutionLanguage": "C#",
+      "outputDescription": "The shortest possible time in seconds required to strike down all UFOs, reported to two decimal places"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">The Roman Empire is being attacked by UFOs! It is up to the unassuming city guardsman Octavius, son of Septimus, to defend his city with his trusty bow!<br><br>Octavius begins on top of a watchtower at coordinates <const>(x=0, y=80, z=0) m</const>. He wields the Bow of Sagittarius, an incredible weapon that is capable of firing arrows that ignore air resistance. It takes him <const>3 sec</const> to draw his bow, aim, and fire an arrow with an initial speed of <const>60 m/s</const>. However, some UFOs may not be in range of this watchtower. Octavius may need to travel to the roof of another watchtower at coordinates <const>(x = 200, y = 20, z = 0) m</const> to reach these UFOs. It takes him <const>20 sec</const> to travel to this watchtower by zip line. Furthermore, Octavius can spend <const>8 sec</const> to chug an Oreo&reg; milkshake at this watchtower, allowing him to fire arrows more quickly (<const>2 sec</const> draw time) and at greater speeds (<const>80 m/s</const>).<br><br>Octavius must shoot down the <var>N</var> UFOs currently menacing the city. Luckily, they are busy abducting hapless civilians and are thus motionless in the sky. The Bow of Sagittarius is extremely powerful, able to take down a UFO in a single shot. To save as many people as possible, Octavius must find the optimal sequence of actions to take in order to strike down all UFOs in the least amount of time. <strong>Report the elapsed time to two decimal places, ending when the final UFO is struck.</strong><br><br>For this puzzle, the acceleration due to gravity is <const>(0, -9.8, 0) m/s^2</const>. UFOs ignore gravity. Arrows and UFOs can be modeled as points for mathematics purposes.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1: </strong> An integer <var>N</var>, representing the number of UFOs to shoot<br><strong>Next <var>N</var> lines: </strong> Space separated integers <var>x</var>, <var>y</var>, and <var>z</var>, representing the coordinates of a UFO</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The shortest possible time in seconds required to strike down all UFOs, reported to two decimal places</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 30<br>-500 &le; <var>x</var>,<var>z</var> coordinates &le; 500<br>1 &le; <var>y</var> coordinates &le; 500<br>All UFOs are possible to hit</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\n200 60 0\n30 120 0</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">6.89</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 147552686253,
+  "avatar": 46874260719816,
+  "commentCount": 25,
+  "upVotes": 32,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 567513,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1606143937001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1606158790408,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1608753937000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1621090232914,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1623177776904,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

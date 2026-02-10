@@ -1,0 +1,155 @@
+{
+  "id": 1183,
+  "activeVersion": 29,
+  "score": 3,
+  "votableId": 7213035,
+  "codingamerId": 2130169,
+  "views": 326,
+  "commentableId": 7150993,
+  "title": "Flood fill Example",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "CyberLemonade",
+  "publicHandle": "118369f42211bec63618b870cf919b5832b9",
+  "codingamerHandle": "d8a0152458f424d53995a613b5abea4f9610312",
+  "lastVersion": {
+    "version": 29,
+    "data": {
+      "title": "Flood fill Example",
+      "topics": [
+        {
+          "id": 54,
+          "handle": "BFS",
+          "labelMap": {
+            "1": "Parcours en largeur",
+            "2": "BFS"
+          },
+          "pageTitle": "BFS: exercises and theory",
+          "puzzleCount": 6,
+          "parentTopicId": 41,
+          "contentDetailsId": 84
+        },
+        {
+          "id": 62,
+          "handle": "flood-fill",
+          "labelMap": {
+            "1": "Remplissage par diffusion",
+            "2": "Flood fill"
+          },
+          "pageTitle": "Flood fill: exercises and theory",
+          "puzzleCount": 5,
+          "parentTopicId": 41,
+          "contentDetailsId": 81
+        }
+      ],
+      "solution": "import java.util.Scanner;\nimport java.io.File;\nimport java.util.ArrayList;\nimport java.awt.Point;\n\nclass Solution {\n    static int W, H;\n    static int[][] voronoi;\n    static char[][] owner;\n    static boolean[][] grid;\n\n    static class Entity extends Point{\n        char id;\n        int area = 0;\n        Entity(int x,int y,char cnt) {\n            super(x,y);\n            id = cnt;\n        }\n    }\n\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n        \n        W = in.nextInt();\n        H = in.nextInt();\n        \n        grid = new boolean[W][H];\n        voronoi = new int[W][H];\n        owner = new char[W][H];\n        ArrayList<Entity> entities = new ArrayList<Entity>();\n        \n        in.nextLine();\n        \n        for (int y = 0; y < H; y++) {\n            String line = in.nextLine();\n            for (int x = 0; x < W; x++) {\n                if (line.charAt(x) != '#') {grid[x][y] = true;}\n                if (line.charAt(x) != '.' && line.charAt(x) != '#') {entities.add(new Entity(x,y,line.charAt(x)));}\n            }\n        }\n        \n        initBoard();\n        for (int i = 0; i < entities.size(); i++) {BFS(entities.get(i));}\n        \n        for (int y = 0; y < H; y++) {\n            for (int x = 0; x < W; x++) {\n                if (!grid[x][y]) System.out.print(\"#\");\n                else System.out.print(owner[x][y]);\n            }\n            System.out.println();\n        }\n    }\n\n    static void initBoard() {\n        for (int y = 0; y < H; y++) {\n            for (int x = 0; x < W; x++) {\n                voronoi[x][y] = W+H+1;\n                owner[x][y] = '.';\n            }\n        }\n    }\n\n    static void BFS(Entity cnt) {\n        ArrayList<Point> then = new ArrayList<Point>();\n        \n        boolean visited[][] = new boolean[W][H];\n        \n        int[] dx = {0,0,-1,+1};\n        int[] dy = {-1,+1,0,0};\n        \n        int time = 0;\n        \n        then.add(cnt);\n        visited[cnt.x][cnt.y] = true;\n        \n        while (then.size() > 0) {\n            ArrayList<Point> next = new ArrayList<Point>();\n        \n            while (then.size() > 0) {\n                Point now = then.get(0);\n            \n                if (voronoi[now.x][now.y] == time) {\n                    owner[now.x][now.y] = '+';\n                } else {\n                    voronoi[now.x][now.y] = time;\n                    owner[now.x][now.y] = cnt.id;\n                }\n                \n                for (int i = 0; i < 4; i++) {\n                    int x = now.x + dx[i];\n                    int y = now.y + dy[i];\n                    if (x == -1 || x == W || y == -1 || y == H || visited[x][y] || voronoi[x][y] < time+1 || !grid[x][y]) {continue;}\n                    next.add(new Point(x,y));\n                    visited[x][y] = true;\n                }\n                \n                then.remove(0);\n            }\n            \n            time++;\n            then.addAll(next);\n        }\n    }\n}",
+      "statement": "<<Story:>>\n\nThe Resistance have made a map of Alderaan, the planet they are currently settled in. They have put defence towers with heavy armaments on specific places in their base. Princess Leia has asked for a map showing which defence tower is to operate when an enemy lands.\n\nThis map works on the following principle: whichever defence tower is closest to the spot where the enemy have landed, will operate. C3PO and R2D2 have been assigned the job of drafting this map. You must help them...\n\nOf course, to make your job simpler, the map provided has been highly simplified to spots where enemy can land, and those where they can't.\n\n-------------------------------------------------- xxx --------------------------------------------------\n\n<<The Problem:>>\n\nGiven a grid consisting of {{‘.’}} (visitable points) and {{‘#’}} (un-visitable points), and other entities for the defence towers, output a map showing the area coverage of each tower, based on distance.\n\n-------------------------------------------------- xxx --------------------------------------------------\n\n<<Rules:>>\n\n1. Each tower has an [[I.D.]], which is not {{'#'}}, {{'.'}} or {{'+'}}. Note that 2 towers may have the same [[I.D.]].\n\n2. If 2 towers can reach a spot at the exact same time, mark that spot {{'+'}}, even if both towers share the same [[I.D.]].\n\n3. Towers can't send troops through un-visitable spots ({{'#'}}).\n\n4. If a tower can get to a spot first, mark the spot by its [[I.D.]].\n\n5. This is the legend:\n(i) {{'.'}} = reachable nodes\n(ii) {{'#'}} = unreachable nodes\n(iii) any other character = a tower's [[I.D.]]\n\n6. Troops sent out by the towers at a particular spot can immediately move by distance 1 in the cardinal directions, i.e. UP, DOWN, LEFT, RIGHT (diagonals not possible). \n\n7. If a spot on the map cannot be accessed (regardless of whether it is visitable or not) assign that spot with the character it had in the original map.\n\n-------------------------------------------------- xxx --------------------------------------------------\n\n<<Example:>>\n\nConsider the following grid:\n`...#.\nA#...\n#..B.\n.....\n`\nAt time = {{1}}, they will reach…\n`A..#.\nA#.B.\n#.BBB\n...B.\n`\nAt time = {{2}}, they will reach…\n`AA.#.\nA#BBB\n#BBBB\n..BBB\n`\nAt time = {{3}}, they will reach…\n`AA+#B\nA#BBB\n#BBBB\n.BBBB\n`(Note that, both [[A]] and [[B]] can reach spot ({{2}},{{0}}) at time = {{3}}, so that spot is made into {{‘+’}})\n\nAt time = {{4}}, they will reach…\n`AA+#B\nA#BBB\n#BBBB\nBBBBB\n`\nThis is what your program must output.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "10\n10\n..#.#...##\n#..#.#....\n.........#\n..#..#..#.\n.......#..\n..#.JEDI.#\n..#.....#.\n.....#..#.\n..........\n..........",
+          "testOut": "JJ#.#DDD##\n#JJ#J#DDDD\nJJJJJ+DDD#\nJJ#JJ#DD#I\nJJJJJED#II\nJJ#JJEDII#\nJJ#JJEDI#I\nJJJJJ#DI#I\nJJJJJ+DIII\nJJJJJ+DIII",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "10\n10\n..#..#.#..\n.......#..\n......#...\n...SITH...\n.#.#......\n..#.#..#..\n.#..#..##.\n.....#....\n#...#.....\n..........",
+          "testOut": "SS#SI#T#HH\nSSSSITT#HH\nSSSSIT#HHH\nSSSSITHHHH\nS#S#ITHHHH\nSS#S#TH#HH\nS#SS#TH##H\nSSSSS#HHHH\n#SSH#HHHHH\nSSHHHHHHHH",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "12\n12\n#....##..#.#\n#.#..#..5..#\n...#........\n......##....\n......#..#..\n1...........\n............\n.#.2#.......\n...#..3.#.#.\n....#.....#.\n....#.....#.\n...4...#....",
+          "testOut": "#11+5##55#5#\n#1#55#55555#\n111#55555555\n111225##5555\n11122+#55#55\n11122+335555\n11222+333333\n1#22#3333333\n122#3333#3#3\n1++4#33333#3\n4444#+3333#3\n444444+#3333",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "12\n12\n*..#...###..\n.#......#...\n....#..##...\n@.#.....#..#\n..#........#\n#.#.....#...\n#........#..\n#...##......\n..##......$.\n#.....%.....\n............\n#...#.#.#...",
+          "testOut": "***#***###$$\n*#******#$$$\n@@@@#*%##$$$\n@@#@@+%%#$$#\n@@#@+%%%$$$#\n#@#+%%%%#$$$\n#@@+%%%%$#$$\n#@@+##%%$$$$\n++##%%%%$$$$\n#%%%%%%%%$$$\n%%%%%%%%%$$$\n#%%%#%#%#$$$",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "20\n20\nA.#.........#.#.#..L\n..#.........#..##...\n###..#.#.....###..#.\n#......#......#.....\n...D.....#..#.#.....\n...#..#....####.....\n...#...#......#..#..\n...#........####....\n..#..##......#...N..\n.E...#..#...........\n....#.#...#......###\n...#..#...#...#.#...\n..##......#.........\n....#.##...##...#.##\n.#...#...R..#.......\n.#..................\n...........#..#.....\n.......#......##....\n#...#.....#...##....\n...#................",
+          "testOut": "AA#DDDDDDDDD#.#.#LLL\nAA#DDDDDDDDD#..##LLL\n###DD#D#DDDDD###LL#L\n#DDDDDD#DDDDDD#++LLL\nDDDDDDDDD#DD#D#NN++L\nDDD#DD#DDDD####NNNN+\nEED#DDD#D+++++#NN#NN\nEEE#DDDD+RR+####NNNN\nEE#EE##+RRR+N#NNNNNN\nEEEEE#RR#RR+NNNNNNNN\nEEEE#R#RRR#+NNNNN###\nEEE#RR#RRR#+NN#N#NNN\nEE##RRRRRR#+++NNNNNN\nEEEE#R##RRR##R+N#N##\nE#EER#RRRRRR#RR+++++\nE#ERRRRRRRRRRRRRRRRR\nEEERRRRRRRR#RR#RRRRR\nEEERRRR#RRRRRR##RRRR\n#EER#RRRRR#RRR##RRRR\nEEE#RRRRRRRRRRRRRRRR",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "20\n20\n#..#...#..#...#.....\n....#.#....#......#.\nR..#....E...#...#..#\n............#....#.#\n.#...S.....#......#.\n.##.#...#....#.I....\n#............#...##.\n..#..#....##...#..##\n..##.T.#...#......#.\n#........#.........#\n...#...........#....\n#.....#.#....N......\n#..A............#...\n..#..##.#....#......\n.........#..##......\n#...#........#......\n...##......#.#..#.#.\n...#...#.....#.....#\n#..#.......C........\n#.....##.......#....",
+          "testOut": "#RR#SSS#EE#III#IIIII\nRRRR#S#EEEE#IIIIII#I\nRRR#SSEEEEEE#III#II#\nRRRSSSSEEEEE#IIII#I#\nR#SSSSSSEEE#IIIIII#I\nR##S#SSS#EE+I#IIIIII\n#++++S+++EE++#III##I\n++#TT#TTTT##++I#II##\n++##TTT#TTN#NN++II#.\n#++TTTTTT#NNNNNN+++#\nAAA#+TTTTNNNNNN#NNNN\n#AAAA+#+#NNNNNNNNNNN\n#AAAAAAAANNNNNNN#NNN\nAA#AA##A#NNNN#NNNNNN\nAAAAAAAA+#CN##NNNNNN\n#AAA#AA+CCCCC#NNNNNN\nAAA##A+CCCC#C#CC#C#N\nAAA#++C#CCCCC#CCCCC#\n#AA#CCCCCCCCCCCCCCCC\n#AA+CC##CCCCCCC#CCCC",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "25\n25\n....#...........KYLO...#.\n#.....#...#..#........#.#\n..REY..........#..#......\n#...#..#.#........##.#.#.\n..#............#.........\n......#.........#......#.\n.#........#........#...#.\n#..HAN...................\n......#....#.##.....##.#.\n##..#....#.#....#..#.....\n..............###......#.\n#.....#.........#...##...\n...##..##.......#........\n.#.###..#.....#.#.....#.#\n....#...FN2187.....#.....\n..#.........#....#.#.....\n...........#...#.#...#...\n.#...##...##.....#..#..#.\n..................#...##.\n.....#.#....##.......#..#\n..........#........#.#...\n.#.............#......#.#\n...#.#.#.###..#..#.....##\n#.#........###.......#...\n..##.LEIA......#..#.##.##",
+          "testOut": "RRRE#YYYY+KKKKKKKYLOOOO#.\n#RREYY#YYY#KK#KKKYLOOO#O#\nRRREYYYYYYY+KKK#KY#OOOOOO\n#RRE#YY#Y#Y+KKKKKY##O#O#O\nRR#E++++++++KKK#KYY+OOOOO\n++HHAN#NNNNN+KKK#YY+OOO#O\n+#HHANNNNN#N++KYYYY#OOO#O\n#HHHANNNNNNN++++YYY+OOOOO\nHHHHAN#NNN+#8##7+YY+##O#O\n##HH#NNNN#2#8777#++#7+OOO\nHHHH+NNNNN2187###77777+#+\n#HHH+N#NNN218777#777##777\nHHH##+F##N218777#77777777\nH#H###FF#N2187#7#77777#7#\n+++F#FFFFN218777777#77777\n++#FFFFFFN21#7777#7#77777\nFFFFFFFFFN2#777#7#777#777\nF#FFF##FFN##77777#77#77#7\nLLLLL++FFNN+777777#777##7\nLLLLL#E#+NN+##7777777#..#\nLLLLLEE+AA#AA777777#7#...\nL#LLLEE+AAAAAA7#777777#.#\nLLL#L#E#A###AA#AA#AAAAA##\n#L#LLLEIAAA###AAAAAAA#AAA\nLL##LLEIAAAAAAA#AA#A##A##",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "25\n25\n..#..#...........#..OBI..\n.#.SNOKE................#\n............#...#.....#..\n.....#.........#.........\n....#...###......#..#.#..\n.#.##.............#......\n..........#..##.......#..\n.#....#.#...........#....\n......#....#.....#...##..\n.##.#.#..#....LUKE###....\n...##......##.........#..\n............#.#..##....#.\n....#....#.#.......#.##..\n#.WAN...#.#.......#..#...\n..#...#........###......#\n#..##..#.#...##.....#..#.\n......#...#..#....##MAUL#\n..#.....#........#.......\n.#......#........#.#.....\n##.##.###.....#..........\n................YODA..#..\n...##.......#.#.......#..\n..#.....##...#...........\n......#.##.#.......#.....\n...VADER...#...#.....#..#",
+          "testOut": "SS#SN#KEEEEEEE+OO#OOOBIII\nS#SSNOKEEEEEEE+OOOOOOBII#\nSSSSNOKEEEEE#E+O#OOOOB#II\nSSSSN#KEEEEEE+U#KOOOOBBII\nSSSS#KKE###ELUUUK#OO#B#II\nS#S##KKEEEELLUUUKK#OBBBII\nSSSSKKKEEE#LL##UKKKK+B#II\nW#SS++#E#LLLLLLUKKKK#BBII\nWWSNNN#ELLL#LLLUK#KKK##++\nW##N#N#N+#LLLLLUKE###EEE+\nWWW##NNN+LL##LLUKEEEEE#+U\nWWWAANNNN+LL#L#UK##EEEE#U\nWWWA#NNNN#L#LLUUKKK#A##UU\n#WWANNNN#N#LLLUUKK#AA#UUU\nWW#ANN#NNNN+LLU###AAAAUU#\n#WW##NN#N#N+L##YYYAA#AU#.\nWWW+NN#NNN#YY#YYYY##MAUL#\nWW#+NNNN#+YYYYYYY#+MMAULL\nW#++++++#RYYYYYYY#D#MAULL\n##+##D###RYYYY#YYODAA+ULL\nVV+DDD+RRRYYYYYYYODAAA#LL\nVVV##D+RRRRY#Y#YYODAAA#LL\nVV#VAD+R##RRR#YYYODAAAA++\nVVVVAD#R##R#YYYYYOD#AAA++\nVVVVADERRRR#YYY#YODDA#A+#",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "3\n1\nA.A",
+          "testOut": "A+A",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "1\n3\nB\n.\nB",
+          "testOut": "B\n+\nB",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ [[W]], [[H]] ≤ 30",
+      "coverBinaryId": 27976327754265,
+      "stubGenerator": "read W:int\nread H:int\nloop H read line:string(30)\nwrite answer",
+      "inputDescription": "<<Line 1:>> An integer [[W]], the width of the map\n<<Line 2:>> An integer [[H]], the height of the map\n<<Next [[H]] lines:>> [[W]] characters in each line, the map",
+      "solutionLanguage": "Java",
+      "outputDescription": "<<First [[H]] lines:>> [[W]] characters in each line, the resulting map"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><strong>Story:</strong><br><br>The Resistance have made a map of Alderaan, the planet they are currently settled in. They have put defence towers with heavy armaments on specific places in their base. Princess Leia has asked for a map showing which defence tower is to operate when an enemy lands.<br><br>This map works on the following principle: whichever defence tower is closest to the spot where the enemy have landed, will operate. C3PO and R2D2 have been assigned the job of drafting this map. You must help them...<br><br>Of course, to make your job simpler, the map provided has been highly simplified to spots where enemy can land, and those where they can't.<br><br>-------------------------------------------------- xxx --------------------------------------------------<br><br><strong>The Problem:</strong><br><br>Given a grid consisting of <const>&lsquo;.&rsquo;</const> (visitable points) and <const>&lsquo;#&rsquo;</const> (un-visitable points), and other entities for the defence towers, output a map showing the area coverage of each tower, based on distance.<br><br>-------------------------------------------------- xxx --------------------------------------------------<br><br><strong>Rules:</strong><br><br>1. Each tower has an <var>I.D.</var>, which is not <const>'#'</const>, <const>'.'</const> or <const>'+'</const>. Note that 2 towers may have the same <var>I.D.</var>.<br><br>2. If 2 towers can reach a spot at the exact same time, mark that spot <const>'+'</const>, even if both towers share the same <var>I.D.</var>.<br><br>3. Towers can't send troops through un-visitable spots (<const>'#'</const>).<br><br>4. If a tower can get to a spot first, mark the spot by its <var>I.D.</var>.<br><br>5. This is the legend:<br>(i) <const>'.'</const> = reachable nodes<br>(ii) <const>'#'</const> = unreachable nodes<br>(iii) any other character = a tower's <var>I.D.</var><br><br>6. Troops sent out by the towers at a particular spot can immediately move by distance 1 in the cardinal directions, i.e. UP, DOWN, LEFT, RIGHT (diagonals not possible). <br><br>7. If a spot on the map cannot be accessed (regardless of whether it is visitable or not) assign that spot with the character it had in the original map.<br><br>-------------------------------------------------- xxx --------------------------------------------------<br><br><strong>Example:</strong><br><br>Consider the following grid:<br><pre style=\"font-family: monospace\">...#.<br>A#...<br>#..B.<br>.....<br></pre><br>At time = <const>1</const>, they will reach&hellip;<br><pre style=\"font-family: monospace\">A..#.<br>A#.B.<br>#.BBB<br>...B.<br></pre><br>At time = <const>2</const>, they will reach&hellip;<br><pre style=\"font-family: monospace\">AA.#.<br>A#BBB<br>#BBBB<br>..BBB<br></pre><br>At time = <const>3</const>, they will reach&hellip;<br><pre style=\"font-family: monospace\">AA+#B<br>A#BBB<br>#BBBB<br>.BBBB<br></pre>(Note that, both <var>A</var> and <var>B</var> can reach spot (<const>2</const>,<const>0</const>) at time = <const>3</const>, so that spot is made into <const>&lsquo;+&rsquo;</const>)<br><br>At time = <const>4</const>, they will reach&hellip;<br><pre style=\"font-family: monospace\">AA+#B<br>A#BBB<br>#BBBB<br>BBBBB<br></pre><br>This is what your program must output.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>W</var>, the width of the map<br><strong>Line 2:</strong> An integer <var>H</var>, the height of the map<br><strong>Next <var>H</var> lines:</strong> <var>W</var> characters in each line, the map</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>First <var>H</var> lines:</strong> <var>W</var> characters in each line, the resulting map</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>W</var>, <var>H</var> &le; 30</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">10\n10\n..#.#...##\n#..#.#....\n.........#\n..#..#..#.\n.......#..\n..#.JEDI.#\n..#.....#.\n.....#..#.\n..........\n..........</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">JJ#.#DDD##\n#JJ#J#DDDD\nJJJJJ+DDD#\nJJ#JJ#DD#I\nJJJJJED#II\nJJ#JJEDII#\nJJ#JJEDI#I\nJJJJJ#DI#I\nJJJJJ+DIII\nJJJJJ+DIII</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 251613554069,
+  "avatar": 57032502077757,
+  "commentCount": 28,
+  "upVotes": 4,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 194286,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

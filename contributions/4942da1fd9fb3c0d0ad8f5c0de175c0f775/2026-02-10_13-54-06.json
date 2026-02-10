@@ -1,0 +1,337 @@
+{
+  "id": 494,
+  "activeVersion": 65,
+  "score": 8,
+  "votableId": 3950605,
+  "codingamerId": 1174714,
+  "views": 420,
+  "commentableId": 3895482,
+  "title": "Advanced Tree",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Shoko84",
+  "publicHandle": "4942da1fd9fb3c0d0ad8f5c0de175c0f775",
+  "codingamerHandle": "b23e9b2c3708c21e0a0221b1d6c0a9eb4174711",
+  "lastVersion": {
+    "version": 65,
+    "data": {
+      "title": "Advanced Tree",
+      "topics": [],
+      "solution": "class Node:\n    def __init__(self, name, path):\n        self.name = name\n        self.path = path\n        self.children = []\nPATH, f, n = input(), input().split(\",\"), int(input())\nhidden, direc = \"-a\" in f, \"-d\" in f\ndepth = float(\"inf\")\nif any(flag.startswith(\"-L\") for flag in f):\n    _flag = next(flag for flag in f if flag.startswith(\"-L\"))\n    flag = _flag.split()\n    if len(flag) == 2 and flag[1].isnumeric() and int(flag[1]) > 0: depth = int(flag[1])  \nNodes = {\".\": Node(\".\", \".\")}\nfor _ in range(n):\n    path = input().split(\"/\")\n    current = Nodes[\".\"]\n    for k, name in enumerate(path):\n        if name != \".\" and name[0] == \".\":\n            if not hidden: break\n        p = \"/\".join(path[:k+1])\n        if p not in Nodes:\n            Nodes[p] = Node(name, p)\n            current.children.append(Nodes[p])\n        current = Nodes[p]\nnb_nodes, nb_files = -1, 0\ndef display(node, full, d, filler, first, last=False):\n    global nb_nodes, nb_files\n    if d > depth: return\n    nb_nodes += 1\n    path = node.path if full else node.name\n    if last: print(filler + \"`-- \"*(d>0) + path)\n    else: print(filler + \"|-- \"*(d>0) + path)\n    _C = [c for c in node.children if c.children] if direc else node.children\n    C = sorted(_C, key=lambda x: x.name.upper() if x.name[0] != \".\" else x.name[1:].upper())\n    for k, c in enumerate(C):\n        display(c, False, d+1, filler + (\"\" if first else \"    \" if last else \"|   \"), False, c is C[-1])\n    nb_files += C == []\n_PATH = PATH if PATH.startswith(\".\") else \"./\" + PATH\nif _PATH not in Nodes or not Nodes[_PATH].children:\n    print(PATH, \"[error opening dir]\")\n    nb_nodes = 0\nelse: display(Nodes[_PATH], PATH.startswith(\".\"), 0, \"\", True)\nprint()\nif direc: print(f\"{nb_nodes} director{'ies' if nb_nodes != 1 else 'y'}\")\nelse: print(f\"{nb_nodes - nb_files} director{'ies' if nb_nodes - nb_files != 1 else 'y'}, {nb_files} file{'s' if nb_files != 1 else ''}\")",
+      "statement": "Your goal is to recreate the behaviour of the UNIX tree program with support for some flags.\nYou'll be given a starting path [[S]], a list of flags [[F]], and a list of files.\n\nThe tree will be printed with characters pipe {{|}} backtick {{`}} hyphen {{-}} and with spaces.\nRefer to the first example to understand how you need to print the tree.\n\nYou'll also need to handle three flags inspired by the original tree program:\n- {{-a}} : Display hidden directories and files.\n- {{-d}}: Only display directories (modifies the report line, see below).\n- {{-L}} [[depth]]: Limit the \"depth\" of the tree.\n\nA hidden file or directory has a name starting with a dot: {{.}}\n\nThe input path [[S]] must be printed followed by the text {{[error opening dir]}} <<if>>:\n- the path is a file, or\n- the path doesn't exist\n\nFinally, you'll need to print a new line plus the number of directories and files found as follows:\n\n{{[[x]] directories, [[y]] files}}\n\nwhere [[x]] is the number of directories and [[y]] is the number of files. If the {{-d}} option is in effect, that last line reads like this instead:\n\n{{[[x]] directories}}\n\nIf [[x]] or [[y]] are equal to {{1}}, then you need to print {{directory}} and {{file}} respectively.\n\nThe tree needs to be sorted in <<ascending, alphabetical, case insensitive order>> and <<without considering>> the leading and first character '.' (dot) from hidden files or directories names.\n\nIncorrect flags must be ignored.\nYou're only given valid paths, which are only starting with <<one \"current directory\" (./)>> and <<without \"parent directory\" (../)>>\nThere are no empty directories.\nThere are no spaces in files or directory names.\nThere are no duplicated directories or files with the same name as either a hidden or non-hidden file/directory <<on the same depth>> (i.e: you will never see both <<.Directory1>> and <<Directory1>> in the same folder)",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": ".\n\n6\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6",
+          "testOut": ".\n|-- Directory1\n|   |-- File1\n|   |-- File2\n|   `-- File4\n|-- Directory2\n|   |-- Directory3\n|   |   `-- File5\n|   `-- File3\n`-- File6\n\n3 directories, 6 files",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Example",
+          "isTest": false,
+          "testIn": ".\n\n6\n./Directory1/File4\n./Directory1/File5\n./Directory2/File6\n./Directory1/File7\n./Directory2/Directory3/File8\n./File9",
+          "testOut": ".\n|-- Directory1\n|   |-- File4\n|   |-- File5\n|   `-- File7\n|-- Directory2\n|   |-- Directory3\n|   |   `-- File8\n|   `-- File6\n`-- File9\n\n3 directories, 6 files",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "In a directory Test",
+          "isTest": true,
+          "testIn": "./Directory1\n\n6\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6",
+          "testOut": "./Directory1\n|-- File1\n|-- File2\n`-- File4\n\n0 directories, 3 files",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "In a directory Validator",
+          "isTest": false,
+          "testIn": "./Directory2\n\n6\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6",
+          "testOut": "./Directory2\n|-- Directory3\n|   `-- File5\n`-- File3\n\n1 directory, 2 files",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Also in a directory Test",
+          "isTest": true,
+          "testIn": "Directory1\n\n6\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6",
+          "testOut": "Directory1\n|-- File1\n|-- File2\n`-- File4\n\n0 directories, 3 files",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Also in a directory Validator",
+          "isTest": false,
+          "testIn": "Directory2\n\n6\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6",
+          "testOut": "Directory2\n|-- Directory3\n|   `-- File5\n`-- File3\n\n1 directory, 2 files",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Gap End of Tree Handling Test",
+          "isTest": true,
+          "testIn": ".\n\n10\n./Directory1/File1\n./Directory2/File2\n./Directory3/File4\n./Directory3/File3\n./Directory4/Directory5/File5\n./Directory4/Directory5/File6\n./Directory6/File7\n./Directory6/File8\n./Directory6/Test/File10\n./Directory6/Test/File9",
+          "testOut": ".\n|-- Directory1\n|   `-- File1\n|-- Directory2\n|   `-- File2\n|-- Directory3\n|   |-- File3\n|   `-- File4\n|-- Directory4\n|   `-- Directory5\n|       |-- File5\n|       `-- File6\n`-- Directory6\n    |-- File7\n    |-- File8\n    `-- Test\n        |-- File10\n        `-- File9\n\n7 directories, 10 files",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Gap End of Tree Handling Validator",
+          "isTest": false,
+          "testIn": ".\n\n8\n./Names/Boys/Kevin\n./Names/Boys/Nicolas\n./Names/Girls/Juliette\n./Names/Girls/Floriane\n./Names/Girls/Salome\n./Letters/Consonants\n./Letters/Vowels\n./Letters/List_Of_Letters",
+          "testOut": ".\n|-- Letters\n|   |-- Consonants\n|   |-- List_Of_Letters\n|   `-- Vowels\n`-- Names\n    |-- Boys\n    |   |-- Kevin\n    |   `-- Nicolas\n    `-- Girls\n        |-- Floriane\n        |-- Juliette\n        `-- Salome\n\n4 directories, 8 files",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Hidden Directories w/o -a Test",
+          "isTest": true,
+          "testIn": ".\n\n7\n./Directory1/File1\n./Directory2/File2\n./Directory2/File3\n./.Directory3/File4\n./Directory4/File5\n./Directory4/File6\n./Directory4/.Directory5/File7",
+          "testOut": ".\n|-- Directory1\n|   `-- File1\n|-- Directory2\n|   |-- File2\n|   `-- File3\n`-- Directory4\n    |-- File5\n    `-- File6\n\n3 directories, 5 files",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Hidden Directories w/o -a Validator",
+          "isTest": false,
+          "testIn": ".\n\n8\n./.Directory1/File2\n./.Directory1/File1\n./Directory2/File3\n./Directory3/File4\n./Directory3/.Directory4/File5\n./Directory3/.Directory4/File6\n./.Directory5/.File7\n./File8",
+          "testOut": ".\n|-- Directory2\n|   `-- File3\n|-- Directory3\n|   `-- File4\n`-- File8\n\n2 directories, 3 files",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Dots in Filenames Test",
+          "isTest": true,
+          "testIn": ".\n-a\n7\n./Directory1/File1.txt\n./Directory1/File2.js\n./Directory2/File3.rb\n./Directory2/File4.cpp\n./.Directory3/Directory4/.File5.c\n./.Directory3/Directory4/File6.py\n./File7",
+          "testOut": ".\n|-- Directory1\n|   |-- File1.txt\n|   `-- File2.js\n|-- Directory2\n|   |-- File3.rb\n|   `-- File4.cpp\n|-- .Directory3\n|   `-- Directory4\n|       |-- .File5.c\n|       `-- File6.py\n`-- File7\n\n4 directories, 7 files",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Dots in Filenames Validator",
+          "isTest": false,
+          "testIn": "./Secret_Project\n-a\n8\n./Secret_Project/default_index.html\n./Secret_Project/views/index.html\n./Secret_Project/views/listing.html\n./Secret_Project/views/add_to_cart.html\n./Secret_Project/styles/style.css\n./Secret_Project/script/main.js\n./Secret_Project/script/listing.js\n./Secret_Project/views/add_to_cart.js",
+          "testOut": "./Secret_Project\n|-- default_index.html\n|-- script\n|   |-- listing.js\n|   `-- main.js\n|-- styles\n|   `-- style.css\n`-- views\n    |-- add_to_cart.html\n    |-- add_to_cart.js\n    |-- index.html\n    `-- listing.html\n\n3 directories, 8 files",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Limit Flag Test",
+          "isTest": true,
+          "testIn": ".\n-L 2\n6\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6",
+          "testOut": ".\n|-- Directory1\n|   |-- File1\n|   |-- File2\n|   `-- File4\n|-- Directory2\n|   |-- Directory3\n|   `-- File3\n`-- File6\n\n3 directories, 5 files",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Limit Flag Validator",
+          "isTest": false,
+          "testIn": ".\n-L 4\n14\n./Names/Henry\n./Names/Albert\n./Names/Joeffrey\n./Some/NaN\n./Some/Numbers/2\n./Some/Numbers/1\n./Some/Numbers/6\n./Some/Numbers/50\n./Some/Numbers/Here/43\n./Some/Numbers/Here/101\n./Some/Numbers/Here/Or/2020\n./Some/Numbers/Here/Or/Not/Azaz\n./Secret/IAmALegend\n./Secret/ButYouDidntKnow",
+          "testOut": ".\n|-- Names\n|   |-- Albert\n|   |-- Henry\n|   `-- Joeffrey\n|-- Secret\n|   |-- ButYouDidntKnow\n|   `-- IAmALegend\n`-- Some\n    |-- NaN\n    `-- Numbers\n        |-- 1\n        |-- 2\n        |-- 50\n        |-- 6\n        `-- Here\n            |-- 101\n            |-- 43\n            `-- Or\n\n6 directories, 12 files",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Hidden Files w/o -a Test",
+          "isTest": true,
+          "testIn": ".\n\n9\n./such/wow/We\n./such/wow/Love\n./such/wow/Doge\n./such/wow/.much/I\n./such/wow/.much/pain/Dont\n./such/wow/.much/pain/Suffer\n./much/amaze/Who\n./much/amaze/Hates\n./much/amaze/Memes",
+          "testOut": ".\n|-- much\n|   `-- amaze\n|       |-- Hates\n|       |-- Memes\n|       `-- Who\n`-- such\n    `-- wow\n        |-- Doge\n        |-- Love\n        `-- We\n\n4 directories, 6 files",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Hidden Files w/o -a Validator",
+          "isTest": false,
+          "testIn": ".\n\n8\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6\n./.File7\n./Directory2/Directory3/.File8",
+          "testOut": ".\n|-- Directory1\n|   |-- File1\n|   |-- File2\n|   `-- File4\n|-- Directory2\n|   |-- Directory3\n|   |   `-- File5\n|   `-- File3\n`-- File6\n\n3 directories, 6 files",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Hidden Files with -a Test",
+          "isTest": true,
+          "testIn": ".\n-a\n9\n./such/wow/We\n./such/wow/Love\n./such/wow/Doge\n./such/wow/.much/I\n./such/wow/.much/pain/Dont\n./such/wow/.much/pain/Suffer\n./much/amaze/Who\n./much/amaze/Hates\n./much/amaze/Memes",
+          "testOut": ".\n|-- much\n|   `-- amaze\n|       |-- Hates\n|       |-- Memes\n|       `-- Who\n`-- such\n    `-- wow\n        |-- Doge\n        |-- Love\n        |-- .much\n        |   |-- I\n        |   `-- pain\n        |       |-- Dont\n        |       `-- Suffer\n        `-- We\n\n6 directories, 9 files",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Hidden Files with -a Validator",
+          "isTest": false,
+          "testIn": ".\n-a\n8\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6\n./.File7\n./Directory2/Directory3/.File8",
+          "testOut": ".\n|-- Directory1\n|   |-- File1\n|   |-- File2\n|   `-- File4\n|-- Directory2\n|   |-- Directory3\n|   |   |-- File5\n|   |   `-- .File8\n|   `-- File3\n|-- File6\n`-- .File7\n\n3 directories, 8 files",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Directory Flag Test",
+          "isTest": true,
+          "testIn": ".\n-d\n8\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6\n./.File7\n./Directory2/Directory3/.File8",
+          "testOut": ".\n|-- Directory1\n`-- Directory2\n    `-- Directory3\n\n3 directories",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Directory Flag Validator",
+          "isTest": false,
+          "testIn": ".\n-d\n4\n./Creating/index.html\n./Directories/Can/Some_File.txt\n./Directories/Can/Help_You/Another_File.c\n./Directories/Can/Manage/Your_Project/Final_Rendering.js",
+          "testOut": ".\n|-- Creating\n`-- Directories\n    `-- Can\n        |-- Help_You\n        `-- Manage\n            `-- Your_Project\n\n6 directories",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple Flags Test",
+          "isTest": true,
+          "testIn": ".\n-L 2,-a\n8\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./.File7\n./File6\n./Directory2/Directory3/.File8",
+          "testOut": ".\n|-- Directory1\n|   |-- File1\n|   |-- File2\n|   `-- File4\n|-- Directory2\n|   |-- Directory3\n|   `-- File3\n|-- File6\n`-- .File7\n\n3 directories, 6 files",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple Flags Validator",
+          "isTest": false,
+          "testIn": ".\n-a,-L 2\n6\n./.HiddenDirectory/File_1\n./DirectoryNotHidden/File_2\n./AnotherOneDir/GoodJob/File_3\n./.HiddenDirectory/DoNotHide/File_4\n./.HiddenDirectory/DoNotHide/File_5\n./.HiddenDirectory/OrYouWill/Fail.cpp",
+          "testOut": ".\n|-- AnotherOneDir\n|   `-- GoodJob\n|-- DirectoryNotHidden\n|   `-- File_2\n`-- .HiddenDirectory\n    |-- DoNotHide\n    |-- File_1\n    `-- OrYouWill\n\n6 directories, 2 files",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "All Flags Test",
+          "isTest": true,
+          "testIn": "Directory2\n-a,-L 1,-d\n8\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6\n./.File7\n./Directory2/Directory3/.File8",
+          "testOut": "Directory2\n`-- Directory3\n\n1 directory",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "All Flags Validator",
+          "isTest": false,
+          "testIn": "./Series\n-a,-d,-L 2\n18\n./Series/List.txt\n./Series/TV/Best_TV_Series.txt\n./Series/Anime/Best_Animes.txt\n./Series/Anime/Drama/Angel_Beats.mkv\n./Series/Anime/Drama/Guilty_Crown.mkv\n./Series/Anime/Drama/Btooom.mkv\n./Series/TV/Drama/Breaking_Bad.mkv\n./Series/TV/Drama/Game_Of_Thrones.mkv\n./Series/Anime/Sci-Fi/Steins_Gate.mkv\n./Series/Anime/Sci-Fi/Code_Geass.mkv\n./Series/TV/Sci-Fi/Doctor_Who.mkv\n./Series/Anime/Action/Psycho-Pass.mkv\n./Series/Anime/Action/Sword_Art_Online.mkv\n./Series/Anime/Action/Naruto.mkv\n./Series/Anime/Action/Mirai_Nikki.mkv\n./Series/TV/Action/Arrow.mkv\n./Series/TV/Action/Luke_Cage.mkv\n./.secretfolder/.secretfile",
+          "testOut": "./Series\n|-- Anime\n|   |-- Action\n|   |-- Drama\n|   `-- Sci-Fi\n`-- TV\n    |-- Action\n    |-- Drama\n    `-- Sci-Fi\n\n8 directories",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Error Handling 1 Test",
+          "isTest": true,
+          "testIn": "Directory3\n\n8\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6\n./.File7\n./Directory2/Directory3/.File8",
+          "testOut": "Directory3 [error opening dir]\n\n0 directories, 0 files",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Error Handling 1 Validator",
+          "isTest": false,
+          "testIn": "Directory424242\n\n8\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6\n./.File7\n./Directory2/Directory3/.File8",
+          "testOut": "Directory424242 [error opening dir]\n\n0 directories, 0 files",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Error Handling 2 Test",
+          "isTest": true,
+          "testIn": "Directory1/File1\n\n8\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6\n./.File7\n./Directory2/Directory3/.File8",
+          "testOut": "Directory1/File1 [error opening dir]\n\n0 directories, 0 files",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Error Handling 2 Validator",
+          "isTest": false,
+          "testIn": "./.File7\n\n8\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6\n./.File7\n./Directory2/Directory3/.File8",
+          "testOut": "./.File7 [error opening dir]\n\n0 directories, 0 files",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Error Handling 3 Test",
+          "isTest": true,
+          "testIn": "Directory1/File1\n-d\n8\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6\n./.File7\n./Directory2/Directory3/.File8",
+          "testOut": "Directory1/File1 [error opening dir]\n\n0 directories",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Error Handling 3 Validator",
+          "isTest": false,
+          "testIn": "./Directory2/Directory3/File5\n-d\n8\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6\n./.File7\n./Directory2/Directory3/.File8",
+          "testOut": "./Directory2/Directory3/File5 [error opening dir]\n\n0 directories",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Wrong Flag Test",
+          "isTest": true,
+          "testIn": ".\n-L,-e,-a\n8\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6\n./.File7\n./Directory2/Directory3/.File8",
+          "testOut": ".\n|-- Directory1\n|   |-- File1\n|   |-- File2\n|   `-- File4\n|-- Directory2\n|   |-- Directory3\n|   |   |-- File5\n|   |   `-- .File8\n|   `-- File3\n|-- File6\n`-- .File7\n\n3 directories, 8 files",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Wrong Flag Validator",
+          "isTest": false,
+          "testIn": ".\n-z,-p,-a\n5\n./Just/First_File.txt\n./.Displaying/Second_File.txt\n./Hidden/Third_File.txt\n./.Folders/Fourth_File.txt\n./.Folders/And/.Files/Fifth_File.txt",
+          "testOut": ".\n|-- .Displaying\n|   `-- Second_File.txt\n|-- .Folders\n|   |-- And\n|   |   `-- .Files\n|   |       `-- Fifth_File.txt\n|   `-- Fourth_File.txt\n|-- Hidden\n|   `-- Third_File.txt\n`-- Just\n    `-- First_File.txt\n\n6 directories, 5 files",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Big Test 1",
+          "isTest": true,
+          "testIn": ".\n-a\n15\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/DirectoryA/File5\n./File6\n./.File7\n./Directory2/DirectoryA/.File8\n./Directory2/DirectoryA/DirectoryIII/File9\n./Directory2/DirectoryA/DirectoryIII/.File10\n./.Directory3/File11\n./.Directory3/File13\n./.Directory3/.File12\n./.Directory3/DirectoryA/DirectoryI/DirectoryII/File14\n./.Directory3/DirectoryA/DirectoryI/DirectoryII/File15",
+          "testOut": ".\n|-- Directory1\n|   |-- File1\n|   |-- File2\n|   `-- File4\n|-- Directory2\n|   |-- DirectoryA\n|   |   |-- DirectoryIII\n|   |   |   |-- .File10\n|   |   |   `-- File9\n|   |   |-- File5\n|   |   `-- .File8\n|   `-- File3\n|-- .Directory3\n|   |-- DirectoryA\n|   |   `-- DirectoryI\n|   |       `-- DirectoryII\n|   |           |-- File14\n|   |           `-- File15\n|   |-- File11\n|   |-- .File12\n|   `-- File13\n|-- File6\n`-- .File7\n\n8 directories, 15 files",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Big Validator 1",
+          "isTest": false,
+          "testIn": "./Series\n-a\n28\n./Series/List.txt\n./Series/TV/Best_TV_Series.txt\n./Series/Anime/Best_Animes.txt\n./Series/Anime/Drama/Angel_Beats.mkv\n./Series/Anime/Drama/Guilty_Crown.mkv\n./Series/Anime/Drama/Btooom.mkv\n./Series/TV/Drama/Breaking_Bad.mkv\n./Series/TV/Drama/Game_Of_Thrones.mkv\n./Series/Anime/Sci-Fi/Steins_Gate.mkv\n./Series/Anime/Sci-Fi/Code_Geass.mkv\n./Series/TV/Sci-Fi/Doctor_Who.mkv\n./Series/Anime/Action/Psycho-Pass.mkv\n./Series/Anime/Action/Sword_Art_Online.mkv\n./Series/Anime/Action/Naruto.mkv\n./Series/Anime/Action/Mirai_Nikki.mkv\n./Series/TV/Action/Arrow.mkv\n./Series/TV/Action/Luke_Cage.mkv\n./.secretfolder/.secretfile\n./Series/Anime/Mystery/Detective_Conan.mkv\n./Series/Anime/Mystery/Another.mkv\n./Series/Anime/Mystery/Boku_Dake_Ga_Inai_Machi.mkv\n./Series/Anime/Harem/Nisekoi.mkv\n./Series/TV/Horror/Scream.mkv\n./Series/TV/Horror/iZombie.mkv\n./Series/TV/Documentary/Alien_Theory.mkv\n./Series/TV/Documentary/POV.mkv\n./Series/TV/Western/Firefly.mkv\n./Series/TV/Western/Into_The_Wild.mkv",
+          "testOut": "./Series\n|-- Anime\n|   |-- Action\n|   |   |-- Mirai_Nikki.mkv\n|   |   |-- Naruto.mkv\n|   |   |-- Psycho-Pass.mkv\n|   |   `-- Sword_Art_Online.mkv\n|   |-- Best_Animes.txt\n|   |-- Drama\n|   |   |-- Angel_Beats.mkv\n|   |   |-- Btooom.mkv\n|   |   `-- Guilty_Crown.mkv\n|   |-- Harem\n|   |   `-- Nisekoi.mkv\n|   |-- Mystery\n|   |   |-- Another.mkv\n|   |   |-- Boku_Dake_Ga_Inai_Machi.mkv\n|   |   `-- Detective_Conan.mkv\n|   `-- Sci-Fi\n|       |-- Code_Geass.mkv\n|       `-- Steins_Gate.mkv\n|-- List.txt\n`-- TV\n    |-- Action\n    |   |-- Arrow.mkv\n    |   `-- Luke_Cage.mkv\n    |-- Best_TV_Series.txt\n    |-- Documentary\n    |   |-- Alien_Theory.mkv\n    |   `-- POV.mkv\n    |-- Drama\n    |   |-- Breaking_Bad.mkv\n    |   `-- Game_Of_Thrones.mkv\n    |-- Horror\n    |   |-- iZombie.mkv\n    |   `-- Scream.mkv\n    |-- Sci-Fi\n    |   `-- Doctor_Who.mkv\n    `-- Western\n        |-- Firefly.mkv\n        `-- Into_The_Wild.mkv\n\n13 directories, 27 files",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Not starting in .",
+          "isTest": true,
+          "testIn": "./Directory4/Directory5/Directory6\n-a,-L 4\n23\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/DirectoryA/File5\n./File6\n./.File7\n./Directory2/DirectoryA/.File8\n./Directory2/DirectoryA/Directory6/File9\n./Directory2/DirectoryA/Directory6/.File10\n./.Directory3/File11\n./.Directory3/File13\n./.Directory3/.File12\n./.Directory3/Directory6/DirectoryI/DirectoryII/File14\n./.Directory3/Directory6/DirectoryI/DirectoryII/File15\n./Directory4/Directory5/Directory6/Directory8/Fileb\n./Directory4/Directory5/Directory6/Directory8/Filec\n./Directory4/Directory5/Directory6/Directory9/Directory10/Directory11/Directory12/Filee\n./Directory4/Directory5/Directory6/Directory9/Directory10/Directory11/Filef\n./Directory4/Directory5/Directory6/Directory7/File18\n./Directory4/Directory5/Directory6/Directory7/.File17\n./Directory4/Directory5/Directory6/Directory7/.File16\n./Directory4/Directory5/Directory6/Directory7/File19",
+          "testOut": "./Directory4/Directory5/Directory6\n|-- Directory7\n|   |-- .File16\n|   |-- .File17\n|   |-- File18\n|   `-- File19\n|-- Directory8\n|   |-- Fileb\n|   `-- Filec\n`-- Directory9\n    `-- Directory10\n        `-- Directory11\n            |-- Directory12\n            `-- Filef\n\n6 directories, 7 files",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "LePoulpeVolant Validator",
+          "isTest": false,
+          "testIn": "./.Directory3/DirectoryA\n-a,-L 2\n15\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/DirectoryA/File5\n./File6\n./.File7\n./Directory2/DirectoryA/.File8\n./Directory2/DirectoryA/DirectoryIII/File9\n./Directory2/DirectoryA/DirectoryIII/.File10\n./.Directory3/File11\n./.Directory3/File13\n./.Directory3/.File12\n./.Directory3/DirectoryA/DirectoryI/DirectoryII/File14\n./.Directory3/DirectoryA/DirectoryI/DirectoryII/File15",
+          "testOut": "./.Directory3/DirectoryA\n`-- DirectoryI\n    `-- DirectoryII\n\n2 directories, 0 files",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "[[N]] >= 0\nWhen provided, [[depth]] > 0",
+      "stubGenerator": "read S:string(512)\nread F:string(512)\nread N:int\nloop N read line:string(512)\nwrite Tree output",
+      "inputDescription": "<<Line 1:>> A string [[S]] - a path to execute \"tree\" in\n<<Line 2:>> An string [[F]] - a list of flags, possibly null, for the tree program separated with commas {{,}}\n<<Line 3:>> An integer [[N]] - the number of files\n<<Next [[N]] lines:>> A list of files; each line is a single file",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The tree output"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Your goal is to recreate the behaviour of the UNIX tree program with support for some flags.<br>You'll be given a starting path <var>S</var>, a list of flags <var>F</var>, and a list of files.<br><br>The tree will be printed with characters pipe <const>|</const> backtick <const>`</const> hyphen <const>-</const> and with spaces.<br>Refer to the first example to understand how you need to print the tree.<br><br>You'll also need to handle three flags inspired by the original tree program:<br>- <const>-a</const> : Display hidden directories and files.<br>- <const>-d</const>: Only display directories (modifies the report line, see below).<br>- <const>-L</const> <var>depth</var>: Limit the &quot;depth&quot; of the tree.<br><br>A hidden file or directory has a name starting with a dot: <const>.</const><br><br>The input path <var>S</var> must be printed followed by the text <const>[error opening dir]</const> <strong>if</strong>:<br>- the path is a file, or<br>- the path doesn't exist<br><br>Finally, you'll need to print a new line plus the number of directories and files found as follows:<br><br><const><var>x</var> directories, <var>y</var> files</const><br><br>where <var>x</var> is the number of directories and <var>y</var> is the number of files. If the <const>-d</const> option is in effect, that last line reads like this instead:<br><br><const><var>x</var> directories</const><br><br>If <var>x</var> or <var>y</var> are equal to <const>1</const>, then you need to print <const>directory</const> and <const>file</const> respectively.<br><br>The tree needs to be sorted in <strong>ascending, alphabetical, case insensitive order</strong> and <strong>without considering</strong> the leading and first character '.' (dot) from hidden files or directories names.<br><br>Incorrect flags must be ignored.<br>You're only given valid paths, which are only starting with <strong>one &quot;current directory&quot; (./)</strong> and <strong>without &quot;parent directory&quot; (../)</strong><br>There are no empty directories.<br>There are no spaces in files or directory names.<br>There are no duplicated directories or files with the same name as either a hidden or non-hidden file/directory <strong>on the same depth</strong> (i.e: you will never see both <strong>.Directory1</strong> and <strong>Directory1</strong> in the same folder)</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> A string <var>S</var> - a path to execute &quot;tree&quot; in<br><strong>Line 2:</strong> An string <var>F</var> - a list of flags, possibly null, for the tree program separated with commas <const>,</const><br><strong>Line 3:</strong> An integer <var>N</var> - the number of files<br><strong>Next <var>N</var> lines:</strong> A list of files; each line is a single file</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The tree output</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><var>N</var> &gt;= 0<br>When provided, <var>depth</var> &gt; 0</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">.\n\n6\n./Directory1/File1\n./Directory1/File2\n./Directory2/File3\n./Directory1/File4\n./Directory2/Directory3/File5\n./File6</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">.\n|-- Directory1\n|   |-- File1\n|   |-- File2\n|   `-- File4\n|-- Directory2\n|   |-- Directory3\n|   |   `-- File5\n|   `-- File3\n`-- File6\n\n3 directories, 6 files</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 292627388268,
+  "avatar": 9552765056380,
+  "commentCount": 33,
+  "upVotes": 9,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 43884,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

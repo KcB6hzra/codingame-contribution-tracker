@@ -1,0 +1,264 @@
+{
+  "id": 5487,
+  "activeVersion": 77,
+  "score": 19,
+  "votableId": 15141305,
+  "codingamerId": 3751016,
+  "views": 709,
+  "commentableId": 15058224,
+  "title": "Kakuro Solver",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Q12",
+  "publicHandle": "548716c9fd04e173337848966ad2c024762b",
+  "codingamerHandle": "b683bbb0b3a4c1d61f3ac36f8201d98a6101573",
+  "lastVersion": {
+    "version": 77,
+    "autocloseTime": 1610398804117,
+    "data": {
+      "title": "Kakuro Solver",
+      "topics": [
+        {
+          "id": 248,
+          "handle": "grid",
+          "labelMap": {
+            "1": "Grid",
+            "2": "Grid"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        },
+        {
+          "id": 182,
+          "handle": "combinatorics",
+          "labelMap": {
+            "1": "Combinatorics",
+            "2": "Combinatorics"
+          },
+          "puzzleCount": 4,
+          "parentTopicId": 93
+        },
+        {
+          "id": 59,
+          "handle": "brute-force",
+          "labelMap": {
+            "1": "Force brute",
+            "2": "Brute-force"
+          },
+          "pageTitle": "Brute-force: exercises and theory",
+          "puzzleCount": 7,
+          "parentTopicId": 41,
+          "contentDetailsId": 90
+        },
+        {
+          "id": 56,
+          "handle": "backtracking",
+          "labelMap": {
+            "1": "Retour sur trace",
+            "2": "Backtracking"
+          },
+          "pageTitle": "Backtracking: exercises and theory",
+          "puzzleCount": 10,
+          "parentTopicId": 41,
+          "contentDetailsId": 80
+        }
+      ],
+      "solution": "\nfunction solve(){ // Good old backtracking\n    for (let y = 0; y < H; y++)\n        for (let x = 0; x < W; x++) {\n            //If there is no value in the current pos (X, or sum)\n            //or there is already number there (not empty)\n            if (!Kakuro[y][x].isValue || Kakuro[y][x].value) \n                continue;\n            let first = true;\n            let options = new Set();\n            let temp;\n            for (const constraint of Kakuro[y][x].constraints) {\n                //Our options for the current cell\n                const cOptions = constraint.getOptions();\n                if (!cOptions || !cOptions.length) \n                    return null;\n                if (first) {\n                    first = false;\n                    cOptions.forEach(o => options.add(o));\n                }\n                else {\n                    temp = options;\n                    options = new Set();\n                    cOptions.forEach(o => { \n                        if (temp.has(o)) \n                            options.add(o) \n                    });\n                }\n            }\n            for (const option of options) {\n                Kakuro[y][x].value = option;\n                if (solve()) \n                    return Kakuro;\n            }\n            Kakuro[y][x].value = 0;\n            return null;\n        }\n    return Kakuro;\n}\n\nconst SUMINV = [9, 17, 24, 30, 35, 39, 42, 44, 45];\n\nlet Kakuro = [];\n\nlet constraints = [];\n\nconst SUM = [0, 1, 3, 6, 10, 15, 21, 28, 36, 45, 55];\n\n//Creating a class\nclass Constraint {\n    constructor(x, y, dx, dy, total) {\n        this.x = x; \n        this.y = y; \n        this.dx = dx; \n        this.dy = dy; \n        this.total = total; \n        this.cells = []; \n    }\n\n    init(Kakuro){\n        let x1 = this.x + this.dx;\n        let y1 = this.y + this.dy;\n        while (y1 < H && x1 < W && Kakuro[y1][x1].isValue) {\n            this.cells.push(Kakuro[y1][x1]);\n            Kakuro[y1][x1].constraints.push(this);\n            x1 += this.dx;\n            y1 += this.dy;\n        }\n    }\n\n    getOptions(){\n        let values = 0;\n        let sum = 0;\n        for (const cell of this.cells)\n            if (cell.value) {\n                values++; \n                sum += cell.value; \n            }\n        //calc how many cells need to be filled\n        const avail = this.cells.length - values;\n        //calc the current sum after decreasing him\n        //by the values already been found\n        const rest = this.total - sum;\n        //if there is just one cell remaining to fill\n        if (avail == 1) {\n            //if the value should be greater or equal to ten or\n            //there is already the same value in the current row or column\n            //of cells\n            if (rest >= 10 || this.cells.some(c => c.value === rest)) \n                return null;\n            return [rest];\n        }\n        const result = [];\n        for (let i = Math.max(1, rest - SUMINV[avail - 1]); i <= Math.min(9, rest - SUM[avail - 1]); i++)\n            if (!this.cells.some(c => c.value === i))\n                result.push(i);\n        return result;\n    }\n}\n\nvar inputs = readline().split(' ');\nconst H = parseInt(inputs[0]);\nconst W = parseInt(inputs[1]);\nfor (let i = 0; i < H; i++) {\n    const line = readline();\n\n    let Row = [];\n\n    let tokens = line.split('|');\n    tokens = tokens.slice(1, tokens.length - 1);\n\n    for(let j = 0; j < tokens.length; j++){\n        let token = tokens[j].trim();\n\n        let cell = {isValue: false, value: token}\n\n        if(token != 'X'){\n            if(token.includes('\\\\')){\n                //Sum\n                let match = [token.slice(0,token.indexOf('\\\\')), \n                token.slice(token.indexOf('\\\\') + 1,token.length)];\n\n                if (match[0])\n                    //Sum Down\n                    constraints.push(new Constraint(j, i, 0, 1, +match[0]));\n\n                if (match[1])\n                    //Sum Right\n                    constraints.push(new Constraint(j, i, 1, 0, +match[1]));\n            }\n            else{\n                //Empty\n                cell.isValue = true;\n                cell.value = +token || 0;\n                cell.constraints = [];\n            }\n        }\n        Row[j] = cell;\n    }\n    Kakuro[i] = Row;\n}\n\n// Write an answer using console.log()\n// To debug: console.error('Debug messages...');\n\n\nconstraints.forEach(constraint => constraint.init(Kakuro));\n\n//Calling the solve function\nconst result = solve();\n\n//Showing the output\nfor(let i = 0; i < H; i++){\n    let line = \"\";\n    for(let j = 0; j < W; j++){\n\n        if(result[i][j].value == 'X'){\n            line += \"X\";\n        }\n        else if(result[i][j].isValue == true){\n            line += result[i][j].value;\n        }\n        else{\n            let token = result[i][j].value;\n            let match = [token.slice(0,token.indexOf('\\\\')), \n            token.slice(token.indexOf('\\\\') + 1,token.length)];\n            line += match[0] + \"\\\\\" + match[1];\n        }\n\n        if(j != W - 1){\n            line += ',';\n        }\n\n    }\n    console.log(line);\n}",
+      "statement": "Kakuro puzzles are similar to crosswords, but use digits (from 1 to 9) instead of letters.\n\nRules :\n- All empty cells need to be filled in with digits, in such a way that all the given sums are respected.\n- You are not allowed to use the same digit more than once to obtain a given sum.\n\nNotation :\n- 'X' : represents a cell that you don't need to fill.\n- Empty cell : represents a cell that you need to fill with a digit (1 - 9).\n- Cell with digit : the given digit is part of the solution, don't change it.\n- Cell with backslash : the required sum of the corresponding cells.\n   - X\\ : the vertical sum X of the cells downwards,\n   - \\X : the horizontal sum X of the cells to the right,\n   - X\\Y : the vertical sum X of the cells downwards, and the horizontal sum Y of the cells to the right.\n\nEach Kakuro puzzle has an unique solution. Good luck!\n\n<<Example 1:>>\n[[height]] = 3, [[width]] = 3\n\n`|   X  |  9\\  |  11\\  |\n|  \\17 |      |       |\n|  \\3  |      |       |`\n\nFor the horizontal sum to be 3 in the second row, we have 2 options: (2, 1) and (1, 2).\nFor the vertical sum to be 11 in the second column, we have 8 options: (9, 2), (2, 9), (8, 3), (3, 8), (7, 4), (4, 7), (6, 5) or (5, 6).\nIf we combine those options we find that the value in the bottom right cell has to be 2.\n\n`|   X  |  9\\  |  11\\  |\n|  \\17 |      |       |\n|  \\3  |      |   2   |`\n\nSince 2 is now fixed, we can deduce the value of its neighbors : 11 - 2 = 9, and 3 - 2 = 1.\n\n\n`|   X  |  9\\  |  11\\  |\n|  \\17 |      |   9   |\n|  \\3  |  1   |   2   |`\n\nFinally we can deduce the last value in the same way : 9 - 1 = 8, or 17 - 9 = 8.\n\nSo the solution is:\n\n`|   X  |  9\\  |  11\\  |\n|  \\17 |  8   |   9   |\n|  \\3  |  1   |   2   |`\n\n<<Example 2:>>\n[[height]] = 5, [[width]] = 5\n\n`|  X   | 17\\  | 6\\   |   X   |  X   |\n|  \\9  |  8   |      | 24\\   |  X   |\n|  \\20 |      |      |       | 4\\   |\n|  X   |  \\14 |      |       |      |\n|  X   |  X   |  \\8  |       |      |`\n\nIn this kakuro grid we have a given digit, <<8>>, which means it's part of the solution and we can use it to solve the puzzle. \nSubstracting 8 from the vertical sum 17, we get 9 as the cell value beneath it.\nSubstracting 8 from the horizontal sum 9, we get 1 as the cell value to the right.\n\n`|  X   | 17\\  | 6\\   |   X   |  X   |\n|  \\9  |  8   |  1   | 24\\   |  X   |\n|  \\20 |  9   |      |       | 4\\   |\n|  X   |  \\14 |      |       |      |\n|  X   |  X   |  \\8  |       |      |`\n\nNow by combining our options in each cell like we did in example 1, and using some guess work, we find that the solution is :\n\n`|  X   | 17\\  | 6\\   |   X   |  X   |\n|  \\9  |  8   |  1   | 24\\   |  X   |\n|  \\20 |  9   |  3   |   8   | 4\\   |\n|  X   |  \\14 |  2   |   9   |  3   |\n|  X   |  X   |  \\8  |   7   |  1   |`\n\nYou can find here more information: <<https://en.wikipedia.org/wiki/Kakuro>>\n\nThanks to Djoums that helped me with the puzzle.",
+      "testCases": [
+        {
+          "title": "Example 1 (3 * 3)",
+          "isTest": true,
+          "testIn": "3 3\n|   X   |   9\\  |  11\\  |\n|  \\17  |       |       |\n|  \\3   |       |       |",
+          "testOut": "X,9\\,11\\\n\\17,8,9\n\\3,1,2",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 1 (3 * 3)",
+          "isTest": false,
+          "testIn": "3 3\n|  X    |   8\\  |  4\\   |\n|  \\9   |       |       |\n|  \\3   |       |       |",
+          "testOut": "X,8\\,4\\\n\\9,6,3\n\\3,2,1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 2 (4 * 4)",
+          "isTest": true,
+          "testIn": "4 4\n|  X     |   23\\  |    9\\  |    7\\  |\n|  \\18   |        |        |        |\n|  \\11   |        |        |        |\n|  \\10   |        |        |        |",
+          "testOut": "X,23\\,9\\,7\\\n\\18,9,5,4\n\\11,8,1,2\n\\10,6,3,1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 2 (4 * 4)",
+          "isTest": false,
+          "testIn": "4 4\n|  X    | 20\\ |  17\\  |  12\\  |\n|  \\23  |     |       |       |\n|  \\19  |     |       |       |\n|  \\7   |     |       |       |",
+          "testOut": "X,20\\,17\\,12\\\n\\23,9,6,8\n\\19,7,9,3\n\\7,4,2,1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 3 (1 * 3)",
+          "isTest": true,
+          "testIn": "1 3\n|  \\3  |     |   2   |",
+          "testOut": "\\3,1,2",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 3 (3 * 1)",
+          "isTest": false,
+          "testIn": "3 1\n|  7\\   |\n|       |\n|   3   |",
+          "testOut": "7\\\n4\n3",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Example 2 (5 * 5)",
+          "isTest": true,
+          "testIn": "5 5\n|  X   | 17\\  |  6\\  |   X   |   X  |\n|  \\9  |   8  |      |  24\\  |   X  |\n|  \\20 |      |      |       |  4\\  |\n|  X   |  \\14 |      |       |      |\n|  X   |  X   |  \\8  |       |      |",
+          "testOut": "X,17\\,6\\,X,X\n\\9,8,1,24\\,X\n\\20,9,3,8,4\\\nX,\\14,2,9,3\nX,X,\\8,7,1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 4 (5 * 5)",
+          "isTest": false,
+          "testIn": "5 5\n|  X   | 17\\   |  7\\ |  X  |  X  |\n|  \\10 |       |  2  | 24\\ |  X  |\n|  \\18 |       |     |     | 4\\  |\n|  X   |  \\12  |     |     |     |\n|  X   |  X    | \\12 |     |     |",
+          "testOut": "X,17\\,7\\,X,X\n\\10,8,2,24\\,X\n\\18,9,1,8,4\\\nX,\\12,4,7,1\nX,X,\\12,9,3",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 5 (9 * 8)",
+          "isTest": true,
+          "testIn": "9 8\n|   X    |   X    |   X    | 11\\    | 20\\    |   X    |   X    |   X    |\n|   X    | 14\\    | 29\\15  |        |        |   X    |   X    |   X    |\n|   \\23  |        |        |        |        |  9\\    |   X    |   X    |\n|   \\17  |        |        | 18\\6   |        |        | 23\\    |   X    |\n|   X    |   \\17  |        |        |    \\9  |        |        |   X    |\n|   X    |   \\15  |        |        |  13\\15 |        |        | 10\\    |\n|   X    |   X    |   \\5   |        |        |  5\\11  |        |        |\n|   X    |   X    |   X    |   \\12  |        |        |        |        |\n|   X    |   X    |   X    |   \\7   |        |        |   X    |   X    |",
+          "testOut": "X,X,X,11\\,20\\,X,X,X\nX,14\\,29\\15,8,7,X,X,X\n\\23,6,5,3,9,9\\,X,X\n\\17,8,9,18\\6,4,2,23\\,X\nX,\\17,8,9,\\9,1,8,X\nX,\\15,7,8,13\\15,6,9,10\\\nX,X,\\5,1,4,5\\11,4,7\nX,X,X,\\12,6,1,2,3\nX,X,X,\\7,3,4,X,X",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 5 (9 * 8)",
+          "isTest": false,
+          "testIn": "9 8\n|  X    |   X    |  44\\   | 12\\   |  X    |   X   | 38\\  | 10\\  |\n|  X    |   \\13  |        |       |  6\\   |   \\16 |      |      |\n|  X    |  4\\9   |        |       |       | 11\\5  |      |      |\n|  \\8   |        |        |   \\21 |       |       |      |   X  |\n|  \\12  |        |        | 10\\   |   \\5  |       |      | 11\\  |\n|  X    |   \\9   |        |       | 17\\   |   \\3  |      |      |\n|  X    |  3\\15  |        |       |       |  6\\13 |      |      |\n|  \\9   |        |        |   \\16 |       |       |      |   X  |\n|  \\8   |        |        |   X   |   \\10 |       |      |   X  |",
+          "testOut": "X,X,44\\,12\\,X,X,38\\,10\\\nX,\\13,5,8,6\\,\\16,9,7\nX,4\\9,3,4,2,11\\5,2,3\n\\8,1,7,\\21,4,9,8,X\n\\12,3,9,10\\,\\5,2,3,11\\\nX,\\9,2,7,17\\,\\3,1,2\nX,3\\15,4,3,8,6\\13,4,9\n\\9,1,8,\\16,9,2,5,X\n\\8,2,6,X,\\10,4,6,X",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 6 (9 * 9)",
+          "isTest": true,
+          "testIn": "9 9\n|   X    |   X    | 29\\    | 15\\    |   X    |  21\\   |  5\\    |   X    |   X    |\n|   X    | 16\\3   |        |        |  6\\3   |        |        |   X    |   X    |\n|   \\23  |        |   6    |        |        |   2    |        |  3\\    |  4\\    |\n|   \\31  |        |        |   3    |        |        | 10\\4   |        |        |\n|   X    |  3\\8   |        |        | 22\\11  |        |        |        |        |\n|   \\25  |        |   7    |        |        |   3    |        |  4\\    |   X    |\n|   \\5   |        |        |  3\\13  |        |        |   2    |        |   X    |\n|   X    |   X    |   \\8   |        |        |   \\4   |        |        |   X    |\n|   X    |   X    |   \\3   |        |        |   X    |   X    |   X    |   X    |",
+          "testOut": "X,X,29\\,15\\,X,21\\,5\\,X,X\nX,16\\3,1,2,6\\3,1,2,X,X\n\\23,7,6,4,1,2,3,3\\,4\\\n\\31,9,8,3,5,6,10\\4,1,3\nX,3\\8,3,5,22\\11,5,3,2,1\n\\25,2,7,1,8,3,4,4\\,X\n\\5,1,4,3\\13,6,4,2,1,X\nX,X,\\8,1,7,\\4,1,3,X\nX,X,\\3,2,1,X,X,X,X",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 6 (9 * 9)",
+          "isTest": false,
+          "testIn": "9 9\n|   X    |   X    | 12\\    | 23\\    |   X    |  3\\    | 26\\    |   X    |   X    |\n|   X    |   \\4   |        |        | 10\\10  |        |        |   X    |   X    |\n|   X    |  4\\27  |        |   9    |        |        |   5    | 14\\    |   X    |\n|   \\16  |        |   5    |        |        | 15\\16  |        |        | 15\\    |\n|   \\6   |        |        |        | 15\\10  |        |   3    |        |        |\n|   X    |  3\\    |  6\\25  |        |        |   5    |        |        |        |\n|   \\5   |        |        |  9\\3   |        |        |   \\8   |        |        |\n|   \\15  |        |        |        |   4    |        |   X    |   X    |   X    |\n|   X    |   \\10  |        |        |        |        |   X    |   X    |   X    |",
+          "testOut": "X,X,12\\,23\\,X,3\\,26\\,X,X\nX,\\4,1,3,10\\10,2,8,X,X\nX,4\\27,4,9,8,1,5,14\\,X\n\\16,1,5,8,2,15\\16,9,7,15\\\n\\6,3,2,1,15\\10,4,3,1,2\nX,3\\,6\\25,2,6,5,1,4,7\n\\5,2,3,9\\3,2,1,\\8,2,6\n\\15,1,2,5,4,3,X,X,X\nX,\\10,1,4,3,2,X,X,X",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 7 (12 * 10)",
+          "isTest": true,
+          "testIn": "12 10\n|   X    |   X    | 12\\    | 13\\    |   X    |  9\\    | 14\\    |   X    | 28\\    | 12\\    |\n|   X    | 15\\15  |        |        | 12\\12  |        |        |   \\16  |        |        |\n|   \\22  |        |        |        |        |        |        | 16\\4   |        |        |\n|   \\12  |        |        | 10\\6   |        |        | 19\\14  |        |        |        |\n|   X    |   X    | 36\\17  |        |        | 24\\17  |        |        |        |  3\\    |\n|   X    | 17\\7   |        |        | 19\\16  |        |        |   \\5   |        |        |\n|   \\16  |        |        |   \\24  |        |        |        |  4\\3   |        |        |\n|   \\17  |        |        |  4\\11  |        |        |  6\\5   |        |        |   X    |\n|   X    | 18\\12  |        |        |        |  6\\3   |        |        | 21\\    |  8\\    |\n|   \\6   |        |        |        |  3\\3   |        |        | 16\\11  |        |        |\n|   \\10  |        |        |   \\29  |        |        |        |        |        |        |\n|   \\17  |        |        |   \\4   |        |        |   \\11  |        |        |   X    |",
+          "testOut": "X,X,12\\,13\\,X,9\\,14\\,X,28\\,12\\\nX,15\\15,6,9,12\\12,3,9,\\16,7,9\n\\22,7,2,4,3,1,5,16\\4,3,1\n\\12,8,4,10\\6,1,5,19\\14,7,5,2\nX,X,36\\17,9,8,24\\17,2,9,6,3\\\nX,17\\7,6,1,19\\16,7,9,\\5,4,1\n\\16,9,7,\\24,7,9,8,4\\3,1,2\n\\17,8,9,4\\11,3,8,6\\5,3,2,X\nX,18\\12,2,1,9,6\\3,2,1,21\\,8\\\n\\6,2,1,3,3\\3,2,1,16\\11,9,2\n\\10,7,3,\\29,2,1,3,9,8,6\n\\17,9,8,\\4,1,3,\\11,7,4,X",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 7 (12 * 10)",
+          "isTest": false,
+          "testIn": "12 10\n|   X    | 11\\    | 12\\    |   X    |   X    |  7\\    | 10\\    |   X    | 32\\    | 16\\    |\n|   \\17  |        |        | 27\\    |   \\8   |        |        |   \\13  |        |        |\n|   \\7   |        |        |        | 13\\5   |        |        | 12\\12  |        |        |\n|   X    |   X    |   \\6   |        |        | 12\\15  |        |        |        |   X    |\n|   X    | 23\\    | 33\\24  |        |        |        | 15\\4   |        |        | 23\\    |\n|   \\22  |        |        |        |  9\\13  |        |        | 34\\11  |        |        |\n|   \\29  |        |        |        |        |  5\\30  |        |        |        |        |\n|   \\17  |        |        |  16\\5  |        |        |  7\\24  |        |        |        |\n|   X    |   \\12  |        |        | 12\\14  |        |        |        |   X    |   X    |\n|   X    | 11\\17  |        |        |        | 14\\5   |        |        |  7\\    | 16\\    |\n|   \\3   |        |        |   \\6   |        |        |   \\23  |        |        |        |\n|   \\15  |        |        |   \\12  |        |        |   X    |   \\8   |        |        |",
+          "testOut": "X,11\\,12\\,X,X,7\\,10\\,X,32\\,16\\\n\\17,9,8,27\\,\\8,3,5,\\13,6,7\n\\7,2,4,1,13\\5,4,1,12\\12,3,9\nX,X,\\6,2,4,12\\15,4,9,2,X\nX,23\\,33\\24,8,9,7,15\\4,3,1,23\\\n\\22,6,7,9,9\\13,5,8,34\\11,5,6\n\\29,9,5,7,8,5\\30,7,6,8,9\n\\17,8,9,16\\5,1,4,7\\24,9,7,8\nX,\\12,3,9,12\\14,1,6,7,X,X\nX,11\\17,2,7,8,14\\5,1,4,7\\,16\\\n\\3,2,1,\\6,1,5,\\23,8,6,9\n\\15,9,6,\\12,3,9,X,\\8,1,7",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 8 (18 * 10)",
+          "isTest": true,
+          "testIn": "18 10\n|   X    | 20\\    | 15\\    | 11\\    |   X    |   X    | 19\\    |  8\\    |   X    |   X    |\n|   \\6   |        |        |        |   X    | 16\\4   |        |        | 17\\    |  7\\    |\n|   \\19  |        |        |        | 30\\30  |        |        |        |        |        |\n|   \\12  |        |        | 14\\22  |        |        |        | 12\\10  |        |        |\n|   X    |   \\21  |        |        |        |   \\10  |        |        | 23\\    | 27\\    |\n|   X    |  6\\    | 23\\17  |        |        |  9\\    | 9\\20   |        |        |        |\n|   \\12  |        |        |   \\19  |        |        |        |   \\17  |        |        |\n|   \\8   |        |        |  7\\    | 14\\3   |        |        | 21\\16  |        |        |\n|   X    |   \\22  |        |        |        |        |  6\\11  |        |        |        |\n|   X    | 28\\    | 10\\12  |        |        | 14\\8   |        |        | 10\\    |   X    |\n|   \\13  |        |        |        | 12\\29  |        |        |        |        |  9\\    |\n|   \\11  |        |        |   \\14  |        |        | 10\\    |   \\8   |        |        |\n|   \\9   |        |        |  9\\6   |        |        |        |  4\\4   |        |        |\n|   \\7   |        |        |        | 10\\    |   \\4   |        |        | 10\\    |   X    |\n|   X    |  7\\    | 15\\12  |        |        |  5\\7   |        |        |        |  8\\    |\n|   \\13  |        |        |  3\\6   |        |        |        |  6\\3   |        |        |\n|   \\16  |        |        |        |        |        |   \\12  |        |        |        |\n|   X    |   X    |   \\4   |        |        |   X    |   \\7   |        |        |        |",
+          "testOut": "X,20\\,15\\,11\\,X,X,19\\,8\\,X,X\n\\6,3,1,2,X,16\\4,1,3,17\\,7\\\n\\19,8,2,9,30\\30,9,2,5,8,6\n\\12,9,3,14\\22,6,7,9,12\\10,9,1\nX,\\21,9,5,7,\\10,7,3,23\\,27\\\nX,6\\,23\\17,9,8,9\\,9\\20,9,5,6\n\\12,4,8,\\19,9,3,7,\\17,9,8\n\\8,2,6,7\\,14\\3,1,2,21\\16,7,9\nX,\\22,9,2,6,5,6\\11,5,2,4\nX,28\\,10\\12,4,8,14\\8,1,7,10\\,X\n\\13,9,3,1,12\\29,8,5,9,7,9\\\n\\11,7,4,\\14,9,5,10\\,\\8,2,6\n\\9,8,1,9\\6,3,1,2,4\\4,1,3\n\\7,4,2,1,10\\,\\4,1,3,10\\,X\nX,7\\,15\\12,8,4,5\\7,4,1,2,8\\\n\\13,4,9,3\\6,2,1,3,6\\3,1,2\n\\16,3,6,2,1,4,\\12,4,3,5\nX,X,\\4,1,3,X,\\7,2,4,1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 8 (18 * 10)",
+          "isTest": false,
+          "testIn": "18 10\n|   X    |   X    | 42\\    |  4\\    |   X    |   X    | 11\\    |  5\\    |   X    |   X    |\n|   X    |   \\4   |        |        |  8\\    |   \\13  |        |        | 42\\    |   X    |\n|   X    | 17\\6   |        |        |        |  8\\11  |        |        |        |  9\\    |\n|   \\14  |        |        |   \\8   |        |        | 22\\    |   \\6   |        |        |\n|   \\16  |        |        | 16\\    |   \\11  |        |        | 17\\16  |        |        |\n|   X    |   \\12  |        |        |  3\\    |   \\23  |        |        |        |   X    |\n|   X    | 14\\18  |        |        |        | 10\\21  |        |        |        |  5\\    |\n|   \\17  |        |        |  6\\8   |        |        |  4\\    |   \\7   |        |        |\n|   \\15  |        |        |        | 12\\7   |        |        | 10\\8   |        |        |\n|   X    | 11\\    | 30\\10  |        |        |  4\\8   |        |        | 36\\    |  3\\    |\n|   \\16  |        |        |   \\4   |        |        | 11\\6   |        |        |        |\n|   \\3   |        |        |  9\\    |  8\\5   |        |        |  3\\4   |        |        |\n|   X    |   \\19  |        |        |        |   \\12  |        |        |        |   X    |\n|   X    | 10\\6   |        |        |        |  4\\    |   \\9   |        |        | 12\\    |\n|   \\4   |        |        |   \\3   |        |        | 10\\    |   \\7   |        |        |\n|   \\14  |        |        |  9\\    | 12\\5   |        |        | 10\\17  |        |        |\n|   X    |   \\20  |        |        |        |   \\14  |        |        |        |   X    |\n|   X    |   X    |   \\5   |        |        |   X    |   \\15  |        |        |   X    |",
+          "testOut": "X,X,42\\,4\\,X,X,11\\,5\\,X,X\nX,\\4,1,3,8\\,\\13,9,4,42\\,X\nX,17\\6,2,1,3,8\\11,2,1,8,9\\\n\\14,8,6,\\8,5,3,22\\,\\6,4,2\n\\16,9,7,16\\,\\11,5,6,17\\16,9,7\nX,\\12,5,7,3\\,\\23,9,8,6,X\nX,14\\18,8,9,1,10\\21,7,9,5,5\\\n\\17,8,9,6\\8,2,6,4\\,\\7,3,4\n\\15,6,4,5,12\\7,4,3,10\\8,7,1\nX,11\\,30\\10,1,9,4\\8,1,7,36\\,3\\\n\\16,9,7,\\4,3,1,11\\6,3,1,2\n\\3,2,1,9\\,8\\5,3,2,3\\4,3,1\nX,\\19,8,6,5,\\12,9,1,2,X\nX,10\\6,2,3,1,4\\,\\9,2,7,12\\\n\\4,1,3,\\3,2,1,10\\,\\7,4,3\n\\14,9,5,9\\,12\\5,3,2,10\\17,8,9\nX,\\20,4,7,9,\\14,8,1,5,X\nX,X,\\5,2,3,X,\\15,9,6,X",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 9 (15 * 15)",
+          "isTest": true,
+          "testIn": "15 15\n|   X    |   X    |   X    |   X    | 16\\    | 10\\    |   X    |   X    |   X    |  3\\    | 16\\    |   X    |   X    |   X    |   X    |\n|   X    | 17\\    |  3\\    |   \\10  |        |        |   X    |   X    |   \\9   |        |        | 24\\    | 16\\    |   X    |   X    |\n|   \\11  |        |        |  6\\13  |        |        |  7\\    |   X    |   \\25  |        |        |        |        |   X    |   X    |\n|   \\12  |        |        |        | 23\\3   |        |        |   X    |   X    |   X    |  4\\16  |        |        |   X    |   X    |\n|   X    |   X    | 29\\13  |        |        |        |        | 16\\    |   X    | 29\\10  |        |        |   X    |   X    |   X    |\n|   X    |  4\\17  |        |        |        |  3\\9   |        |        |  3\\8   |        |        | 16\\    |  3\\    |   X    |   X    |\n|   \\6   |        |        |   \\9   |        |        | 11\\17  |        |        |        |   \\10  |        |        | 10\\    |   X    |\n|   \\12  |        |        | 16\\    |  3\\3   |        |        | 17\\10  |        |        |  4\\10  |        |        |        | 17\\    |\n|   X    |   \\19  |        |        |        |   \\13  |        |        |  4\\10  |        |        |  7\\    |   \\10  |        |        |\n|   X    |   X    |   \\8   |        |        |  3\\14  |        |        |        | 23\\7   |        |        | 23\\13  |        |        |\n|   X    |   X    |   X    |   X    |  6\\4   |        |        |   \\9   |        |        | 29\\13  |        |        |        |   X    |\n|   X    |   X    |   X    | 16\\3   |        |        |   X    |   X    |   \\23  |        |        |        |        |  4\\    | 16\\    |\n|   X    |   X    |   \\10  |        |        | 16\\    |  4\\    |   X    |   \\14  |        |        |  3\\17  |        |        |        |\n|   X    |   X    |   \\21  |        |        |        |        |   X    |   X    |   \\7   |        |        |   \\12  |        |        |\n|   X    |   X    |   X    |   X    |   \\10  |        |        |   X    |   X    |   \\10  |        |        |   X    |   X    |   X    |",
+          "testOut": "X,X,X,X,16\\,10\\,X,X,X,3\\,16\\,X,X,X,X\nX,17\\,3\\,\\10,7,3,X,X,\\9,2,7,24\\,16\\,X,X\n\\11,9,2,6\\13,9,4,7\\,X,\\25,1,9,8,7,X,X\n\\12,8,1,3,23\\3,2,1,X,X,X,4\\16,7,9,X,X\nX,X,29\\13,2,6,1,4,16\\,X,29\\10,1,9,X,X,X\nX,4\\17,7,1,9,3\\9,2,7,3\\8,5,3,16\\,3\\,X,X\n\\6,1,5,\\9,8,1,11\\17,9,1,7,\\10,9,1,10\\,X\n\\12,3,9,16\\,3\\3,2,1,17\\10,2,8,4\\10,7,2,1,17\\\nX,\\19,8,9,2,\\13,5,8,4\\10,9,1,7\\,\\10,2,8\nX,X,\\8,7,1,3\\14,2,9,3,23\\7,3,4,23\\13,4,9\nX,X,X,X,6\\4,1,3,\\9,1,8,29\\13,2,8,3,X\nX,X,X,16\\3,1,2,X,X,\\23,9,7,1,6,4\\,16\\\nX,X,\\10,7,3,16\\,4\\,X,\\14,6,8,3\\17,9,1,7\nX,X,\\21,9,2,7,3,X,X,\\7,5,2,\\12,3,9\nX,X,X,X,\\10,9,1,X,X,\\10,9,1,X,X,X",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 9 (15 * 15)",
+          "isTest": false,
+          "testIn": "15 15\n|   X    |   X    |   X    | 16\\    |  3\\    |   X    |   X    |   X    |   X    |   X    |   X    | 42\\    |  6\\    |   X    |   X    |\n|   X    | 16\\    |  6\\9   |        |        | 23\\    | 10\\    |   X    | 17\\    |  7\\    |   \\8   |        |        |   X    |   X    |\n|   \\30  |        |        |        |        |        |        |   \\11  |        |        |   \\6   |        |        |   X    |   X    |\n|   \\10  |        |        | 24\\    |   \\8   |        |        |   \\9   |        |        |  3\\10  |        |        |   X    |   X    |\n|   X    |   \\12  |        |        | 17\\10  |        |        |  3\\    | 16\\9   |        |        |        |   X    |   X    |   X    |\n|   X    |   X    |   \\15  |        |        |  6\\15  |        |        |        |  6\\8   |        |        |  3\\    |   X    |   X    |\n|   X    |   X    |   \\19  |        |        |        | 23\\11  |        |        |        |  7\\7   |        |        |   X    |   X    |\n|   X    |   X    |   X    | 17\\    | 28\\9   |        |        |   X    |   \\15  |        |        |        |        |   X    |   X    |\n|   X    |   X    |   \\18  |        |        |        |        | 16\\    |  4\\3   |        |        | 17\\    | 24\\    |   X    |   X    |\n|   X    |   X    |   \\11  |        |        |  3\\17  |        |        |        | 30\\17  |        |        |        |   X    |   X    |\n|   X    |   X    |   X    |   \\8   |        |        |  7\\19  |        |        |        |  7\\17  |        |        |  7\\    |   X    |\n|   X    |   X    |   X    |  7\\7   |        |        |        | 17\\    |   \\9   |        |        |   \\10  |        |        | 16\\    |\n|   X    |   X    |   \\5   |        |        |   \\11  |        |        |   \\10  |        |        |  4\\    |  3\\11  |        |        |\n|   X    |   X    |   \\7   |        |        |   \\12  |        |        |   \\26  |        |        |        |        |        |        |\n|   X    |   X    |   \\9   |        |        |   X    |   X    |   X    |   X    |   X    |   \\3   |        |        |   X    |   X    |",
+          "testOut": "X,X,X,16\\,3\\,X,X,X,X,X,X,42\\,6\\,X,X\nX,16\\,6\\9,7,2,23\\,10\\,X,17\\,7\\,\\8,5,3,X,X\n\\30,7,2,9,1,8,3,\\11,9,2,\\6,4,2,X,X\n\\10,9,1,24\\,\\8,6,2,\\9,8,1,3\\10,9,1,X,X\nX,\\12,3,9,17\\10,9,1,3\\,16\\9,4,2,3,X,X,X\nX,X,\\15,7,8,6\\15,4,2,9,6\\8,1,7,3\\,X,X\nX,X,\\19,8,9,2,23\\11,1,7,3,7\\7,6,1,X,X\nX,X,X,17\\,28\\9,1,8,X,\\15,1,4,8,2,X,X\nX,X,\\18,8,1,3,6,16\\,4\\3,2,1,17\\,24\\,X,X\nX,X,\\11,9,2,3\\17,9,7,1,30\\17,2,8,7,X,X\nX,X,X,\\8,7,1,7\\19,9,3,7,7\\17,9,8,7\\,X\nX,X,X,7\\7,4,2,1,17\\,\\9,8,1,\\10,9,1,16\\\nX,X,\\5,2,3,\\11,2,9,\\10,6,4,4\\,3\\11,2,9\nX,X,\\7,1,6,\\12,4,8,\\26,9,2,3,1,4,7\nX,X,\\9,4,5,X,X,X,X,X,\\3,1,2,X,X",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Test 10 (7 * 7)",
+          "isTest": true,
+          "testIn": "7 7\n|   X    |   X    |  9\\    | 39\\    | 21\\    |  7\\    |   X    |\n|   X    |  3\\22  |        |        |        |        |   X    |\n|   \\18  |        |        |        |        |        |   X    |\n|   X    |        |  6\\10  |        |        |        |  3\\    |\n|   X    |   \\9   |        |        |        |  4\\    |        |\n|   X    |   \\15  |        |        |        |        |        |\n|   X    |   \\14  |        |        |        |        |   X    |",
+          "testOut": "X,X,9\\,39\\,21\\,7\\,X\nX,3\\22,7,9,5,1,X\n\\18,1,2,8,3,4,X\nX,2,6\\10,7,1,2,3\\\nX,\\9,1,6,2,4\\,2\nX,\\15,2,5,4,3,1\nX,\\14,3,4,6,1,X",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10 (7 * 7)",
+          "isTest": false,
+          "testIn": "7 7\n|   X    |   X    |  38\\   |   X    | 28\\    | 35\\    |   X    |\n|   X    | 24\\    |        |   \\17  |        |        |   X    |\n|   \\17  |        |        | 26\\15  |        |        |  6\\    |\n|   \\36  |        |        |        |        |        |        |\n|   \\32  |        |        |        |        |        |        |\n|   X    |   \\5   |        |        |   \\5   |        |        |\n|   X    |   \\12  |        |        |   X    |        |   X    |",
+          "testOut": "X,X,38\\,X,28\\,35\\,X\nX,24\\,9,\\17,9,8,X\n\\17,9,8,26\\15,8,7,6\\\n\\36,8,7,9,6,5,1\n\\32,7,6,8,5,4,2\nX,\\5,3,2,\\5,2,3\nX,\\12,5,7,X,9,X",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "Sums are natural numbers (positive and integer)\n1 <= [[height]] <= 18\n1 <= [[width]] <= 15",
+      "coverBinaryId": 52649565887434,
+      "stubGenerator": "read height:int width:int\nloop height read line:string(1024)\nwrite Kakuro grid",
+      "inputDescription": "<<Line 1:>> integer [[height]], integer [[width]]\n<<Next [[height]] lines:>> string [[line]]",
+      "solutionLanguage": "Javascript",
+      "outputDescription": "The kakuro grid with comma between cells."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Kakuro puzzles are similar to crosswords, but use digits (from 1 to 9) instead of letters.<br><br>Rules :<br>- All empty cells need to be filled in with digits, in such a way that all the given sums are respected.<br>- You are not allowed to use the same digit more than once to obtain a given sum.<br><br>Notation :<br>- 'X' : represents a cell that you don't need to fill.<br>- Empty cell : represents a cell that you need to fill with a digit (1 - 9).<br>- Cell with digit : the given digit is part of the solution, don't change it.<br>- Cell with backslash : the required sum of the corresponding cells.<br>   - X\\ : the vertical sum X of the cells downwards,<br>   - \\X : the horizontal sum X of the cells to the right,<br>   - X\\Y : the vertical sum X of the cells downwards, and the horizontal sum Y of the cells to the right.<br><br>Each Kakuro puzzle has an unique solution. Good luck!<br><br><strong>Example 1:</strong><br><var>height</var> = 3, <var>width</var> = 3<br><br><pre style=\"font-family: monospace\">|   X  |  9\\  |  11\\  |<br>|  \\17 |      |       |<br>|  \\3  |      |       |</pre><br><br>For the horizontal sum to be 3 in the second row, we have 2 options: (2, 1) and (1, 2).<br>For the vertical sum to be 11 in the second column, we have 8 options: (9, 2), (2, 9), (8, 3), (3, 8), (7, 4), (4, 7), (6, 5) or (5, 6).<br>If we combine those options we find that the value in the bottom right cell has to be 2.<br><br><pre style=\"font-family: monospace\">|   X  |  9\\  |  11\\  |<br>|  \\17 |      |       |<br>|  \\3  |      |   2   |</pre><br><br>Since 2 is now fixed, we can deduce the value of its neighbors : 11 - 2 = 9, and 3 - 2 = 1.<br><br><br><pre style=\"font-family: monospace\">|   X  |  9\\  |  11\\  |<br>|  \\17 |      |   9   |<br>|  \\3  |  1   |   2   |</pre><br><br>Finally we can deduce the last value in the same way : 9 - 1 = 8, or 17 - 9 = 8.<br><br>So the solution is:<br><br><pre style=\"font-family: monospace\">|   X  |  9\\  |  11\\  |<br>|  \\17 |  8   |   9   |<br>|  \\3  |  1   |   2   |</pre><br><br><strong>Example 2:</strong><br><var>height</var> = 5, <var>width</var> = 5<br><br><pre style=\"font-family: monospace\">|  X   | 17\\  | 6\\   |   X   |  X   |<br>|  \\9  |  8   |      | 24\\   |  X   |<br>|  \\20 |      |      |       | 4\\   |<br>|  X   |  \\14 |      |       |      |<br>|  X   |  X   |  \\8  |       |      |</pre><br><br>In this kakuro grid we have a given digit, <strong>8</strong>, which means it's part of the solution and we can use it to solve the puzzle. <br>Substracting 8 from the vertical sum 17, we get 9 as the cell value beneath it.<br>Substracting 8 from the horizontal sum 9, we get 1 as the cell value to the right.<br><br><pre style=\"font-family: monospace\">|  X   | 17\\  | 6\\   |   X   |  X   |<br>|  \\9  |  8   |  1   | 24\\   |  X   |<br>|  \\20 |  9   |      |       | 4\\   |<br>|  X   |  \\14 |      |       |      |<br>|  X   |  X   |  \\8  |       |      |</pre><br><br>Now by combining our options in each cell like we did in example 1, and using some guess work, we find that the solution is :<br><br><pre style=\"font-family: monospace\">|  X   | 17\\  | 6\\   |   X   |  X   |<br>|  \\9  |  8   |  1   | 24\\   |  X   |<br>|  \\20 |  9   |  3   |   8   | 4\\   |<br>|  X   |  \\14 |  2   |   9   |  3   |<br>|  X   |  X   |  \\8  |   7   |  1   |</pre><br><br>You can find here more information: <strong>https://en.wikipedia.org/wiki/Kakuro</strong><br><br>Thanks to Djoums that helped me with the puzzle.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> integer <var>height</var>, integer <var>width</var><br><strong>Next <var>height</var> lines:</strong> string <var>line</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The kakuro grid with comma between cells.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Sums are natural numbers (positive and integer)<br>1 &lt;= <var>height</var> &lt;= 18<br>1 &lt;= <var>width</var> &lt;= 15</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3 3\n|   X   |   9\\  |  11\\  |\n|  \\17  |       |       |\n|  \\3   |       |       |</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">X,9\\,11\\\n\\17,8,9\n\\3,1,2</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 160428702033,
+  "avatar": 51600040008150,
+  "commentCount": 38,
+  "upVotes": 19,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 509659,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1610302049051,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,185 @@
+{
+  "id": 22257,
+  "activeVersion": 24,
+  "score": 10,
+  "votableId": 24231871,
+  "codingamerId": 3376722,
+  "views": 413,
+  "commentableId": 24115025,
+  "title": "Lunar Lockout",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "oolivierr",
+  "publicHandle": "222579e3abae3a3befa8ff174ac0eb2de4d63",
+  "codingamerHandle": "2fcd0b4e8dc1685d91cbd9b358e1416b2276733",
+  "lastVersion": {
+    "version": 24,
+    "autocloseTime": 1660940199945,
+    "data": {
+      "title": "Lunar Lockout",
+      "topics": [
+        {
+          "id": 54,
+          "handle": "BFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en largeur",
+            "2": "BFS"
+          },
+          "pageTitle": "BFS: exercises and theory",
+          "puzzleCount": 19,
+          "parentTopicId": 41,
+          "contentDetailsId": 84
+        }
+      ],
+      "solution": "def affiche_grille(g):\n    for line in g:\n        print(''.join(line))\n\ndef creation_grille(etat):\n    g = [['.'] * 5 for k in range(5)]\n    for n,pos in enumerate(etat):\n        x,y = pos\n        g[y][x] = vaisseaux[n]\n    return g\n\ndef deplacement(etat,v,d):\n    xV,yV = etat[v] \n    x = xV + direction[d][0]\n    y = yV + direction[d][1]\n    while 0 <= x <= 4 and 0<= y <= 4:\n        if (x, y) in etat:\n            x = x - direction[d][0]\n            y = y - direction[d][1]\n            etatNew = etat[:v] +((x,y),)  +etat[v+1:]\n            return (True, etatNew)\n        x = x + direction[d][0]\n        y = y + direction[d][1]\n    return (False, etat)\n            \ndef creationGraphe(etat):\n    dico = {}\n    aVoir = [etat]\n    dejaVu = []\n    while len(aVoir)>0:\n        etat = aVoir.pop()\n        if etat not in dejaVu:\n            dejaVu.append(etat)\n            for v in range(len(etat)):\n                for d in \"DLRU\":\n                    resultat = deplacement(etat,v,d)\n                    if resultat[0] :\n                        if etat in dico:\n                            if resultat[1] not in dico[etat]:\n                                dico[etat].append(resultat[1])\n                        else:\n                            dico[etat] = [(resultat[1])]\n                        aVoir.append(resultat[1])\n    return dico\n\ndef parcoursBFS(G, etat):\n    dist = {sommet:float('inf')  for sommet in G}\n    dist[etat] = 0\n    predecesseur = {sommet:None  for sommet in G}\n    aVisiter = []\n    aVisiter.append(etat)\n    while len(aVisiter) > 0:\n        etat = aVisiter.pop(0)\n        for voisin in G[etat]:\n            if dist[voisin] == float('inf'):\n                dist[voisin] = dist[etat] + 1\n                predecesseur[voisin] = etat\n                aVisiter.append(voisin)\n    return  dist, predecesseur\n\ndef rechercheSolution(etat,dicoP):\n    lesSolutions = []\n    solution = []\n    for cle, prede in dicoP.items():\n        solution = []\n        if cle[-1] == (2, 2): \n            solution.append(cle)\n            avant = dicoP[cle]\n            while avant != etat:\n                solution = [avant] + solution\n                avant = dicoP[avant]\n            solution = [avant] + solution\n            lesSolutions.append(codageSolution(solution))\n    lesSolutions.sort()   \n    return meilleureSolution(lesSolutions)\n\ndef meilleureSolution(liste):\n    meilleur = liste[0]\n    for elt in liste:\n        if len(elt) < len(meilleur):\n            meilleur = elt\n    return meilleur\n\ndef codageSolution(solution):\n    sol  = \"\"\n    for num in range(len(solution)-1):\n        etat1 = solution[num]\n        etat2 = solution[num + 1]\n        for k in range(len(etat1)):\n            if etat1[k] != etat2[k]:v = k\n        deplacementX = etat2[v][0] - etat1[v][0]\n        deplacementY = etat2[v][1] - etat1[v][1]\n        if deplacementX > 0:direc = 'R'\n        elif deplacementX < 0:direc = 'L'\n        elif deplacementY > 0:direc = 'D'            \n        elif deplacementY < 0:direc = 'U'\n        sol = sol + vaisseaux[v]+direc + \" \"\n    return sol\n\n# programme principal\ngrille = [['.'] * 5 for k in range(5)]\ndirection = {'D':(0,1), 'L':(-1,0), 'R':(1,0),'U':(0,-1)}\nvaisseaux = []\n\n# lecture des entrées\nlevel = dict()\nfor y in range(5):\n    ligne = input()\n    for x in range(5):\n        if ligne[x] != '.':\n            level[ligne[x]] = (x, y)\n            grille[y][x] = ligne[x]\n            vaisseaux.append(ligne[x])\n\nvaisseaux.sort()\n\netat = []\nfor k in range(len(level)):\n    etat.append(level[vaisseaux[k]])\netat = tuple(etat)\n\ng = creationGraphe(etat)\ndist, predecesseur =  parcoursBFS(g, etat)\n\nsolution = rechercheSolution(etat,predecesseur)\nprint(solution[:-1])\n\nprint()\n\n#affichage des grilles menant à la réponse :\nfor n,coup in enumerate(solution[:-1].split()):\n    v = vaisseaux.index(coup[0])\n    d = coup[1]\n    etat = deplacement(etat,v,d)[1]\n    grille = creation_grille(etat)\n\naffiche_grille(grille)\n",
+      "statement": "Lunar Lockout  is a game edited by Binary Arts in 1999.\n--------------------------------------------------------------------------------\n<<The object>> : To maneuver the Red Spacepod (X) assisted by the Helper-Bots (A, B, C, ...), until it lands on the Emergency Entry Port at the center of the Mothership's Landing Grid.\n\n<<The Rules>> :\n1 - Spacepod and Helper-Bots (both may be described as tokens below) travel between the grid lines, and can only move up (U), left (L), down (D) and right (R). No diagonal movement is allowed.\n2 - You can only move a token on the grid if its movement can be blocked by a Helper-Bot or the Spacepod. Without this block, the Spacepod or Helper-Bot will jet off the Landing Grid into space --- forever !\n3 - A move is complete when a moving token lands on the grid square next to the blocking token (the blocking token acts like your brakes).\n4 - The Spacepod must jet over the Emergency Entry Port unless a blocking token stops the Spacepod from moving further.\n\n<<Note>> :\n- If there are several solutions, the shortest one is given.\n- If there are still several solutions, we will give the first one in alphabetical order.\n\n<<Example>> :\nInput :\n`.....\nA.C..\n..D..\n..X..\nB....`\nBot B move Up : write BU\n`.....\nA.C..\nB.D..\n..X..\n.....`\nBot D move Left : write DL\n`.....\nA.C..\nBD...\n..X..\n.....`\nPod X move Up : write XU\n`.....\nA.C..\nBDX..\n.....\n.....`\nYou WIN !!\n\nOutput : \n`BU DL XU\n\n.....\nA.C..\nBDX..\n.....\n.....`\n\nExample in video : https://www.youtube.com/watch?v=KXGcwYqiSLM",
+      "testCases": [
+        {
+          "title": "One move",
+          "isTest": true,
+          "testIn": ".....\nA.D..\n.C...\n..X..\nB....",
+          "testOut": "XU\n\n.....\nA.D..\n.CX..\n.....\nB....",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "One move",
+          "isTest": false,
+          "testIn": "..X..\n....B\n.....\n..A..\n.....",
+          "testOut": "XD\n\n.....\n....B\n..X..\n..A..\n.....",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A little more movement",
+          "isTest": true,
+          "testIn": "...B.\n.....\nX....\n....C\nA....",
+          "testOut": "AU AR BD XR\n\n.....\n.....\n..XB.\n...AC\n.....",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "A little more movement",
+          "isTest": false,
+          "testIn": "..X..\n.....\n.....\n.....\nA.B.C",
+          "testOut": "AR BU CL BD XD\n\n.....\n.....\n..X..\n..B..\n.AC..",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A few more moves",
+          "isTest": true,
+          "testIn": ".A...\n....C\nX....\n.....\n...BD",
+          "testOut": "DU DL DU DR BU XR\n\n.A...\n...DC\n..XB.\n.....\n.....",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "A few more moves",
+          "isTest": false,
+          "testIn": "..C..\n.....\n...X.\nAB...\n...DE",
+          "testOut": "XD BR AR BU XL XU\n\n..C..\n..B..\n..X..\n.A...\n...DE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Many more movements",
+          "isTest": true,
+          "testIn": "A.D..\nB....\n....E\nC..X.\n.....",
+          "testOut": "AR XL AD AR CU CR CU BR XU XR\n\n..D..\n.BC..\n..XAE\n.....\n.....",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Many more movements",
+          "isTest": false,
+          "testIn": ".C..D\n.X...\nA....\n.....\nB...E",
+          "testOut": "BR CR CD EU XR CU BU CL XD XL\n\n....D\n....E\nACX..\n...B.\n.....",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "The maximum of movements",
+          "isTest": true,
+          "testIn": "AD..E\nB....\n.....\n.....\nC...X",
+          "testOut": "BD CR DR DD DL BU XU BR BD BL EL DU XL XD\n\nAE...\n.D...\n..X..\n..B..\n...C.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "The maximum of movements",
+          "isTest": false,
+          "testIn": "A.B..\n....D\n.....\n...C.\n.X..E",
+          "testOut": "AR AD CL CU XR EU DL DD DL DU DR XU XL XU\n\n..B..\n..C..\n..XDE\n.A...\n.....",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Example of the statement",
+          "isTest": true,
+          "testIn": ".....\nA.C..\n..D..\n..X..\nB....",
+          "testOut": "BU DL XU\n\n.....\nA.C..\nBDX..\n.....\n.....",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": ".....\n..B.C\n..A..\n....D\n..X..",
+          "testOut": "AD AR XU\n\n.....\n..B.C\n..X..\n...AD\n.....",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "The number of Helper-Bots varies between 1 and 5 (A to  E).",
+      "coverBinaryId": 86379609279927,
+      "stubGenerator": "loop 5 read line:string(5)\nwrite BU DL XU",
+      "inputDescription": "<< 5 lines >> The grid",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1>> : The list of moves as shown in the example\n<<Line 2>> : A blank line\n<<5 lines >> : The grid giving the final position of the Helper-Bots and the Spacepod"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Lunar Lockout  is a game edited by Binary Arts in 1999.<br>--------------------------------------------------------------------------------<br><strong>The object</strong> : To maneuver the Red Spacepod (X) assisted by the Helper-Bots (A, B, C, ...), until it lands on the Emergency Entry Port at the center of the Mothership's Landing Grid.<br><br><strong>The Rules</strong> :<br>1 - Spacepod and Helper-Bots (both may be described as tokens below) travel between the grid lines, and can only move up (U), left (L), down (D) and right (R). No diagonal movement is allowed.<br>2 - You can only move a token on the grid if its movement can be blocked by a Helper-Bot or the Spacepod. Without this block, the Spacepod or Helper-Bot will jet off the Landing Grid into space --- forever !<br>3 - A move is complete when a moving token lands on the grid square next to the blocking token (the blocking token acts like your brakes).<br>4 - The Spacepod must jet over the Emergency Entry Port unless a blocking token stops the Spacepod from moving further.<br><br><strong>Note</strong> :<br>- If there are several solutions, the shortest one is given.<br>- If there are still several solutions, we will give the first one in alphabetical order.<br><br><strong>Example</strong> :<br>Input :<br><pre style=\"font-family: monospace\">.....<br>A.C..<br>..D..<br>..X..<br>B....</pre><br>Bot B move Up : write BU<br><pre style=\"font-family: monospace\">.....<br>A.C..<br>B.D..<br>..X..<br>.....</pre><br>Bot D move Left : write DL<br><pre style=\"font-family: monospace\">.....<br>A.C..<br>BD...<br>..X..<br>.....</pre><br>Pod X move Up : write XU<br><pre style=\"font-family: monospace\">.....<br>A.C..<br>BDX..<br>.....<br>.....</pre><br>You WIN !!<br><br>Output : <br><pre style=\"font-family: monospace\">BU DL XU<br><br>.....<br>A.C..<br>BDX..<br>.....<br>.....</pre><br><br>Example in video : https://www.youtube.com/watch?v=KXGcwYqiSLM</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong> 5 lines </strong> The grid</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1</strong> : The list of moves as shown in the example<br><strong>Line 2</strong> : A blank line<br><strong>5 lines </strong> : The grid giving the final position of the Helper-Bots and the Spacepod</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">The number of Helper-Bots varies between 1 and 5 (A to  E).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">.....\nA.D..\n.C...\n..X..\nB....</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">XU\n\n.....\nA.D..\n.CX..\n.....\nB....</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 111969983491,
+  "avatar": 80843720970807,
+  "commentCount": 24,
+  "upVotes": 12,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 683766,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1658343937001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1658348199945,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1658759817720,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

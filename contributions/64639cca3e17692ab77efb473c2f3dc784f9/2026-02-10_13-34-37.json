@@ -1,0 +1,200 @@
+{
+  "id": 6463,
+  "activeVersion": 11,
+  "score": 18,
+  "votableId": 17656755,
+  "codingamerId": 3981543,
+  "views": 568,
+  "commentableId": 17563305,
+  "title": "Is the King In Check? (Part 2)",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "DrQuarius",
+  "publicHandle": "64639cca3e17692ab77efb473c2f3dc784f9",
+  "codingamerHandle": "15f542cbada8c7d47242ab3377e62d9a3451893",
+  "lastVersion": {
+    "version": 11,
+    "autocloseTime": 1623294713535,
+    "data": {
+      "title": "Is the King In Check? (Part 2)",
+      "topics": [
+        {
+          "id": 137,
+          "handle": "chess",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Échecs",
+            "2": "Chess"
+          },
+          "puzzleCount": 7,
+          "parentTopicId": 107
+        },
+        {
+          "labelMap": {
+            "2": "Grid"
+          }
+        },
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 43,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        }
+      ],
+      "solution": "board = (1..8).map{gets.split}\nboard0 = board\nking_xy = board.map.with_index{ |row,i| row.include?(\"k\")? [row.index(\"k\"), i] : nil }.flatten.compact\nans = []\nrooklines = (board.map(&:join) + board.transpose.map(&:join)).select{|r| r[/[RQ]/] }\n2.times{enemy = board.join.scan(/[BNRQ]/).first\nenemy_xy = board.map.with_index{ |row,i| row.include?(enemy)? [\"BNRQ\".chars.map{|e| row.index(e) }.compact , i] : nil }.flatten.compact\nboard = board.join.sub(enemy,\"_\").chars.each_slice(8).to_a\nrook = king_xy.zip(enemy_xy).any?{ |a,b| a == b }\nbishop = king_xy.zip(enemy_xy).map{ |a,b| (a - b).abs }.uniq.size == 1\nknight = !(rook || bishop) && king_xy.zip(enemy_xy).map{ |a,b| (a - b).abs }.max < 3\nrook = rook && rooklines.any?{|r| r[/k_*[RQ]|[RQ]_*k/] }  #Check if rook lines are clear\nif bishop\n    #Check if bishop line is blocked by N or R\n    kb_dx = king_xy[0] - enemy_xy[0]\n    i_dx = kb_dx <=> 0      #-1 or 1 depending on which way to step from enemy to king\n    kb_dy = king_xy[1] - enemy_xy[1]\n    i_dy = kb_dy <=> 0      #-1 or 1 depending on which way to step from enemy to king\n    bishop = (1...kb_dx.abs).all?{|i| board0[ enemy_xy[1] + i*i_dy ][ enemy_xy[0] + i*i_dx ] == \"_\"}\nend\nqueen = rook || bishop\nif enemy == \"R\"\n    ans << (rook ? \"Check\" : \"No Check\")\nelsif enemy == \"B\"\n    ans << (bishop ? \"Check\" : \"No Check\")\nelsif enemy == \"Q\"\n    ans << (queen ? \"Check\" : \"No Check\")\nelsif enemy == \"N\"\n    ans << (knight ? \"Check\" : \"No Check\")\nend\n}\nputs ans.include?(\"Check\")?\"Check\" : \"No Check\"",
+      "statement": "<<Part 2 of a series, please solve Part 1 first to understand this problem fully https://www.codingame.com/training/easy/is-the-king-in-check-part-1>>\n\n8 x 8 space-separated character rows of <<a chessboard with three pieces on the board>>. Your King and <<two>> enemy pieces. Print \"Check\" or \"No Check\" depending on whether one of the enemy pieces is able to attack your king on the next turn (remembering that pieces that are 'in the way' of an enemy's line of attack at your king will block each other - excluding Knights which can't be blocked).\n\nThe King will be a {{k}} character (<<Note:>> it was \"K\" in the previous challenge, please update your code). The possible enemy pieces are Bishop ({{B}}), Knight ({{N}}), Rook ({{R}}) or Queen ({{Q}}). The empty positions will be {{_}} in the input. The only two non-{{_}} characters will be {{k}} and two of {{B}}/{{N}}/{{R}}/{{Q}}.\n\n<<Bishops>> ({{B}}): Attack diagonally in all four directions.\n<<Rooks>> ({{R}}): Attack horizontally/verically in all four directions (can attack along same row or column)\n<<Queens>> ({{Q}}): Attack in all eight of the above directions.\n\n<<Knights>> ({{N}}): Attack in <<L-shapes>> - squares that are two rows and one column away (L), or one row and two columns away (∟). (These happen to be the only eight squares in a 5x5 sub-grid that a Queen can't attack from the same spot).\n\n<<Example>>\n_ _ _ _ _ _ _ _\n_ _ _ Q _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ N _ _ _ _\n_ k _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n\nIn the above diagram, the Queen is not able to attack the King, but the Knight is, so the repsonse is \"Check\".\n\n<<Example>>\n_ _ _ _ _ _ _ _\n_ k N _ Q _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n\nHere the Queen would be able to attack the King if it weren't for the fact that the Knight is in the way. The knight cannot attack the king either so the answer is \"No Check\".",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "_ _ _ _ _ _ _ Q\n_ _ _ _ R _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ k _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _",
+          "testOut": "Check",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ k _ _ _\n_ _ _ _ _ R _ _\nN _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _",
+          "testOut": "No Check",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "_ _ B _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ k _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ Q _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _",
+          "testOut": "No Check",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "k _ _ _ _ _ _ _\n_ R _ _ _ _ _ _\n_ _ B _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _",
+          "testOut": "No Check",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ k _ _ _ _\n_ _ _ _ N _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ Q",
+          "testOut": "No Check",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ Q _ _ _ _ _\n_ _ _ _ k _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ Q _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _",
+          "testOut": "No Check",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "_ _ _ _ _ _ _ _\nQ _ _ _ _ _ _ _\n_ _ _ k _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ Q\n_ _ _ _ _ _ _ _",
+          "testOut": "Check",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "_ _ _ _ B _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ k _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ N _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _",
+          "testOut": "Check",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ Q _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ R _ _ _ _ _\n_ _ _ _ _ _ _ _\nk _ _ _ _ _ _ _",
+          "testOut": "No Check",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "_ _ _ _ R _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ N _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ k _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _",
+          "testOut": "No Check",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\nk _ _ B _ _ _ Q\n_ _ _ _ _ _ _ _",
+          "testOut": "No Check",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\nk _ _ R _ _ _ Q\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _",
+          "testOut": "Check",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "Always three pieces on the board. Only non-space characters in input are {{_}}, one {{k}} and two of {{B}}/{{N}}/{{R}}/{{Q}}. Always an 8x8 size board, always three pieces.",
+      "stubGenerator": "loop 8 read chessRow:string(15)\nwrite Check/No Check",
+      "inputDescription": "<<8 lines of :>> 8 space-separated characters, mostly underscores with exactly one {{k}} and two of {{B}}/{{N}}/{{R}}/{{Q}}.",
+      "solutionLanguage": "Ruby",
+      "outputDescription": "<<1 line :>> \"Check\" if the King is in check (by either enemy) or \"No Check\" if not."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><strong>Part 2 of a series, please solve Part 1 first to understand this problem fully https://www.codingame.com/training/easy/is-the-king-in-check-part-1</strong><br><br>8 x 8 space-separated character rows of <strong>a chessboard with three pieces on the board</strong>. Your King and <strong>two</strong> enemy pieces. Print &quot;Check&quot; or &quot;No Check&quot; depending on whether one of the enemy pieces is able to attack your king on the next turn (remembering that pieces that are 'in the way' of an enemy's line of attack at your king will block each other - excluding Knights which can't be blocked).<br><br>The King will be a <const>k</const> character (<strong>Note:</strong> it was &quot;K&quot; in the previous challenge, please update your code). The possible enemy pieces are Bishop (<const>B</const>), Knight (<const>N</const>), Rook (<const>R</const>) or Queen (<const>Q</const>). The empty positions will be <const>_</const> in the input. The only two non-<const>_</const> characters will be <const>k</const> and two of <const>B</const>/<const>N</const>/<const>R</const>/<const>Q</const>.<br><br><strong>Bishops</strong> (<const>B</const>): Attack diagonally in all four directions.<br><strong>Rooks</strong> (<const>R</const>): Attack horizontally/verically in all four directions (can attack along same row or column)<br><strong>Queens</strong> (<const>Q</const>): Attack in all eight of the above directions.<br><br><strong>Knights</strong> (<const>N</const>): Attack in <strong>L-shapes</strong> - squares that are two rows and one column away (L), or one row and two columns away (∟). (These happen to be the only eight squares in a 5x5 sub-grid that a Queen can't attack from the same spot).<br><br><strong>Example</strong><br>_ _ _ _ _ _ _ _<br>_ _ _ Q _ _ _ _<br>_ _ _ _ _ _ _ _<br>_ _ _ N _ _ _ _<br>_ k _ _ _ _ _ _<br>_ _ _ _ _ _ _ _<br>_ _ _ _ _ _ _ _<br>_ _ _ _ _ _ _ _<br><br>In the above diagram, the Queen is not able to attack the King, but the Knight is, so the repsonse is &quot;Check&quot;.<br><br><strong>Example</strong><br>_ _ _ _ _ _ _ _<br>_ k N _ Q _ _ _<br>_ _ _ _ _ _ _ _<br>_ _ _ _ _ _ _ _<br>_ _ _ _ _ _ _ _<br>_ _ _ _ _ _ _ _<br>_ _ _ _ _ _ _ _<br>_ _ _ _ _ _ _ _<br><br>Here the Queen would be able to attack the King if it weren't for the fact that the Knight is in the way. The knight cannot attack the king either so the answer is &quot;No Check&quot;.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>8 lines of :</strong> 8 space-separated characters, mostly underscores with exactly one <const>k</const> and two of <const>B</const>/<const>N</const>/<const>R</const>/<const>Q</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>1 line :</strong> &quot;Check&quot; if the King is in check (by either enemy) or &quot;No Check&quot; if not.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Always three pieces on the board. Only non-space characters in input are <const>_</const>, one <const>k</const> and two of <const>B</const>/<const>N</const>/<const>R</const>/<const>Q</const>. Always an 8x8 size board, always three pieces.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">_ _ _ _ _ _ _ Q\n_ _ _ _ R _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ k _ _ _ _ _\n_ _ _ _ _ _ _ _\n_ _ _ _ _ _ _ _</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Check</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 147727640834,
+  "avatar": 50556106957921,
+  "commentCount": 26,
+  "upVotes": 21,
+  "downVotes": 3,
+  "validateAction": {
+    "actionId": 565118,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1620104736999,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1620350662289,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1623002835010,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

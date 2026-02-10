@@ -1,0 +1,353 @@
+{
+  "id": 7282,
+  "activeVersion": 68,
+  "score": 37,
+  "votableId": 19776774,
+  "codingamerId": 2064637,
+  "views": 499,
+  "commentableId": 19674866,
+  "title": "Balanced Levers",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "java_coffee_cup",
+  "publicHandle": "7282396993be2d629ec1d9e283d810e67eb3",
+  "codingamerHandle": "f4c116cad137a7eee91b727ff6fe53597364602",
+  "lastVersion": {
+    "version": 68,
+    "autocloseTime": 1635221201425,
+    "data": {
+      "title": "Balanced Levers",
+      "topics": [
+        {
+          "id": 154,
+          "handle": "physics",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Physics",
+            "2": "Physics"
+          },
+          "puzzleCount": 12,
+          "parentTopicId": 93
+        },
+        {
+          "id": 71,
+          "handle": "recursion",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Récursion",
+            "2": "Recursion"
+          },
+          "pageTitle": "Recursion: exercises and theory",
+          "puzzleCount": 16,
+          "parentTopicId": 41,
+          "contentDetailsId": 77
+        },
+        {
+          "id": 70,
+          "handle": "permutations",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Permutations",
+            "2": "Permutations"
+          },
+          "pageTitle": "Permutations: exercises and theory",
+          "puzzleCount": 8,
+          "parentTopicId": 41,
+          "contentDetailsId": 103
+        }
+      ],
+      "solution": "/**\n * This code is for creation and verification of test cases.\n * It is designed NOT to be beautiful or super fast.\n * It is designed to provide lots of run-time info to assist design.\n */\nimport java.io.IOException;\nimport java.util.ArrayList;\nimport java.util.Collections;\nimport java.util.Comparator;\nimport java.util.LinkedList;\nimport java.util.List;\n\npublic class Solution {\n\tstatic double ans;\n\tstatic double lim;\n\tstatic boolean isDebug = false;\n\tstatic boolean isVerbose = false;\n\tstatic List<Design> designs = new ArrayList<>();\n\n\tpublic static void main(String[] args) {\n\t\tString s = \"\";\n\n\t\twhile ((s = readLine()) != null) {\n\t\t\tif (s.isEmpty()) {\n\t\t\t\tbreak;\n\t\t\t}\n\n\t\t\tlim = Double.parseDouble(s); // room limit\n\n\t\t\ts = readLine();\n\t\t\tint n = Integer.parseInt(s); // num of weights\n\n\t\t\tint[] wArr = new int[n];\n\n\t\t\ts = readLine();\n\t\t\tString[] ss = s.split(\"\\\\s\");\n\n\t\t\tfor (int i = 0; i < n; i++) {\n\t\t\t\tint w = Integer.parseInt(ss[i]);\n\t\t\t\twArr[i] = w;\n\t\t\t}\n\t\t\tsolve(wArr);\n\n\t\t\tif (ans < 0) {\n\t\t\t\tSystem.out.println(\"-1\");\n\t\t\t} else {\n\t\t\t\tSystem.out.printf(\"%.4f\\n\", ans);\n\t\t\t}\n\n\t\t} // while\n\t}\n\n\tprivate static void solve(int[] arr) {\n\t\tif (lim == 1.0 && arr.length >= 2) {\n\t\t\tans = 1.0;\n\t\t\treturn;\n\t\t}\n\n\t\tans = -1;\n\t\tList<Mobile> list1 = new LinkedList<>();\n\t\tfor (int i = 0; i < arr.length; i++) {\n\t\t\tlist1.add(new Mobile(arr[i]));\n\t\t}\n\t\tsearch(list1);\n\n\t\tCollections.sort(designs, new Comparator<Design>() {\n\t\t\t@Override\n\t\t\tpublic int compare(Design o1, Design o2) {\n\t\t\t\treturn Double.compare(o2.d, o1.d);\n\t\t\t}\n\t\t});\n\n\t\tif (isVerbose) {\n\t\t\tfor (Design d : designs) {\n\t\t\t\tSystem.err.println(d);\n\t\t\t}\n\t\t}\n\t}\n\n\t// TODO\n\t// recursive\n\tprivate static void search(List<Mobile> list1) {\n\t\tif (isDebug)\n\t\t\tshowMobileList(list1);\n\n\t\tint len = list1.size();\n\n\t\tif (len == 1) {\n\t\t\tdouble dd = list1.get(0).dL + list1.get(0).dR;\n\n\t\t\t// log the design\n\t\t\tMobile m = list1.get(0); // the only mobile in list\n\t\t\tdesigns.add(new Design(m, dd));\n\n\t\t\tif (dd <= lim) {\n\t\t\t\tans = Math.max(ans, dd);\n\t\t\t}\n\t\t\treturn;\n\t\t}\n\n\t\tfor (int i = 0; i < len - 1; i++) {\n\t\t\tfor (int j = i + 1; j < len; j++) {\n\n\t\t\t\t// make a hard copy of list1\n\t\t\t\tList<Mobile> list2 = new LinkedList<>();\n\t\t\t\tfor (Mobile m : list1) {\n\t\t\t\t\tlist2.add(m);\n\t\t\t\t}\n\n\t\t\t\t// item i, j are used to build a new item, no use now\n\t\t\t\tlist2.remove(j);\n\t\t\t\tlist2.remove(i);\n\t\t\t\tlist2.add(new Mobile(list1.get(i), list1.get(j)));\n\n\t\t\t\tif (isDebug)\n\t\t\t\t\tSystem.err.println(\"search \" + list1.get(i) + \" \" + list1.get(j));\n\t\t\t\tsearch(list2);\n\n\t\t\t\t// replace the last item at list2 by this new item\n\t\t\t\tlist2.remove(list2.size() - 1);\n\t\t\t\tlist2.add(new Mobile(list1.get(j), list1.get(i)));\n\n\t\t\t\tif (isDebug)\n\t\t\t\t\tSystem.err.println(\"rev, search again\");\n\t\t\t\tsearch(list2);\n\t\t\t}\n\t\t}\n\t}\n\n\tprivate static void showMobileList(List<Mobile> list) {\n\t\tfor (Mobile m : list) {\n\t\t\tSystem.err.println(m);\n\t\t}\n\n\t\tif (isDebug)\n\t\t\tSystem.err.println(\"--- ans = \" + ans + \" ---\\n\");\n\t}\n\n\tprivate static String readLine() {\n\t\tStringBuffer sb = new StringBuffer();\n\t\tint b = 0;\n\t\twhile (b != '\\n' && b >= 0) {\n\t\t\ttry {\n\t\t\t\tb = System.in.read();\n\t\t\t} catch (IOException e) {\n\t\t\t\treturn null;\n\t\t\t}\n\t\t\tif (b != '\\r' && b != '\\n' && b >= 0)\n\t\t\t\tsb.append((char) b);\n\t\t}\n\t\tif (sb.length() == 0 && b < 0) {\n\t\t\treturn null;\n\t\t}\n\t\treturn sb.toString().trim();\n\t}\n\n}\n\nclass Mobile {\n\tdouble dL = 0.0, dR = 0.0; // distance of rod on two sides\n\tint w; // total weight (sum of w of sub-mobiles)\n\tMobile a = null, b = null;\n\n\tpublic Mobile(Mobile a, Mobile b) {\n\t\tthis.w = a.w + b.w;\n\n\t\tthis.a = a;\n\t\tthis.b = b;\n\t\tdouble ll = (double) b.w / w;\n\t\tdouble rr = (double) a.w / w;\n\n\t\tthis.dL = Math.max(ll + a.dL, b.dL - rr);\n\t\tthis.dR = Math.max(rr + b.dR, a.dR - ll);\n\t}\n\n\t// when mobile is a leave, a and b are null\n\tpublic Mobile(int w) {\n\t\tthis.w = w;\n\t}\n\n\tStringBuilder tree = new StringBuilder();\n\n\t@Override\n\tpublic String toString() {\n\t\texplore(this, 0);\n\t\treturn tree.toString();\n\t}\n\n\t// recursive\n\tprivate void explore(Mobile m, int sp) {\n\t\tif (m.isLeave()) {\n\t\t\ttree.append(space(sp)).append(\"w=\" + m.w).append('\\n');\n\t\t\treturn;\n\t\t}\n\n\t\ttree.append(space(sp))\n\t\t\t\t.append(\"w=\" + m.w + \", a.w=\" + m.a.w + \", b.w=\" + m.b.w + \", dL=\" + m.dL + \", dR=\" + m.dR)\n\t\t\t\t.append('\\n');\n\t\texplore(m.a, sp + 1);\n\t\texplore(m.b, sp + 1);\n\t}\n\n\tprivate String space(int n) {\n\t\tStringBuilder sb = new StringBuilder();\n\t\tfor (int i = 0; i < n; i++) {\n\t\t\tsb.append(\"  \");\n\t\t}\n\t\treturn sb.toString();\n\t}\n\n\tprivate boolean isLeave() {\n\t\treturn a == null || b == null;\n\t}\n\n\t@Override\n\tpublic int hashCode() {\n\t\tfinal int prime = 31;\n\t\tint result = 1;\n\t\tresult = prime * result + ((a == null) ? 0 : a.hashCode());\n\t\tresult = prime * result + ((b == null) ? 0 : b.hashCode());\n\t\tlong temp;\n\t\ttemp = Double.doubleToLongBits(dL);\n\t\tresult = prime * result + (int) (temp ^ (temp >>> 32));\n\t\ttemp = Double.doubleToLongBits(dR);\n\t\tresult = prime * result + (int) (temp ^ (temp >>> 32));\n\t\treturn result;\n\t}\n\n\t@Override\n\tpublic boolean equals(Object obj) {\n\t\tif (this == obj)\n\t\t\treturn true;\n\t\tif (obj == null)\n\t\t\treturn false;\n\t\tif (getClass() != obj.getClass())\n\t\t\treturn false;\n\t\tMobile other = (Mobile) obj;\n\t\tif (a == null) {\n\t\t\tif (other.a != null)\n\t\t\t\treturn false;\n\t\t} else if (!a.equals(other.a))\n\t\t\treturn false;\n\t\tif (b == null) {\n\t\t\tif (other.b != null)\n\t\t\t\treturn false;\n\t\t} else if (!b.equals(other.b))\n\t\t\treturn false;\n\t\tif (Double.doubleToLongBits(dL) != Double.doubleToLongBits(other.dL))\n\t\t\treturn false;\n\t\tif (Double.doubleToLongBits(dR) != Double.doubleToLongBits(other.dR))\n\t\t\treturn false;\n\t\treturn true;\n\t}\n\n}\n\nclass Design {\n\tMobile m;\n\tdouble d;\n\n\tpublic Design(Mobile m, double d) {\n\t\tthis.m = m;\n\t\tthis.d = d;\n\t}\n\n\t@Override\n\tpublic int hashCode() {\n\t\tfinal int prime = 31;\n\t\tint result = 1;\n\t\tlong temp;\n\t\ttemp = Double.doubleToLongBits(d);\n\t\tresult = prime * result + (int) (temp ^ (temp >>> 32));\n\t\tresult = prime * result + ((m == null) ? 0 : m.hashCode());\n\t\treturn result;\n\t}\n\n\t@Override\n\tpublic boolean equals(Object obj) {\n\t\tif (this == obj)\n\t\t\treturn true;\n\t\tif (obj == null)\n\t\t\treturn false;\n\t\tif (getClass() != obj.getClass())\n\t\t\treturn false;\n\t\tDesign other = (Design) obj;\n\t\tif (Double.doubleToLongBits(d) != Double.doubleToLongBits(other.d))\n\t\t\treturn false;\n\t\tif (m == null) {\n\t\t\tif (other.m != null)\n\t\t\t\treturn false;\n\t\t} else if (!m.equals(other.m))\n\t\t\treturn false;\n\t\treturn true;\n\t}\n\n\t@Override\n\tpublic String toString() {\n\t\treturn \"total width = \" + d + \"\\n\" + m;\n\t}\n\n}",
+      "statement": "A hanging mobile (not referring to a mobile phone) is a sculpture or decoration whose parts are balanced to move in response to air currents. It is a kinetic art based on lever balance design. In this puzzle, whenever a \"mobile\" is mentioned, it means \"hanging mobile\". The banner shows example drawings of this object.\n\nYou probably know the lever equilibrium equation very well. For the sake of completeness, here is the equation stated.\n\na, b are lengths; n, m are weights.\n\n`      |\n __a__|____b____\n|               |\nn               m`<<a * n = b * m>>\n\n\n<<A mobile is defined as:>>\n▪️  a weight hung by a string, or\n▪️ a rod with two sub-mobiles at both ends.\n(A sub-mobile is also a mobile with the same definition.)\n\nA weight cannot be tied directly to a weight. The banner drawing is just a decoration, not a definition.\n\n{{● ○ ● ○ ● ○ ● ○ ● ○ ● ○ ● ○ ● ○ ● ○ ● ○ ● ○ ● ○}}\n\nIn a classroom, students are given a number of weights and some rods to build hanging mobiles. Specifications are given:\n\n▪️ All rods are identical, with a length of one (1) unit. Rods cannot be extended or cut short. The full length of the rods should be used as the beam in a lever.\n▪️ Every rod used must be designed to be horizontally balanced.\n▪️ For simplicity, the rods and strings are assumed to be weightless. Assume the rods will not be bent by the weights.\n\n<<Task>>\nYou have to design a hanging mobile that has the longest width.\nAll given weights must be used. You can have as many rods as you need. Ignore the width of the weights when measuring the total width.\n\n<<Big but not too big>>\nLast but not the least, the classroom has a limited area. Any hanging mobile designs wider than the classroom width are rejected. Keep your design no larger than the given limit.\n\n\n<<Example>>\n\nWith a given set of weights [1, 1, 2], there are several possible designs. Some of them are wider.\n\n` _______|__          _______|__\n|    ______|___     |       ___|______\n1   |          |    1      |          |\n    1          2           2          1\n\nwidth = 1 + (1/3)    width = 1 + (2/3)`\nThe max width is 1.6667. If it is not exceeding the classroom width limit, it is the answer.\n\nHanging mobiles are often in 3D form. To measure the width, we flatten the design into a 2D form. Some rods and weights can be overlapping when flattened and it is allowed.",
+      "testCases": [
+        {
+          "title": "3w #1",
+          "isTest": true,
+          "testIn": "9.9\n3\n1 2 4",
+          "testOut": "1.8000",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3w #1v",
+          "isTest": false,
+          "testIn": "10.0\n3\n1 1 2",
+          "testOut": "1.6667",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3w #2",
+          "isTest": true,
+          "testIn": "1.524\n3\n550 608 526",
+          "testOut": "1.5112",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3w #2v",
+          "isTest": false,
+          "testIn": "1.166\n3\n613 962 171",
+          "testOut": "1.1509",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3w #3",
+          "isTest": true,
+          "testIn": "1.4\n3\n720 442 786",
+          "testOut": "1.3804",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3w #3v",
+          "isTest": false,
+          "testIn": "1.5\n3\n461 285 801",
+          "testOut": "1.3820",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4w #1",
+          "isTest": true,
+          "testIn": "1.5\n4\n79 80 480 621",
+          "testOut": "1.4969",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4w #1v",
+          "isTest": false,
+          "testIn": "1.69\n4\n813 98 847 384",
+          "testOut": "1.6881",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4w #2",
+          "isTest": true,
+          "testIn": "1.945\n4\n896 43 13 588",
+          "testOut": "1.9332",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4w #2v",
+          "isTest": false,
+          "testIn": "2.406\n4\n571 15 479 444",
+          "testOut": "2.4055",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "4w #3",
+          "isTest": true,
+          "testIn": "2.4040\n4\n91 811 694 252",
+          "testOut": "2.4039",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "4w #3v",
+          "isTest": false,
+          "testIn": "2.6565\n4\n748 21 13 262",
+          "testOut": "2.6513",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5w #1",
+          "isTest": true,
+          "testIn": "2.5411\n5\n246 739 249 899 707",
+          "testOut": "2.5363",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5w #1v",
+          "isTest": false,
+          "testIn": "2.5488\n5\n318 559 245 78 736",
+          "testOut": "2.5424",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5w #2",
+          "isTest": true,
+          "testIn": "2.1199\n5\n346 892 747 242 27",
+          "testOut": "2.1196",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5w #2v",
+          "isTest": false,
+          "testIn": "2.043\n5\n113 814 316 496 507",
+          "testOut": "2.0422",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5w #3",
+          "isTest": true,
+          "testIn": "1.648\n5\n650 100 794 865 25",
+          "testOut": "1.6476",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5w #3v",
+          "isTest": false,
+          "testIn": "1.683\n5\n157 839 853 236 430",
+          "testOut": "1.6821",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6w #1",
+          "isTest": true,
+          "testIn": "2.505\n6\n859 314 333 783 82 942",
+          "testOut": "2.5049",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "6w #1v",
+          "isTest": false,
+          "testIn": "2.12\n6\n225 961 436 731 213 407",
+          "testOut": "2.1199",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6w #2",
+          "isTest": true,
+          "testIn": "2.82\n6\n612 618 357 218 365 170",
+          "testOut": "2.8199",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "6w #2v",
+          "isTest": false,
+          "testIn": "3.08\n6\n490 851 69 551 560 655",
+          "testOut": "3.0798",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6w #3",
+          "isTest": true,
+          "testIn": "2.6\n6\n545 621 690 632 792 834",
+          "testOut": "2.5997",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "6w #3v",
+          "isTest": false,
+          "testIn": "2.6\n6\n393 407 297 779 117 966",
+          "testOut": "2.5999",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Single",
+          "isTest": true,
+          "testIn": "9.9\n1\n100",
+          "testOut": "0.0000",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Single v",
+          "isTest": false,
+          "testIn": "1.5\n1\n2",
+          "testOut": "0.0000",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Tiny room",
+          "isTest": true,
+          "testIn": "1.461\n5\n825 173 507 28 807",
+          "testOut": "-1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Tiny room v",
+          "isTest": false,
+          "testIn": "1.416\n5\n697 115 261 873 182",
+          "testOut": "-1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Twins",
+          "isTest": true,
+          "testIn": "9.0\n2\n956 613",
+          "testOut": "1.0000",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Twins v",
+          "isTest": false,
+          "testIn": "8.5\n2\n917 368",
+          "testOut": "1.0000",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "Number of weights: 1 ≤ [[N]] ≤ 6\nValue of each weight: 1 ≤ w ≤ 1000\nClassroom width: 1 ≤ [[L]] ≤ 10",
+      "coverBinaryId": 69384169953744,
+      "stubGenerator": "read lim:float\nread n:int\nloopline n w:int\nwrite ans\n ",
+      "inputDescription": "<<Line 1: >> [[L]], a float-point number which is the width of the classroom, measured in unit length (same unit used for rod length)\n<<Line 2: >> [[N]], the number of weights given\n<<Line 3: >> [w1, w2, w3...wn], totally [[N]] integers listed in one line, space separated, for all the given weights, in no specific order.",
+      "solutionLanguage": "Java",
+      "outputDescription": "<<Line 1: >> A float-point number for the maximum width of a mobile design confirming to the above requirements, round to 4 digits after the decimal point. (e.g. 1.00005 becomes 1.0001)\n\nIn case no design can fit into the classroom, output <<-1>> as the answer.\n\nNote that the classroom width is an absolute limit that no mobile design should be larger than it. Suppose the classroom width is 2 and the width of a mobile design is 2.00001. Although this design width can be rounded to 2.0000, we should still reject this design because it is absolutely longer than the limit. We should resort to design options less than or equal to 2."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A hanging mobile (not referring to a mobile phone) is a sculpture or decoration whose parts are balanced to move in response to air currents. It is a kinetic art based on lever balance design. In this puzzle, whenever a &quot;mobile&quot; is mentioned, it means &quot;hanging mobile&quot;. The banner shows example drawings of this object.<br><br>You probably know the lever equilibrium equation very well. For the sake of completeness, here is the equation stated.<br><br>a, b are lengths; n, m are weights.<br><br><pre style=\"font-family: monospace\">      |<br> __a__|____b____<br>|               |<br>n               m</pre><strong>a * n = b * m</strong><br><br><br><strong>A mobile is defined as:</strong><br>▪️  a weight hung by a string, or<br>▪️ a rod with two sub-mobiles at both ends.<br>(A sub-mobile is also a mobile with the same definition.)<br><br>A weight cannot be tied directly to a weight. The banner drawing is just a decoration, not a definition.<br><br><const>● ○ ● ○ ● ○ ● ○ ● ○ ● ○ ● ○ ● ○ ● ○ ● ○ ● ○ ● ○</const><br><br>In a classroom, students are given a number of weights and some rods to build hanging mobiles. Specifications are given:<br><br>▪️ All rods are identical, with a length of one (1) unit. Rods cannot be extended or cut short. The full length of the rods should be used as the beam in a lever.<br>▪️ Every rod used must be designed to be horizontally balanced.<br>▪️ For simplicity, the rods and strings are assumed to be weightless. Assume the rods will not be bent by the weights.<br><br><strong>Task</strong><br>You have to design a hanging mobile that has the longest width.<br>All given weights must be used. You can have as many rods as you need. Ignore the width of the weights when measuring the total width.<br><br><strong>Big but not too big</strong><br>Last but not the least, the classroom has a limited area. Any hanging mobile designs wider than the classroom width are rejected. Keep your design no larger than the given limit.<br><br><br><strong>Example</strong><br><br>With a given set of weights [1, 1, 2], there are several possible designs. Some of them are wider.<br><br><pre style=\"font-family: monospace\"> _______|__          _______|__<br>|    ______|___     |       ___|______<br>1   |          |    1      |          |<br>    1          2           2          1<br><br>width = 1 + (1/3)    width = 1 + (2/3)</pre><br>The max width is 1.6667. If it is not exceeding the classroom width limit, it is the answer.<br><br>Hanging mobiles are often in 3D form. To measure the width, we flatten the design into a 2D form. Some rods and weights can be overlapping when flattened and it is allowed.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1: </strong> <var>L</var>, a float-point number which is the width of the classroom, measured in unit length (same unit used for rod length)<br><strong>Line 2: </strong> <var>N</var>, the number of weights given<br><strong>Line 3: </strong> [w1, w2, w3...wn], totally <var>N</var> integers listed in one line, space separated, for all the given weights, in no specific order.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1: </strong> A float-point number for the maximum width of a mobile design confirming to the above requirements, round to 4 digits after the decimal point. (e.g. 1.00005 becomes 1.0001)<br><br>In case no design can fit into the classroom, output <strong>-1</strong> as the answer.<br><br>Note that the classroom width is an absolute limit that no mobile design should be larger than it. Suppose the classroom width is 2 and the width of a mobile design is 2.00001. Although this design width can be rounded to 2.0000, we should still reject this design because it is absolutely longer than the limit. We should resort to design options less than or equal to 2.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Number of weights: 1 &le; <var>N</var> &le; 6<br>Value of each weight: 1 &le; w &le; 1000<br>Classroom width: 1 &le; <var>L</var> &le; 10</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">9.9\n3\n1 2 4</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1.8000</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 135545988163,
+  "avatar": 13281799951852,
+  "commentCount": 24,
+  "upVotes": 40,
+  "downVotes": 3,
+  "validateAction": {
+    "actionId": 599219,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1632629137001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1632629201425,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1635184279655,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

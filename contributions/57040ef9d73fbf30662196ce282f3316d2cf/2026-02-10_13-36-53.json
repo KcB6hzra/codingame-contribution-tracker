@@ -1,0 +1,312 @@
+{
+  "id": 5704,
+  "activeVersion": 40,
+  "score": 21,
+  "votableId": 15696630,
+  "codingamerId": 1964298,
+  "views": 785,
+  "commentableId": 15611051,
+  "title": "Pedestrian Traffic",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "tobakudan",
+  "publicHandle": "57040ef9d73fbf30662196ce282f3316d2cf",
+  "codingamerHandle": "13a3e68e8b4297b35ea5dae5b967805e8924691",
+  "lastVersion": {
+    "version": 40,
+    "autocloseTime": 1618886363181,
+    "data": {
+      "title": "Pedestrian Traffic",
+      "topics": [
+        {
+          "id": 46,
+          "handle": "loops",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 31,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        }
+      ],
+      "solution": "n = int(input())\nupper = input()\nlower = input()\n\ndef move(p):\n    global prev_path, path, current, moved, not_checked\n    if p in not_checked:\n        not_checked.remove(p)\n        current.append(p)\n        if switch_lane(p) or move_forward(p):\n            moved.append(p)\n            return True\n        # Can't move this turn\n        path[p[0]][p[1]] = prev_path[p[0]][p[1]]\n        return False\n    else:\n        return p in moved\n\ndef move_forward(p):\n    global prev_path, path, dir, current\n    next = p[1] + dir[p[2]]\n    if next not in range(n):   # If we can exit the path\n        return True\n    other_person = prev_path[p[0]][next]\n    if (p[0], next, other_person) in current:\n        if (p[0], next, other_person) == current[0] and len(current) > 2:   # If it's the first element, then a cycle is complete. If not, two people are trying to take the same spot, so it doesn't work. > 2 to avoid two forward movers switching places\n            path[p[0]][next] = p[2]\n            return True\n        else:\n            return False\n    if other_person == 'o' or move((p[0], next, other_person)):   # If open or if the person there will move\n        if not ((p[2] == 'R' and p[0] == 0) or (p[2] == 'L' and p[0] == 1)):   # If in the wrong lane, check if somebody is coming from the other direction\n            other_side = p[1] + 2*dir[p[2]]\n            if other_side in range(n):\n                other_person = prev_path[p[0]][other_side]\n                if other_person != 'o':\n                    if dir[p[2]] == -dir[other_person]:\n                        return False\n        path[p[0]][next] = p[2]\n        return True\n    else:\n        return False\n\ndef switch_lane(p):\n    global prev_path, path, dir, current\n    if (p[2] == 'R' and p[0] == 0) or (p[2] == 'L' and p[0] == 1):   # If I'm in the correct lane already\n        return False\n    other_lane = (p[0] - 1) * -1\n    other_person = prev_path[other_lane][p[1]]\n    if other_person != 'o' and (other_lane, p[1], other_person) in current:   # If the person is part of a dependency, check for person coming from the side (only need to check one side)\n        if (other_lane, p[1], other_person) == current[0]:   # If it's the first element, then a cycle is complete. If not, two people are trying to take the same spot, so it doesn't work\n            if p[1] - dir[p[2]] in range(n):\n                contender = prev_path[other_lane][p[1] - dir[p[2]]]\n                if contender == p[2]:\n                    return False\n            path[other_lane][p[1]] = p[2]\n            return True\n        else:\n            return False\n    next1 = p[1] - dir[p[2]]\n    if next1 in range(n):\n        contender1 = prev_path[other_lane][next1]\n        if contender1 == p[2]:\n            return False\n    if other_person == 'o' or move((other_lane, p[1], other_person)):   # If open or if the person there will move\n        next2 = p[1] + dir[p[2]]\n        if next2 in range(n):\n            contender2 = prev_path[other_lane][next2]\n            if contender2 in ['R', 'L']:\n                move((other_lane, next2, contender2))\n                if path[other_lane][p[1]] != 'o':\n                    return False\n        path[other_lane][p[1]] = p[2]\n        return True\n    else:\n        return False\n\npath = [list(upper), list(lower)]\ndir = {'R':1, 'L':-1}\ns = 0\nwhile True:\n    moved = []\n    not_checked = [(i, j, x) for i in [0, 1] for j, x in enumerate(path[i]) if x in ['R', 'L']]\n    prev_path = path\n    path = [['o'] * n, ['o'] * n]\n    while not_checked:\n        current = []   # Those currently being considered, for detecting circular dependencies\n        p = not_checked[0]\n        move(p)\n    if path == prev_path:\n        break\n    s += 1\n\nflat_path = path[0] + path[1]\nif 'R' in flat_path or 'L' in flat_path:\n    print('Congestion')\nelse:\n    print(s)\n",
+      "statement": "Pedestrians are walking on a path of length [[n]] that is separated into an upper and lower lane. The upper lane is for people moving to the right and the lower lane is for people moving to the left. However, due to people walking next to their friend or being distracted by their phone, not everyone is in their correct lane. \n\nPeople are differentiated by the direction in which they are moving:\n\nPeople moving toward the right: <<R>>\nPeople moving toward the left: <<L>>\nOpen spaces on the path: <<o>>\n\n`              o o o o o --> Right exit\nLeft exit <-- o o o o o`\nEach second, everyone moves according to the following rules:\n\n1. People will prioritize trying to move to their lane. If this is not possible or they are already in their correct lane, they will try to move forward\n2. If two people both want to move forward to the same space, the one who is in their correct lane takes priority\n3. If a lane switcher and forward mover want to move to the same space, the forward mover takes priority\n4. People can exit from the edges of the path\n5. People can move to unoccupied spaces\n6. People can move to a space that was opened up due to someone else moving during the current second (for example, two people directly above and below each other can swap lanes)\n7. An exception to rule 6 is that two people in the same lane cannot walk past (swap places with) each other\n\nYour task is to determine whether the path becomes clogged so that not everyone can exit, and if everyone is able to exit, how many seconds it takes.\n\nExample:\n\no o R L o\no L R o o\n\no o R R o\nL o o L o\n\no o o R R\no o L o o\n\no o o o R\no L o o o\n\no o o o o\nL o o o o\n\no o o o o\no o o o o\n\nIt takes 5 seconds for everyone to exit.",
+      "testCases": [
+        {
+          "title": "Crossing Paths",
+          "isTest": true,
+          "testIn": "4\nRoLo\noooo",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "6\noooooo\nooRoLo",
+          "testOut": "5",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "One Way Stampede",
+          "isTest": true,
+          "testIn": "10\nRRRRRRRRRR\nRRRRRRRRRR",
+          "testOut": "11",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "9\nLLLLLLLLL\nLLLLLLLLL",
+          "testOut": "10",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Simple Dependency",
+          "isTest": true,
+          "testIn": "3\noLo\noRo",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "6\noLoooL\noRoooo",
+          "testOut": "7",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "More Dependencies",
+          "isTest": true,
+          "testIn": "5\nooRLo\noLRoo",
+          "testOut": "5",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "5\nRRRLo\nooRoo",
+          "testOut": "6",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Complex Dependencies",
+          "isTest": true,
+          "testIn": "5\nRooLo\noRoLL",
+          "testOut": "Congestion",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "3\nRLL\nRRL",
+          "testOut": "Congestion",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Temporary Blockage",
+          "isTest": true,
+          "testIn": "7\noRRLLLo\nLLLLLLL",
+          "testOut": "11",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "6\nRLRLLL\nLLLLLL",
+          "testOut": "13",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Ring Around the Rosie",
+          "isTest": true,
+          "testIn": "9\noRRRRRRLo\noRLLLLLLo",
+          "testOut": "9",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "8\noRLooLRo\noRLooLRo",
+          "testOut": "8",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Empty Path",
+          "isTest": true,
+          "testIn": "12\noooooooooooo\noooooooooooo",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "15\nooooooooooooooo\nooooooooooooooo",
+          "testOut": "0",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Group Collision",
+          "isTest": true,
+          "testIn": "9\nRRoooooLL\nRRoooooLL",
+          "testOut": "Congestion",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "13\nRRRoooooooLLL\nRRoooooooooLL",
+          "testOut": "Congestion",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Long Path",
+          "isTest": true,
+          "testIn": "30\noooRRLoLRoooooLooRLoRLRooRoooo\nooooLoooooLoRLLoLoooooRRoLRLoo",
+          "testOut": "29",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "30\noLRRoLRRoRoLooRoooooLRLLoLoooR\nRooLoLoooRLRoLoRooRooooooRoRoo",
+          "testOut": "31",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Longer Path",
+          "isTest": true,
+          "testIn": "100\noRRooooLoRRRoLLLLoooRoLRLRRoRooLoooooRLoooLoooLoRRoooRLoooooRRoLLoRRRLoRLRRLRRoRoooRLooooLoRooLooooR\nRoRoLoooRRoooooLooooooRoRRRLRooRLLRRLoLooRooooRRoLooRooooLoooRRRoooLLLRoooLoooRoLooooooooRoRoLLoLooR",
+          "testOut": "101",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "100\noLooLRRoLoLooRRooRoLoooRoooooRLLoooRRooRLLooLoooLRLooLRLRLoooLooLoLLLoooooRoLoRRooRooooooooLLooooooo\nooRLooooooLLoooRoooooLLLLoRooooooRoooLoooooRoLLRoLoooRRooLoLRoRoooLLoooRoRLLooLoooooRLRooooLooLLoLLo",
+          "testOut": "99",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Longest Path",
+          "isTest": true,
+          "testIn": "999\nooooooooooooRooooLoooooooooooRoooooooLooLLoooRooooRooRoooooooooooLooooRoooooooRooooooooooooooLLoooooRooLLoRLooooRoooLooooLoooRoooooooRoooLooooooRooLoooLoooRoRoooRooLoRoooRRoooooooooooooRooLooLoooooRooRooooLoooLoooooooooooLLoRoLoRoRoooooRoooRoooLoooRoRLLoooooooooooooLRooooRooooooRLRooooRoooLooLoooooooooRooooLRoooLoLLoooRoooooLoRoooooooRoLoooooooooooooooooLooLooRooooooooLoooooRoooooLooooooRooLoooooRoooooooRoooRoLoooRoooooRooooooooooooooRRoooRooooooooooRoooRooLoooLooLooooooooooooLRoooooRoooooooooLRoooRooooRLoRoooLoooLoooooooooRoooooooRooooooooooLooRoLLoLoooLRooooRoooooooooooooooooRoooooRoRooooooooooooooRoooooooooooooooLooLooLooLoRRoLooooRoooooooRooooooRooRLoooRoooLooooooLRLRooLLRooooooooooooooLoooooLRoooooRooRooooooRooooooLooLoooRoRoRoooLooooLLoooLooooRRooooooooooooLoRooooRoRooooooooooRoooRLLLoooooRoooooooRoooooooooooRoooRoRoRoLooRoRoooooRoRoooooooLooLoooRoooRoRooooooooooooooRooRooRoooRRoooooRooooooooooooooooRoRLoooooooLoRoRoooLoooooooRoRRooooooRLLoooooooooooooooRoRoRoRLooooooooLoRoooooo\nooRooRoooooRLooRooooRooooooooooLooooooRoooLooRooLLooooooooooooooooLooooLRooLoooRooooooooRooooooooRooRRoRoRoLooooooRooooooRoLooooooooooLoooLoooooLooLLoooRooLoooRoRoooRooRoooLoooooooLooooooooLooooRoooRoooooLooooLoLoRooooooooooLoooRoooRooooooooooRooLooooooooooooooRRoooooLoLRoooooooLooooooooooLooRoooooooooLLoLoooLoooooooooLoooooooooooooooooooooooRoooooooooRoooooooooooooLooLooRoooRLoooooooLoLoRoooooooooLRRoooooooRRoooooooLRoooooRoLoooRoooLoooooLoooLoRRoooLoooooooooooLooLooooRoooRoooRoLooooooooooooLoRoooooooLoooooooLRoLoooooooLoLoooooRLooooooooLoooRRooooooooooLooooooRooooLoooRooooooLLoooooooooooooLoooooooRLoooooooRooooooLoooooooooooooooooooooRooooRooRRRoooooooRLoooooooLoooooooRoooooLooLooLooooooooRoooooooooooooRooRooLooRooooooRoooRoooLooooRoooooooooooooooooRooRooLooooRooRoRoLooooLRooLooooooRoooooRoooooLoLooooooooRLoLRoooLLooooooooLoRooooooooooooRooooooLoRooooooooooRoooooooooooooRoRoooRoooLooLooRoooooooRoRoRooooooRooooooLoooooooLooRLoooooooooLoooRoLoooooooLLooooooRRooLoRoooLooooLoRLooooooooo",
+          "testOut": "998",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "999\noooLoooLRooooooooooLooooooRRooRooooRooooooooLooooooooRoooRLooooooooooLRooooooLoooooLoRoooLoLooooLoRRoooooooooRooooRLRoooooRRoLoooooooLooooRooLooRLLoRooRooooRoRoooooooooLoooLoRLooLoooLoLoooooooooooRRoooooooooooooRoLoooooooooLRooLooooRoooRooooooLoooooLoRoLooooRoRoooRoooRRoLooooooooooooooooooooLRooRooooooLooLooooooooooooRoooooooLooRooooooooooooRoooooooooooooooLooooooooooooLoRooooooooooRoooooooRoRoooRRRooRRoooooooooooRoooRRooRoooLooRooooooooLoooooooooooooooooooLRoRRoooooooooooooLoooooRooooooooooooooooooooooooRooLRoooooLooRLoRooLoLooRooRLooRLoRRoooooooooooLRoRoRooooooooRooooRRoooooRooooooRLooooRRRooooRRoLooooooooooooooooooRoooRooooooooRoooLooooooLLooRRoRooooooooooooooooooooooooLooooooooooLoooRooooRLoooooooooLoooooooRRoLooooLooRoRooLoooRooooLooRoLLooooRRoLoooLRooooRRoooLoLooRooLoooLooLooRoRoooooooooooooooLooLooLRRLLoooooooooooLooLooLooooooLoooooooooooooooLoooLoooooLooooRoooRLLoooooLoLRoooooRoooooooRooRooooooLoLooooLRoooooooooLLoooooooLooooooooooRooooooooLoooooooRooLoooooooooooRRoRRooooooLoL\nooooooLooRooRooooLooRoRRooooooooooooooooooLoRoooooooooooLRoooooLLoooooRRoooooooLooLoooooooooooooooooRRoooRooooLoRooooooLoooooRooooRooRoooLooooLooooooRoRLoooooLoRoLoRooRoooooooooooooLoooLoLooRRooRoooooRooooooLRoooLoooLLooooooLoooooooooooooLRoooRLooooRRRooooooooooooRooLoooooooRooooooooooooLRooooooooooooooooooooooooooooRRLoRoooooooooRooooooRooooRooRooooooLoLoooLRoooLooLoRoRRoooooRooRRoLoLoooLLooooRooLoooooRooooooRLoooooRoooooLoRooooooLRoooooLoRRRooRLooRoooooRoooLoLoooooooRooooooRoooooLooRooooRooRRoRoRoooLoRoooooLooRLoRoooooRooooooooooooooLooLooooooooooRoLRooooLoooRRoLooRRooooooooooRoooLRLoooooRoooooooRRoooooooRLoRoooLoRRoooLLoooooooLoLooooooooRooooooooLoooRoooooooooLRoooooLoooooooooLRoRRoooooooLLoooooLoLooooooLLoooooooooooooRoRooRoooLoRLooooooooLoLooooLoooooooooooooLoLooooooooooooooooRooRooooLoRLoooRRLRooooooRoooRoRooLoooLooooLoooLooooooooLooRooooooooooooooooLLoRLooRoRoooooooooooRRRoooooLRLooooLoRoooRooRoooooooooRoRLoooooooooLooooRRoooooooRooLLoooooooooLooooLoooLooRoLoRooooLoLooooRooooLo",
+          "testOut": "1000",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "0 < [[n]] < 1000",
+      "coverBinaryId": 53579681512943,
+      "stubGenerator": "read n:int\nread upper:string(n)\nread lower:string(n)\nwrite answer",
+      "inputDescription": "<<Line 1:>> An integer [[n]] for the length of the path\n<<Lines 2 & 3:>> String of length [[n]] consisting of <<R>>, <<L>>, and <<o>>",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The number of seconds it takes for everyone to exit the path.\nIf not everyone can exit, print \"Congestion\"."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Pedestrians are walking on a path of length <var>n</var> that is separated into an upper and lower lane. The upper lane is for people moving to the right and the lower lane is for people moving to the left. However, due to people walking next to their friend or being distracted by their phone, not everyone is in their correct lane. <br><br>People are differentiated by the direction in which they are moving:<br><br>People moving toward the right: <strong>R</strong><br>People moving toward the left: <strong>L</strong><br>Open spaces on the path: <strong>o</strong><br><br><pre style=\"font-family: monospace\">              o o o o o --&gt; Right exit<br>Left exit &lt;-- o o o o o</pre><br>Each second, everyone moves according to the following rules:<br><br>1. People will prioritize trying to move to their lane. If this is not possible or they are already in their correct lane, they will try to move forward<br>2. If two people both want to move forward to the same space, the one who is in their correct lane takes priority<br>3. If a lane switcher and forward mover want to move to the same space, the forward mover takes priority<br>4. People can exit from the edges of the path<br>5. People can move to unoccupied spaces<br>6. People can move to a space that was opened up due to someone else moving during the current second (for example, two people directly above and below each other can swap lanes)<br>7. An exception to rule 6 is that two people in the same lane cannot walk past (swap places with) each other<br><br>Your task is to determine whether the path becomes clogged so that not everyone can exit, and if everyone is able to exit, how many seconds it takes.<br><br>Example:<br><br>o o R L o<br>o L R o o<br><br>o o R R o<br>L o o L o<br><br>o o o R R<br>o o L o o<br><br>o o o o R<br>o L o o o<br><br>o o o o o<br>L o o o o<br><br>o o o o o<br>o o o o o<br><br>It takes 5 seconds for everyone to exit.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>n</var> for the length of the path<br><strong>Lines 2 &amp; 3:</strong> String of length <var>n</var> consisting of <strong>R</strong>, <strong>L</strong>, and <strong>o</strong></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The number of seconds it takes for everyone to exit the path.<br>If not everyone can exit, print &quot;Congestion&quot;.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt; <var>n</var> &lt; 1000</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4\nRoLo\noooo</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">4</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 152670916730,
+  "avatar": 12290760605610,
+  "commentCount": 40,
+  "upVotes": 27,
+  "downVotes": 6,
+  "validateAction": {
+    "actionId": 541562,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1610870737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1610870808397,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1613466337001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1613624939299,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1616220337000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1616294363180,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1618059695037,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

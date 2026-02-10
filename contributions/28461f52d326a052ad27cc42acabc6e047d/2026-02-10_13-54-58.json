@@ -1,0 +1,127 @@
+{
+  "id": 284,
+  "activeVersion": 5,
+  "score": 7,
+  "votableId": 2287463,
+  "codingamerId": 281395,
+  "views": 289,
+  "commentableId": 2236379,
+  "title": "Sliding puzzle",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "raphi",
+  "publicHandle": "28461f52d326a052ad27cc42acabc6e047d",
+  "codingamerHandle": "fef2c49bbeb7b956c5b40d89d9b2d20a593182",
+  "lastVersion": {
+    "version": 5,
+    "data": {
+      "title": "Sliding puzzle",
+      "topics": [
+        {
+          "id": 68,
+          "handle": "pathfinding",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Recherche de chemins",
+            "2": "Pathfinding"
+          },
+          "pageTitle": "Pathfinding: exercises and theory",
+          "puzzleCount": 52,
+          "parentTopicId": 41,
+          "contentDetailsId": 69
+        }
+      ],
+      "solution": "#include <iostream>\n#include <string>\n#include <vector>\n#include <algorithm>\n\nusing namespace std;\n\n// The test cases can be solved without any kind of optimization\n\nclass Puzzle{\npublic:\n    Puzzle(int w,int h):\n        width(w),\n        height(h),\n        grid(width*height),\n        goal(width*height){\n        iota(goal.begin(),goal.end(),1);\n        goal.back()=0;\n    }\n    \n    void readInput(){\n        for (int i = 0; i < height; i++) {\n            for(int j=0;j<width;j++){\n                string piece;\n                cin>>piece;\n                if(piece == \".\") (*this)[i][j]=0;\n                else (*this)[i][j] = stoi(piece);\n            }\n        }\n    }\n    \n    int solve(){\n        for (int i = 0; i < height; i++) {\n            for(int j=0;j<width;j++){\n                if((*this)[i][j]==0){\n                    return solve(j,i,0);   \n                }\n            }\n        }\n        return -1;\n    }\n    \n    int* operator[](int i){return &(grid[i*width]);}\n    \n private:\n    int width,height;\n    vector<int> grid;\n    vector<int> goal;\n    int maxDepth = 11;\n    \n    int solve(int emptyX, int emptyY, int depth){\n        if(depth>=maxDepth) return 1000;\n        if(equal(grid.begin(),grid.end(),goal.begin())){\n            maxDepth = depth;\n            return 0;\n        }\n        \n        int lowest = 1000;\n        if(emptyX<width-1){\n            int temp = (*this)[emptyY][emptyX+1];\n            (*this)[emptyY][emptyX] = temp;\n            (*this)[emptyY][emptyX+1] = 0;\n            int newScore = solve(emptyX+1,emptyY,depth+1)+1;\n            (*this)[emptyY][emptyX+1] = temp;\n            (*this)[emptyY][emptyX] = 0;\n            \n            if(newScore<lowest)lowest=newScore;\n        }\n        if(emptyX>0){\n            int temp = (*this)[emptyY][emptyX-1];\n            (*this)[emptyY][emptyX] = temp;\n            (*this)[emptyY][emptyX-1] = 0;\n            int newScore = solve(emptyX-1,emptyY,depth+1)+1;\n            (*this)[emptyY][emptyX-1] = temp;\n            (*this)[emptyY][emptyX] = 0;\n            \n            if(newScore<lowest)lowest=newScore;\n        }\n        if(emptyY>0){\n            int temp = (*this)[emptyY-1][emptyX];\n            (*this)[emptyY][emptyX] = temp;\n            (*this)[emptyY-1][emptyX] = 0;\n            int newScore = solve(emptyX,emptyY-1,depth+1)+1;\n            (*this)[emptyY-1][emptyX] = temp;\n            (*this)[emptyY][emptyX] = 0;\n            \n            if(newScore<lowest)lowest=newScore;\n        }\n        if(emptyY<height-1){\n            int temp = (*this)[emptyY+1][emptyX];\n            (*this)[emptyY][emptyX] = temp;\n            (*this)[emptyY+1][emptyX] = 0;\n            int newScore = solve(emptyX,emptyY+1,depth+1)+1;\n            (*this)[emptyY+1][emptyX] = temp;\n            (*this)[emptyY][emptyX] = 0;\n            \n            if(newScore<lowest)lowest=newScore;\n        }\n        return lowest;\n    }\n};\n\n\nint main()\n{\n    int H, W;\n    cin >> H >> W; cin.ignore();\n    \n    Puzzle puzzle(W,H);\n    puzzle.readInput();\n    \n    cout<<puzzle.solve()<<endl;\n}",
+      "statement": "You are given a sliding puzzle containing  [[W]] × [[H]] - 1 pieces. You need to find how many times you have to slide these pieces to reorder them from 1 at the top left to  [[W]] × [[H]] - 1  just at the left of the bottom right corner (with the empty space at the bottom right). \n\nFor example, only one move is needed to solve the following puzzle (slide 7 to the left) :\n`1 2 3 4\n5 6 . 7`\n\n2 moves are needed to solve the following puzzle (slide 3 to the left then 4 to the left) :\n`1 2 . 3 4`",
+      "testCases": [
+        {
+          "title": "2x2",
+          "isTest": true,
+          "testIn": "2 2\n2 3\n1 .",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "2x2",
+          "isTest": false,
+          "testIn": "2 2\n. 1\n3 2",
+          "testOut": "2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3x3",
+          "isTest": true,
+          "testIn": "3 3\n4 1 2\n. 6 3\n7 5 8",
+          "testOut": "7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3x3",
+          "isTest": false,
+          "testIn": "3 3\n1 3 6\n5 2 .\n4 7 8",
+          "testOut": "7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "10x1",
+          "isTest": true,
+          "testIn": "10 1\n1\n.\n2\n3\n4\n5\n6\n7\n8\n9",
+          "testOut": "8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "1x10",
+          "isTest": false,
+          "testIn": "1 10\n1 2 3 4 . 5 6 7 8 9",
+          "testOut": "5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "2x5",
+          "isTest": true,
+          "testIn": "2 5\n. 7 2 3 4\n1 6 8 9 5",
+          "testOut": "7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "2x5",
+          "isTest": false,
+          "testIn": "2 5\n6 1 2 4 5\n. 7 3 8 9",
+          "testOut": "6",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "1 ≤ [[W]],[[H]] ≤ 10\n0 ≤ Answer ≤ 10",
+      "stubGenerator": "read H:int W:int\nloop H read line:string(256)\nwrite 0",
+      "inputDescription": "<<Line 1 :>> The height [[H]] and width [[W]] of the puzzle.\n<<Next [[H]] Lines :>> A row of the puzzle ([[W]] numbers separated by a space). The empty space is marked with a dot .",
+      "solutionLanguage": "C++",
+      "outputDescription": "<<Line 1 :>> The number of moves needed to solve the puzzle."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are given a sliding puzzle containing  <var>W</var> &times; <var>H</var> - 1 pieces. You need to find how many times you have to slide these pieces to reorder them from 1 at the top left to  <var>W</var> &times; <var>H</var> - 1  just at the left of the bottom right corner (with the empty space at the bottom right). <br><br>For example, only one move is needed to solve the following puzzle (slide 7 to the left) :<br><pre style=\"font-family: monospace\">1 2 3 4<br>5 6 . 7</pre><br><br>2 moves are needed to solve the following puzzle (slide 3 to the left then 4 to the left) :<br><pre style=\"font-family: monospace\">1 2 . 3 4</pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1 :</strong> The height <var>H</var> and width <var>W</var> of the puzzle.<br><strong>Next <var>H</var> Lines :</strong> A row of the puzzle (<var>W</var> numbers separated by a space). The empty space is marked with a dot .</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1 :</strong> The number of moves needed to solve the puzzle.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>W</var>,<var>H</var> &le; 10<br>0 &le; Answer &le; 10</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2 2\n2 3\n1 .</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">4</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 299461808044,
+  "avatar": 1905416285031,
+  "commentCount": 7,
+  "upVotes": 8,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 912,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

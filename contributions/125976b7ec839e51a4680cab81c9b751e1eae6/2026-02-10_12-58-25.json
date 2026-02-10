@@ -1,0 +1,244 @@
+{
+  "id": 125976,
+  "activeVersion": 40,
+  "score": 7,
+  "votableId": 37283244,
+  "codingamerId": 6297853,
+  "views": 240,
+  "commentableId": 37122527,
+  "title": "Diagonal-achoo!!",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "AnshuJack",
+  "publicHandle": "125976b7ec839e51a4680cab81c9b751e1eae6",
+  "codingamerHandle": "91b04e74c5dbd6c2ecb1ab27e2b748183587926",
+  "lastVersion": {
+    "version": 40,
+    "autocloseTime": 1759927445481,
+    "freezeTime": 1755340694175,
+    "data": {
+      "title": "Diagonal-achoo!!",
+      "topics": [
+        {
+          "id": 86,
+          "handle": "simulation",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Simulation",
+            "2": "Simulation"
+          },
+          "pageTitle": "Simulation: exercises and theory",
+          "puzzleCount": 49,
+          "parentTopicId": 42,
+          "contentDetailsId": 72
+        },
+        {
+          "id": 48,
+          "handle": "graphs",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Graphes",
+            "2": "Graphs"
+          },
+          "pageTitle": "Graphs: exercises and theory",
+          "puzzleCount": 41,
+          "parentTopicId": 40,
+          "contentDetailsId": 75
+        },
+        {
+          "id": 54,
+          "handle": "BFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en largeur",
+            "2": "BFS"
+          },
+          "pageTitle": "BFS: exercises and theory",
+          "puzzleCount": 37,
+          "parentTopicId": 41,
+          "contentDetailsId": 84
+        }
+      ],
+      "solution": "import sys\nimport math\nfrom copy import deepcopy as dc\nfrom functools import reduce\n\n# Auto-generated code below aims at helping you parse\n# the standard input according to the problem statement.\n\nn = int(input())\ng = int(input())\nc = []\n\ndef Find(grid):\n    for i in range(n):\n        for j in range(n):\n            if grid[i][j] == 'C':\n                return [i,j]\n    return [100,100]\n\ndef Infect(grid):\n    grid = grid\n    x,y=Find(grid)\n    while x+y!=200: #Error 200 - No more C\n        grid[x][y] = 'D' #Replace with Dead person(D)\n        #Infect 4 corners\n        if x!=0:\n            if y!=0:\n                if grid[x-1][y-1] == '.':grid[x-1][y-1]='C'\n            if y!=n-1:\n                if grid[x-1][y+1] == '.':grid[x-1][y+1]='C'\n        if x!=n-1:\n            if y!=n-1:\n                if grid[x+1][y+1] == '.':grid[x+1][y+1]='C'\n            if y!=0:\n                if grid[x+1][y-1] == '.':grid[x+1][y-1]='C'\n        x,y=Find(grid)\n    return grid\n\ndef Count(grid):\n    c=0\n    for e in grid:\n        for k in e:\n            if k == 'D':\n                c+=1\n    return c\n\ngrids = []\nfor i in range(g):\n    grid_i = [] #ith grid\n    for j in range(n):\n        row = input()\n        grid_i+=[list(row)]\n    grids += [grid_i]\n    c+=[Count(Infect(grid_i))]\n\n\n# Write an answer using print\n# To debug: print(\"Debug messages...\", file=sys.stderr, flush=True)\nIndex=c.index(max(c))\nprint(Index)\nfor e in grids[Index]:\n    line = reduce(lambda x,y: x+y, e).replace('D','C')\n    print(line)\n\n\n\n\"\"\" - Previous code kept for reference\nfrom copy import deepcopy as dc\n\nn = int(input())\ng = int(input())\ndirectory = {}\nexpanded = []\n\n#Format the grids and store them in directory\nfor i in range(g):\n    i_grid = []\n    for j in range(n):\n        j_row = list(input())\n        i_grid += [j_row]\n    directory[i] = dc(i_grid)\n\nmapping = dc(directory)\n\n#Auxillary Functions - Extension of Functions, but are also helpful on their own\n#------------------------------------------------------------\ndef Diagonal_cells(i_grid:list):\n    dig = {}\n    for x in range(len(i_grid)):\n        for y in range(len(i_grid[x])):\n            if i_grid[x][y] == 'C':\n                if x>0: #Up\n                    if y>0: #Up-Left\n                        dig[(x-1,y-1)] = i_grid[x-1][y-1]\n                    if y<len(i_grid[x])-1: #Up-Right\n                        dig[(x-1,y+1)] = i_grid[x-1][y+1]\n                if x<len(i_grid)-1: #Down\n                    if y>0: #Down-Left\n                        dig[(x+1,y-1)] = i_grid[x+1][y-1]\n                    if y<len(i_grid[x])-1: #Down-Right\n                        dig[(x+1,y+1)] = i_grid[x+1][y+1]\n    return dc(dig)\n\n\ndef Over_grid(i_grid:list):\n    dig = Diagonal_cells(dc(i_grid))\n    cells = dig.values()\n    if '.' in cells:\n        return False\n    return True\n\ndef Update_expanded_grid(index:int, new_i_grid:list):\n    global mapping\n    mapping[index] = new_i_grid\n\ndef Edges(i_grid:list):\n    edg = {}\n    x = len(i_grid)-1\n    for y in range(len(i_grid[0])):\n        edg[(0,y)] = i_grid[0][y]\n        edg[(x,y)] = i_grid[x][y]\n    for x in range(len(i_grid)):\n        edg[(x,0)] = i_grid[x][0]\n        edg[(x,y)] = i_grid[x][y]\n        \n    cells = edg.values()\n    if 'C' in cells:\n        return True\n    return False\n            \n#------------------------------------------------------------\n\ndef Expand_grid(index:int):\n    from functools import reduce\n    global directory, mapping\n    '''\n            A A A  #Top\n    B   ->  A B A  #Middle\n            A A A  #Bottom\n    '''\n    B = dc(mapping[index])   #Handle with care, using Deepcopy as dc\n    A = dc(directory[index]) #Handle with care, using Deepcopy as dc\n    new_i_grid = []\n\n    #Top\n    for i in range(len(A)):\n        i_top_row = reduce(lambda x,y: x+y, A[i])\n        new_i_grid += [list(i_top_row*3)]\n\n    #Middle\n    for i_A,i_B in zip(A,B):\n        A_row = reduce(lambda x,y: x+y, i_A)\n        B_row = reduce(lambda x,y: x+y, i_B)\n        i_middle_row = A_row + B_row + A_row\n        new_i_grid += [list(i_middle_row)]\n\n    #Bottom\n    for i in range(len(A)):\n        i_top_row = reduce(lambda x,y: x+y, A[i])\n        new_i_grid += [list(i_top_row*3)]\n\n    Update_expanded_grid(index,dc(new_i_grid))\n\ndef Check_Overflow(mapping:dict):\n    global expanded\n    for index in mapping:\n        i_grid = mapping[index]\n        if not Over_grid(dc(i_grid)) or not Edges(dc(i_grid)) or index in expanded:\n            continue\n        Expand_grid(index)\n        expanded+=[index]\n\n\ndef Over(mapping:dict):\n    for index in mapping:\n        i_grid = mapping[index]\n        dig = Diagonal_cells(dc(i_grid))\n        if '.' in dig.values():\n            return False\n    return True\n\n#Temp\n'''\n#--------------------------------------------\nprint('Original')\nfor index in mapping:\n        i_grid = mapping[index]\n        print(index)\n        for e in i_grid:\n            print(*e,sep='')\n        print()\n#---------------------------------------------\n'''\n\n#k=1\nwhile not Over(mapping):\n    Check_Overflow(mapping)\n    #print(f'Turn {k}:')\n    for index in mapping:\n        i_grid = mapping[index]\n        dig = Diagonal_cells(dc(i_grid))\n        for x,y in dig:\n            if i_grid[x][y] == '.':\n                i_grid[x][y] = 'C'\n        #Used for simulation purpose\n        '''\n        print(index)\n        for e in i_grid:\n            print(*e,sep='')\n        print()\n        '''\n    #k+=1\n\n\n\n#Count\ncnt = []\nfor index in mapping:\n    i_grid = mapping[index]\n    c=0\n    for row in i_grid:\n        c+=row.count('C')\n    cnt+=[c]\n\nprint(cnt.index(max(cnt)))\n\"\"\"",
+      "statement": "In a network of top-secret underground research facilities, a group of rogue scientists are conducting unethical experiments using a synthetic, fast-mutating pathogen known as <<Diagonal-achoo!!>> This virus spreads exclusively along diagonal paths, infecting ordinary test subjects unless blocked by specially-engineered immune individuals — the <<H-class prototypes>>.\n\nYou are given [[g]] square grids representing [[g]] different simulation chambers. Each grid is of fixed size [[n]] × [[n]], and each cell may contain:\n\n• {{.}} → a normal (uninfected) person\n\n• {{H}} → a healthy person (immune)\n\n• {{C}} → a contagious person\n\nThe infection unfolds turn-by-turn, independently in each grid. During each turn:\n• Every contagious person ({{C}}) sneezes and infects diagonally adjacent normal persons ({{.}}).\n• But the sneeze path is blocked if it reaches a healthy person ({{H}}).\n• Infected persons ({{.}} turned to {{C}}) become contagious in the next turn and continue spreading.\n\nYour task is to simulate the spread of infection in all grids until the infection stops (i.e., no more new infections), and print the index (<<0-based>>) along with the aftermath of the grid that ends up with the most infected people, including both initially contagious and newly infected. If a <<tie occurs>>, choose the grid with the <<lower index>>.\n\n<<Example of spread of infection>>:\n```\n....       C.C.       C.C.\n.C..   →   .C..   →   .C.C\n..H.       C.H.       C.H.\n....       ....       .C..\n```",
+      "testCases": [
+        {
+          "title": "Easy Comparision",
+          "isTest": true,
+          "testIn": "5\n2\n.H...\n.....\n.H.C.\n..H..\n.....\n.....\n..C..\n.....\n.....\n.....",
+          "testOut": "1\n.C.C.\nC.C.C\n.C.C.\nC.C.C\n.C.C.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Easy Comparision",
+          "isTest": false,
+          "testIn": "5\n2\n....H\n.....\n.....\n.H.C.\n....H\n.....\n.C...\n.....\n.....\n.....",
+          "testOut": "1\nC.C.C\n.C.C.\nC.C.C\n.C.C.\nC.C.C",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simulation Chamber - I",
+          "isTest": true,
+          "testIn": "4\n10\nCH.H\n....\n....\n.H..\nC..H\n....\n....\nH..H\n....\n.H..\n.H..\nCH..\n.C..\nH...\n..H.\n...H\n..H.\n..H.\n.HC.\n....\n....\nH..H\n.C..\n..H.\n....\n....\n.H.C\nHH..\nH...\n...H\n...H\n...C\n..H.\n...H\n..C.\n.H..\n.H..\n....\nH...\n.HC.",
+          "testOut": "0\nCHCH\n.C.C\nC.C.\n.H.C",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simulation Chamber - I",
+          "isTest": false,
+          "testIn": "4\n10\n...H\n..H.\nH.C.\n....\n...H\n..C.\n....\nH.H.\n.H..\n.H..\nC..H\n....\n.HC.\n....\n..H.\n.H..\n.H..\n....\nH..H\n.C..\n..C.\n....\n...H\nH.H.\n....\n..C.\n.HH.\n...H\n.CH.\n....\nH...\n..H.\n....\n.C..\nH.H.\n.H..\n...H\n....\n..C.\n.H.H",
+          "testOut": "5\nC.C.\n.C.C\nC.CH\nHCHC",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simulation Chamber - II",
+          "isTest": true,
+          "testIn": "6\n25\n......\n......\nH.....\n.....H\n....H.\n.....C\n....C.\n....H.\n......\nH.....\nH.....\n......\nH.....\n....H.\n.....H\n......\n...C..\n......\n...H..\n......\n..H...\n.....H\n.....C\n......\n..C...\n......\nH..H..\n....H.\n......\n......\n......\n......\n....H.\n.H....\n..H...\nC.....\n......\n...H..\n....C.\nH.....\n..H...\n......\nH...C.\n......\n......\n....H.\n..H...\n......\n...H..\n......\n......\n......\nH....H\nC.....\nC.....\n.H..H.\n......\n.H....\n......\n......\n...C..\n....H.\n......\n......\n....HH\n......\n......\n....HH\n...C..\n....H.\n......\n......\n......\n.H....\n......\n...C..\n.....H\n...H..\n......\n..H...\n..C...\nH...H.\n......\n......\n..H...\n......\nH.....\n......\n.....H\n...C..\n...C..\n....H.\n......\n......\n......\n.H...H\n......\n......\n.C..H.\n.H....\n.H....\n......\n......\n......\nH.C...\n.....H\nH.....\n......\n..H...\n......\n....C.\n......\n......\n...HH.\n......\n..H...\n......\n......\n..C...\n...H.H\n......\n......\n..H.HH\n.....C\n......\n......\n.HH...\n.C....\n......\n..H...\n......\n......\n.C....\nHH....\n......\n..H...\n......\n......\n......\n......\nH.....\n......\n.H....\n.C.H..\n......\n....C.\n......\n.H..H.\n.H....\n......",
+          "testOut": "5\n.C.C.C\nC.C.C.\n.C.CHC\nCHC.C.\n.CHC.C\nC.C.C.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simulation Chamber - II",
+          "isTest": false,
+          "testIn": "6\n25\n......\n.H....\n......\n.H.H..\n......\n..C...\n...H..\n......\n....C.\n......\n......\nH...H.\n...H..\n.....C\n......\n......\n....H.\n.....H\n....H.\n.....C\n......\n......\n......\n..HH..\n......\n......\nHH....\n......\nH.C...\n......\n......\n.H...C\n......\n....H.\n.....H\n......\n.....H\n......\nH.....\n.....H\n......\nC.....\n..C...\n....H.\n...HH.\n......\n......\n......\n......\n......\n.CH...\n.H....\n......\n..H...\n....H.\n......\n......\n...HC.\n.H....\n......\n..H...\n......\n.H....\n..H..C\n......\n......\n.....H\n....H.\n......\n......\nC...H.\n......\n......\n.....H\n.C....\n...H..\n....H.\n......\n...C..\n...H..\n....H.\n......\n....H.\n......\n..H...\n......\n......\n......\n.H..C.\n....H.\nC.....\n..H...\n.H....\n......\n......\n..H...\n......\n.....C\n.....H\n......\nH.....\n..H...\n......\n......\n....C.\n.....H\nH.....\n...H..\n......\nH.HH..\n......\n......\n......\n..C...\n......\n......\n..CH..\n..H...\nH.....\n......\n......\n....C.\nH.....\n......\n..H...\nH.....\n......\n...H..\n......\n.....C\nH.....\nH.....\n....H.\n......\nH.....\n..H...\n......\nC.....\n.H....\nH.....\n..C...\n..H...\n......\n......\nH....C\n.H....\n......\n......\n......\n....H.",
+          "testOut": "0\n.C.C.C\nCHC.C.\n.C.C.C\nCHCHC.\n.C.C.C\nC.C.C.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Large Scale Simulation",
+          "isTest": true,
+          "testIn": "10\n50\n.H........\n.H........\n..........\n.......H..\n..........\n.......H..\n..........\n........H.\n.......C..\n..........\n......CH..\n..........\n..H.......\n...H......\n..........\n..........\n..........\n...H...H..\n..........\n..........\n..C.......\n..........\n.........H\n.H........\n...H...H..\n..........\n........H.\n..........\n..........\n..........\n..........\n..........\n........H.\n..........\n......H...\n.....H....\n....H.....\n......C...\n......H...\n..........\n..C.......\nH.........\n.........H\n..........\n......H..H\n..........\n..........\n......H...\n..........\n..........\n..........\n..HH......\n.H........\n......H...\n..........\n..........\n..........\nC.........\n.........H\n..........\n..........\n..........\n.......H..\nH.....H...\n..........\n..........\n..H.......\n..........\n..........\n.....C..H.\n....H.....\n...H......\n..........\n........H.\n..........\n..........\n..........\n.....H.H..\n.......C..\n..........\n..........\n........HC\n..........\n..........\n..........\n..........\n..........\n.H.H......\n.........H\n.H........\n...H......\n..........\n..........\n.......H..\n...H.H....\n..........\n..........\n.C........\n..........\n....H.....\n..........\n...H......\n.........H\n..........\n.H....H...\n......H...\n..........\n..........\nC.........\n..........\n...H......\n..........\n..........\n..........\nC.........\nH...H.....\n.......H..\n..........\n..........\n.........H\n..........\n..........\n..........\n.H........\n..H.......\n..........\n.C........\nH.......H.\n..........\n......H...\nH......H..\n.......H..\n..........\n......H...\n..........\n..........\n..........\n....C.H...\n..........\n..........\n..........\n..H.......\n..........\n..........\n..........\n..........\n..........\n........H.\n....C..H..\n...H.....H\n......C...\n.......H..\n..........\n.H........\n.H........\n..........\n..........\n..........\n......H...\n..H.......\n..........\nC....H....\nH........H\n..........\n..H.H.....\n..........\n..........\n..........\n..........\n..........\nH.........\n..........\n....H....H\n.H........\n..........\n..........\n.....C..H.\n..........\n..........\n..........\n..........\n........C.\n..H.......\n....H.....\n........H.\n..........\n..........\n.......H.H\n..........\n..........\n........H.\n....C.H...\n..........\n..........\n..H.......\n......H...\n.......H..\n..........\n..........\n..........\n..........\nH.........\n..........\n..........\nC.........\n..........\n..........\n..........\n...H....H.\n...H.....H\n..........\n..........\n.....H....\n..........\nH.........\n..........\n..........\n.H........\n.........H\n.H....C...\n.H........\n.....H....\n.........H\n...H......\n..........\n..........\n..........\n....H.....\n.....C....\n..........\n..........\n..C...H...\n..........\nH.........\n..........\n....H....H\n..........\n..........\n..........\n....H.....\n.......C.H\n.....H....\n..H.......\n.....H....\n..........\n..........\n..........\n..........\n...H......\n..........\n..........\n..........\n..........\n..H.......\n.........H\n.......H..\nC.........\n.........H\n.H........\n..........\n..H.......\n..........\n..........\n.HC.......\n..........\n..........\n..........\n.H........\n........H.\n.......H..\n..........\n....H.....\n..........\n........H.\n....H.....\n..........\n.H........\n.......H.C\n..........\n..........\n..........\n..H....H..\n..........\n..........\n.......C..\n...H......\n..........\n....H.....\n..........\n.......H..\n..........\n..........\n..........\n...C......\n.H........\n...H......\n..........\n.H.....H.H\n..........\n..........\n..........\n..........\n..........\n..........\nH......HC.\n.........H\n..........\n....H.....\n..........\n..H.......\nH.........\n....C.....\n..........\n........H.\n..........\n..........\nH.H.......\n.......H..\n..........\n..........\n.....H....\n..........\n.........H\n.H...H....\n..........\n..........\n........H.\n..........\n..C.......\n..........\n...H.H....\n..........\n...H......\n..........\n..........\nC........H\n......H...\n..........\n..........\n..........\n..........\n..........\n..........\n.....H....\n........H.\n..C.......\nH.........\n..........\n......H...\n......H...\n......C.HH\n..........\n..........\n..........\n.......H..\n......HH..\n..........\n..........\n..........\n..........\n..........\n..........\n..........\n......H...\n...H......\n.H...C....\n..........\n.......H..\n..........\n......H...\n........C.\n.H......H.\n.H........\n..........\n..........\n..........\n...H..H...\n..........\n..........\n..........\n.......H..\n..........\n...C..H.H.\n..........\n..........\n..........\n....H.....\n..........\n...H......\n..........\n..........\n.......HH.\n...H......\n..........\n..........\n..........\n..........\nC.......H.\n..........\n.........H\n..H......C\n....H.....\n..........\n..........\n..........\n..........\n........H.\n..H....H..\n..........\n..........\n......H...\n..........\n..H.......\n..........\n..........\n....H.....\n..........\n....H.H...\n..........\n.........C\n..........\n..........\n..H.......\n......H...\n........H.\n.H........\n..........\n....C.....\n...H......\n..........\n....HH....\n..........\n..C......H\nH.........\n..........\n..........\n..........\n..........\n......H...\n..........\n.........H\n....H..H..\n..........\n....HC....\n..........\n..........\n..........\n..........\n.....H....\n..........\n....H.....\n......H...\n..........\nC.H..H....\n.........H\n..........\n..........\n..........\n..........\n..........\nH.........\n..........\n..........\n..........\nH........H\n..........\n..........\n..H.......\n....C.....\n......H...\n..........\n..........\n....H.....\n.....H....\n....H.....\n.....H....\n..........\n.C.H......\n..........\n..........\n..........\n.HH......C\n..H.......\n...H......\n..........\n..........\n..........\n..H.......\n..........\n..........\n..........\n.......H..\n..........\n..H.......\n..........\n..H.......\n..........\n..........\n.......CH.\n..H.......",
+          "testOut": "3\n.C.C.C.C.C\nC.C.C.C.C.\n.C.C.C.CHC\nC.C.C.C.C.\n.C.C.CHC.C\nC.C.CHC.C.\n.C.CHC.C.C\nC.C.C.C.C.\n.C.C.CHC.C\nC.C.C.C.C.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Large Scale Simulation",
+          "isTest": false,
+          "testIn": "10\n50\n..........\n..........\n..........\n....C..H.H\n..........\n..H.......\n..........\n.....H....\n..........\n........H.\n.........H\n..........\n..........\n..........\n...H......\n..........\nC.H...H...\n..H.......\n..........\n..........\n..........\n...H......\n..........\n..........\n..........\n.......H..\n..........\n..........\n.H.CH....H\n..........\n.....H....\n..........\n..........\n....H.....\n..........\n....H.....\n......H...\n.........H\n..........\n.......C..\n..H.......\n.C........\n..........\n...H......\n..........\n..H..H....\n..........\n.....H....\n..........\n..........\n..........\n.....H..HC\n........H.\n..H.......\n..........\n..........\nH.........\n..........\n..........\n..........\n..........\n...H.H....\n.......C..\n.H........\n..........\n..........\n.H........\n........H.\n..........\n..........\n.......C..\n..........\n..........\n..........\n..H.......\n.......H..\n..........\nHH.......H\n..........\n..........\n........H.\n...C......\n..........\n..........\n..........\n..H.......\n......H...\n.H........\n......H...\n..........\n..........\n........H.\n..........\n..........\n..........\n..........\n..........\n....H....C\n......H...\nH.H.......\n..H.......\n.......C..\nH..H......\n..........\n..........\n......H...\n..........\n..........\n..........\n..H.......\n..........\n..........\n...H......\n....H.....\n..........\n.....H....\n.........H\n......C...\nH.........\n..........\n..........\n..........\n..........\nH..H......\n.....H.H..\n..........\n......C...\n..........\n..........\n.H........\n.....H....\n..........\n.......C..\n..........\n..........\n..........\n.H........\n.........H\n....H.....\n....H.....\n..........\n..........\n.........H\n....C.....\n.....H....\n..........\n.....H....\n.......H..\n..........\n...H......\n..........\n.........H\n..........\n..........\n..........\n........H.\n..........\n.H......H.\n.......H..\nC.........\n..........\n..........\n..........\n....H.....\n..........\n...H..H...\n..........\n........C.\n..........\n.H..H.....\n..........\nH.........\n..........\n..........\n...H.....C\n..........\n..H.......\n..........\n..........\n..H.H.....\n..........\n..H...H...\n..........\n......H...\n..........\n..........\nC...H.....\n..........\n..........\n.H........\n........H.\n..........\n..........\n...H......\n......H...\n...H......\nHC........\n..........\n..........\n..........\n......H...\n..........\n..........\n.......H..\n.....C.H..\n..........\n......H...\n..........\n.....H....\n..........\n..........\n..........\n..........\n..C.......\n........H.\n..........\n....H.....\n........H.\n........H.\n.....H....\n.......H..\n..........\n..........\n..........\n..........\n........H.\n..........\n..H.......\n.H.......C\n..H.......\n..........\n..........\n..........\n..H.C.....\n..........\nH.......H.\n..........\n....HH....\n..........\n..........\n..........\n..........\n.......C..\n....H..H..\n..H.......\n..........\n........H.\n..........\n.......H..\n..........\n..........\nH.........\n.....H....\n..........\n..........\n......C...\n..........\n.....H..H.\n..........\n.......H..\n.H........\n.........H\n.........C\n..........\n..........\n.........H\n..........\n.......H..\n..........\nH.........\n..........\n..........\nH.........\n..........\nH.........\n..H.......\n.........C\n....H.....\nH.........\n..........\n..........\n.........C\n..........\n....H.....\n..........\nH.........\n.....H.H..\n..........\n......H...\n..........\n..........\n..........\n.C.......H\n......H...\n....H...H.\n..........\n..........\n..........\n..........\n.....H....\n..........\n..........\n..........\n..........\n.H........\nH.........\nH.........\n..........\nC...H.....\n..H.......\n........H.\n.......H..\n..........\n..........\n..........\n..........\n...H....H.\n..........\n.......H.C\n..........\n..........\n.H........\n....HH....\n..........\n..........\n......H...\n..H.......\n..........\n..........\n..C.......\n..........\n..H.......\nC.........\n..........\n.....H....\n....H....H\n..........\n....H.....\n..........\n..........\n.H........\n..........\n..........\n.....C....\n...H......\n..H.......\n.......H..\n.H........\n..........\n..........\nH.........\n..........\n....HH....\n..........\n..........\n..........\n..........\n.C.H......\n....H.....\n..........\n..........\n.......H..\n..........\nH....C.H.H\n...H......\n..........\n..........\n..........\n..........\n..........\n.......H..\nC.........\n..........\n..........\n..........\n..........\n..H.......\n..........\n..........\n.H..H....H\n..........\n..........\n..........\n....H.....\n...H.....C\nH.........\n..........\n..........\n.......H..\n.........H\n..........\n.......H..\n..........\n.H..H.....\n.........H\n..........\n..........\n.........C\n..........\nH.........\nH.........\n.........H\n........H.\n..........\n..........\n..........\n.........H\n..........\n..........\n..H..C....\n.......H..\n........H.\n........H.\n..........\nH.........\n..........\n...C......\n..........\n..........\nH.........\n..........\n..........\n..........\n..........\n.H...H....\n......C...\n.....H....\n..........\n..H.......\n.........H\n....H...H.\n..........\n..........\n.....H....\n...H......\n......C...\n..........\n..........\n..H.......\n..........\n..........\n.........H\n.........H\n.H........\n.C...H..H.\n..........\n..........\n..........\n..........\n..........\n..........\n..HHH.....\n..........\n..........\n..........\n........C.\n..........\n..........\n........H.\n....H.....\n.....H....\n....H.....\n..C.......\n..........\n..........\n..........\n..........\n..........\n.......H..\n.H..H.....\n....H..H..\n..........\nH......H..\n..........\n..........\n..........\n..........\n...C.....H\n..........\n..........\n..........\n.....H....\n.....H....\n...H......\n.........H\n.........C\n......H...\n..........\n..........\n..........\n...H......\n..........\n..H......H\n......C...\n........H.\n.....H....\n..........\n..........\n..........\n..........",
+          "testOut": "19\n.C.C.C.CHC\nC.C.C.C.C.\n.C.C.C.C.C\nC.CHC.C.C.\n.C.C.CHC.C\nC.CHC.C.C.\nHC.C.C.C.C\nC.C.C.C.C.\n.C.C.C.C.C\nC.C.C.C.C.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "One Man Chambers",
+          "isTest": true,
+          "testIn": "1\n3\n.\nC\nH",
+          "testOut": "1\nC",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "One Man Chambers",
+          "isTest": false,
+          "testIn": "1\n3\nH\n.\nC",
+          "testOut": "2\nC",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Weird Patterns - I",
+          "isTest": true,
+          "testIn": "10\n2\n..........\n..........\n..........\n....C.....\n....C.....\n..........\n..........\n..........\n..........\n..........\n..........\n..........\n..........\n....H.....\n....H.....\n..........\n..........\n..........\n..........\n..........",
+          "testOut": "0\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Weird Patterns - I",
+          "isTest": false,
+          "testIn": "10\n2\n..........\n..........\n..........\n..........\n....HH....\n..........\n..........\n..........\n..........\n..........\n..........\n..........\n..........\n..........\n....CC....\n..........\n..........\n..........\n..........\n..........",
+          "testOut": "1\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Weird Patterns - II",
+          "isTest": true,
+          "testIn": "10\n3\nHHHHHHHHHH\nHHHHHHHHHH\nHHHHHHHHHH\nHHHHHHHHHH\nHHHHHHHHHH\nHHHHHHHHHH\nHHHHHHHHHH\nHHHHHHHHHH\nHHHHHHHHHH\nHHHHHHHHHH\nCHCHCHCHCH\nHCHCHCHCHC\nCHCHCHCHCH\nHCHCHCHCHC\nCHCHCHCHCH\nHCHCHCHCHC\nCHCHCHCHCH\nHCHCHCHCHC\nCHCHCHCHCH\nHCHCHCHCHC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC",
+          "testOut": "2\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Weird Patterns - II",
+          "isTest": false,
+          "testIn": "10\n6\nHHHHHHHHHH\nHHHHHHHHHH\nHHHHHHHHHH\nHHHHHHHHHH\nHHHHHHHHHH\nHHHHHHHHHH\nHHHHHHHHHH\nHHHHHHHHHH\nHHHHHHHHHH\nHHHHHHHHHH\nCHCHCHCHCH\nCHCHCHCHCH\nCHCHCHCHCH\nCHCHCHCHCH\nCHCHCHCHCH\nCHCHCHCHCH\nCHCHCHCHCH\nCHCHCHCHCH\nCHCHCHCHCH\nCHCHCHCHCH\nC.C.C.C.C.\n.C.C.C.C.C\nC.C.C.C.C.\n.C.C.C.C.C\nC.C.C.C.C.\n.C.C.C.C.C\nC.C.C.C.C.\n.C.C.C.C.C\nC.C.C.C.C.\n.C.C.C.C.C\nC........C\n.C......C.\n..C....C..\n...C..C...\n....CC....\n....CC....\n...C..C...\n..C....C..\n.C......C.\nC........C\n..........\n..........\n..........\n..........\n..........\n..........\n..........\n..........\n..........\n..........\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC",
+          "testOut": "3\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC\nCCCCCCCCCC",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "1 ≤ [[n]] ≤ 10\n2 ≤ [[g]] ≤ 50",
+      "coverBinaryId": 145050629973698,
+      "stubGenerator": "read n:int\nread g:int\nloop g loop n read row:string(n)\nwrite Index (starts from 0)\n      C.C.\n      .C.C\n      C.H.\n      .C..",
+      "inputDescription": "<<First Line:>> Integer [[n]], size of the grid ([[n]] x [[n]])\n<<Second Line:>> Integer [[g]], number of grids.\n<<Next [[g]]*[[n]] Lines:>> For each grid, [[n]] lines follow, each a string of length [[n]], representing rows of that grid.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<First Line>>: [[Index]]  of the grid with the most infected.\n<<Next [[n]] Lines>>: The grid with the most infected."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">In a network of top-secret underground research facilities, a group of rogue scientists are conducting unethical experiments using a synthetic, fast-mutating pathogen known as <strong>Diagonal-achoo!!</strong> This virus spreads exclusively along diagonal paths, infecting ordinary test subjects unless blocked by specially-engineered immune individuals &mdash; the <strong>H-class prototypes</strong>.<br><br>You are given <var>g</var> square grids representing <var>g</var> different simulation chambers. Each grid is of fixed size <var>n</var> &times; <var>n</var>, and each cell may contain:<br><br>&bull; <const>.</const> &rarr; a normal (uninfected) person<br><br>&bull; <const>H</const> &rarr; a healthy person (immune)<br><br>&bull; <const>C</const> &rarr; a contagious person<br><br>The infection unfolds turn-by-turn, independently in each grid. During each turn:<br>&bull; Every contagious person (<const>C</const>) sneezes and infects diagonally adjacent normal persons (<const>.</const>).<br>&bull; But the sneeze path is blocked if it reaches a healthy person (<const>H</const>).<br>&bull; Infected persons (<const>.</const> turned to <const>C</const>) become contagious in the next turn and continue spreading.<br><br>Your task is to simulate the spread of infection in all grids until the infection stops (i.e., no more new infections), and print the index (<strong>0-based</strong>) along with the aftermath of the grid that ends up with the most infected people, including both initially contagious and newly infected. If a <strong>tie occurs</strong>, choose the grid with the <strong>lower index</strong>.<br><br><strong>Example of spread of infection</strong>:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>....       C.C.       C.C.<br>.C..   &rarr;   .C..   &rarr;   .C.C<br>..H.       C.H.       C.H.<br>....       ....       .C..<br></pre><pre style=\"font-family: monospace\"></pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>First Line:</strong> Integer <var>n</var>, size of the grid (<var>n</var> x <var>n</var>)<br><strong>Second Line:</strong> Integer <var>g</var>, number of grids.<br><strong>Next <var>g</var>*<var>n</var> Lines:</strong> For each grid, <var>n</var> lines follow, each a string of length <var>n</var>, representing rows of that grid.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>First Line</strong>: <var>Index</var>  of the grid with the most infected.<br><strong>Next <var>n</var> Lines</strong>: The grid with the most infected.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>n</var> &le; 10<br>2 &le; <var>g</var> &le; 50</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5\n2\n.H...\n.....\n.H.C.\n..H..\n.....\n.....\n..C..\n.....\n.....\n.....</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1\n.C.C.\nC.C.C\n.C.C.\nC.C.C\n.C.C.</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 11222021124,
+  "avatar": 130575027242778,
+  "commentCount": 8,
+  "upVotes": 7,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1215404,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1754420737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1754735894175,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1757329537001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1757335445481,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1759506283240,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

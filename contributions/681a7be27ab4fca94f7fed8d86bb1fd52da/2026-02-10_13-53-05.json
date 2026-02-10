@@ -1,0 +1,223 @@
+{
+  "id": 681,
+  "activeVersion": 62,
+  "score": 14,
+  "votableId": 4840312,
+  "codingamerId": 552776,
+  "views": 380,
+  "commentableId": 4782988,
+  "title": "Binary neural network - Part 1",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "player_one",
+  "publicHandle": "681a7be27ab4fca94f7fed8d86bb1fd52da",
+  "codingamerHandle": "fefb3b0a360d9451bde5553900470e2d677255",
+  "lastVersion": {
+    "version": 62,
+    "data": {
+      "title": "Binary neural network - Part 1",
+      "topics": [
+        {
+          "id": 89,
+          "handle": "neural-network",
+          "labelMap": {
+            "1": "Réseau de neurones",
+            "2": "Neural network"
+          },
+          "pageTitle": "Neural network: exercises and theory",
+          "puzzleCount": 1,
+          "parentTopicId": 42,
+          "contentDetailsId": 112
+        }
+      ],
+      "solution": "import sys\nimport math\n\ninputs, outputs, layers, validators, examples, iterations = [ int(i) for i in input().split() ]\nnum_hidden_nodes = [ int(i) for i in input().split() ]\ntest_input = [ [ int(i) for i in input() ] for j in range(validators) ]\ntrain_data = [ [ [ int(i) for i in word ] for word in input().split() ] for j in range(examples) ]\n\ndef activation(t):\n    return 1 / (1 + math.exp(-t))\n\nlcg = 1103527590 \ndef lcg_rand():\n    global lcg\n    val = lcg\n    lcg = (1103515245 * lcg + 12345) & 0x7fffffff\n    return float(val) / 0x7fffffff\n    \nclass Node:\n    def __init__(self):\n        self._inputs = []\n        self._outputs = []\n    \n    def add_input(self, node):\n        self._inputs.append({ 'weight': lcg_rand(), 'source': node })\n        node._add_output(self)\n        \n    def _add_output(self, node):\n        self._outputs.append(node)\n        \n    def calc_output(self):\n        self._out = activation(sum( [ i['weight'] * i['source'].get_output() for i in self._inputs ] ))\n    \n    def get_output(self):\n        return self._out\n        \n    def set_expected(self, val):\n        self._expected = val\n        \n    def calc_new_weights(self):\n        self._delta = self._out * (1 - self._out)\n        if len(self._outputs):\n            self._delta *= self._sum_weighted_deltas()\n        else:\n            self._delta *= self._out - self._expected\n        \n        self._new_weights = [ self._new_weight(i) for i in self._inputs ]\n            \n    def apply_new_weights(self):\n        for i in range(len(self._inputs)):\n            self._inputs[i]['weight'] = self._new_weights[i]\n    \n    def _sum_weighted_deltas(self):\n        return sum( [ n._get_weighted_delta(self) for n in self._outputs ] )\n        \n    def _new_weight(self, connection):\n        return connection['weight'] - 0.5 * self._delta * connection['source'].get_output()\n        \n    def _get_weighted_delta(self, other):\n        i = next(obj for obj in self._inputs if obj['source'] is other)\n        return i['weight'] * self._delta\n\n\nclass InputNode:\n    def __init__(self):\n        self._val = 0\n        \n    def set_input(self, val):\n        self._val = val\n        \n    def _add_output(self, node):\n        return True\n                \n    def get_output(self):\n        return self._val\n        \n\nout_nodes = [ Node() for i in range(outputs) ]\nhidden_nodes = [ [ Node() for j in range(num_hidden_nodes[i]) ] for i in range(layers) ]\nin_nodes = [ InputNode() for i in range(inputs) ]\nbias_node = InputNode()\nbias_node.set_input(1)\n\nlayers = hidden_nodes + [ out_nodes ]\nl1 = in_nodes\nfor i in range(len(layers)):\n    l2 = layers[i]\n    for o in l2:\n        for i in l1:\n            o.add_input(i)\n        o.add_input(bias_node)\n    l1 = l2\n            \ndef calc_from_input(in_data):\n    for i in range(inputs):\n        in_nodes[i].set_input(in_data[i])\n    for layer in layers:\n        for node in layer:\n            node.calc_output()\n\ndef train(out_data):\n    for i in range(outputs):\n        out_nodes[i].set_expected(out_data[i])\n    for layer in layers[::-1]:\n        for node in layer:\n            node.calc_new_weights()\n    for layer in layers:\n        for node in layer:\n            node.apply_new_weights()\n    \nfor i in range(iterations):\n    for data in train_data:\n        calc_from_input(data[0])\n        train(data[1])\n\nfor data in test_input:\n    calc_from_input(data)\n    print(''.join([ str(round(n.get_output())) for n in out_nodes ]))",
+      "statement": "You will build a neural network that takes binary [[inputs]] and produces binary [[outputs]]. The network follows a specified topology, and learns from a provided training set using backpropagation.\n\n<<NOTATION>>\n\n - <<Input node>>: I1 - 1st input node, top to bottom\n - <<Output node>>: O2 - 2nd output node, top to bottom\n - <<Hidden layer node>>: H2:3 - 3rd node (top to bottom) in the 2nd hidden layer (left to right)\n - <<Bias node>>: θ\n - <<Output>>: o[O2] - output of O2\n - <<Weight>>: w[I1, O2] - weight of link from I1 to O2 (left to right)\n - <<Training data>>: t2 - expected output of O2\n - <<Learning rate>>: η = {{0.5}}\n\n<<TOPOLOGY>>\n\n - The input nodes are in a column at the left, followed by the hidden layers (0 - 2 columns), followed by output nodes in a column on the right\n\n - There is a single bias node, θ, which is linked to every hidden and output node\n\n - Each node is linked to every node in the previous column to the left. So a network with 2 [[inputs]] and 2 [[outputs]] has 6 links. Their associated weights are: w[I1, O1], w[I2, O1], w[θ, O1], w[I1, O2], w[I2, O2], w[θ, O2]\n\n<<NODE OUTPUT>>\n\n - The input nodes output unmodified input values\n\n - θ always outputs {{1}}\n\n - The un-normalized outputs of hidden and output nodes are the sum of all inputs multiplied by the associated weights. For example, in a network with 2 inputs, the node H1:1 outputs:\n\n`o'[H1:1] = o[I1]*w[I1, H1:1] + o[I2]*w[I2, H1:1] + w[θ, H1:1]`\n - This value is then normalized with a sigmoid activation function:\n\n`o[H1:1] = 1 / (1 + exp(-o'[H1:1]))`\n<<BACKPROPAGATION>>\n\n - For output node k:\n\n`δ[k] = o[k]*(1 - o[k])*(o[k] - tk)`\n - For hidden node j (sum for all nodes k in the next layer to the right):\n\n`δ[j] = o[j]*(1 - o[j])*\n       ( δ[k1]*w[j, k1] + δ[k2]*w[j, k2] + ... + δ[kn]*w[j, kn] )`\n - For link, w[j, k]:\n\n`∆w = −η*δ[k]*o[j]`\n - Since o[θ] is always {{1}}, ∆w for w[θ, k] is:\n\n`∆w = −η*δ[k]`\n<<TRAINING>>\n\nRepeat [[trainingIterations]] times the following:\n - For each line of [[trainingInputs]] and [[expectedOutputs]]:\n  1) Run the network forward with the provided inputs to get the outputs\n  2) Calculate the ∆w's for all links, based on expected output\n  3) Apply the ∆w's to all link weights\n\n<<WEIGHTS>>\n\nWeights are initialized using a linear congruential generator with a seed of {{1103527590}}. The LCG works as follows:\n\n`X(0) = 1103527590\nX(n+1) = 1103515245 * X(n) + 12345 [mod 2^31]`\nEach LCG value is normalized to [0, 1] by dividing by 0x7fffffff.\n\nWeights are initialized on each node in each layer, top to bottom, left to right. Each node links to every node in the column to the left, top to bottom, and then to θ. So for a network with 2 inputs, 2 hidden nodes, and 2 outputs, the initialization order is:\n\n`w[I1, H1:1]\nw[I2, H1:1]\nw[θ, H1:1]\nw[I1, H1:2]\nw[I2, H1:2]\nw[θ, H1:2]\nw[H1:1, O1]\nw[H1:2, O1]\nw[θ, O1]\nw[H1:1, O2]\nw[H1:2, O2]\nw[θ, O2]`\n<<MORE INFO>>\n\nhttps://www.youtube.com/watch?v=aVId8KMsdUU\nhttps://www.youtube.com/watch?v=bxe2T-V8XRs",
+      "testCases": [
+        {
+          "title": "Copycat",
+          "isTest": true,
+          "testIn": "1 1 0 2 2 7\n\n0\n1\n0 0\n1 1",
+          "testOut": "0\n1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Copycat",
+          "isTest": false,
+          "testIn": "1 1 0 2 2 40\n\n1\n0\n0 0\n1 1",
+          "testOut": "1\n0",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Opposite",
+          "isTest": true,
+          "testIn": "1 1 0 2 2 9\n\n0\n1\n0 1\n1 0",
+          "testOut": "1\n0",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Opposite",
+          "isTest": false,
+          "testIn": "1 1 0 2 2 40\n\n1\n0\n0 1\n1 0",
+          "testOut": "0\n1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Or",
+          "isTest": true,
+          "testIn": "2 1 0 4 4 40\n\n00\n01\n10\n11\n00 0\n01 1\n10 1\n11 1",
+          "testOut": "0\n1\n1\n1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Or",
+          "isTest": false,
+          "testIn": "2 1 0 4 4 60\n\n10\n11\n00\n01\n01 1\n10 1\n00 0\n11 1",
+          "testOut": "1\n1\n0\n1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "And",
+          "isTest": true,
+          "testIn": "2 1 0 4 4 30\n\n00\n01\n10\n11\n00 0\n01 0\n10 0\n11 1",
+          "testOut": "0\n0\n0\n1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "And",
+          "isTest": false,
+          "testIn": "2 1 0 4 4 50\n\n10\n00\n01\n11\n11 1\n00 0\n10 0\n01 0",
+          "testOut": "0\n0\n0\n1",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Reverse bits",
+          "isTest": true,
+          "testIn": "3 3 0 8 8 7\n\n000\n001\n010\n011\n100\n101\n110\n111\n000 000\n001 100\n010 010\n011 110\n100 001\n101 101\n110 011\n111 111",
+          "testOut": "000\n100\n010\n110\n001\n101\n011\n111",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Reverse bits",
+          "isTest": false,
+          "testIn": "3 3 0 8 8 30\n\n100\n101\n110\n111\n000\n001\n010\n011\n010 010\n110 011\n111 111\n011 110\n000 000\n001 100\n100 001\n101 101",
+          "testOut": "001\n101\n011\n111\n000\n100\n010\n110",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Is odd",
+          "isTest": true,
+          "testIn": "6 1 0 8 64 1\n\n101010\n010101\n111111\n000000\n111000\n000111\n100000\n000001\n000000 0\n000001 1\n000010 0\n000011 1\n000100 0\n000101 1\n000110 0\n000111 1\n001000 0\n001001 1\n001010 0\n001011 1\n001100 0\n001101 1\n001110 0\n001111 1\n010000 0\n010001 1\n010010 0\n010011 1\n010100 0\n010101 1\n010110 0\n010111 1\n011000 0\n011001 1\n011010 0\n011011 1\n011100 0\n011101 1\n011110 0\n011111 1\n100000 0\n100001 1\n100010 0\n100011 1\n100100 0\n100101 1\n100110 0\n100111 1\n101000 0\n101001 1\n101010 0\n101011 1\n101100 0\n101101 1\n101110 0\n101111 1\n110000 0\n110001 1\n110010 0\n110011 1\n110100 0\n110101 1\n110110 0\n110111 1\n111000 0\n111001 1\n111010 0\n111011 1\n111100 0\n111101 1\n111110 0\n111111 1",
+          "testOut": "0\n1\n1\n0\n0\n1\n0\n1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Is even",
+          "isTest": false,
+          "testIn": "6 1 0 8 64 10\n\n100010\n011101\n110111\n001000\n110000\n001111\n101000\n001001\n110000 1\n110001 0\n110010 1\n110011 0\n110100 1\n110101 0\n110110 1\n110111 0\n111000 1\n111001 0\n111010 1\n111011 0\n111100 1\n111101 0\n111110 1\n111111 0\n000000 1\n000001 0\n000010 1\n000011 0\n000100 1\n000101 0\n000110 1\n000111 0\n001000 1\n001001 0\n001010 1\n001011 0\n001100 1\n001101 0\n001110 1\n001111 0\n010000 1\n010001 0\n010010 1\n010011 0\n010100 1\n010101 0\n010110 1\n010111 0\n011000 1\n011001 0\n011010 1\n011011 0\n011100 1\n011101 0\n011110 1\n011111 0\n100000 1\n100001 0\n100010 1\n100011 0\n100100 1\n100101 0\n100110 1\n100111 0\n101000 1\n101001 0\n101010 1\n101011 0\n101100 1\n101101 0\n101110 1\n101111 0",
+          "testOut": "1\n0\n0\n1\n1\n0\n1\n0",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "One hidden layer",
+          "isTest": true,
+          "testIn": "1 1 1 2 2 250\n1\n0\n1\n0 0\n1 1",
+          "testOut": "0\n1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "One hidden layer",
+          "isTest": false,
+          "testIn": "1 1 1 2 2 250\n1\n0\n1\n0 1\n1 0",
+          "testOut": "1\n0",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Xor",
+          "isTest": true,
+          "testIn": "2 1 1 4 4 2400\n2\n00\n01\n10\n11\n00 0\n01 1\n10 1\n11 0",
+          "testOut": "0\n1\n1\n0",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Xor",
+          "isTest": false,
+          "testIn": "2 1 1 4 4 2400\n2\n01\n00\n10\n11\n00 0\n01 1\n10 1\n11 0",
+          "testOut": "1\n0\n1\n0",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Average",
+          "isTest": true,
+          "testIn": "16 1 1 4 80 100\n4\n1000001010101010\n0000111000101101\n1101000001101011\n1100111000110010\n0011001001110000 0\n0100000111011111 1\n1000010111001100 0\n1001010110011010 1\n0011100011110011 1\n1010110001110100 1\n0110000011010100 0\n0010001111010101 1\n0001111010001100 0\n1101001000100001 0\n0010111101001000 0\n0010011110110101 1\n0001010110110110 1\n0110010001011010 0\n1110010111011010 1\n0110010011000011 0\n0011110110111000 1\n1001000011001010 0\n0111101001101110 1\n1110011110011110 1\n1001011011101011 1\n0010011001000000 0\n0101101000010000 0\n0100010010101101 0\n0111001010011000 0\n1100111000001010 0\n1101100111001010 1\n1010111111000111 1\n1100000100101101 0\n0111010000000001 0\n1000001001110001 0\n1010110011111110 1\n1100001101110000 0\n1100010001000000 0\n1001100111010111 1\n0110001000100101 0\n1110011101001000 1\n1110110100011100 1\n1000111111100001 1\n0100000000011011 0\n1000110001010000 0\n0011101000001001 0\n0110101111011011 1\n1011000011101101 1\n0011000000000010 0\n0100100101101010 0\n0010000011100011 0\n0011011001100111 1\n0000101101101100 0\n0111111110011110 1\n1110011010000100 0\n0101001000100010 0\n1000010011100101 0\n0101110111011100 1\n1010000001100101 0\n0011011010110101 1\n0101110110100010 1\n1011111011101010 1\n1100001111010101 1\n1000111110111111 1\n0010010110101101 1\n1110011111000010 1\n0111011111011110 1\n0011011000000011 0\n0000011001100011 0\n0101001000011011 0\n0100101100101101 1\n1101110001110011 1\n0011010100110101 1\n0001101101110011 1\n0110011000011011 1\n0100010010100110 0\n1000101110000110 0\n1101100010000101 0\n1010010101100111 1\n0101001100110100 0\n1001010111101111 1\n1111101101100111 1\n0100111101101010 1\n0001000101001011 0",
+          "testOut": "0\n0\n1\n1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Average",
+          "isTest": false,
+          "testIn": "16 1 1 4 80 100\n4\n1011101001011111\n0010001110001111\n1101111000100011\n0100001110110000\n1100001011101100 1\n1011101101100100 1\n0001001011101111 1\n1110111101000110 1\n0110101110101110 1\n0100110100011101 1\n0110000101110011 1\n1000000100100110 0\n0100000101110000 0\n0000001011011111 1\n1101111100010110 1\n1001100010011001 0\n1100100000101110 0\n1001001100111111 1\n1111101001100111 1\n0110001000111110 1\n1011100110010101 1\n0010101110110000 0\n1110011001000001 0\n1010100001001010 0\n1100010001110011 1\n0011100011100001 0\n0100011001110101 1\n0111101000101010 1\n0100101011001011 1\n0000101010000111 0\n1001001001000111 0\n0100110000011000 0\n1011000100111011 1\n1101110011010111 1\n1011110011111001 1\n0011111011011001 1\n1111010001010110 1\n1001111010110001 1\n0011011010011111 1\n1000011100110010 0\n0111110010101010 1\n0001001100000110 0\n1001101111101010 1\n1001110000100010 0\n0001110101110011 1\n0101001000101100 0\n1110000100110100 0\n1100100011111000 1\n1110111000001001 1\n1101110100011111 1\n1000111110001101 1\n0111111011001110 1\n0011011110110011 1\n0101010011111111 1\n1110000100010000 0\n1010111010001001 1\n0000101010011000 0\n1110110101011011 1\n0111011101000000 0\n0001101100000000 0\n1001000110000000 0\n0000101101010111 1\n1100101001000000 0\n1110000011101101 1\n1101111011111010 1\n0110111111000001 1\n1011110110011011 1\n1111100111111101 1\n0111010000001010 0\n0100001000001110 0\n0110010111011011 1\n1011011111001101 1\n0000001000011110 0\n0101011011001111 1\n1001010100111110 1\n1011010101001011 1\n0001010100010110 0\n1110000110011011 1\n0100110000100111 0\n1000011100001010 0\n0010011110111101 1\n0011000010010110 0\n0110111011111001 1\n0010011110111100 1",
+          "testOut": "1\n1\n1\n0",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Two hidden layers",
+          "isTest": true,
+          "testIn": "4 1 2 16 16 2430\n2 2\n0000\n0001\n0010\n0011\n0100\n0101\n0110\n0111\n1000\n1001\n1010\n1011\n1100\n1101\n1110\n1111\n0000 1\n0001 0\n0010 0\n0011 0\n0100 0\n0101 1\n0110 0\n0111 0\n1000 0\n1001 0\n1010 1\n1011 0\n1100 0\n1101 0\n1110 0\n1111 1",
+          "testOut": "1\n0\n0\n0\n0\n1\n0\n0\n0\n0\n1\n0\n0\n0\n0\n1",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Two hidden layers",
+          "isTest": false,
+          "testIn": "4 1 2 16 16 2600\n2 2\n0000\n0001\n0010\n0011\n0100\n0101\n1101\n1110\n1111\n0110\n0111\n1000\n1001\n1010\n1011\n1100\n0111 0\n1000 0\n1001 0\n1010 1\n1011 0\n1100 0\n1101 0\n1110 0\n1111 1\n0000 1\n0001 0\n0010 0\n0011 0\n0100 0\n0101 1\n0110 0",
+          "testOut": "1\n0\n0\n0\n0\n1\n0\n0\n1\n0\n0\n0\n0\n1\n0\n0",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "1 ≤ [[inputs]],[[outputs]] ≤ 16\n0 ≤ [[hiddenLayers]] ≤ 2\n1 ≤ [[testInputs]] ≤ 16\n1 ≤ [[trainingExamples]] ≤ 100\n1 ≤ [[trainingIterations]] ≤ 10000\n1 ≤ [[nodes]] ≤ 4",
+      "coverBinaryId": 135673380804684,
+      "stubGenerator": "read inputs:int outputs:int hiddenLayers:int testInputs:int trainingExamples:int trainingIterations:int\nloopline hiddenLayers nodes:int\nloop testInputs read testInput:string(16)\nloop trainingExamples read trainingInputs:word(16) expectedOutputs:word(16)\nloop testInputs write answer",
+      "inputDescription": "<<Line 1:>> Six space-separated integers specifying the number of [[inputs]], [[outputs]], [[hiddenLayers]], [[testInputs]], [[trainingExamples]], and [[trainingIterations]].\n<<Line 2:>> [[hiddenLayers]] space-separated integers specifying the number of [[nodes]] in each hidden layer, from closest-to-input to closest-to-output.\n<<Next [[testInputs]] lines:>> a binary number of [[inputs]] digits, specifying each [[testInput]] to the neural network\n<<Next [[trainingExamples]] lines:>> One set of training data per line, each consisting two binary numbers. The first binary number has [[inputs]] digits, and specifies the [[trainingInputs]] to the neural network. The second binary number has [[outputs]] digits, and specifies the [[expectedOutputs]] for the provided inputs.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[testInputs]] lines:>> Each containing  a binary number of [[outputs]] digits, specifying the calculated outputs from the neural network (rounded to the nearest integer) for the provided test inputs, after being trained by the examples"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You will build a neural network that takes binary <var>inputs</var> and produces binary <var>outputs</var>. The network follows a specified topology, and learns from a provided training set using backpropagation.<br><br><strong>NOTATION</strong><br><br> - <strong>Input node</strong>: I1 - 1st input node, top to bottom<br> - <strong>Output node</strong>: O2 - 2nd output node, top to bottom<br> - <strong>Hidden layer node</strong>: H2:3 - 3rd node (top to bottom) in the 2nd hidden layer (left to right)<br> - <strong>Bias node</strong>: &theta;<br> - <strong>Output</strong>: o[O2] - output of O2<br> - <strong>Weight</strong>: w[I1, O2] - weight of link from I1 to O2 (left to right)<br> - <strong>Training data</strong>: t2 - expected output of O2<br> - <strong>Learning rate</strong>: &eta; = <const>0.5</const><br><br><strong>TOPOLOGY</strong><br><br> - The input nodes are in a column at the left, followed by the hidden layers (0 - 2 columns), followed by output nodes in a column on the right<br><br> - There is a single bias node, &theta;, which is linked to every hidden and output node<br><br> - Each node is linked to every node in the previous column to the left. So a network with 2 <var>inputs</var> and 2 <var>outputs</var> has 6 links. Their associated weights are: w[I1, O1], w[I2, O1], w[&theta;, O1], w[I1, O2], w[I2, O2], w[&theta;, O2]<br><br><strong>NODE OUTPUT</strong><br><br> - The input nodes output unmodified input values<br><br> - &theta; always outputs <const>1</const><br><br> - The un-normalized outputs of hidden and output nodes are the sum of all inputs multiplied by the associated weights. For example, in a network with 2 inputs, the node H1:1 outputs:<br><br><pre style=\"font-family: monospace\">o'[H1:1] = o[I1]*w[I1, H1:1] + o[I2]*w[I2, H1:1] + w[&theta;, H1:1]</pre><br> - This value is then normalized with a sigmoid activation function:<br><br><pre style=\"font-family: monospace\">o[H1:1] = 1 / (1 + exp(-o'[H1:1]))</pre><br><strong>BACKPROPAGATION</strong><br><br> - For output node k:<br><br><pre style=\"font-family: monospace\">&delta;[k] = o[k]*(1 - o[k])*(o[k] - tk)</pre><br> - For hidden node j (sum for all nodes k in the next layer to the right):<br><br><pre style=\"font-family: monospace\">&delta;[j] = o[j]*(1 - o[j])*<br>       ( &delta;[k1]*w[j, k1] + &delta;[k2]*w[j, k2] + ... + &delta;[kn]*w[j, kn] )</pre><br> - For link, w[j, k]:<br><br><pre style=\"font-family: monospace\">∆w = &minus;&eta;*&delta;[k]*o[j]</pre><br> - Since o[&theta;] is always <const>1</const>, ∆w for w[&theta;, k] is:<br><br><pre style=\"font-family: monospace\">∆w = &minus;&eta;*&delta;[k]</pre><br><strong>TRAINING</strong><br><br>Repeat <var>trainingIterations</var> times the following:<br> - For each line of <var>trainingInputs</var> and <var>expectedOutputs</var>:<br>  1) Run the network forward with the provided inputs to get the outputs<br>  2) Calculate the ∆w's for all links, based on expected output<br>  3) Apply the ∆w's to all link weights<br><br><strong>WEIGHTS</strong><br><br>Weights are initialized using a linear congruential generator with a seed of <const>1103527590</const>. The LCG works as follows:<br><br><pre style=\"font-family: monospace\">X(0) = 1103527590<br>X(n+1) = 1103515245 * X(n) + 12345 [mod 2^31]</pre><br>Each LCG value is normalized to [0, 1] by dividing by 0x7fffffff.<br><br>Weights are initialized on each node in each layer, top to bottom, left to right. Each node links to every node in the column to the left, top to bottom, and then to &theta;. So for a network with 2 inputs, 2 hidden nodes, and 2 outputs, the initialization order is:<br><br><pre style=\"font-family: monospace\">w[I1, H1:1]<br>w[I2, H1:1]<br>w[&theta;, H1:1]<br>w[I1, H1:2]<br>w[I2, H1:2]<br>w[&theta;, H1:2]<br>w[H1:1, O1]<br>w[H1:2, O1]<br>w[&theta;, O1]<br>w[H1:1, O2]<br>w[H1:2, O2]<br>w[&theta;, O2]</pre><br><strong>MORE INFO</strong><br><br>https://www.youtube.com/watch?v=aVId8KMsdUU<br>https://www.youtube.com/watch?v=bxe2T-V8XRs</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Six space-separated integers specifying the number of <var>inputs</var>, <var>outputs</var>, <var>hiddenLayers</var>, <var>testInputs</var>, <var>trainingExamples</var>, and <var>trainingIterations</var>.<br><strong>Line 2:</strong> <var>hiddenLayers</var> space-separated integers specifying the number of <var>nodes</var> in each hidden layer, from closest-to-input to closest-to-output.<br><strong>Next <var>testInputs</var> lines:</strong> a binary number of <var>inputs</var> digits, specifying each <var>testInput</var> to the neural network<br><strong>Next <var>trainingExamples</var> lines:</strong> One set of training data per line, each consisting two binary numbers. The first binary number has <var>inputs</var> digits, and specifies the <var>trainingInputs</var> to the neural network. The second binary number has <var>outputs</var> digits, and specifies the <var>expectedOutputs</var> for the provided inputs.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>testInputs</var> lines:</strong> Each containing  a binary number of <var>outputs</var> digits, specifying the calculated outputs from the neural network (rounded to the nearest integer) for the provided test inputs, after being trained by the examples</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>inputs</var>,<var>outputs</var> &le; 16<br>0 &le; <var>hiddenLayers</var> &le; 2<br>1 &le; <var>testInputs</var> &le; 16<br>1 &le; <var>trainingExamples</var> &le; 100<br>1 &le; <var>trainingIterations</var> &le; 10000<br>1 &le; <var>nodes</var> &le; 4</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1 1 0 2 2 7\n\n0\n1\n0 0\n1 1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">0\n1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 280354285723,
+  "avatar": 52487021619351,
+  "commentCount": 8,
+  "upVotes": 15,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 100172,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

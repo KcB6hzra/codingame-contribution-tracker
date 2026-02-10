@@ -1,0 +1,236 @@
+{
+  "id": 42783,
+  "activeVersion": 22,
+  "score": 15,
+  "votableId": 27226735,
+  "codingamerId": 5135323,
+  "views": 474,
+  "commentableId": 27100135,
+  "title": "Fibonomials",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "__yel__p",
+  "publicHandle": "427836f5e55f37e7e282d1bd0334271bf2755",
+  "codingamerHandle": "0022efebc483d32d655f59e0cd0902ff3235315",
+  "lastVersion": {
+    "version": 22,
+    "autocloseTime": 1681241817649,
+    "data": {
+      "title": "Fibonomials",
+      "topics": [
+        {
+          "id": 71,
+          "handle": "recursion",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Récursion",
+            "2": "Recursion"
+          },
+          "pageTitle": "Recursion: exercises and theory",
+          "puzzleCount": 29,
+          "parentTopicId": 41,
+          "contentDetailsId": 77
+        },
+        {
+          "id": 148,
+          "handle": "polynomials",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Polynomials",
+            "2": "Polynomials"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        },
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 31,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "id": 112,
+          "handle": "string-manipulation",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "String manipulation",
+            "2": "String manipulation"
+          },
+          "puzzleCount": 43,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "# Solution 1: using numpy.polynomial module\n# Solution 2: parsing the polynomial and evaluating string expression\n# Solution 3: more fun, actually doing the maths !\n# Uncomment a solution to try it\n\ndef output(x):\n    print(int(x) if abs(x) < 1e12 else f\"{x:.6E}\")\n    return 0\n\n#'''\n# Solution 1:\nfrom numpy.polynomial import Polynomial\n\nif input() == \"COEFS\":\n    p0 = Polynomial([int(i) for i in input().split()])\n    p1 = Polynomial([int(i) for i in input().split()])\nelse:\n    p0 = Polynomial.fromroots([int(i) for i in input().split()])\n    p1 = Polynomial.fromroots([int(i) for i in input().split()])\n\nx = int(input())\noutput(p0(x))\noutput(p1(x))\nfor _ in range(int(input())-2):\n    p2 = p1(p0) + p0(p1)\n    output(p2(x))\n    p0, p1 = p1, p2\n#'''\n\n'''\n# Solution 2:\ndef from_coefs(coefs):\n    m = len(coefs)\n    if m == 1:\n        return coefs[0]\n    if m == 2:\n        return f\"{coefs[0]}+{coefs[1]}*(x)\" if int(coefs[0]) else f\"{coefs[1]}*(x)\"\n    expression = '+'.join(f\"({coefs[i]}*(x)**{i})\" for i in range(2,m) if int(coefs[i]))\n    return f\"{coefs[0]}+{coefs[1]}*(x)+{expression}\"\n\ndef from_roots(roots):\n    m = len(roots)\n    return '*'.join([f\"(x-{roots[i]})\" for i in range(m)])\n\nif input() == \"COEFS\":\n    p0 = from_coefs(input().split())\n    p1 = from_coefs(input().split())\nelse:\n    p0 = from_roots(input().split())\n    p1 = from_roots(input().split())\n\nx = input()\noutput(eval(p0.replace('x', x)))\noutput(eval(p1.replace('x', x)))\nfor _ in range(int(input())-2):\n    p2 = p1.replace(\"x\", p0) + \"+\" + p0.replace(\"x\", p1)\n    output(eval(p2.replace('x', x)))\n    p0, p1 = p1, p2\n'''\n\n'''\n# Solution 3:\nfrom itertools import combinations as comb\nimport numpy as np\nfrom math import prod\n\ndef from_roots(roots):\n    m = len(roots)\n    coefs = [(-1)**i*sum(map(prod, comb(roots, i))) for i in range(m,-1,-1)]\n    return np.array(coefs, dtype='float64')\n\ndef evaluate(A, x):\n    m = len(A)\n    return sum(map(lambda i: A[i] * x**i, range(m)))\n\ndef multiply(A, B):\n    m, n = len(A), len(B)\n    if m == 1:\n        return A[0] * B\n    if n == 1:\n        return B[0] * A\n    C = np.zeros(m + n - 1,dtype='float64')\n    for i in range(m):\n        for j in range(n):\n            C[i+j] += A[i] * B[j]\n    return C\n\ndef power(A, n):\n    if n == 0:\n        return np.array([1],dtype='float64')\n    if n == 1:\n        return A\n    B = np.array(A)\n    for i in range(2, n+1):\n        B = multiply(A, B)\n    return B\n\ndef add(A, B):\n    if len(A) < len(B):\n        C = B.copy()\n        C[:len(A)] += A\n    else:\n        C = A.copy()\n        C[:len(B)] += B\n    return C\n\ndef compound(A, B):\n    C = np.array([0],dtype='float64')\n    for i in range(len(A)):\n        C = add(C, multiply(np.array([A[i]]), power(B, i)))\n    return C\n\nif input() == \"COEFS\":\n    p0 = np.array(list(map(int, input().split())), dtype='float64')\n    p1 = np.array(list(map(int, input().split())), dtype='float64')\nelse:\n    p0 = from_roots(list(map(int, input().split())))\n    p1 = from_roots(list(map(int, input().split())))\n\nx = int(input())\noutput(evaluate(p0, x))\noutput(evaluate(p1, x))\nfor _ in range(int(input())-2):\n    p2 = add(compound(p1, p0), compound(p0, p1))\n    output(evaluate(p2, x))\n    p0, p1 = p1, p2\n'''",
+      "statement": "Let's define <<\"fibonomial sequence\">> as a sequence of polynomials (<<P0(x), P1(x)...Pi(x),...>>) such that:\n<<P2(x) = P1(P0(x)) + P0(P1(x))>>\n<<P3(x) = P2(P1(x)) + P1(P2(x))>>\n...\n<<P{n+2}(x) = P{n+1}(Pn(x)) + Pn(P{n+1}(x))>>.\n\nGiven either the coefficients or the roots of the first two polynomials [[P0]] and [[P1]], output the fibonomials sequence of size [[n]] for a given integer [[x]] (i.e. <<P0(x), P1(x), P2(x), ..., P{n-1}(x)>>).\nIf an element of the sequence is quite big, i.e. abs(Pi(x)) >= 10^12, format it in scientific notation with 6 decimal precision (7 significant figures, Cf. example 2 below).\n\nThe string entry [[defined_by]] takes one of the values {{COEFS}}, {{ROOTS}} to specify whether the polynomials are defined by their coefficients (increasing powers) or by their roots.\n{{COEFS}}  ===> P0 = [[a0]] + [[a1]] x + [[a2]] x^2 + ... + [[ai]] x^i + ...\nand likewise P1 = [[b0]] + [[b1]] x + [[b2]] x^2 + ... + [[bi]] x^i + ...\n{{ROOTS}} ===> P0 = (x-[[a0]]) (x-[[a1]]) (x-[[a2]]) ... (x-[[ai]]) ...\nand likewise P1 = (x-[[b0]]) (x-[[b1]]) (x-[[b2]]) ... (x-[[bi]]) ...\n\n<<Example 1:>>\n[[defined_by]] = {{COEFS}}\n[[ai]] = <<-1 2>>      ==> P0 = <<2x-1>>          ...(eq. 1)\n[[bi]] = <<3 0 -1>>   ==> P1 = <<-x^2+3>>     ...(eq. 2)\n[[x]] = <<-5>>\n[[n]] = <<3>>\n\nSolution:\n(eq. 1 & 2) ==> P1(P0(x)) = -P0^2+3= -(2x-1)^2+3    ... (eq. 3)\n(eq. 1 & 2) ==> P0(P1(x)) = 2*P1-1 = 2*(-x^2+3)-1   ... (eq. 4)\n(eq. 3 & 4) ==> P2(x) = P1(P0(x))+P0(P1(x)) = -(2*x-1)^2+3 + 2*(-x^2+3)-1  ... (eq. 5)\nThus, for x = -5:\n(eq. 1) ==> P0(-5) = 2*(-5)-1 = <<-11>>\n(eq. 2) ==> P1(-5) = -(-5)^2+3 = <<-22>>\n(eq. 5) ==> P2(-5) = -(2*(-5)-1)^2+3+2*(-(-5)^2+3)-1 = <<-163>>\n\n<<Example 2:>>\n[[defined_by]] = {{ROOTS}}\n[[ai]] = <<0 0 0 1 -1>>   ==> P0 = <<x^3 (x-1) (x+1)>> = <<x^5 - x^3>>   ...(eq. 1)\n[[bi]] = <<1000>>           ==> P1 = <<x-1000>>                                            ...(eq. 2)\n[[x]] = <<-10>>\n[[n]] = <<3>>\n\nSolution:\n(eq. 1 & 2) ==> P1(P0(x)) = P0 - 1000 = x^5 - x^3 - 1000                     ... (eq. 3)\n(eq. 1 & 2) ==> P0(P1(x)) = P1^5 - P1^3 = (x-1000)^5 - (x-1000)^3    ... (eq. 4)\n(eq. 3 & 4) ==> P2(x) = x^5 - x^3 - 1000 + (x-1000)^5 - (x-1000)^3    ... (eq. 5)\nThus, for x = -10:\n(eq. 1) ==> P0(-10) = -10^5 - (-10)^3 = <<-99000>>\n(eq. 2) ==> P1(-10) = -10 - 1000 = <<-1010>>\n(eq. 5) ==> P2(-10) = -10^5 - (-10)^3 - 1000 + (-1010)^5 - (-1010)^3 = -1051009019899000 = <<-1.051009E+15>>",
+      "testCases": [
+        {
+          "title": "Example 1",
+          "isTest": true,
+          "testIn": "COEFS\n-1 2\n3 0 -1\n-5\n3",
+          "testOut": "-11\n-22\n-163",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Example 1 Validator",
+          "isTest": false,
+          "testIn": "COEFS\n-1 2\n3 0 -1\n5\n3",
+          "testOut": "9\n-22\n-123",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Example 2",
+          "isTest": true,
+          "testIn": "ROOTS\n0 0 0 1 -1\n1000\n-10\n3",
+          "testOut": "-99000\n-1010\n-1.051009E+15",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Example 2 Validator",
+          "isTest": false,
+          "testIn": "ROOTS\n0 -1 0 0 1\n-1000\n10\n4",
+          "testOut": "99000\n1010\n1.051009E+15\n3.491005E+16",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Regular Fibonacci !",
+          "isTest": true,
+          "testIn": "COEFS\n0\n1\n123456789\n10",
+          "testOut": "0\n1\n1\n2\n3\n5\n8\n13\n21\n34",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Regular Fibonacci Validator",
+          "isTest": false,
+          "testIn": "COEFS\n3\n5\n987654321\n10",
+          "testOut": "3\n5\n8\n13\n21\n34\n55\n89\n144\n233",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Almost Fibonacci !",
+          "isTest": true,
+          "testIn": "COEFS\n1\n0 1\n1\n25",
+          "testOut": "1\n1\n2\n4\n6\n10\n16\n26\n42\n68\n110\n178\n288\n466\n754\n1220\n1974\n3194\n5168\n8362\n13530\n21892\n35422\n57314\n92736",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Almost Fibonacci Validator",
+          "isTest": false,
+          "testIn": "COEFS\n0 1\n1\n-1\n16",
+          "testOut": "-1\n1\n2\n3\n5\n8\n13\n21\n34\n55\n89\n144\n233\n377\n610\n987",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Powers of 2",
+          "isTest": true,
+          "testIn": "ROOTS\n0\n0\n1\n7",
+          "testOut": "1\n1\n2\n4\n16\n128\n4096",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Powers of 2 Validator",
+          "isTest": false,
+          "testIn": "COEFS\n0 1\n0 1\n1\n7",
+          "testOut": "1\n1\n2\n4\n16\n128\n4096",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Exponential growth",
+          "isTest": true,
+          "testIn": "ROOTS\n1 -3 1\n2\n-2\n6",
+          "testOut": "9\n-4\n-18\n-194\n-14783380\n-7.957991E+22",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Exponential growth Validator",
+          "isTest": false,
+          "testIn": "ROOTS\n2 2 2\n5 0\n-1\n5",
+          "testOut": "-27\n6\n928\n860384\n3.185894E+36",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 <= [[n]] < 32\n-2^63 <= [[x]] < 2^63",
+      "coverBinaryId": 96518643354987,
+      "stubGenerator": "read definedBy:string(10)\nread aI:string(50)\nread bI:string(50)\nread x:int\nread n:int\nloop n write p_i(x)",
+      "inputDescription": "<<Line 1:>> The string [[defined_by]] {{COEFS}} or {{ROOTS}}\n<<Line 2:>> Integers [[ai]] for all the coefficients or roots of the first polynomial [[P0]], separated by a whitespace.\n<<Line 3:>> Integers [[bi]] for all the coefficients or roots of the second polynomial [[P1]], separated by a whitespace.\n<<Line 4:>> An integer [[x]] for which the fibonomials are evaluated.\n<<Line 5:>> An integer [[n]] for the size of the sequence.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[n]] lines:>> The [[n]] integers elements of the <<fibonomial sequence>>, one per line. Output an element in scientific notation {{#.6#E+#}} if the element's absolute value is greater than or equal to 10^12."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Let's define <strong>&quot;fibonomial sequence&quot;</strong> as a sequence of polynomials (<strong>P0(x), P1(x)...Pi(x),...</strong>) such that:<br><strong>P2(x) = P1(P0(x)) + P0(P1(x))</strong><br><strong>P3(x) = P2(P1(x)) + P1(P2(x))</strong><br>...<br><strong>P{n+2}(x) = P{n+1}(Pn(x)) + Pn(P{n+1}(x))</strong>.<br><br>Given either the coefficients or the roots of the first two polynomials <var>P0</var> and <var>P1</var>, output the fibonomials sequence of size <var>n</var> for a given integer <var>x</var> (i.e. <strong>P0(x), P1(x), P2(x), ..., P{n-1}(x)</strong>).<br>If an element of the sequence is quite big, i.e. abs(Pi(x)) &gt;= 10^12, format it in scientific notation with 6 decimal precision (7 significant figures, Cf. example 2 below).<br><br>The string entry <var>defined_by</var> takes one of the values <const>COEFS</const>, <const>ROOTS</const> to specify whether the polynomials are defined by their coefficients (increasing powers) or by their roots.<br><const>COEFS</const>  ===&gt; P0 = <var>a0</var> + <var>a1</var> x + <var>a2</var> x^2 + ... + <var>ai</var> x^i + ...<br>and likewise P1 = <var>b0</var> + <var>b1</var> x + <var>b2</var> x^2 + ... + <var>bi</var> x^i + ...<br><const>ROOTS</const> ===&gt; P0 = (x-<var>a0</var>) (x-<var>a1</var>) (x-<var>a2</var>) ... (x-<var>ai</var>) ...<br>and likewise P1 = (x-<var>b0</var>) (x-<var>b1</var>) (x-<var>b2</var>) ... (x-<var>bi</var>) ...<br><br><strong>Example 1:</strong><br><var>defined_by</var> = <const>COEFS</const><br><var>ai</var> = <strong>-1 2</strong>      ==&gt; P0 = <strong>2x-1</strong>          ...(eq. 1)<br><var>bi</var> = <strong>3 0 -1</strong>   ==&gt; P1 = <strong>-x^2+3</strong>     ...(eq. 2)<br><var>x</var> = <strong>-5</strong><br><var>n</var> = <strong>3</strong><br><br>Solution:<br>(eq. 1 &amp; 2) ==&gt; P1(P0(x)) = -P0^2+3= -(2x-1)^2+3    ... (eq. 3)<br>(eq. 1 &amp; 2) ==&gt; P0(P1(x)) = 2*P1-1 = 2*(-x^2+3)-1   ... (eq. 4)<br>(eq. 3 &amp; 4) ==&gt; P2(x) = P1(P0(x))+P0(P1(x)) = -(2*x-1)^2+3 + 2*(-x^2+3)-1  ... (eq. 5)<br>Thus, for x = -5:<br>(eq. 1) ==&gt; P0(-5) = 2*(-5)-1 = <strong>-11</strong><br>(eq. 2) ==&gt; P1(-5) = -(-5)^2+3 = <strong>-22</strong><br>(eq. 5) ==&gt; P2(-5) = -(2*(-5)-1)^2+3+2*(-(-5)^2+3)-1 = <strong>-163</strong><br><br><strong>Example 2:</strong><br><var>defined_by</var> = <const>ROOTS</const><br><var>ai</var> = <strong>0 0 0 1 -1</strong>   ==&gt; P0 = <strong>x^3 (x-1) (x+1)</strong> = <strong>x^5 - x^3</strong>   ...(eq. 1)<br><var>bi</var> = <strong>1000</strong>           ==&gt; P1 = <strong>x-1000</strong>                                            ...(eq. 2)<br><var>x</var> = <strong>-10</strong><br><var>n</var> = <strong>3</strong><br><br>Solution:<br>(eq. 1 &amp; 2) ==&gt; P1(P0(x)) = P0 - 1000 = x^5 - x^3 - 1000                     ... (eq. 3)<br>(eq. 1 &amp; 2) ==&gt; P0(P1(x)) = P1^5 - P1^3 = (x-1000)^5 - (x-1000)^3    ... (eq. 4)<br>(eq. 3 &amp; 4) ==&gt; P2(x) = x^5 - x^3 - 1000 + (x-1000)^5 - (x-1000)^3    ... (eq. 5)<br>Thus, for x = -10:<br>(eq. 1) ==&gt; P0(-10) = -10^5 - (-10)^3 = <strong>-99000</strong><br>(eq. 2) ==&gt; P1(-10) = -10 - 1000 = <strong>-1010</strong><br>(eq. 5) ==&gt; P2(-10) = -10^5 - (-10)^3 - 1000 + (-1010)^5 - (-1010)^3 = -1051009019899000 = <strong>-1.051009E+15</strong></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> The string <var>defined_by</var> <const>COEFS</const> or <const>ROOTS</const><br><strong>Line 2:</strong> Integers <var>ai</var> for all the coefficients or roots of the first polynomial <var>P0</var>, separated by a whitespace.<br><strong>Line 3:</strong> Integers <var>bi</var> for all the coefficients or roots of the second polynomial <var>P1</var>, separated by a whitespace.<br><strong>Line 4:</strong> An integer <var>x</var> for which the fibonomials are evaluated.<br><strong>Line 5:</strong> An integer <var>n</var> for the size of the sequence.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>n</var> lines:</strong> The <var>n</var> integers elements of the <strong>fibonomial sequence</strong>, one per line. Output an element in scientific notation <const>#.6#E+#</const> if the element's absolute value is greater than or equal to 10^12.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt;= <var>n</var> &lt; 32<br>-2^63 &lt;= <var>x</var> &lt; 2^63</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">COEFS\n-1 2\n3 0 -1\n-5\n3</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">-11\n-22\n-163</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 89955346761,
+  "avatar": 92869880984408,
+  "commentCount": 24,
+  "upVotes": 22,
+  "downVotes": 7,
+  "validateAction": {
+    "actionId": 783659,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1676052337001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1676052781048,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1678647937001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1678649817649,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1680774028185,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

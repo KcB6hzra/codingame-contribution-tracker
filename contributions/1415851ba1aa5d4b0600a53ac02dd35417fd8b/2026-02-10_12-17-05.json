@@ -1,0 +1,422 @@
+{
+  "id": 141585,
+  "activeVersion": 106,
+  "score": 2,
+  "votableId": 38984699,
+  "codingamerId": 3932502,
+  "views": 344,
+  "commentableId": 38817819,
+  "title": "Time Loop Facility Escape",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "N3l",
+  "publicHandle": "1415851ba1aa5d4b0600a53ac02dd35417fd8b",
+  "codingamerHandle": "cbbb24d6a51ec60e0af86bdd22deebbd2052393",
+  "lastVersion": {
+    "version": 106,
+    "autocloseTime": 1772807574647,
+    "freezeTime": 1770820374647,
+    "data": {
+      "title": "Time Loop Facility Escape",
+      "topics": [
+        {
+          "id": 63,
+          "handle": "greedy",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Algorithmes glouton",
+            "2": "Greedy algorithms"
+          },
+          "pageTitle": "Greedy algorithms: exercises and theory",
+          "puzzleCount": 21,
+          "parentTopicId": 41,
+          "contentDetailsId": 91
+        },
+        {
+          "id": 54,
+          "handle": "BFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en largeur",
+            "2": "BFS"
+          },
+          "pageTitle": "BFS: exercises and theory",
+          "puzzleCount": 49,
+          "parentTopicId": 41,
+          "contentDetailsId": 84
+        },
+        {
+          "id": 68,
+          "handle": "pathfinding",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Recherche de chemins",
+            "2": "Pathfinding"
+          },
+          "pageTitle": "Pathfinding: exercises and theory",
+          "puzzleCount": 63,
+          "parentTopicId": 41,
+          "contentDetailsId": 69
+        }
+      ],
+      "solution": "import sys\nimport collections\nimport functools\nimport itertools\n\n# Moves priority: 'W', 'U', 'R', 'L', 'D'\nMOVES = [('W', (0, 0)), ('U', (0, -1)), ('R', (1, 0)), ('L', (-1, 0)), ('D', (0, 1))]\n\nclass Solver:\n    \"\"\"Bitwise SOS-DP for optimal pathfinding with coordination and Lex-Max priority.\"\"\"\n    \n    # Adaptive search thresholds\n    SWITCH_THRESHOLD = 15  # Limit for full combinatorial search\n    TURN_RANGE_COMPLEX = 10\n    TURN_RANGE_SIMPLE = 60\n\n    def __init__(self):\n        self.W = 0\n        self.H = 0\n        self.max_loops = 0\n        self.grid_flat = \"\"\n        self.start_idx = -1\n        self.exit_idx = -1\n        \n        self.sw_pos = {}\n        self.id_sw = []\n        self.sw_id = {}\n        self.pos_to_sw_idx = {}\n        self.door_to_sw_idx = {}\n        \n        self.neighbors = []\n        self.dist_matrix = []\n        self.floor_indices = []\n        self.floor_mask = 0\n        self.immunity_mask = 0\n        \n        self.col0_mask = 0\n        self.colW_mask = 0\n        self.switch_density = 0.0\n\n    @functools.lru_cache(None)\n    def get_nav_mask(self, ghost_open_mask):\n        closed_mask = 0\n        for d_pos, sw_idx in self.door_to_sw_idx.items():\n            if not (ghost_open_mask & (1 << sw_idx)):\n                closed_mask |= (1 << d_pos)\n        return self.floor_mask & ~closed_mask\n\n    def read(self, fp=None, grid_lines=None):\n        \"\"\"Initializes game state from grid input.\"\"\"\n        try:\n            if grid_lines:\n                lines = grid_lines\n            else:\n                lines = open(fp).readlines() if fp else sys.stdin.readlines()\n            if not lines: return False\n            \n            # Reset state for multi-pass filtering\n            self.sw_pos = {}\n            self.id_sw = []\n            self.sw_id = {}\n            self.pos_to_sw_idx = {}\n            self.door_to_sw_idx = {}\n            self.neighbors = []\n            self.dist_matrix = []\n            self.floor_indices = []\n            self.floor_mask = 0\n            self.immunity_mask = 0\n            self.col0_mask = 0\n            self.colW_mask = 0\n\n            self.W, self.H, self.max_loops = map(int, lines[0].split())\n            grid_lines = [l.rstrip('\\n').ljust(self.W, '#') for l in lines[1:1+self.H]]\n            self.grid_flat = \"\".join(grid_lines)\n            \n            sw_list = []\n            door_map = collections.defaultdict(list)\n            for i, c in enumerate(self.grid_flat):\n                if c == 'S':\n                    self.start_idx = i\n                elif c == 'E':\n                    self.exit_idx = i\n                elif 'a' <= c <= 'z':\n                    self.sw_pos[c] = i\n                    sw_list.append(c)\n                elif 'A' <= c <= 'Z' and c not in ('S', 'E'):\n                    door_map[c].append(i)\n                if c != '#':\n                    self.floor_indices.append(i)\n                    self.floor_mask |= (1 << i)\n            \n            # Constraints for adjacency bitshifts\n            for y in range(self.H):\n                self.col0_mask |= (1 << (y * self.W))\n                self.colW_mask |= (1 << (y * self.W + self.W - 1))\n            self.immunity_mask = (1 << self.start_idx) | (1 << self.exit_idx)\n            \n            self.id_sw = sorted(sw_list)\n            self.sw_id = {s: idx for idx, s in enumerate(self.id_sw)}\n            self.sw_pos_list = [self.sw_pos[s] for s in self.id_sw]\n            for s, pos in self.sw_pos.items():\n                self.pos_to_sw_idx[pos] = self.sw_id[s]\n            for c, positions in door_map.items():\n                sw_char = c.lower()\n                if sw_char in self.sw_id:\n                    sid = self.sw_id[sw_char]\n                    for p in positions:\n                        self.door_to_sw_idx[p] = sid\n            \n            # Precompute neighbor adjacency list (W > U > R > L > D)\n            priority = {'W': 4, 'U': 3, 'R': 2, 'L': 1, 'D': 0}\n            self.move_map = {}\n            for i in range(self.W * self.H):\n                nb = []\n                if self.grid_flat[i] != '#':\n                    x, y = i % self.W, i // self.W\n                    for m_char, (dx, dy) in MOVES:\n                        nx, ny = x + dx, y + dy\n                        if 0 <= nx < self.W and 0 <= ny < self.H:\n                            nidx = ny * self.W + nx\n                            if self.grid_flat[nidx] != '#':\n                                nb.append((m_char, nidx))\n                                self.move_map[(i, nidx)] = m_char\n                nb.sort(key=lambda x: priority[x[0]], reverse=True)\n                self.neighbors.append(nb)\n            \n            # Precompute move priority for fast Lex-Max\n            self.move_prio_map = {}\n            for i in range(self.W * self.H):\n                for m_char, nidx in self.neighbors[i]:\n                    self.move_prio_map[(i, nidx)] = priority[m_char]\n\n            self.compute_distances()\n            \n            # Compute switch density for adaptive search\n            walkable_count = len(self.floor_indices)\n            self.switch_density = len(self.id_sw) / walkable_count if walkable_count else 0\n            \n            return True\n        except Exception: return False\n\n    def compute_distances(self):\n        \"\"\"BFS to compute all-pairs distance matrix and precompute reachability positions.\"\"\"\n        size = self.W * self.H\n        self.dist_matrix = [[-1] * size for _ in range(size)]\n        for s in self.floor_indices:\n            dist_from_s = self.dist_matrix[s]\n            dist_from_s[s] = 0\n            queue = collections.deque([s])\n            while queue:\n                curr = queue.popleft()\n                for _, nidx in self.neighbors[curr]:\n                    if dist_from_s[nidx] == -1:\n                        dist_from_s[nidx] = dist_from_s[curr] + 1\n                        queue.append(nidx)\n        \n        # Precompute bitmasks of positions at distance <= d from each floor tile\n        self.dist_to_pos_bits = [[0] * (size + 1) for _ in range(size)]\n        for s in self.floor_indices:\n            dist_from_s = self.dist_matrix[s]\n            bits_at_d = self.dist_to_pos_bits[s]\n            for p in self.floor_indices:\n                d = dist_from_s[p]\n                if d != -1:\n                    bits_at_d[d] |= (1 << p)\n            # Prefix OR: bits_at_d[d] contains all positions reachable in <= d steps\n            for d in range(1, size + 1):\n                bits_at_d[d] |= bits_at_d[d - 1]\n\n    @functools.lru_cache(None)\n    def get_precomputed_masks(self, T, ghost_ms, ghost_open_mask):\n        \"\"\"Precomputes navigation and switch safety masks for a specific turn count and ghost state.\"\"\"\n        nm_static = self.get_nav_mask(ghost_open_mask)\n        nav_masks_t = tuple((nm_static & ~gt) | (nm_static & self.immunity_mask) for gt in ghost_ms)\n        sw_safe_mask_t = []\n        for t in range(T + 1):\n            gt = ghost_ms[t]\n            msk = 0\n            for i, p in enumerate(self.sw_pos_list):\n                if not (gt & (1 << p)) or (self.immunity_mask & (1 << p)):\n                    msk |= (1 << i)\n            sw_safe_mask_t.append(msk)\n        return nav_masks_t, tuple(sw_safe_mask_t)\n\n    def solve(self, fp=None):\n        \"\"\"Searches for the optimal solution by increasing turn count T (Rule 7.1).\"\"\"\n        if not self.read(fp):\n            return\n\n        # V4 Integration: Check for symmetric grid heuristic\n        if self.is_symmetric():\n            self.solve_symmetric()\n            return\n        \n        # Minimum turns to reach exit\n        min_turns = self.dist_matrix[self.start_idx][self.exit_idx]\n        if min_turns == -1:\n            print(\"IMPOSSIBLE\")\n            return\n        \n        # Apply grid filtering for complex maps to optimize search\n        if len(self.id_sw) > self.SWITCH_THRESHOLD:\n            self.apply_filtering()\n            min_turns = max(min_turns, self.dist_matrix[self.start_idx][self.exit_idx])\n        \n        all_sw_mask = (1 << len(self.id_sw)) - 1\n        t_range = self.TURN_RANGE_COMPLEX if len(self.id_sw) > self.SWITCH_THRESHOLD else self.TURN_RANGE_SIMPLE\n        \n        # Iterative Search Strategy: T (Turns) then N (Loops)\n        for T in range(min_turns, min_turns + t_range + 1):\n            ghost_ms_empty = (0,) * (T + 1)\n            for N in range(1, self.max_loops + 1):\n                res = self.backtrack_loops(0, N, T, all_sw_mask, ghost_ms_empty, 0)\n                if res:\n                    # Optimize solution by removing redundant loops\n                    optimized_res = self.optimize_solution(res)\n                    for path in optimized_res:\n                        print(\" \".join(self.path_to_moves(path)))\n                    return\n        print(\"IMPOSSIBLE\")\n\n    @functools.lru_cache(None)\n    def backtrack_loops(self, robot_idx, N, T, rem_sw_m, ghost_ms, ghost_open_mask):\n        \"\"\"\n        Recursive search for robot coordination across N loops.\n        Explores multiple path candidates for helpers to allow global optimality.\n        \"\"\"\n        if robot_idx == N: return ()\n        \n        nav_masks_t, sw_safe_mask_t = self.get_precomputed_masks(T, ghost_ms, ghost_open_mask)\n\n        if robot_idx == N - 1:\n            paths = self.find_path(T, nav_masks_t, sw_safe_mask_t, 0, True, max_paths=1)\n            if paths: return (paths[0],)\n            return None\n\n        sw_indices = [i for i in range(len(self.id_sw)) if (rem_sw_m >> i) & 1]\n        sw_indices.sort(key=lambda i: self.dist_matrix[self.start_idx][self.sw_pos[self.id_sw[i]]])\n        \n        all_candidate_group = []\n        \n        # Determine combinations to try\n        combinations_to_try = []\n        if len(self.id_sw) <= self.SWITCH_THRESHOLD:\n            max_n = len(sw_indices) if len(sw_indices) <= 9 else (3 if len(sw_indices) <= 12 else 2)\n            for n in range(min(max_n, len(sw_indices)) + 1):\n                for subset in itertools.combinations(sw_indices, n):\n                    local_m = 0\n                    for idx in subset: local_m |= (1 << idx)\n                    combinations_to_try.append(local_m)\n        else:\n            branch_factor = 8 if self.switch_density <= 0.08 else (15 if self.switch_density <= 0.15 else 25)\n            for idx in sw_indices[:branch_factor]:\n                combinations_to_try.append(1 << idx)\n            combinations_to_try.append(0) # Potential wait-only loop\n\n        # Determine search depth for helper robot\n        m_paths = 2 if (self.W * self.H < 100) else 1\n\n        for local_m in combinations_to_try:\n            candidates = self.find_path(T, nav_masks_t, sw_safe_mask_t, local_m, False, max_paths=m_paths)\n            for path in candidates:\n                hit_mask = 0\n                for p in path:\n                    if p in self.pos_to_sw_idx: hit_mask |= (1 << self.pos_to_sw_idx[p])\n                \n                prio_tuple = tuple(self.move_prio_map[(path[i], path[i+1])] for i in range(len(path)-1))\n                all_candidate_group.append((prio_tuple, hit_mask, path))\n\n        # Sort all candidates across all groups by Lex-Max priority\n        all_candidate_group.sort(key=lambda x: x[0], reverse=True)\n\n        for _, hit_mask, path in all_candidate_group:\n            # Update ghost masks for Next Robot\n            new_ghost_ms = list(ghost_ms)\n            for t, p in enumerate(path):\n                new_ghost_ms[t] |= (1 << p)\n            \n            res = self.backtrack_loops(robot_idx + 1, N, T, rem_sw_m & ~hit_mask, \n                                      tuple(new_ghost_ms), ghost_open_mask | hit_mask)\n            if res is not None:\n                return (path,) + res\n        return None\n\n    @functools.lru_cache(None)\n    def find_path(self, T, nav_masks_t, sw_safe_mask_t, target_mask, reach_exit, max_paths=5):\n        \"\"\"\n        Bitwise SOS-DP engine to find valid paths for turn T.\n        Returns a list of paths in Lex-descending order.\n        \"\"\"\n        t_indices = [i for i in range(len(self.id_sw)) if (target_mask >> i) & 1]\n        num_t = len(t_indices)\n        full_mask = (1 << num_t) - 1\n        \n        t_bit_idx = [-1] * (self.W * self.H)\n        for i, idx in enumerate(t_indices):\n            t_bit_idx[self.sw_pos[self.id_sw[idx]]] = i\n\n        W = self.W; m0 = self.col0_mask; mW = self.colW_mask\n        all_t_pos_mask = 0\n        for idx in t_indices: all_t_pos_mask |= (1 << self.sw_pos[self.id_sw[idx]])\n\n        t_safe_sw = []\n        for t in range(T + 1):\n            ts = []; sm = sw_safe_mask_t[t]\n            for i, idx in enumerate(t_indices):\n                if (sm >> idx) & 1:\n                    p = self.sw_pos_list[idx]\n                    prop = (1 << p) | (1 << p << 1 & ~m0) | (1 << p >> 1 & ~mW) | (1 << p << W) | (1 << p >> W)\n                    ts.append((1 << p, i, prop))\n            t_safe_sw.append(ts)\n\n        R = [[0] * (1 << num_t) for _ in range(T + 1)]\n        if reach_exit:\n            if (nav_masks_t[T] >> self.exit_idx) & 1:\n                R[T][0] = (1 << self.exit_idx)\n        else:\n            R[T][0] = nav_masks_t[T]\n\n        dist_limit = len(self.dist_to_pos_bits[0]) - 1\n        for t in range(T - 1, -1, -1):\n            nxt_r = R[t + 1]\n            cur_r = R[t]\n            at_t = nav_masks_t[t]\n            pk_safe_nxt = t_safe_sw[t + 1]\n\n            rem_t = T - t\n            idx_t = min(rem_t, dist_limit)\n            if reach_exit:\n                at_t &= self.dist_to_pos_bits[self.exit_idx][idx_t]\n            elif t_indices:\n                target_reachable = 0\n                for idx in t_indices:\n                    pos = self.sw_pos[self.id_sw[idx]]\n                    target_reachable |= self.dist_to_pos_bits[pos][idx_t]\n                at_t &= target_reachable\n            \n            if not at_t: return []\n            \n            any_reach = False\n            for m in range(1 << num_t):\n                nm_v = nxt_r[m]\n                if not nm_v: continue\n                any_reach = True\n                prop = (nm_v | (nm_v << 1 & ~m0) | (nm_v >> 1 & ~mW) | (nm_v << W) | (nm_v >> W))\n                cur_r[m] |= (prop & at_t)\n                if nm_v & all_t_pos_mask:\n                    for p_msk, k, prp_k in pk_safe_nxt:\n                        if not (m & (1 << k)):\n                            if nm_v & p_msk: cur_r[m | (1 << k)] |= (prp_k & at_t)\n            if not any_reach and t < T - 1:\n                return []\n        \n        init_bit = t_bit_idx[self.start_idx]\n        init_h = (1 << init_bit) if init_bit != -1 else 0\n        rem_g = full_mask ^ init_h\n        if not ((R[0][rem_g] >> self.start_idx) & 1): return []\n        \n        # Multi-path Lex-descending reconstruction\n        if max_paths == 1:\n            path, cur, cm = [self.start_idx], self.start_idx, init_h\n            for t in range(T):\n                nxt_all = R[t + 1]\n                found = False\n                for _, nidx in self.neighbors[cur]:\n                    if not (nav_masks_t[t + 1] & (1 << nidx)): continue\n                    tb = t_bit_idx[nidx]\n                    new_m = cm | ((1 << tb) if tb != -1 else 0)\n                    if (nxt_all[full_mask ^ new_m] >> nidx) & 1:\n                        path.append(nidx); cur, cm, found = nidx, new_m, True; break\n                if not found: return []\n            return [tuple(path)]\n\n        found_paths = []\n        def reconstruct(t, cur, cm, path):\n            if len(found_paths) >= max_paths: return\n            if t == T:\n                found_paths.append(tuple(path))\n                return\n            nxt_all = R[t + 1]\n            for _, nidx in self.neighbors[cur]:\n                if not (nav_masks_t[t + 1] & (1 << nidx)): continue\n                tb = t_bit_idx[nidx]\n                new_m = cm | ((1 << tb) if tb != -1 else 0)\n                if (nxt_all[full_mask ^ new_m] >> nidx) & 1:\n                    path.append(nidx)\n                    reconstruct(t + 1, nidx, new_m, path)\n                    path.pop()\n                    if len(found_paths) >= max_paths: return\n        reconstruct(0, self.start_idx, init_h, [self.start_idx])\n        return found_paths\n\n    def get_lex_max_shortest_path(self, start, end):\n        \"\"\"Finds the lexicographical largest shortest path from start to end (Rule 7.2).\"\"\"\n        size = self.W * self.H\n        dist_to_end = [-1] * size\n        dist_to_end[end] = 0\n        queue = collections.deque([end])\n        while queue:\n            curr = queue.popleft()\n            for _, nidx in self.neighbors[curr]:\n                if dist_to_end[nidx] == -1:\n                    dist_to_end[nidx] = dist_to_end[curr] + 1\n                    queue.append(nidx)\n        \n        if dist_to_end[start] == -1:\n            return None\n        \n        path, curr = [start], start\n        while curr != end:\n            best_n = -1\n            # neighbors are pre-sorted W > U > R > L > D\n            for m_char, nidx in self.neighbors[curr]:\n                if m_char == 'W':\n                    continue\n                if dist_to_end[nidx] == dist_to_end[curr] - 1:\n                    best_n = nidx\n                    break\n            if best_n == -1:\n                break\n            path.append(best_n)\n            curr = best_n\n        return tuple(path)\n\n    def apply_filtering(self):\n        \"\"\"Identifies essential switches for reaching the exit and simplifies the grid.\"\"\"\n        min_turns = self.dist_matrix[self.start_idx][self.exit_idx]\n        if min_turns == -1:\n            return\n        \n        # Keep switches/doors on any path within a reasonable margin of the shortest path\n        limit = min_turns + 30\n        essential_sw = set()\n        for p in self.floor_indices:\n            ds = self.dist_matrix[self.start_idx][p]\n            de = self.dist_matrix[p][self.exit_idx]\n            if ds != -1 and de != -1 and (ds + de) <= limit:\n                if p in self.door_to_sw_idx:\n                    essential_sw.add(self.door_to_sw_idx[p])\n        \n        # Recursively include dependent switches\n        to_process = collections.deque(list(essential_sw))\n        \n        def add_deps(p_list):\n            for pos in p_list:\n                if pos in self.door_to_sw_idx:\n                    sid = self.door_to_sw_idx[pos]\n                    if sid not in essential_sw:\n                        essential_sw.add(sid)\n                        to_process.append(sid)\n        \n        while to_process:\n            sid = to_process.popleft()\n            target_pos = self.sw_pos[self.id_sw[sid]]\n            path_to_sw = self.get_lex_max_shortest_path(self.start_idx, target_pos)\n            if path_to_sw:\n                add_deps(path_to_sw)\n        \n        essential_sw_names = {self.id_sw[i] for i in essential_sw}\n        essential_door_chars = {s.upper() for s in essential_sw_names}\n        \n        # Construct simplified grid lines\n        grid_lines = [f\"{self.W} {self.H} {self.max_loops}\\n\"]\n        for y in range(self.H):\n            line = \"\"\n            for x in range(self.W):\n                idx = y * self.W + x\n                char = self.grid_flat[idx]\n                if 'a' <= char <= 'z':\n                    if char not in essential_sw_names:\n                        char = '.'\n                elif 'A' <= char <= 'Z' and char not in ('S', 'E'):\n                    if char not in essential_door_chars:\n                        char = '#'\n                line += char\n            grid_lines.append(line + \"\\n\")\n        \n        # Re-initialize with filtered grid\n        self.read(grid_lines=grid_lines)\n\n    def path_to_moves(self, path):\n        \"\"\"Converts position index tuple to a tuple of movement characters.\"\"\"\n        res = []\n        for i in range(len(path) - 1):\n            res.append(self.move_map.get((path[i], path[i + 1]), '?'))\n        return tuple(res)\n\n    def verify_paths(self, paths):\n        \"\"\"Strictly validates a solution set (list of paths) against all rules.\"\"\"\n        if not paths: return False\n        T = len(paths[0]) - 1\n        ghost_open_mask = 0\n        ghost_paths = []\n        \n        for i, path in enumerate(paths):\n             if path[0] != self.start_idx: return False\n             if len(path) != T + 1: return False\n\n             # Check moves against Nav Mask (Walls/Doors)\n             nav_mask = self.get_nav_mask(ghost_open_mask)\n             for t in range(T):\n                v = path[t+1]\n                if not ((nav_mask >> v) & 1):\n                   return False\n             \n             # Check collisions\n             for gp in ghost_paths:\n                 for t in range(T + 1):\n                     p1, p2 = path[t], gp[t]\n                     if p1 == p2 and p1 != self.start_idx:\n                         return False\n                         \n             # Update open mask\n             for p in path:\n                 if p in self.pos_to_sw_idx:\n                     ghost_open_mask |= (1 << self.pos_to_sw_idx[p])\n             ghost_paths.append(path)\n\n        # Victory check\n        return any(p[-1] == self.exit_idx for p in paths)\n\n    def is_symmetric(self):\n        \"\"\"Checks if the grid is symmetric across the vertical axis (V4 Logic).\"\"\"\n        mid = self.W // 2\n        for y in range(self.H):\n            for x in range(mid + 1):\n                idx = y * self.W + x\n                idx_mirror = y * self.W + (self.W - 1 - x)\n                c1 = self.grid_flat[idx]\n                c2 = self.grid_flat[idx_mirror]\n                \n                # S and E must be on the central axis to preserve position\n                if c1 in 'SE' or c2 in 'SE':\n                    if c1 != c2: # Must be identical (so both on axis)\n                        return False\n                else:\n                    # Check structural symmetry (Wall vs Empty/Door/Switch)\n                    if c1 != c2:\n                        # Allow loose symmetry (structure only) for simple loop counts\n                        if self.max_loops > 4:\n                            return False\n\n                        type1 = 'wall' if c1 == '#' else 'other'\n                        type2 = 'wall' if c2 == '#' else 'other'\n                        if type1 != type2:\n                            return False\n        return True\n\n    def find_path_to_targets(self, targets):\n        \"\"\"V4 Logic: BFS to find shortest path visiting all targets (Doors open), Priority U>R>L>D.\"\"\"\n        # Local priority for heuristic: U, R, L, D\n        moves_prio = [('U', (0, -1)), ('R', (1, 0)), ('L', (-1, 0)), ('D', (0, 1))]\n        \n        target_list = sorted(list(targets))\n        target_to_bit = {t: i for i, t in enumerate(target_list)}\n        final_mask = (1 << len(targets)) - 1\n        \n        start_node = (self.start_idx, 0)\n        queue = collections.deque([start_node])\n        came_from = {start_node: None}\n        \n        while queue:\n            curr, mask = queue.popleft()\n            \n            if mask == final_mask:\n                path = []\n                node = (curr, mask)\n                while node:\n                    path.append(node[0])\n                    node = came_from[node]\n                path.reverse()\n                return tuple(path)\n\n            new_mask = mask\n            if curr in targets:\n                new_mask |= (1 << target_to_bit[curr])\n\n            cx, cy = curr % self.W, curr // self.W\n            for m_char, (dx, dy) in moves_prio:\n                nx, ny = cx + dx, cy + dy\n                if 0 <= nx < self.W and 0 <= ny < self.H:\n                    nidx = ny * self.W + nx\n                    if self.grid_flat[nidx] != '#':\n                        # Doors are treated as walkable (heuristic assumption)\n                        next_mask = new_mask\n                        if nidx in targets:\n                            next_mask |= (1 << target_to_bit[nidx])\n                        \n                        next_node = (nidx, next_mask)\n                        if next_node not in came_from:\n                            came_from[next_node] = (curr, mask)\n                            queue.append(next_node)\n        return None\n\n    def solve_symmetric(self):\n        \"\"\"V4 Logic: Solving logic for symmetric grids.\"\"\"\n        loops = []\n        needed_switches = set()\n        \n        # Step 1: Find shortest path to Exit (ignoring doors)\n        path = self.find_path_to_targets({self.exit_idx})\n        if not path:\n            print(\"IMPOSSIBLE\")\n            return\n            \n        loops.append(path)\n        \n        # Identify dependencies\n        for p in path:\n            char = self.grid_flat[p]\n            if 'A' <= char <= 'Z' and char not in 'SE':\n                sw_char = char.lower()\n                if sw_char in self.sw_pos:\n                    needed_switches.add(self.sw_pos[sw_char])\n\n        # Step 2: Iteratively satisfy dependencies\n        while needed_switches:\n            if len(loops) >= self.max_loops:\n                print(\"IMPOSSIBLE\")\n                return\n\n            path = self.find_path_to_targets(needed_switches)\n            if not path:\n                print(\"IMPOSSIBLE\")\n                return\n            loops.append(path)\n            \n            new_needed = set()\n            for p in path:\n                char = self.grid_flat[p]\n                if 'A' <= char <= 'Z' and char not in 'SE':\n                    sw_char = char.lower()\n                    if sw_char in self.sw_pos:\n                         new_needed.add(self.sw_pos[sw_char])\n            needed_switches = new_needed\n        \n        # Finalize: Reverse loop order and apply 'W' padding\n        loops.reverse()\n        max_len = max(len(p) for p in loops)\n        \n        move_map_prio = {} \n        \n        # Local move map for output\n        local_move_map = {}\n        for i in range(self.W * self.H):\n            if self.grid_flat[i] == '#': continue\n            cx, cy = i % self.W, i // self.W\n            for m_char, (dx, dy) in [('U', (0, -1)), ('R', (1, 0)), ('L', (-1, 0)), ('D', (0, 1))]:\n                 nx, ny = cx + dx, cy + dy\n                 if 0 <= nx < self.W and 0 <= ny < self.H:\n                     local_move_map[(i, ny * self.W + nx)] = m_char\n\n        for p in loops:\n            pad_len = max_len - len(p)\n            moves = ['W'] * pad_len\n            for i in range(len(p) - 1):\n                moves.append(local_move_map.get((p[i], p[i+1]), 'W')) # Fallback W if strictly wait?\n            print(\" \".join(moves))\n\n    def optimize_solution(self, paths):\n        \"\"\"Attempts to remove redundant loops from the solution.\"\"\"\n        current_paths = list(paths)\n        while True:\n            improved = False\n            # Try removing one loop\n            for i in range(len(current_paths)):\n                # Candidate: remove loop i\n                candidate = current_paths[:i] + current_paths[i+1:]\n                if not candidate: continue\n                \n                if self.verify_paths(candidate):\n                    current_paths = candidate\n                    improved = True\n                    # Restart search with reduced set\n                    break\n            \n            if not improved:\n                break\n        return tuple(current_paths)\n\nif __name__ == \"__main__\":\n    Solver().solve(sys.argv[1] if len(sys.argv) > 1 else None)\n",
+      "statement": "Navigate through a facility to reach the extraction point {{E}} by coordinating robot actions across multiple time loops.\n\n<<The Facility>>\n\nA [[width]] × [[height]] grid containing the following symbols:\n\n• {{S}}     <<Start>>:    All robots spawn here at the beginning of each loop\n• {{E}}     <<Exit>>:     Reach this point to complete the mission\n• {{#}}     <<Wall>>:     Impassable obstacle\n• {{.}}     <<Floor>>:    Walkable space\n• {{a-z}}   <<Switches>>: Pressure plates that control corresponding doors ({{e}} and {{s}} excluded)\n• {{A-Z}}   <<Doors>>:    Barriers opened by the matching lowercase switch ({{E}} and {{S}} excluded). e.g., {{a}} opens {{A}}. \n\n<<Key Concepts>>\n\n- <<Robot>>: The entity you control. Each loop, you program a robot's path.\n- <<Ghost>>: A replay of a previous robot. After completing a loop, that robot becomes a ghost, which automatically replays the same sequence of moves in all subsequent loops. Ghosts remain stationary at their final position once their path ends.\n\n<<Rules>>\n\n<<1. Movement>>\nEach turn, a robot may perform one of the following actions:\n- {{D}} (<<Down>>): Move one cell down \n- {{L}} (<<Left>>): Move one cell left \n- {{R}} (<<Right>>): Move one cell right\n- {{U}} (<<Up>>): Move one cell up \n- {{W}} (<<Wait>>): Stay in place\n\nA robot cannot move into a wall ({{#}}) or a closed door ({{A-Z}}).\n\n<<2. Time Loops>>\n- You program paths sequentially: Loop {{0}}, then Loop {{1}}, etc.\n- In Loop [[N]], ghosts from all previous loops ({{0}} to [[N]]-{{1}}) replay their paths simultaneously.\n- The robot and all ghosts move together, one step per turn.\n\n<<3. Collision>>\n- A robot <<cannot>> occupy the same position as a ghost at the same time step.\n- Robots and ghosts <<can>> cross each other (swap places) between time steps.\n- {{S}} (start) is a neutral zone where collisions are ignored.\n\n<<4. Door Activation>>\nA door is open for the <<entire loop>> if any ghost will stand on its corresponding switch at any point during that loop. This follows time loop logic: future actions are predetermined. A robot cannot open a door for its own loop; only ghosts from previous loops can.\n\n<<5. Victory Condition>>\nThe mission is complete when any robot reaches {{E}}.\n\n<<6. Turn Counting>>\nAll loops run simultaneously, so the <<number of turns>> of a solution is defined as the length of a single <<padded>> output line. Padding with {{W}} counts as actual turns. {{W}} moves after reaching {{E}} still count towards the <<total number of turns>>.\n\n<<7. Determining the Canonical Solution>>\nIf multiple solutions exist, the <<Canonical Solution>> is determined by applying the following criteria in order of priority:\n\n<<7.1. Minimize Turns>>: Complete the mission in the fewest number of <<turns>> per loop. For example, a solution finishing in 7 turns per loop (with 2 loops) is preferred over one finishing in 9 turns (with 1 loop).\n\n<<7.2. Minimize Loops>>: If the number of turns are equal, prefer the solution requiring fewer <<time loops>> (fewer output lines). For example, a solution with 2 loops (7 turns) is preferred over one with 3 loops (7 turns).\n\n<<7.3. Lexicographical Order>>: If both the <<number of turns>> and the <<number of loops>> are equal, return the solution that is <<lexicographically largest>>. To compare two solutions, concatenate all their output lines into a single string (Loop 0, then Loop 1, etc.) and compare using standard string comparison. Since {{W}} has the highest ASCII value among the move characters, this ensures that robots prefer <<Waiting>> over performing unnecessary moves.",
+      "testCases": [
+        {
+          "title": "Basic Lock",
+          "isTest": true,
+          "testIn": "5 6 2\n#####\n#a###\n#S..#\n###A#\n#E..#\n#####",
+          "testOut": "W W W W W U\nR R D D L L",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "7 6 2\n#######\n#a#####\n#S..#E#\n#.###A#\n#.....#\n#######",
+          "testOut": "W W W W W W W U\nD D R R R R U U",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "The Polite Keymaster",
+          "isTest": true,
+          "testIn": "6 3 2\n######\n#SaAE#\n######",
+          "testOut": "W W R\nR R R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "6 3 2\n######\n#EXxS#\n######",
+          "testOut": "W W L\nL L L",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Time Gap",
+          "isTest": true,
+          "testIn": "5 6 2\n#####\n#E#.#\n#A..#\n#..a#\n#S..#\n#####",
+          "testOut": "R U R\nU U U",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "5 6 2\n#####\n#.#E#\n#..A#\n#a..#\n#..S#\n#####",
+          "testOut": "L U L\nU U U",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "So Close, Yet So Far",
+          "isTest": true,
+          "testIn": "17 3 2\n#################\n#EAS...........a#\n#################",
+          "testOut": "R R R R R R R R R R R R\nW W W W W W W W W W L L",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "3 17 3\n###\n#E#\n#A#\n#S#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#.#\n#a#\n###",
+          "testOut": "D D D D D D D D D D D D\nW W W W W W W W W W U U",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "If Only",
+          "isTest": true,
+          "testIn": "7 7 2\n#######\n#a...S#\n#####.#\n#b....#\n#####.#\n#E..BA#\n#######",
+          "testOut": "L L L L R R R R D D L L L L\nW W W W W W D D D D L L L L",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "7 7 2\n#######\n#S...a#\n#.#####\n#....b#\n#.#####\n#AB..E#\n#######",
+          "testOut": "R R R R L L L L D D R R R R\nW W W W W W D D D D R R R R",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "The Useless Door",
+          "isTest": true,
+          "testIn": "10 5 3\n##########\n#a.....BS#\n######.#.#\n#E..A..b.#\n##########",
+          "testOut": "W W W W W W D D L\nW W L L L L L L L\nL L D D L L L L L",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "11 5 3\n###########\n#S.B.....a#\n#.#..######\n#.b..A...E#\n###########",
+          "testOut": "W W W W W W W D D R\nW W R R R R R R R R\nR R R D D R R R R R",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Temporal Traffic Jam",
+          "isTest": true,
+          "testIn": "9 7 3\n#########\n#......E#\n####A####\n#S.....b#\n####B####\n#......a#\n#########",
+          "testOut": "W W W R R R R R R\nW R R R D D R R R\nR R R U W U R R R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "9 7 3\n#########\n#E......#\n####A####\n#b.....S#\n####B####\n#a......#\n#########",
+          "testOut": "W W W L L L L L L\nW L L L D D L L L\nL L L U W U L L L",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "What A Maze",
+          "isTest": true,
+          "testIn": "14 7 3\n##############\n#a.........bS#\n#####.####.#.#\n#c...B...D.#.#\n###.##.####.##\n#E.A...C..d..#\n##############",
+          "testOut": "W W W W L L L L L L L L L L L\nL L L L L L L D D L L D D L L",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "14 7 3\n##############\n#Sb.........a#\n#.#.####.#####\n#.#.D...B...c#\n##.####.##.###\n#..d..C...A.E#\n##############",
+          "testOut": "W W W W R R R R R R R R R R R\nR R R R R R R D D R R D D R R",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Ghosts Priority",
+          "isTest": true,
+          "testIn": "9 6 4\n#########\n#dB...#a#\n##....AS#\n#DC...###\n#E#.c.b.#\n#########",
+          "testOut": "W W W W W W W W U\nW W L L L D D R R\nW L L U W L L L L\nL L L W L L D L D",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "9 6 4\n#########\n#E#.c.b.#\n#DC...###\n##....AS#\n#dB...#a#\n#########",
+          "testOut": "W W W W W W W W D\nW W L L U U R L L\nW L L L W L L D L\nL L U W L L L L U",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "The Deep Descent",
+          "isTest": true,
+          "testIn": "7 11 5\n#######\n#S...a#\n#A#####\n#....b#\n#B#####\n#....c#\n#C#####\n#....d#\n#D#####\n#....E#\n#######",
+          "testOut": "W W W W W W W W R R R R\nW W W W W W D D R R R R\nW W W W D D D D R R R R\nW W D D D D D D R R R R\nD D D D D D D D R R R R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "7 11 5\n#######\n#a...S#\n#####A#\n#b....#\n#####B#\n#c....#\n#####C#\n#d....#\n#####D#\n#E....#\n#######",
+          "testOut": "W W W W W W W W L L L L\nW W W W W W D D L L L L\nW W W W D D D D L L L L\nW W D D D D D D L L L L\nD D D D D D D D L L L L",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Another Brick In The Wall",
+          "isTest": true,
+          "testIn": "25 15 4\n#########################\n#C........#.............#\n#.#######.#...#########.#\n#.##....#.#.#.#########.#\n#.#..##c#.#.#...........#\n#...#.HSb...#.#########.#\n#...#.#h###.#.#########.#\n#...#.#..#.##.#########.#\n#...#.##.#..............#\n#...#.##.###..#########.#\n#...#......#..#########.#\n#...##.#.#.#............#\n#..#...#B#.###..........#\n#........E..............#\n#########################",
+          "testOut": "W W W W W W W W W R\nD D R D D D D D D R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "25 15 4\n#########################\n#.........#.............#\n#.#######.#...#########.#\n#.##....#.#.#.#########.#\n#.#..##x#.#.#...........#\n#...#.XSb...#.#########.#\n#.###.#B###.#.#########.#\n#...#.#..#.##.#########.#\n###.#.##.#..............#\n#.#.#.##.###..#########.#\n#...#......#..#########.#\n#...##.#.#..............#\n####...#############.##.#\n#........E..............#\n#########################",
+          "testOut": "W W W W W W W W W W W W W U\nL L D D D D D R D D D R R R",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Temporal Cascade",
+          "isTest": true,
+          "testIn": "25 15 4\n#########################\n#S.a..#..b..d..#..c..#..#\n#.###.########.#####.##.#\n#.#...A........B.....C..#\n#.#.###.########.#####.##\n#.#.#...#......#.#...#..#\n#.#.#...#......#.#...#..#\n#.#.#####......#.#...#..#\n#.#.#####......#.#...#..#\n#.#.#####......#.#...#..#\n#.#.#####......#.#...#..#\n#.#.#####......#.#...#..#\n#.#.#####......#.D...#..#\n#.......#......#.#...#E.#\n#########################",
+          "testOut": "W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W R R\nW W W W W W W W W W W R R R R D D R R R R R R R R R U U L L L L L\nW W W W W W W W R R R R D D R R R R R R R R R R R R R R R U U L L\nR R R R D D R R R R R R R R R R R R R R R R R D D D D D D D D D D",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "25 15 4\n#########################\n#..#..c..#..d..b..#..a.S#\n#.##.#####.########.###.#\n#..C.....B........A...#.#\n##.#####.########.###.#.#\n#..#...#.#......#...#.#.#\n#..#...#.#......#...#.#.#\n#..#...#.#......#####.#.#\n#..#...#.#......#####.#.#\n#..#...#.#......#####.#.#\n#..#...#.#......#####.#.#\n#..#...#.#......#####.#.#\n#..#...D.#......#####.#.#\n#.E#...#.#......#.......#\n#########################",
+          "testOut": "W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W L L\nW W W W W W W W W W W L L L L D D L L L L L L L L L U U R R R R R\nW W W W W W W W L L L L D D L L L L L L L L L L L L L L L U U R R\nL L L L D D L L L L L L L L L L L L L L L L L D D D D D D D D D D",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Endless Corridors",
+          "isTest": true,
+          "testIn": "30 20 2\n##############################\n#S..........................a#\n#.##########################.#\n#..........................#.#\n#.########################.#.#\n#..........................#.#\n#.########################.#.#\n#..........................#.#\n#.########################.#.#\n#..........................#.#\n#.########################.#.#\n#..........................#.#\n#.########################.#.#\n#..........................#.#\n#.########################.#.#\n#..........................#.#\n#########################..#.#\n#E.A.......................#.#\n###########################..#\n##############################",
+          "testOut": "W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W R R R R R R R R R R R R R R R R R R R R R R R R R R R\nD D D D D D D D D D D D D D R R R R R R R R R R R R R R R R R R R R R R R R D D L L L L L L L L L L L L L L L L L L L L L L L L",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "30 20 2\n##############################\n#a..........................S#\n#.##########################.#\n#.#..........................#\n#.#.########################.#\n#.#..........................#\n#.#.########################.#\n#.#..........................#\n#.#.########################.#\n#.#..........................#\n#.#.########################.#\n#.#..........................#\n#.#.########################.#\n#.#..........................#\n#.#.########################.#\n#.#..........................#\n#.#..#########################\n#.#.......................A.E#\n#..###########################\n##############################",
+          "testOut": "W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W L L L L L L L L L L L L L L L L L L L L L L L L L L L\nD D D D D D D D D D D D D D L L L L L L L L L L L L L L L L L L L L L L L L D D R R R R R R R R R R R R R R R R R R R R R R R R",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "The Switchboard",
+          "isTest": true,
+          "testIn": "30 7 5\n##############################\n#aA.B.C.D.F.G#H.I.J.K.L.M.N#E#\n#.###.#.#P#.#.###.#.#.#.#Q##.#\n#.#.O.#.#.R.T.U.V.W#X.Y#..##Z#\n#S#.####.##.#######.##.##....#\n#bcdfg#hijklmnopqrtuvwxyz#####\n##############################",
+          "testOut": "W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W U U U\nW W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W D R R R\nW W W W W W W W W W W W W W W W W W W W W U U U R R R R R R R R R R D D D D L L\nW W W W W W W W W W U U U R R R R R R R R R R D D D D R R R R R R R R R R R R R\nU U U R R R R R R R R R R D D R R R R R R U U R R R R R R R R D D D R R R U U U",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 14",
+          "isTest": false,
+          "testIn": "30 7 5\n##############################\n#bcdfg#hijklmnopqrtuvwxyz#####\n#S#.####.##.#######.##.##....#\n#.#.O.#.#.R.T.U.V.W#X.Y#..##Z#\n#.###.#.#P#.#.###.#.#.#.#Q##.#\n#aA.B.C.D.F.G#H.I.J.K.L.M.N#E#\n##############################",
+          "testOut": "W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W D D D\nW W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W U R R R\nW W W W W W W W W W W W W W W W W W W W W D D D R R R R R R R R R R U U U U L L\nW W W W W W W W W W D D D R R R R R R R R R R U U U U R R R R R R R R R R R R R\nD D D R R R R R R R R U U R R R R R R R R D D R R R R R R R R U U U R R R D D D",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Symphony No 5  ?",
+          "isTest": true,
+          "testIn": "15 9 5\n###############\n#......E......#\n#A###########B#\n#......c......#\n#h....fSg....i#\n#......d......#\n#C###########D#\n#.GI..b.a..HF.#\n###############",
+          "testOut": "W W W W W W W U R D R R R R R\nW L L L L L L D D D R R R R R\nU R R R R R R U U L L L L L L",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 15",
+          "isTest": false,
+          "testIn": "15 9 5\n###############\n#......E......#\n#B###########A#\n#......c......#\n#i....gSf....h#\n#......d......#\n#D###########C#\n#.FH..a.b..IG.#\n###############",
+          "testOut": "W W W W W W W U L D L L L L L\nW R R R R R R D D D L L L L L\nU L L L L L L U U R R R R R R",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "The Gearwork Nexus",
+          "isTest": true,
+          "testIn": "19 19 5\n###################\n#.#..........j#...#\n#.#.#.#.###.#.##..#\n#.#.#.#.#...#...i.#\n#.#.#.#.#.###.###.#\n#.d..p..m...o.....#\n##.##.#a#########.#\n#Nc..BbS..l..Pg.#.#\n#.#.###.#.#####.###\n#.#C#...#.....#...#\n#.#.###.###A#####.#\n#.#...#f#...h.I..M#\n#.###..D#####.#.#.#\n#.k.G...L...#.F.#O#\n###.##n##.#.###.#.#\n#.#.#.....#H..#..J#\n#.#.###.#####.###.#\n#........K...E....#\n###################",
+          "testOut": "W W W W W W W W W U U L L L L L\nW W W W W R R R L D D R R D D R\nD D D D D D R R R R D D R R D D",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 16",
+          "isTest": false,
+          "testIn": "19 19 5\n###################\n#........K...E....#\n#.#.###.#####.###.#\n#.#.#.....#H..#..J#\n###.##n##.#.###.#.#\n#.k.G...L...#.F.#O#\n#.###..D#####.#.#.#\n#.#...#f#...h.I..M#\n#.#.###.###A#####.#\n#.#C#...#.....#...#\n#.#.###.#.#####.###\n#Nc..BbS..l..Pg.#.#\n##.##.#a#########.#\n#.d..p..m...o.....#\n#.#.#.#.#.###.###.#\n#.#.#.#.#...#...i.#\n#.#.#.#.###.#.##..#\n#.#..........j#...#\n###################",
+          "testOut": "W W W W W W W W W D D L L L L L\nW W W W W R R R L U U R R U U R\nU U U U U U R R R R U U R R U U",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Alphabet Hub",
+          "isTest": true,
+          "testIn": "21 18 4\n#####################\n##..a..b..c..d......#\n##.##################\n##..f..g..h..i..j..k#\n##.##################\n##..l..m..n..o..p...#\n##.##################\n##.#.BC.####.RTU.####\n##.#A##D####Q###V####\n##.#.##.####.###.####\n#S...##.WXYZ.###...E#\n##.#K##F####P###L####\n##.#JIHG####.ONM.####\n##.##################\n##..q..r..t..u..v...#\n##.##################\n##..w..x..y..z......#\n#####################",
+          "testOut": "W W W W W W W W R D D D D D D R R R R R R R R R R R\nW W W W W W R U U U U U R R R R R R R R R R R R R R\nW R U U U U U U U R R R R R R R R R R R R R R R R R\nR R R D D R R R U U R R R R R D D R R R R U U R R R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 17",
+          "isTest": false,
+          "testIn": "21 18 4\n#####################\n#......d..c..b..a..##\n##################.##\n#k..j..i..h..g..f..##\n##################.##\n#...p..o..n..m..l..##\n##################.##\n####.UTR.####.CB.#.##\n####V###Q####D##A#.##\n####.###.####.##.#.##\n#E...###.ZYXW.##...S#\n####L###P####F##K#.##\n####.MNO.####GHIJ#.##\n##################.##\n#...v..u..t..r..q..##\n##################.##\n#......z..y..x..w..##\n#####################",
+          "testOut": "W W W W W W W W L D D D D D D L L L L L L L L L L L\nW W W W W W L U U U U U L L L L L L L L L L L L L L\nW L U U U U U U U L L L L L L L L L L L L L L L L L\nL L L D D L L L U U L L L L L D D L L L L U U L L L",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "The Seven-Gate Barrier",
+          "isTest": true,
+          "testIn": "26 9 5\n##########################\n#E.Z........A.....#.....i#\n####........B.....#.....h#\n#...........C...........g#\n#j#.........D...........d#\n#...........G.....#.....c#\n####........H.....#b....a#\n#z.J........I...........S#\n##########################",
+          "testOut": "W W W W W W W W W W W W W W W W W W W W W W W W W W W U U\nW U U U U L L L L L L L L L L L L L L L L L L L L L L L D\nW W L L L L L L L U U L L L L L L L L L L L L L D D L L L\nU U U U L L L L L L L U U L L L L L L L L L L L L L L L L",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 18",
+          "isTest": false,
+          "testIn": "26 9 5\n##########################\n#i.....#.....A........Z.E#\n#h.....#.....B........####\n#g...........C...........#\n#d...........D.........#j#\n#c.....#.....G...........#\n#a....b#.....H........####\n#S...........I........J.z#\n##########################",
+          "testOut": "W W W W W W W W W W W W W W W W W W W W W W W W W W W U U\nW U U U U R R R R R R R R R R R R R R R R R R R R R R R D\nW W R R R R R R R U U R R R R R R R R R R R R R D D R R R\nU U U U R R R R R R R U U R R R R R R R R R R R R R R R R",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Lexical PIpeline",
+          "isTest": true,
+          "testIn": "16 20 5\n################\n#########E######\n#########.######\n#NOPQRTUVWYZ####\n##BCD#GHIJLM####\n#########.######\n##.##.#.#..##.##\n##f##k#p#.v##.##\n##.##.#.#..##.##\n##d##j#o#.u##z##\n##.##.#.#..##.##\n##c##i#n#.t##y##\n##.##.#.#..##.##\n##b##h#m#.r##x##\n##.##.#.#..##.##\n##a##g#l#.q##w##\n##.##A#.#..##.##\n#X..........F.K#\n#########S######\n################",
+          "testOut": "U L L L L L L L U U U U U U U U U U\nW W W W W W W W W W W U R R R R U U\nW W W W W U L L L L U U U U U U U U\nW U U U U U U U U U U U U U U U U U",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 19",
+          "isTest": false,
+          "testIn": "16 20 5\n################\n######S#########\n#K.F..........X#\n##.##..#.#A##.##\n##w##q.#l#g##a##\n##.##..#.#.##.##\n##x##r.#m#h##b##\n##.##..#.#.##.##\n##y##t.#n#i##c##\n##.##..#.#.##.##\n##z##u.#o#j##d##\n##.##..#.#.##.##\n##.##v.#p#k##f##\n##.##..#.#.##.##\n######.#########\n####MLJIHG#DCB##\n####ZYWVUTRQPON#\n######.#########\n######E#########\n################",
+          "testOut": "D R R R R R R R D D D D D D D D D D\nW W W W W W W W W W W D L L L L D D\nW W W W W D R R R R D D D D D D D D\nW D D D D D D D D D D D D D D D D D",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "The Labyrinth Sprint",
+          "isTest": true,
+          "testIn": "27 6 4\n###########################\n#g....b.......c........aFE#\n#D####C#######B###G######A#\n#...#...#...#...#.h.#...#f#\n###.d.#.H.#...#...#...#..S#\n###########################",
+          "testOut": "W W W W W W W W W W W W W W W W W W W W W W W W W W W L L U L L D L L U L\nW W W W U D L L U L L D L L U L L D L L U L L D L L U L L D L L U L L D L\nL L U L L D L L U L L D L L U L L D L L U L L D L L U L L D L L U L L U U\nW W W W W W W W W W W W W W W W W W L L U L L D L L U L U U R R R R R R R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 20",
+          "isTest": false,
+          "testIn": "27 6 4\n###########################\n#EFa........c.......b....g#\n#A######G###B#######C####D#\n#f#...#.h.#...#...#...#...#\n#S..#...#...#...#.H.#.d.###\n###########################",
+          "testOut": "W W W W W W W W W W W W W W W W W W W W W W W W W W W R R U R R D R R U R\nW W W W U D R R U R R D R R U R R D R R U R R D R R U R R D R R U R R D R\nR R U R R D R R U R R D R R U R R D R R U R R D R R U R R D R R U R R U U\nW W W W W W W W W W W W W W W W W W R R U R R D R R U R U U L L L L L L L",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "The Bunker",
+          "isTest": true,
+          "testIn": "30 20 5\n##############################\n#....p....d...a...c.....o....#\n##Y###########N############T##\n#............................#\n#...#Q########B#########R#...#\n#...#....................#...#\n#...#.####F########G####.#...#\n#...#.#................#.#...#\n#...#.#.#######M########.#...#\n#...C.#.#............ZE#.D...#\n#...#.#.######J#########.#...#\n#...#.#................#.#...#\n#...#.####I########H####.#...#\n#...#....................#...#\n#...#O########A#########P#...#\n#w...........u.x............v#\n#.............S..............#\n#XW########################UV#\n#....r..fghij.b.mnq...ty.z...#\n##############################",
+          "testOut": "W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W U L\nR R R R R R R R R R R R R D D L L L L L L L L L L L L L L L L L L\nW W U R R R R R R R R R R R R U U U U U U U U U U U U R U U L L L\nU L L L L L L L L L U U R R R R R U U R R R R U U R R R R R R R R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 21",
+          "isTest": false,
+          "testIn": "30 20 5\n##############################\n#....o.....c...a...d....p....#\n##T############N###########Y##\n#............................#\n#...#R#########B########Q#...#\n#...#....................#...#\n#...#.####G########F####.#...#\n#...#.#................#.#...#\n#...#.########M#######.#.#...#\n#...D.#EZ............#.#.C...#\n#...#.#########J######.#.#...#\n#...#.#................#.#...#\n#...#.####H########I####.#...#\n#...#....................#...#\n#...#P#########A########O#...#\n#v............x.u...........w#\n#..............S.............#\n#VU########################WX#\n#...z.yt...qnm.b.jihgf..r....#\n##############################",
+          "testOut": "W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W U R\nL L L L L L L L L L L L L D D R R R R R R R R R R R R R R R R R R\nW W U L L L L L L L L L L L L U U U U U U U U U U U U L U U R R R\nU R R R R R R R R R U U L L L L L U U L L L L U U L L L L L L L L",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "- {{3}} ≤ [[width]] ≤ {{30}}\n- {{3}} ≤ [[height]] ≤ {{20}}\n- {{1}} ≤ [[max_loops]] ≤ {{5}}\n- Every side of the grid is a wall ({{#}}).\n- The grid contains exactly one {{S}} and one {{E}}.\n- Each switch letter ({{a-z}}) and each door letter ({{A-Z}}) appears exactly once, forming a one-to-one correspondence.\n- Every door is placed so that it blocks all possible routes through its location unless it is opened; it cannot be bypassed by walking around it.\n- Every test case is guaranteed to have a solution.",
+      "coverBinaryId": 156160163744506,
+      "stubGenerator": "read width:int height:int maxLoops:int\nloop height\n    read row:string(width)\nwrite \"U R W...\"",
+      "inputDescription": "<<Line 1:>> Three space-separated integers [[width]] [[height]] [[max_loops]] \n\n<<Next [[height]] lines>>: The facility map (each row is [[width]] characters)",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[N]] lines>> (where [[N]] ≤ [[max_loops]]), one per loop.\n\nEach line contains space-separated single-letter moves: {{D}} {{L}} {{R}} {{U}} {{W}} (Down, Left, Right, Up, Wait).\n<<Important>>: All paths must be padded to the same length using {{W}}."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Navigate through a facility to reach the extraction point <const>E</const> by coordinating robot actions across multiple time loops.<br><br><strong>The Facility</strong><br><br>A <var>width</var> &times; <var>height</var> grid containing the following symbols:<br><br>&bull; <const>S</const>     <strong>Start</strong>:    All robots spawn here at the beginning of each loop<br>&bull; <const>E</const>     <strong>Exit</strong>:     Reach this point to complete the mission<br>&bull; <const>#</const>     <strong>Wall</strong>:     Impassable obstacle<br>&bull; <const>.</const>     <strong>Floor</strong>:    Walkable space<br>&bull; <const>a-z</const>   <strong>Switches</strong>: Pressure plates that control corresponding doors (<const>e</const> and <const>s</const> excluded)<br>&bull; <const>A-Z</const>   <strong>Doors</strong>:    Barriers opened by the matching lowercase switch (<const>E</const> and <const>S</const> excluded). e.g., <const>a</const> opens <const>A</const>. <br><br><strong>Key Concepts</strong><br><br>- <strong>Robot</strong>: The entity you control. Each loop, you program a robot's path.<br>- <strong>Ghost</strong>: A replay of a previous robot. After completing a loop, that robot becomes a ghost, which automatically replays the same sequence of moves in all subsequent loops. Ghosts remain stationary at their final position once their path ends.<br><br><strong>Rules</strong><br><br><strong>1. Movement</strong><br>Each turn, a robot may perform one of the following actions:<br>- <const>D</const> (<strong>Down</strong>): Move one cell down <br>- <const>L</const> (<strong>Left</strong>): Move one cell left <br>- <const>R</const> (<strong>Right</strong>): Move one cell right<br>- <const>U</const> (<strong>Up</strong>): Move one cell up <br>- <const>W</const> (<strong>Wait</strong>): Stay in place<br><br>A robot cannot move into a wall (<const>#</const>) or a closed door (<const>A-Z</const>).<br><br><strong>2. Time Loops</strong><br>- You program paths sequentially: Loop <const>0</const>, then Loop <const>1</const>, etc.<br>- In Loop <var>N</var>, ghosts from all previous loops (<const>0</const> to <var>N</var>-<const>1</const>) replay their paths simultaneously.<br>- The robot and all ghosts move together, one step per turn.<br><br><strong>3. Collision</strong><br>- A robot <strong>cannot</strong> occupy the same position as a ghost at the same time step.<br>- Robots and ghosts <strong>can</strong> cross each other (swap places) between time steps.<br>- <const>S</const> (start) is a neutral zone where collisions are ignored.<br><br><strong>4. Door Activation</strong><br>A door is open for the <strong>entire loop</strong> if any ghost will stand on its corresponding switch at any point during that loop. This follows time loop logic: future actions are predetermined. A robot cannot open a door for its own loop; only ghosts from previous loops can.<br><br><strong>5. Victory Condition</strong><br>The mission is complete when any robot reaches <const>E</const>.<br><br><strong>6. Turn Counting</strong><br>All loops run simultaneously, so the <strong>number of turns</strong> of a solution is defined as the length of a single <strong>padded</strong> output line. Padding with <const>W</const> counts as actual turns. <const>W</const> moves after reaching <const>E</const> still count towards the <strong>total number of turns</strong>.<br><br><strong>7. Determining the Canonical Solution</strong><br>If multiple solutions exist, the <strong>Canonical Solution</strong> is determined by applying the following criteria in order of priority:<br><br><strong>7.1. Minimize Turns</strong>: Complete the mission in the fewest number of <strong>turns</strong> per loop. For example, a solution finishing in 7 turns per loop (with 2 loops) is preferred over one finishing in 9 turns (with 1 loop).<br><br><strong>7.2. Minimize Loops</strong>: If the number of turns are equal, prefer the solution requiring fewer <strong>time loops</strong> (fewer output lines). For example, a solution with 2 loops (7 turns) is preferred over one with 3 loops (7 turns).<br><br><strong>7.3. Lexicographical Order</strong>: If both the <strong>number of turns</strong> and the <strong>number of loops</strong> are equal, return the solution that is <strong>lexicographically largest</strong>. To compare two solutions, concatenate all their output lines into a single string (Loop 0, then Loop 1, etc.) and compare using standard string comparison. Since <const>W</const> has the highest ASCII value among the move characters, this ensures that robots prefer <strong>Waiting</strong> over performing unnecessary moves.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Three space-separated integers <var>width</var> <var>height</var> <var>max_loops</var> <br><br><strong>Next <var>height</var> lines</strong>: The facility map (each row is <var>width</var> characters)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>N</var> lines</strong> (where <var>N</var> &le; <var>max_loops</var>), one per loop.<br><br>Each line contains space-separated single-letter moves: <const>D</const> <const>L</const> <const>R</const> <const>U</const> <const>W</const> (Down, Left, Right, Up, Wait).<br><strong>Important</strong>: All paths must be padded to the same length using <const>W</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">- <const>3</const> &le; <var>width</var> &le; <const>30</const><br>- <const>3</const> &le; <var>height</var> &le; <const>20</const><br>- <const>1</const> &le; <var>max_loops</var> &le; <const>5</const><br>- Every side of the grid is a wall (<const>#</const>).<br>- The grid contains exactly one <const>S</const> and one <const>E</const>.<br>- Each switch letter (<const>a-z</const>) and each door letter (<const>A-Z</const>) appears exactly once, forming a one-to-one correspondence.<br>- Every door is placed so that it blocks all possible routes through its location unless it is opened; it cannot be bypassed by walking around it.<br>- Every test case is guaranteed to have a solution.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5 6 2\n#####\n#a###\n#S..#\n###A#\n#E..#\n#####</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">W W W W W U\nR R D D L L</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 154238261680568,
+  "commentCount": 153,
+  "upVotes": 2,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,151 @@
+{
+  "id": 35028,
+  "activeVersion": 39,
+  "score": 4,
+  "votableId": 25736554,
+  "codingamerId": 2064637,
+  "views": 142,
+  "commentableId": 25614318,
+  "title": "Blending Colors",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "java_coffee_cup",
+  "publicHandle": "350287c9abb84f10186e73c8d3f536a279d06",
+  "codingamerHandle": "f4c116cad137a7eee91b727ff6fe53597364602",
+  "lastVersion": {
+    "version": 39,
+    "autocloseTime": 1667627414369,
+    "data": {
+      "title": "Blending Colors",
+      "topics": [
+        {
+          "id": 95,
+          "handle": "geometry",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Geometry",
+            "2": "Geometry"
+          },
+          "puzzleCount": 18,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import java.util.ArrayList;\nimport java.util.List;\nimport java.util.Scanner;\n\npublic class Solution {\n\n\tpublic static void main(String[] args) {\n\t\tScanner in = new Scanner(System.in);\n\t\tBoard b = new Board();\n\n\t\tint R = in.nextInt();\n\t\tint P = in.nextInt();\n\t\tin.nextLine();\n\t\tfor (int j = 0; j < R; j++) {\n\t\t\tString s = in.nextLine();\n\t\t\tb.addShape(s);\n\t\t}\n\t\tfor (int j = 0; j < P; j++) {\n\t\t\tString[] ss = in.nextLine().split(\"\\\\s\");\n\t\t\tint x = Integer.parseInt(ss[0]);\n\t\t\tint y = Integer.parseInt(ss[1]);\n\t\t\tb.queryColor(x, y);\n\t\t}\n\t\tin.close();\n\t}\n}\n\nclass Board {\n\tList<Shape> sList = new ArrayList<>();\n\n\tpublic void addShape(String s) {\n\t\tsList.add(new Shape(s));\n\t}\n\n\tpublic void queryColor(int x, int y) {\n\t\tint count = 0; // how many shapes contain the target point\n\t\tint r = 0, g = 0, b = 0;\n\t\tfor (Shape sh : sList) {\n\t\t\t// 0: outside, 1: on edge, 2: inside\n\t\t\tint status = sh.contains(x, y);\n\t\t\tif (status == 1) {\n\t\t\t\tSystem.out.println(\"(0, 0, 0)\"); // black\n\t\t\t\treturn;\n\t\t\t} else if (status == 2) {\n\t\t\t\tr += sh.R;\n\t\t\t\tg += sh.G;\n\t\t\t\tb += sh.B;\n\t\t\t\tcount++;\n\t\t\t}\n\t\t}\n\t\tif (count == 0) {\n\t\t\tSystem.out.println(\"(255, 255, 255)\"); // white\n\t\t\treturn;\n\t\t}\n\n\t\tr = Math.round((float) r / count);\n\t\tg = Math.round((float) g / count);\n\t\tb = Math.round((float) b / count);\n\t\tSystem.out.printf(\"(%d, %d, %d)\\n\", r, g, b);\n\t}\n}\n\nclass Shape {\n\tint type; // 1: square or 0: circle\n\tint x0, y0; // origin\n\tint len;\n\tint R, G, B;\n\n\tpublic Shape(String s) {\n\t\tString[] ss = s.split(\"\\\\s\");\n\t\ttype = ss[0].equals(\"CIRCLE\") ? 0 : 1;\n\t\tx0 = Integer.parseInt(ss[1]);\n\t\ty0 = Integer.parseInt(ss[2]);\n\t\tlen = Integer.parseInt(ss[3]);\n\t\tR = Integer.parseInt(ss[4]);\n\t\tG = Integer.parseInt(ss[5]);\n\t\tB = Integer.parseInt(ss[6]);\n\t}\n\n\t// 0: outside, 1: on edge, 2: inside\n\tpublic int contains(int x, int y) {\n\t\t// square\n\t\tif (type == 1) {\n\t\t\tint x2 = x0 + len; // the opp side\n\t\t\tint y2 = y0 + len;\n\n\t\t\tif ((x == x0 || x == x2) && (y >= y0 && y <= y2)) {\n\t\t\t\treturn 1;\n\t\t\t}\n\t\t\tif ((y == y0 || y == y2) && (x >= x0 && x <= x2)) {\n\t\t\t\treturn 1;\n\t\t\t}\n\t\t\tif (x > x0 && x < x2 && y > y0 && y < y2) {\n\t\t\t\treturn 2;\n\t\t\t}\n\t\t\treturn 0;\n\t\t}\n\t\t// circle\n\t\telse {\n\t\t\tint dx = x - x0;\n\t\t\tint dy = y - y0;\n\t\t\tint dx2 = dx * dx;\n\t\t\tint dy2 = dy * dy;\n\t\t\tint len2 = len * len;\n\t\t\tif (dx2 + dy2 == len2) {\n\t\t\t\treturn 1;\n\t\t\t}\n\t\t\tif (dx2 + dy2 < len2) {\n\t\t\t\treturn 2;\n\t\t\t}\n\t\t\treturn 0;\n\t\t}\n\t}\n}",
+      "statement": "Designers are placing shapes of different sizes and colors on the canvas of an image editor.\n\n<<About Colors>>\nThe shapes have primary colors defined in RGB color notations. Red is (255, 0, 0); Green is (0, 255, 0); Blue is (0, 0, 255). Besides these, they also use Yellow (255, 255, 0), Cyan (0, 255, 255) and Magenta (255, 0, 255).\nAll shapes have a very thin black border (0, 0, 0) and are on a white background (255, 255, 255).\n\nThe shapes are defined as transparent so that when one shape is overlaying another, their colors will mix to reveal a new color. When two or more colors blend together, the new color is the average of all layer's colors.\n\nFor example, when R and G blend, the mixed color is (128, 128, 0). When Y, M and G mix, the result will be ((255+255+0)/3, (255+0+255)/3, (0+255+0)/3), which is (170, 170, 85). We round the decimal results to get the nearest integers (i.e. 10.4 is regarded as 10; 10.5 is regarded as 11).\n\n<<Black and White do not have blending effects.>>\n\nIn the final design, only squares and circles are used. Designers want to have a program to automatically calculate the color at any chosen point. \n\nWhen a chosen point is within one or more shapes, report the color or mixed color at that point.\nWhen a chosen point is outside the shapes, report White (255, 255, 255).\nWhen a chosen point is on the borderline of any shape, report Black (0, 0, 0).",
+      "testCases": [
+        {
+          "title": "RGB",
+          "isTest": true,
+          "testIn": "3 6\nSQUARE 0 5 6 255 0 0\nSQUARE 4 2 3 0 255 0\nCIRCLE 4 6 3 0 0 255\n0 0\n4 5\n2 6\n5 3\n5 4\n3 4",
+          "testOut": "(255, 255, 255)\n(0, 0, 0)\n(128, 0, 128)\n(0, 255, 0)\n(0, 128, 128)\n(0, 0, 255)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "RGB Validator",
+          "isTest": false,
+          "testIn": "3 6\nCIRCLE 5 4 3 0 255 0\nCIRCLE 8 4 2 255 0 0\nSQUARE 0 0 5 0 0 255\n8 4\n7 4\n4 2\n0 8\n6 5\n9 5",
+          "testOut": "(0, 0, 0)\n(128, 128, 0)\n(0, 128, 128)\n(255, 255, 255)\n(0, 255, 0)\n(255, 0, 0)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "CMY",
+          "isTest": true,
+          "testIn": "10 20\nCIRCLE 60 99 42 255 0 255\nSQUARE 40 9 26 255 255 0\nCIRCLE 33 2 25 255 0 255\nCIRCLE 53 88 25 255 255 0\nCIRCLE 0 27 69 255 255 0\nSQUARE 15 13 58 255 0 255\nSQUARE 68 25 95 0 255 255\nSQUARE 21 69 55 255 0 255\nCIRCLE 13 32 86 255 255 0\nSQUARE 25 77 40 0 255 255\n34 38\n21 55\n92 16\n77 67\n90 51\n8 41\n73 17\n93 67\n83 90\n66 50\n42 77\n31 55\n33 91\n88 30\n12 9\n41 78\n77 54\n19 24\n40 96\n51 22",
+          "testOut": "(255, 170, 85)\n(255, 170, 85)\n(255, 255, 0)\n(170, 170, 170)\n(128, 255, 128)\n(255, 255, 0)\n(0, 0, 0)\n(0, 255, 255)\n(128, 128, 255)\n(255, 128, 128)\n(0, 0, 0)\n(255, 170, 85)\n(204, 153, 153)\n(128, 255, 128)\n(255, 170, 85)\n(213, 170, 128)\n(128, 255, 128)\n(255, 170, 85)\n(204, 153, 153)\n(255, 191, 64)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "CMY Validator",
+          "isTest": false,
+          "testIn": "10 20\nCIRCLE 4 31 65 0 255 255\nCIRCLE 45 37 38 0 255 255\nSQUARE 77 15 51 0 255 255\nSQUARE 97 5 14 255 255 0\nCIRCLE 43 93 92 255 255 0\nSQUARE 83 33 61 255 255 0\nSQUARE 2 6 73 255 255 0\nSQUARE 37 43 67 0 255 255\nSQUARE 92 26 88 0 255 255\nSQUARE 90 45 83 255 0 255\n41 43\n49 91\n67 89\n71 81\n54 8\n11 80\n16 47\n14 7\n69 87\n93 77\n38 56\n32 79\n1 4\n18 54\n96 29\n5 9\n23 61\n96 67\n47 76\n90 67",
+          "testOut": "(0, 0, 0)\n(128, 255, 128)\n(128, 255, 128)\n(128, 255, 128)\n(128, 255, 128)\n(128, 255, 128)\n(128, 255, 128)\n(170, 255, 85)\n(128, 255, 128)\n(153, 204, 153)\n(102, 255, 153)\n(0, 0, 0)\n(0, 255, 255)\n(128, 255, 128)\n(85, 255, 170)\n(128, 255, 128)\n(128, 255, 128)\n(153, 204, 153)\n(128, 255, 128)\n(0, 0, 0)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "All colors",
+          "isTest": true,
+          "testIn": "10 50\nSQUARE 78 56 96 0 255 0\nCIRCLE 41 5 52 255 255 0\nCIRCLE 81 0 32 255 0 0\nSQUARE 29 53 82 255 0 0\nCIRCLE 72 45 74 0 0 255\nCIRCLE 91 62 60 255 0 0\nCIRCLE 39 53 47 255 0 255\nSQUARE 54 89 82 255 0 0\nSQUARE 32 75 75 0 255 0\nSQUARE 86 1 90 0 255 255\n40 87\n134 70\n141 8\n81 18\n50 110\n5 6\n159 41\n60 94\n44 106\n48 80\n8 70\n116 77\n109 19\n135 23\n72 44\n154 37\n67 167\n42 27\n41 67\n29 18\n53 148\n50 119\n69 117\n160 16\n135 162\n60 79\n0 29\n99 127\n110 27\n43 42\n116 17\n137 10\n101 26\n87 165\n122 22\n76 136\n127 25\n59 99\n42 41\n101 156\n143 137\n159 46\n95 14\n104 30\n157 86\n48 140\n165 134\n123 29\n83 1\n65 165",
+          "testOut": "(153, 51, 102)\n(64, 128, 128)\n(0, 255, 255)\n(191, 64, 64)\n(85, 85, 85)\n(255, 255, 0)\n(0, 255, 255)\n(170, 43, 85)\n(85, 85, 85)\n(153, 51, 102)\n(128, 0, 255)\n(64, 128, 128)\n(85, 85, 170)\n(85, 85, 170)\n(191, 64, 128)\n(0, 255, 255)\n(255, 0, 0)\n(170, 85, 170)\n(191, 0, 128)\n(170, 85, 170)\n(0, 255, 0)\n(128, 128, 0)\n(153, 51, 51)\n(0, 255, 255)\n(255, 0, 0)\n(153, 51, 102)\n(170, 85, 170)\n(128, 128, 0)\n(85, 85, 170)\n(191, 64, 128)\n(85, 85, 170)\n(0, 128, 255)\n(85, 85, 170)\n(255, 0, 0)\n(85, 85, 170)\n(128, 128, 0)\n(85, 85, 170)\n(153, 51, 51)\n(191, 64, 128)\n(255, 0, 0)\n(0, 255, 0)\n(0, 255, 255)\n(128, 64, 128)\n(85, 85, 170)\n(0, 255, 128)\n(0, 255, 0)\n(0, 255, 0)\n(85, 85, 170)\n(170, 85, 85)\n(255, 0, 0)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "All colors Validator",
+          "isTest": false,
+          "testIn": "10 50\nCIRCLE 98 34 85 255 0 0\nCIRCLE 12 60 10 255 0 255\nSQUARE 31 90 28 255 255 0\nSQUARE 75 37 37 0 255 0\nSQUARE 61 10 33 255 255 0\nSQUARE 55 5 1 255 0 0\nSQUARE 74 80 98 255 0 0\nCIRCLE 67 92 16 0 255 255\nSQUARE 85 14 41 0 0 255\nCIRCLE 22 63 70 0 255 0\n22 19\n11 33\n19 21\n4 37\n77 14\n58 45\n13 40\n42 32\n64 35\n12 77\n24 99\n76 2\n0 0\n29 96\n92 97\n67 39\n89 41\n69 55\n81 65\n2 97\n24 5\n42 78\n76 54\n81 46\n18 96\n39 38\n32 93\n50 2\n72 30\n97 31\n88 18\n54 96\n98 71\n49 89\n10 48\n29 14\n55 25\n69 47\n1 50\n28 78\n37 90\n95 17\n31 25\n74 57\n54 38\n100 35\n0 94\n70 16\n90 25\n32 63",
+          "testOut": "(128, 128, 0)\n(0, 255, 0)\n(128, 128, 0)\n(0, 255, 0)\n(255, 128, 0)\n(128, 128, 0)\n(0, 255, 0)\n(128, 128, 0)\n(170, 170, 0)\n(0, 255, 0)\n(0, 255, 0)\n(255, 0, 0)\n(0, 255, 0)\n(0, 255, 0)\n(255, 0, 0)\n(170, 170, 0)\n(128, 128, 64)\n(128, 128, 0)\n(85, 170, 0)\n(0, 255, 0)\n(128, 128, 0)\n(128, 128, 0)\n(85, 170, 0)\n(85, 170, 0)\n(0, 255, 0)\n(128, 128, 0)\n(128, 255, 0)\n(128, 128, 0)\n(170, 170, 0)\n(128, 0, 128)\n(170, 85, 85)\n(128, 191, 64)\n(128, 128, 0)\n(128, 128, 0)\n(0, 255, 0)\n(128, 128, 0)\n(128, 128, 0)\n(128, 128, 0)\n(0, 255, 0)\n(128, 128, 0)\n(0, 0, 0)\n(128, 0, 128)\n(128, 128, 0)\n(128, 128, 0)\n(128, 128, 0)\n(128, 0, 128)\n(0, 255, 0)\n(170, 170, 0)\n(170, 85, 85)\n(128, 128, 0)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Concentric",
+          "isTest": true,
+          "testIn": "6 8\nCIRCLE 500 500 500 255 255 0\nCIRCLE 500 500 300 255 0 255\nCIRCLE 500 500 100 255 255 0\nCIRCLE 500 500 70 0 255 0\nCIRCLE 500 500 13 0 255 255\nCIRCLE 500 500 13 0 255 255\n500 500\n500 510\n500 550\n500 590\n500 600\n500 700\n500 1000\n1000 1000",
+          "testOut": "(128, 213, 128)\n(128, 213, 128)\n(191, 191, 64)\n(255, 170, 85)\n(0, 0, 0)\n(255, 128, 128)\n(0, 0, 0)\n(255, 255, 255)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Concentric Validator",
+          "isTest": false,
+          "testIn": "6 8\nCIRCLE 400 500 500 0 255 0\nCIRCLE 400 500 300 0 255 255\nCIRCLE 400 500 100 255 255 0\nCIRCLE 400 500 100 0 255 255\nCIRCLE 400 500 70 0 0 255\nCIRCLE 400 500 13 255 255 0\n401 499\n418 497\n471 496\n511 495\n700 500\n0 0\n899 500\n900 500",
+          "testOut": "(85, 213, 128)\n(51, 204, 153)\n(64, 255, 128)\n(0, 255, 128)\n(0, 0, 0)\n(255, 255, 255)\n(0, 255, 0)\n(0, 0, 0)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Big Canvas",
+          "isTest": true,
+          "testIn": "50 50\nCIRCLE 733 830 266 255 0 0\nSQUARE 494 228 33 0 255 255\nCIRCLE 938 272 3 0 0 255\nSQUARE 201 570 7 0 255 0\nSQUARE 260 936 24 255 0 0\nCIRCLE 177 120 206 0 0 255\nSQUARE 412 725 114 0 255 0\nSQUARE 40 559 208 255 0 0\nCIRCLE 810 84 98 255 0 0\nCIRCLE 867 613 6 255 255 0\nCIRCLE 845 531 146 255 0 0\nSQUARE 975 325 172 0 0 255\nSQUARE 489 485 69 255 0 0\nSQUARE 421 758 12 255 0 0\nCIRCLE 877 315 217 255 255 0\nSQUARE 740 941 216 255 0 0\nCIRCLE 531 794 286 0 255 255\nSQUARE 280 783 76 0 255 255\nCIRCLE 780 89 42 255 0 255\nSQUARE 98 100 112 0 255 0\nCIRCLE 91 189 128 255 0 0\nCIRCLE 219 216 42 255 255 0\nCIRCLE 440 784 83 255 0 255\nSQUARE 276 203 199 0 255 0\nSQUARE 688 278 198 0 255 0\nCIRCLE 363 820 25 255 0 0\nSQUARE 342 153 35 255 255 0\nCIRCLE 384 734 35 255 0 0\nSQUARE 608 938 5 255 0 0\nSQUARE 558 97 57 255 255 0\nSQUARE 627 793 200 0 0 255\nSQUARE 489 501 205 0 255 255\nCIRCLE 910 407 299 0 255 0\nCIRCLE 764 914 282 0 255 255\nSQUARE 843 358 10 255 0 255\nCIRCLE 402 229 210 255 0 255\nSQUARE 373 802 205 255 255 0\nCIRCLE 452 601 249 255 0 0\nCIRCLE 185 736 230 255 255 0\nSQUARE 860 897 236 0 255 255\nSQUARE 875 432 57 0 255 255\nSQUARE 140 998 162 0 0 255\nSQUARE 897 383 154 255 0 0\nSQUARE 162 1 168 0 255 0\nSQUARE 748 876 63 0 255 255\nSQUARE 255 959 180 255 0 255\nCIRCLE 443 541 159 0 255 255\nCIRCLE 116 17 13 0 0 255\nSQUARE 973 559 262 255 0 0\nCIRCLE 644 786 121 255 0 255\n32 618\n427 62\n783 207\n227 835\n769 464\n971 283\n198 763\n551 636\n480 46\n977 124\n925 119\n528 275\n884 922\n402 442\n687 398\n906 201\n463 847\n119 290\n137 156\n713 978\n207 4\n770 270\n762 455\n464 78\n419 139\n576 188\n324 704\n107 82\n424 382\n780 931\n226 13\n952 647\n349 176\n569 227\n139 943\n562 991\n85 801\n947 171\n944 948\n641 810\n834 871\n585 105\n267 141\n580 328\n368 963\n335 948\n434 831\n894 87\n319 997\n650 639",
+          "testOut": "(255, 255, 0)\n(255, 0, 255)\n(128, 255, 0)\n(255, 255, 0)\n(128, 191, 0)\n(128, 255, 0)\n(255, 128, 0)\n(64, 191, 191)\n(255, 0, 255)\n(128, 255, 0)\n(128, 255, 0)\n(255, 0, 255)\n(85, 170, 170)\n(128, 128, 128)\n(128, 255, 0)\n(128, 255, 0)\n(191, 128, 128)\n(128, 0, 128)\n(85, 85, 85)\n(64, 128, 191)\n(0, 128, 128)\n(128, 255, 0)\n(128, 191, 0)\n(255, 0, 255)\n(255, 0, 255)\n(255, 0, 255)\n(170, 170, 85)\n(128, 0, 128)\n(170, 85, 85)\n(51, 153, 204)\n(0, 128, 128)\n(0, 255, 0)\n(170, 85, 170)\n(255, 0, 255)\n(255, 255, 0)\n(128, 191, 128)\n(255, 255, 0)\n(128, 255, 0)\n(128, 128, 128)\n(102, 102, 204)\n(128, 128, 128)\n(255, 255, 0)\n(85, 85, 170)\n(255, 0, 255)\n(128, 128, 255)\n(0, 255, 255)\n(153, 153, 102)\n(255, 0, 0)\n(255, 0, 255)\n(128, 128, 128)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Big Canvas Validator",
+          "isTest": false,
+          "testIn": "50 50\nSQUARE 533 204 166 0 255 0\nCIRCLE 315 755 300 255 255 0\nSQUARE 749 916 201 255 0 0\nSQUARE 539 18 180 0 255 255\nSQUARE 20 361 90 255 0 255\nSQUARE 674 176 182 0 255 0\nSQUARE 272 921 277 255 255 0\nCIRCLE 158 858 216 0 255 255\nSQUARE 628 137 206 255 0 0\nSQUARE 493 555 81 0 255 255\nCIRCLE 781 421 277 0 255 255\nSQUARE 87 761 83 255 0 0\nSQUARE 504 806 266 0 255 255\nCIRCLE 259 276 216 255 0 255\nSQUARE 10 710 85 0 255 255\nCIRCLE 289 668 168 0 255 255\nCIRCLE 634 877 278 0 255 255\nSQUARE 90 586 295 0 255 0\nSQUARE 170 959 139 255 0 255\nCIRCLE 240 412 181 0 0 255\nCIRCLE 185 356 256 255 0 255\nCIRCLE 804 889 103 0 255 0\nSQUARE 681 509 126 255 0 255\nCIRCLE 810 728 71 0 255 255\nCIRCLE 513 212 292 0 255 255\nCIRCLE 606 138 128 255 255 0\nCIRCLE 840 538 58 255 255 0\nCIRCLE 306 523 16 0 255 255\nCIRCLE 702 260 275 255 255 0\nSQUARE 573 387 28 0 0 255\nCIRCLE 970 560 269 255 0 0\nCIRCLE 747 867 77 255 255 0\nCIRCLE 920 713 8 255 0 0\nSQUARE 652 591 198 0 0 255\nCIRCLE 844 564 274 0 255 255\nSQUARE 353 972 153 255 0 255\nCIRCLE 202 969 147 255 255 0\nSQUARE 361 701 262 255 255 0\nSQUARE 5 326 285 0 255 255\nSQUARE 320 381 88 0 255 255\nSQUARE 472 501 263 255 255 0\nSQUARE 996 998 268 0 255 0\nCIRCLE 764 435 24 255 0 0\nCIRCLE 98 261 4 0 255 255\nSQUARE 646 61 66 0 255 0\nSQUARE 189 427 80 0 255 0\nCIRCLE 684 261 64 255 255 0\nSQUARE 375 241 56 255 0 0\nSQUARE 370 496 248 255 0 255\nCIRCLE 460 455 84 0 255 0\n184 868\n289 912\n638 610\n503 18\n779 730\n865 414\n731 52\n513 753\n507 71\n544 661\n345 85\n90 236\n756 316\n196 967\n585 616\n173 83\n80 940\n772 346\n753 865\n552 113\n36 352\n513 367\n698 807\n84 403\n365 454\n849 711\n744 773\n378 561\n224 993\n724 199\n394 879\n753 758\n265 795\n673 838\n608 78\n902 457\n272 543\n367 125\n56 438\n391 330\n549 602\n414 70\n943 158\n950 650\n157 373\n999 499\n782 44\n128 970\n657 739\n296 862",
+          "testOut": "(128, 255, 64)\n(170, 255, 85)\n(64, 255, 191)\n(0, 255, 255)\n(51, 153, 204)\n(128, 191, 128)\n(128, 255, 128)\n(191, 255, 64)\n(170, 255, 85)\n(191, 191, 128)\n(128, 128, 255)\n(255, 0, 255)\n(85, 213, 128)\n(191, 191, 128)\n(102, 204, 204)\n(255, 0, 255)\n(170, 255, 85)\n(51, 255, 153)\n(64, 255, 128)\n(128, 255, 128)\n(128, 128, 255)\n(85, 255, 170)\n(0, 255, 255)\n(128, 64, 255)\n(102, 102, 255)\n(51, 153, 204)\n(0, 170, 255)\n(170, 170, 170)\n(191, 191, 128)\n(102, 204, 102)\n(170, 255, 85)\n(0, 191, 255)\n(64, 255, 128)\n(0, 255, 255)\n(128, 255, 128)\n(85, 170, 170)\n(102, 153, 204)\n(128, 128, 255)\n(170, 85, 255)\n(128, 64, 255)\n(191, 191, 128)\n(0, 255, 255)\n(255, 255, 0)\n(128, 128, 128)\n(128, 64, 255)\n(85, 170, 170)\n(255, 255, 0)\n(170, 255, 85)\n(64, 191, 191)\n(128, 255, 64)",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "1 ≤ [[S]] ≤ 50\n1 ≤ [[P]] ≤ 50\n0 ≤ [[x]], [[y]] ≤ 1000 (This is the canvas size limit)\n1 ≤ [[len]] ≤ 500\n0 ≤ [[R]], [[G]], [[B]] ≤ 255\n\nSome shapes may be partially drawn outside the canvas. Your business is within the canvas only.",
+      "coverBinaryId": 91420986764746,
+      "stubGenerator": "read S:int P:int\nloop S read line:string(127)\nloop P read x:int y:int\nwrite answer\n",
+      "inputDescription": "<<Line 1:>> Integer [[S]] and [[P]], for the number of Shapes and number of checking points.\n\n<<Next [[S]] lines:>> Each line defines one Shape by seven elements, space separated: \n[[name]] is either <<SQUARE>> or <<CIRCLE>>\n[[x0]] [[y0]] are integers. For a circle, this is the coordinates of the center. For a square, it is the coordinates of the lower-left corner. We are using the Cartesian coordinates system. All square sides are parallel to the x or y axis.\n[[len]] is an integer. For a circle, it is the radius. For a square, it is the side length.\n[[R]] [[G]] [[B]] are integers, color values of this shape.\n\n<<Next [[P]] lines:>> Each line defines a point by integers [[x]] [[y]]. You have to calculate the color at each of the points.",
+      "solutionLanguage": "Java",
+      "outputDescription": "<<Write [[P]] lines>> Each line is a RGB color notation in format <<(R, G, B)>>."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Designers are placing shapes of different sizes and colors on the canvas of an image editor.<br><br><strong>About Colors</strong><br>The shapes have primary colors defined in RGB color notations. Red is (255, 0, 0); Green is (0, 255, 0); Blue is (0, 0, 255). Besides these, they also use Yellow (255, 255, 0), Cyan (0, 255, 255) and Magenta (255, 0, 255).<br>All shapes have a very thin black border (0, 0, 0) and are on a white background (255, 255, 255).<br><br>The shapes are defined as transparent so that when one shape is overlaying another, their colors will mix to reveal a new color. When two or more colors blend together, the new color is the average of all layer's colors.<br><br>For example, when R and G blend, the mixed color is (128, 128, 0). When Y, M and G mix, the result will be ((255+255+0)/3, (255+0+255)/3, (0+255+0)/3), which is (170, 170, 85). We round the decimal results to get the nearest integers (i.e. 10.4 is regarded as 10; 10.5 is regarded as 11).<br><br><strong>Black and White do not have blending effects.</strong><br><br>In the final design, only squares and circles are used. Designers want to have a program to automatically calculate the color at any chosen point. <br><br>When a chosen point is within one or more shapes, report the color or mixed color at that point.<br>When a chosen point is outside the shapes, report White (255, 255, 255).<br>When a chosen point is on the borderline of any shape, report Black (0, 0, 0).</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Integer <var>S</var> and <var>P</var>, for the number of Shapes and number of checking points.<br><br><strong>Next <var>S</var> lines:</strong> Each line defines one Shape by seven elements, space separated: <br><var>name</var> is either <strong>SQUARE</strong> or <strong>CIRCLE</strong><br><var>x0</var> <var>y0</var> are integers. For a circle, this is the coordinates of the center. For a square, it is the coordinates of the lower-left corner. We are using the Cartesian coordinates system. All square sides are parallel to the x or y axis.<br><var>len</var> is an integer. For a circle, it is the radius. For a square, it is the side length.<br><var>R</var> <var>G</var> <var>B</var> are integers, color values of this shape.<br><br><strong>Next <var>P</var> lines:</strong> Each line defines a point by integers <var>x</var> <var>y</var>. You have to calculate the color at each of the points.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Write <var>P</var> lines</strong> Each line is a RGB color notation in format <strong>(R, G, B)</strong>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>S</var> &le; 50<br>1 &le; <var>P</var> &le; 50<br>0 &le; <var>x</var>, <var>y</var> &le; 1000 (This is the canvas size limit)<br>1 &le; <var>len</var> &le; 500<br>0 &le; <var>R</var>, <var>G</var>, <var>B</var> &le; 255<br><br>Some shapes may be partially drawn outside the canvas. Your business is within the canvas only.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3 6\nSQUARE 0 5 6 255 0 0\nSQUARE 4 2 3 0 255 0\nCIRCLE 4 6 3 0 0 255\n0 0\n4 5\n2 6\n5 3\n5 4\n3 4</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">(255, 255, 255)\n(0, 0, 0)\n(128, 0, 128)\n(0, 255, 0)\n(0, 128, 128)\n(0, 0, 255)</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 105609553406,
+  "avatar": 13281799951852,
+  "commentCount": 10,
+  "upVotes": 4,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 708964,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1665120118647,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

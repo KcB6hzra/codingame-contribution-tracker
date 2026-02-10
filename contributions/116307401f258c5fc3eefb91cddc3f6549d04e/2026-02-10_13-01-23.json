@@ -1,0 +1,183 @@
+{
+  "id": 116307,
+  "activeVersion": 13,
+  "score": 16,
+  "votableId": 36189588,
+  "codingamerId": 1983963,
+  "views": 296,
+  "commentableId": 36032712,
+  "title": "Inside Area",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "pluieciel",
+  "publicHandle": "116307401f258c5fc3eefb91cddc3f6549d04e",
+  "codingamerHandle": "3ae5608cc0aec3a2d51efd34cade51cb3693891",
+  "lastVersion": {
+    "version": 13,
+    "autocloseTime": 1742758443387,
+    "freezeTime": 1737824527817,
+    "data": {
+      "title": "Inside Area",
+      "topics": [
+        {
+          "id": 95,
+          "handle": "geometry",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Geometry",
+            "2": "Geometry"
+          },
+          "puzzleCount": 27,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "(ns Solution\n  (:require [clojure.string :as str])\n  (:gen-class))\n\n(def dirs {\">\" [0 1] \"v\" [1 0] \"<\" [0 -1] \"^\" [-1 0]})\n\n(defn get-len [lst]\n  (->> lst\n       (map (fn [[a b]] (inc (- b a))))\n       (reduce +)))\n\n(defn -main [& args]\n  (let [n (Integer/parseInt (read-line))\n        actions (repeatedly n #(->> (str/split (read-line) #\" \")))\n        start [0 0]\n        path (->> (reduce (fn [done action]\n                            (let [pos (last done)\n                                  [d step] action\n                                  step (read-string step)\n                                  newpos (mapv + pos (map #(* % step) (get dirs d)))]\n                              (conj done newpos)))\n                          [start] actions)\n                  rest)\n        rows (->> path\n                  (group-by first)\n                  (#(for [[r lst] %] [r (partition 2 (sort (map second lst)))]))\n                  (sort-by first))\n        [[rn rowone] & nxtrows] rows]\n  (loop [tot 0\n          prern rn\n          prerow rowone\n          todo nxtrows]\n    (if (empty? todo)\n      (println tot)\n      (let [[nxtrn nxtrow] (first todo)\n            block (* (- nxtrn prern) (get-len prerow))\n            [newrow makeup] (loop [res []\n                                    rowa prerow\n                                    rowb nxtrow\n                                    makeup 0]\n                              (cond\n                                (empty? rowa) [(concat res rowb) makeup]\n                                (empty? rowb) [(concat res rowa) makeup]\n                                :else\n                                (let [[s e :as a] (first rowa)\n                                      [sn en :as b] (first rowb)]\n                                  (cond\n                                    (< en s) (recur (conj res b) rowa (rest rowb) makeup)\n                                    (= en s) (recur res (conj (rest rowa) [sn e]) (rest rowb) makeup)\n                                    (and (= s sn) (< en e)) (recur res (conj (rest rowa) [en e]) (rest rowb) (+ makeup (- en sn)))\n                                    (and (= s sn) (= en e)) (recur res (rest rowa) (rest rowb) (+ makeup (inc (- en sn))))\n                                    (and (< s sn) (< en e)) (recur (conj res [s sn]) (conj (rest rowa) [en e]) (rest rowb) (+ makeup (dec (- en sn))))\n                                    (= en e) (recur (conj res [s sn]) (rest rowa) (rest rowb) (+ makeup (- en sn)))\n                                    (= e sn) (recur res (rest rowa) (conj (rest rowb) [s en]) makeup)\n                                    (< e sn) (recur (conj res a) (rest rowa) rowb makeup)))))]\n        (recur (+ tot block makeup)\n                nxtrn\n                newrow\n                (rest todo)))))))",
+      "statement": "A robot is navigating a 2D plane, following a set of movement instructions.\nThe following symbols are used to indicate the movement directions:\n    {{^}} : Move up\n    {{v}} : Move down\n    {{>}} : Move right\n    {{<}} : Move left\n\nEach instruction consists of a [[direction]] and an integer [[step]] indicating the number of units to move in that direction. For example, \"{{> 5}}\" means the robot will move 5 units to the right.\n\nAfter executing all instructions, the robot returns to its starting point, creating a closed, non-self-intersecting polygon. \n\nExample:\n4\n> 3\nv 2\n< 3\n^ 2\n\nThe robot will make a path looks like:\n`{{......}}\n{{.####.}}\n{{.#..#.}}\n{{.####.}}\n{{......}}`\n\nWe want to know the area enclosed by the robot's path, including the path.\nIt looks like:\n`{{......}}\n{{.####.}}\n{{.####.}}\n{{.####.}}\n{{......}}`\n\nSo, the area is 12.\n\nCan you determine the enclosed area based on the given set of instructions?",
+      "testCases": [
+        {
+          "title": "口",
+          "isTest": true,
+          "testIn": "4\n< 6\n^ 4\n> 6\nv 4",
+          "testOut": "35",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "口",
+          "isTest": false,
+          "testIn": "4\n> 3\nv 4\n< 3\n^ 4",
+          "testOut": "20",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "凹",
+          "isTest": true,
+          "testIn": "8\nv 800\n> 1000\n^ 800\n< 300\nv 400\n< 400\n^ 400\n< 300",
+          "testOut": "642201",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "凹",
+          "isTest": false,
+          "testIn": "8\nv 8\n> 10\n^ 8\n< 3\nv 4\n< 4\n^ 4\n< 3",
+          "testOut": "87",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "凸",
+          "isTest": true,
+          "testIn": "8\n^ 1000\n< 1000\n^ 1000\n< 1000\nv 3000\n> 1000\n^ 1000\n> 1000",
+          "testOut": "4005001",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "凸",
+          "isTest": false,
+          "testIn": "8\n> 100\n^ 100\n> 100\n^ 100\n< 100\n^ 100\n< 100\nv 300",
+          "testOut": "40501",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "arc de triomphe",
+          "isTest": true,
+          "testIn": "32\nv 10\n< 10\nv 10\n< 10\nv 10\n> 10\nv 100\n> 50\n^ 70\n> 5\n^ 10\n> 5\n^ 5\n> 10\n^ 5\n> 10\nv 5\n> 10\nv 5\n> 5\nv 10\n> 5\nv 70\n> 50\n^ 100\n> 10\n^ 10\n< 10\n^ 10\n< 10\n^ 10\n< 130",
+          "testOut": "15791",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "arc de triomphe",
+          "isTest": false,
+          "testIn": "32\nv 100\n< 100\nv 100\n< 100\nv 100\n> 100\nv 1000\n> 500\n^ 700\n> 50\n^ 100\n> 50\n^ 50\n> 100\n^ 50\n> 100\nv 50\n> 100\nv 50\n> 50\nv 100\n> 50\nv 700\n> 500\n^ 1000\n> 100\n^ 100\n< 100\n^ 100\n< 100\n^ 100\n< 1300",
+          "testOut": "1543901",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "really large",
+          "isTest": true,
+          "testIn": "14\n> 461937\nv 56407\n> 356671\nv 863240\n> 367720\nv 266681\n< 577262\n^ 829975\n< 112010\nv 829975\n< 491645\n^ 686074\n< 5411\n^ 500254",
+          "testOut": "952408144115",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "really large",
+          "isTest": false,
+          "testIn": "14\n> 461937\nv 56407\n> 356671\nv 863240\n> 367720\nv 266681\n< 577260\n^ 829975\n< 112009\nv 829975\n< 491646\n^ 686074\n< 5413\n^ 500254",
+          "testOut": "952407601942",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "really really large",
+          "isTest": true,
+          "testIn": "602\n< 456731\nv 169418\n< 335664\n^ 169418\n< 394257\n^ 463270\n> 70590\n^ 447271\n> 137229\n^ 334945\n> 57463\nv 69144\n> 296261\nv 540147\n> 125481\nv 144851\n> 40101\nv 28074\n> 459527\n^ 247146\n> 133878\n^ 86567\n< 557259\n^ 283062\n> 557259\n^ 298027\n> 235511\nv 26933\n> 65106\nv 520721\n< 65106\nv 120002\n> 303461\n^ 235118\n> 3258\n^ 135897\n> 160615\nv 444101\n> 113376\nv 66878\n> 315907\n^ 510979\n> 91549\nv 280368\n> 397704\nv 154667\n> 60776\nv 505469\n< 60776\nv 37547\n> 322339\n^ 350650\n< 66486\n^ 266164\n> 66486\n^ 361237\n> 314436\n^ 312029\n> 11843\n^ 152669\n> 388559\n^ 499327\n> 68812\nv 448689\n> 260046\nv 147488\n> 146668\nv 367848\n> 225459\nv 66601\n> 204856\nv 284740\n< 599615\nv 102534\n> 599615\nv 279600\n> 166151\nv 38653\n> 499427\n^ 142872\n> 35737\n^ 562655\n> 91334\nv 82692\n> 317218\nv 508390\n> 109903\nv 64558\n< 427121\nv 4690\n> 99201\nv 231375\n> 28889\nv 118214\n> 210011\nv 290726\n> 49414\nv 232051\n> 560962\nv 174817\n< 306921\nv 193212\n< 187649\n^ 193212\n< 325817\nv 25471\n> 260659\nv 275450\n> 322783\nv 123818\n> 542482\n^ 288572\n> 5297\n^ 538131\n> 154045\n^ 87518\n> 427400\n^ 49984\n> 285864\n^ 381926\n< 209227\n^ 135298\n< 247515\n^ 417247\n> 456742\n^ 273886\n< 14231\nv 150745\n< 377575\n^ 150745\n< 321458\n^ 26291\n> 16438\n^ 251073\n> 542300\n^ 181834\n< 84688\n^ 218659\n< 313894\n^ 306392\n< 131790\n^ 284571\n< 261679\n^ 132448\n< 209307\n^ 430802\n< 182205\nv 429414\n< 226347\nv 65036\n< 283273\n^ 494450\n< 227853\n^ 226958\n> 159760\n^ 233457\n< 253127\n^ 188786\n> 253127\n^ 183738\n> 314877\nv 97443\n> 268665\nv 13618\n< 235297\nv 595122\n> 235297\nv 85795\n> 369829\n^ 216476\n< 205007\n^ 402967\n> 205007\n^ 172535\n> 238396\nv 178830\n> 429415\nv 338016\n> 44619\nv 89135\n> 10787\n^ 406413\n< 30726\n^ 470050\n< 361578\n^ 236752\n< 287893\n^ 417936\n< 216016\n^ 173468\n< 479492\n^ 352937\n< 43034\n^ 315743\n< 425161\nv 315743\n< 467815\nv 22125\n< 446255\nv 361121\n< 477729\nv 66324\n< 165813\nv 544536\n> 191333\nv 590676\n< 191333\nv 66361\n< 87865\n^ 30875\n< 118906\n^ 400953\n< 493597\n^ 259465\n< 165490\n^ 229880\n< 305114\n^ 287508\n< 46083\n^ 518420\n< 218584\n^ 10926\n< 72638\n^ 425888\n> 72638\n^ 254579\n< 264137\n^ 19890\n< 231044\nv 316745\n< 320373\n^ 316745\n< 264689\nv 553920\n< 315495\n^ 553920\n< 145443\n^ 191629\n> 108620\n^ 319714\n> 133036\n^ 144631\n< 153446\n^ 419248\n> 153446\n^ 70986\n> 107095\n^ 36627\n> 477341\nv 53917\n< 243415\nv 372010\n< 323859\nv 8519\n> 77582\nv 110802\n> 303198\n^ 317653\n> 433537\nv 317653\n> 92404\nv 242443\n< 384075\nv 166384\n< 522646\nv 19734\n> 567274\nv 17397\n> 514272\n^ 87085\n> 80427\n^ 331264\n> 66904\nv 88357\n> 341577\nv 433326\n> 118967\nv 163270\n> 189468\nv 6682\n> 581577\nv 182581\n< 91828\nv 451106\n< 373220\n^ 451106\n< 205612\nv 336071\n> 184592\nv 285354\n> 486068\nv 182873\n< 581577\nv 139088\n> 302246\nv 559096\n> 298018\n^ 559096\n> 119892\n^ 413583\n> 171823\n^ 223019\n> 374435\n^ 293521\n< 374435\n^ 116604\n< 171823\n^ 85922\n> 356013\n^ 153618\n> 452429\n^ 153620\n> 70270\n^ 341718\n< 522699\n^ 35997\n> 72738\n^ 54369\n> 70012\n^ 408942\n> 31041\n^ 82119\n> 333873\n^ 193921\n> 250763\n^ 211914\n> 195721\nv 104713\n> 248228\n^ 104713\n> 422342\nv 405835\n> 56794\nv 156252\n> 425656\nv 389178\n> 262785\nv 418349\n> 247841\nv 127312\n> 231026\nv 387576\n> 288139\nv 330478\n> 242539\nv 185279\n> 296305\nv 372788\n> 534050\nv 170277\n> 448264\nv 134511\n> 345856\nv 515793\n> 105415\nv 71992\n> 166800\nv 173734\n< 72966\nv 450153\n> 72966\nv 134320\n> 282621\n^ 349534\n< 354243\n^ 150161\n> 354243\n^ 258512\n> 445572\nv 325138\n> 272369\nv 418481\n> 160816\n^ 316379\n> 534173\n^ 41629\n< 534173\n^ 314067\n> 362875\nv 32283\n> 242640\nv 328425\n> 176071\nv 311367\n> 43950\nv 512943\n> 34244\nv 169187\n< 372483\nv 88918\n< 251221\nv 342121\n< 126734\nv 306503\n< 222665\nv 46181\n< 91583\nv 497306\n> 153650\nv 256705\n> 520470\nv 244661\n> 185516\n^ 501366\n> 205050\nv 301010\n> 307195\nv 396282\n< 307195\nv 22532\n< 34244\nv 506294\n< 112184\nv 433424\n< 35805\nv 496191\n< 51205\nv 18201\n< 137028\n^ 76867\n< 436056\n^ 377730\n< 392535\n^ 110962\n> 392535\n^ 382257\n< 214074\nv 231005\n< 381706\n^ 338082\n< 412828\n^ 505742\n< 203925\n^ 292524\n< 359147\n^ 341936\n< 83071\nv 361042\n< 77073\nv 279116\n< 377721\nv 343340\n> 377721\nv 334085\n< 137273\nv 160701\n< 186061\n^ 322589\n< 543019\nv 322589\n< 94626\nv 45\n< 406661\nv 60957\n< 250603\nv 20128\n> 395250\nv 517157\n< 395250\nv 64071\n< 184424\nv 326580\n< 1511\nv 312758\n< 521655\nv 212580\n< 271370\nv 247819\n< 150839\nv 207245\n< 21972\n^ 268956\n< 306409\nv 268956\n< 302419\nv 186014\n< 72884\nv 406588\n< 372425\nv 468777\n< 357808\n^ 186697\n< 170766\n^ 488414\n< 280815\n^ 199580\n< 283427\nv 297921\n< 255901\nv 511231\n< 348525\nv 219500\n< 42061\nv 222148\n< 539159\nv 147224\n> 581220\nv 201459\n< 503015\nv 187462\n< 108410\nv 136469\n> 567032\nv 270128\n> 50927\n^ 270128\n> 307350\nv 371568\n> 290542\nv 53128\n< 268122\nv 36219\n< 358131\nv 373480\n< 90267\nv 346297\n< 414711\n^ 328516\n< 273070\n^ 391261\n< 61380\n^ 8992\n< 314916\n^ 595012\n< 227763\nv 595012\n< 146932\n^ 389233\n< 98643\nv 51875\n< 155079\n^ 129007\n< 278381\nv 129007\n< 237286\n^ 51875\n< 469398\n^ 36411\n< 306146\n^ 73418\n> 151920\n^ 423781\n> 482963\n^ 371032\n> 413188\n^ 53968\n> 467936\n^ 281353\n> 28926\n^ 273664\n> 384989\n^ 93789\n> 304622\n^ 378688\n< 402245\n^ 414707\n< 38972\n^ 177705\n< 125857\nv 260304\n< 333539\nv 332108\n< 153352\n^ 247523\n< 344400\nv 328256\n< 249906\nv 323268\n< 477776\n^ 238844\n< 171055\n^ 356945\n< 491769\n^ 55735\n< 205294\n^ 448403\n< 398422\n^ 310717\n> 398422\n^ 260813\n> 313277\n^ 363828\n> 513163\nv 23668\n> 186483\nv 431695\n> 429021\nv 491648\n> 244688\nv 10606\n> 53288\n^ 198990\n> 153626\n^ 440291\n< 153626\n^ 318336\n> 200280\n^ 325879\n< 453692\n^ 212998\n< 82571\n^ 295180",
+          "testOut": "54058824661845",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "really really large",
+          "isTest": false,
+          "testIn": "602\n< 456731\nv 169418\n< 335664\n^ 169418\n< 394257\n^ 463270\n> 70590\n^ 447271\n> 137229\n^ 334945\n> 57463\nv 69144\n> 296261\nv 540147\n> 125481\nv 144851\n> 40101\nv 28074\n> 459527\n^ 247146\n> 133878\n^ 86567\n< 557259\n^ 283062\n> 557259\n^ 298027\n> 235511\nv 26933\n> 65106\nv 520721\n< 65106\nv 120002\n> 303461\n^ 235118\n> 3258\n^ 135897\n> 160615\nv 444101\n> 113376\nv 66878\n> 315907\n^ 510979\n> 91549\nv 280368\n> 397704\nv 154667\n> 60776\nv 505469\n< 60776\nv 37547\n> 322339\n^ 350650\n< 66486\n^ 266164\n> 66486\n^ 361237\n> 314436\n^ 312029\n> 11843\n^ 152669\n> 388559\n^ 499327\n> 68812\nv 448689\n> 260046\nv 147488\n> 146668\nv 367848\n> 225459\nv 66601\n> 204856\nv 284740\n< 599615\nv 102534\n> 599615\nv 279600\n> 166151\nv 38653\n> 499427\n^ 142872\n> 35737\n^ 562655\n> 91334\nv 82692\n> 317218\nv 508390\n> 109903\nv 64558\n< 427121\nv 4690\n> 99201\nv 231375\n> 28889\nv 118214\n> 210011\nv 290726\n> 49414\nv 232051\n> 560962\nv 174817\n< 306921\nv 193212\n< 187649\n^ 193212\n< 325817\nv 25471\n> 260659\nv 275450\n> 322783\nv 123818\n> 542482\n^ 288572\n> 5297\n^ 538131\n> 154045\n^ 87518\n> 427400\n^ 49984\n> 285864\n^ 381926\n< 209227\n^ 135298\n< 247515\n^ 417247\n> 456742\n^ 273886\n< 14231\nv 150745\n< 377575\n^ 150745\n< 321458\n^ 26291\n> 16438\n^ 251073\n> 542300\n^ 181834\n< 84688\n^ 218659\n< 313894\n^ 306392\n< 131790\n^ 284571\n< 261679\n^ 132448\n< 209307\n^ 430802\n< 182205\nv 429414\n< 226347\nv 65036\n< 283273\n^ 494450\n< 227853\n^ 226958\n> 159760\n^ 233457\n< 253127\n^ 188786\n> 253127\n^ 183738\n> 314877\nv 97443\n> 268665\nv 13618\n< 235297\nv 595122\n> 235297\nv 85795\n> 369829\n^ 216476\n< 205007\n^ 402967\n> 205007\n^ 172535\n> 238396\nv 178830\n> 429415\nv 338016\n> 44619\nv 89135\n> 10787\n^ 406413\n< 30726\n^ 470050\n< 361578\n^ 236752\n< 287893\n^ 417936\n< 216016\n^ 173468\n< 479492\n^ 352937\n< 43034\n^ 315743\n< 425161\nv 315743\n< 467815\nv 22125\n< 446255\nv 361121\n< 477729\nv 66324\n< 165813\nv 544536\n> 191333\nv 590676\n< 191333\nv 66361\n< 87865\n^ 30875\n< 118906\n^ 400953\n< 493597\n^ 259465\n< 165490\n^ 229880\n< 305114\n^ 287508\n< 46083\n^ 518420\n< 218584\n^ 10926\n< 72638\n^ 425888\n> 72638\n^ 254579\n< 264137\n^ 19890\n< 231044\nv 316745\n< 320373\n^ 316745\n< 264689\nv 553920\n< 315495\n^ 553920\n< 145443\n^ 191629\n> 108620\n^ 319714\n> 133036\n^ 144631\n< 153446\n^ 419248\n> 153446\n^ 70986\n> 107095\n^ 36627\n> 477341\nv 53917\n< 243415\nv 372010\n< 323859\nv 8519\n> 77582\nv 110802\n> 303198\n^ 317653\n> 433537\nv 317653\n> 92404\nv 242443\n< 384075\nv 166384\n< 522646\nv 19734\n> 567274\nv 17397\n> 514272\n^ 87085\n> 80427\n^ 331264\n> 66904\nv 88357\n> 341577\nv 433326\n> 118967\nv 163270\n> 189468\nv 6682\n> 581577\nv 182581\n< 91828\nv 451106\n< 373220\n^ 451106\n< 205612\nv 336071\n> 184592\nv 285354\n> 486068\nv 182873\n< 581577\nv 139088\n> 302246\nv 559096\n> 298018\n^ 559096\n> 119892\n^ 413583\n> 171823\n^ 223019\n> 374435\n^ 293521\n< 374435\n^ 116604\n< 171823\n^ 85922\n> 356013\n^ 153618\n> 452429\n^ 153620\n> 70270\n^ 341718\n< 522699\n^ 35997\n> 72738\n^ 54369\n> 70012\n^ 408942\n> 31041\n^ 82119\n> 333873\n^ 193921\n> 250763\n^ 211914\n> 195721\nv 104713\n> 248228\n^ 104713\n> 422342\nv 405835\n> 56794\nv 156252\n> 425656\nv 389178\n> 262785\nv 418349\n> 247841\nv 127312\n> 231026\nv 387576\n> 288139\nv 330478\n> 242539\nv 185279\n> 296305\nv 372788\n> 534050\nv 170277\n> 448264\nv 134511\n> 345856\nv 515793\n> 105415\nv 71992\n> 166800\nv 173734\n< 72966\nv 450153\n> 72966\nv 134320\n> 282621\n^ 349534\n< 354243\n^ 150161\n> 354243\n^ 258512\n> 445572\nv 325138\n> 272369\nv 418481\n> 160816\n^ 316379\n> 534173\n^ 41629\n< 534173\n^ 314067\n> 362875\nv 32283\n> 242640\nv 328425\n> 176071\nv 311367\n> 43950\nv 512943\n> 34244\nv 169187\n< 372483\nv 88918\n< 251221\nv 342121\n< 126734\nv 306503\n< 222665\nv 46181\n< 91583\nv 497306\n> 153650\nv 256705\n> 520470\nv 244661\n> 185516\n^ 501366\n> 205050\nv 301010\n> 307195\nv 396282\n< 307195\nv 22532\n< 34244\nv 506294\n< 112184\nv 433424\n< 35805\nv 496191\n< 51205\nv 18201\n< 137028\n^ 76867\n< 436056\n^ 377730\n< 392535\n^ 110962\n> 392535\n^ 382257\n< 214074\nv 231005\n< 381706\n^ 338082\n< 412828\n^ 505742\n< 203925\n^ 292524\n< 359147\n^ 341936\n< 83071\nv 361042\n< 77073\nv 279116\n< 377721\nv 343340\n> 377721\nv 334085\n< 137273\nv 160701\n< 186061\n^ 322589\n< 543019\nv 322589\n< 94626\nv 45\n< 406661\nv 60957\n< 250603\nv 20128\n> 395250\nv 517157\n< 395250\nv 64071\n< 184424\nv 326580\n< 1511\nv 312758\n< 521655\nv 212580\n< 271370\nv 247819\n< 150839\nv 207245\n< 21972\n^ 268956\n< 306409\nv 268956\n< 302419\nv 186014\n< 72884\nv 406588\n< 372425\nv 468777\n< 357808\n^ 186697\n< 170766\n^ 488414\n< 280815\n^ 199580\n< 283427\nv 297921\n< 255901\nv 511231\n< 348525\nv 219500\n< 42061\nv 222148\n< 539159\nv 147224\n> 581220\nv 201459\n< 503015\nv 187462\n< 108410\nv 136469\n> 567032\nv 270128\n> 50927\n^ 270128\n> 307350\nv 371568\n> 290542\nv 53128\n< 268122\nv 36219\n< 358131\nv 373480\n< 90267\nv 346297\n< 414711\n^ 328516\n< 273070\n^ 391261\n< 61380\n^ 8992\n< 314916\n^ 595012\n< 227763\nv 595012\n< 146932\n^ 389233\n< 98643\nv 51875\n< 155079\n^ 129007\n< 278381\nv 129007\n< 237286\n^ 51875\n< 469398\n^ 36411\n< 306146\n^ 73418\n> 151920\n^ 423781\n> 482963\n^ 371032\n> 413188\n^ 53968\n> 467936\n^ 281353\n> 28926\n^ 273664\n> 384989\n^ 93789\n> 304622\n^ 378688\n< 402245\n^ 414707\n< 38972\n^ 177705\n< 125857\nv 260304\n< 333539\nv 332108\n< 153352\n^ 247523\n< 344400\nv 328256\n< 249906\nv 323268\n< 477776\n^ 238800\n< 171055\n^ 356989\n< 491769\n^ 55735\n< 205290\n^ 448403\n< 398426\n^ 310717\n> 398422\n^ 260813\n> 313277\n^ 363828\n> 513163\nv 23660\n> 186483\nv 431703\n> 429021\nv 491648\n> 244688\nv 10606\n> 53288\n^ 198990\n> 153626\n^ 440291\n< 153626\n^ 318336\n> 200280\n^ 325879\n< 453692\n^ 212998\n< 82571\n^ 295180",
+          "testOut": "54058831886517",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "coverBinaryId": 137395501375861,
+      "stubGenerator": "read n:int\nloop n read direction:word(1) step:int\nwrite answer",
+      "inputDescription": "<<line 1:>> number of instructions [[n]]\n<<following [[n]] lines>>: one instruction in each row. formatted as [[direction]] [[step]], meaning that the robot should move [[step]] units in [[direction]]",
+      "solutionLanguage": "Clojure",
+      "outputDescription": "<<line 1:>> area inside the path, including the path."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A robot is navigating a 2D plane, following a set of movement instructions.<br>The following symbols are used to indicate the movement directions:<br>    <const>^</const> : Move up<br>    <const>v</const> : Move down<br>    <const>&gt;</const> : Move right<br>    <const>&lt;</const> : Move left<br><br>Each instruction consists of a <var>direction</var> and an integer <var>step</var> indicating the number of units to move in that direction. For example, &quot;<const>&gt; 5</const>&quot; means the robot will move 5 units to the right.<br><br>After executing all instructions, the robot returns to its starting point, creating a closed, non-self-intersecting polygon. <br><br>Example:<br>4<br>&gt; 3<br>v 2<br>&lt; 3<br>^ 2<br><br>The robot will make a path looks like:<br><pre style=\"font-family: monospace\"><const>......</const><br><const>.####.</const><br><const>.#..#.</const><br><const>.####.</const><br><const>......</const></pre><br><br>We want to know the area enclosed by the robot's path, including the path.<br>It looks like:<br><pre style=\"font-family: monospace\"><const>......</const><br><const>.####.</const><br><const>.####.</const><br><const>.####.</const><br><const>......</const></pre><br><br>So, the area is 12.<br><br>Can you determine the enclosed area based on the given set of instructions?</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>line 1:</strong> number of instructions <var>n</var><br><strong>following <var>n</var> lines</strong>: one instruction in each row. formatted as <var>direction</var> <var>step</var>, meaning that the robot should move <var>step</var> units in <var>direction</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>line 1:</strong> area inside the path, including the path.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4\n&lt; 6\n^ 4\n&gt; 6\nv 4</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">35</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 28223690905,
+  "avatar": 12585096610807,
+  "commentCount": 17,
+  "upVotes": 19,
+  "downVotes": 3,
+  "validateAction": {
+    "actionId": 1102312,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1739811937006,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1740166443387,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1742504790652,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

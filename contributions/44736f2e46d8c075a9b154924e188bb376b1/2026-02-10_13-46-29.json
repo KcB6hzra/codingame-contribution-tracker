@@ -1,0 +1,248 @@
+{
+  "id": 4473,
+  "activeVersion": 25,
+  "score": 5,
+  "votableId": 11162977,
+  "codingamerId": 2858335,
+  "views": 270,
+  "commentableId": 11091032,
+  "title": "Surakarta",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "pac-nam",
+  "publicHandle": "44736f2e46d8c075a9b154924e188bb376b1",
+  "codingamerHandle": "1575e1dd6e3ae2dacc24976dfd94dff35338582",
+  "lastVersion": {
+    "version": 25,
+    "autocloseTime": 1567324953775,
+    "data": {
+      "title": "Surakarta",
+      "topics": [
+        {
+          "id": 71,
+          "handle": "recursion",
+          "labelMap": {
+            "1": "Récursion",
+            "2": "Recursion"
+          },
+          "pageTitle": "Recursion: exercises and theory",
+          "puzzleCount": 13,
+          "parentTopicId": 41,
+          "contentDetailsId": 77
+        },
+        {
+          "id": 56,
+          "handle": "backtracking",
+          "labelMap": {
+            "1": "Retour sur trace",
+            "2": "Backtracking"
+          },
+          "pageTitle": "Backtracking: exercises and theory",
+          "puzzleCount": 7,
+          "parentTopicId": 41,
+          "contentDetailsId": 80
+        },
+        {
+          "id": 46,
+          "handle": "loops",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 23,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        }
+      ],
+      "solution": "package main\n\nimport \"fmt\"\n\nvar grid [6][]byte\n\ntype SContext struct {\n    Y, X, toadd     int\n    tochange        *int\n}\n\nfunc main() {\n    var count int\n    for i := 0; i < 6; i++ {\n        fmt.Scan(&grid[i])\n    }\n    for Y := 0; Y < 6; Y++ {\n        for X := 0; X < 6; X++ {\n            if grid[Y][X] == 'X' {\n                count += takeOthers(Y, X)\n            }\n        }\n    }\n    fmt.Println(count)\n}\n\nfunc takeOthers(Y, X int) (count int) {\n    grid[Y][X] = '.'\n    ctx := new(SContext)\n    ctx.Y, ctx.X, ctx.toadd, ctx.tochange = Y - 1, X, -1, &ctx.Y // UP\n    count += onePiece(ctx, 0, false)\n    ctx.Y, ctx.X, ctx.toadd, ctx.tochange = Y + 1, X, 1, &ctx.Y // DOWN\n    count += onePiece(ctx, 0, false)\n    ctx.Y, ctx.X, ctx.toadd, ctx.tochange = Y, X - 1, -1, &ctx.X // LEFT\n    count += onePiece(ctx, 0, false)\n    ctx.Y, ctx.X, ctx.toadd, ctx.tochange = Y, X + 1, 1, &ctx.X // RIGHT\n    count += onePiece(ctx, 0, false)\n    grid[Y][X] = 'X'\n    return count\n}\n\nfunc onePiece(ctx *SContext, cpt int, canTake bool) int {\n    if ctx.Y < 0 || ctx.Y > 5 || ctx.X < 0 || ctx.X > 5 {\n        canTake = true\n        if ctx.X > 5 && ctx.Y <= 2 {        // exit: RIGHT UP\n            ctx.X, ctx.Y, ctx.tochange, ctx.toadd = -(ctx.Y - 5), 0, &ctx.Y, +1\n        } else if ctx.X > 5 && ctx.Y > 2 {  // exit: RIGHT DOWN\n            ctx.X, ctx.Y, ctx.tochange, ctx.toadd = ctx.Y, 5, &ctx.Y, -1\n        } else if ctx.Y > 5 && ctx.X > 2 {  // exit: DOWN RIGHT\n            ctx.X, ctx.Y, ctx.tochange, ctx.toadd = 5, ctx.X, &ctx.X, -1\n        } else if ctx.Y > 5 && ctx.X <= 2 { // exit: DOWN LEFT\n            ctx.X, ctx.Y, ctx.tochange, ctx.toadd = 0, -(ctx.X - 5), &ctx.X, +1\n        } else if ctx.X < 0 && ctx.Y > 2 {  // exit: LEFT DOWN\n            ctx.X, ctx.Y, ctx.tochange, ctx.toadd = -(ctx.Y - 5), 5, &ctx.Y, -1\n        } else if ctx.X < 0 && ctx.Y <= 2 { // exit: LEFT UP\n            ctx.X, ctx.Y, ctx.tochange, ctx.toadd = ctx.Y, 0, &ctx.Y, +1\n        } else if ctx.Y < 0 && ctx.X <= 2 { // exit: UP LEFT\n            ctx.X, ctx.Y, ctx.tochange, ctx.toadd = 0, ctx.X, &ctx.X, +1\n        } else if ctx.Y < 0 && ctx.X > 2 {  // exit: UP RIGHT\n            ctx.X, ctx.Y, ctx.tochange, ctx.toadd = 5, -(ctx.X - 5), &ctx.X, -1\n        }\n    }\n    if grid[ctx.Y][ctx.X] == 'O' && canTake {\n        return 1\n    } else if grid[ctx.Y][ctx.X] != '.' || cpt > 25 || // 'X' or !canTake && 'O'\n    ((ctx.Y == 0 || ctx.Y == 5) && (ctx.X == 0 || ctx.X == 5)) { // angles\n        return 0\n    }\n    *ctx.tochange += ctx.toadd\n    return onePiece(ctx, cpt + 1, canTake)\n}",
+      "statement": "The surakarta is a traditional board game from Indonesia. Here is what the board looks like.\n`\n╭───╮╭───╮\n│╭─╮││╭─╮│\n││┏┿┿┿┿┓││\n│╰╂┼┼┼┼╂╯│\n╰─╂┼┼┼┼╂─╯\n╭─╂┼┼┼┼╂─╮\n│╭╂┼┼┼┼╂╮│\n││┗┿┿┿┿┛││\n│╰─╯││╰─╯│\n╰───╯╰───╯\n`\nIt is played on a board of 6 by 6. The pieces are placed on intersections or edges of the grid. To move, they follow the lines horizontally or vertically as far as they wish.\n\n- If a piece reaches the <<edge of the grid represented in bold>>, It can still move forward, by doing a loop following the lines on the side of the board.\n- A piece cannot pass through another.\n- To capture a piece of the other player, you have to go to its position <<after doing one or more loops>>.\n\nExample of how to capture a piece: https://cdn.store-factory.com/www.lecomptoirdesjeux.com/media/diagsurakarta2.jpg\n\nEach piece can potentially move in 4 directions, and potentially capture an enemy piece in every direction (it can be 4 times the same piece, if different moves lead to the capture of the same piece).\n\nIt is your turn. You have to find how many moves can be done to capture a piece this turn for every piece you have.\n\nIf you have 3 pieces:\n3 moves of the first piece reach to capture.\n1 moves of the second piece reach to capture.\n2 moves of the third piece reach to capture.\n\nThe output will be {{6}}.\n\nFor the sake of clarity, corner lines will not be in input.",
+      "testCases": [
+        {
+          "title": "around the world",
+          "isTest": true,
+          "testIn": ".O....\n......\n......\n.X....\n......\n......",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "around the world Validator",
+          "isTest": false,
+          "testIn": "......\n......\n......\n....X.\n......\n....O.",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple ways",
+          "isTest": true,
+          "testIn": "......\n...O..\n......\n.X....\n......\n......",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple ways validator",
+          "isTest": false,
+          "testIn": "......\n......\n......\n.X....\n...O..\n......",
+          "testOut": "4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Impossible",
+          "isTest": true,
+          "testIn": "......\n...X..\nX..O.X\n......\n...X..\n......",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Impossible Validator",
+          "isTest": false,
+          "testIn": "......\n..X...\n......\nX.O..X\n..X...\n......",
+          "testOut": "0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Pass on Yourself",
+          "isTest": true,
+          "testIn": "......\n..O...\n......\n......\n....X.\n......",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Pass on Yourself Validator",
+          "isTest": false,
+          "testIn": "......\n......\n....O.\n......\n.X....\n......",
+          "testOut": "4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "angles are not OK",
+          "isTest": true,
+          "testIn": ".X....\nO.....\n......\n......\n......\n......",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "angles Validator",
+          "isTest": false,
+          "testIn": ".O....\nX.....\n......\n......\n......\n......",
+          "testOut": "2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "We have a problem",
+          "isTest": true,
+          "testIn": "......\n......\n....X.\n......\n..X.O.\n......",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Problem Validator",
+          "isTest": false,
+          "testIn": "......\n......\n......\n......\n......\n.XO.X.",
+          "testOut": "0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "It works",
+          "isTest": true,
+          "testIn": "......\n.O..O.\n......\n......\n.X..X.\n......",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "It works Validator",
+          "isTest": false,
+          "testIn": "......\n......\n..XO..\n..XO..\n......\n......",
+          "testOut": "2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Number test",
+          "isTest": true,
+          "testIn": "OOOOOO\nOOOOOO\n......\n......\nXXXXXX\nXXXXXX",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Number Validator",
+          "isTest": false,
+          "testIn": "XXXXXX\nXXXXXX\n......\n......\nOOOOOO\nOOOOOO",
+          "testOut": "0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Crossway",
+          "isTest": true,
+          "testIn": "X....O\n.X..O.\n..XO..\n..OX..\n.O..X.\nO....X",
+          "testOut": "8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Crossway Validator",
+          "isTest": false,
+          "testIn": "O....X\n.O..X.\n..OX..\n..XO..\n.X..O.\nX....O",
+          "testOut": "8",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Real test",
+          "isTest": true,
+          "testIn": "...X..\nO.....\n..X.OX\n..O...\n.X..X.\nO..X.O",
+          "testOut": "6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Real test Validator",
+          "isTest": false,
+          "testIn": "...O..\nX.....\n..O.XO\n..X...\n.O..O.\nX..O.X",
+          "testOut": "4",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "0 < opponent pieces count < 13\n0 < your pieces count < 13",
+      "coverBinaryId": 32174648347442,
+      "stubGenerator": "loop 6 read line:word(6)\nwrite answer",
+      "inputDescription": "<<6 lines>>:  the state of your grid.\n{{X}} represents your pieces\n{{O}} represents the opponent pieces\n{{.}} represents an empty square",
+      "solutionLanguage": "Go",
+      "outputDescription": "The number of moves that lead to a capture this turn."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">The surakarta is a traditional board game from Indonesia. Here is what the board looks like.<br><pre style=\"font-family: monospace\"><br>╭───╮╭───╮<br>│╭─╮││╭─╮│<br>││┏┿┿┿┿┓││<br>│╰╂┼┼┼┼╂╯│<br>╰─╂┼┼┼┼╂─╯<br>╭─╂┼┼┼┼╂─╮<br>│╭╂┼┼┼┼╂╮│<br>││┗┿┿┿┿┛││<br>│╰─╯││╰─╯│<br>╰───╯╰───╯<br></pre><br>It is played on a board of 6 by 6. The pieces are placed on intersections or edges of the grid. To move, they follow the lines horizontally or vertically as far as they wish.<br><br>- If a piece reaches the <strong>edge of the grid represented in bold</strong>, It can still move forward, by doing a loop following the lines on the side of the board.<br>- A piece cannot pass through another.<br>- To capture a piece of the other player, you have to go to its position <strong>after doing one or more loops</strong>.<br><br>Example of how to capture a piece: https://cdn.store-factory.com/www.lecomptoirdesjeux.com/media/diagsurakarta2.jpg<br><br>Each piece can potentially move in 4 directions, and potentially capture an enemy piece in every direction (it can be 4 times the same piece, if different moves lead to the capture of the same piece).<br><br>It is your turn. You have to find how many moves can be done to capture a piece this turn for every piece you have.<br><br>If you have 3 pieces:<br>3 moves of the first piece reach to capture.<br>1 moves of the second piece reach to capture.<br>2 moves of the third piece reach to capture.<br><br>The output will be <const>6</const>.<br><br>For the sake of clarity, corner lines will not be in input.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>6 lines</strong>:  the state of your grid.<br><const>X</const> represents your pieces<br><const>O</const> represents the opponent pieces<br><const>.</const> represents an empty square</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The number of moves that lead to a capture this turn.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt; opponent pieces count &lt; 13<br>0 &lt; your pieces count &lt; 13</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">.O....\n......\n......\n.X....\n......\n......</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 205051506419,
+  "avatar": 21605936572232,
+  "commentCount": 7,
+  "upVotes": 5,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 370612,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

@@ -1,0 +1,286 @@
+{
+  "id": 21663,
+  "activeVersion": 55,
+  "score": 19,
+  "votableId": 24150259,
+  "codingamerId": 4806550,
+  "views": 564,
+  "commentableId": 24033635,
+  "title": "Markov ants",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Rafarafa",
+  "publicHandle": "216638ec81ba9a5dd2105b22ad2de62d3e2df",
+  "codingamerHandle": "68977779383d7e4ea558c7a5446487f40556084",
+  "lastVersion": {
+    "version": 55,
+    "autocloseTime": 1696405102242,
+    "data": {
+      "title": "Markov ants",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Random walk"
+          }
+        },
+        {
+          "labelMap": {
+            "2": "Markov chains"
+          }
+        },
+        {
+          "id": 110,
+          "handle": "probability",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Probability",
+            "2": "Probability"
+          },
+          "puzzleCount": 5,
+          "parentTopicId": 93
+        },
+        {
+          "id": 86,
+          "handle": "simulation",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Simulation",
+            "2": "Simulation"
+          },
+          "pageTitle": "Simulation: exercises and theory",
+          "puzzleCount": 42,
+          "parentTopicId": 42,
+          "contentDetailsId": 72
+        }
+      ],
+      "solution": "import numpy as np\n\n\ndef futureStates(x, y, step):\n    '''\n    Gives a list of every possible future state.\n    Here there's trivially 4 cases, but this allows generalization.\n    '''\n    return [(x + step, y), (x - step, y), (x, y + step), (x, y - step)]\n\n\ndef solve(start, step, w, h):\n    '''\n    For the math details, check (IN FRENCH):\n    https://idpoisson.fr/berglund/probamass_html/node18.html\n    '''\n    states = generateStates(step, w, h)\n    matrix = transitionMarkov(step, states)\n\n    matrix_size = matrix.shape[0]\n    row_start_point = list(states.keys()).index(start)\n    # The last .round(10) allows us to round the expentacy on the next line\n    inv = np.linalg.inv(np.identity(matrix_size) - matrix).round(10)\n\n    expectancy = round(sum(i for i in inv[row_start_point]), 1)\n\n    return expectancy\n\n\ndef generateStates(step, w, h):\n    '''\n    We create the following dictionary:\n        keys = every possible state\n             = every point in the interior of the anthill\n        values = every possible state after one step\n               = every point in futureStates that REMAINS INSIDE the anthill\n               (HERE)\n               = every point in futureStates that verifies 0 < x < w-1 and 0 < y < h-1\n\n    NB: notice that we NEVER use the ascii anthill. Since we are dealing only\n    with rectangles, all the information of the Polygon (=Anthill) is actually alfindStarty\n    given by the dimensions (width + height).\n    For the general case, this won't work. We would need to build a border of the \n    Polygon from a set of points defining its border (here we could have done it \n    with the coordinates of the '+'). A pseudocode would be:\n        points = input()\n        polygon = Polygon(points)\n        for point in polygon.interior():\n            temp = [s for s in futureStates(p, step) if s in polygon.interior()]\n            states.setdefault(p, temp)\n    The interior could be coded with some PIP algorithm.\n\n    ALTHOUGH, here it's way easier since the INTERIOR is just the coordinates of\n    the points with value '.'. If those were not given, a bfs or floodfill from the\n    starting position of the ant, stopping at the border ('|-+') would also yield\n    the same result.\n    '''\n    states = {}\n    # We loop over the interior of the anthill, i.e.:\n    #   (0 < x < w-1 and 0 < y < h-1)\n    # For the general solution, loop over the interior of the Polygon.\n    for y in range(1, h):\n        for x in range(1, w):\n            temp = []\n            for s in futureStates(x, y, step):\n                if abs(s[0]) < w - 1 and abs(s[1]) < h - 1:\n                    temp.append(s)\n            states.setdefault((x, y), temp)\n\n    return states\n\n\ndef transitionMarkov(step, states):\n    '''\n    We build the submatrix of the Markov transition matrix without absorbing states.\n    '''\n    matrix_points = list(states.keys())\n    # Here this is always 4, but it generalizes if we add extra directions.\n    move_choices = len(futureStates(0, 0, step))\n\n    matrix = []\n    # The probability of going from point1 to point2 is (1 / move_choices)\n    # if point2 is a possible future state of point1, else 0.\n    for point1 in matrix_points:\n        row = []\n        for point2 in matrix_points:\n            row.append(1 / move_choices if point2 in states[point1] else 0)\n        matrix.append(row)\n\n    return np.matrix(matrix)\n\n\ndef main():\n    step = int(input())\n    w, h = [int(i) for i in input().split()]\n    entries = [input() for _ in range(h)]\n\n    # Finds the starting position of the ant.\n    for y, row in enumerate(entries):\n        x = row.find('A')\n        if x != -1:\n            start = x, y\n\n    expectancy = solve(start, step, w, h)\n\n    print(expectancy)\n\n\nif __name__ == '__main__':\n    main()\n",
+      "statement": "An ant leaves its anthill in order to forage for food, but it doesn't know where to go, therefore every second it moves randomly [[step]] cm directly north, south, east or west with equal probability.\n\nYou will work with an ascii representation of the <<anthill>>, where the initial position of the ant is represented by the letter {{A}}, and the borders of the anthill by the characters {{|}}, {{-}} and {{+}} for the corners. The distance between each element of the anthill is equal to {{1}} cm. In this version, the anthill is always a RECTANGLE.\n\nIf the food is located at the borders of the anthill, how long will it take the ant to reach it on average (rounded to 1 decimal place)?\n\n<<NOTE>>: The ant reaches its food if it ends on the border of the anthill OR outside the anthill. \n\nThe original problem can be found here: {{https://web.archive.org/web/20220817071104/https://optiver.com/working-at-optiver/career-opportunities/5841549002/}}",
+      "testCases": [
+        {
+          "title": "Base case",
+          "isTest": true,
+          "testIn": "1\n5 5\n+---+\n|...|\n|.A.|\n|...|\n+---+",
+          "testOut": "4.5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Base case idem",
+          "isTest": false,
+          "testIn": "1\n5 5\n+---+\n|...|\n|.A.|\n|...|\n+---+",
+          "testOut": "4.5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Square 6",
+          "isTest": true,
+          "testIn": "1\n7 7\n+-----+\n|.....|\n|.....|\n|..A..|\n|.....|\n|.....|\n+-----+",
+          "testOut": "10.4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Square 8",
+          "isTest": false,
+          "testIn": "1\n9 9\n+-------+\n|.......|\n|.......|\n|.......|\n|...A...|\n|.......|\n|.......|\n|.......|\n+-------+",
+          "testOut": "18.6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Different step",
+          "isTest": true,
+          "testIn": "3\n7 7\n+-----+\n|.....|\n|.....|\n|..A..|\n|.....|\n|.....|\n+-----+",
+          "testOut": "1.0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Different step val",
+          "isTest": false,
+          "testIn": "2\n7 7\n+-----+\n|.....|\n|.....|\n|..A..|\n|.....|\n|.....|\n+-----+",
+          "testOut": "4.5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Different origin",
+          "isTest": true,
+          "testIn": "1\n5 5\n+---+\n|...|\n|..A|\n|...|\n+---+",
+          "testOut": "3.5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Different origin val",
+          "isTest": false,
+          "testIn": "1\n7 7\n+-----+\n|.....|\n|.A...|\n|.....|\n|.....|\n|.....|\n+-----+",
+          "testOut": "8.5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Different shape (rectangle)",
+          "isTest": true,
+          "testIn": "1\n5 3\n+---+\n|.A.|\n+---+",
+          "testOut": "1.7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Different shape (rectangle) val",
+          "isTest": false,
+          "testIn": "1\n9 5\n+-------+\n|.......|\n|...A...|\n|.......|\n+-------+",
+          "testOut": "7.2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Different shape + start",
+          "isTest": true,
+          "testIn": "1\n9 5\n+-------+\n|.......|\n|....A..|\n|.......|\n+-------+",
+          "testOut": "6.9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Different shape + start",
+          "isTest": false,
+          "testIn": "1\n9 5\n+-------+\n|.......|\n|.......|\n|.A.....|\n+-------+",
+          "testOut": "4.6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Different shape + start + step",
+          "isTest": true,
+          "testIn": "2\n9 5\n+-------+\n|.......|\n|....A..|\n|.......|\n+-------+",
+          "testOut": "1.8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Different shape + start + step",
+          "isTest": false,
+          "testIn": "3\n9 5\n+-------+\n|.......|\n|.......|\n|....A..|\n+-------+",
+          "testOut": "1.3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Extra test 1",
+          "isTest": true,
+          "testIn": "2\n12 8\n+----------+\n|..........|\n|....A.....|\n|..........|\n|..........|\n|..........|\n|..........|\n+----------+",
+          "testOut": "4.8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Extra val 1",
+          "isTest": false,
+          "testIn": "2\n12 8\n+----------+\n|..........|\n|..........|\n|..........|\n|..........|\n|.......A..|\n|..........|\n+----------+",
+          "testOut": "4.4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Extra test 2",
+          "isTest": true,
+          "testIn": "2\n15 15\n+-------------+\n|.............|\n|....A........|\n|.............|\n|.............|\n|.............|\n|.............|\n|.............|\n|.............|\n|.............|\n|.............|\n|.............|\n|.............|\n|.............|\n+-------------+",
+          "testOut": "8.0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Extra val 2",
+          "isTest": false,
+          "testIn": "2\n15 15\n+-------------+\n|.............|\n|.............|\n|.............|\n|.............|\n|.............|\n|........A....|\n|.............|\n|.............|\n|.............|\n|.............|\n|.............|\n|.............|\n|.............|\n+-------------+",
+          "testOut": "15.0",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 <= [[step]] <= 3\n3 <= [[w]], [[h]] <= 15\nThe ant always starts INSIDE the anthill (never at the borders or outside).",
+      "coverBinaryId": 85635981051805,
+      "stubGenerator": "read step:int\nread w:int h:int\nloop h read row:string(31)\n\nwrite average time to reach food",
+      "inputDescription": "<<Line 1>>: An integer [[step]].\n<<Line 2>>: Two space-separated integers [[w]] and [[h]]: the width and height of the ascii anthill.\n<<Next [[h]] lines>>: [[w]] characters representing the [[h]]-th row of the ascii anthill.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The average time (in seconds) it takes the ant to reach its food (a float rounded to 1 decimal place)."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">An ant leaves its anthill in order to forage for food, but it doesn't know where to go, therefore every second it moves randomly <var>step</var> cm directly north, south, east or west with equal probability.<br><br>You will work with an ascii representation of the <strong>anthill</strong>, where the initial position of the ant is represented by the letter <const>A</const>, and the borders of the anthill by the characters <const>|</const>, <const>-</const> and <const>+</const> for the corners. The distance between each element of the anthill is equal to <const>1</const> cm. In this version, the anthill is always a RECTANGLE.<br><br>If the food is located at the borders of the anthill, how long will it take the ant to reach it on average (rounded to 1 decimal place)?<br><br><strong>NOTE</strong>: The ant reaches its food if it ends on the border of the anthill OR outside the anthill. <br><br>The original problem can be found here: <const>https://web.archive.org/web/20220817071104/https://optiver.com/working-at-optiver/career-opportunities/5841549002/</const></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: An integer <var>step</var>.<br><strong>Line 2</strong>: Two space-separated integers <var>w</var> and <var>h</var>: the width and height of the ascii anthill.<br><strong>Next <var>h</var> lines</strong>: <var>w</var> characters representing the <var>h</var>-th row of the ascii anthill.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The average time (in seconds) it takes the ant to reach its food (a float rounded to 1 decimal place).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt;= <var>step</var> &lt;= 3<br>3 &lt;= <var>w</var>, <var>h</var> &lt;= 15<br>The ant always starts INSIDE the anthill (never at the borders or outside).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1\n5 5\n+---+\n|...|\n|.A.|\n|...|\n+---+</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">4.5</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 74901616840,
+  "avatar": 80946308795008,
+  "commentCount": 41,
+  "upVotes": 19,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 853713,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1657901137001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1669791162747,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1672383937000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1681739907178,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1692860737000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1693813102242,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1695827505993,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

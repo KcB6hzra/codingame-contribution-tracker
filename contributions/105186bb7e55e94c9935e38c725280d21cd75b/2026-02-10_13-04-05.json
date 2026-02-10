@@ -1,0 +1,320 @@
+{
+  "id": 105186,
+  "activeVersion": 38,
+  "score": 5,
+  "votableId": 34931855,
+  "codingamerId": 2530696,
+  "views": 228,
+  "commentableId": 34778960,
+  "title": "The Prime Twins - Part Two",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Cyber-Kotik",
+  "publicHandle": "105186bb7e55e94c9935e38c725280d21cd75b",
+  "codingamerHandle": "d5cef5ca5515fe5272e762a6ccd689696960352",
+  "lastVersion": {
+    "version": 38,
+    "autocloseTime": 1729199571359,
+    "freezeTime": 1727212371359,
+    "data": {
+      "title": "The Prime Twins - Part Two",
+      "topics": [
+        {
+          "id": 74,
+          "handle": "cryptology",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Cryptologie",
+            "2": "Cryptography"
+          },
+          "pageTitle": "Cryptography: exercises and theory",
+          "puzzleCount": 23,
+          "parentTopicId": 43,
+          "contentDetailsId": 105
+        },
+        {
+          "id": 129,
+          "handle": "arithmetic",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Arithmetic",
+            "2": "Arithmetic"
+          },
+          "puzzleCount": 31,
+          "parentTopicId": 93
+        },
+        {
+          "id": 112,
+          "handle": "string-manipulation",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "String manipulation",
+            "2": "String manipulation"
+          },
+          "puzzleCount": 69,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "using System;\nusing System.Linq;\nusing System.IO;\nusing System.Text;\nusing System.Collections;\nusing System.Collections.Generic;\n\n/**\n * Auto-generated code below aims at helping you parse\n * the standard input according to the problem statement.\n **/\n\nclass Solution\n{\n    static void Main(string[] args)\n    {\n        // Read the operation type (\"ENCODE\" or \"DECODE\")\n        string operation = Console.ReadLine();\n\n        // Read the key (as an integer)\n        int key = int.Parse(Console.ReadLine());\n\n        // Read the message to encode or decode\n        string message = Console.ReadLine();\n\n        // Create the alphabet mapping\n        Dictionary<char, string> map = new Dictionary<char, string>();\n        long lastValue = (long)key + key; // Use 'long' to handle large numbers\n        map.Add('A', lastValue.ToString(\"X\")); // Add 'A' to the map with its hex value\n\n        // Populate the map with letters 'B' to 'Z'\n        for (int i = 66; i <= 90; i++)\n        {\n            lastValue = FindNextPrimeTwinsIndex(lastValue) + key;\n            map.Add((char)i, lastValue.ToString(\"X\"));\n        }\n\n        string resultMessage;\n\n        // Determine whether to encode or decode based on the operation input\n        if (operation == \"ENCODE\")\n        {\n            resultMessage = Encode(map, message);\n        }\n        else\n        {\n            resultMessage = Decode(map, message);\n        }\n\n        // Output the result\n        Console.WriteLine(resultMessage);\n    }\n\n    // Function to encode the message\n    static string Encode(Dictionary<char, string> map, string message)\n    {\n        string result = string.Empty;\n        string upperMessage = message.ToUpper();\n\n        for (int i = 0; i < upperMessage.Length; i++)\n        {\n            if (upperMessage[i] == ' ')\n            {\n                // Encode spaces as \"GG\"\n                result += \"GG\";\n            }\n            else\n            {\n                if (map.TryGetValue(upperMessage[i], out string hexValue))\n                {\n                    // Append the hex value of the character\n                    result += hexValue;\n\n                    // Add a separator \"G\" if the next character is not a space or the end of the message\n                    if (i + 1 < upperMessage.Length && upperMessage[i + 1] != ' ')\n                    {\n                        result += \"G\";\n                    }\n                }\n                else\n                {\n                    // Character not found in the map, return error\n                    return \"ERROR !!\";\n                }\n            }\n        }\n\n        return result;\n    }\n\n    // Function to decode the message\n    static string Decode(Dictionary<char, string> map, string message)\n    {\n        // Create an inverse mapping from hex values to characters\n        Dictionary<string, char> reverseMap = new Dictionary<string, char>();\n        foreach (var kvp in map)\n        {\n            reverseMap[kvp.Value] = kvp.Key;\n        }\n\n        string result = string.Empty;\n        int index = 0;\n\n        while (index < message.Length)\n        {\n            // Check for space encoded as \"GG\"\n            if (index + 1 < message.Length && message.Substring(index, 2) == \"GG\")\n            {\n                result += \" \";\n                index += 2;\n            }\n            else\n            {\n                // If the character is 'G' and not part of \"GG\", it's an error\n                if (message[index] == 'G')\n                {\n                    return \"ERROR !!\";\n                }\n\n                // Extract the hex value until we find a 'G', 'GG', or end of message\n                string hexValue = \"\";\n                while (index < message.Length && IsHexDigit(message[index]))\n                {\n                    hexValue += message[index];\n                    index++;\n                }\n\n                if (hexValue.Length == 0)\n                {\n                    // No hex digits found, error\n                    return \"ERROR !!\";\n                }\n\n                // Convert the hex value back to a character\n                if (reverseMap.TryGetValue(hexValue, out char decodedChar))\n                {\n                    result += decodedChar;\n                }\n                else\n                {\n                    // Hex value not found in the map, return error\n                    return \"ERROR !!\";\n                }\n\n                // After the hex value, we may have a 'G' separator\n                if (index < message.Length)\n                {\n                    if (index + 1 < message.Length && message.Substring(index, 2) == \"GG\")\n                    {\n                        // Next is a space, will be handled in the next iteration\n                    }\n                    else if (message[index] == 'G')\n                    {\n                        // Move past the 'G' separator\n                        index++;\n                    }\n                    else\n                    {\n                        // Unexpected character after hex value, error\n                        return \"ERROR !!\";\n                    }\n                }\n            }\n        }\n\n        return result;\n    }\n\n    // Helper function to check if a character is a hex digit (0-9, A-F)\n    static bool IsHexDigit(char c)\n    {\n        return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F');\n    }\n\n    // Function to find the next index of prime twins after 'n'\n    static long FindNextPrimeTwinsIndex(long n)\n    {\n        // Start checking from the next odd number\n        long first = n % 2 == 0 ? n + 1 : n + 2;\n\n        while (true)\n        {\n            if (IsPrime(first) && IsPrime(first + 2))\n            {\n                // Return the index (first + 1)\n                return first + 1;\n            }\n            first += 2; // Increment by 2 to check only odd numbers\n        }\n    }\n\n    // Optimized function to check if a number is prime\n    static bool IsPrime(long x)\n    {\n        if (x <= 1) return false;\n        if (x == 2) return true; // 2 is prime\n        if (x % 2 == 0) return false; // Even numbers greater than 2 are not prime\n\n        // Check for divisibility by odd numbers up to the square root of 'x'\n        for (long i = 3; i * i <= x; i += 2)\n        {\n            if (x % i == 0) return false;\n        }\n        return true;\n    }\n}\n",
+      "statement": "Part one : https://www.codingame.com/training/easy/the-prime-twins---part-one\n\n<<Context :>>\n五 and 七, two brilliant young students in middle school, have just finished creating their own secret language during the holidays. Proud of their creation, they speak confidently, convinced that no one will ever be able to decipher their messages.\n\n<<Encryption principles :>>\n<<•>> [[i]] denotes the integer between a pair of prime twins. For example, between 5 and 7, [[i]] = 6. \n<<•>> [[key]] represents the secret key agreed upon by 五 and 七.\n\n<<Transformation rules :>>\nA is transformed into [[key]] + [[key]]. For subsequent letters like B and beyond, [[key]] is added to the integer located between the closest pair of prime twins that is strictly greater than the previous value. For example, if the previous value was [[i]], the search for the next pair of twins starts from [[i]] + 1.\n\n<<Example :>>\nIf [[key]] = 3, A = 3 + 3 = 6. For B, the search for prime twins starts strictly above 6, and the closest twins will be 11 and 13, so [[i]] = 12 and B = 3 + 12 = 15. For C, starting strictly above 15, the next twins will be 17 and 19, so [[i]] = 18 and C = 3 + 18 = 21.\n\n<<Input format :>>\nFor an {{ENCODE}} [[operation]], [[message]] contains only upper case letters and spaces.\nFor a {{DECODE}} [[operation]], [[message]] contains only upper case hexadecimal values and the upper case letter {{G}}.\n\n<<Output format :>>\nThe resulting integers are then converted to hexadecimal in upper case, separated by {{G}} or {{GG}} for space. For example, <<ABC>> is transformed into  <<6, 15, 21>>, which is then converted to <<6{{G}}F{{G}}15>>.\n\n<<Error case :>>\nIf [[message]] does not comply with its respective input format, you must return {{ERROR !!}}.\n\n<<Goal :>>\nDevelop code to decode or encode the secret language of 五 and 七.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "ENCODE\n3\nABC",
+          "testOut": "6GFG15",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "ENCODE\n4\nABC",
+          "testOut": "8G10G16",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "DECODE\n2\n4AG20G98G98GC8",
+          "testOut": "HELLO",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "DECODE\n3\n69G2DGB7GB7GE7",
+          "testOut": "HELLO",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "DECODE\n50000\n30E12GC3DF4G3D20EG7A6C0GB7A9AG61D5AG186A0GAB722G495D4",
+          "testOut": "CODINGAME",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "DECODE\n49999\n30E11GC3DF3G3D20DG7A6BFGB7A99G61D59G1869EGAB721G495D3",
+          "testOut": "CODINGAME",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "DECODE\n13\nF1G97G1B1G1B1G247G37FG247G28FG1B1G73",
+          "testOut": "HELLOWORLD",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "DECODE\n14\nF2G98G1B2G1B2G248G380G248G290G1B2G74",
+          "testOut": "HELLOWORLD",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "DECODE\n12\nF0G96G1B0G1B0G246GG37EG246G28EG1B0G72",
+          "testOut": "HELLO WORLD",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "DECODE\n13\nF1G97G1B1G1B1G247GG37FG247G28FG1B1G73",
+          "testOut": "HELLO WORLD",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "DECODE\n13\nF1G97G1B1G1B1G247GGG37FG247G28FG1B1G73",
+          "testOut": "ERROR !!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "DECODE\n13\nF1G97G1B1G1B1GGG247GG37FG247G28FG1B1G73",
+          "testOut": "ERROR !!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 7",
+          "isTest": true,
+          "testIn": "DECODE\n50\nE6G800G98G16AG5FCGG3A4G500G6B6G2C6G3A4GG",
+          "testOut": "CYBER KOTIK ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "DECODE\n51\nE7G801G9FG16BG5FDGG3A5G501G6B7G2C7G3A5GG",
+          "testOut": "CYBER KOTIK ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 8",
+          "isTest": true,
+          "testIn": "DECODE\n5000000\n989680G7272302G5F5F238G4C4C0D2G42C2756G1C9C646",
+          "testOut": "AWSOME",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "DECODE\n4999999\n98967EG7272301G5F5F237G4C4C0D1G42C2755G1C9C645",
+          "testOut": "AWSOME",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 9",
+          "isTest": true,
+          "testIn": "DECODE\n51\n53DG501GG53DG501GGGG53DG501G53DG501GG53DG501GG53DG501GG",
+          "testOut": "PO PO  POPO PO PO ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "DECODE\n50\n53CG500GG53CG500GGGG53CG500G53CG500GG53CG500GG53CG500GG",
+          "testOut": "PO PO  POPO PO PO ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 10",
+          "isTest": true,
+          "testIn": "ENCODE\n51\nPO PO  POP0 PO PO ",
+          "testOut": "ERROR !!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "ENCODE\n51\nPO PO  POP0 PO PO ",
+          "testOut": "ERROR !!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 11",
+          "isTest": true,
+          "testIn": "ENCODE\n1800000\nGOD SAVE THE QUEEN",
+          "testOut": "DBBD36G1B77A9CG8956FEGG2255C22G36EE80G277C608GA4CE8CGG240D3DAGF7358AGA4CE8CGG1EE6B5CG25C4D7EGA4CE8CGA4CE8CG19C0272",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "ENCODE\n180010\nGOD SAVE THE QUEEN",
+          "testOut": "15FB8CG2BF9BAGDBCC4GG36F862G57E54G3F3766G107C14GG39B7CAG18BB7EG107C14GG31784EG3C783AG107C14G107C14G293A6A",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 12",
+          "isTest": true,
+          "testIn": "ENCODE\n65535\nERROR OR NOT",
+          "testOut": "6017DG1308B7G1308B7G10067DG1308B7GG10067DG1308B7GGF05EBG10067DG1509D5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "ENCODE\n65534\nERROR OR NOT",
+          "testOut": "6017CG1308B6G1308B6G10067CG1308B6GG10067CG1308B6GGF05EAG10067CG1509D4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 13",
+          "isTest": true,
+          "testIn": "ENCODE\n512\nABRACADBRA",
+          "testOut": "400G608G2882G400G848G400GA52G608G2882G400",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "ENCODE\n513\nABRACADBRA",
+          "testOut": "402G609G2883G402G849G402GA53G609G2883G402",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 14",
+          "isTest": true,
+          "testIn": "ENCODE\n123456\nNEXT PART COMING SO SOON",
+          "testOut": "1C46EEGB4E40G2F21C4G279564GG200BDAG3C480G23D078G279564GG78936G1E2958G1A6448G12D896G1C46EEGF1386GG25B2D0G1E2958GG25B2D0G1E2958G1E2958G1C46EE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 14",
+          "isTest": false,
+          "testIn": "ENCODE\n123457\nNEXT PART COMING SO SOON",
+          "testOut": "1C46EFGB4E41G2F21C5G279565GG200BDBG3C482G23D079G279565GG78937G1E2959G1A6449G12D897G1C46EFGF1387GG25B2D1G1E2959GG25B2D1G1E2959G1E2959G1C46EF",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "2 <= [[key]] <= 5*10⁶\n[[message]] contains only upper case letters and spaces",
+      "coverBinaryId": 129191783014826,
+      "stubGenerator": "read operation:string(6)\nread key:int\nread message:string(10000)\nwrite resultMessage",
+      "inputDescription": "<<Line 1>>: string [[operation]] {{ENCODE}}/{{DECODE}}\n<<Line 2>>: integer [[key]] Secret key agreed upon by 五 and 七\n<<Line 3>>: string  [[message]]",
+      "solutionLanguage": "C#",
+      "outputDescription": "encoded or decoded  upper case letter message / \"{{ERROR !!}}\""
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Part one : https://www.codingame.com/training/easy/the-prime-twins---part-one<br><br><strong>Context :</strong><br>五 and 七, two brilliant young students in middle school, have just finished creating their own secret language during the holidays. Proud of their creation, they speak confidently, convinced that no one will ever be able to decipher their messages.<br><br><strong>Encryption principles :</strong><br><strong>&bull;</strong> <var>i</var> denotes the integer between a pair of prime twins. For example, between 5 and 7, <var>i</var> = 6. <br><strong>&bull;</strong> <var>key</var> represents the secret key agreed upon by 五 and 七.<br><br><strong>Transformation rules :</strong><br>A is transformed into <var>key</var> + <var>key</var>. For subsequent letters like B and beyond, <var>key</var> is added to the integer located between the closest pair of prime twins that is strictly greater than the previous value. For example, if the previous value was <var>i</var>, the search for the next pair of twins starts from <var>i</var> + 1.<br><br><strong>Example :</strong><br>If <var>key</var> = 3, A = 3 + 3 = 6. For B, the search for prime twins starts strictly above 6, and the closest twins will be 11 and 13, so <var>i</var> = 12 and B = 3 + 12 = 15. For C, starting strictly above 15, the next twins will be 17 and 19, so <var>i</var> = 18 and C = 3 + 18 = 21.<br><br><strong>Input format :</strong><br>For an <const>ENCODE</const> <var>operation</var>, <var>message</var> contains only upper case letters and spaces.<br>For a <const>DECODE</const> <var>operation</var>, <var>message</var> contains only upper case hexadecimal values and the upper case letter <const>G</const>.<br><br><strong>Output format :</strong><br>The resulting integers are then converted to hexadecimal in upper case, separated by <const>G</const> or <const>GG</const> for space. For example, <strong>ABC</strong> is transformed into  <strong>6, 15, 21</strong>, which is then converted to <strong>6<const>G</const>F<const>G</const>15</strong>.<br><br><strong>Error case :</strong><br>If <var>message</var> does not comply with its respective input format, you must return <const>ERROR !!</const>.<br><br><strong>Goal :</strong><br>Develop code to decode or encode the secret language of 五 and 七.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: string <var>operation</var> <const>ENCODE</const>/<const>DECODE</const><br><strong>Line 2</strong>: integer <var>key</var> Secret key agreed upon by 五 and 七<br><strong>Line 3</strong>: string  <var>message</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">encoded or decoded  upper case letter message / &quot;<const>ERROR !!</const>&quot;</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &lt;= <var>key</var> &lt;= 5*10⁶<br><var>message</var> contains only upper case letters and spaces</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">ENCODE\n3\nABC</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">6GFG15</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 42086418946,
+  "avatar": 128569885297741,
+  "commentCount": 31,
+  "upVotes": 5,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 1015579,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1728642224924,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

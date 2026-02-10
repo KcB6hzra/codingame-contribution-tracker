@@ -1,0 +1,127 @@
+{
+  "id": 1119,
+  "activeVersion": 10,
+  "score": 9,
+  "votableId": 7082170,
+  "codingamerId": 835037,
+  "views": 335,
+  "commentableId": 7020388,
+  "title": "The Empire Enigma",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "ReMoD",
+  "publicHandle": "11199924a6730cffc7ec084af2569d391f43",
+  "codingamerHandle": "1ef8cf0b481141304f044cd1b534ab9d730538",
+  "lastVersion": {
+    "version": 10,
+    "autocloseTime": 1532016703560,
+    "data": {
+      "title": "The Empire Enigma",
+      "topics": [
+        {
+          "id": 74,
+          "handle": "cryptology",
+          "labelMap": {
+            "1": "Cryptologie",
+            "2": "Cryptography"
+          },
+          "pageTitle": "Cryptography: exercises and theory",
+          "puzzleCount": 1,
+          "parentTopicId": 43,
+          "contentDetailsId": 105
+        }
+      ],
+      "solution": "#include <stdlib.h>\n#include <stdio.h>\n#include <string.h>\n#include <stdint.h>\n#include <assert.h>\n\n\n/**\n *  The objective of this puzzle is to make people reflefct on the \n *  danger of using poor RNG for cryptographic purpose.\n *  The following three parameters for the Linear Congruential RNG are\n *  so poor that the RNG cycle is just 16, meaning that using large \"Offset\"\n *  is useless. \n *  Furthermore, they also make so that the sequence only depends on Seed % 17\n *\n *  What is most scaring is that finding such a bad RNG was extremely easy :)\n * \n *  Those who want to solve the puzzle will have to analyze the RNG (a simple\n *  spreadheet would do) and when they'll notice the short cycles will soon\n *  be able to write down the correct solution.\n */\n\n#define A 7562100\n#define C 907598307\n#define M 7140\n\nstatic int64_t N;\nint64_t ernd_seed(int64_t s) {N=s;}\n\nint64_t ernd_next()\n{\n  N=(A*N+C) % M;\n  return N;\n}\n\nint main()\n{\n    int64_t Offset;\n    scanf(\"%lld\", &Offset);\n    \n    int Length;\n    scanf(\"%d\", &Length);\n\n    int c;\n    scanf(\"%d\", &c); // '@' is the first character in each message\n    c = (c ^ '@');   // hence, this is the first byte of the random sequence\n    \n    Offset %= 16;  // RNG cycle is only 16, we can discard far less than Offset characters\n    \n    /* Find SEED */\n    int64_t seed;  // Seeds have a cycle of 17 we only need to test up to 16\n    \n    for (seed=0; seed<17; seed++) {\n      int msk;\n      ernd_seed(seed);\n      for(int i=0; i< Offset; i++)\n        msk=ernd_next();\n      msk = ernd_next() & 255;\n      if (msk == c) break;\n    }\n    assert(seed<17);\n    \n    for (int i = 0; i < Length-1; i++) {\n        scanf(\"%d\", &c);\n        putchar((c ^ ernd_next()) & 255);\n    }\n\n    putchar('\\n');\n\n    return 0;\n}",
+      "statement": "Write a decoder to allow the rebellion to decipher the Empire's secret messages.\n\nThe rebelllion figured out that characters in the original message are encoded by XOR'ing them with a stream of random numbers:\n\n- The Empire uses ASCII codes for their original message.\n\n- First character of each original message is always {{@}}.\n\n- Each message is encoded with a different [[Seed]] for the Random Number Generator (RNG).\n\n- The first [[Offset]] numbers from the RNG are discarded before encoding.\n\n- Each <<undiscarded>> random number from the RNG is then XOR'ed with the ASCII code of each character, truncated to the <<lowest 8 bits>>. The resulting number then becomes part of the encoded message.\n\n- The RNG used is:\n<<R(n+1) =  ({{7562100}} * R(n) + {{907598307}}) mod {{7140}}>>\nwhere R(0) = [[Seed]], R(1) is the first number from the RNG, R(2) is the second, etc.\n\nThe Empire believes that security is guaranteed by using large seeds ({{0}} < [[Seed]] < {{2^63}}) and the large offsets ( {{0}} ≤ [[Offset]] < {{2^63}}) which should prevent any brute force attack. Apparently you have a better way to work around the security than simple brute force!\n\n<<Example>>\nThe original message {{@Hello}} is encoded with [[Seed]] = {{581980637}} and [[Offset]] = {{10}} to obtain the encoded message of {{135 155 214 19 183 44}}.",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "10\n6\n135\n155\n214\n19\n183\n44",
+          "testOut": "Hello",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Example",
+          "isTest": false,
+          "testIn": "10\n6\n23\n172\n252\n93\n91\n163",
+          "testOut": "World",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Attack!",
+          "isTest": true,
+          "testIn": "5423\n14\n111\n118\n179\n167\n210\n28\n176\n99\n206\n241\n107\n136\n81\n118",
+          "testOut": "Attack Endor!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Defend!",
+          "isTest": false,
+          "testIn": "5423\n18\n243\n59\n190\n37\n238\n241\n107\n199\n96\n56\n137\n230\n92\n84\n166\n189\n199\n94",
+          "testOut": "Defend Coruscant!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Large offset",
+          "isTest": true,
+          "testIn": "4095514635\n26\n23\n177\n242\n77\n85\n166\n243\n199\n23\n190\n99\n195\n234\n123\n147\n3\n62\n136\n179\n78\n23\n161\n178\n199\n11\n162",
+          "testOut": "Jabba the Hutt is a fatty",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Large offset",
+          "isTest": false,
+          "testIn": "4095514635\n26\n63\n153\n44\n233\n254\n47\n161\n70\n35\n143\n179\n77\n88\n178\n180\n219\n11\n251\n34\n171\n184\n121\n130\n87\n35\n158",
+          "testOut": "Boba Fett bought a 'vette",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Huge offset and long text",
+          "isTest": true,
+          "testIn": "639308311567312489\n139\n155\n10\n255\n191\n102\n148\n3\n54\n219\n227\n74\n69\n174\n188\n215\n95\n180\n37\n171\n252\n102\n145\n74\n59\n219\n228\n78\n69\n233\n243\n225\n26\n185\n38\n231\n191\n124\n151\n66\n52\n158\n224\n71\n94\n183\n160\n159\n95\n168\n55\n249\n246\n100\n142\n77\n48\n219\n245\n93\n88\n170\n243\n210\n95\n179\n42\n239\n251\n106\n137\n3\n53\n154\n224\n74\n27\n231\n187\n210\n9\n190\n99\n252\n240\n97\n199\n87\n63\n158\n250\n93\n23\n161\n186\n193\n12\n175\n99\n253\n246\n108\n147\n76\n37\n130\n179\n78\n80\n166\n186\n221\n12\n175\n99\n255\n247\n106\n199\n70\n33\n146\n255\n15\n112\n166\n191\n210\n28\n175\n42\n232\n191\n74\n138\n83\n62\n137\n246\n1",
+          "testOut": "It is a period of civil war. Rebel spaceships, striking from a hidden base, have won their first victory against the evil Galactic Empire.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Huge offset and long text",
+          "isTest": false,
+          "testIn": "639308311567312489\n134\n135\n135\n219\n26\n251\n48\n226\n241\n102\n148\n87\n50\n137\n179\n105\n126\n149\n128\n231\n95\n148\n17\n207\n218\n93\n199\n75\n54\n136\n179\n93\n94\n180\n182\n221\n95\n189\n49\n228\n242\n47\n147\n75\n50\n219\n242\n92\n95\n162\n160\n147\n16\n189\n99\n255\n247\n106\n199\n102\n58\n139\n250\n93\n82\n231\n178\n221\n27\n251\n52\n226\n243\n99\n199\n77\n56\n143\n179\n93\n82\n180\n167\n147\n10\n181\n55\n226\n243\n47\n180\n72\n46\n140\n242\n67\n92\n162\n161\n159\n95\n175\n43\n238\n191\n99\n134\n80\n35\n219\n217\n74\n83\n174\n255\n147\n23\n186\n48\n171\n253\n106\n130\n77\n119\n159\n246\n92\n67\n181\n188\n202\n26\n191\n109",
+          "testOut": "The sinister FIRST ORDER has risen from the ashes of the Empire and will not rest until Skywalker, the last Jedi, has been destroyed.",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "0 < [[Seed]] < 2^63\n0 ≤ [[Offset]] < 2^63\n0 < [[Length]] < 256\n32 ≤ ASCII code of each character in the original message ≤ 126",
+      "stubGenerator": "read Offset:string(20)\nread Length:int\nloop Length read C:int\nwrite Hello",
+      "inputDescription": "<<Line 1:>> An integer [[Offset]] for the random numbers from the RNG to discard before starting XOR'ing.\n<<Line 2:>> An integer [[Length]] for the length of the message including {{@}}.\n<<Next [[Length]] lines:>> One integer [[C]] in each line for each encoded character of the message.",
+      "solutionLanguage": "C",
+      "outputDescription": "<<Line 1:>> The decoded message excluding the initial {{@}}."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Write a decoder to allow the rebellion to decipher the Empire's secret messages.<br><br>The rebelllion figured out that characters in the original message are encoded by XOR'ing them with a stream of random numbers:<br><br>- The Empire uses ASCII codes for their original message.<br><br>- First character of each original message is always <const>@</const>.<br><br>- Each message is encoded with a different <var>Seed</var> for the Random Number Generator (RNG).<br><br>- The first <var>Offset</var> numbers from the RNG are discarded before encoding.<br><br>- Each <strong>undiscarded</strong> random number from the RNG is then XOR'ed with the ASCII code of each character, truncated to the <strong>lowest 8 bits</strong>. The resulting number then becomes part of the encoded message.<br><br>- The RNG used is:<br><strong>R(n+1) =  (<const>7562100</const> * R(n) + <const>907598307</const>) mod <const>7140</const></strong><br>where R(0) = <var>Seed</var>, R(1) is the first number from the RNG, R(2) is the second, etc.<br><br>The Empire believes that security is guaranteed by using large seeds (<const>0</const> &lt; <var>Seed</var> &lt; <const>2^63</const>) and the large offsets ( <const>0</const> &le; <var>Offset</var> &lt; <const>2^63</const>) which should prevent any brute force attack. Apparently you have a better way to work around the security than simple brute force!<br><br><strong>Example</strong><br>The original message <const>@Hello</const> is encoded with <var>Seed</var> = <const>581980637</const> and <var>Offset</var> = <const>10</const> to obtain the encoded message of <const>135 155 214 19 183 44</const>.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>Offset</var> for the random numbers from the RNG to discard before starting XOR'ing.<br><strong>Line 2:</strong> An integer <var>Length</var> for the length of the message including <const>@</const>.<br><strong>Next <var>Length</var> lines:</strong> One integer <var>C</var> in each line for each encoded character of the message.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> The decoded message excluding the initial <const>@</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt; <var>Seed</var> &lt; 2^63<br>0 &le; <var>Offset</var> &lt; 2^63<br>0 &lt; <var>Length</var> &lt; 256<br>32 &le; ASCII code of each character in the original message &le; 126</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">10\n6\n135\n155\n214\n19\n183\n44</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Hello</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 240592600476,
+  "avatar": 16293972128943,
+  "commentCount": 17,
+  "upVotes": 11,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 238674,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

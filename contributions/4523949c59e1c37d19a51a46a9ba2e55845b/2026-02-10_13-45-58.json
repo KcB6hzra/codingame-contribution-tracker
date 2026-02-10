@@ -1,0 +1,198 @@
+{
+  "id": 4523,
+  "activeVersion": 12,
+  "score": 5,
+  "votableId": 11298036,
+  "codingamerId": 1569823,
+  "views": 329,
+  "commentableId": 11225511,
+  "title": "Photo Booth Transformation",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Niako",
+  "publicHandle": "4523949c59e1c37d19a51a46a9ba2e55845b",
+  "codingamerHandle": "eb89cbdf69d07106c84edf1d191caaf33289651",
+  "lastVersion": {
+    "version": 12,
+    "autocloseTime": 1569514179510,
+    "data": {
+      "title": "Photo Booth Transformation",
+      "topics": [
+        {
+          "id": 94,
+          "handle": "mathematics",
+          "labelMap": {
+            "1": "Mathematics",
+            "2": "Mathematics"
+          },
+          "puzzleCount": 15,
+          "parentTopicId": 93
+        },
+        {
+          "id": 64,
+          "handle": "image-processing",
+          "labelMap": {
+            "1": "Traitement d'images",
+            "2": "Image processing"
+          },
+          "pageTitle": "Image processing: exercises and theory",
+          "puzzleCount": 2,
+          "parentTopicId": 41,
+          "contentDetailsId": 101
+        },
+        {
+          "id": 70,
+          "handle": "permutations",
+          "labelMap": {
+            "1": "Permutations",
+            "2": "Permutations"
+          },
+          "pageTitle": "Permutations: exercises and theory",
+          "puzzleCount": 1,
+          "parentTopicId": 41,
+          "contentDetailsId": 103
+        }
+      ],
+      "solution": "#!/usr/bin/env python3\n\nfrom math import gcd\n\nlcm = lambda a,b: a*b//gcd(a,b)\n\nphotobooth = lambda w,h: lambda x,y: (x//2+(x%2)*(w//2), y//2+(y%2)*(h//2))\n\n# period of a permutation = LCM of the sizes of its cycles\ndef permutation_period(P):\n    per = 1\n    Seen = [False]*len(P)\n    for i in range(len(P)):\n        if not Seen[i]:\n            c = 0\n            while not Seen[i]:\n                Seen[i] = True\n                c += 1\n                i = P[i]\n            per = lcm(per,c)\n    return per\n\n# O(w*h) approach (expected)\ndef solution2d(w,h):\n    F = photobooth(w,h)\n    idx = lambda x,y: x*h+y\n    P = [idx(*F(*divmod(i,h))) for i in range(w*h)]\n    return permutation_period(P)\n\n# O(w+h) approach noticing both dimensions are independent\ndef solution1d(w,h):\n    F = photobooth(w,h)\n    Px = [F(x,0)[0] for x in range(w)]\n    Py = [F(0,y)[1] for y in range(h)]\n    return lcm(permutation_period(Px), permutation_period(Py))\n\n# There is also a \"formula\" for the period of the 1d-permutations\n# (period on one dimension w = multiplicative order of 2 mod w-1)\n# - ad-hoc proof (in French):\n#   https://fr.wikipedia.org/wiki/Transformation_du_clich%C3%A9_Photomaton\n# - or notice the 1d-perm. is the inverse of a classic cards \"faro shuffle\":\n#   https://en.wikipedia.org/wiki/Faro_shuffle\ndef solution_formula(w,h):\n    l = 1\n    for d in (w-1, h-1):\n        if d>1:\n            # multiplicative order of 2 mod d (odd), computed \"naively\"\n            k, p = 2, 1\n            while k!=1:\n                k = (2*k)%d\n                p += 1\n            l = lcm(l,p)\n    return l\n\ndef main():\n    T = int(input())\n    for _ in range(T):\n        w,h = map(int,input().split())\n        print(solution2d(w,h))\n        #print(solution1d(w,h))\n        #print(solution_formula(w,h))\n\nmain()",
+      "statement": "Given a [[W]]×[[H]] image, with [[W]] and [[H]] both even, we define its <<photo booth transformation>> as the image obtained after the following process:\n - Divide the image into 2×2 blocks (which is possible as both dimensions are even);\n - Build four [[W]]/2×[[H]]/2 images by gathering the top-left pixels of each block into one image (following the blocks ordering) and similarly the top-right / bottom-left / bottom-right pixels into three other images;\n - Glue together these four images (following the inside-block ordering) to obtain a new [[W]]×[[H]] image.\n\n<<Example:>> 6×4 image```┌──────┐      ┌──┬──┬──┐      ┌───┬───┐      ┌──────┐\n│ABCDEF│      │AB│CD│EF│      │ACE│BDF│      │ACEBDF│\n│GHIJKL│      │GH│IJ│KL│      │MOQ│NPR│      │MOQNPR│\n│MNOPQR│  ~>  ├──┼──┼──┤  ~>  ├───┼───┤  ~>  │GIKHJL│\n│STUVWX│      │MN│OP│QR│      │GIK│HJL│      │SUWTVX│\n└──────┘      │ST│UV│WX│      │SUW│TVX│      └──────┘\n              └──┴──┴──┘      └───┴───┘```This transformation results in an image which contains four reduced versions of the original image, though none of them have a single a pixel in common (each of them contains exactly 1/4 of the original pixels).\n\n<<Illustrations:>>\n- https://i.imgur.com/632iL82.png\n- https://i.imgur.com/nK8s3c7.png\n- https://i.imgur.com/rMfqTYM.png\n\nIterating this transform from a given image always brings us back to the original image after a (positive) number of steps that we call a <<period>> of the image.\n\nGiven some even dimensions [[W]] and [[H]], <<what is the minimum period common to all [[W]]×[[H]] images?>>\n\n<<Back to the example:>> Assuming all pixel values are distinct, we have:```┌──────┐    ┌──────┐    ┌──────┐    ┌──────┐    ┌──────┐\n│ABCDEF│    │ACEBDF│    │AEDCBF│    │ADBECF│    │ABCDEF│\n│GHIJKL│    │MOQNPR│    │GKJIHL│    │MPNQOR│    │GHIJKL│\n│MNOPQR│ ~> │GIKHJL│ ~> │MQPONR│ ~> │GJHKIL│ ~> │MNOPQR│\n│STUVWX│    │SUWTVX│    │SWVUTX│    │SVTWUX│    │STUVWX│\n└──────┘    └──────┘    └──────┘    └──────┘    └──────┘```Hence the minimum period is <<4>>.\n\n<<Additional illustrations (and references in French):>>\n - http://www.lifl.fr/~pmathieu/transform/joc_phot.html\n - http://www.lifl.fr/~pmathieu/transform/earth_phot.html",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "2\n6 4\n4 6",
+          "testOut": "4\n4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "2\n8 2\n2 8",
+          "testOut": "3\n3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Size <= 10",
+          "isTest": true,
+          "testIn": "10\n2 4\n6 10\n2 4\n4 8\n8 10\n6 6\n6 6\n2 10\n2 8\n4 2",
+          "testOut": "2\n12\n2\n6\n6\n4\n4\n6\n3\n2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "10\n2 4\n2 10\n4 4\n4 8\n10 4\n4 6\n4 4\n10 6\n4 2\n10 6",
+          "testOut": "2\n6\n2\n6\n6\n4\n2\n12\n2\n12",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Size <= 20",
+          "isTest": true,
+          "testIn": "10\n16 16\n18 8\n14 2\n6 20\n14 6\n20 12\n2 10\n20 14\n14 12\n16 8",
+          "testOut": "4\n24\n12\n36\n12\n90\n6\n36\n60\n12",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "10\n18 8\n10 16\n10 14\n8 10\n12 8\n4 10\n14 8\n4 18\n18 18\n16 12",
+          "testOut": "24\n12\n12\n6\n30\n6\n12\n8\n8\n20",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Size <= 100",
+          "isTest": true,
+          "testIn": "5\n46 74\n64 88\n44 80\n48 18\n50 44",
+          "testOut": "36\n84\n546\n184\n42",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "5\n46 78\n2 28\n86 14\n90 2\n68 72",
+          "testOut": "60\n18\n24\n11\n2310",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Size <= 500",
+          "isTest": true,
+          "testIn": "7\n84 354\n368 336\n344 70\n98 486\n32 274\n100 338\n434 62",
+          "testOut": "3608\n8052\n3234\n48\n60\n210\n360",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "7\n30 146\n164 220\n40 70\n406 266\n270 214\n178 16\n32 154",
+          "testOut": "28\n162\n132\n1404\n9380\n116\n120",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Size <= 1000",
+          "isTest": true,
+          "testIn": "5\n604 958\n172 446\n538 918\n280 234\n170 622",
+          "testOut": "4620\n396\n34710\n870\n5148",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "5\n258 518\n526 150\n396 416\n262 660\n438 42",
+          "testOut": "1840\n2220\n6396\n3948\n1980",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Size <= 2000",
+          "isTest": true,
+          "testIn": "3\n1716 638\n462 110\n1178 1632",
+          "testOut": "588\n4140\n46110",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "3\n378 468\n460 150\n1056 1246",
+          "testOut": "19572\n2664\n17220",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ [[T]] ≤ 10\n2 ≤ [[W]], [[H]] ≤ 2000\nBoth [[W]] and [[H]] are even.",
+      "coverBinaryId": 33089429112370,
+      "stubGenerator": "read T:int\nloop T read W:int H:int\nwrite 0",
+      "inputDescription": "<<Line 1:>> One single integer [[T]] for the number of testcases to follow.\n<<Next [[T]] lines:>> Two space-separated integers [[Wi]] and [[Hi]] corresponding to the width and height of the image.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[T]] lines:>> One single integer corresponding to the period of the photo booth map on [[Wi]]×[[Hi]] images."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Given a <var>W</var>&times;<var>H</var> image, with <var>W</var> and <var>H</var> both even, we define its <strong>photo booth transformation</strong> as the image obtained after the following process:<br> - Divide the image into 2&times;2 blocks (which is possible as both dimensions are even);<br> - Build four <var>W</var>/2&times;<var>H</var>/2 images by gathering the top-left pixels of each block into one image (following the blocks ordering) and similarly the top-right / bottom-left / bottom-right pixels into three other images;<br> - Glue together these four images (following the inside-block ordering) to obtain a new <var>W</var>&times;<var>H</var> image.<br><br><strong>Example:</strong> 6&times;4 image<pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">┌──────┐      ┌──┬──┬──┐      ┌───┬───┐      ┌──────┐<br>│ABCDEF│      │AB│CD│EF│      │ACE│BDF│      │ACEBDF│<br>│GHIJKL│      │GH│IJ│KL│      │MOQ│NPR│      │MOQNPR│<br>│MNOPQR│  ~&gt;  ├──┼──┼──┤  ~&gt;  ├───┼───┤  ~&gt;  │GIKHJL│<br>│STUVWX│      │MN│OP│QR│      │GIK│HJL│      │SUWTVX│<br>└──────┘      │ST│UV│WX│      │SUW│TVX│      └──────┘<br>              └──┴──┴──┘      └───┴───┘</pre><pre style=\"font-family: monospace\"></pre>This transformation results in an image which contains four reduced versions of the original image, though none of them have a single a pixel in common (each of them contains exactly 1/4 of the original pixels).<br><br><strong>Illustrations:</strong><br>- https://i.imgur.com/632iL82.png<br>- https://i.imgur.com/nK8s3c7.png<br>- https://i.imgur.com/rMfqTYM.png<br><br>Iterating this transform from a given image always brings us back to the original image after a (positive) number of steps that we call a <strong>period</strong> of the image.<br><br>Given some even dimensions <var>W</var> and <var>H</var>, <strong>what is the minimum period common to all <var>W</var>&times;<var>H</var> images?</strong><br><br><strong>Back to the example:</strong> Assuming all pixel values are distinct, we have:<pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">┌──────┐    ┌──────┐    ┌──────┐    ┌──────┐    ┌──────┐<br>│ABCDEF│    │ACEBDF│    │AEDCBF│    │ADBECF│    │ABCDEF│<br>│GHIJKL│    │MOQNPR│    │GKJIHL│    │MPNQOR│    │GHIJKL│<br>│MNOPQR│ ~&gt; │GIKHJL│ ~&gt; │MQPONR│ ~&gt; │GJHKIL│ ~&gt; │MNOPQR│<br>│STUVWX│    │SUWTVX│    │SWVUTX│    │SVTWUX│    │STUVWX│<br>└──────┘    └──────┘    └──────┘    └──────┘    └──────┘</pre><pre style=\"font-family: monospace\"></pre>Hence the minimum period is <strong>4</strong>.<br><br><strong>Additional illustrations (and references in French):</strong><br> - http://www.lifl.fr/~pmathieu/transform/joc_phot.html<br> - http://www.lifl.fr/~pmathieu/transform/earth_phot.html</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> One single integer <var>T</var> for the number of testcases to follow.<br><strong>Next <var>T</var> lines:</strong> Two space-separated integers <var>Wi</var> and <var>Hi</var> corresponding to the width and height of the image.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>T</var> lines:</strong> One single integer corresponding to the period of the photo booth map on <var>Wi</var>&times;<var>Hi</var> images.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>T</var> &le; 10<br>2 &le; <var>W</var>, <var>H</var> &le; 2000<br>Both <var>W</var> and <var>H</var> are even.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\n6 4\n4 6</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">4\n4</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 201702529624,
+  "avatar": 11911528647474,
+  "commentCount": 6,
+  "upVotes": 8,
+  "downVotes": 3,
+  "validateAction": {
+    "actionId": 378637,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

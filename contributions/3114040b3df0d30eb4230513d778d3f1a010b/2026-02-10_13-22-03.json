@@ -1,0 +1,180 @@
+{
+  "id": 31140,
+  "activeVersion": 8,
+  "score": 4,
+  "votableId": 25298319,
+  "codingamerId": 1075921,
+  "views": 196,
+  "commentableId": 25177598,
+  "title": "Maze /w teleporters and jumps",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "PenguinPero",
+  "publicHandle": "3114040b3df0d30eb4230513d778d3f1a010b",
+  "codingamerHandle": "197a5c02c7dcc883e6e19f3ae697fb9e1295701",
+  "lastVersion": {
+    "version": 8,
+    "autocloseTime": 1664987463454,
+    "data": {
+      "title": "Maze /w teleporters and jumps",
+      "topics": [
+        {
+          "id": 54,
+          "handle": "BFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en largeur",
+            "2": "BFS"
+          },
+          "pageTitle": "BFS: exercises and theory",
+          "puzzleCount": 21,
+          "parentTopicId": 41,
+          "contentDetailsId": 84
+        },
+        {
+          "id": 186,
+          "handle": "maze",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Maze",
+            "2": "Maze"
+          },
+          "puzzleCount": 9,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\n\nclass Solution\n{\n    static void Main(string[] args)\n    {\n        var width = int.Parse(Console.ReadLine());\n        var height = int.Parse(Console.ReadLine());\n        var cells = new Cell[width, height];\n        var teleporters = new Dictionary<char, Cell>();\n        var jumps = new Dictionary<Cell, Cell>();\n        Cell startCell = null;\n        Cell endCell = null;\n\n        for (int i = 0; i < height; i++)\n        {\n            string row = Console.ReadLine();\n\n            for (int j = 0; j < row.Length; j++)\n                cells[j, i] = new Cell { Sign = row[j], X = j, Y = i };\n        }\n\n        for (int i = 0; i < width; i++)\n            for (int j = 0; j < height; j++)\n            {\n                var cell = cells[i, j];\n\n                if (cell.Sign == 'S')\n                    startCell = cell;\n                else if (cell.Sign == 'E')\n                    endCell = cell;\n                else if (cell.IsTeleporterExit)\n                    teleporters[char.ToLower(cell.Sign)] = cell;\n                else if (cell.IsJumpPod)\n                    jumps[cell] = cell.Sign switch\n                    {\n                        '^' => cells[cell.X, cell.Y - 2],\n                        'v' => cells[cell.X, cell.Y + 2],\n                        '<' => cells[cell.X - 2, cell.Y],\n                        '>' => cells[cell.X + 2, cell.Y]\n                    };\n            }\n\n        IEnumerable<Cell> GetNeighbors(Cell cell)\n        {\n            if (cell.X - 1 >= 0) yield return cells[cell.X - 1, cell.Y];\n            if (cell.X + 1 < width) yield return cells[cell.X + 1, cell.Y];\n            if (cell.Y - 1 >= 0) yield return cells[cell.X, cell.Y - 1];\n            if (cell.Y + 1 < height) yield return cells[cell.X, cell.Y + 1];\n        }\n\n        int BFS()\n        {\n            var cellQueue = new Queue<Cell>();\n            cellQueue.Enqueue(startCell);\n            startCell.Step = 0;\n\n            while (cellQueue.Count > 0)\n            {\n                var currentCell = cellQueue.Dequeue();\n\n                foreach (var neighbor in GetNeighbors(currentCell)\n                                        .Where(x => x.Sign != '#' && (x.Step == -1 || currentCell.Step + 1 < x.Step)))\n                {\n                    var cell = neighbor;\n\n                    while (cell.IsJumpPod)\n                        cell = jumps[cell];\n\n                    if (cell.IsTeleporterEntry)\n                        cell = teleporters[cell.Sign];\n\n                    if (cell.Step == -1 || currentCell.Step + 1 < cell.Step)\n                    {\n                        cell.Step = currentCell.Step + 1;\n                        cellQueue.Enqueue(cell);\n                    }\n                }\n            }\n\n            return endCell.Step;\n        }\n\n        Console.WriteLine(BFS());\n    }\n\n    class Cell\n    {\n        public int X { get; set; }\n        public int Y { get; set; }\n        public int Step { get; set; } = -1;\n        public char Sign { get; set; }\n        public bool IsTeleporterEntry\n            => char.IsLetter(Sign) && char.IsLower(Sign) && Sign != 'v';\n        public bool IsTeleporterExit\n            => char.IsLetter(Sign) && char.IsUpper(Sign);\n        public bool IsJumpPod\n            => \"^<>v\".Contains(Sign);\n    }\n}",
+      "statement": "Your goal is to find the minimum amount of steps from start to end in a maze with teleporters and jump pods, and return {{-1}} if it is impossible to reach the end.\n\nYou will be given a maze of [[width]] x [[height]] cells with symbols:\n{{#}}: wall\n{{_}}: empty cell\n{{S}}: starting point\n{{E}}: ending point\n{{lowercase letter}}: teleporter entry\n{{UPPERCASE letter}}: teleporter exit\n{{<}}, {{>}}, {{^}}, {{v}}: jump pod\n\nHow teleporters work: Stepping on a lowercase letter instantly transports you to the matching uppercase letter. Teleporters are one-way: you can travel from the lowercase entry to the uppercase exit, but not the other way round.\n\nHow jump pods work: When you step on a jump pod, you jump 2 cells in the direction of the sign. You also jump over walls, but there won't be any out of bounds jump pods. Stepping on the {{>}} will make you jump 2 cells to the right, {{<}} to the left, {{^}} up, and {{v}} down.\n\nYou may move up, down, left, or right (no diagonal moves), one cell at a time. Each move to an adjacent cell counts as a single step. Stepping onto a teleporter or a jump pod also counts as one step, but the teleportation or jump itself does not add extra steps.",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "6\n5\n######\n#S__x#\n######\n#X__E#\n######",
+          "testOut": "6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Example - validator",
+          "isTest": false,
+          "testIn": "7\n5\n#######\n#E___X#\n#######\n#x___S#\n#######",
+          "testOut": "8",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Jumps",
+          "isTest": true,
+          "testIn": "16\n3\n################\n#S__>#__>#_>#_E#\n################",
+          "testOut": "7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Jumps - validator",
+          "isTest": false,
+          "testIn": "18\n3\n##################\n#E#<_____#<__#<_S#\n##################",
+          "testOut": "9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No way out",
+          "isTest": true,
+          "testIn": "7\n7\n#######\n#__S__#\n#_x_y_#\n#######\n#__#_X#\n#Y#E#_#\n#######",
+          "testOut": "-1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "No way out - validator",
+          "isTest": false,
+          "testIn": "7\n7\n#######\n#__S#E#\n#_xy###\n#######\n#__#_X#\n#Y____#\n#######",
+          "testOut": "-1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Teleporter maze",
+          "isTest": true,
+          "testIn": "16\n9\n################\n#____#Z#__W__#X#\n#_##y#_#____t#_#\n#Sz###_#######_#\n#_##w#x#Y___u#_#\n#____###_____#_#\n##############_#\n#E____U__T_____#\n################",
+          "testOut": "15",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Teleporter maze - validator",
+          "isTest": false,
+          "testIn": "16\n9\n################\n#____#Y__t####E#\n#_##y######_Z#_#\n#Sz###W___#_x#U#\n#_##w#____####_#\n#____#______u#T#\n##############_#\n#X_____________#\n################",
+          "testOut": "13",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Jumps and teleports",
+          "isTest": true,
+          "testIn": "16\n9\n################\n###>#>#>#_____y#\n################\n#S_^#E_____#<_X#\n#__v#____#<#<_Y#\n################\n#__>#>#>#______#\n#_#######_____x#\n################",
+          "testOut": "13",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Jumps and teleports - validator",
+          "isTest": false,
+          "testIn": "16\n9\n################\n######E#########\n#_>____#y#<#<#<#\n################\n#^#^###______#^#\n#_#_#x#______###\n#Y#_##########^#\n###X#^#<#<#<#<S#\n################",
+          "testOut": "7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Don't take it",
+          "isTest": true,
+          "testIn": "6\n5\n######\n#S__x#\n#_X__#\n#_E__#\n######",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Don't take it - validator",
+          "isTest": false,
+          "testIn": "6\n6\n######\n#____#\n#EX_S#\n#____#\n#__x_#\n######",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "3 ≤ [[width]] ≤ 20\n3 ≤ [[height]] ≤ 20\nEach maze contains exactly one {{S}} and one {{E}}.\nTeleporter entries and exits are strictly one-to-one; no duplicates.\n{{S}}, {{E}} and {{v}} are never used as teleporter symbols.",
+      "coverBinaryId": 89731741377467,
+      "stubGenerator": "read width:int\nread height:int\n\nloop height read row:string(48)\n\nwrite answer",
+      "inputDescription": "<<Line 1:>> [[width]] of the maze\n<<Line 2:>> [[height]] of the maze\n<<Next [[height]] lines:>> string describing a row in the maze",
+      "solutionLanguage": "C#",
+      "outputDescription": "<<Line 1:>> the minimum amount of steps from start to end, or {{-1}} if it is impossible to reach the end"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Your goal is to find the minimum amount of steps from start to end in a maze with teleporters and jump pods, and return <const>-1</const> if it is impossible to reach the end.<br><br>You will be given a maze of <var>width</var> x <var>height</var> cells with symbols:<br><const>#</const>: wall<br><const>_</const>: empty cell<br><const>S</const>: starting point<br><const>E</const>: ending point<br><const>lowercase letter</const>: teleporter entry<br><const>UPPERCASE letter</const>: teleporter exit<br><const>&lt;</const>, <const>&gt;</const>, <const>^</const>, <const>v</const>: jump pod<br><br>How teleporters work: Stepping on a lowercase letter instantly transports you to the matching uppercase letter. Teleporters are one-way: you can travel from the lowercase entry to the uppercase exit, but not the other way round.<br><br>How jump pods work: When you step on a jump pod, you jump 2 cells in the direction of the sign. You also jump over walls, but there won't be any out of bounds jump pods. Stepping on the <const>&gt;</const> will make you jump 2 cells to the right, <const>&lt;</const> to the left, <const>^</const> up, and <const>v</const> down.<br><br>You may move up, down, left, or right (no diagonal moves), one cell at a time. Each move to an adjacent cell counts as a single step. Stepping onto a teleporter or a jump pod also counts as one step, but the teleportation or jump itself does not add extra steps.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> <var>width</var> of the maze<br><strong>Line 2:</strong> <var>height</var> of the maze<br><strong>Next <var>height</var> lines:</strong> string describing a row in the maze</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> the minimum amount of steps from start to end, or <const>-1</const> if it is impossible to reach the end</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">3 &le; <var>width</var> &le; 20<br>3 &le; <var>height</var> &le; 20<br>Each maze contains exactly one <const>S</const> and one <const>E</const>.<br>Teleporter entries and exits are strictly one-to-one; no duplicates.<br><const>S</const>, <const>E</const> and <const>v</const> are never used as teleporter symbols.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">6\n5\n######\n#S__x#\n######\n#X__E#\n######</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">6</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 107989575139,
+  "avatar": 11740712510393,
+  "commentCount": 36,
+  "upVotes": 5,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 698386,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1662740146672,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

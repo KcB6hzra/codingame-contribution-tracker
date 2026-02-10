@@ -1,0 +1,156 @@
+{
+  "id": 353,
+  "activeVersion": 16,
+  "score": 16,
+  "votableId": 2823964,
+  "codingamerId": 1425402,
+  "views": 237,
+  "commentableId": 2771480,
+  "title": "Elementary cellular automaton",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "LauMJ",
+  "publicHandle": "3531c969e3383c7937756081660780e1af9",
+  "codingamerHandle": "b0cc0f83fb92aafec3268b3047c19d962045241",
+  "lastVersion": {
+    "version": 16,
+    "data": {
+      "title": "Elementary cellular automaton",
+      "topics": [
+        {
+          "id": 87,
+          "handle": "state-machine",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Machine à états",
+            "2": "State machine"
+          },
+          "pageTitle": "State machine: exercises and theory",
+          "puzzleCount": 7,
+          "parentTopicId": 42,
+          "contentDetailsId": 94
+        },
+        {
+          "id": 50,
+          "handle": "lists",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Listes",
+            "2": "Lists"
+          },
+          "pageTitle": "Lists: exercises and theory",
+          "puzzleCount": 6,
+          "parentTopicId": 40,
+          "contentDetailsId": 96
+        }
+      ],
+      "solution": "import numpy as np\n\nr = int(input())\nn = int(input())\nstart_pattern = input()\n\ncol = len(start_pattern)\n# Make a grid and translate input to zeros and ones\ngrid = np.zeros((n,col), dtype=np.int)\nfor j,c in enumerate(start_pattern):\n    grid[0,j] = c == '@'\n\n# Get the 8-bit binary number from the rule integer\nr_bin = bin(r)[2:]\nr_bin = '0'*(8-len(r_bin)) + r_bin\n\n# Define the rule for all possible neighborhoods\nPATTERNS = ['111', '110', '101', '100', '011', '010', '001', '000']\nrule_dict = dict()\nfor p,c in zip(PATTERNS, r_bin):\n    rule_dict[p] = int(c)\n\n# Calculate the evolution of the automaton\nfor i in range(1,n):\n    for j in range(col):\n        if j == 0:  # Left wrap-around\n            t = np.concatenate([[grid[i-1, col-1]], grid[i-1, j:j+2]])\n        elif j == col-1:  # Right wrap-around\n            t = np.concatenate([grid[i-1, j-1:], [grid[i-1, 0]]])\n        else:\n            t = grid[i-1,j-1:j+2]\n        # Look-up the next value in the 'rulebook'\n        t = ''.join(str(d) for d in t)\n        grid[i,j] = rule_dict[t]\n\n# Translate back to '@' and '.' and print the result\nfor i in range(n):\n    print(''.join('@' if g else '.' for g in grid[i]))\n",
+      "statement": "Your goal is to write a program that can show the evolution of an Elementary Cellular Automaton! This is a one-dimensional binary system in which each cell ({{0}} or {{1}}) evolves to the next stage based on its own value and the values of its immediately adjacent neighbors.\n\nFor example, consider the [[pattern]]:\n\n`{{0010110}}`\n\nIn order to determine the next value for the 4th cell, we look at the neighborhood: {{101}}, composed of the 3rd cell, {{1}}, 4th cell {{0}}, and 5th cell, {{1}}.\n\nSince neighborhoods can have any one of 8 different values ({{000}} - {{111}}) there are 256 possible rules for determining how the automaton should evolve any given neighborhood into either a {{0}} or a {{1}}.\n\nFor example, a rule could state that neighborhoods that resemble {{001}} will evolve into {{1}}, and all other neighborhoods will evolve into {{0}}. In this case, the [[pattern]] {{000100}} would evolve as shown:\n\n`{{000100\n001000\n010000}}`\n\nIn this puzzle, the rule will be provided in the <<Input>> in the form of a Wolfram code (a single 8-bit number) where each digit in the binary representation of the code represents the evolution for the corresponding neighborhood.\n\nFor example, if the provided rule is the code {{53}}, or {{00110101}} in binary, then this would be interpreted as follows:\n\n`Neighborhood:\t{{111   110   101   100   011   010   001   000}}\nNext value:\t {{0     0     1     1     0     1     0     1}}`\n\nAnd so  a neighborhood resembling {{010}} would evolve into a {{1}}, while a neighborhood resembling {{110}} would evolve into a {{0}}.\n\nFor further explanation, see:\nwikipedia.org/wiki/Elementary_cellular_automaton#The_numbering_system\n\n<<Note:>> The system is periodic, or wrapped around, meaning that for the [[pattern]] [ . . @ . @ ], the neighborhood for the 1st cell is [ @ . . ], the 2nd is [ . . @ ], the 3rd is [ . @ . ], the 4th is [ @ . @ ], and the neighborhood for the last cell is [ . @ . ].",
+      "testCases": [
+        {
+          "title": "Pyramid",
+          "isTest": true,
+          "testIn": "254\n5\n.....@.....",
+          "testOut": ".....@.....\n....@@@....\n...@@@@@...\n..@@@@@@@..\n.@@@@@@@@@.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "254\n7\n........@........",
+          "testOut": "........@........\n.......@@@.......\n......@@@@@......\n.....@@@@@@@.....\n....@@@@@@@@@....\n...@@@@@@@@@@@...\n..@@@@@@@@@@@@@..",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Sierpiński triangle",
+          "isTest": true,
+          "testIn": "90\n16\n...............@...............",
+          "testOut": "...............@...............\n..............@.@..............\n.............@...@.............\n............@.@.@.@............\n...........@.......@...........\n..........@.@.....@.@..........\n.........@...@...@...@.........\n........@.@.@.@.@.@.@.@........\n.......@...............@.......\n......@.@.............@.@......\n.....@...@...........@...@.....\n....@.@.@.@.........@.@.@.@....\n...@.......@.......@.......@...\n..@.@.....@.@.....@.@.....@.@..\n.@...@...@...@...@...@...@...@.\n@.@.@.@.@.@.@.@.@.@.@.@.@.@.@.@",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "90\n19\n.....................@....................",
+          "testOut": ".....................@....................\n....................@.@...................\n...................@...@..................\n..................@.@.@.@.................\n.................@.......@................\n................@.@.....@.@...............\n...............@...@...@...@..............\n..............@.@.@.@.@.@.@.@.............\n.............@...............@............\n............@.@.............@.@...........\n...........@...@...........@...@..........\n..........@.@.@.@.........@.@.@.@.........\n.........@.......@.......@.......@........\n........@.@.....@.@.....@.@.....@.@.......\n.......@...@...@...@...@...@...@...@......\n......@.@.@.@.@.@.@.@.@.@.@.@.@.@.@.@.....\n.....@...............................@....\n....@.@.............................@.@...\n...@...@...........................@...@..",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Rule 30: Conus Textile",
+          "isTest": true,
+          "testIn": "30\n14\n..............@..............",
+          "testOut": "..............@..............\n.............@@@.............\n............@@..@............\n...........@@.@@@@...........\n..........@@..@...@..........\n.........@@.@@@@.@@@.........\n........@@..@....@..@........\n.......@@.@@@@..@@@@@@.......\n......@@..@...@@@.....@......\n.....@@.@@@@.@@..@...@@@.....\n....@@..@....@.@@@@.@@..@....\n...@@.@@@@..@@.@....@.@@@@...\n..@@..@...@@@..@@..@@.@...@..\n.@@.@@@@.@@..@@@.@@@..@@.@@@.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "30\n12\n............@...............",
+          "testOut": "............@...............\n...........@@@..............\n..........@@..@.............\n.........@@.@@@@............\n........@@..@...@...........\n.......@@.@@@@.@@@..........\n......@@..@....@..@.........\n.....@@.@@@@..@@@@@@........\n....@@..@...@@@.....@.......\n...@@.@@@@.@@..@...@@@......\n..@@..@....@.@@@@.@@..@.....\n.@@.@@@@..@@.@....@.@@@@....",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Sierpiński triangle, continued",
+          "isTest": true,
+          "testIn": "90\n16\n........@........",
+          "testOut": "........@........\n.......@.@.......\n......@...@......\n.....@.@.@.@.....\n....@.......@....\n...@.@.....@.@...\n..@...@...@...@..\n.@.@.@.@.@.@.@.@.\n@...............@\n@@.............@@\n.@@...........@@.\n@@@@.........@@@@\n...@@.......@@...\n..@@@@.....@@@@..\n.@@..@@...@@..@@.\n@@@@@@@@.@@@@@@@@",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "90\n23\n...@...........",
+          "testOut": "...@...........\n..@.@..........\n.@...@.........\n@.@.@.@........\n.......@......@\n@.....@.@....@.\n.@...@...@..@..\n@.@.@.@.@.@@.@.\n..........@@...\n.........@@@@..\n........@@..@@.\n.......@@@@@@@@\n@.....@@......@\n@@...@@@@....@@\n.@@.@@..@@..@@.\n@@@.@@@@@@@@@@@\n..@.@..........\n.@...@.........\n@.@.@.@........\n.......@......@\n@.....@.@....@.\n.@...@...@..@..\n@.@.@.@.@.@@.@.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Rule 110, different start",
+          "isTest": true,
+          "testIn": "110\n21\n....@..@@@.@@..........",
+          "testOut": "....@..@@@.@@..........\n...@@.@@.@@@@..........\n..@@@@@@@@..@..........\n.@@......@.@@..........\n@@@.....@@@@@..........\n@.@....@@...@.........@\n@@@...@@@..@@........@@\n..@..@@.@.@@@.......@@.\n.@@.@@@@@@@.@......@@@.\n@@@@@.....@@@.....@@.@.\n@...@....@@.@....@@@@@@\n@..@@...@@@@@...@@.....\n@.@@@..@@...@..@@@....@\n@@@.@.@@@..@@.@@.@...@@\n..@@@@@.@.@@@@@@@@..@@.\n.@@...@@@@@......@.@@@.\n@@@..@@...@.....@@@@.@.\n@.@.@@@..@@....@@..@@@@\n@@@@@.@.@@@...@@@.@@...\n@...@@@@@.@..@@.@@@@..@\n@..@@...@@@.@@@@@..@.@@",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "110\n30\n...@....@@@.@@@.....",
+          "testOut": "...@....@@@.@@@.....\n..@@...@@.@@@.@.....\n.@@@..@@@@@.@@@.....\n@@.@.@@...@@@.@.....\n@@@@@@@..@@.@@@....@\n......@.@@@@@.@...@@\n.....@@@@...@@@..@@@\n....@@..@..@@.@.@@.@\n...@@@.@@.@@@@@@@@@@\n..@@.@@@@@@........@\n.@@@@@....@.......@@\n@@...@...@@......@@@\n.@..@@..@@@.....@@..\n@@.@@@.@@.@....@@@..\n@@@@.@@@@@@...@@.@.@\n...@@@....@..@@@@@@@\n..@@.@...@@.@@.....@\n.@@@@@..@@@@@@....@@\n@@...@.@@....@...@@@\n.@..@@@@@...@@..@@..\n@@.@@...@..@@@.@@@..\n@@@@@..@@.@@.@@@.@.@\n....@.@@@@@@@@.@@@@@\n...@@@@......@@@...@\n..@@..@.....@@.@..@@\n.@@@.@@....@@@@@.@@@\n@@.@@@@...@@...@@@.@\n.@@@..@..@@@..@@.@@@\n@@.@.@@.@@.@.@@@@@.@\n.@@@@@@@@@@@@@...@@@",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "0 ≤ [[R]] ≤ 255\n10 ≤ [[pattern]].length ≤ 50",
+      "stubGenerator": "read R:int\nread N:int\nread startPattern:word(50)\nwrite .....@.@.....",
+      "inputDescription": "<<Line 1:>> A rule [[R]] provided as a Wolfram code.\n<<Line 2:>> The number [[N]] of lines to output.\n<<Line 3:>> The starting [[pattern]] to evolve. {{@}} and {{.}} represent {{1}} and {{0}}.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[N]] lines:>> The evolution of the starting [[pattern]]. The first line must be the starting pattern, itself, and the next [[N]]-1 lines represent the subsequent evolutions from the starting pattern."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Your goal is to write a program that can show the evolution of an Elementary Cellular Automaton! This is a one-dimensional binary system in which each cell (<const>0</const> or <const>1</const>) evolves to the next stage based on its own value and the values of its immediately adjacent neighbors.<br><br>For example, consider the <var>pattern</var>:<br><br><pre style=\"font-family: monospace\"><const>0010110</const></pre><br><br>In order to determine the next value for the 4th cell, we look at the neighborhood: <const>101</const>, composed of the 3rd cell, <const>1</const>, 4th cell <const>0</const>, and 5th cell, <const>1</const>.<br><br>Since neighborhoods can have any one of 8 different values (<const>000</const> - <const>111</const>) there are 256 possible rules for determining how the automaton should evolve any given neighborhood into either a <const>0</const> or a <const>1</const>.<br><br>For example, a rule could state that neighborhoods that resemble <const>001</const> will evolve into <const>1</const>, and all other neighborhoods will evolve into <const>0</const>. In this case, the <var>pattern</var> <const>000100</const> would evolve as shown:<br><br><pre style=\"font-family: monospace\"><const>000100<br>001000<br>010000</const></pre><br><br>In this puzzle, the rule will be provided in the <strong>Input</strong> in the form of a Wolfram code (a single 8-bit number) where each digit in the binary representation of the code represents the evolution for the corresponding neighborhood.<br><br>For example, if the provided rule is the code <const>53</const>, or <const>00110101</const> in binary, then this would be interpreted as follows:<br><br><pre style=\"font-family: monospace\">Neighborhood:\t<const>111   110   101   100   011   010   001   000</const><br>Next value:\t <const>0     0     1     1     0     1     0     1</const></pre><br><br>And so  a neighborhood resembling <const>010</const> would evolve into a <const>1</const>, while a neighborhood resembling <const>110</const> would evolve into a <const>0</const>.<br><br>For further explanation, see:<br>wikipedia.org/wiki/Elementary_cellular_automaton#The_numbering_system<br><br><strong>Note:</strong> The system is periodic, or wrapped around, meaning that for the <var>pattern</var> [ . . @ . @ ], the neighborhood for the 1st cell is [ @ . . ], the 2nd is [ . . @ ], the 3rd is [ . @ . ], the 4th is [ @ . @ ], and the neighborhood for the last cell is [ . @ . ].</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> A rule <var>R</var> provided as a Wolfram code.<br><strong>Line 2:</strong> The number <var>N</var> of lines to output.<br><strong>Line 3:</strong> The starting <var>pattern</var> to evolve. <const>@</const> and <const>.</const> represent <const>1</const> and <const>0</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>N</var> lines:</strong> The evolution of the starting <var>pattern</var>. The first line must be the starting pattern, itself, and the next <var>N</var>-1 lines represent the subsequent evolutions from the starting pattern.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &le; <var>R</var> &le; 255<br>10 &le; <var>pattern</var>.length &le; 50</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">254\n5\n.....@.....</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">.....@.....\n....@@@....\n...@@@@@...\n..@@@@@@@..\n.@@@@@@@@@.</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 302750628806,
+  "avatar": 13508591864679,
+  "commentCount": 6,
+  "upVotes": 16,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 729,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

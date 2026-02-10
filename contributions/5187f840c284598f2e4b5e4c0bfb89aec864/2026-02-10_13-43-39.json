@@ -1,0 +1,202 @@
+{
+  "id": 5187,
+  "activeVersion": 45,
+  "score": 13,
+  "votableId": 14416485,
+  "codingamerId": 257832,
+  "views": 422,
+  "commentableId": 14337515,
+  "title": "What the Brainfuck !",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "publicHandle": "5187f840c284598f2e4b5e4c0bfb89aec864",
+  "codingamerHandle": "51cf3569a28219e695585f664d80a5b5238752",
+  "lastVersion": {
+    "version": 45,
+    "autocloseTime": 1598037437407,
+    "data": {
+      "title": "What the Brainfuck !",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "brainfuck"
+          }
+        },
+        {
+          "id": 235,
+          "handle": "interpreter",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "interpreter",
+            "2": "Interpreters"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "#include <iostream>\n#include <vector>\n#include <map>\n\nint main()\n{\n    int L, S, I, pointer = 0, in = 0;\n    std::string program = \"\", result = \"\", error = \"\";\n    std::vector<int> jumpList;\n    std::map<int,int> jumps, backs;\n\n    std::cin >> L >> S >> I;\n    std::cin.ignore();\n\n    unsigned char array[S];\n    int inputs[I];\n\n    std::fill(array, array + S, 0);\n\n    for (int i = 0; i < L; ++i)\n    {\n        std::string r;\n\n        getline(std::cin, r);\n\n        for(int j = 0; j < r.size(); ++j)\n        {\n            int pos = program.size() + j;\n\n            if(r[j] == '[')jumpList.push_back(pos);\n            else if(r[j] == ']')\n            {\n                if(jumpList.size() != 0)\n                {\n                    jumps[jumpList.back()] = pos;\n                    backs[pos] = jumpList.back();\n\n                    jumpList.pop_back();\n                }\n                else error = \"SYNTAX ERROR\";\n            }\n        }\n\n        program += r;\n    }\n\n    if(jumpList.size() != 0)error = \"SYNTAX ERROR\";\n\n    for (int i = 0; i < I; ++i)\n    {\n        std::cin >> inputs[i];\n    }\n\n    for (int i = 0; i < program.size() && error == \"\"; ++i)\n    {\n        switch(program[i])\n        {\n            case '>':\n            {\n                if(pointer < S - 1)++pointer;\n                else error = \"POINTER OUT OF BOUNDS\";\n\n                break;\n            }\n            case '<':\n            {\n                if(pointer > 0)--pointer;\n                else error = \"POINTER OUT OF BOUNDS\";\n\n                break;\n            }\n            case '+':\n            {\n                if(array[pointer] < 255)++array[pointer];\n                else error = \"INCORRECT VALUE\";\n\n                break;\n            }\n            case '-':\n            {\n                if(array[pointer > 0])--array[pointer];\n                else error = \"INCORRECT VALUE\";\n\n                break;\n            }\n            case '.':\n            {\n                result += array[pointer];\n\n                break;\n            }\n            case ',':\n            {\n                array[pointer] = inputs[in++];\n            }\n            case '[':\n            {\n                if(array[pointer] == 0)i = jumps[i];\n\n                break;\n            }\n            case ']':\n            {\n                if(array[pointer] != 0)i = backs[i];\n            }\n        }\n    }\n\n    std::cout << (error.size() != 0 ? error : result) << std::endl;\n}",
+      "statement": "Brainfuck is a minimalist programming language consisting of 8 commands. That's all.\nHowever it is Turing complete and allows you to make whatever you want, if you are very patient and motivated.\n\nYour goal is to create a fully functional Brainfuck interpreter.\nLet see how it works.\n\nThe Brainfuck model is composed of three elements:\n- <<An array>> of [[S]] one byte cells initialized to 0, and indexed from 0.\n- <<A pointer>> initialized to point to the first cell (index 0) of the array.\n- <<A program>> made up of the 8 valid instructions.\n\nThe following are the instructions:\n- {{>}} increment the pointer position.\n- {{<}} decrement the pointer position.\n- {{+}} increment the value of the cell the pointer is pointing to.\n- {{-}} decrement the value of the cell the pointer is pointing to.\n- {{.}} output the value of the pointed cell, interpreting it as an ASCII value.\n- {{,}} accept a positive one byte integer as input and store it in the pointed cell.\n- {{[}} jump to the instruction after the corresponding {{]}} if the pointed cell's value is 0.\n- {{]}} go back to the instruction after the corresponding {{[}} if the pointed cell's value is different from 0.\n\n<<Note:>> The {{[}} and {{]}} commands always come in pairs, and in case of nested {{[}}{{]}} the first {{[}} always correspond to the last {{]}}.\n\n<<Be careful:>> A Brainfuck program can contain any characters, that allow the developers to comment their code and to make it more readable. Of course your interpreter must ignore all of these \"inactive\" characters.\n\nIn some cases, errors might be encountered. When this happens you have to stop the execution of the program and  print the correct error message from the following list:\n- <<\"SYNTAX ERROR\">> if a {{[}} appears to have no {{]}} to jump to, or vice versa. Note that this error must be raised before the execution of the program, no matter its position in the Brainfuck code.\n- <<\"POINTER OUT OF BOUNDS\">> if the pointer position goes below 0 or above [[S]] - 1.\n- <<\"INCORRECT VALUE\">> if after an operation the value of a cell becomes negative or higher than 255.",
+      "testCases": [
+        {
+          "title": "A simple start",
+          "isTest": true,
+          "testIn": "1 1 0\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.+.+.",
+          "testOut": "ABC",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "A simple start",
+          "isTest": false,
+          "testIn": "1 1 0\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.+.+.",
+          "testOut": "DEF",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Hello World!",
+          "isTest": true,
+          "testIn": "1 4 0\n++++++++++[>+++++++>++++++++++>+++<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.",
+          "testOut": "Hello World!",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Printing a message",
+          "isTest": false,
+          "testIn": "1 4 0\n++++++++++[>+++++++>+++++++++++>+++<<<-]>----.>+.-.----.+++++.++++++.---.>++.<<+++++++++++.>---.-.----------.+.>.+.",
+          "testOut": "Bonjour Monde !",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Inputs multiplication",
+          "isTest": true,
+          "testIn": "1 4 2\n,>,><[<[>>+>+<<<-]>>>[<<<+>>>-]<<-]>.\n4\n9",
+          "testOut": "$",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Inputs manipulation",
+          "isTest": false,
+          "testIn": "1 4 2\n,>,><[<[>>+>+<<<-]>>>[<<<+>>>-]<<-]>.\n9\n7",
+          "testOut": "?",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Noisy code",
+          "isTest": true,
+          "testIn": "35 4 0\n++++++++++          Set the first cell (0) to 10\n[                   Start of the initialization loop \n   >                Go to cell 1\n   +++++++          Set it to 7\n   >                Go to cell 2\n   ++++++++++       Set it to 10\n   >                Go to cell 3\n   +++              Set it to 3\n   <<<              Go back to cell 0\n   -                Decrement it\n]                   Loop until cell 0 value is 0\n>++                 Add 2 to cell 1 to set it to 72\n.                   Print the 'H' character (72)\n>+                  Add 1 to cell 2 to set it to 101\n.                   Print the 'e' character (101)\n+++++++             Add 7 to cell 2 to set it to 108\n..                  Print the 'l' character (108) twice\n+++                 Add 3 to cell 2 to set it to 111\n.                   Print the 'o' character (111)\n>++                 Add 2 to cell 3 to set it to 32\n.                   Print the ' ' character (32)\n<<                  Go back to cell 1\n+++++++++++++++     Add 15 to cell 1 to set it to 87\n.                   Print the 'W' character (87)\n>                   Go to cell 2\n.                   Print the 'o' character (111)\n+++                 Add 3 to cell 2 to set it to 114\n.                   Print the 'r' character (114)\n------              Substract 6 to cell 2 to set it to 108\n.                   Print the 'l' character (108)\n--------            Substract 8 to cell 2 to set it to 100\n.                   Print the 'd' character (100)\n>                   Go to cell 3\n+                   Add 1 to cell 3 to set it to 33\n.                   Print the '!' character (33)",
+          "testOut": "Hello World!",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Noisy code",
+          "isTest": false,
+          "testIn": "41 4 0\n++++++++++          Set the first cell (0) to 10\n[                   Start of the initialization loop \n    >               Go to cell 1\n    +++++++         Set it to 7\n    >               Go to cell 2\n    +++++++++++     Set it to 7\n    >               Go to cell 3\n    +++             Set it to 3\n    <<<             Go back to cell 0\n    -               Decrement it\n]                   Loop until cell 0 value is 0\n>----               Substract 4 to cell 1 to set it to 66\n.                   Print the 'B' character (66)\n>+                  Add 1 to cell 2 to set it to 111\n.                   Print the 'o' character (111)\n-                   Substract 1 to cell 2 to set it to 110\n.                   Print the 'n' character (110)\n----                Substract 4 to the 2 cell to set it to 106\n.                   Print the 'j' character (106)\n+++++               Add 5 to the cell 2 to set it to 111\n.                   Print the 'o' character (111)\n++++++              Add 6 to the cell 2 to set it to 117\n.                   Print the 'u' character (117)\n---                 Substract 3 to the cell 2 to set it to 114\n.                   Print the 'r' character (114)\n>++                 Add 2 to cell 3 to set it to 32\n.                   Print the ' ' character (32)\n<<+++++++++++       Add 11 to cell 1 to set it to 77\n.                   Print the 'M' character (77)\n>---                Substract 3 to cell 2 to set it to 111\n.                   Print the 'o' character (111)\n-                   Substract 1 to cell 2 to set it to 110\n.                   Print the 'n' character (110)\n----------          Substract 10 to cell 2 to set it to 100\n.                   Print the 'd' character (100)\n+                   Add 1 to cell 2 to set it to 101\n.                   Print the 'e' character (101)\n>                   Go to cell 3\n.                   Print the ' ' character (32)\n+                   Add 1 to cell 3 to set it to 33\n.                   Print the '!' character (33)",
+          "testOut": "Bonjour Monde !",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Pointer out of bounds",
+          "isTest": true,
+          "testIn": "1 4 0\n++++++++++[>+++++++>++++++++++>+++<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "testOut": "POINTER OUT OF BOUNDS",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Pointer out of bounds",
+          "isTest": false,
+          "testIn": "1 4 0\n++++++++++[>+++++++>+++++++++++>+++<<<-]>>>>----.>+.-.----.+++++.++++++.---.>++.<<+++++++++++.>---.-.----------.+.>.+.",
+          "testOut": "POINTER OUT OF BOUNDS",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Incorrect value",
+          "isTest": true,
+          "testIn": "1 4 2\n,>,><[<[>>+>+<<<-]>>>[<<<+>>>-]<<-]>.\n50\n6",
+          "testOut": "INCORRECT VALUE",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Incorrect value",
+          "isTest": false,
+          "testIn": "1 1 0\n-",
+          "testOut": "INCORRECT VALUE",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Syntax error",
+          "isTest": true,
+          "testIn": "1 4 0\n++++++++++[>+++++++>++++++++++>+++<<<->++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.",
+          "testOut": "SYNTAX ERROR",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Syntax error",
+          "isTest": false,
+          "testIn": "1 4 0\n++++++++++>+++++++>++++++++++>+++<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.",
+          "testOut": "SYNTAX ERROR",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "Multiple errors",
+          "isTest": true,
+          "testIn": "1 4 0\n++++++++++[>+++++++>++++++++++>+++><<<--------------------------]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.",
+          "testOut": "POINTER OUT OF BOUNDS",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Multiple errors",
+          "isTest": false,
+          "testIn": "1 4 0\n[<-",
+          "testOut": "SYNTAX ERROR",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "0 < [[L]] ≤ 100\n0 ≤ [[N]] ≤ 100\n0 < [[S]] ≤ 100",
+      "coverBinaryId": 46844164779571,
+      "stubGenerator": "read L:int S:int N:int\nloop L read r:string(1024)\nloop N read c:int\nwrite answer",
+      "inputDescription": "<<Line 1:>> Three integers [[L]], [[S]] and [[N]] for the program line count, the needed array size and the inputs count.\n<<Next [[L]] lines:>> A line of the Brainfuck program.\n<<Next [[N]] lines:>> An integer input to the Brainfuck program.",
+      "solutionLanguage": "C++",
+      "outputDescription": "The output must be the characters sequence printed ({{.}}) by the Brainfuck program, or the correct error message if a problem is encountered.\nNote that the given programs will never try to use {{.}} on a value corresponding to no printable ASCII characters."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Brainfuck is a minimalist programming language consisting of 8 commands. That's all.<br>However it is Turing complete and allows you to make whatever you want, if you are very patient and motivated.<br><br>Your goal is to create a fully functional Brainfuck interpreter.<br>Let see how it works.<br><br>The Brainfuck model is composed of three elements:<br>- <strong>An array</strong> of <var>S</var> one byte cells initialized to 0, and indexed from 0.<br>- <strong>A pointer</strong> initialized to point to the first cell (index 0) of the array.<br>- <strong>A program</strong> made up of the 8 valid instructions.<br><br>The following are the instructions:<br>- <const>&gt;</const> increment the pointer position.<br>- <const>&lt;</const> decrement the pointer position.<br>- <const>+</const> increment the value of the cell the pointer is pointing to.<br>- <const>-</const> decrement the value of the cell the pointer is pointing to.<br>- <const>.</const> output the value of the pointed cell, interpreting it as an ASCII value.<br>- <const>,</const> accept a positive one byte integer as input and store it in the pointed cell.<br>- <const>[</const> jump to the instruction after the corresponding <const>]</const> if the pointed cell's value is 0.<br>- <const>]</const> go back to the instruction after the corresponding <const>[</const> if the pointed cell's value is different from 0.<br><br><strong>Note:</strong> The <const>[</const> and <const>]</const> commands always come in pairs, and in case of nested <const>[</const><const>]</const> the first <const>[</const> always correspond to the last <const>]</const>.<br><br><strong>Be careful:</strong> A Brainfuck program can contain any characters, that allow the developers to comment their code and to make it more readable. Of course your interpreter must ignore all of these &quot;inactive&quot; characters.<br><br>In some cases, errors might be encountered. When this happens you have to stop the execution of the program and  print the correct error message from the following list:<br>- <strong>&quot;SYNTAX ERROR&quot;</strong> if a <const>[</const> appears to have no <const>]</const> to jump to, or vice versa. Note that this error must be raised before the execution of the program, no matter its position in the Brainfuck code.<br>- <strong>&quot;POINTER OUT OF BOUNDS&quot;</strong> if the pointer position goes below 0 or above <var>S</var> - 1.<br>- <strong>&quot;INCORRECT VALUE&quot;</strong> if after an operation the value of a cell becomes negative or higher than 255.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Three integers <var>L</var>, <var>S</var> and <var>N</var> for the program line count, the needed array size and the inputs count.<br><strong>Next <var>L</var> lines:</strong> A line of the Brainfuck program.<br><strong>Next <var>N</var> lines:</strong> An integer input to the Brainfuck program.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The output must be the characters sequence printed (<const>.</const>) by the Brainfuck program, or the correct error message if a problem is encountered.<br>Note that the given programs will never try to use <const>.</const> on a value corresponding to no printable ASCII characters.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt; <var>L</var> &le; 100<br>0 &le; <var>N</var> &le; 100<br>0 &lt; <var>S</var> &le; 100</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1 1 0\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.+.+.</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">ABC</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 174438162258,
+  "commentCount": 35,
+  "upVotes": 14,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 481198,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1596292855468,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

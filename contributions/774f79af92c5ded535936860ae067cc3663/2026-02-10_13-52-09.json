@@ -1,0 +1,147 @@
+{
+  "id": 774,
+  "activeVersion": 12,
+  "score": 5,
+  "votableId": 5479894,
+  "codingamerId": 1418821,
+  "views": 329,
+  "commentableId": 5421877,
+  "title": "Unfolding paper",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "input.txt",
+  "publicHandle": "774f79af92c5ded535936860ae067cc3663",
+  "codingamerHandle": "c96ef356539198f0d2256efec98bad501288141",
+  "lastVersion": {
+    "version": 12,
+    "data": {
+      "title": "Unfolding paper",
+      "topics": [],
+      "solution": "local transition = {\r\n    [0] = \r\n    { [0] = 4; };\r\n    { [1] = 2; [4] = 2; };\r\n    { [0] = 2; };\r\n    { [1] = 1; [4] = 1; };\r\n    { [0] = 2; };\r\n    { [5] = 2; };\r\n    { [0] = 1; };\r\n    { [5] = 1; };\r\n    { [2] = 2; [8] = 2; };\r\n    { [3] = 1; [6] = 1; [9] = 1; [12] = 1; };\r\n    { [10] = 2; };\r\n    { [11] = 1; [14] = 1; };\r\n    { [2] = 1; [8] = 1; };\r\n    { [7] = 1; [13] = 1; };\r\n    { [10] = 1; };\r\n    { [15] = 1; };\r\n}\r\nlocal N, W, H\r\nlocal paper, ptypes = {}, {}\r\n\r\n---------------------------------------------\r\n\r\nfunction string.at( s, i ) return s:sub( i, i ) end\r\n\r\nfunction partType( i, j )\r\n    if paper[i]:at( j ) ~= \"#\" then return end\r\n    if ptypes[i] and ptypes[i][j] then return end\r\n    \r\n    local stack, visited = { {i, j} }, {}\r\n    local t = 0\r\n    while #stack > 0 do\r\n        local p = table.remove( stack )\r\n        local i, j = table.unpack( p )\r\n        \r\n        visited[i] = visited[i] or {}\r\n        visited[i][j] = true\r\n        \r\n        if j == W then t = t | 1\r\n        elseif not visited[i][j + 1] and paper[i]:at( j + 1 ) == \"#\" then \r\n            table.insert( stack, {i, j + 1} ) \r\n        end\r\n        \r\n        if i == 1 then t = t | 2\r\n        elseif not ( visited[i - 1] and visited[i - 1][j] ) and paper[i - 1]:at( j ) == \"#\" then \r\n            table.insert( stack, {i - 1, j} )\r\n        end\r\n        \r\n        if j == 1 then t = t | 4\r\n        elseif not visited[i][j - 1] and paper[i]:at( j - 1 ) == \"#\" then \r\n            table.insert( stack, {i, j - 1} )\r\n        end\r\n        \r\n        if i == H then t = t | 8\r\n        elseif not ( visited[i + 1] and visited[i + 1][j] ) and paper[i + 1]:at( j ) == \"#\" then\r\n            table.insert( stack, {i + 1, j} )\r\n        end\r\n    end\r\n\r\n    for i, row in pairs( visited ) do\r\n        for j, _ in pairs( row ) do\r\n            ptypes[i] = ptypes[i] or {}\r\n            ptypes[i][j] = t\r\n        end\r\n    end\r\n    \r\n    return t\r\nend \r\n\r\n---------------------------------------------\r\n\r\nN, W, H = io.read( \"n\", \"n\", \"n\", \"l\" )\r\n\r\nfor i = 1, H do paper[i] = io.read() end\r\n\r\nlocal parts = {}\r\nfor i = 0, 15 do parts[i] = 0 end\r\n\r\nfor i = 1, H do\r\n    for j = 1, W do\r\n        local t = partType( i, j )\r\n        if t then parts[t] = parts[t] + 1 end\r\n    end\r\nend\r\n\r\nlocal np = {}\r\nfor i = 1, N do\r\n    for j = 0, 15 do np[j] = 0 end\r\n    \r\n    for j = 0, 15 do\r\n        local p = parts[j]\r\n        if p > 0 then\r\n            for k = 0, 15 do \r\n                np[k] = np[k] + p * ( transition[j][k] or 0 ) \r\n            end\r\n        end\r\n    end\r\n    parts, np = np, parts\r\nend\r\n\r\nlocal sum  = 0\r\nfor i = 0, 15 do sum = sum + parts[i] end\r\n\r\nprint( sum )",
+      "statement": "A sheet of paper is folded left-to-right then up-to-down {{N}} times. \nThen you cut out a few shapes and unfold the sheet.\n\nThe task is to determine how many parts the sheet will break up to.\n\n<<Explanations>>\n\nLets look at the example. It is a sheet of two pieces. One piece is one or more connected {{#}}'s. Note that cells adjacent diagonally are not connected.\n\n`###\n#..\n#.#`\nUnfolding works as follow:\n1) Down-to-up\n\n`#.#\n#..\n###\n###\n#..\n#.#`\n2) Right-to-left\n\n`#.##.#\n..##..\n######\n######\n..##..\n#.##.#`\n3) Go to 1, repeat N-1 times.\n\nIn this case N=1, so after unfolding there will be 5 pieces (four in the corners and one in the center).\n\nNote that there are always as many horizontal folds as vertical ones: the number [[N]] of folds is really a number of double folds, once in each direction.",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "1\n3 3\n###\n#..\n#.#",
+          "testOut": "5",
+          "isValidator": false
+        },
+        {
+          "title": "One fold",
+          "isTest": false,
+          "testIn": "1\n5 3\n#.###\n...##\n#####",
+          "testOut": "2",
+          "isValidator": true
+        },
+        {
+          "title": "Multiple folds",
+          "isTest": true,
+          "testIn": "5\n3 3\n###\n#..\n#.#",
+          "testOut": "290",
+          "isValidator": false
+        },
+        {
+          "title": "Multiple folds",
+          "isTest": false,
+          "testIn": "7\n5 3\n#.#.#\n#.#.#\n#.#.#",
+          "testOut": "257",
+          "isValidator": true
+        },
+        {
+          "title": "Big sheet",
+          "isTest": true,
+          "testIn": "5\n44 11\n############################################\n#..........................................#\n#..........................................#\n#..........................................#\n#..........................................#\n#..........................................#\n#..........................................#\n#..........................................#\n#..........................................#\n#..........................................#\n############################################",
+          "testOut": "1",
+          "isValidator": false
+        },
+        {
+          "title": "Big sheet",
+          "isTest": false,
+          "testIn": "3\n88 5\n########################################################################################\n#.............#.....#.................##..........................................###..#\n#............##..#####...............##........................................#########\n#.............#....................................##..................................#\n########################################################################################",
+          "testOut": "1",
+          "isValidator": true
+        },
+        {
+          "title": "Long unfolding",
+          "isTest": true,
+          "testIn": "10000\n3 3\n###\n.#.\n.#.",
+          "testOut": "1",
+          "isValidator": false
+        },
+        {
+          "title": "Long unfolding",
+          "isTest": false,
+          "testIn": "10000\n3 3\n.#.\n##.\n.##",
+          "testOut": "1",
+          "isValidator": true
+        },
+        {
+          "title": "Many pieces",
+          "isTest": true,
+          "testIn": "14\n5 5\n.....\n.###.\n.#.#.\n.###.\n.....",
+          "testOut": "268435456",
+          "isValidator": false
+        },
+        {
+          "title": "Many pieces",
+          "isTest": false,
+          "testIn": "16\n3 2\n#..\n...",
+          "testOut": "1073741824",
+          "isValidator": true
+        },
+        {
+          "title": "Random",
+          "isTest": true,
+          "testIn": "4\n23 4\n.#.......#.....#...####\n##..#.....####.#.......\n#...###....#...#.###.##\n###........#...#....#..",
+          "testOut": "1168",
+          "isValidator": false
+        },
+        {
+          "title": "Random",
+          "isTest": false,
+          "testIn": "5\n12 6\n#.#........#\n#.##....##..\n#..##...##..\n.##..#......\n..#..##..#..\n#.#...##....",
+          "testOut": "4448",
+          "isValidator": true
+        },
+        {
+          "title": "Chess board",
+          "isTest": true,
+          "testIn": "5\n46 12\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#",
+          "testOut": "254337",
+          "isValidator": false
+        },
+        {
+          "title": "Chess board",
+          "isTest": false,
+          "testIn": "5\n46 24\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#\n#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.\n.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#",
+          "testOut": "531009",
+          "isValidator": true
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "1 ≤ [[W]], [[H]] ≤ 100\n1 ≤ [[N]] ≤ 10000\n1 ≤ [[M]] ≤ 2³¹",
+      "stubGenerator": "read N:int\nread W:int H:int\nloop H read row:string(100)\nwrite 1",
+      "inputDescription": "<<Line 1:>> Single integer [[N]].\n<<Line 2:>> Two space-separated integers [[W]] and [[H]] represent width and height of the folded sheet respectively.\n<<Next [[H]] lines:>> [[W]] characters, where {{.}} is hole and {{#}} is paper.",
+      "solutionLanguage": "Lua",
+      "outputDescription": "<<Line 1:>> An integer [[M]] – the number of parts."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A sheet of paper is folded left-to-right then up-to-down <const>N</const> times. <br>Then you cut out a few shapes and unfold the sheet.<br><br>The task is to determine how many parts the sheet will break up to.<br><br><strong>Explanations</strong><br><br>Lets look at the example. It is a sheet of two pieces. One piece is one or more connected <const>#</const>'s. Note that cells adjacent diagonally are not connected.<br><br><pre style=\"font-family: monospace\">###<br>#..<br>#.#</pre><br>Unfolding works as follow:<br>1) Down-to-up<br><br><pre style=\"font-family: monospace\">#.#<br>#..<br>###<br>###<br>#..<br>#.#</pre><br>2) Right-to-left<br><br><pre style=\"font-family: monospace\">#.##.#<br>..##..<br>######<br>######<br>..##..<br>#.##.#</pre><br>3) Go to 1, repeat N-1 times.<br><br>In this case N=1, so after unfolding there will be 5 pieces (four in the corners and one in the center).<br><br>Note that there are always as many horizontal folds as vertical ones: the number <var>N</var> of folds is really a number of double folds, once in each direction.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Single integer <var>N</var>.<br><strong>Line 2:</strong> Two space-separated integers <var>W</var> and <var>H</var> represent width and height of the folded sheet respectively.<br><strong>Next <var>H</var> lines:</strong> <var>W</var> characters, where <const>.</const> is hole and <const>#</const> is paper.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> An integer <var>M</var> &ndash; the number of parts.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>W</var>, <var>H</var> &le; 100<br>1 &le; <var>N</var> &le; 10000<br>1 &le; <var>M</var> &le; 2&sup3;&sup1;</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1\n3 3\n###\n#..\n#.#</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">5</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 261585155221,
+  "avatar": 13393616028136,
+  "commentCount": 5,
+  "upVotes": 5,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 160440,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

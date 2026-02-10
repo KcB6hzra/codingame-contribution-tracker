@@ -1,0 +1,169 @@
+{
+  "id": 1376,
+  "activeVersion": 24,
+  "score": 1,
+  "votableId": 7976950,
+  "codingamerId": 1193459,
+  "views": 171,
+  "commentableId": 7913989,
+  "title": "Symbolic system of equations",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "izanbf",
+  "publicHandle": "13765138b771ce50104a2e75f9e77a0f6be1",
+  "codingamerHandle": "94641200ff45e1fb655f3b5732a1b77f9543911",
+  "lastVersion": {
+    "version": 24,
+    "autocloseTime": 1532016703560,
+    "data": {
+      "title": "Symbolic system of equations",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "Rewriting"
+          }
+        },
+        {
+          "labelMap": {
+            "2": "Cycle detection"
+          }
+        },
+        {
+          "id": 48,
+          "handle": "graphs",
+          "labelMap": {
+            "1": "Graphes",
+            "2": "Graphs"
+          },
+          "pageTitle": "Graphs: exercises and theory",
+          "puzzleCount": 9,
+          "parentTopicId": 40,
+          "contentDetailsId": 75
+        }
+      ],
+      "solution": "#include <bits/stdc++.h>\nusing namespace std;\n\n#define PI = 3.14159265;\n#define PHI = 1.61803398;\n\n#define D(x) cerr << #x << \" = \" << x << \", \"\n\ntypedef unsigned int uint;\ntypedef unsigned long ul;\ntypedef unsigned long long ull;\ntypedef long long ll;\ntypedef long double ld;\ntypedef unsigned char byte;\n\ntemplate<typename T> using V = vector<T>;\ntemplate<typename T, typename U> using P = pair<T,U>;\ntemplate<typename T, typename U> using umap = unordered_map<T,U>;\ntemplate<typename T, typename U> using uset = unordered_set<T,U>;\n\nint n, m;\nV<string> var, func, eval;\numap<string,int> var_to_index;\nstring temp;\nV<V<int>> adj;\n\nvoid evaluate(int u)\n{\n    if (eval[u].size() == 0) {\n        if (func[u].size() > 0) {\n            eval[u] = func[u] + \" (\";\n            for (int v : adj[u]) {\n                eval[u] += ' ';\n                evaluate(v);\n                eval[u] += eval[v];\n            }\n            eval[u] += \" )\";\n        }\n        else {\n            eval[u] = var[u];\n        }\n    }\n}\n\nvoid topological_sort()\n{\n    int count = 0;\n    V<int> in_degree(n, 0);\n    queue<int> q;\n    V<int> sorted;\n\n    for (int u = 0; u < n; ++u) {\n        for (int v : adj[u]) {\n            ++in_degree[v];\n        }\n    }\n    for (int u = 0; u < n; ++u) {\n        if (in_degree[u] == 0) q.push(u);\n    }\n    while (not q.empty()) {\n        int u = q.front();\n        q.pop();\n        ++count;\n        sorted.push_back(u);\n        for (int v : adj[u]) {\n            --in_degree[v];\n            if (in_degree[v] == 0) q.push(v);\n        }\n    }\n\n    if (count == n) {\n        for (int u = 0; u < n; ++u) {\n            evaluate(u);\n            cout << var[u] << \" -> \" << eval[u] << endl;\n        }\n    }\n    else {\n        cout << \"No solution!\" << endl;\n    }\n}\n\nint main()\n{\n    cin >> n;\n    var = vector<string>(n);\n    func = vector<string>(n);\n    eval = vector<string>(n);\n    var_to_index = umap<string,int>();\n    adj = V<V<int>>(n);\n    for (int i = 0; i < n; ++i) {\n        cin >> var[i];\n        var_to_index[var[i]] = i;\n    }\n    cin >> m;\n    for (int i = 0; i < m; ++i) {\n        string x;\n        cin >> x >> temp;\n        int x_index = var_to_index[x];\n        cin >> func[x_index] >> temp;\n        while ((cin >> temp) and temp != \")\") {\n            adj[x_index].push_back(var_to_index[temp]);\n        }       \n    }\n    topological_sort();\n}",
+      "statement": "Write a program that outputs the general [[solution]] to a symbolic system of [[equations]]. The general [[solution]] is one which <<cannot be simplified>>.\n\nIf a [[variable]] is not declared in any of the [[equations]], the [[solution]] for that [[variable]] is itself (e.g. {{x -> x}}).\n\nThere is <<no solution>> if any [[equation]] in the system contains <<circular reference or self reference>> (please refer to the test cases for the examples).",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "3\nx y z\n2\nz = f ( x y )\ny = h ( x )",
+          "testOut": "x -> x\ny -> h ( x )\nz -> f ( x h ( x ) )",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Example",
+          "isTest": false,
+          "testIn": "3\na b c\n2\nc = f ( a )\nb = h ( a c )",
+          "testOut": "a -> a\nb -> h ( a f ( a ) )\nc -> f ( a )",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Circular reference, 2 variables",
+          "isTest": true,
+          "testIn": "2\nxx yy\n2\nxx = ff ( yy )\nyy = ff ( xx )",
+          "testOut": "No solution!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Circular reference, >2 variables",
+          "isTest": false,
+          "testIn": "3\nxx yy zz\n3\nxx = ff ( yy )\nyy = ff ( zz )\nzz = ff ( xx )",
+          "testOut": "No solution!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Self reference",
+          "isTest": true,
+          "testIn": "3\nx y z\n2\nx = f ( x )\ny = g ( y z )",
+          "testOut": "No solution!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Self reference",
+          "isTest": false,
+          "testIn": "3\nx y z\n2\nx = f ( z )\nz = g ( y z )",
+          "testOut": "No solution!",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No equations",
+          "isTest": true,
+          "testIn": "2\ncg z\n0",
+          "testOut": "cg -> cg\nz -> z",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "No equations",
+          "isTest": false,
+          "testIn": "5\na b c d e\n0",
+          "testOut": "a -> a\nb -> b\nc -> c\nd -> d\ne -> e",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Levels",
+          "isTest": true,
+          "testIn": "6\nuu uv w x y z\n4\nx = f ( uv )\ny = gg ( x z )\nw = gg ( uv y )\nuu = gh ( uv )",
+          "testOut": "uu -> gh ( uv )\nuv -> uv\nw -> gg ( uv gg ( f ( uv ) z ) )\nx -> f ( uv )\ny -> gg ( f ( uv ) z )\nz -> z",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Levels",
+          "isTest": false,
+          "testIn": "5\na b c d e\n4\na = pq ( b c )\nb = f ( c )\nc = pq ( e d )\ne = f ( d )",
+          "testOut": "a -> pq ( f ( pq ( f ( d ) d ) ) pq ( f ( d ) d ) )\nb -> f ( pq ( f ( d ) d ) )\nc -> pq ( f ( d ) d )\nd -> d\ne -> f ( d )",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Levels again",
+          "isTest": true,
+          "testIn": "4\na b c d\n3\na = k ( b c d )\nb = m ( c d )\nc = n ( d )",
+          "testOut": "a -> k ( m ( n ( d ) d ) n ( d ) d )\nb -> m ( n ( d ) d )\nc -> n ( d )\nd -> d",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Levels again",
+          "isTest": false,
+          "testIn": "10\na b c d e f g h i j\n3\na = p ( b c d e f g h i j )\nb = q ( c d e f g h i j )\nc = r ( d e f g h i j )",
+          "testOut": "a -> p ( q ( r ( d e f g h i j ) d e f g h i j ) r ( d e f g h i j ) d e f g h i j )\nb -> q ( r ( d e f g h i j ) d e f g h i j )\nc -> r ( d e f g h i j )\nd -> d\ne -> e\nf -> f\ng -> g\nh -> h\ni -> i\nj -> j",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "1 ≤ [[N]] ≤ 10\n0 ≤ [[M]] ≤ 10\n1 ≤ length of each [[variable]] name ≤ 2, and the name is in lowercase letters.\n1 ≤ length of each [[function]] name ≤ 2, and the name is in lowercase letters.\nAll [[variable]] names and [[function]] names are distinct.\nA [[variable]] appears in the left side of at most one [[equation]] in the system.\nA [[function]] may appear in different [[equations]] but always contains the same number (between {{1}} and [[N]]) of different [[variables]] as its arguments.",
+      "stubGenerator": "read N:int\nloopline N variables:word(10)\nread M:int\nloop M read equation:string(64)\nwrite Solved system",
+      "inputDescription": "<<Line 1:>> An integer [[N]] for the number of [[variables]].\n<<Line 2:>> [[N]] space-separated [[variables]] in lexicographical order.\n<<Line 3:>> An integer [[M]] for the number of [[equations]].\n<<Next [[M]] lines:>> One line for each [[equation]] in the format of [[variable]] {{=}} [[function]].",
+      "solutionLanguage": "C++",
+      "outputDescription": "<<[[N]] lines:>> One line for the [[solution]] for each [[variable]] in lexicographical order, in the format of [[variable]] {{->}} [[solution]].\n<<Or>> in the case of no solution:\n<<Line 1:>> {{No solution!}}"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Write a program that outputs the general <var>solution</var> to a symbolic system of <var>equations</var>. The general <var>solution</var> is one which <strong>cannot be simplified</strong>.<br><br>If a <var>variable</var> is not declared in any of the <var>equations</var>, the <var>solution</var> for that <var>variable</var> is itself (e.g. <const>x -&gt; x</const>).<br><br>There is <strong>no solution</strong> if any <var>equation</var> in the system contains <strong>circular reference or self reference</strong> (please refer to the test cases for the examples).</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var> for the number of <var>variables</var>.<br><strong>Line 2:</strong> <var>N</var> space-separated <var>variables</var> in lexicographical order.<br><strong>Line 3:</strong> An integer <var>M</var> for the number of <var>equations</var>.<br><strong>Next <var>M</var> lines:</strong> One line for each <var>equation</var> in the format of <var>variable</var> <const>=</const> <var>function</var>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>N</var> lines:</strong> One line for the <var>solution</var> for each <var>variable</var> in lexicographical order, in the format of <var>variable</var> <const>-&gt;</const> <var>solution</var>.<br><strong>Or</strong> in the case of no solution:<br><strong>Line 1:</strong> <const>No solution!</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 10<br>0 &le; <var>M</var> &le; 10<br>1 &le; length of each <var>variable</var> name &le; 2, and the name is in lowercase letters.<br>1 &le; length of each <var>function</var> name &le; 2, and the name is in lowercase letters.<br>All <var>variable</var> names and <var>function</var> names are distinct.<br>A <var>variable</var> appears in the left side of at most one <var>equation</var> in the system.<br>A <var>function</var> may appear in different <var>equations</var> but always contains the same number (between <const>1</const> and <var>N</var>) of different <var>variables</var> as its arguments.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\nx y z\n2\nz = f ( x y )\ny = h ( x )</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">x -&gt; x\ny -&gt; h ( x )\nz -&gt; f ( x h ( x ) )</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 240772901530,
+  "avatar": 22216812982495,
+  "commentCount": 12,
+  "upVotes": 1,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 237195,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

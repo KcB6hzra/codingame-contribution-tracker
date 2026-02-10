@@ -1,0 +1,193 @@
+{
+  "id": 45094,
+  "activeVersion": 43,
+  "score": 13,
+  "votableId": 27763010,
+  "codingamerId": 1443918,
+  "views": 268,
+  "commentableId": 27635369,
+  "title": "Tiny Forest",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "AdrienLB",
+  "publicHandle": "45094a56da559da9bc8948f676f5194e640f3",
+  "codingamerHandle": "2a09a92d6ce22d09c7462f4b872b300d8193441",
+  "lastVersion": {
+    "version": 43,
+    "autocloseTime": 1677879676381,
+    "data": {
+      "title": "Tiny Forest",
+      "topics": [
+        {
+          "id": 66,
+          "handle": "optimization",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Optimisation",
+            "2": "Optimization"
+          },
+          "pageTitle": "Optimization: exercises and theory",
+          "puzzleCount": 14,
+          "parentTopicId": 41,
+          "contentDetailsId": 87
+        },
+        {
+          "id": 153,
+          "handle": "2d-array",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "2D array",
+            "2": "2D array"
+          },
+          "puzzleCount": 44,
+          "parentTopicId": 93
+        },
+        {
+          "id": 86,
+          "handle": "simulation",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Simulation",
+            "2": "Simulation"
+          },
+          "pageTitle": "Simulation: exercises and theory",
+          "puzzleCount": 34,
+          "parentTopicId": 42,
+          "contentDetailsId": 72
+        }
+      ],
+      "solution": "#include <iostream>\n#include <string>\n#include <vector>\n#include <algorithm>\n\nusing namespace std;\n\n/**\n * Auto-generated code below aims at helping you parse\n * the standard input according to the problem statement.\n **/\nstatic int n;\nstatic int w;\nstatic int h;\n\nclass Tile\n{\n    public :\n        int x = 0;\n        int y = 0;\n        char val = '-';\n        bool noNeedToPlant = false;\n        int grow = -1;\n\n        Tile(){ x = 0; y = 0; val = '-'; noNeedToPlant = false; }\n        Tile( int X, int Y, char V, bool B ){ x =X; y = Y; val =V; noNeedToPlant = B; }\n\n};\n\nstatic Tile MAP_Tiles_Start[50][50];\n\n#define copyMAP( MAP_Tiles, MAP_Tiles_origin ) \\\nfor (int i = 0; i < w; i++)  \\\n{ \\\n    for (int j = 0; j < h; j++) \\\n    { \\\n        MAP_Tiles[i][j].val = MAP_Tiles_origin[i][j].val; \\\n        MAP_Tiles[i][j].noNeedToPlant = MAP_Tiles_origin[i][j].noNeedToPlant; \\\n    } \\\n}\n\nvoid print( Tile MAP_Tiles[][50] )\n{ \n    for (int j = 0; j < h; j++)\n    {\n        for (int i = 0; i < w; i++) \n        {\n            cerr << MAP_Tiles[i][j].val ;\n        }\n        cerr << endl;\n    }\n}\n\nvoid plant( Tile MAP_Tiles[][50], int i, int j )\n{\n    if( MAP_Tiles[i][j].val == '.' )\n    {\n        MAP_Tiles[i][j].val = 'X';\n        MAP_Tiles[i][j].grow = 0;\n    }\n}\n\nvoid disperse( Tile MAP_Tiles[][50], int i, int j )\n{\n    if( i-1 >= 0 )\n    {\n        plant( MAP_Tiles, i-1, j );\n    }\n    if( j-1 >= 0 )\n    {\n        plant( MAP_Tiles, i, j-1 );\n    }\n    if( i+1 < w )\n    {\n        plant( MAP_Tiles, i+1, j );\n    }\n    if( j+1 < h )\n    {\n        plant( MAP_Tiles, i, j+1 );\n    }\n\n}\n\nint count( Tile MAP_Tiles[][50] )\n{\n    int count = 0;\n    for (int i = 0; i < w; i++) \n    {\n        for (int j = 0; j < h; j++)\n        {\n            if( MAP_Tiles[i][j].val == 'Y' )\n            {\n                count++;\n            }\n        }\n    }\n    return count;\n}\n\nint simulation( Tile MAP_Tiles[][50] )\n{\n    int years = 0;\n    while( years <= 33 )\n    {\n        //cerr << \" YEAR \" << years << endl;\n\n        //disperse\n        if( years != 0 )\n        {\n            for (int i = 0; i < w; i++) \n            {\n                for (int j = 0; j < h; j++)\n                {\n                    if( MAP_Tiles[i][j].val == 'Y' )\n                    {\n                        disperse( MAP_Tiles, i, j );\n                    }\n                }\n            }\n        }\n\n        //grow\n        for (int i = 0; i < w; i++) \n        {\n            for (int j = 0; j < h; j++)\n            {\n                if( MAP_Tiles[i][j].val == 'X' )\n                {\n                    if( MAP_Tiles[i][j].grow == 10 )\n                    {\n                        MAP_Tiles[i][j].val = 'Y';\n                        MAP_Tiles[i][j].noNeedToPlant = true;\n                    }\n                    else\n                    {\n                        MAP_Tiles[i][j].grow++;\n                    }\n                }\n            }\n        }\n\n        //print( MAP_Tiles );\n\n        years++;\n    }\n    return count( MAP_Tiles );\n}\n\nint main()\n{\n    cin >> w; cin.ignore();\n    cin >> h; cin.ignore();\n\n    for (int i = 0; i < h; i++) {\n        string row;\n\n        getline(cin, row);\n\n        int x = 0;\n        for( char c : row )\n        {\n            Tile T( x, i, c, false );\n            MAP_Tiles_Start[x][i] = T;\n            x++;\n        }\n    }\n\n    //input\n    Tile MAP_Tiles_Start_With_Trees[50][50];\n\n    copyMAP( MAP_Tiles_Start_With_Trees , MAP_Tiles_Start );\n\n    //print( MAP_Tiles_Start_With_Trees );\n\n    simulation( MAP_Tiles_Start_With_Trees );\n\n    //print( MAP_Tiles_Start_With_Trees );\n\n    //start Simul\n    int maxCount = 0;\n    int bestX;\n    int bestY;\n    for (int i = 0; i < w; i++) \n    {\n        for (int j = 0; j < h; j++)\n        {\n            //if( MAP_Tiles_Start_With_Trees[i][j].noNeedToPlant == false )\n            {\n                //cerr << \"TEST \" << i << \" \" << j << endl;\n                Tile MAP_Tiles_Temp[50][50];\n                copyMAP( MAP_Tiles_Temp, MAP_Tiles_Start );\n                MAP_Tiles_Temp[i][j].val = 'X';\n                MAP_Tiles_Temp[i][j].grow = 0;\n                int simu = simulation( MAP_Tiles_Temp );\n                //print( MAP_Tiles_Temp );\n\n                //cerr << \"simu \" << simu << \" on \" << i << \" :: \" << j << endl;\n                if( simu > maxCount )\n                {\n                    maxCount = simu;\n                    bestX = i;\n                    bestY = j;\n                }\n            }\n        }\n    }\n\n    //cerr << \"count \" << maxCount << \" on \" << bestX << \" :: \" << bestY << endl;\n    cout << maxCount << endl;\n}",
+      "statement": "You have just inherited of a small plot of land of width [[W]] and height [[H]] with some trees on it. You want to grow a forest, but you have only {{1}} seed to plant. Find the maximum number of trees after {{33}} years you can have by planting the seed at the best place.\n\n<<Rules:>>\n-Seeds need 10 years to grow into a tree.\n-Trees produce 4 seeds around them after one year.\n-Trees may already be present on your land. They will also produce seeds after one year.\n\n<<Year 0>> : X is your one and only seed and Y is a tree already present.\n\n`.  .  .  .  .`        \n`.  X  .  .  .`\n`.  .  .  .  .`\n`.  .  .  .  .` \n`.  .  .  .  Y`\n\n<<Year  1>> : Trees produce seeds after one year.\n\n`.  .  .  .  .`        \n`.  X  .  .  .`\n`.  .  .  .  .`\n`.  .  .  .  X` \n`.  .  .  X  Y`\n\n<<Year  10>> : Your seed is now a tree. Congratulations!\n\n`.  .  .  .  .`        \n`.  Y  .  .  .`\n`.  .  .  .  .`\n`.  .  .  .  X` \n`.  .  .  X  Y`\n\n<<Year 11>> : Your new tree starts to produce seeds after a year.\n\n`.  X  .  .  .`        \n`X  Y  X  .  .`\n`.  X  .  .  .`\n`.  .  .  .  Y` \n`.  .  .  Y  Y`\n\n<<Year 12>> : The old trees in the corner also keep spreading.\n\n`.  X  .  .  .`        \n`X  Y  X  .  .`\n`.  X  .  .  X`\n`.  .  .  X  Y` \n`.  .  X  Y  Y`\n\n<<Year 33>> : Finally you have a tiny forest of 21 trees!\n\n`Y  Y  Y  X  .`         \n`Y  Y  Y  Y  Y` \n`Y  Y  Y  Y  Y` \n`X  Y  Y  Y  Y`  \n`.  Y  Y  Y  Y`\n\nMaybe if you plant the seed at another place you can get a bigger forest in the end.\nWhen you will find the best place, you will need to give the number of trees you get after 33 years.",
+      "testCases": [
+        {
+          "title": "No Trees",
+          "isTest": true,
+          "testIn": "5\n5\n.....\n.....\n.....\n.....\n.....",
+          "testOut": "13",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "No Trees",
+          "isTest": false,
+          "testIn": "6\n6\n......\n......\n......\n......\n......\n......",
+          "testOut": "13",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "One Tree",
+          "isTest": true,
+          "testIn": "5\n5\n.....\n.....\n.....\n.....\n....Y",
+          "testOut": "21",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "One Tree",
+          "isTest": false,
+          "testIn": "5\n5\n.....\n.....\n..Y..\n.....\n.....",
+          "testOut": "23",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Some Trees",
+          "isTest": true,
+          "testIn": "10\n10\n..........\n..........\n.....Y....\n..........\n..........\n..........\n...Y......\n..........\n..........\n......Y...",
+          "testOut": "70",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Some Trees",
+          "isTest": false,
+          "testIn": "10\n10\n..........\n..Y.......\n..........\n..........\n........Y.\n..........\n..........\n.Y........\n..........\n..........",
+          "testOut": "73",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Long Forest",
+          "isTest": true,
+          "testIn": "40\n5\n........................................\n........................................\n...Y...Y...Y...Y...Y...Y...Y...Y...Y....\n........................................\n........................................",
+          "testOut": "174",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Long Forest",
+          "isTest": false,
+          "testIn": "40\n5\n........................................\n........................................\n.Y...Y...Y...Y...Y...Y...Y...Y...Y...Y..\n........................................\n........................................",
+          "testOut": "182",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Huge Forest",
+          "isTest": true,
+          "testIn": "20\n20\n....................\n..Y......Y.....Y....\n....................\n..Y.............Y...\n........Y...........\n....................\n......Y......Y......\n.Y..................\n....................\n...........Y...Y....\n....................\n..Y................Y\n..........Y.........\n..Y............Y....\n........Y..........Y\n....................\n..............Y.....\n.Y..................\n.........Y..........\n....Y...............",
+          "testOut": "352",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Huge Forest",
+          "isTest": false,
+          "testIn": "20\n20\n....................\n..Y......Y.....Y....\n......Y.............\n..Y.............Y...\n........Y...........\n....................\n......Y......Y......\n.Y..................\n....................\n...........Y...Y....\n....................\n..Y................Y\n..........Y.........\n..Y............Y....\n........Y..........Y\n....................\n..............Y.....\n.Y..................\n.........Y..........\n....Y...............",
+          "testOut": "356",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Symetrical Forest",
+          "isTest": true,
+          "testIn": "6\n5\n......\n......\n...Y..\n......\n......",
+          "testOut": "26",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Symetrical Forest",
+          "isTest": false,
+          "testIn": "5\n5\n..Y..\n.....\n..Y..\n.....\n.....",
+          "testOut": "25",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 <=  [[W]] <= 40\n1 <=  [[H]]  <= 40",
+      "coverBinaryId": 97753347218143,
+      "stubGenerator": "read W:int\nread H:int\nloop H read ROW:string(1024)\nwrite number of trees",
+      "inputDescription": "<<Line 1>> : an integer [[W]] for the width of the parcel.\n<<Line 2>> : an integer [[H]] for the height of the parcel.\n<<Next [[H]] lines>> : each line of the land, with trees ({{Y}}) or grass ({{.}}).",
+      "solutionLanguage": "C++",
+      "outputDescription": "<<Line 1>> : an integer [[N]] for the number of trees you can have on your land after {{33}} years by planting your seed at the best place."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You have just inherited of a small plot of land of width <var>W</var> and height <var>H</var> with some trees on it. You want to grow a forest, but you have only <const>1</const> seed to plant. Find the maximum number of trees after <const>33</const> years you can have by planting the seed at the best place.<br><br><strong>Rules:</strong><br>-Seeds need 10 years to grow into a tree.<br>-Trees produce 4 seeds around them after one year.<br>-Trees may already be present on your land. They will also produce seeds after one year.<br><br><strong>Year 0</strong> : X is your one and only seed and Y is a tree already present.<br><br><pre style=\"font-family: monospace\">.  .  .  .  .</pre>        <br><pre style=\"font-family: monospace\">.  X  .  .  .</pre><br><pre style=\"font-family: monospace\">.  .  .  .  .</pre><br><pre style=\"font-family: monospace\">.  .  .  .  .</pre> <br><pre style=\"font-family: monospace\">.  .  .  .  Y</pre><br><br><strong>Year  1</strong> : Trees produce seeds after one year.<br><br><pre style=\"font-family: monospace\">.  .  .  .  .</pre>        <br><pre style=\"font-family: monospace\">.  X  .  .  .</pre><br><pre style=\"font-family: monospace\">.  .  .  .  .</pre><br><pre style=\"font-family: monospace\">.  .  .  .  X</pre> <br><pre style=\"font-family: monospace\">.  .  .  X  Y</pre><br><br><strong>Year  10</strong> : Your seed is now a tree. Congratulations!<br><br><pre style=\"font-family: monospace\">.  .  .  .  .</pre>        <br><pre style=\"font-family: monospace\">.  Y  .  .  .</pre><br><pre style=\"font-family: monospace\">.  .  .  .  .</pre><br><pre style=\"font-family: monospace\">.  .  .  .  X</pre> <br><pre style=\"font-family: monospace\">.  .  .  X  Y</pre><br><br><strong>Year 11</strong> : Your new tree starts to produce seeds after a year.<br><br><pre style=\"font-family: monospace\">.  X  .  .  .</pre>        <br><pre style=\"font-family: monospace\">X  Y  X  .  .</pre><br><pre style=\"font-family: monospace\">.  X  .  .  .</pre><br><pre style=\"font-family: monospace\">.  .  .  .  Y</pre> <br><pre style=\"font-family: monospace\">.  .  .  Y  Y</pre><br><br><strong>Year 12</strong> : The old trees in the corner also keep spreading.<br><br><pre style=\"font-family: monospace\">.  X  .  .  .</pre>        <br><pre style=\"font-family: monospace\">X  Y  X  .  .</pre><br><pre style=\"font-family: monospace\">.  X  .  .  X</pre><br><pre style=\"font-family: monospace\">.  .  .  X  Y</pre> <br><pre style=\"font-family: monospace\">.  .  X  Y  Y</pre><br><br><strong>Year 33</strong> : Finally you have a tiny forest of 21 trees!<br><br><pre style=\"font-family: monospace\">Y  Y  Y  X  .</pre>         <br><pre style=\"font-family: monospace\">Y  Y  Y  Y  Y</pre> <br><pre style=\"font-family: monospace\">Y  Y  Y  Y  Y</pre> <br><pre style=\"font-family: monospace\">X  Y  Y  Y  Y</pre>  <br><pre style=\"font-family: monospace\">.  Y  Y  Y  Y</pre><br><br>Maybe if you plant the seed at another place you can get a bigger forest in the end.<br>When you will find the best place, you will need to give the number of trees you get after 33 years.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong> : an integer <var>W</var> for the width of the parcel.<br><strong>Line 2</strong> : an integer <var>H</var> for the height of the parcel.<br><strong>Next <var>H</var> lines</strong> : each line of the land, with trees (<const>Y</const>) or grass (<const>.</const>).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1</strong> : an integer <var>N</var> for the number of trees you can have on your land after <const>33</const> years by planting your seed at the best place.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt;=  <var>W</var> &lt;= 40<br>1 &lt;=  <var>H</var>  &lt;= 40</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5\n5\n.....\n.....\n.....\n.....\n.....</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">13</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 93813337994,
+  "avatar": 10291630773271,
+  "commentCount": 14,
+  "upVotes": 13,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 759070,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "ACCEPTED",
+      "date": 1676916125831,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

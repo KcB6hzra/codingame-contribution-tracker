@@ -1,0 +1,113 @@
+{
+  "id": 339,
+  "activeVersion": 12,
+  "score": 10,
+  "votableId": 2636754,
+  "codingamerId": 301922,
+  "views": 210,
+  "commentableId": 2584686,
+  "title": "The water jug riddle from Die Hard 3",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "tyrcho",
+  "publicHandle": "339fbf5da94e20cfa9cfa789453fe678d07",
+  "codingamerHandle": "e30e2eaed69f0747e8826dbf32015ea1229103",
+  "lastVersion": {
+    "version": 12,
+    "data": {
+      "title": "The water jug riddle from Die Hard 3",
+      "topics": [],
+      "solution": "object Solution extends App {\r\n  val target=readInt\r\n  val numbers=Vector.fill(readInt)(readInt).toSet\r\n\r\n  val solver = WaterPouringSolver(target, numbers)\r\n  println(solver.solution.get.moves.size)\r\n\r\n  case class WaterPouringSolver(target: Int, capacities: Set[Int]) {\r\n    val initialState = State(capacities.map(Glass(_, 0)))\r\n    val initialPath = Path(Nil, initialState)\r\n\r\n    def from(paths: Set[Path], explored: Set[State]): Stream[Set[Path]] = {\r\n      val newPaths = for {\r\n        path <- paths\r\n        move <- path.endState.moves\r\n        newPath = path.add(move)\r\n        if !explored.contains(newPath.endState)\r\n      } yield newPath\r\n      val distinctStates = newPaths.groupBy(_.endState)\r\n      val pathsToDistinctStates=distinctStates.map { case (_, paths) => paths.head }.toSet\r\n      paths #:: from(pathsToDistinctStates, distinctStates.keySet)\r\n    }\r\n\r\n    def solution = (for {\r\n      steps <- from(Set(initialPath), Set(initialState))\r\n      path <- steps\r\n      if path.endState.glasses.exists(_.water == target)\r\n    } yield path).headOption\r\n  }\r\n\r\n  case class Path(moves: List[Move], endState: State) {\r\n    def add(move: Move) =\r\n      Path(move :: moves, move(endState))\r\n\r\n    override def toString = moves.reverse.mkString(\"\\n\")\r\n  }\r\n\r\n  trait Move {\r\n    def apply(s: State): State\r\n  }\r\n\r\n  case class Empty(g: Glass) extends Move {\r\n    def apply(s: State) = State(s.glasses - g + g.copy(water = 0))\r\n  }\r\n\r\n  case class Fill(g: Glass) extends Move {\r\n    def apply(s: State) = State(s.glasses - g + g.copy(water = g.capacity))\r\n  }\r\n\r\n  case class Pour(from: Glass, to: Glass) extends Move {\r\n    val moved = from.water min (to.capacity - to.water)\r\n    def apply(s: State) = State(s.glasses - from - to +\r\n      from.copy(water = from.water - moved) +\r\n      to.copy(water = to.water + moved))\r\n  }\r\n\r\n  case class State(glasses: Set[Glass]) {\r\n    def emptyMoves = glasses.map(Empty)\r\n    def fillMoves = glasses.map(Fill)\r\n    def pourMoves = for {\r\n      g <- glasses\r\n      h <- glasses\r\n      if g != h\r\n    } yield Pour(g, h)\r\n\r\n    def moves: Set[Move] = emptyMoves ++ fillMoves ++ pourMoves\r\n  }\r\n\r\n  case class Glass(capacity: Int, water: Int)\r\n}",
+      "statement": "You've got to defuse a bomb by placing exactly 4 liters of water on a sensor.  And you have to be quick!\n\nThe problem is, you only have a 5L jug and a 3L jug on hand! \n\nSee the video clip here: https://youtu.be/BVtQNK_ZUJg\n\nYou have an unlimited water source, and if needed you can also empty the water in the jugs to get rid of it.\n\nHow could 4 liters be measured?\n\nOne method:\n- Start by filling the 5L bottle. This state could be represented as (0, 5). \n- Next, pour from the 5L bottle into the 3L bottle until the 3L bottle is full, to get the state (3, 2). \n- Empty the 3L bottle, changing the state to (0, 2). \n- Pour the 2 liters of water from the 5L bottle into the 3L bottle, to get the state (2, 0).\n- Fill the 5L bottle again; the state is now (2, 5). \n- Pour from the 5L bottle into the 3L bottle until it is full, resulting in the state (3, 4). \n\n6 moves were used.\n\nYou will need to solve this problem in the general case of [[N]] containers and find the length of the shortest sequence of moves.\n\nYou always start with all containers empty.\n\nPossible moves:\n- \"Fill\" a container to reach its capacity\n- \"Empty\" water from a container to empty it completely\n- \"Pour\" water from a container to another. No water is spilled with this move.",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "4\n2\n3\n5",
+          "testOut": "6",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "Simple with 2 recipients",
+          "isTest": false,
+          "testIn": "1\n2\n3\n5",
+          "testOut": "4",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "2 recipients",
+          "isTest": true,
+          "testIn": "4\n2\n7\n9",
+          "testOut": "6",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "2 recipients with lots of steps",
+          "isTest": false,
+          "testIn": "5\n2\n9\n19",
+          "testOut": "24",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "3 recipients",
+          "isTest": true,
+          "testIn": "11\n3\n5\n7\n12",
+          "testOut": "9",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "3 large recipients",
+          "isTest": false,
+          "testIn": "1\n3\n32\n51\n53",
+          "testOut": "14",
+          "isValidator": true,
+          "needValidation": false
+        },
+        {
+          "title": "4 recipients",
+          "isTest": true,
+          "testIn": "20\n4\n2\n7\n19\n47",
+          "testOut": "9",
+          "isValidator": false,
+          "needValidation": false
+        },
+        {
+          "title": "4 recipients",
+          "isTest": false,
+          "testIn": "20\n4\n5\n7\n19\n47",
+          "testOut": "8",
+          "isValidator": true,
+          "needValidation": false
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "0 < [[W]] < 100\n1 < [[N]] < 5\nEach container has a unique capacity [[Ci]] and:\n0 < [[C0]] < [[C1]] ... < [[CN]] < 100\n\nThere is always a solution!",
+      "stubGenerator": "read target:int\nread containersCount:int\nloop containersCount read capacity:int\n\nwrite count",
+      "inputDescription": "<<Line 1:>> The amount of water [[W]] to be measured ({{4}} in the example)\n<<Line 2:>> The number of containers [[N]] to be measured ({{2}} in the example)\n<<Following [[N]] lines:>> An integer representing the capacity of the containers ({{3}} and {{5}} in the example)",
+      "solutionLanguage": "Scala",
+      "outputDescription": "<<Line 1:>> The minimal number of moves [[M]] needed to solve the problem ({{6}} in the example)"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You've got to defuse a bomb by placing exactly 4 liters of water on a sensor.  And you have to be quick!<br><br>The problem is, you only have a 5L jug and a 3L jug on hand! <br><br>See the video clip here: https://youtu.be/BVtQNK_ZUJg<br><br>You have an unlimited water source, and if needed you can also empty the water in the jugs to get rid of it.<br><br>How could 4 liters be measured?<br><br>One method:<br>- Start by filling the 5L bottle. This state could be represented as (0, 5). <br>- Next, pour from the 5L bottle into the 3L bottle until the 3L bottle is full, to get the state (3, 2). <br>- Empty the 3L bottle, changing the state to (0, 2). <br>- Pour the 2 liters of water from the 5L bottle into the 3L bottle, to get the state (2, 0).<br>- Fill the 5L bottle again; the state is now (2, 5). <br>- Pour from the 5L bottle into the 3L bottle until it is full, resulting in the state (3, 4). <br><br>6 moves were used.<br><br>You will need to solve this problem in the general case of <var>N</var> containers and find the length of the shortest sequence of moves.<br><br>You always start with all containers empty.<br><br>Possible moves:<br>- &quot;Fill&quot; a container to reach its capacity<br>- &quot;Empty&quot; water from a container to empty it completely<br>- &quot;Pour&quot; water from a container to another. No water is spilled with this move.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> The amount of water <var>W</var> to be measured (<const>4</const> in the example)<br><strong>Line 2:</strong> The number of containers <var>N</var> to be measured (<const>2</const> in the example)<br><strong>Following <var>N</var> lines:</strong> An integer representing the capacity of the containers (<const>3</const> and <const>5</const> in the example)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> The minimal number of moves <var>M</var> needed to solve the problem (<const>6</const> in the example)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt; <var>W</var> &lt; 100<br>1 &lt; <var>N</var> &lt; 5<br>Each container has a unique capacity <var>Ci</var> and:<br>0 &lt; <var>C0</var> &lt; <var>C1</var> ... &lt; <var>CN</var> &lt; 100<br><br>There is always a solution!</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4\n2\n3\n5</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">6</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 301780007145,
+  "avatar": 1742081719876,
+  "commentCount": 10,
+  "upVotes": 10,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 940,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

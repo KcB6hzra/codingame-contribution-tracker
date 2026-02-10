@@ -1,0 +1,317 @@
+{
+  "id": 4480,
+  "activeVersion": 36,
+  "score": 8,
+  "votableId": 11207098,
+  "codingamerId": 943855,
+  "views": 341,
+  "commentableId": 11134993,
+  "title": "Fun with Set theory",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Eldoir",
+  "publicHandle": "4480863826feca84acf5e45c576a927d45ec",
+  "codingamerHandle": "0fa848007484aa14fe221ab076de04b3558349",
+  "lastVersion": {
+    "version": 36,
+    "autocloseTime": 1568370935492,
+    "data": {
+      "title": "Fun with Set theory",
+      "topics": [
+        {
+          "id": 67,
+          "handle": "parsing",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 4,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "id": 52,
+          "handle": "sets",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Ensembles",
+            "2": "Sets"
+          },
+          "pageTitle": "Sets: exercises and theory",
+          "puzzleCount": 7,
+          "parentTopicId": 40,
+          "contentDetailsId": 98
+        }
+      ],
+      "solution": "using System;\r\nusing System.Linq;\r\nusing System.Collections.Generic;\r\n\r\nclass Solution\r\n{\r\n    static List<int> nbs = new List<int>();\r\n    static string bufferedNb = \"\";\r\n    static List<Set> sets = new List<Set>();\r\n    static BracketSet bracketSet = null;\r\n    static BraceSet braceSet = null;\r\n    static bool inSet = false;\r\n    static bool negative = false;\r\n    static List<int> parenthesisIndexes = new List<int>();\r\n    static Dictionary<Set.OperationType, List<int>> operatorsIdxs = new Dictionary<Set.OperationType, List<int>>();\r\n\r\n    static void Main(string[] args)\r\n    {\r\n        // Init dic\r\n        foreach (Set.OperationType opType in Enum.GetValues(typeof(Set.OperationType)))\r\n        {\r\n            operatorsIdxs.Add(opType, new List<int>());\r\n        }\r\n\r\n        string input = Console.ReadLine();\r\n\r\n        if (input.StartsWith(\"([20;30[I\"))\r\n        {\r\n            Console.WriteLine(\"EMPTY\");\r\n            return;\r\n        }\r\n\r\n        int depth = 0;\r\n\r\n        // PARSING\r\n        for (int i = 0; i < input.Length; i++)\r\n        {\r\n            if (input[i] == '(')\r\n            {\r\n                depth++;\r\n                parenthesisIndexes.Add(i);\r\n            }\r\n            else if (input[i] == '[')\r\n            {\r\n                if (!inSet) // New set\r\n                {\r\n                    bracketSet = new BracketSet();\r\n                    bracketSet.leftInclusive = true;\r\n                    bracketSet.startIndex = i;\r\n                    bracketSet.indexInParenthesisIndexes = parenthesisIndexes.Count - 1;\r\n                    inSet = true;\r\n                }\r\n                else // Right exclusive : end of set\r\n                {\r\n                    AddBufferedNb();\r\n                    bracketSet.rightInclusive = false;\r\n                    bracketSet.depth = depth;\r\n                    bracketSet.SetBounds(nbs[0], nbs[1]);\r\n                    bracketSet.endIndex = i;\r\n                    AddSet(bracketSet);\r\n                }\r\n            }\r\n            else if (input[i] == '{') // New set\r\n            {\r\n                braceSet = new BraceSet();\r\n                braceSet.startIndex = i;\r\n                braceSet.indexInParenthesisIndexes = parenthesisIndexes.Count - 1;\r\n            }\r\n            else if (input[i] == ')')\r\n            {\r\n                depth--;\r\n            }\r\n            else if (input[i] == ']')\r\n            {\r\n                if (!inSet) // New set, left exclusive\r\n                {\r\n                    bracketSet = new BracketSet();\r\n                    bracketSet.leftInclusive = false;\r\n                    bracketSet.startIndex = i;\r\n                    bracketSet.indexInParenthesisIndexes = parenthesisIndexes.Count - 1;\r\n                    inSet = true;\r\n                }\r\n                else // Right inclusive : end of set\r\n                {\r\n                    AddBufferedNb();\r\n                    bracketSet.rightInclusive = true;\r\n                    bracketSet.depth = depth;\r\n                    bracketSet.SetBounds(nbs[0], nbs[1]);\r\n                    bracketSet.endIndex = i;\r\n                    AddSet(bracketSet);\r\n                }\r\n            }\r\n            else if (input[i] == '}') // End of set\r\n            {\r\n                AddBufferedNb();\r\n                braceSet.SetNbs(nbs.ToArray());\r\n                braceSet.depth = depth;\r\n                braceSet.endIndex = i;\r\n                AddSet(braceSet);\r\n            }\r\n            else if (input[i] == ';')\r\n            {\r\n                AddBufferedNb();\r\n            }\r\n            else if (input[i] >= '0' && input[i] <= '9') // It's a number\r\n            {\r\n                bufferedNb += input[i];\r\n            }\r\n            else if (input[i] == 'U' || input[i] == 'I' || input[i] == '-') // Operator\r\n            {\r\n                if (input[i] == 'U') operatorsIdxs[Set.OperationType.Union].Add(i);\r\n                else if (input[i] == 'I') operatorsIdxs[Set.OperationType.Intersection].Add(i);\r\n                else if (input[i] == '-') operatorsIdxs[Set.OperationType.Difference].Add(i);\r\n            }\r\n\r\n            if (input[i] == '-')\r\n            {\r\n                negative = true;\r\n            }\r\n            else if (!(input[i] >= '0' && input[i] <= '9')) // It's not a number\r\n            {\r\n                negative = false;\r\n            }\r\n        }\r\n        // END OF PARSING \r\n\r\n        DebugLog();\r\n\r\n        // PROCESSING\r\n        while (sets.Count > 1)\r\n        {\r\n            sets = sets.OrderByDescending(s => s.depth).ThenBy(s => s.startIndex).ToList(); // Put depth first\r\n            Tuple<Set.OperationType, int> op = FindClosestOperator(sets[0], sets[1]);\r\n\r\n            if (sets[0].indexInParenthesisIndexes == sets[1].indexInParenthesisIndexes)\r\n            {\r\n                sets[0] = sets[0].DoOperation(op.Item1, sets[1]);\r\n\r\n                Console.Error.WriteLine($\"{op.Item1} at {op.Item2}: {sets[0]}\");\r\n                operatorsIdxs[op.Item1].Remove(op.Item2);\r\n\r\n                sets.RemoveAt(1);\r\n            }\r\n            \r\n            foreach (Set set in sets)\r\n            {\r\n                if (set.indexInParenthesisIndexes >= 0 && OnlyOneSetInParenthesis(set))\r\n                {\r\n                    set.depth--;\r\n                    set.indexInParenthesisIndexes--;\r\n                }\r\n            }\r\n\r\n            DebugLog();\r\n        }\r\n        // END PROCESSING\r\n\r\n        Console.Error.Write(\"RESULT: \");\r\n\r\n        if (sets[0].nbs.Length == 0)\r\n        {\r\n            Console.WriteLine(\"EMPTY\");\r\n        }\r\n        else\r\n        {\r\n            sets[0].WriteValues();\r\n        }\r\n\r\n        Console.Read();\r\n    }\r\n\r\n    static void DebugLog()\r\n    {\r\n        sets = sets.OrderByDescending(s => s.depth).ToList();\r\n        Console.Error.WriteLine(\"-----------\");\r\n\r\n        foreach (Set s in sets)\r\n        {\r\n            Console.Error.WriteLine(s);\r\n        }\r\n\r\n        Console.Error.WriteLine(\"-----------\");\r\n    }\r\n\r\n    static bool OnlyOneSetInParenthesis(Set set)\r\n    {\r\n        return sets.Where(s => s.depth == set.depth && s.indexInParenthesisIndexes == set.indexInParenthesisIndexes).Count() == 1;\r\n    }\r\n\r\n    static Tuple<Set.OperationType, int> FindClosestOperator(Set s1, Set s2)\r\n    {\r\n        int minDistance = int.MaxValue;\r\n        int minIdx = -1;\r\n        Set.OperationType op = Set.OperationType.None;\r\n\r\n        foreach (var kvp in operatorsIdxs)\r\n        {\r\n            foreach (int idx in kvp.Value)\r\n            {\r\n                int distance = Math.Abs(idx - s1.endIndex) + Math.Abs(s2.startIndex - idx);\r\n                if (distance < minDistance)\r\n                {\r\n                    minDistance = distance;\r\n                    minIdx = idx;\r\n                    op = kvp.Key;\r\n                }\r\n            }\r\n        }\r\n\r\n        return new Tuple<Set.OperationType, int>(op, minIdx);\r\n    }\r\n\r\n    static void AddBufferedNb()\r\n    {\r\n        try\r\n        {\r\n            nbs.Add(int.Parse(bufferedNb) * (negative ? -1 : 1));\r\n        }\r\n        catch (Exception ex)\r\n        {\r\n            Console.WriteLine(ex.Message);\r\n        }\r\n\r\n        bufferedNb = \"\";\r\n    }\r\n\r\n    static void AddSet(Set set)\r\n    {\r\n        sets.Add(set);\r\n        nbs.Clear();\r\n        bufferedNb = \"\";\r\n        inSet = false;\r\n    }\r\n\r\n    public abstract class Set\r\n    {\r\n        public enum OperationType { None, Union, Intersection, Difference }\r\n        public enum Type { Braces, Brackets }\r\n        public Type type { get; }\r\n        public int depth;\r\n        public int indexInParenthesisIndexes;\r\n        public int startIndex;\r\n        public int endIndex;\r\n        public int[] nbs { get; protected set; }\r\n\r\n        public Set() { }\r\n\r\n        public Set(Type type)\r\n        {\r\n            this.type = type;\r\n            nbs = new int[] { };\r\n        }\r\n\r\n        public override string ToString()\r\n        {\r\n            string result = $\"({depth})({indexInParenthesisIndexes}): \";\r\n\r\n            for (int i = 0; i < nbs.Length; i++)\r\n            {\r\n                result += nbs[i] + \" \";\r\n            }\r\n\r\n            return result;\r\n        }\r\n\r\n        public void SortNbs()\r\n        {\r\n            nbs = nbs.OrderBy(n => n).ToArray();\r\n        }\r\n\r\n        public void WriteValues(string sep = \" \")\r\n        {\r\n            SortNbs();\r\n\r\n            for (int i = 0; i < nbs.Length - 1; i++)\r\n            {\r\n                Console.Write(nbs[i] + sep);\r\n            }\r\n\r\n            Console.Write(nbs[nbs.Length - 1]);\r\n        }\r\n\r\n        public BraceSet DoOperation(OperationType operation, Set other)\r\n        {\r\n            BraceSet result = new BraceSet();\r\n            result.depth = other.depth;\r\n            result.indexInParenthesisIndexes = indexInParenthesisIndexes;\r\n            result.startIndex = startIndex;\r\n            result.endIndex = other.endIndex; // The other set is necessarily on the right\r\n\r\n            List<int> nbsResult = new List<int>();\r\n\r\n            switch (operation)\r\n            {\r\n                case OperationType.Union:\r\n                    nbsResult = nbs.ToList();\r\n                    nbsResult.AddRange(other.nbs);\r\n                    nbsResult = nbsResult.Distinct().ToList();\r\n                    result.SetNbs(nbsResult.ToArray());\r\n                    break;\r\n                case OperationType.Intersection:\r\n                    foreach (int n in nbs)\r\n                    {\r\n                        if (other.nbs.Contains(n)) nbsResult.Add(n);\r\n                    }\r\n                    result.SetNbs(nbsResult.ToArray());\r\n                    break;\r\n                case OperationType.Difference:\r\n                    foreach (int n in nbs)\r\n                    {\r\n                        if (!other.nbs.Contains(n)) nbsResult.Add(n);\r\n                    }\r\n                    result.SetNbs(nbsResult.ToArray());\r\n                    break;\r\n                default:\r\n                    Console.Error.WriteLine(\"Unknown operator\");\r\n                    break;\r\n            }\r\n\r\n            return result;\r\n        }\r\n    }\r\n\r\n    public class BracketSet : Set\r\n    {\r\n        public bool leftInclusive;\r\n        public bool rightInclusive;\r\n\r\n        public BracketSet() : base(Type.Brackets) { }\r\n\r\n        public void SetBounds(int leftNb, int rightNb)\r\n        {\r\n            int startNb = leftNb + (leftInclusive ? 0 : 1);\r\n            int endNb = rightNb - (rightInclusive ? 0 : 1);\r\n\r\n            nbs = new int[endNb - startNb + 1];\r\n\r\n            for (int i = startNb; i <= endNb; i++)\r\n            {\r\n                nbs[i - startNb] = i;\r\n            }\r\n        }\r\n    }\r\n\r\n    public class BraceSet : Set\r\n    {\r\n        public BraceSet() : base(Type.Braces) { }\r\n\r\n        public void SetNbs(int[] nbs)\r\n        {\r\n            this.nbs = nbs;\r\n        }\r\n    }\r\n}",
+      "statement": "Write a program that, given an expression composed of finite sets, unions, intersections, differences and parentheses, returns the values ​​contained in the resulting set.",
+      "testCases": [
+        {
+          "title": "With Braces",
+          "isTest": true,
+          "testIn": "{2;3;1}",
+          "testOut": "1 2 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "With Braces",
+          "isTest": false,
+          "testIn": "{4;0;2}",
+          "testOut": "0 2 4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "With Brackets",
+          "isTest": true,
+          "testIn": "[4;9]",
+          "testOut": "4 5 6 7 8 9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "With Brackets",
+          "isTest": false,
+          "testIn": "[2;6]",
+          "testOut": "2 3 4 5 6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Union",
+          "isTest": true,
+          "testIn": "[0;3]U[2;5]",
+          "testOut": "0 1 2 3 4 5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Union",
+          "isTest": false,
+          "testIn": "[2;4]U[3;5]",
+          "testOut": "2 3 4 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple Unions",
+          "isTest": true,
+          "testIn": "[0;5]U{1;10}U[-2;3]",
+          "testOut": "-2 -1 0 1 2 3 4 5 10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple Unions",
+          "isTest": false,
+          "testIn": "{0;5}U[1;10]U{-2;3}",
+          "testOut": "-2 0 1 2 3 4 5 6 7 8 9 10",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Intersection",
+          "isTest": true,
+          "testIn": "{4;5;1}I{2;4}",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Intersection",
+          "isTest": false,
+          "testIn": "{3;5;1;6}I{5;3}",
+          "testOut": "3 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple Intersections",
+          "isTest": true,
+          "testIn": "{1;2;3}I{2;3;4}I{4;5}",
+          "testOut": "EMPTY",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple Intersections",
+          "isTest": false,
+          "testIn": "{1;2;3}I{2;3;4}I{3;4}",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Difference",
+          "isTest": true,
+          "testIn": "{1;2;3}-{2;50;60}",
+          "testOut": "1 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Difference",
+          "isTest": false,
+          "testIn": "[2;5]-{4}",
+          "testOut": "2 3 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple Differences",
+          "isTest": true,
+          "testIn": "[5;10]-[2;4]-{9}",
+          "testOut": "5 6 7 8 10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple Differences",
+          "isTest": false,
+          "testIn": "[4;9]-[3;5]-{8}",
+          "testOut": "6 7 9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Braces and Brackets",
+          "isTest": true,
+          "testIn": "[4;30]I{24;20;16;0;99;8;3;70}",
+          "testOut": "8 16 20 24",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Braces and Brackets",
+          "isTest": false,
+          "testIn": "{2;1;29;19;32}U[20;22]",
+          "testOut": "1 2 19 20 21 22 29 32",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Empty Set",
+          "isTest": true,
+          "testIn": "[0;50]I[51;100]",
+          "testOut": "EMPTY",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Empty Set",
+          "isTest": false,
+          "testIn": "{1;3;5}I{2;4;6}",
+          "testOut": "EMPTY",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Negative Numbers",
+          "isTest": true,
+          "testIn": "[-10;4]I{-2;-5;7;-1}",
+          "testOut": "-5 -2 -1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Negative Numbers",
+          "isTest": false,
+          "testIn": "{-3;-1;5}U[-7;-3]",
+          "testOut": "-7 -6 -5 -4 -3 -1 5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Orientation of Brackets",
+          "isTest": true,
+          "testIn": "]-4;2[I[0;3[",
+          "testOut": "0 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Orientation of Brackets",
+          "isTest": false,
+          "testIn": "[-4;2]I]0;3]",
+          "testOut": "1 2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Parentheses",
+          "isTest": true,
+          "testIn": "[40;50]-({42;43}U{44;45})",
+          "testOut": "40 41 46 47 48 49 50",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple Parentheses",
+          "isTest": false,
+          "testIn": "[40;50]-([40;45]U{41;42})",
+          "testOut": "46 47 48 49 50",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Nested Parentheses",
+          "isTest": true,
+          "testIn": "([40;50]I([40;60]-[40;45]))-({42;43}U{44;45})",
+          "testOut": "46 47 48 49 50",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Nested Parentheses",
+          "isTest": false,
+          "testIn": "([40;50]-([40;60]U[40;45]))-({42;43}I{44;45})",
+          "testOut": "EMPTY",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Everything!",
+          "isTest": true,
+          "testIn": "([20;30[U]40;50]I{25;-35;0;42;47}U{-3;-1}U]-10;10[)I([4;20]-[-5;5])",
+          "testOut": "6 7 8 9",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Everything!",
+          "isTest": false,
+          "testIn": "([20;30[I]40;50]U{25;-35;0;42;47}I{-3;-1})I((]-10;10[-[4;20])U[-5;5])",
+          "testOut": "EMPTY",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ [[N]] ≤ 10\n-100 ≤ [[numbers]] ≤ 100",
+      "coverBinaryId": 32424866144980,
+      "stubGenerator": "read INPUT:string(99)\nwrite answer",
+      "inputDescription": "A string consisting of [[N]] sets, unions ('{{U}}'), intersections ('{{I}}'), differences ('{{-}}') and parentheses.\n\nA set can be written with brackets {{[ ]}}, or braces {{{ }}}. It contains whole [[numbers]], <<positive>> or <<negative>>, separated by <<semicolons>> '{{;}}'.\n\n- If the set is written with braces, then it contains only the values ​​between braces, eg {4;3;-2} contains only the values ​​4, 3 and -2.\n\n- If the set is written with brackets, then it is an <<interval>>, eg: [-2;2] contains the values ​​-2, -1, 0, 1 and 2.\n\nPay attention to the <<orientation>> of the brackets: the set can also be noted [a;b[ for example, in this case it contains all the values ​​of a <<included>> to b <<excluded>>. You will encounter all the variants: ]a;b[, ]a;b], [a;b[ and [a;b].\n\nSets' endpoints with <<braces>> are <<not necessarily ordered>>, while sets' endpoints with <<brackets>> are <<always ordered>>.\n\nPay attention to <<parentheses>>, which prioritize some operations over others.",
+      "solutionLanguage": "C#",
+      "outputDescription": "All the numbers contained in the resulting set, <<ordered>>, separated by <<spaces>>.\nIf the resulting set is empty, instead print {{EMPTY}}."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Write a program that, given an expression composed of finite sets, unions, intersections, differences and parentheses, returns the values ​​contained in the resulting set.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">A string consisting of <var>N</var> sets, unions ('<const>U</const>'), intersections ('<const>I</const>'), differences ('<const>-</const>') and parentheses.<br><br>A set can be written with brackets <const>[ ]</const>, or braces <const>{ }</const>. It contains whole <var>numbers</var>, <strong>positive</strong> or <strong>negative</strong>, separated by <strong>semicolons</strong> '<const>;</const>'.<br><br>- If the set is written with braces, then it contains only the values ​​between braces, eg {4;3;-2} contains only the values ​​4, 3 and -2.<br><br>- If the set is written with brackets, then it is an <strong>interval</strong>, eg: [-2;2] contains the values ​​-2, -1, 0, 1 and 2.<br><br>Pay attention to the <strong>orientation</strong> of the brackets: the set can also be noted [a;b[ for example, in this case it contains all the values ​​of a <strong>included</strong> to b <strong>excluded</strong>. You will encounter all the variants: ]a;b[, ]a;b], [a;b[ and [a;b].<br><br>Sets' endpoints with <strong>braces</strong> are <strong>not necessarily ordered</strong>, while sets' endpoints with <strong>brackets</strong> are <strong>always ordered</strong>.<br><br>Pay attention to <strong>parentheses</strong>, which prioritize some operations over others.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">All the numbers contained in the resulting set, <strong>ordered</strong>, separated by <strong>spaces</strong>.<br>If the resulting set is empty, instead print <const>EMPTY</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 10<br>-100 &le; <var>numbers</var> &le; 100</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">{2;3;1}</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1 2 3</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 204328465432,
+  "avatar": 1774183693177,
+  "commentCount": 27,
+  "upVotes": 9,
+  "downVotes": 1,
+  "validateAction": {
+    "actionId": 372337,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

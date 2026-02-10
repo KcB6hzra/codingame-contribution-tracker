@@ -1,0 +1,143 @@
+{
+  "id": 959,
+  "activeVersion": 12,
+  "score": 1,
+  "votableId": 6481032,
+  "codingamerId": 1640024,
+  "views": 250,
+  "commentableId": 6420930,
+  "title": "Text formatting",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Cezariusz",
+  "publicHandle": "959bd287fe24f3c32dcfc3f80ff7fbd6a53",
+  "codingamerHandle": "96d22efe30413d099ce36f7eda24d01a4200461",
+  "lastVersion": {
+    "version": 12,
+    "data": {
+      "title": "Text formatting",
+      "topics": [
+        {
+          "id": 73,
+          "handle": "strings",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Chaînes de caractères",
+            "2": "Strings"
+          },
+          "pageTitle": "Strings: exercises and theory",
+          "puzzleCount": 21,
+          "parentTopicId": 41,
+          "contentDetailsId": 73
+        }
+      ],
+      "solution": "import java.util.*;\nimport java.io.*;\nimport java.math.*;\n\npublic class Solution {\n\n    private enum State {\n        START, SPACE, PUNCTUATION, LETTER\n    }\n\n    private State getState(char c) {\n        if (Character.isLetterOrDigit(c)) {\n            return State.LETTER;\n        } else if (c == ' ') {\n            return State.SPACE;\n        } else {\n            return State.PUNCTUATION;\n        }\n    }\n\n    /**\n     * Format the text.\n     *\n     * @param is Input stream of text to be formatted\n     * @param os Output stream for the formatted text\n     * @throws IOException when read or write exception occurs\n     */\n    public void format(InputStream is, OutputStream os) throws IOException {\n        State state = State.START;\n        char previousChar = 0;\n        boolean upperCase = false;\n        int r;\n        while ((r = is.read()) != -1) {\n            char c = (char) r;\n            State type = getState(c);\n            switch (state) {\n                case START:\n                    if (c != ' ') {\n                        os.write(Character.toUpperCase(c));\n                        state = getState(c);\n                    }\n                    break;\n                case LETTER:\n                    if (c != ' ') {\n                        os.write(Character.toLowerCase(c));\n                    }\n                    state = getState(c);\n                    break;\n                case PUNCTUATION:\n                    if (c != previousChar && c != ' ') {\n                        if (type == State.LETTER) {\n                            os.write(' ');\n                            if (upperCase) {\n                                os.write(Character.toUpperCase(c));\n                                upperCase = false;\n                            } else {\n                                os.write(Character.toLowerCase(c));\n                            }\n                            state = State.LETTER;\n                        } else {\n                            os.write(c);\n                            state = getState(c);\n                        }\n                    }\n                    break;\n                case SPACE:\n                    if (c != ' ') {\n                        if (type == State.LETTER) {\n                            os.write(' ');\n                            os.write(c);\n                        } else {\n                            os.write(c);\n                        }\n                        state = getState(c);\n                    }\n                    break;\n            }\n            if (c == '.') {\n                upperCase = true;\n            }\n            if (c != ' ') {\n                previousChar = c;\n            }\n        }\n    }\n\n    public static void main(String[] args) throws IOException {\n        Scanner in = new Scanner(System.in);\n        String input = in.nextLine();\n        Solution tf = new Solution();\n        ByteArrayOutputStream os = new ByteArrayOutputStream();\n        tf.format(new ByteArrayInputStream(input.getBytes(\"UTF-8\")), os);\n        System.out.println(new String(os.toByteArray(), \"UTF-8\"));\n    }    \n}\n",
+      "statement": "Format a text file using the following rules:\n\n* Only a single space between words (remove excessive spaces);\n* No spaces before punctuation marks;\n* One space after each punctuation mark in front of a letter;\n* Use only lowercase letters, except for the beginning of the sentence (after a dot);\n* Remove repeated punctuation marks.\n\nA <<punctuation mark>> is a character other than a space, a letter or a digit.\n\n<<Example>>\nInput: \"when a father gives to his son,,, Both laugh; When a son gives to his father, , , Both cry...shakespeare\"\nOutput: \"When a father gives to his son, both laugh; when a son gives to his father, both cry. Shakespeare\"",
+      "testCases": [
+        {
+          "title": "One sentence without spaces",
+          "isTest": true,
+          "testIn": "one,two,three.",
+          "testOut": "One, two, three.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "One sentence without spaces validator",
+          "isTest": false,
+          "testIn": "red,green,blue,black.",
+          "testOut": "Red, green, blue, black.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two sentences",
+          "isTest": true,
+          "testIn": "one,two,three.four,five, six.",
+          "testOut": "One, two, three. Four, five, six.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Two sentences validator",
+          "isTest": false,
+          "testIn": "red,green,blue.black, yellow,brown.",
+          "testOut": "Red, green, blue. Black, yellow, brown.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Extra spaces",
+          "isTest": true,
+          "testIn": "one , two , three . four , five , six .",
+          "testOut": "One, two, three. Four, five, six.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Extra spaces validator",
+          "isTest": false,
+          "testIn": "red , green , blue . black , yellow , brown .",
+          "testOut": "Red, green, blue. Black, yellow, brown.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "More errors",
+          "isTest": true,
+          "testIn": "one , TWO  ,,  three  ..  four,fivE , six .",
+          "testOut": "One, two, three. Four, five, six.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "More errors validator",
+          "isTest": false,
+          "testIn": "red , GREEN  ,blue   ,,   bLaCk  ..  yellow,brOwn    ,     magenta   .",
+          "testOut": "Red, green, blue, black. Yellow, brown, magenta.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Shakespeare",
+          "isTest": true,
+          "testIn": "when a father gives to his son,,, Both laugh; When a son gives to his father, , , Both cry...shakespeare",
+          "testOut": "When a father gives to his son, both laugh; when a son gives to his father, both cry. Shakespeare",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Shakespeare validator",
+          "isTest": false,
+          "testIn": "when a father gives to his son,,, BOTH laugh; When a son gives to his father, , , BOTH cry...shakespearE.",
+          "testOut": "When a father gives to his son, both laugh; when a son gives to his father, both cry. Shakespeare.",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "The length of the input string is less than 1000.",
+      "stubGenerator": "read intext:string(999)\nwrite solution",
+      "inputDescription": "A line of text.",
+      "solutionLanguage": "Java",
+      "outputDescription": "A line containing the Formatted text."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Format a text file using the following rules:<br><br>* Only a single space between words (remove excessive spaces);<br>* No spaces before punctuation marks;<br>* One space after each punctuation mark in front of a letter;<br>* Use only lowercase letters, except for the beginning of the sentence (after a dot);<br>* Remove repeated punctuation marks.<br><br>A <strong>punctuation mark</strong> is a character other than a space, a letter or a digit.<br><br><strong>Example</strong><br>Input: &quot;when a father gives to his son,,, Both laugh; When a son gives to his father, , , Both cry...shakespeare&quot;<br>Output: &quot;When a father gives to his son, both laugh; when a son gives to his father, both cry. Shakespeare&quot;</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">A line of text.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">A line containing the Formatted text.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">The length of the input string is less than 1000.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">one,two,three.</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">One, two, three.</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 261021736238,
+  "avatar": 7600224664408,
+  "commentCount": 6,
+  "upVotes": 3,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 162195,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

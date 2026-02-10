@@ -1,0 +1,171 @@
+{
+  "id": 39583,
+  "activeVersion": 14,
+  "score": 14,
+  "votableId": 26377040,
+  "codingamerId": 2636031,
+  "views": 260,
+  "commentableId": 26252685,
+  "title": "Boarding passes ready!",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "21stCenturyPeon",
+  "publicHandle": "395833ca5c09e8159f50a87d72330bbcceca1",
+  "codingamerHandle": "5a5e7379052be6d44f313c66917fee1e1306362",
+  "lastVersion": {
+    "version": 14,
+    "autocloseTime": 1706797392620,
+    "data": {
+      "title": "Boarding passes ready!",
+      "topics": [],
+      "solution": "import java.util.*;\nimport java.io.*;\nimport java.math.*;\n\nclass Solution {\n\n    public static void main(String args[]) {\n        Scanner in = new Scanner(System.in);\n        int h = in.nextInt();\n        int w = in.nextInt();\n        int n = in.nextInt();\n        if (in.hasNextLine()) {\n            in.nextLine();\n        }\n        List<Passenger>[]plane = new ArrayList[h];\n        for(int i = 0; i < h; i++) {\n            List<Passenger> row=new ArrayList<>();\n            plane[i] = row;\n        }\n        for (int i = 0; i < n; i++) {\n            String passenger = in.nextLine();\n            Passenger p = new Passenger(passenger);\n            plane[p.row-1].add(p);\n        }\n\n        for(int i = 0; i < h; i++) {\n            Collections.sort(plane[i],(Passenger a, Passenger b) -> a.col-b.col);\n        }\n        int boarded=0;\n        while(boarded<n){\n            String bGroup = \"\";\n            // board the next person on the left half of each row\n            for(int r = h ; r > 0; r--){\n                if(!plane[r-1].isEmpty()){\n                    Passenger p = plane[r-1].get(0);\n                    if(p.col<=w/2){\n                        boarded++;\n                        bGroup = bGroup + (bGroup.isEmpty() ? \"\" : \",\") + p.name;\n                        plane[r-1].remove(p);\n                    }\n                }\n            }\n            if(!bGroup.isEmpty()){\n                System.out.println(\"Now boarding: \" + bGroup);\n            }\n\n            // board the next person on the right half of each row\n            bGroup = \"\";\n            for(int r = h ; r > 0; r--){\n                if(!plane[r-1].isEmpty()){\n                    Passenger p = plane[r-1].get(plane[r-1].size() - 1);\n                    if(p.col>w/2){\n                        boarded++;\n                        bGroup = bGroup + (bGroup.isEmpty() ? \"\" : \",\") + p.name;\n                        plane[r-1].remove(p);\n                    }\n                }\n            }\n            if(!bGroup.isEmpty()){\n                System.out.println(\"Now boarding: \" + bGroup);\n            }\n        }\n    }\n}\n\nclass Passenger{\n    String name;\n    String seat;\n    int row;\n    int col;\n    public Passenger(String passenger){\n        String[]details = passenger.split(\",\");\n        name = details[0];\n        seat = details[1];\n        row=Integer.parseInt(seat.replaceAll(\"\\\\D\",\"\"));\n        col=seat.charAt(seat.length()-1)-'A'+1;\n    }\n}",
+      "statement": "CodinGame Airlines are always trying to improve efficiency. To that end, they are trying a new way of boarding passengers onto their planes:\n\n<<Boarding group 1:>> Starting from the back row of the plane, and working up to the front, board the <<left-most>> waiting passenger whose seat is on the <<left>> half of the row. \n<<Boarding group 2:>> Starting from the back row of the plane, and working up to the front, board the <<right-most>> waiting passenger whose seat is on the <<right>> half of the row\n\nRepeat for the next boarding groups, until everyone is on board. Empty boarding groups do not need to be called.\n\n<<You must call the [[name]] of the passengers in each boarding group, in the order the passengers should board, when it's that group's turn.>>\n\n<<Notes:>>\n- Seat {{1A}} is the left-most seat of the front row of the plane.\n- The aisle always divides the seats evenly: In a plane with 6 seats to a row, seats {{A}},{{B}},{{C}} are on the left, and {{D}},{{E}},{{F}} are on the right.\n- Some seats may be unsold. If a seat is unsold, the next eligible passenger in that half of the row boards.\n\n<<Example>>\n`4\n4\n8\nAlice,1A\nBrian,2C\nCathy,2D\nDebra,4C\nEllen,4D\nFrank,2B\nGeoff,1C\nHelen,3A`\n[[w]]=4, so the seats are {{A}} & {{B}} on the left, {{C}} & {{D}} on the right\nAfter boarding, the passengers will be seated like this:\n`             FRONT\n    A     B         C     D  \n1 Alice ----- xxx Geoff -----\n2 ----- Frank xxx Brian Cathy\n3 Helen ----- xxx ----- -----\n4 ----- ----- xxx Debra Ellen`\n<<Boarding Group 1: Left hand side, from row {{4}} to row {{1}}>>\n- There is no passenger in {{4A}}, or {{4B}}. Nobody boards\n- Call <<Helen>> to board seat {{3A}}\n- There is no passenger in {{2A}}; Call <<Frank>> to board seat {{2B}}\n- Call <<Alice>> to board seat {{1A}}\n\n`Now boarding: Helen,Frank,Alice`\n<<Boarding Group 2: Right hand side, from row {{4}} to row {{1}}>>\n- Call <<Ellen>> to board seat {{4D}}\n- There is no passenger in {{3D}}, or {{3C}}. Nobody boards\n- Call <<Cathy>> to board seat {{2D}}\n- There is no passenger in {{1D}}; Call <<Geoff>> to board seat {{1C}}\n\n`Now boarding: Ellen,Cathy,Geoff`\nNot everyone is on the plane - another round of boarding is needed.\n\n<<Boarding Group 3: Left hand side, from row {{4}} to row {{1}}>>\n- There is still no passenger in {{4A}}, or {{4B}}; nobody boards\n- {{3A}} has already boarded, there is no passenger in {{3B}}; nobody boards\n- {{2B}} has already boarded; nobody boards\n- {{1A}} has already boarded, there is no passenger in {{1B}}; nobody boards\n\n(No boarding announcement here, as nobody is getting on.)\n\n<<Boarding Group 4: Right hand side, from row {{4}} to row {{1}}>>\n- {{4D}} has already boarded; Call <<Debra>> to board seat {{4C}}\n- There is no passenger in {{3D}}, or {{3C}}; nobody boards\n- {{2D}} has already boarded; Call <<Brian>> to board seat {{2C}}\n- {{1C}} has already boarded; nobody boards\n\n`Now boarding: Debra,Brian`",
+      "testCases": [
+        {
+          "title": "A very small plane indeed",
+          "isTest": true,
+          "testIn": "1\n2\n2\nHutch,1B\nStarsky,1A",
+          "testOut": "Now boarding: Starsky\nNow boarding: Hutch",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "A very small plane validation",
+          "isTest": false,
+          "testIn": "1\n2\n2\nLacey,1B\nCagney,1A",
+          "testOut": "Now boarding: Cagney\nNow boarding: Lacey",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Just A Few",
+          "isTest": true,
+          "testIn": "2\n2\n4\nElaine,1A\nGeorge,2B\nJerry,1B\nKramer,2A",
+          "testOut": "Now boarding: Kramer,Elaine\nNow boarding: George,Jerry",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Just A Few validation",
+          "isTest": false,
+          "testIn": "2\n2\n4\nB.A.,2A\nFace,1A\nHannibal,1B\nMurdock,2B",
+          "testOut": "Now boarding: B.A.,Face\nNow boarding: Murdock,Hannibal",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Small Flight",
+          "isTest": true,
+          "testIn": "2\n6\n12\nBeyonce Knowles,1A\nChandler Bing,2B\nFarrah Franklin,2E\nJoey Tribiani,2C\nKelly Rowland,1C\nLaTavia Robertson,2D\nLeToya Luckett,2F\nMichelle Williams,1B\nMonica Geller,1E\nPhoebe Buffay,1F\nRachel Green,1D\nRoss Geller,2A",
+          "testOut": "Now boarding: Ross Geller,Beyonce Knowles\nNow boarding: LeToya Luckett,Phoebe Buffay\nNow boarding: Chandler Bing,Michelle Williams\nNow boarding: Farrah Franklin,Monica Geller\nNow boarding: Joey Tribiani,Kelly Rowland\nNow boarding: LaTavia Robertson,Rachel Green",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Small Flight validation",
+          "isTest": false,
+          "testIn": "2\n6\n12\nBruce Banner,1A\nBruce Wayne,2B\nClark Kent,2C\nClint Barton,1E\nDiana Prince,2A\nJohn Stewart,2F\nNatasha Romanov,1B\nShayera Hol,2E\nSteve Rogers,1F\nThor Odinson,1D\nTony Stark,1C\nWally West,2D",
+          "testOut": "Now boarding: Diana Prince,Bruce Banner\nNow boarding: John Stewart,Steve Rogers\nNow boarding: Bruce Wayne,Natasha Romanov\nNow boarding: Shayera Hol,Clint Barton\nNow boarding: Clark Kent,Tony Stark\nNow boarding: Wally West,Thor Odinson",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Half Full",
+          "isTest": true,
+          "testIn": "8\n6\n24\nJean-Luc Picard,1D\nBenjamin Sisko,1E\nKatherine Janeway,1F\nTerry Gilliam,2C\nGraham Chapman,3A\nJohn Cleese,3B\nDuff McKagan,3D\nZiyi Zhang,4A\nJet Li,4C\nMatt Sorum,4E\nDizzy Reed,4F\nBruce Lee,5B\nTerry Jones,5F\nChristopher Pike,6B\nJames Kirk,6C\nEric Idle,6D\nMichael Palin,6E\nJonathan Archer,7A\nMichelle Yeoh,7D\nJackie Chan,7F\nAxl Rose,8A\nSlash,8B\nIzzy Stradlin,8C\nSonny Chiba,8E",
+          "testOut": "Now boarding: Axl Rose,Jonathan Archer,Christopher Pike,Bruce Lee,Ziyi Zhang,Graham Chapman,Terry Gilliam\nNow boarding: Sonny Chiba,Jackie Chan,Michael Palin,Terry Jones,Dizzy Reed,Duff McKagan,Katherine Janeway\nNow boarding: Slash,James Kirk,Jet Li,John Cleese\nNow boarding: Michelle Yeoh,Eric Idle,Matt Sorum,Benjamin Sisko\nNow boarding: Izzy Stradlin\nNow boarding: Jean-Luc Picard",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Half Full validation",
+          "isTest": false,
+          "testIn": "8\n6\n24\nAxl Rose,8A\nBenjamin Sisko,1E\nBruce Lee,5B\nChristopher Pike,6B\nDizzy Reed,4F\nDuff McKagan,3D\nEric Idle,6D\nGraham Chapman,3A\nIzzy Stradlin,8C\nJackie Chan,7F\nJames Kirk,6C\nJean-Luc Picard,1D\nJet Li,4C\nJohn Cleese,3B\nJonathan Archer,7A\nKatherine Janeway,1F\nMatt Sorum,4E\nMichael Palin,6E\nMichelle Yeoh,7D\nSlash,8B\nSonny Chiba,8E\nTerry Gilliam,2C\nTerry Jones,5F\nZiyi Zhang,4A",
+          "testOut": "Now boarding: Axl Rose,Jonathan Archer,Christopher Pike,Bruce Lee,Ziyi Zhang,Graham Chapman,Terry Gilliam\nNow boarding: Sonny Chiba,Jackie Chan,Michael Palin,Terry Jones,Dizzy Reed,Duff McKagan,Katherine Janeway\nNow boarding: Slash,James Kirk,Jet Li,John Cleese\nNow boarding: Michelle Yeoh,Eric Idle,Matt Sorum,Benjamin Sisko\nNow boarding: Izzy Stradlin\nNow boarding: Jean-Luc Picard",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Wide-Body Craft",
+          "isTest": true,
+          "testIn": "5\n8\n40\nAisling Bea,3E\nAl Murray,2C\nAlice Levine,4B\nAsim Chaudhry,4C\nBob Mortimer,3F\nDave Gorman,2D\nDoc Brown,1F\nFrank Skinner,1A\nHugh Dennis,2H\nIain Stirling,5D\nJames Acaster,4G\nJessica Knappett,4H\nJoe Lycett,3A\nJoe Thomas,5E\nJoe Wilkinson,1G\nJon Richardson,1H\nJosh Widdicombe,1B\nKatherine Ryan,2A\nKerry Godliman,5A\nLiza Tarbuck,4D\nLolly Adefope,3B\nLou Sanders,5F\nMark Watson,3G\nMel Giedroyc,3C\nNish Kumar,3H\nNoel Fielding,3D\nPaul Chowdhry,2E\nPaul Sinha,5G\nPhil Wang,5B\nRhod Gilbert,5C\nRichard Osman,2B\nRob Beckett,2F\nRoisin Conaty,1C\nRomesh Ranganathan,1D\nRussell Howard,4E\nSally Phillips,4A\nSara Pascoe,2G\nSian Gibson,5H\nTim Key,1E\nTim Vine,4F",
+          "testOut": "Now boarding: Kerry Godliman,Sally Phillips,Joe Lycett,Katherine Ryan,Frank Skinner\nNow boarding: Sian Gibson,Jessica Knappett,Nish Kumar,Hugh Dennis,Jon Richardson\nNow boarding: Phil Wang,Alice Levine,Lolly Adefope,Richard Osman,Josh Widdicombe\nNow boarding: Paul Sinha,James Acaster,Mark Watson,Sara Pascoe,Joe Wilkinson\nNow boarding: Rhod Gilbert,Asim Chaudhry,Mel Giedroyc,Al Murray,Roisin Conaty\nNow boarding: Lou Sanders,Tim Vine,Bob Mortimer,Rob Beckett,Doc Brown\nNow boarding: Iain Stirling,Liza Tarbuck,Noel Fielding,Dave Gorman,Romesh Ranganathan\nNow boarding: Joe Thomas,Russell Howard,Aisling Bea,Paul Chowdhry,Tim Key",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Wide-Body Craft validation",
+          "isTest": false,
+          "testIn": "5\n8\n40\nAdrian Chiles,4B\nAlan Davies,3E\nArdal O'Hanlon,4G\nBridget Christie,4H\nCharlotte Ritchie,2H\nChris Ramsey,5A\nClaudia Winkleman,4C\nDaisy May Cooper,1F\nDara O Briain,5D\nDavid Baddiel,1A\nDesiree Burch,3F\nEd Gamble,1B\nFern Brady,5E\nGuz Khan,3G\nJamali Maddix,3A\nJo Brand,1C\nJohn Hannah,2C\nJohn Kearns,5F\nJohnny Vegas,1G\nJonnie Peacock,4D\nJudi Love,5B\nKatherine Parkinson,1H\nKaty Wix,1D\nKrishnan Guru-Murthy,2D\nLady Leshurr,4E\nLee Mack,3B\nMawaan Rizwan,2A\nMike Wozniak,3C\nMorgana Robinson,3H\nMunya Chawawa,5G\nNicola Coughlan,2E\nRichard Herring,2B\nRose Matafeo,1E\nRylan Clark-Neal,2F\nSarah Kendall,3D\nSarah Millican,5H\nSayeeda Warsi,4F\nShirley Ballas,2G\nSophie Duker,5C\nVictoria Coren Mitchell,4A",
+          "testOut": "Now boarding: Chris Ramsey,Victoria Coren Mitchell,Jamali Maddix,Mawaan Rizwan,David Baddiel\nNow boarding: Sarah Millican,Bridget Christie,Morgana Robinson,Charlotte Ritchie,Katherine Parkinson\nNow boarding: Judi Love,Adrian Chiles,Lee Mack,Richard Herring,Ed Gamble\nNow boarding: Munya Chawawa,Ardal O'Hanlon,Guz Khan,Shirley Ballas,Johnny Vegas\nNow boarding: Sophie Duker,Claudia Winkleman,Mike Wozniak,John Hannah,Jo Brand\nNow boarding: John Kearns,Sayeeda Warsi,Desiree Burch,Rylan Clark-Neal,Daisy May Cooper\nNow boarding: Dara O Briain,Jonnie Peacock,Sarah Kendall,Krishnan Guru-Murthy,Katy Wix\nNow boarding: Fern Brady,Lady Leshurr,Alan Davies,Nicola Coughlan,Rose Matafeo",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Half-full Wide-Body",
+          "isTest": true,
+          "testIn": "14\n8\n54\nAlice Marshall,3G\nAndrei Kolchak,4D\nAnna Lucia Cortez,14C\nBernard Nadler,2G\nBoone Carlyle,4H\nCharlie Pace,8A\nChen Leong,13B\nClaire Littleton,5G\nClaire Miller,14H\nDave Mustaine,6B\nDavid Ellefson,1H\nEddie Kim,5E\nEdward Mars,3F\nEmmet Bradley,4B\nGary Barlow,8B\nGeorge,5B\nGrace Marshall,14A\nHank Harris,1E\nHoward Donald,2F\nHugo Reyes,10E\nIvan Jorshunov,9F\nJack Doherty,3B\nJack Shepard,12C\nJames Ford,12D\nJames Hetfield,4F\nJames Marshall,2B\nJason Orange,10H\nJin-Soo Kwon,3C\nJohn Locke,4E\nJohn Sanders,2A\nJohn,11D\nKate Austen,1D\nKathryn Bennett,13E\nKirk Hammett,6D\nLars Ulrich,12A\nMark Owen,8C\nMarty Friedman,13G\nMichael Dawson,9B\nNeville Flynn,3D\nNick Menza,9C\nNikki Fernandez,14D\nPaul,12F\nRingo,1C\nRobbie Williams,11C\nRobert Trujillo,13F\nRose Nadler,5F\nSayid Jarrah,13H\nSean Jones,11G\nShannon Rutherford,14G\nSteven Price,11B\nSun-Hwa Kwon,10F\nWalt Lloyd,14F\nWalter Dean,9D\nYoko,9H",
+          "testOut": "Now boarding: Grace Marshall,Chen Leong,Lars Ulrich,Steven Price,Michael Dawson,Charlie Pace,Dave Mustaine,George,Emmet Bradley,Jack Doherty,John Sanders,Ringo\nNow boarding: Claire Miller,Sayid Jarrah,Paul,Sean Jones,Jason Orange,Yoko,Claire Littleton,Boone Carlyle,Alice Marshall,Bernard Nadler,David Ellefson\nNow boarding: Anna Lucia Cortez,Jack Shepard,Robbie Williams,Nick Menza,Gary Barlow,Kirk Hammett,Andrei Kolchak,Jin-Soo Kwon,James Marshall,Kate Austen\nNow boarding: Shannon Rutherford,Marty Friedman,Sun-Hwa Kwon,Ivan Jorshunov,Rose Nadler,James Hetfield,Edward Mars,Howard Donald,Hank Harris\nNow boarding: Nikki Fernandez,James Ford,John,Walter Dean,Mark Owen,Neville Flynn\nNow boarding: Walt Lloyd,Robert Trujillo,Hugo Reyes,Eddie Kim,John Locke\nNow boarding: Kathryn Bennett",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Half-full Wide-Body validation",
+          "isTest": false,
+          "testIn": "14\n8\n54\nAlice Marshall,10H\nAndrei Kolchak,14G\nAnna Lucia Cortez,11G\nBernard Nadler,11B\nBoone Carlyle,9H\nCharlie Pace,5E\nChen Leong,13B\nClaire Littleton,6D\nClaire Miller,12C\nDave Mustaine,1C\nDavid Ellefson,1H\nEddie Kim,13H\nEdward Mars,8B\nEmmet Bradley,13F\nGary Barlow,4H\nGeorge,3C\nGrace Marshall,14C\nHank Harris,12F\nHoward Donald,4F\nHugo Reyes,5F\nIvan Jorshunov,14H\nJack Doherty,14D\nJack Shepard,5G\nJames Ford,8C\nJames Hetfield,2A\nJames Marshall,14A\nJason Orange,4D\nJin-Soo Kwon,10E\nJohn Locke,5B\nJohn Sanders,13E\nJohn,3F\nKate Austen,8A\nKathryn Bennett,9D\nKirk Hammett,2G\nLars Ulrich,2B\nMark Owen,4E\nMarty Friedman,1D\nMichael Dawson,11C\nNeville Flynn,12A\nNick Menza,1E\nNikki Fernandez,6B\nPaul,3B\nRingo,3D\nRobbie Williams,4B\nRobert Trujillo,2F\nRose Nadler,9B\nSayid Jarrah,9C\nSean Jones,12D\nShannon Rutherford,9F\nSteven Price,13G\nSun-Hwa Kwon,10F\nWalt Lloyd,11D\nWalter Dean,14F\nYoko,3G",
+          "testOut": "Now boarding: James Marshall,Chen Leong,Neville Flynn,Bernard Nadler,Rose Nadler,Kate Austen,Nikki Fernandez,John Locke,Robbie Williams,Paul,James Hetfield,Dave Mustaine\nNow boarding: Ivan Jorshunov,Eddie Kim,Hank Harris,Anna Lucia Cortez,Alice Marshall,Boone Carlyle,Jack Shepard,Gary Barlow,Yoko,Kirk Hammett,David Ellefson\nNow boarding: Grace Marshall,Claire Miller,Michael Dawson,Sayid Jarrah,Edward Mars,Claire Littleton,Jason Orange,George,Lars Ulrich,Marty Friedman\nNow boarding: Andrei Kolchak,Steven Price,Sun-Hwa Kwon,Shannon Rutherford,Hugo Reyes,Howard Donald,John,Robert Trujillo,Nick Menza\nNow boarding: Jack Doherty,Sean Jones,Walt Lloyd,Kathryn Bennett,James Ford,Ringo\nNow boarding: Walter Dean,Emmet Bradley,Jin-Soo Kwon,Charlie Pace,Mark Owen\nNow boarding: John Sanders",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1<=[[h]]<=20\n2<=[[w]]<=8; [[w]] is even\n[[n]]>0\nEvery passenger has a different [[name]]",
+      "coverBinaryId": 134114708051199,
+      "stubGenerator": "read h:int\nread w:int\nread n:int\n\nloop n read passenger:string(40)\nwrite Now boarding: Tinky Winky,Dipsy,La La,Po",
+      "inputDescription": "<<Line 1:>> An integer [[h]], the number of rows of seating on the plane\n<<Line 2:>> An integer [[w]], the number of seats in each row of the plane.\n<<Line 3:>> An integer [[n]], the number of passengers boarding.\n<<Next [[n]] lines:>> A string [[passenger]] containing each passenger's details in the format: `[[name]]{{,}}[[seat]]`\n[[seat]] is an integer followed by a letter, eg. {{14C}}",
+      "solutionLanguage": "Java",
+      "outputDescription": "A line for each non-empty boarding group, in order of boarding.\n- Each line starts \"{{Now boarding: }}\" followed by the comma-separated passenger names, in the order they should board\n[[n]] names should be listed in total."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">CodinGame Airlines are always trying to improve efficiency. To that end, they are trying a new way of boarding passengers onto their planes:<br><br><strong>Boarding group 1:</strong> Starting from the back row of the plane, and working up to the front, board the <strong>left-most</strong> waiting passenger whose seat is on the <strong>left</strong> half of the row. <br><strong>Boarding group 2:</strong> Starting from the back row of the plane, and working up to the front, board the <strong>right-most</strong> waiting passenger whose seat is on the <strong>right</strong> half of the row<br><br>Repeat for the next boarding groups, until everyone is on board. Empty boarding groups do not need to be called.<br><br><strong>You must call the <var>name</var> of the passengers in each boarding group, in the order the passengers should board, when it's that group's turn.</strong><br><br><strong>Notes:</strong><br>- Seat <const>1A</const> is the left-most seat of the front row of the plane.<br>- The aisle always divides the seats evenly: In a plane with 6 seats to a row, seats <const>A</const>,<const>B</const>,<const>C</const> are on the left, and <const>D</const>,<const>E</const>,<const>F</const> are on the right.<br>- Some seats may be unsold. If a seat is unsold, the next eligible passenger in that half of the row boards.<br><br><strong>Example</strong><br><pre style=\"font-family: monospace\">4<br>4<br>8<br>Alice,1A<br>Brian,2C<br>Cathy,2D<br>Debra,4C<br>Ellen,4D<br>Frank,2B<br>Geoff,1C<br>Helen,3A</pre><br><var>w</var>=4, so the seats are <const>A</const> &amp; <const>B</const> on the left, <const>C</const> &amp; <const>D</const> on the right<br>After boarding, the passengers will be seated like this:<br><pre style=\"font-family: monospace\">             FRONT<br>    A     B         C     D  <br>1 Alice ----- xxx Geoff -----<br>2 ----- Frank xxx Brian Cathy<br>3 Helen ----- xxx ----- -----<br>4 ----- ----- xxx Debra Ellen</pre><br><strong>Boarding Group 1: Left hand side, from row <const>4</const> to row <const>1</const></strong><br>- There is no passenger in <const>4A</const>, or <const>4B</const>. Nobody boards<br>- Call <strong>Helen</strong> to board seat <const>3A</const><br>- There is no passenger in <const>2A</const>; Call <strong>Frank</strong> to board seat <const>2B</const><br>- Call <strong>Alice</strong> to board seat <const>1A</const><br><br><pre style=\"font-family: monospace\">Now boarding: Helen,Frank,Alice</pre><br><strong>Boarding Group 2: Right hand side, from row <const>4</const> to row <const>1</const></strong><br>- Call <strong>Ellen</strong> to board seat <const>4D</const><br>- There is no passenger in <const>3D</const>, or <const>3C</const>. Nobody boards<br>- Call <strong>Cathy</strong> to board seat <const>2D</const><br>- There is no passenger in <const>1D</const>; Call <strong>Geoff</strong> to board seat <const>1C</const><br><br><pre style=\"font-family: monospace\">Now boarding: Ellen,Cathy,Geoff</pre><br>Not everyone is on the plane - another round of boarding is needed.<br><br><strong>Boarding Group 3: Left hand side, from row <const>4</const> to row <const>1</const></strong><br>- There is still no passenger in <const>4A</const>, or <const>4B</const>; nobody boards<br>- <const>3A</const> has already boarded, there is no passenger in <const>3B</const>; nobody boards<br>- <const>2B</const> has already boarded; nobody boards<br>- <const>1A</const> has already boarded, there is no passenger in <const>1B</const>; nobody boards<br><br>(No boarding announcement here, as nobody is getting on.)<br><br><strong>Boarding Group 4: Right hand side, from row <const>4</const> to row <const>1</const></strong><br>- <const>4D</const> has already boarded; Call <strong>Debra</strong> to board seat <const>4C</const><br>- There is no passenger in <const>3D</const>, or <const>3C</const>; nobody boards<br>- <const>2D</const> has already boarded; Call <strong>Brian</strong> to board seat <const>2C</const><br>- <const>1C</const> has already boarded; nobody boards<br><br><pre style=\"font-family: monospace\">Now boarding: Debra,Brian</pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>h</var>, the number of rows of seating on the plane<br><strong>Line 2:</strong> An integer <var>w</var>, the number of seats in each row of the plane.<br><strong>Line 3:</strong> An integer <var>n</var>, the number of passengers boarding.<br><strong>Next <var>n</var> lines:</strong> A string <var>passenger</var> containing each passenger's details in the format: <pre style=\"font-family: monospace\"><var>name</var><const>,</const><var>seat</var></pre><br><var>seat</var> is an integer followed by a letter, eg. <const>14C</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">A line for each non-empty boarding group, in order of boarding.<br>- Each line starts &quot;<const>Now boarding: </const>&quot; followed by the comma-separated passenger names, in the order they should board<br><var>n</var> names should be listed in total.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1&lt;=<var>h</var>&lt;=20<br>2&lt;=<var>w</var>&lt;=8; <var>w</var> is even<br><var>n</var>&gt;0<br>Every passenger has a different <var>name</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1\n2\n2\nHutch,1B\nStarsky,1A</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Now boarding: Starsky\nNow boarding: Hutch</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 65288537574,
+  "avatar": 115818227951264,
+  "commentCount": 25,
+  "upVotes": 14,
+  "downVotes": 0,
+  "validateAction": {
+    "actionId": 906351,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1671570337000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1704204611692,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1705440467534,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}

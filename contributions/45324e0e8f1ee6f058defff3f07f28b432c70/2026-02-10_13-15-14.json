@@ -1,0 +1,243 @@
+{
+  "id": 45324,
+  "activeVersion": 43,
+  "score": 2,
+  "votableId": 27824688,
+  "codingamerId": 1720510,
+  "views": 228,
+  "commentableId": 27696931,
+  "title": "One for his Nobs",
+  "status": "ACCEPTED",
+  "type": "PUZZLE_INOUT",
+  "nickname": "DeanTheMachine",
+  "publicHandle": "45324e0e8f1ee6f058defff3f07f28b432c70",
+  "codingamerHandle": "1d380533c44a49f2743d4171bd8a0f4b0150271",
+  "lastVersion": {
+    "version": 43,
+    "autocloseTime": 1684599906780,
+    "data": {
+      "title": "One for his Nobs",
+      "topics": [
+        {
+          "id": 133,
+          "handle": "card-games",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Jeu de carte",
+            "2": "Card games"
+          },
+          "pageTitle": "Card games",
+          "puzzleCount": 6,
+          "parentTopicId": 107
+        },
+        {
+          "id": 176,
+          "handle": "combination-puzzle",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Combination puzzle",
+            "2": "Combination puzzle"
+          },
+          "puzzleCount": 1,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\n\nstruct Card\n{   \n    public static readonly string cardRanks = \" A23456789TJQK\"; // A = 1, T = 10, J = 11, Q = 12, K = 13\n\n    public int Rank;\n    public char Suit;\n\n    public Card(char Rank, char Suit)\n    {\n        this.Rank = cardRanks.IndexOf(Rank);\n        this.Suit = Suit;\n    }\n\n    public int Value\n    {\n        get => Rank >= cardRanks.IndexOf('J') ? 10 : Rank; // counting aces as one, face cards as ten\n    }\n\n    public static Card Parse(string input) => new Card(input[0], input[1]);\n}\n\nstruct Hand\n{\n    public Card[] Cards;\n\n    public Hand(Card Card1, Card Card2, Card Card3, Card Card4, Card Card5)\n    {\n        this.Cards = new Card[5] {Card1, Card2, Card3, Card4, Card5};\n    }\n\n    public static Hand Parse(string input)\n    {\n        Card[] Cards = input.Split(' ').Select(c => new Card(c[0], c[1])).ToArray();\n\n        return new Hand(Cards[0], Cards[1], Cards[2], Cards[3], Cards[4]);\n    }\n\n    public int Score(bool isCrib = false)\n    {\n        int totalScore = 0;\n        bool hasRunOf5 = false;\n        bool hasRunOf4 = false;\n        \n        if (Cards.IsNobs()) totalScore += 1; // One point for holding the jack of the same suit as the starter card.\n        if (Cards.IsFifteen()) totalScore += 2; // Two points 4 cards totalling exactly fifteen.\n        if (hasRunOf5 = Cards.IsRun()) totalScore += 5; // Five points for a run of five.  Don't count runs of 4 or 3.\n\n        if (Cards.IsFlush())\n            totalScore += 5; // Five points for a flush, where all four cards in the hand are of the same suit and the starter card is also of that suit\n        else if (!isCrib && Cards.Take(4).IsFlush()) // Four suited cards including the starter, but missing one of the cards in the hand, does not score for flush.  A four-card flush in the crib is not scored unless it is also the same suit as the starter card (for a total of five points).\n            totalScore += 4; // Four points for a flush, where all four cards in the hand are of the same suit, not counting the starter card.\n        \n        foreach (var GroupOf4 in Cards.GetCombinations(4))  // There are 3 combinations of 4 cards.\n        {\n            if (GroupOf4.IsFifteen()) totalScore += 2; // Two points for each distinct combination of 4 cards totalling exactly fifteen\n            \n            if (!hasRunOf5 && GroupOf4.IsRun()) // There can be up to 2 runs of 4 cards.\n            {\n                totalScore += 4; // Four points for a run of four if there was no run of 5.  \n                hasRunOf4 = true; // Don't count runs of three.\n            }\n        }\n\n        foreach (var GroupOf3 in Cards.GetCombinations(3)) // There are 10 combinations of 3 cards.\n        {\n            if (GroupOf3.IsFifteen()) totalScore += 2; // Two points for each distinct combination of 3 cards totalling exactly fifteen\n            if (!hasRunOf5 && !hasRunOf4 && GroupOf3.IsRun()) totalScore += 3; // Three points for a run of three consecutive cards.\n        }\n\n        foreach (var Pair in Cards.GetCombinations(2)) // There are 10 pairs of cards.\n        {\n            if (Pair.IsFifteen()) totalScore += 2; // Two points for each distinct combination of 2 cards totalling exactly fifteen.\n            if (Pair.IsPair()) totalScore += 2; // Two points for a pair of cards of the same rank, Takes into account pair royals and double pair royals.\n        }\n\n        return totalScore;\n    }\n}\n\nstatic class LinqExtensions\n{\n    public static IEnumerable<IEnumerable<T>> GetCombinations<T>(this IEnumerable<T> items, int count) // https://stackoverflow.com/questions/5132758/words-combinations-without-repetition\n    {\n        foreach ((var item, int i) in items.Select((x, i) => (x, i)))\n            if (count == 1)\n                yield return new T[] { item };\n            else\n                foreach (var result in GetCombinations(items.Skip(i + 1), count - 1))\n                    yield return new T[] { item }.Concat(result);\n    }\n\n    public static bool IsFifteen(this IEnumerable<Card> cards) => cards.Sum(c => c.Value) == 15;\n    public static bool IsRun(this IEnumerable<Card> cards) => cards.Count() >= 3 && !cards.OrderBy(c => c.Rank).Select((i,j) => i.Rank-j).Distinct().Skip(1).Any(); // https://stackoverflow.com/questions/13359327/check-if-listint32-values-are-consecutive\n    public static bool IsPair(this IEnumerable<Card> cards) => cards.Count() == 2 && cards.First().Rank == cards.Last().Rank;\n    public static bool IsFlush(this IEnumerable<Card> cards) => cards.Count() >= 4 && !cards.DistinctBy(c => c.Suit).Skip(1).Any();\n    public static bool IsNobs(this IEnumerable<Card> cards) => cards.Count() == 5 && cards.Take(4).Any(c => c.Rank == Card.cardRanks.IndexOf('J') && c.Suit == cards.Last().Suit);\n}\n\nclass Solution\n{\n    static void Main(string[] args)\n    {\n        Console.WriteLine(String.Join('\\n', Enumerable.Range(0, int.Parse(Console.ReadLine())).Select(_ => Hand.Parse(Console.ReadLine()).Score())));\n    }\n}",
+      "statement": "It's two years into the apocalypse and you've been living alone in a bunker.  The only soul you can talk to is an AI bot named Nobs.  To pass the time you play games against Nobs.  But he only knows how to play Solitaire and Minesweeper which you've grown tired of.  You decide to teach him your favorite pre-apocalypse game, Cribbage.  \n\nCribbage is a two-player card and board game where you make combinations to count points and get to the target before your opponent.\nSee here for all the details: <<https://en.wikipedia.org/wiki/Cribbage>> and here for the rules: <<https://en.wikipedia.org/wiki/Rules_of_cribbage>>.\n\nUsing a stack of security keycards as a deck, toothpicks for pegs, and an old pizza box for a board you start to play against Nobs.  At first, Nobs is incredibly bad at playing since he has no idea how to play and simply discards at random into the crib.  You decide that the only way Nobs will ever be a challenge to you is if you teach him the rules for scoring hands so that he can best decide which cards to keep.\n\nWrite the algorithm that Nobs should use to score his hand.\n\nScoring:\n\nYou hold <<4>> cards in your hand and a fifth common <<starter card>> is cut and included when scoring your hand.\n \n Fifteens: 2 points for every distinct group of cards whose totals adds up to 15, ({{A}} is 1, {{J}}, {{Q}}, {{K}} are 10, all others are face value).  Ex: {{7H}} + {{8D}} = <<2>> points, {{AS}} + {{4C}} + {{KS}} = <<2>> points\n\nRuns: <<3>> or more consecutive cards by rank, 1 point for each card.  Ex: {{AH}} + {{2D}} + {{3S}} = <<3>> points, {{TC}} + {{JD}} + {{QS}} + {{KC}} = <<4>> points.  \n\nPairs: <<2>> points for every distinct pair of cards with identical ranks.  This means that a triplet gives <<6>> points and a quadruplet <<12>> points.  Ex: {{AH}} + {{AD}} = <<2>> points, {{AH}} + {{AD}} + {{AS}} = <<6>> points ({{AH}} + {{AD}}, {{AH}} + {{AS}}, and {{AD}} + {{AS}}), and {{AH}} + {{AD}} + {{AS}} + {{AC}} = <<12>> points.\n\nFlushes: <<4>> points if all <<4>> cards in your hand are of the same suit, <<5>> points if the starter card is also the same suit.  Ex: {{AH}} {{2H}} {{6H}} {{TH}} {{JC}} = <<4>> points, {{AH}} {{2H}} {{6H}} {{TH}} {{JH}} = <<5>> points, {{AH}} {{2C}} {{6H}} {{TH}} {{JH}} = <<0>> points\n\nHis nobs: <<1>> point if you have a {{J}} in your hand with the same suit as the starter card. Ex: {{AH 2H JC TH 6C}} = <<1>> point\n\n<<29>> Hand: All five <<5>>'s and the {{J}} for nobs yields the highest possible hand score of <<29>>.  \n\n   Ex: {{JH 5D 5S 5C 5H}}:\n\n     {{JH}} + {{5H}} = <<1>> point for his nobs and fifteen for <<2>>\n    {{JH}} + {{5S}} = fifteen for <<2>>\n     {{JH}} + {{5C}} = fifteen for <<2>>\n     {{JH}} + {{5H}} = fifteen for <<2>>\n     {{5D}} + {{5S}} + {{5C}} = fifteen for <<2>>\n     {{5D}} + {{5S}} + {{5H}} = fifteen for <<2>>\n     {{5D}} + {{5C}} + {{5H}} = fifteen for <<2>>\n     {{5S}} + {{5C}} + {{5H}} = fifteen for <<2>>\n     {{5D}} + {{5S}} = <<2>> for a pair\n     {{5D}} + {{5C}} = <<2>> for a pair\n     {{5D}} + {{5H}} = <<2>> for a pair\n     {{5S}} + {{5C}} = <<2>> for a pair\n     {{5S}} + {{5H}} = <<2>> for a pair\n     {{5C}} + {{5H}} = <<2>> for a pair\n\nAdd it all up and you get <<29>>!  The chances to get a twenty-nine hand are 1 in 216580.",
+      "testCases": [
+        {
+          "title": "Fifteens",
+          "isTest": true,
+          "testIn": "5\n7H 8D TS 2H 4C\n5C TD KS 2H 4C\n6H AS 9C TS KH\n2C TS 3D 6S 8C\n2C TS 3D QH 8C",
+          "testOut": "2\n4\n2\n2\n4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Fifteens",
+          "isTest": false,
+          "testIn": "5\n9C 6S JS AH 3C\n8C AS 7S TS KH\nQC 6S 8D 2S 3C\nKC 2S TD 3H 6C\nTC KD 4S AH 5C",
+          "testOut": "2\n2\n2\n4\n8",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Runs",
+          "isTest": true,
+          "testIn": "3\nKC QH 7D AS JD\nTC JH QD KS 3D\nKS TC JH QD 9D",
+          "testOut": "3\n4\n5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Runs",
+          "isTest": false,
+          "testIn": "3\n3C KH TD QS JD\n9S TC KH JD QS\nTC JH QD 7S 3D",
+          "testOut": "4\n5\n3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Pairs",
+          "isTest": true,
+          "testIn": "3\nAH AD 9H JC KS\nAH AD AS JC KS\nAH AD AS AC KS",
+          "testOut": "2\n6\n12",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Pairs",
+          "isTest": false,
+          "testIn": "3\n6H KD 6S 6C 6S\nTH TD KS TC AS\nKH 2D JH 6C 2S",
+          "testOut": "12\n6\n2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Flushes",
+          "isTest": true,
+          "testIn": "3\nAD 2D 6D JD QS\nAD 2D 6D TD QD\nAD 2D 6D JS QD",
+          "testOut": "4\n5\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Flushes",
+          "isTest": false,
+          "testIn": "3\nAS 2S 6S TS QS\nAC 2C 6C JC QH\nAH 2H 6H JD QH",
+          "testOut": "5\n4\n0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "One for his nobs",
+          "isTest": true,
+          "testIn": "1\nJS 6C 2D AS QS",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "One for his nobs",
+          "isTest": false,
+          "testIn": "1\nAC 2H 6C JS QS",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Compound runs",
+          "isTest": true,
+          "testIn": "4\nTS TH JD QS AC\nTS TH JD QS KC\nTC TH TD JS QH\nTH JD JS QC QH",
+          "testOut": "8\n10\n15\n16",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Compound runs",
+          "isTest": false,
+          "testIn": "4\nTH JD JS QC QH\nTC TH TD JS QH\nTS TH JD QS KC\n9S TH 9D JS AC",
+          "testOut": "16\n15\n10\n8",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Big Hands",
+          "isTest": true,
+          "testIn": "5\n2H 2D 2S 2C 9S\n2H 6H 7H 8H 7D\n4H 4C 5S 5D 6S\n5H 5C 5D QH 5S\n5H 5C 5D JS 5S",
+          "testOut": "20\n20\n24\n28\n29",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Big Hands",
+          "isTest": false,
+          "testIn": "5\n5H 5C 5D JS 5S\n5H 5C 5D QH 5S\n4H 4C 5S 5D 6S\n2H 6H 7H 8H 7D\n2H 2D 2S 2C 9S",
+          "testOut": "29\n28\n24\n20\n20",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "19 hand",
+          "isTest": true,
+          "testIn": "1\nAH 6S TC KS JD",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "19 hand",
+          "isTest": false,
+          "testIn": "1\n2C 8C QC TH 6S",
+          "testOut": "0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Wikipedia hands",
+          "isTest": true,
+          "testIn": "7\n6D JH 4H 7C 5H\n5S 4S 7S 6H 5H\nTS 8D KC 8C 5H\n7S KD 9D 8H 3H\nTS 5S 4S 7C 3H\n7D 3D TH 5C 3H\n8C AS QH 2H 3H",
+          "testOut": "9\n14\n6\n5\n7\n8\n5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Wikipedia hands",
+          "isTest": false,
+          "testIn": "7\n5S 4S 7S 6H 5H\n6D JH 4H 7C 5H\n7D 3D TH 5C 3H\nTS 5S 4S 7C 3H\nTS 8D KC 8C 5H\n8C AS QH 2H 3H\n7S KD 9D 8H 3H",
+          "testOut": "14\n9\n8\n7\n6\n5\n5",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ [[N]] ≤ 10",
+      "coverBinaryId": 104202904205443,
+      "stubGenerator": "read N:int\nloop N loopline 5 card:word(2)\nloop N write handScore",
+      "inputDescription": "<<Line 1:>> An integer [[N]] for the number of hands to score\n<<[[N]] Lines:>> 5 Space-separated values describing the cards in the hand (The first 4 cards for the player, the 5th is the starter card).\nCards are input as a two-character string.  The first character is the card's rank ({{A}}, {{2}}, {{3}}, {{4}}, {{5}}, {{6}}, {{7}}, {{8}}, {{9}}, {{T}},{{ J}}, {{Q}}, {{K}}) and the second is its suit ({{H}}earts, {{D}}iamonds, {{C}}lubs, {{S}}pades).  {{A}} has a value of <<1>>, {{T}}, {{J}}, {{Q}}, {{K}} are all <<10>>, the rest are all face value.",
+      "solutionLanguage": "C#",
+      "outputDescription": "<<[[N]] Lines:>> The score for the given hand."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">It's two years into the apocalypse and you've been living alone in a bunker.  The only soul you can talk to is an AI bot named Nobs.  To pass the time you play games against Nobs.  But he only knows how to play Solitaire and Minesweeper which you've grown tired of.  You decide to teach him your favorite pre-apocalypse game, Cribbage.  <br><br>Cribbage is a two-player card and board game where you make combinations to count points and get to the target before your opponent.<br>See here for all the details: <strong>https://en.wikipedia.org/wiki/Cribbage</strong> and here for the rules: <strong>https://en.wikipedia.org/wiki/Rules_of_cribbage</strong>.<br><br>Using a stack of security keycards as a deck, toothpicks for pegs, and an old pizza box for a board you start to play against Nobs.  At first, Nobs is incredibly bad at playing since he has no idea how to play and simply discards at random into the crib.  You decide that the only way Nobs will ever be a challenge to you is if you teach him the rules for scoring hands so that he can best decide which cards to keep.<br><br>Write the algorithm that Nobs should use to score his hand.<br><br>Scoring:<br><br>You hold <strong>4</strong> cards in your hand and a fifth common <strong>starter card</strong> is cut and included when scoring your hand.<br> <br> Fifteens: 2 points for every distinct group of cards whose totals adds up to 15, (<const>A</const> is 1, <const>J</const>, <const>Q</const>, <const>K</const> are 10, all others are face value).  Ex: <const>7H</const> + <const>8D</const> = <strong>2</strong> points, <const>AS</const> + <const>4C</const> + <const>KS</const> = <strong>2</strong> points<br><br>Runs: <strong>3</strong> or more consecutive cards by rank, 1 point for each card.  Ex: <const>AH</const> + <const>2D</const> + <const>3S</const> = <strong>3</strong> points, <const>TC</const> + <const>JD</const> + <const>QS</const> + <const>KC</const> = <strong>4</strong> points.  <br><br>Pairs: <strong>2</strong> points for every distinct pair of cards with identical ranks.  This means that a triplet gives <strong>6</strong> points and a quadruplet <strong>12</strong> points.  Ex: <const>AH</const> + <const>AD</const> = <strong>2</strong> points, <const>AH</const> + <const>AD</const> + <const>AS</const> = <strong>6</strong> points (<const>AH</const> + <const>AD</const>, <const>AH</const> + <const>AS</const>, and <const>AD</const> + <const>AS</const>), and <const>AH</const> + <const>AD</const> + <const>AS</const> + <const>AC</const> = <strong>12</strong> points.<br><br>Flushes: <strong>4</strong> points if all <strong>4</strong> cards in your hand are of the same suit, <strong>5</strong> points if the starter card is also the same suit.  Ex: <const>AH</const> <const>2H</const> <const>6H</const> <const>TH</const> <const>JC</const> = <strong>4</strong> points, <const>AH</const> <const>2H</const> <const>6H</const> <const>TH</const> <const>JH</const> = <strong>5</strong> points, <const>AH</const> <const>2C</const> <const>6H</const> <const>TH</const> <const>JH</const> = <strong>0</strong> points<br><br>His nobs: <strong>1</strong> point if you have a <const>J</const> in your hand with the same suit as the starter card. Ex: <const>AH 2H JC TH 6C</const> = <strong>1</strong> point<br><br><strong>29</strong> Hand: All five <strong>5</strong>'s and the <const>J</const> for nobs yields the highest possible hand score of <strong>29</strong>.  <br><br>   Ex: <const>JH 5D 5S 5C 5H</const>:<br><br>     <const>JH</const> + <const>5H</const> = <strong>1</strong> point for his nobs and fifteen for <strong>2</strong><br>    <const>JH</const> + <const>5S</const> = fifteen for <strong>2</strong><br>     <const>JH</const> + <const>5C</const> = fifteen for <strong>2</strong><br>     <const>JH</const> + <const>5H</const> = fifteen for <strong>2</strong><br>     <const>5D</const> + <const>5S</const> + <const>5C</const> = fifteen for <strong>2</strong><br>     <const>5D</const> + <const>5S</const> + <const>5H</const> = fifteen for <strong>2</strong><br>     <const>5D</const> + <const>5C</const> + <const>5H</const> = fifteen for <strong>2</strong><br>     <const>5S</const> + <const>5C</const> + <const>5H</const> = fifteen for <strong>2</strong><br>     <const>5D</const> + <const>5S</const> = <strong>2</strong> for a pair<br>     <const>5D</const> + <const>5C</const> = <strong>2</strong> for a pair<br>     <const>5D</const> + <const>5H</const> = <strong>2</strong> for a pair<br>     <const>5S</const> + <const>5C</const> = <strong>2</strong> for a pair<br>     <const>5S</const> + <const>5H</const> = <strong>2</strong> for a pair<br>     <const>5C</const> + <const>5H</const> = <strong>2</strong> for a pair<br><br>Add it all up and you get <strong>29</strong>!  The chances to get a twenty-nine hand are 1 in 216580.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var> for the number of hands to score<br><strong><var>N</var> Lines:</strong> 5 Space-separated values describing the cards in the hand (The first 4 cards for the player, the 5th is the starter card).<br>Cards are input as a two-character string.  The first character is the card's rank (<const>A</const>, <const>2</const>, <const>3</const>, <const>4</const>, <const>5</const>, <const>6</const>, <const>7</const>, <const>8</const>, <const>9</const>, <const>T</const>,<const> J</const>, <const>Q</const>, <const>K</const>) and the second is its suit (<const>H</const>earts, <const>D</const>iamonds, <const>C</const>lubs, <const>S</const>pades).  <const>A</const> has a value of <strong>1</strong>, <const>T</const>, <const>J</const>, <const>Q</const>, <const>K</const> are all <strong>10</strong>, the rest are all face value.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>N</var> Lines:</strong> The score for the given hand.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 10</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5\n7H 8D TS 2H 4C\n5C TD KS 2H 4C\n6H AS 9C TS KH\n2C TS 3D 6S 8C\n2C TS 3D QH 8C</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">2\n4\n2\n2\n4</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "validatedFor": 86362110789,
+  "avatar": 19926056859805,
+  "commentCount": 17,
+  "upVotes": 4,
+  "downVotes": 2,
+  "validateAction": {
+    "actionId": 800384,
+    "progress": 1,
+    "alreadyDone": false
+  },
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1678050337001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1678195587525,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "ACCEPTED",
+      "date": 1684367202434,
+      "data": {
+        "author": "ACTION"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}
