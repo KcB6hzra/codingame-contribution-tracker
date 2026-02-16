@@ -1,0 +1,295 @@
+{
+  "id": 80931,
+  "activeVersion": 13,
+  "score": 16,
+  "votableId": 32210061,
+  "codingamerId": 5429773,
+  "views": 343,
+  "commentableId": 32067464,
+  "title": "Trigonometry Simplification",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Diabetos",
+  "publicHandle": "80931c128f6a64e29890f141d2ea25dfb7cf1",
+  "codingamerHandle": "7e0979ae4d46f3e7bab2eb2ec52f6b0b3779245",
+  "lastVersion": {
+    "version": 13,
+    "autocloseTime": 1773673563057,
+    "data": {
+      "title": "Trigonometry Simplification",
+      "topics": [
+        {
+          "id": 81,
+          "handle": "trigonometry",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Trigonométrie",
+            "2": "Trigonometry"
+          },
+          "pageTitle": "Trigonometry: exercises and theory",
+          "puzzleCount": 15,
+          "parentTopicId": 43,
+          "contentDetailsId": 74
+        },
+        {
+          "id": 94,
+          "handle": "mathematics",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Mathematics",
+            "2": "Mathematics"
+          },
+          "puzzleCount": 61,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "def factorial(k):\n    \"\"\"I could use math.factorial but nah\"\"\"\n    return 1 if k < 2 else factorial(k-1)*k\ndef nCk(n, k):\n    \"\"\"Binomial coefficient\"\"\"\n    return factorial(n)//(factorial(k)*factorial(n-k))\n\ninput = input().split(\" \")\nsinExp, cosExp, factor = int(input[0]), int(input[1]), int(input[2])\nif sinExp + cosExp == 0:\n    print(factor)\n    exit()\nisCos = 1-sinExp%2 # Result is cosine if the sinus' exposant is even\nnumTerms = sinExp + cosExp + 1\n# (Co)sine are (e^+i) +- (e^-i), with Newton binomials,\n# you get some negative exposant, that go into Em\n# and positive ones, that go into Ep\n# with the index being the exposant and the value the factor\nsinEn = [0]*numTerms\nsinEp = [0]*numTerms\ncosEn = [0]*numTerms\ncosEp = [0]*numTerms\nfor i in range(sinExp+1):\n    exp = sinExp-2*i\n    sign = (-1)**((sinExp-exp)//2)\n    if exp < 0:\n        sinEp[-exp] = sign*nCk(sinExp, i)\n    else:\n        sinEn[exp] = sign*nCk(sinExp, i)\nfor i in range(cosExp+1):\n    exp = cosExp-2*i\n    if exp < 0:\n        cosEp[-exp] = nCk(cosExp, i)\n    else:\n        cosEn[exp] = nCk(cosExp, i)\nresEp = [0]*2*numTerms\nresEn = [0]*2*numTerms\nif sinExp == 0:\n    resEn = cosEn\n    resEp = cosEp\nelif cosExp == 0:\n    resEn = sinEn\n    resEp = sinEp\nelse:\n    for sinI in range(-numTerms+1, numTerms):\n        for cosI in range(-numTerms+1, numTerms):\n            exp = sinI+cosI\n            sinCoef = sinEp[-sinI] if sinI < 0 else sinEn[sinI]\n            cosCoef = cosEp[-cosI] if cosI < 0 else cosEn[cosI]\n            if exp < 0:\n                resEp[-exp] += sinCoef*cosCoef\n            else:\n                resEn[exp] += sinCoef*cosCoef\npow2 = 2**(numTerms-2)*(-1)**(sinExp//2)\n# It represents the quantity of (1/2) there is\n# -1 because e+ + e- will give 2 cosine\nansEp = [0]*2*numTerms\nansEn = [0]*2*numTerms\nfor i in range(numTerms):\n    if resEp[i] == resEn[i]:\n        ansEp[i] = resEp[i]/pow2\n    if -resEp[i] == resEn[i]:\n        ansEn[i] = resEn[i]/pow2\nresult = \"\"\nfor i in range(numTerms):\n    coef = ansEp[i] + ansEn[i]\n    if i:\n        if coef:\n            f = int(coef*factor)\n            result += (\n                \"{}{}({}x)\".format(\n                    # factor's sign + factor.abs\n                    (\"+\" if coef > 0 else \"-\") + (str(abs(f)) if abs(f) != 1 else \"\"),\n                    [\"sin\", \"cos\"][isCos],\n                    i if i > 1 else \"\"\n                    )\n                )\n    else:\n        result = str((factor*(resEn[0] - resEp[0]))//(2*pow2))\n        if result == \"0\": result = \"\"\n\n\nif result[0] == '+':\n    # Delete trailing \"add\" sign\n    result = result[1:]\nprint(result)",
+      "statement": "Products of several cosine and sine are hard to study, therefore, we go through a process of simplification. We simply replace every {{cos(x)}} with {{(e^(ix)+e^(-ix))/2}} and every {{sin(x)}} with {{(e^(ix)-e^(-ix))/2i}}, with {{i² = -1}}; then we get rid of every cos/sin power by including them on the exponentials and we make the process the other way.\nE.g. {{cos²(x)}} = {{((e^(ix)+e^(-ix))/2)²}} = {{(e^(2ix) + 2 + e^(-2ix))/4}}, here we use once again the identity given above, => {{(cos(2x) + 1)/2}}\n\nThe goal here is to simplify an expression such as {{sin(x)^[[S]] * cos(x)^[[C]] * [[F]]}}, where [[F]] is a factor given such that the coefficients of the final sum are always integers.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "1 0 1",
+          "testOut": "sin(x)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "1 0 2",
+          "testOut": "2sin(x)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "0 1 1",
+          "testOut": "cos(x)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "0 1 2",
+          "testOut": "2cos(x)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "1 1 4",
+          "testOut": "2sin(2x)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "1 1 2",
+          "testOut": "sin(2x)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "2 1 4",
+          "testOut": "cos(x)-cos(3x)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "1 2 4",
+          "testOut": "sin(x)+sin(3x)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "4 3 64",
+          "testOut": "3cos(x)-3cos(3x)-cos(5x)+cos(7x)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "3 3 32",
+          "testOut": "3sin(2x)-sin(6x)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "4 4 128",
+          "testOut": "3-4cos(4x)+cos(8x)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "3 4 64",
+          "testOut": "3sin(x)+3sin(3x)-sin(5x)-sin(7x)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 7",
+          "isTest": true,
+          "testIn": "8 0 128",
+          "testOut": "35-56cos(2x)+28cos(4x)-8cos(6x)+cos(8x)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "8 0 256",
+          "testOut": "70-112cos(2x)+56cos(4x)-16cos(6x)+2cos(8x)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 8",
+          "isTest": true,
+          "testIn": "10 10 524288",
+          "testOut": "126-210cos(4x)+120cos(8x)-45cos(12x)+10cos(16x)-cos(20x)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "9 1 512",
+          "testOut": "42sin(2x)-48sin(4x)+27sin(6x)-8sin(8x)+sin(10x)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 9",
+          "isTest": true,
+          "testIn": "7 0 64",
+          "testOut": "35sin(x)-21sin(3x)+7sin(5x)-sin(7x)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "0 4 8",
+          "testOut": "3+4cos(2x)+cos(4x)",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 10",
+          "isTest": true,
+          "testIn": "0 0 3",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "0 0 8",
+          "testOut": "8",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 11",
+          "isTest": true,
+          "testIn": "7 3 512",
+          "testOut": "14sin(2x)-8sin(4x)-3sin(6x)+4sin(8x)-sin(10x)",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "7 3 1536",
+          "testOut": "42sin(2x)-24sin(4x)-9sin(6x)+12sin(8x)-3sin(10x)",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "0 ≤ [[S]] ≤ 10\n0 ≤ [[C]] ≤ 10\n1 ≤ [[F]] ≤ 750,000\n[[S]] and [[C]] can't be 0 at the same time\nThe output of such an expression will only contain sine or cosine, never both at the same time.",
+      "coverBinaryId": 118582468984001,
+      "stubGenerator": "read S:int C:int F:int\n\n\nwrite 2cos²(x)=1+cos(2x)",
+      "inputDescription": "Three space separated integers [[S]], [[C]] and [[F]].",
+      "solutionLanguage": "Python3",
+      "outputDescription": "A line with the answer formatted as {{[[k_0]]±[[k_1]]sin/cos(x)±[[k_2]]sin/cos(2x)±...}}.\nFirst the constant term then every term in ascending order of the coefficient in x within each sin/cos term.\nIf [[k]] = 0, the cos/sin associated need not be displayed."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Products of several cosine and sine are hard to study, therefore, we go through a process of simplification. We simply replace every <const>cos(x)</const> with <const>(e^(ix)+e^(-ix))/2</const> and every <const>sin(x)</const> with <const>(e^(ix)-e^(-ix))/2i</const>, with <const>i&sup2; = -1</const>; then we get rid of every cos/sin power by including them on the exponentials and we make the process the other way.<br>E.g. <const>cos&sup2;(x)</const> = <const>((e^(ix)+e^(-ix))/2)&sup2;</const> = <const>(e^(2ix) + 2 + e^(-2ix))/4</const>, here we use once again the identity given above, =&gt; <const>(cos(2x) + 1)/2</const><br><br>The goal here is to simplify an expression such as <const>sin(x)^<var>S</var> * cos(x)^<var>C</var> * <var>F</var></const>, where <var>F</var> is a factor given such that the coefficients of the final sum are always integers.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">Three space separated integers <var>S</var>, <var>C</var> and <var>F</var>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">A line with the answer formatted as <const><var>k_0</var>&plusmn;<var>k_1</var>sin/cos(x)&plusmn;<var>k_2</var>sin/cos(2x)&plusmn;...</const>.<br>First the constant term then every term in ascending order of the coefficient in x within each sin/cos term.<br>If <var>k</var> = 0, the cos/sin associated need not be displayed.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &le; <var>S</var> &le; 10<br>0 &le; <var>C</var> &le; 10<br>1 &le; <var>F</var> &le; 750,000<br><var>S</var> and <var>C</var> can't be 0 at the same time<br>The output of such an expression will only contain sine or cosine, never both at the same time.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1 0 1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">sin(x)</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 102118582822399,
+  "commentCount": 24,
+  "upVotes": 18,
+  "downVotes": 2,
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1707041137000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1707150225917,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1709744737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1711870337586,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1714464337001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1771081563057,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}
