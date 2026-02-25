@@ -1,0 +1,347 @@
+{
+  "id": 126009,
+  "activeVersion": 9,
+  "score": 39,
+  "votableId": 37286696,
+  "codingamerId": 4225191,
+  "views": 518,
+  "commentableId": 37125978,
+  "title": "Mana Quest: Hunt for the Perfect Seven",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "xerneas02",
+  "publicHandle": "1260094aef9b4c2531f4a456b97853de11b6d4",
+  "codingamerHandle": "7dec489e62c248770024696e5a9f8b391915224",
+  "lastVersion": {
+    "version": 9,
+    "autocloseTime": 1774639207457,
+    "freezeTime": 1749625272452,
+    "data": {
+      "title": "Mana Quest: Hunt for the Perfect Seven",
+      "topics": [
+        {
+          "id": 110,
+          "handle": "probability",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Probability",
+            "2": "Probability"
+          },
+          "puzzleCount": 10,
+          "parentTopicId": 93
+        },
+        {
+          "id": 182,
+          "handle": "combinatorics",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Combinatoire",
+            "2": "Combinatorics"
+          },
+          "puzzleCount": 18,
+          "parentTopicId": 93
+        },
+        {
+          "labelMap": {
+            "2": "Inclusion–Exclusion"
+          }
+        }
+      ],
+      "solution": "import math\nfrom itertools import combinations\n\n# Read deck composition\nc = int(input())\ndeck = {}           # Maps category string → count of cards\nfor _ in range(c):\n    category, count_str = input().split()\n    deck[category] = int(count_str)\n\n# Read patterns (constraints)\nq = int(input())\npatterns = [input().strip() for _ in range(q)]\n\n# Helper: check if a single category matches a pattern like \"C1x\" or \"LxB\"\ndef matches(pattern: str, category: str) -> bool:\n    # pattern[0]=='x' means “any type,” otherwise it must match category[0].\n    # pattern[1]=='x' means “any cost,” otherwise it must match category[1].\n    # pattern[2]=='x' means “any color,” otherwise it must match category[2].\n    return (\n        (pattern[0] == 'x' or pattern[0] == category[0])\n        and (pattern[1] == 'x' or pattern[1] == category[1])\n        and (pattern[2] == 'x' or pattern[2] == category[2])\n    )\n\n# For each pattern, build the set of categories in the deck that match it\npattern_sets = []\nfor pat in patterns:\n    matching_categories = {cat for cat in deck if matches(pat, cat)}\n    pattern_sets.append(matching_categories)\n\n# Precompute n choose k\ndef comb(n: int, k: int) -> int:\n    if 0 <= k <= n:\n        return math.comb(n, k)\n    return 0\n\nTOTAL_CARDS = 60\nTOTAL_HANDS = comb(TOTAL_CARDS, 7)\n\n# Inclusion–exclusion: count how many 7-card hands fail at least one pattern\ninvalid_hands = 0\n\n# Iterate through all nonempty subsets of pattern indices\nfor r in range(1, q + 1):\n    for subset in combinations(range(q), r):\n        # Collect all categories that are excluded if we fail every pattern in 'subset'\n        excluded = set()\n        for idx in subset:\n            excluded |= pattern_sets[idx]\n\n        # Total cards we cannot pick from = sum of deck counts for 'excluded'\n        excluded_count = sum(deck[cat] for cat in excluded)\n        remaining_cards = TOTAL_CARDS - excluded_count\n\n        # All 7 cards must come from 'remaining_cards' to miss those patterns\n        ways_to_miss = comb(remaining_cards, 7)\n\n        # Inclusion–exclusion sign: + if subset size odd, – if even\n        if r % 2 == 1:\n            invalid_hands += ways_to_miss\n        else:\n            invalid_hands -= ways_to_miss\n\n# Valid hands = total hands – invalid hands\nvalid_hands = TOTAL_HANDS - invalid_hands\nprobability = valid_hands / TOTAL_HANDS\n\n# Print result rounded to four decimal places\nprint(f\"{probability:.4f}\")",
+      "statement": "You have a {{60}}-card <<Magic: The Gathering>> deck. Each card is represented by a 3-character string of the form [[T]][[C]][[P]], where:\n\n[[T]] indicates the <<type>> of the card:\n• {{C}} = Creature\n• {{I}} = Instant\n• {{S}} = Sorcery\n• {{E}} = Enchantment\n• {{L}} = Land\n\n[[C]] represents the <<mana cost>> of the card. It is an integer from {{0}} to {{9}}.\n\n[[P]] indicates the <<color>> of the card:\n• {{W}} = White\n• {{U}} = Blue\n• {{B}} = Black\n• {{R}} = Red\n• {{G}} = Green\n\nFor example:\n• {{C1R}} = a {{Red Creature}} card that costs {{1}} mana\n• {{L0G}} = a {{Green Land}} card (cost {{0}})\n• {{I3B}} = a {{Black Instant}} card costing {{3}} mana\n\nYou will draw a {{7}}-card opening hand from the deck, chosen <<randomly without replacement>>. You must compute the probability that your hand matches all of a given set of patterns, i.e. your 7-card hand contains at least one card matching each pattern.\n\nEach pattern is a 3-character string where each character may be a specific value or {{x}}, which matches any value in that position.\n\nFor example:\n• {{C1x}} = a {{Creature}} card of cost {{1}} and {{any color}}\n• {{LxB}} = a {{Land}} card that is {{Black}} and of {{any cost}}\n• {{Ixx}} = any {{Instant}} card\n\n== Example ==\n\nInput:\n```\n7\nC1R 10\nC2B 5\nC3G 8\nI2U 12\nS4W 5\nL0G 15\nL0B 5\n2\nC1x\nLxB\n```\n\nOutput:\n0.3334\n\n== Explanation ==\n\nThere are {{10}} cards of category {{C1R}} in the deck. {{C1x}} matches all those 10 cards.\n\nThere are {{5}} cards of category {{L0B}} in the deck. {{LxB}} matches all those 5 cards.\n\nThe probability that a 7-card hand includes at least one card from each of those patterns is approximately 0.3334.",
+      "testCases": [
+        {
+          "title": "Do I have a land",
+          "isTest": true,
+          "testIn": "2\nL0R 26\nC1R 34\n1\nLxx",
+          "testOut": "0.9861",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Do I have a land",
+          "isTest": false,
+          "testIn": "2\nL0B 24\nC1B 36\n1\nLxx",
+          "testOut": "0.9784",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Any card will do",
+          "isTest": true,
+          "testIn": "3\nC1B 19\nI2B 12\nL0B 29\n1\nxxx",
+          "testOut": "1.0000",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Any card will do",
+          "isTest": false,
+          "testIn": "4\nC1R 13\nI2R 9\nS5R 9\nL0R 29\n1\nxxx",
+          "testOut": "1.0000",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "100%",
+          "isTest": true,
+          "testIn": "1\nL0U 60\n1\nL0x",
+          "testOut": "1.0000",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "100%",
+          "isTest": false,
+          "testIn": "1\nC0W 60\n1\nC0x",
+          "testOut": "1.0000",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "0%",
+          "isTest": true,
+          "testIn": "1\nC1R 60\n1\nLxB",
+          "testOut": "0.0000",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "0%",
+          "isTest": false,
+          "testIn": "1\nC1R 60\n1\nL0x",
+          "testOut": "0.0000",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "1 Pattern",
+          "isTest": true,
+          "testIn": "3\nC1R 10\nC1G 10\nL0B 40\n1\nC1x",
+          "testOut": "0.9517",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "1 Pattern",
+          "isTest": false,
+          "testIn": "3\nC1R 10\nC1G 10\nL0B 40\n1\nC1R",
+          "testOut": "0.7414",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Overlap",
+          "isTest": true,
+          "testIn": "3\nC1R 10\nC2G 20\nL0B 30\n2\nC1x\nCxR",
+          "testOut": "0.7414",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Overlap",
+          "isTest": false,
+          "testIn": "3\nC1R 10\nC2G 20\nL0B 30\n2\nC1x\nCxG",
+          "testOut": "0.6984",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "3 Patterns",
+          "isTest": true,
+          "testIn": "8\nC1R 5\nC1G 7\nC2B 7\nI2U 9\nS3B 2\nS4W 10\nL0G 10\nL0B 10\n3\nC1x\nI2U\nL0G",
+          "testOut": "0.3776",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "3 Patterns",
+          "isTest": false,
+          "testIn": "7\nC1R 5\nC1G 5\nC2B 12\nI2U 10\nS4W 10\nL0G 10\nL0B 8\n3\nC1x\nI2U\nL0B",
+          "testOut": "0.3156",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5 Patterns",
+          "isTest": true,
+          "testIn": "6\nC1R 4\nC2G 8\nC3B 10\nI1W 10\nL0U 18\nS2U 10\n5\nx1x\nC2x\nC3x\nI1x\nL0x",
+          "testOut": "0.2749",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "5 Patterns",
+          "isTest": false,
+          "testIn": "6\nC1R 4\nC2G 8\nC3B 10\nI1W 10\nL0U 10\nS2U 18\n5\nC1x\nC2x\nCxB\nI1x\nC1R",
+          "testOut": "0.0990",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6 Patterns",
+          "isTest": true,
+          "testIn": "6\nC1R 10\nC2G 10\nC5B 10\nI1W 10\nS2W 10\nL0B 10\n6\nxxR\nCxG\nC5x\nx1W\nS2x\nL0x",
+          "testOut": "0.0699",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "6 Patterns",
+          "isTest": false,
+          "testIn": "6\nC1R 10\nC2G 10\nC5B 10\nI1W 10\nS2W 10\nL0B 10\n6\nC1x\nC2x\nI1x\nS2x\nL0x\nxxW",
+          "testOut": "0.1379",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "7 Patterns",
+          "isTest": true,
+          "testIn": "7\nC1R 10\nC2G 10\nC3B 10\nC4U 10\nI1W 10\nS2W 5\nL0B 5\n7\nC1x\nC2x\nC3x\nCxU\nxxx\nS2x\nx0B",
+          "testOut": "0.0207",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "7 Patterns",
+          "isTest": false,
+          "testIn": "7\nC1R 14\nC2G 10\nC6B 10\nC4U 6\nI1W 7\nS2W 8\nL0B 5\n7\nx1x\nC2x\nx6x\nIxW\nS2x\nL0x\nx4x",
+          "testOut": "0.0148",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "8 Patterns",
+          "isTest": true,
+          "testIn": "8\nC1R 8\nC2G 8\nC3B 8\nC4U 8\nI8U 8\nS5W 8\nL0B 8\nE1U 4\n8\nC1x\nC2x\nxxx\nCxU\nI8x\nSxx\nL0x\nxxU",
+          "testOut": "0.0224",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "8 Patterns",
+          "isTest": false,
+          "testIn": "8\nC1R 10\nC2G 10\nC3B 8\nC5U 8\nI1W 8\nS2W 6\nL0B 6\nE1R 4\n8\nx1R\nx2x\nC3x\nCxU\nI1x\nS2x\nL0x\nExx",
+          "testOut": "0.0071",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "8 Patterns Impossible",
+          "isTest": true,
+          "testIn": "8\nC1R 8\nC2G 8\nC3B 8\nC8U 8\nI1W 8\nS5W 8\nL0B 8\nE1R 4\n8\nCxR\nx2G\nC3B\nC8x\nx1W\nx5x\nL0B\nE1R",
+          "testOut": "0.0000",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "8 Patterns Impossible",
+          "isTest": false,
+          "testIn": "8\nC6R 8\nC2G 8\nC3B 8\nC4U 8\nI1W 8\nS8W 8\nL0B 8\nE1R 4\n8\nC6x\nC2x\nx3x\nC4x\nIxW\nS8x\nLxx\nx1R",
+          "testOut": "0.0000",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ [[C]] ≤ 60\n\nThe sum of all [[Count]] is exactly 60.\n\n1 ≤ [[Q]] ≤ 8",
+      "coverBinaryId": 145063509739062,
+      "stubGenerator": "read c:int\nloop c read category:word(3) count:int\nread q:int\nloop q read pattern:word(3)\nwrite 0.0000",
+      "inputDescription": "<<Line 1>>: An integer [[C]] — the number of distinct categories in the deck.\n\n<<Next [[C]] lines>>: [[Category]] [[Count]] — a 3-letter category code and the number of cards in that category separated by a space.\n\n<<Next line>>: An integer [[Q]] — the number of patterns.\n\n<<Next [[Q]] lines>>: [[Pattern]] — a 3-character string representing a pattern to match, and may contain any number of {{x}}s as wildcards.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "Output a single line: the probability (a decimal between 0 and 1) that a random 7-card hand includes at least one card matching each of the given patterns, rounded to {{four decimal places}}."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You have a <const>60</const>-card <strong>Magic: The Gathering</strong> deck. Each card is represented by a 3-character string of the form <var>T</var><var>C</var><var>P</var>, where:<br><br><var>T</var> indicates the <strong>type</strong> of the card:<br>&bull; <const>C</const> = Creature<br>&bull; <const>I</const> = Instant<br>&bull; <const>S</const> = Sorcery<br>&bull; <const>E</const> = Enchantment<br>&bull; <const>L</const> = Land<br><br><var>C</var> represents the <strong>mana cost</strong> of the card. It is an integer from <const>0</const> to <const>9</const>.<br><br><var>P</var> indicates the <strong>color</strong> of the card:<br>&bull; <const>W</const> = White<br>&bull; <const>U</const> = Blue<br>&bull; <const>B</const> = Black<br>&bull; <const>R</const> = Red<br>&bull; <const>G</const> = Green<br><br>For example:<br>&bull; <const>C1R</const> = a <const>Red Creature</const> card that costs <const>1</const> mana<br>&bull; <const>L0G</const> = a <const>Green Land</const> card (cost <const>0</const>)<br>&bull; <const>I3B</const> = a <const>Black Instant</const> card costing <const>3</const> mana<br><br>You will draw a <const>7</const>-card opening hand from the deck, chosen <strong>randomly without replacement</strong>. You must compute the probability that your hand matches all of a given set of patterns, i.e. your 7-card hand contains at least one card matching each pattern.<br><br>Each pattern is a 3-character string where each character may be a specific value or <const>x</const>, which matches any value in that position.<br><br>For example:<br>&bull; <const>C1x</const> = a <const>Creature</const> card of cost <const>1</const> and <const>any color</const><br>&bull; <const>LxB</const> = a <const>Land</const> card that is <const>Black</const> and of <const>any cost</const><br>&bull; <const>Ixx</const> = any <const>Instant</const> card<br><br>== Example ==<br><br>Input:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>7<br>C1R 10<br>C2B 5<br>C3G 8<br>I2U 12<br>S4W 5<br>L0G 15<br>L0B 5<br>2<br>C1x<br>LxB<br></pre><pre style=\"font-family: monospace\"></pre><br><br>Output:<br>0.3334<br><br>== Explanation ==<br><br>There are <const>10</const> cards of category <const>C1R</const> in the deck. <const>C1x</const> matches all those 10 cards.<br><br>There are <const>5</const> cards of category <const>L0B</const> in the deck. <const>LxB</const> matches all those 5 cards.<br><br>The probability that a 7-card hand includes at least one card from each of those patterns is approximately 0.3334.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: An integer <var>C</var> &mdash; the number of distinct categories in the deck.<br><br><strong>Next <var>C</var> lines</strong>: <var>Category</var> <var>Count</var> &mdash; a 3-letter category code and the number of cards in that category separated by a space.<br><br><strong>Next line</strong>: An integer <var>Q</var> &mdash; the number of patterns.<br><br><strong>Next <var>Q</var> lines</strong>: <var>Pattern</var> &mdash; a 3-character string representing a pattern to match, and may contain any number of <const>x</const>s as wildcards.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Output a single line: the probability (a decimal between 0 and 1) that a random 7-card hand includes at least one card matching each of the given patterns, rounded to <const>four decimal places</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>C</var> &le; 60<br><br>The sum of all <var>Count</var> is exactly 60.<br><br>1 &le; <var>Q</var> &le; 8</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\nL0R 26\nC1R 34\n1\nLxx</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">0.9861</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 146784907860198,
+  "commentCount": 30,
+  "upVotes": 39,
+  "downVotes": 0,
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1751612737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1751612858195,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1754208337001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1754292723070,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1756886737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1756969941953,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1759565137003,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1759745722570,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1762340737001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1772047207457,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}
