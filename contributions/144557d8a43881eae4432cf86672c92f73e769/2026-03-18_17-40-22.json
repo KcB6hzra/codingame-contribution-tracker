@@ -1,0 +1,198 @@
+{
+  "id": 144557,
+  "activeVersion": 4,
+  "score": 0,
+  "votableId": 39380671,
+  "codingamerId": 4771680,
+  "views": 12,
+  "commentableId": 39212251,
+  "title": "The Hole Truth",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Nietzschos",
+  "publicHandle": "144557d8a43881eae4432cf86672c92f73e769",
+  "codingamerHandle": "1c24ba13063470e103ad86d8ddf18b400861774",
+  "lastVersion": {
+    "version": 4,
+    "autocloseTime": 1776447576336,
+    "freezeTime": 1774460376336,
+    "data": {
+      "title": "The Hole Truth",
+      "topics": [
+        {
+          "id": 62,
+          "handle": "flood-fill",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Remplissage par diffusion",
+            "2": "Flood fill"
+          },
+          "pageTitle": "Flood fill: exercises and theory",
+          "puzzleCount": 24,
+          "parentTopicId": 41,
+          "contentDetailsId": 81
+        },
+        {
+          "id": 54,
+          "handle": "BFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en largeur",
+            "2": "BFS"
+          },
+          "pageTitle": "BFS: exercises and theory",
+          "puzzleCount": 49,
+          "parentTopicId": 41,
+          "contentDetailsId": 84
+        },
+        {
+          "id": 48,
+          "handle": "graphs",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Graphes",
+            "2": "Graphs"
+          },
+          "pageTitle": "Graphs: exercises and theory",
+          "puzzleCount": 44,
+          "parentTopicId": 40,
+          "contentDetailsId": 75
+        }
+      ],
+      "solution": "use std::io;\nuse std::collections::VecDeque;\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_line(&mut input).unwrap();\n    let mut iter = input.trim().split_whitespace();\n    let w: usize = iter.next().unwrap().parse().unwrap();\n    let h: usize = iter.next().unwrap().parse().unwrap();\n\n    let mut grid: Vec<Vec<u8>> = Vec::with_capacity(h);\n    for _ in 0..h {\n        let mut line = String::new();\n        io::stdin().read_line(&mut line).unwrap();\n        grid.push(line.trim().bytes().collect());\n    }\n\n    eprintln!(\"Grid: {}x{}\", w, h);\n\n    let mut visited = vec![vec![false; w]; h];\n\n    // Flood-fill from all border '.' cells to mark exterior\n    let mut queue = VecDeque::new();\n    for r in 0..h {\n        for c in 0..w {\n            if (r == 0 || r == h - 1 || c == 0 || c == w - 1) && grid[r][c] == b'.' {\n                if !visited[r][c] {\n                    visited[r][c] = true;\n                    queue.push_back((r, c));\n                }\n            }\n        }\n    }\n\n    // BFS to mark all exterior '.' cells\n    while let Some((r, c)) = queue.pop_front() {\n        for (dr, dc) in [(!0usize, 0), (1, 0), (0, !0usize), (0, 1)] {\n            let nr = r.wrapping_add(dr);\n            let nc = c.wrapping_add(dc);\n            if nr < h && nc < w && !visited[nr][nc] && grid[nr][nc] == b'.' {\n                visited[nr][nc] = true;\n                queue.push_back((nr, nc));\n            }\n        }\n    }\n\n    // Count remaining unvisited '.' components = holes\n    let mut holes = 0;\n    for r in 0..h {\n        for c in 0..w {\n            if !visited[r][c] && grid[r][c] == b'.' {\n                holes += 1;\n                eprintln!(\"Hole found at ({}, {})\", c, r);\n                // BFS to mark this hole\n                visited[r][c] = true;\n                queue.push_back((r, c));\n                while let Some((rr, cc)) = queue.pop_front() {\n                    for (dr, dc) in [(!0usize, 0), (1, 0), (0, !0usize), (0, 1)] {\n                        let nr = rr.wrapping_add(dr);\n                        let nc = cc.wrapping_add(dc);\n                        if nr < h && nc < w && !visited[nr][nc] && grid[nr][nc] == b'.' {\n                            visited[nr][nc] = true;\n                            queue.push_back((nr, nc));\n                        }\n                    }\n                }\n            }\n        }\n    }\n\n    eprintln!(\"Total holes: {}\", holes);\n    println!(\"{}\", holes);\n}\n",
+      "statement": "You are given a 2D grid where {{#}} represents solid material and {{.}} represents empty space. The area outside the grid is considered empty ({{.}}). Any {{.}} cell on the border of the grid is therefore connected to the outside.\n\nEmpty space is connected using <<4-connectivity>> (up, down, left, right; diagonals do not count).\n\nA <<hole>> is a connected region of {{.}} that does not touch the border of the grid.\n\nYour task is to count the number of holes in the grid.",
+      "testCases": [
+        {
+          "title": "Simple ring",
+          "isTest": true,
+          "testIn": "5 5\n.....\n.###.\n.#.#.\n.###.\n.....",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Larger ring",
+          "isTest": false,
+          "testIn": "7 7\n.......\n.#####.\n.#...#.\n.#...#.\n.#...#.\n.#####.\n.......",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two holes",
+          "isTest": true,
+          "testIn": "7 5\n.......\n.#####.\n.#.#.#.\n.#####.\n.......",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Three holes",
+          "isTest": false,
+          "testIn": "13 5\n.............\n.###.###.###.\n.#.#.#.#.#.#.\n.###.###.###.\n.............",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No holes",
+          "isTest": true,
+          "testIn": "5 5\n.....\n.###.\n.###.\n.###.\n.....",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Open shape",
+          "isTest": false,
+          "testIn": "5 5\n##..#\n#...#\n#...#\n#...#\n##..#",
+          "testOut": "0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Nested rings",
+          "isTest": true,
+          "testIn": "11 9\n...........\n.#########.\n.#.......#.\n.#.#####.#.\n.#.#...#.#.\n.#.#####.#.\n.#.......#.\n.#########.\n...........",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Nested single",
+          "isTest": false,
+          "testIn": "9 7\n.........\n.#######.\n.#.....#.\n.#.###.#.\n.#.....#.\n.#######.\n.........",
+          "testOut": "1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Border-touching shapes",
+          "isTest": true,
+          "testIn": "15 11\n..#####........\n.##...##.####..\n.#.....#.#..#..\n.#.###.#.#..#..\n.#.#.#.#.####..\n.#.###.#.......\n.#.....########\n.##...##.....#.\n..#####..###.#.\n.........#.#.#.\n.........###.#.",
+          "testOut": "4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Mixed shapes on borders",
+          "isTest": false,
+          "testIn": "17 11\n.............###.\n............##.##\n..#####..#..#...#\n..#...#..#..#.#.#\n..#.#.#..#..#...#\n..#...#.....##.##\n..#####......###.\n.................\n..####.##########\n..#..#.#..#....#.\n..####.##########",
+          "testOut": "5",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Smiley face",
+          "isTest": true,
+          "testIn": "13 12\n####.....####\n##.........##\n#...........#\n#..###.###..#\n#..#.#.#.#..#\n#..###.###..#\n#...........#\n#..#.....#..#\n#...#####...#\n#...........#\n##.........##\n####.....####",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Alien face",
+          "isTest": false,
+          "testIn": "17 12\n#####.......#####\n##.............##\n#...............#\n#..###.###.###..#\n#..#.#.#.#.#.#..#\n#..###.###.###..#\n#...............#\n#...#.......#...#\n#....#.....#....#\n#.....#####.....#\n##.............##\n#####.......#####",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Tall grid with irregular hole",
+          "isTest": true,
+          "testIn": "7 13\n.......\n.#####.\n.#...#.\n.#.#.#.\n.#.#.#.\n.#...#.\n.#####.\n.......\n.#####.\n.#####.\n.#####.\n.#####.\n.......",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Tall grid with two irregular holes",
+          "isTest": false,
+          "testIn": "8 16\n........\n.######.\n.#..#.#.\n.#..#.#.\n.#....#.\n.######.\n........\n.######.\n.#....#.\n.#.##.#.\n.#.#..#.\n.#....#.\n.######.\n........\n.####...\n........",
+          "testOut": "2",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "{{3}} ≤ [[W]], [[H]] ≤ {{20}}\nThere is at least one {{#}} cell.\nThere is at least one {{.}} cell.",
+      "coverBinaryId": 159490944507667,
+      "stubGenerator": "read W:int H:int\nloop H read row:string(100)\nwrite answer",
+      "inputDescription": "<<Line 1:>> Two space-separated integers [[W]] and [[H]] -- the width and height of the grid.\n<<Next [[H]] lines:>> A string of [[W]] characters, each either {{#}} or {{.}}",
+      "solutionLanguage": "Rust",
+      "outputDescription": "<<Line 1:>> A single integer: the number of holes in the grid."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are given a 2D grid where <const>#</const> represents solid material and <const>.</const> represents empty space. The area outside the grid is considered empty (<const>.</const>). Any <const>.</const> cell on the border of the grid is therefore connected to the outside.<br><br>Empty space is connected using <strong>4-connectivity</strong> (up, down, left, right; diagonals do not count).<br><br>A <strong>hole</strong> is a connected region of <const>.</const> that does not touch the border of the grid.<br><br>Your task is to count the number of holes in the grid.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Two space-separated integers <var>W</var> and <var>H</var> -- the width and height of the grid.<br><strong>Next <var>H</var> lines:</strong> A string of <var>W</var> characters, each either <const>#</const> or <const>.</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> A single integer: the number of holes in the grid.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><const>3</const> &le; <var>W</var>, <var>H</var> &le; <const>20</const><br>There is at least one <const>#</const> cell.<br>There is at least one <const>.</const> cell.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5 5\n.....\n.###.\n.#.#.\n.###.\n.....</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 79616741910452,
+  "commentCount": 2,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}
