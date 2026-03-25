@@ -1,0 +1,481 @@
+{
+  "id": 143367,
+  "activeVersion": 15,
+  "score": 1,
+  "votableId": 39207801,
+  "codingamerId": 3232421,
+  "views": 39,
+  "commentableId": 39040005,
+  "title": "Build-A-Die",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "User123",
+  "publicHandle": "143367a6dc2b779265dc06d35f0a92ed8edd4a",
+  "codingamerHandle": "c3b956997f0e142fcaa109d71c0ecd431242323",
+  "lastVersion": {
+    "version": 15,
+    "autocloseTime": 1776798357366,
+    "data": {
+      "title": "Build-A-Die",
+      "topics": [
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 47,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "id": 117,
+          "handle": "logic",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Logic",
+            "2": "Logic"
+          },
+          "puzzleCount": 35,
+          "parentTopicId": 93
+        },
+        {
+          "id": 95,
+          "handle": "geometry",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Geometry",
+            "2": "Geometry"
+          },
+          "puzzleCount": 38,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "from collections import defaultdict\nfrom itertools import permutations\nfrom sys import stderr\nfrom typing import Optional\n\n\ndef debug(*values: object, sep: Optional[str] = \" \", end: Optional[str] = \"\\n\") -> None:\n    print(*values, sep=sep, end=end, file=stderr, flush=True)\n\n\nclass CubeFace:\n    def __init__(self, *adjs: str):\n        self._adj = \"\".join(adjs) + adjs[0]\n\n    def __repr__(self) -> str:\n        return f\"CubeFace({self._adj[:-1]})\"\n\n    def check(self, left: str, right: str = \"\") -> bool:\n        return left + right in self._adj\n\n\nclass CubeNet:\n\n    _FACES: tuple[str, ...] = (\"top\", \"front\", \"bottom\", \"back\", \"left\", \"right\")\n\n    def __init__(self, net: str):\n        self._net = net\n        self._map = self._parse_net(net)\n\n    def _parse_net(self, net: str) -> dict[tuple[int, int], str]:\n        \"\"\"Cube net 1/11:\n        ???         ?\n         ?   ?      ?      ?\n         ?   ????   ?   ????\n         ?   ?     ???     ?\n        \"\"\"\n        if net == \"???\\n ? \\n ? \\n ? \":\n            return {\n                (0, 0): \"top\",\n                (0, 1): \"front\",\n                (0, 2): \"bottom\",\n                (1, 1): \"left\",\n                (2, 1): \"back\",\n                (3, 1): \"right\",\n            }\n        if net == \"?   \\n????\\n?   \":\n            return {\n                (0, 0): \"top\",\n                (1, 0): \"front\",\n                (2, 0): \"bottom\",\n                (1, 1): \"right\",\n                (1, 2): \"back\",\n                (1, 3): \"left\",\n            }\n        if net == \"   ?\\n????\\n   ?\":\n            return {\n                (0, 3): \"top\",\n                (1, 0): \"front\",\n                (2, 3): \"bottom\",\n                (1, 1): \"right\",\n                (1, 2): \"back\",\n                (1, 3): \"left\",\n            }\n        if net == \" ? \\n ? \\n ? \\n???\":\n            return {\n                (0, 1): \"top\",\n                (1, 1): \"front\",\n                (2, 1): \"bottom\",\n                (3, 1): \"back\",\n                (3, 0): \"left\",\n                (3, 2): \"right\",\n            }\n\n        \"\"\"Cube net 2/11:\n        ??          ?\n         ??   ?     ?      ?\n         ?   ????  ??   ????\n         ?   ?      ??    ?\n        \"\"\"\n        if net == \"?? \\n ??\\n ? \\n ? \":\n            return {\n                (0, 0): \"top\",\n                (0, 1): \"front\",\n                (1, 2): \"bottom\",\n                (1, 1): \"left\",\n                (2, 1): \"back\",\n                (3, 1): \"right\",\n            }\n        if net == \" ?  \\n????\\n?   \":\n            return {\n                (0, 1): \"top\",\n                (1, 0): \"front\",\n                (2, 0): \"bottom\",\n                (1, 1): \"right\",\n                (1, 2): \"back\",\n                (1, 3): \"left\",\n            }\n        if net == \"   ?\\n????\\n  ? \":\n            return {\n                (0, 3): \"top\",\n                (1, 0): \"front\",\n                (2, 2): \"bottom\",\n                (1, 1): \"right\",\n                (1, 2): \"back\",\n                (1, 3): \"left\",\n            }\n        if net == \" ? \\n ? \\n?? \\n ??\":\n            return {\n                (0, 1): \"top\",\n                (1, 1): \"front\",\n                (2, 1): \"bottom\",\n                (3, 1): \"back\",\n                (2, 0): \"left\",\n                (3, 2): \"right\",\n            }\n\n        \"\"\"Cube net 3/11:\n        ??          ?\n         ?     ?   ??      ?\n         ??  ????   ?   ????\n         ?   ?      ??   ?\n        \"\"\"\n        if net == \"?? \\n ? \\n ??\\n ? \":\n            return {\n                (0, 0): \"top\",\n                (0, 1): \"front\",\n                (2, 2): \"bottom\",\n                (1, 1): \"left\",\n                (2, 1): \"back\",\n                (3, 1): \"right\",\n            }\n        if net == \"  ? \\n????\\n?   \":\n            return {\n                (0, 2): \"top\",\n                (1, 0): \"front\",\n                (2, 0): \"bottom\",\n                (1, 1): \"right\",\n                (1, 2): \"back\",\n                (1, 3): \"left\",\n            }\n        if net == \"   ?\\n????\\n ?  \":\n            return {\n                (0, 3): \"top\",\n                (1, 0): \"front\",\n                (2, 1): \"bottom\",\n                (1, 1): \"right\",\n                (1, 2): \"back\",\n                (1, 3): \"left\",\n            }\n        if net == \" ? \\n?? \\n ? \\n ??\":\n            return {\n                (0, 1): \"top\",\n                (1, 0): \"front\",\n                (2, 1): \"bottom\",\n                (3, 2): \"back\",\n                (3, 1): \"left\",\n                (1, 1): \"right\",\n            }\n\n        \"\"\"Cube net 4/11:\n        ??\n         ?      ?\n         ?   ????\n         ??  ?\n        \"\"\"\n        if net == \"?? \\n ? \\n ? \\n ??\":\n            return {\n                (0, 0): \"top\",\n                (0, 1): \"front\",\n                (3, 2): \"bottom\",\n                (2, 1): \"back\",\n                (1, 1): \"left\",\n                (3, 1): \"right\",\n            }\n        if net == \"   ?\\n????\\n?   \":\n            return {\n                (0, 3): \"top\",\n                (1, 0): \"front\",\n                (2, 0): \"bottom\",\n                (1, 1): \"right\",\n                (1, 2): \"back\",\n                (1, 3): \"left\",\n            }\n\n        \"\"\"Cube net 5/11:\n        ?           ?\n        ???   ?     ?     ??\n         ?    ???  ???  ???\n         ?   ??      ?    ?\n        \"\"\"\n        if net == \"?  \\n???\\n ? \\n ? \":\n            return {\n                (0, 0): \"top\",\n                (1, 0): \"front\",\n                (2, 1): \"bottom\",\n                (3, 1): \"left\",\n                (1, 2): \"back\",\n                (1, 1): \"right\",\n            }\n        if net == \" ?  \\n ???\\n??  \":\n            return {\n                (0, 1): \"top\",\n                (1, 1): \"front\",\n                (2, 1): \"bottom\",\n                (2, 0): \"left\",\n                (1, 3): \"back\",\n                (1, 2): \"right\",\n            }\n        if net == \"  ??\\n??? \\n  ? \":\n            return {\n                (0, 2): \"top\",\n                (0, 3): \"front\",\n                (2, 2): \"bottom\",\n                (1, 2): \"left\",\n                (1, 1): \"back\",\n                (1, 0): \"right\",\n            }\n        if net == \" ? \\n ? \\n???\\n  ?\":\n            return {\n                (0, 1): \"top\",\n                (1, 1): \"front\",\n                (2, 1): \"bottom\",\n                (2, 0): \"left\",\n                (3, 2): \"back\",\n                (2, 2): \"right\",\n            }\n\n        \"\"\"Cube net 6/11:\n        ?           ?\n        ??     ?   ??     ??\n         ??   ???   ??  ???\n         ?   ??      ?   ?\n        \"\"\"\n        if net == \"?  \\n?? \\n ??\\n ? \":\n            return {\n                (0, 0): \"top\",\n                (1, 0): \"front\",\n                (2, 1): \"bottom\",\n                (3, 1): \"left\",\n                (2, 2): \"back\",\n                (1, 1): \"right\",\n            }\n        if net == \"  ? \\n ???\\n??  \":\n            return {\n                (0, 2): \"top\",\n                (1, 1): \"front\",\n                (2, 1): \"bottom\",\n                (2, 0): \"left\",\n                (1, 3): \"back\",\n                (1, 2): \"right\",\n            }\n        if net == \"  ??\\n??? \\n ?  \":\n            return {\n                (0, 2): \"top\",\n                (0, 3): \"front\",\n                (2, 1): \"bottom\",\n                (1, 2): \"left\",\n                (1, 1): \"back\",\n                (1, 0): \"right\",\n            }\n        if net == \" ? \\n?? \\n ??\\n  ?\":\n            return {\n                (0, 1): \"top\",\n                (1, 0): \"front\",\n                (2, 1): \"bottom\",\n                (3, 2): \"left\",\n                (2, 2): \"back\",\n                (1, 1): \"right\",\n            }\n\n        \"\"\"Cube net 7/11:\n        ?          ??\n        ??      ?   ?     ??\n         ?    ???   ??  ???\n         ??  ??      ?  ?\n        \"\"\"\n        if net == \"?  \\n?? \\n ? \\n ??\":\n            return {\n                (0, 0): \"top\",\n                (1, 0): \"front\",\n                (2, 1): \"bottom\",\n                (3, 1): \"left\",\n                (3, 2): \"back\",\n                (1, 1): \"right\",\n            }\n        if net == \"   ?\\n ???\\n??  \":\n            return {\n                (0, 3): \"top\",\n                (1, 1): \"front\",\n                (2, 1): \"bottom\",\n                (1, 2): \"right\",\n                (1, 3): \"back\",\n                (2, 0): \"left\",\n            }\n        if net == \"  ??\\n??? \\n?   \":\n            return {\n                (0, 2): \"top\",\n                (0, 3): \"front\",\n                (2, 0): \"bottom\",\n                (1, 0): \"right\",\n                (1, 1): \"back\",\n                (1, 2): \"left\",\n            }\n        if net == \"?? \\n ? \\n ??\\n  ?\":\n            return {\n                (0, 0): \"top\",\n                (0, 1): \"front\",\n                (2, 2): \"bottom\",\n                (1, 1): \"left\",\n                (2, 1): \"back\",\n                (3, 2): \"right\",\n            }\n\n        \"\"\"Cube net 8/11:\n        ?\n        ??     ??\n         ??   ??\n          ?  ??\n        \"\"\"\n        if net == \"?  \\n?? \\n ??\\n  ?\":\n            return {\n                (0, 0): \"top\",\n                (1, 0): \"front\",\n                (2, 1): \"bottom\",\n                (3, 2): \"left\",\n                (2, 2): \"back\",\n                (1, 1): \"right\",\n            }\n        if net == \"  ??\\n ?? \\n??  \":\n            return {\n                (0, 2): \"top\",\n                (0, 3): \"front\",\n                (2, 1): \"bottom\",\n                (1, 2): \"left\",\n                (1, 1): \"back\",\n                (2, 0): \"right\",\n            }\n\n        \"\"\"Cube net 9/11:\n         ?          ?\n        ???   ?     ?     ?\n         ?   ????  ???  ????\n         ?    ?     ?     ?\n        \"\"\"\n        if net == \" ? \\n???\\n ? \\n ? \":\n            return {\n                (0, 1): \"top\",\n                (1, 0): \"front\",\n                (2, 1): \"bottom\",\n                (3, 1): \"left\",\n                (1, 2): \"back\",\n                (1, 1): \"right\",\n            }\n        if net == \" ?  \\n????\\n ?  \":\n            return {\n                (0, 1): \"top\",\n                (1, 0): \"front\",\n                (2, 1): \"bottom\",\n                (1, 1): \"right\",\n                (1, 2): \"back\",\n                (1, 3): \"left\",\n            }\n        if net == \"  ? \\n????\\n  ? \":\n            return {\n                (0, 2): \"top\",\n                (1, 0): \"front\",\n                (2, 2): \"bottom\",\n                (1, 1): \"right\",\n                (1, 2): \"back\",\n                (1, 3): \"left\",\n            }\n        if net == \" ? \\n ? \\n???\\n ? \":\n            return {\n                (0, 1): \"top\",\n                (1, 1): \"front\",\n                (2, 1): \"bottom\",\n                (2, 0): \"left\",\n                (3, 1): \"back\",\n                (2, 2): \"right\",\n            }\n\n        \"\"\"Cube net 10/11:\n         ?\n        ??     ?\n         ??  ????\n         ?    ?\n        \"\"\"\n        if net == \" ? \\n?? \\n ??\\n ? \":\n            return {\n                (0, 1): \"top\",\n                (1, 0): \"front\",\n                (2, 1): \"bottom\",\n                (3, 1): \"left\",\n                (2, 2): \"back\",\n                (1, 1): \"right\",\n            }\n        if net == \"  ? \\n????\\n ?  \":\n            return {\n                (0, 2): \"top\",\n                (1, 0): \"front\",\n                (2, 1): \"bottom\",\n                (1, 3): \"left\",\n                (1, 2): \"back\",\n                (1, 1): \"right\",\n            }\n\n        \"\"\"Cube net 11/11:\n        ?\n        ?\n        ??\n         ?    ???\n         ?  ???\n        \"\"\"\n        if net == \"? \\n? \\n??\\n ?\\n ?\":\n            return {\n                (0, 0): \"top\",\n                (1, 0): \"front\",\n                (2, 0): \"bottom\",\n                (4, 1): \"left\",\n                (3, 1): \"back\",\n                (2, 1): \"right\",\n            }\n        if net == \"  ???\\n???  \":\n            return {\n                (0, 2): \"top\",\n                (0, 3): \"front\",\n                (0, 4): \"bottom\",\n                (1, 2): \"left\",\n                (1, 1): \"back\",\n                (1, 0): \"right\",\n            }\n\n        assert False, \"Invalid cube net\"\n\n    def _adj_faces(self, top: str) -> tuple[str, str, str, str]:\n        \"\"\"Represent adjacent faces of the top face in anti-clockwise order\"\"\"\n\n        if top == \"top\":\n            return (\"front\", \"right\", \"back\", \"left\")\n        if top == \"front\":\n            return (\"top\", \"left\", \"bottom\", \"right\")\n        if top == \"bottom\":\n            return (\"front\", \"left\", \"back\", \"right\")\n        if top == \"back\":\n            return (\"top\", \"right\", \"bottom\", \"left\")\n        if top == \"left\":\n            return (\"top\", \"back\", \"bottom\", \"front\")\n        if top == \"right\":\n            return (\"top\", \"front\", \"bottom\", \"back\")\n\n        assert False, \"Invalid face\"\n\n    def _rotate(self, face_map: dict[str, str], top: str, front: str) -> str:\n        \"\"\"Rotate cube such that the flattened representation is the lexicographically smallest\"\"\"\n\n        adj_faces = self._adj_faces(top)\n        try:\n            idx = adj_faces.index(front)\n            bottom = next(iter(set(self._FACES) - set(adj_faces) - {top}))\n            return (\n                face_map[top]\n                + face_map[front]\n                + face_map[bottom]\n                + face_map[adj_faces[(idx + 2) % 4]]\n                + face_map[adj_faces[(idx + 3) % 4]]\n                + face_map[adj_faces[(idx + 1) % 4]]\n            )\n        except ValueError:\n            # debug(f\"Invalid front face '{front}' for the given top face '{top}'\")\n            return chr(0x10FFFF) * 6\n\n    def _check(self, face_map: dict[str, str], constraints: list[str]) -> bool:\n        cube_faces: dict[str, list[CubeFace]] = defaultdict(list)\n        for face, label in face_map.items():\n            cube_faces[label].append(\n                CubeFace(*(face_map[adj] for adj in self._adj_faces(face)))\n            )\n\n        for constraint in constraints:\n            if len(constraint) == 2:\n                a, b = constraint[0], constraint[1]\n                if not any(\n                    cube_face.check(b) for cube_face in cube_faces[a]\n                ) or not any(cube_face.check(a) for cube_face in cube_faces[b]):\n                    return False\n            elif len(constraint) == 3:\n                a, b, c = constraint[0], constraint[1], constraint[2]\n                if (\n                    not any(cube_face.check(b, c) for cube_face in cube_faces[a])\n                    or not any(cube_face.check(c, a) for cube_face in cube_faces[b])\n                    or not any(cube_face.check(a, b) for cube_face in cube_faces[c])\n                ):\n                    return False\n            else:\n                assert False, \"Invalid constraint\"\n        return True\n\n    def assign(self, faces: str, constraints: list[str]) -> list[str]:\n        res: dict[str, str] = {}\n        seen_perm: set[tuple[str, ...]] = set()\n        seen_rot: set[str] = set()\n\n        for perm in permutations(faces):\n            if perm in seen_perm:\n                continue\n            seen_perm.add(perm)\n            face_map = {face: letter for face, letter in zip(self._FACES, perm)}\n\n            # Determine lexicographically smallest rotation of the current permutation\n            top, front = min(\n                permutations(self._FACES, 2), key=lambda f: self._rotate(face_map, *f)\n            )\n            rot = self._rotate(face_map, top, front)\n            assert rot < chr(0x10FFFF) * 6, \"Invalid rotation\"\n\n            if rot not in seen_rot:\n                seen_rot.add(rot)\n                if not self._check(face_map, constraints):\n                    continue\n            elif rot not in res:\n                continue\n\n            # Construct the net\n            net = [list(row) for row in self._net.split(\"\\n\")]\n            for (i, j), face in self._map.items():\n                net[i][j] = face_map[face]\n            net_flat = \"\\n\".join(\"\".join(row) for row in net)\n            if rot not in res or net_flat < res[rot]:\n                res[rot] = net_flat\n\n        return list(sorted(res.values()))\n\n\nif __name__ == \"__main__\":\n    faces = input()\n\n    N = int(input())\n    constraints_grid = [input() for _ in range(5)]\n    constraints: list[str] = []\n    for j in range(0, 6 * N, 6):\n        if constraints_grid[0][j] == \"\\\\\":\n            constraints.append(\n                constraints_grid[0][j + 2]\n                + constraints_grid[3][j]\n                + constraints_grid[3][j + 4]\n            )\n        elif constraints_grid[0][j] == \" \":\n            constraints.append(constraints_grid[1][j + 2] + constraints_grid[3][j + 2])\n        elif constraints_grid[0][j] == \"-\":\n            constraints.append(constraints_grid[2][j] + constraints_grid[2][j + 4])\n        else:\n            assert False, \"Invalid constraint grid\"\n\n    W, H = map(int, input().split())\n    net = \"\\n\".join(input() for _ in range(H))\n    cube_net = CubeNet(net)\n\n    valid_nets = cube_net.assign(faces, constraints)\n    print(len(valid_nets))\n    for net in sorted(valid_nets):\n        for row in net.split(\"\\n\"):\n            print(row.rstrip())\n",
+      "statement": "Thank goodness you're here, toymaker. The factory's toy production has been stumped lately by a termite infestation that has chewed away portions of our die blueprints! We need your help to decipher whatever's left so that production can resume.\n\nA die is a standard cube with {{6}} labelled faces. For each die blueprint, you will be given the labels of all {{6}} faces and some 3D images of the fully constructed die that show some of its faces. Based on this information, please reconstruct the provided die template by labelling each face on the template!",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "ABCDEF\n3\n\\ F / \\ E / \\ D /\n \\ /   \\ /   \\ / \n  v     v     v  \nA | D C | F A | B\n  |     |     |  \n3 4\n???\n ? \n ? \n ? ",
+          "testOut": "1\nABE\n C\n F\n D",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "YCPKDZ\n3\n\\ D / \\ Y / \\ C /\n \\ /   \\ /   \\ / \n  v     v     v  \nP | K P | D Z | Y\n  |     |     |  \n4 3\n   ?\n????\n   ?",
+          "testOut": "1\n   C\nDKZY\n   P",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Corners",
+          "isTest": true,
+          "testIn": "LTJIZU\n3\n\\ Z / \\ T / \\ I /\n \\ /   \\ /   \\ / \n  v     v     v  \nU | T Z | U U | J\n  |     |     |  \n4 3\n ?  \n????\n ?  ",
+          "testOut": "1\n I\nJLTU\n Z",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "DPJWSV\n3\n\\ D / \\ V / \\ W /\n \\ /   \\ /   \\ / \n  v     v     v  \nW | S W | P D | P\n  |     |     |  \n4 3\n  ? \n????\n ?  ",
+          "testOut": "1\n  D\nJPWS\n V",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Side Profile",
+          "isTest": true,
+          "testIn": "ElHQGS\n3\n\\ S / \\ Q / --+--\n \\ /   \\ /    |  \n  v     v   E | S\nG | E E | H   |  \n  |     |   --+--\n5 2\n  ???\n???  ",
+          "testOut": "1\n  EGl\nHQS",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "cPvOxk\n3\n--+-- \\ c / \\ v /\n  |    \\ /   \\ / \nx | O   v     v  \n  |   v | P k | O\n--+--   |     |  \n4 3\n   ?\n????\n?   ",
+          "testOut": "1\n   O\nPvkx\nc",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Front Face",
+          "isTest": true,
+          "testIn": "geCaEz\n4\n      \\ E / \\ g / \\ C /\n/ e \\  \\ /   \\ /   \\ / \n+---+   v     v     v  \n| g | e | a e | C E | z\n        |     |     |  \n4 3\n  ? \n????\n  ? ",
+          "testOut": "1\n  C\nEzge\n  a",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "XYdFHS\n4\n      --+-- \\ Y / \\ d /\n/ X \\   |    \\ /   \\ / \n+---+ H | S   v     v  \n| Y |   |   X | S S | H\n      --+--   |     |  \n3 4\n ? \n ? \n?? \n ??",
+          "testOut": "1\n F\n H\ndS\n YX",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Mix",
+          "isTest": true,
+          "testIn": "VwIYje\n3\n      \\ j / --+--\n/ I \\  \\ /    |  \n+---+   v   e | j\n| e | e | Y   |  \n        |   --+--\n3 4\n ? \n ? \n?? \n ??",
+          "testOut": "4\n I\n V\nej\n Yw\n I\n V\njY\n ew\n I\n V\nwY\n je\n I\n V\nwj\n eY",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "86yklN\n4\n\\ N /       --+-- --+--\n \\ /  / l \\   |     |  \n  v   +---+ N | 6 N | k\nk | y | y |   |     |  \n  |         --+-- --+--\n3 4\n?  \n?? \n ??\n  ?",
+          "testOut": "3\n6\n8N\n ky\n  l\n6\n8k\n yN\n  l\n6\n8l\n yk\n  N",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Repeat",
+          "isTest": true,
+          "testIn": "o300eC\n2\n--+-- \\ C /\n  |    \\ / \nC | 0   v  \n  |   0 | o\n--+--   |  \n4 3\n   ?\n????\n?   ",
+          "testOut": "6\n   0\n03eo\nC\n   0\n03oC\ne\n   0\n0C3e\no\n   0\n0e3o\nC\n   0\n3Coe\n0\n   0\n3eCo\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "TQyffp\n3\n\\ y / --+-- --+--\n \\ /    |     |  \n  v   p | y T | f\nf | T   |     |  \n  |   --+-- --+--\n5 2\n  ???\n???  ",
+          "testOut": "4\n  QTf\nfpy\n  QTy\nffp\n  QTy\nfpf\n  QfT\nfyp",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Cryptic",
+          "isTest": true,
+          "testIn": ";I^7y3\n1\n     \n/ ^ \\\n+---+\n| I |\n     \n3 4\n ? \n?? \n ??\n ? ",
+          "testOut": "24\n 3\n7;\n I^\n y\n 3\n7;\n Iy\n ^\n 3\n7;\n ^I\n y\n 3\n7;\n ^y\n I\n 3\n7;\n yI\n ^\n 3\n7;\n y^\n I\n 3\n7I\n ;^\n y\n 3\n7I\n ^;\n y\n 3\n7I\n ^y\n ;\n 3\n7I\n y^\n ;\n 3\n7^\n ;I\n y\n 3\n7^\n I;\n y\n 3\n7^\n Iy\n ;\n 3\n7^\n yI\n ;\n 3\n7y\n ;I\n ^\n 3\n7y\n ;^\n I\n 3\n7y\n I;\n ^\n 3\n7y\n I^\n ;\n 3\n7y\n ^;\n I\n 3\n7y\n ^I\n ;\n 3\n;I\n 7^\n y\n 3\n;^\n 7I\n y\n 3\n;y\n 7I\n ^\n 3\n;y\n 7^\n I",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "(/k%gu\n2\n--+--      \n  |   / % \\\n% | g +---+\n  |   | g |\n--+--      \n4 3\n  ??\n ?? \n??  ",
+          "testOut": "24\n  %(\n /g\nku\n  %(\n /g\nuk\n  %(\n /k\ngu\n  %(\n /u\ngk\n  %(\n g/\nku\n  %(\n g/\nuk\n  %(\n gk\n/u\n  %(\n gk\nu/\n  %(\n gu\n/k\n  %(\n gu\nk/\n  %(\n k/\ngu\n  %(\n kg\n/u\n  %(\n kg\nu/\n  %(\n ku\ng/\n  %(\n u/\ngk\n  %(\n ug\n/k\n  %(\n ug\nk/\n  %(\n uk\ng/\n  %/\n gk\nu(\n  %/\n gu\nk(\n  %/\n kg\nu(\n  %/\n ku\ng(\n  %/\n ug\nk(\n  %/\n uk\ng(",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Missing Images",
+          "isTest": true,
+          "testIn": "g2`~pb\n0\n\n\n\n\n\n4 3\n   ?\n????\n?   ",
+          "testOut": "30\n   2\n`bgp\n~\n   2\n`bg~\np\n   2\n`bpg\n~\n   2\n`bp~\ng\n   2\n`b~g\np\n   2\n`b~p\ng\n   2\n`gbp\n~\n   2\n`gb~\np\n   2\n`gpb\n~\n   2\n`gp~\nb\n   2\n`g~b\np\n   2\n`g~p\nb\n   2\n`pbg\n~\n   2\n`pb~\ng\n   2\n`pgb\n~\n   2\n`pg~\nb\n   2\n`p~b\ng\n   2\n`p~g\nb\n   2\n`~bg\np\n   2\n`~bp\ng\n   2\n`~gb\np\n   2\n`~gp\nb\n   2\n`~pb\ng\n   2\n`~pg\nb\n   2\nbgp~\n`\n   2\nbg~p\n`\n   2\nbpg~\n`\n   2\nbp~g\n`\n   2\nb~gp\n`\n   2\nb~pg\n`",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "\\63>kg\n0\n\n\n\n\n\n3 4\n?? \n ? \n ??\n  ?",
+          "testOut": "30\n36\n >\n \\g\n  k\n36\n >\n \\k\n  g\n36\n >\n g\\\n  k\n36\n >\n gk\n  \\\n36\n >\n k\\\n  g\n36\n >\n kg\n  \\\n36\n \\\n >g\n  k\n36\n \\\n >k\n  g\n36\n \\\n g>\n  k\n36\n \\\n gk\n  >\n36\n \\\n k>\n  g\n36\n \\\n kg\n  >\n36\n g\n >\\\n  k\n36\n g\n >k\n  \\\n36\n g\n \\>\n  k\n36\n g\n \\k\n  >\n36\n g\n k>\n  \\\n36\n g\n k\\\n  >\n36\n k\n >\\\n  g\n36\n k\n >g\n  \\\n36\n k\n \\>\n  g\n36\n k\n \\g\n  >\n36\n k\n g>\n  \\\n36\n k\n g\\\n  >\n3>\n \\\n g6\n  k\n3>\n \\\n k6\n  g\n3>\n g\n \\6\n  k\n3>\n g\n k6\n  \\\n3>\n k\n \\6\n  g\n3>\n k\n g6\n  \\",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No Solution",
+          "isTest": true,
+          "testIn": ",s,/}s\n4\n\\ s / \\ , / \\ } / \\ , /\n \\ /   \\ /   \\ /   \\ / \n  v     v     v     v  \n/ | } , | } / | s s | }\n  |     |     |     |  \n3 4\n?  \n?? \n ??\n ? ",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "KKK@f$\n3\n\\ f / \\ K / \\ @ /\n \\ /   \\ /   \\ / \n  v     v     v  \n$ | K K | f f | $\n  |     |     |  \n3 4\n?? \n ? \n ??\n ? ",
+          "testOut": "0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple",
+          "isTest": true,
+          "testIn": "kk}#$}\n1\n     \n/ } \\\n+---+\n| } |\n     \n3 4\n ? \n???\n ? \n ? ",
+          "testOut": "6\n #\n$kk\n }\n }\n #\n$k}\n k\n }\n #\n$k}\n }\n k\n #\n$}k\n }\n k\n #\n$}}\n k\n k\n #\nkk}\n $\n }",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "PD=m==\n1\n     \n/ m \\\n+---+\n| = |\n     \n4 3\n  ??\n ?? \n??  ",
+          "testOut": "5\n  ==\n =D\nPm\n  ==\n =D\nmP\n  ==\n =P\nmD\n  ==\n D=\nPm\n  ==\n D=\nmP",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "More",
+          "isTest": true,
+          "testIn": "zTT/zT\n2\n           \n/ T \\ / T \\\n+---+ +---+\n| T | | z |\n           \n3 4\n ? \n ? \n???\n  ?",
+          "testOut": "3\n /\n T\nTTz\n  z\n /\n T\nTzT\n  z\n /\n T\nzTz\n  T",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "kc55ck\n3\n--+--            \n  |   / 5 \\ / k \\\n5 | 5 +---+ +---+\n  |   | 5 | | c |\n--+--            \n3 4\n?  \n?? \n ? \n ??",
+          "testOut": "4\n5\n5c\n c\n kk\n5\n5c\n k\n ck\n5\n5c\n k\n kc\n5\n5k\n c\n kc",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Duplicate",
+          "isTest": true,
+          "testIn": ">>>>*>\n4\n--+--                  \n  |   / * \\ / > \\ / > \\\n> | > +---+ +---+ +---+\n  |   | > | | > | | * |\n--+--                  \n2 5\n? \n? \n??\n ?\n ?",
+          "testOut": "1\n*\n>\n>>\n >\n >",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "VV++VV\n3\n--+--       --+--\n  |   / V \\   |  \n+ | V +---+ V | V\n  |   | + |   |  \n--+--       --+--\n4 3\n  ??\n ?? \n??  ",
+          "testOut": "2\n  ++\n VV\nVV\n  +V\n VV\nV+",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Identical",
+          "isTest": true,
+          "testIn": "888888\n2\n--+--      \n  |   / 8 \\\n8 | 8 +---+\n  |   | 8 |\n--+--      \n4 3\n ?  \n????\n ?  ",
+          "testOut": "1\n 8\n8888\n 8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "yyyyyy\n3\n\\ y / --+-- --+--\n \\ /    |     |  \n  v   y | y y | y\ny | y   |     |  \n  |   --+-- --+--\n4 3\n   ?\n????\n ?  ",
+          "testOut": "1\n   y\nyyyy\n y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Net 1",
+          "isTest": true,
+          "testIn": "NQCCCN\n0\n\n\n\n\n\n4 3\n?   \n????\n?   ",
+          "testOut": "3\nC\nCCNN\nQ\nC\nCNCN\nQ\nC\nCNCQ\nN",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 14",
+          "isTest": false,
+          "testIn": "e=H\"\"-\n3\n--+--            \n  |   / e \\ / \" \\\n- | = +---+ +---+\n  |   | = | | H |\n--+--            \n3 4\n ? \n ? \n ? \n???",
+          "testOut": "9\n \"\n \"\n -\n=eH\n \"\n \"\n -\nH=e\n \"\n \"\n -\nHe=\n \"\n \"\n -\ne=H\n \"\n \"\n =\n-He\n \"\n \"\n =\n-eH\n \"\n \"\n =\nHe-\n \"\n \"\n =\neH-\n \"\n -\n \"\n=eH",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Net 2",
+          "isTest": true,
+          "testIn": "YTYYT3\n2\n      --+--\n/ T \\   |  \n+---+ Y | T\n| Y |   |  \n      --+--\n4 3\n   ?\n????\n  ? ",
+          "testOut": "3\n   3\nTTYY\n  Y\n   3\nTYTY\n  Y\n   3\nTYYY\n  T",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 15",
+          "isTest": false,
+          "testIn": "&&;a&^\n1\n\\ & /\n \\ / \n  v  \n& | &\n  |  \n4 3\n ?  \n????\n?   ",
+          "testOut": "2\n &\n&&;^\na\n &\n&&;a\n^",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Net 3",
+          "isTest": true,
+          "testIn": "mmm==L\n3\n      --+--      \n/ L \\   |   / m \\\n+---+ L | m +---+\n| m |   |   | = |\n      --+--      \n4 3\n  ? \n????\n?   ",
+          "testOut": "3\n  =\n=Lmm\nm\n  =\n=mLm\nm\n  =\nLmmm\n=",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 16",
+          "isTest": false,
+          "testIn": "00,MM!\n4\n--+-- --+--       \\ M /\n  |     |   / M \\  \\ / \nM | 0 0 | , +---+   v  \n  |     |   | M | M | 0\n--+-- --+--         |  \n3 4\n?? \n ? \n ??\n ? ",
+          "testOut": "5\n!,\n 0\n 0M\n M\n!,\n 0\n M0\n M\n!,\n 0\n MM\n 0\n!,\n M\n 0M\n 0\n!,\n M\n M0\n 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Net 4",
+          "isTest": true,
+          "testIn": "O(g(gO\n2\n           \n/ ( \\ / O \\\n+---+ +---+\n| ( | | g |\n           \n4 3\n   ?\n????\n?   ",
+          "testOut": "4\n   (\n(OOg\ng\n   (\n(OgO\ng\n   (\n(Ogg\nO\n   (\n(gOg\nO",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 17",
+          "isTest": false,
+          "testIn": "/s//sP\n0\n\n\n\n\n\n3 4\n?? \n ? \n ? \n ??",
+          "testOut": "3\n//\n /\n P\n ss\n//\n P\n /\n ss\n//\n s\n /\n sP",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Net 5",
+          "isTest": true,
+          "testIn": "Mfr6\\r\n0\n\n\n\n\n\n3 4\n ? \n ? \n???\n  ?",
+          "testOut": "15\n 6\n M\n\\fr\n  r\n 6\n M\n\\rf\n  r\n 6\n M\n\\rr\n  f\n 6\n M\nf\\r\n  r\n 6\n M\nfr\\\n  r\n 6\n M\nfrr\n  \\\n 6\n M\nr\\f\n  r\n 6\n M\nr\\r\n  f\n 6\n M\nrf\\\n  r\n 6\n M\nrfr\n  \\\n 6\n M\nrr\\\n  f\n 6\n M\nrrf\n  \\\n 6\n \\\nfMr\n  r\n 6\n \\\nrMf\n  r\n 6\n \\\nrMr\n  f",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 18",
+          "isTest": false,
+          "testIn": "lo]cl]\n3\n      --+--      \n/ c \\   |   / l \\\n+---+ ] | l +---+\n| l |   |   | c |\n      --+--      \n4 3\n  ??\n??? \n  ? ",
+          "testOut": "8\n  ]]\ncll\n  o\n  ]]\nclo\n  l\n  ]]\ncol\n  l\n  ]]\nlcl\n  o\n  ]]\nlco\n  l\n  ]]\nllo\n  c\n  ]c\nllo\n  ]\n  ]c\nlol\n  ]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Net 6",
+          "isTest": true,
+          "testIn": "v|k8|v\n4\n      \\ 8 /            \n/ 8 \\  \\ /  / | \\ / k \\\n+---+   v   +---+ +---+\n| v | v | | | | | | v |\n        |              \n4 3\n  ??\n??? \n ?  ",
+          "testOut": "4\n  8k\nvv|\n |\n  8k\nv|v\n |\n  8k\nv||\n v\n  8v\nv||\n k",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 19",
+          "isTest": false,
+          "testIn": "I5]II5\n2\n           \n/ 5 \\ / ] \\\n+---+ +---+\n| 5 | | I |\n           \n3 4\n ? \n?? \n ??\n  ?",
+          "testOut": "2\n 5\n5I\n II\n  ]\n 5\n5I\n I]\n  I",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Net 7",
+          "isTest": true,
+          "testIn": "oo4oQ4\n0\n\n\n\n\n\n3 4\n?  \n?? \n ??\n ? ",
+          "testOut": "3\n4\n4Q\n oo\n o\n4\n4o\n Qo\n o\n4\nQo\n 4o\n o",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 20",
+          "isTest": false,
+          "testIn": "ym|y<a\n2\n\\ a / --+--\n \\ /    |  \n  v   a | y\ny | m   |  \n  |   --+--\n3 4\n ? \n?? \n ??\n  ?",
+          "testOut": "6\n <\nam\n yy\n  |\n <\nam\n y|\n  y\n <\nay\n m|\n  y\n <\na|\n my\n  y\n <\nmy\n ay\n  |\n <\nmy\n a|\n  y",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Net 8",
+          "isTest": true,
+          "testIn": "+mZ+d3\n3\n--+-- \\ m / --+--\n  |    \\ /    |  \nd | 3   v   d | m\n  |   3 | +   |  \n--+--   |   --+--\n3 4\n?  \n?? \n ??\n ? ",
+          "testOut": "2\n+\n+3\n md\n Z\n+\n+Z\n 3d\n m",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 21",
+          "isTest": false,
+          "testIn": "l'N'Ul\n3\n--+-- \\ l /      \n  |    \\ /  / N \\\nl | '   v   +---+\n  |   N | ' | l |\n--+--   |        \n4 3\n  ??\n??? \n ?  ",
+          "testOut": "6\n  ''\nNUl\n l\n  ''\nNlU\n l\n  ''\nUll\n N\n  ''\nlNl\n U\n  'N\nUll\n '\n  'N\nlUl\n '",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Net 9",
+          "isTest": true,
+          "testIn": "))cSS#\n1\n--+--\n  |  \n) | #\n  |  \n--+--\n4 3\n  ? \n????\n  ? ",
+          "testOut": "8\n  #\n))SS\n  c\n  #\n))Sc\n  S\n  #\n))cS\n  S\n  #\n)S)S\n  c\n  #\n)S)c\n  S\n  #\n)SSc\n  )\n  #\n)ScS\n  )\n  #\n)cSS\n  )",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 22",
+          "isTest": false,
+          "testIn": "f{h{hf\n3\n      --+-- --+--\n/ h \\   |     |  \n+---+ { | h { | f\n| f |   |     |  \n      --+-- --+--\n3 4\n ? \n ? \n???\n ? ",
+          "testOut": "6\n f\n f\nhh{\n {\n f\n f\nh{h\n {\n f\n f\nh{{\n h\n f\n f\n{h{\n h\n f\n h\nhf{\n {\n f\n h\n{f{\n h",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Net 10",
+          "isTest": true,
+          "testIn": "xDPYY3\n0\n\n\n\n\n\n3 4\n ? \n?? \n ??\n ? ",
+          "testOut": "15\n 3\nDP\n YY\n x\n 3\nDP\n Yx\n Y\n 3\nDP\n xY\n Y\n 3\nDY\n PY\n x\n 3\nDY\n Px\n Y\n 3\nDY\n YP\n x\n 3\nDY\n Yx\n P\n 3\nDY\n xP\n Y\n 3\nDY\n xY\n P\n 3\nDx\n PY\n Y\n 3\nDx\n YP\n Y\n 3\nDx\n YY\n P\n 3\nPY\n DY\n x\n 3\nPY\n Dx\n Y\n 3\nPx\n DY\n Y",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 23",
+          "isTest": false,
+          "testIn": "v(M!)M\n3\n--+-- --+--      \n  |     |   / v \\\n) | M ( | v +---+\n  |     |   | ) |\n--+-- --+--      \n4 3\n  ? \n????\n ?  ",
+          "testOut": "9\n  !\n()MM\n v\n  !\n(M)M\n v\n  !\n(M)v\n M\n  !\n(MM)\n v\n  !\n(MMv\n )\n  !\n(v)M\n M\n  !\n(vMM\n )\n  !\n)MMv\n (\n  !\n)vMM\n (",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Net 11",
+          "isTest": true,
+          "testIn": "N-@---\n0\n\n\n\n\n\n2 5\n? \n? \n??\n ?\n ?",
+          "testOut": "2\n-\n-\n--\n @\n N\n-\n-\n-@\n -\n N",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 24",
+          "isTest": false,
+          "testIn": "[u33u&\n0\n\n\n\n\n\n5 2\n  ???\n???  ",
+          "testOut": "8\n  &33\n[uu\n  &33\nu[u\n  &33\nuu[\n  &3[\n3uu\n  &3[\nu3u\n  &3u\n3[u\n  &3u\n3u[\n  &3u\n[3u",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Nothing",
+          "isTest": true,
+          "testIn": "kg{lug\n4\n\\ l / \\ g / \\ k / \\ g /\n \\ /   \\ /   \\ /   \\ / \n  v     v     v     v  \nu | k g | l l | u g | k\n  |     |     |     |  \n3 4\n?  \n?? \n ??\n  ?",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 25",
+          "isTest": false,
+          "testIn": "Hx\"C_C\n3\n\\ x / \\ x / \\ x /\n \\ /   \\ /   \\ / \n  v     v     v  \n\" | H H | _ \" | _\n  |     |     |  \n4 3\n  ??\n??? \n  ? ",
+          "testOut": "0",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "0 ≤ [[N]] ≤ 4\n2 ≤ [[W]], [[H]] ≤ 5\n0 ≤ [[T]] ≤ 30\nEach face label is a printable non-whitespace non-question-mark ASCII character\nEach given die template is a valid cube net with exactly {{6}} question marks ({{?}})",
+      "coverBinaryId": 159601963657097,
+      "stubGenerator": "read faces:word(6)\nread n:int\nloop 5 read image:string(23)\nread w:int h:int\nloop h read die:string(w)\nwrite die templates!",
+      "inputDescription": "<<Line 1>>: {{6}} face labels used on the die, in no particular order\n<<Line 2>>: A single non-negative integer [[N]]; the number of 3D images of the fully constructed die\n<<Next {{5}} lines>>: [[N]] space-separated sets of {{5}}x{{5}} 3D images showing the fully constructed die viewed from a certain angle. Each of the [[N]] images will either show 2 or 3 faces in one of the following 3 ways:\n```  (1)  |  (2)  |  (3)\n \\ A / |       | --+--\n  \\ /  | / A \\ |   |  \n   v   | +---+ | B | C\n B | C | | B | |   |  \n   |   |       | --+--```Note: labels in each image are <<not guaranteed>> to be properly oriented. If [[N]] = 0, these 5 lines will be empty.\n<<Next line>>: Two space-separated positive integers [[W]] and [[H]]\n<<Next [[H]] lines>>: Space-padded lines of length [[W]] denoting the die template as a cube net. Each question mark ({{?}}) represents an unlabelled face on the cube net",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1>>: A single non-negative integer [[T]]; the number of <<unique>> die template(s) constructible from the given die blueprint\n<<Next [[T]]x[[H]] lines>>: [[T]] sets of [[H]] lines, where each set denotes a valid die template with its faces labelled with the {{6}} given face labels - one label per face\n\n- Two die templates are <<equal>> if their folded dice can be rotated such that every pair of corresponding faces match.\n- Each unique die template must be the <<lexicographically smallest>> among its valid permutations. Output the valid die template(s) in <<ascending lexicographical order>>.\n- Remove trailing spaces per output line."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Thank goodness you're here, toymaker. The factory's toy production has been stumped lately by a termite infestation that has chewed away portions of our die blueprints! We need your help to decipher whatever's left so that production can resume.<br><br>A die is a standard cube with <const>6</const> labelled faces. For each die blueprint, you will be given the labels of all <const>6</const> faces and some 3D images of the fully constructed die that show some of its faces. Based on this information, please reconstruct the provided die template by labelling each face on the template!</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: <const>6</const> face labels used on the die, in no particular order<br><strong>Line 2</strong>: A single non-negative integer <var>N</var>; the number of 3D images of the fully constructed die<br><strong>Next <const>5</const> lines</strong>: <var>N</var> space-separated sets of <const>5</const>x<const>5</const> 3D images showing the fully constructed die viewed from a certain angle. Each of the <var>N</var> images will either show 2 or 3 faces in one of the following 3 ways:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\">  (1)  |  (2)  |  (3)<br> \\ A / |       | --+--<br>  \\ /  | / A \\ |   |  <br>   v   | +---+ | B | C<br> B | C | | B | |   |  <br>   |   |       | --+--</pre><pre style=\"font-family: monospace\"></pre>Note: labels in each image are <strong>not guaranteed</strong> to be properly oriented. If <var>N</var> = 0, these 5 lines will be empty.<br><strong>Next line</strong>: Two space-separated positive integers <var>W</var> and <var>H</var><br><strong>Next <var>H</var> lines</strong>: Space-padded lines of length <var>W</var> denoting the die template as a cube net. Each question mark (<const>?</const>) represents an unlabelled face on the cube net</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1</strong>: A single non-negative integer <var>T</var>; the number of <strong>unique</strong> die template(s) constructible from the given die blueprint<br><strong>Next <var>T</var>x<var>H</var> lines</strong>: <var>T</var> sets of <var>H</var> lines, where each set denotes a valid die template with its faces labelled with the <const>6</const> given face labels - one label per face<br><br>- Two die templates are <strong>equal</strong> if their folded dice can be rotated such that every pair of corresponding faces match.<br>- Each unique die template must be the <strong>lexicographically smallest</strong> among its valid permutations. Output the valid die template(s) in <strong>ascending lexicographical order</strong>.<br>- Remove trailing spaces per output line.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &le; <var>N</var> &le; 4<br>2 &le; <var>W</var>, <var>H</var> &le; 5<br>0 &le; <var>T</var> &le; 30<br>Each face label is a printable non-whitespace non-question-mark ASCII character<br>Each given die template is a valid cube net with exactly <const>6</const> question marks (<const>?</const>)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">ABCDEF\n3\n\\ F / \\ E / \\ D /\n \\ /   \\ /   \\ / \n  v     v     v  \nA | D C | F A | B\n  |     |     |  \n3 4\n???\n ? \n ? \n ? </pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1\nABE\n C\n F\n D</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 143871801993425,
+  "commentCount": 3,
+  "upVotes": 1,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
