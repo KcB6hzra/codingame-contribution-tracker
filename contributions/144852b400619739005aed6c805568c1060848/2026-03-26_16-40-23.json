@@ -1,0 +1,263 @@
+{
+  "id": 144852,
+  "activeVersion": 7,
+  "score": 1,
+  "votableId": 39493759,
+  "codingamerId": 5155955,
+  "views": 29,
+  "commentableId": 39325140,
+  "title": "Cistercian addition",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Daminator4113",
+  "publicHandle": "144852b400619739005aed6c805568c1060848",
+  "codingamerHandle": "4497bb213fe239a6240d616fdd2d97f05595515",
+  "lastVersion": {
+    "version": 7,
+    "autocloseTime": 1777122730176,
+    "freezeTime": 1775135530176,
+    "data": {
+      "title": "Cistercian addition",
+      "topics": [
+        {
+          "id": 211,
+          "handle": "numbers",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Numbers",
+            "2": "Numbers"
+          },
+          "puzzleCount": 8,
+          "parentTopicId": 93
+        },
+        {
+          "id": 73,
+          "handle": "strings",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Chaînes de caractères",
+            "2": "Strings"
+          },
+          "pageTitle": "Strings: exercises and theory",
+          "puzzleCount": 68,
+          "parentTopicId": 41,
+          "contentDetailsId": 73
+        }
+      ],
+      "solution": "# --- Convert a normal number into a Cistercian number ---\npattern = ' A B \\nCD|FG\\n I|K \\nMN|PQ\\n R S '\n'''\n A B \nCD|FG\n I|K \nMN|PQ\n R S \n'''\n\nunits = {\n    1:'B _',\n    2:'F _',\n    3:'F \\\\',\n    4:'F /',\n    5:'BF _/',\n    6:'G |',\n    7:'BG _|',\n    8:'FG _|',\n    9:'BFG __|'\n}\n\nreplace = lambda s,a,b:s.translate(str.maketrans(a,b))\n\ntens = {k*10:replace(v,'BFG/\\\\','ADC\\\\/') for k,v in units.items()}\nhundreds = {k*100:replace(v,'BFG/\\\\','PKQ\\\\/') for k,v in units.items()}\nthousands = {k*1000:replace(v,'BFG','NIM') for k,v in units.items()}\n\ndata_ntc = {**units,**tens,**hundreds,**thousands,300:'P /',400:'P \\\\',500:'PS \\\\‾',3000:'N \\\\',4000:'N /',5000:'NR /‾'}\n\ndef convert_ntc(n):\n  if not 0<n<1e4:return ''\n  s=pattern\n  for x in [n//1e3*1e3,n//100%10*100,n//10%10*10,n%10]:\n    if x:\n      a,b=data_ntc[x].split()\n      s=replace(s,a,b)\n  r = ''.join(c if c in '\\n_‾|/\\\\' else ' ' for c in s)\n  return [l for l in r.split('\\n')]\n\n\n\n# --- Convert a Cistercian number into a normal number ---\nunits = {'B _':1,'F _':2,'F \\\\':3,'F /':4,'G |':6}\n\nreplace = lambda s,a,b:s.translate(str.maketrans(a,b))\n\ntens = {replace(k,'BFG/\\\\','ADC\\\\/'):v*10 for k,v in units.items()}\nhundreds = {replace(k,'BFG/\\\\','PKQ\\\\/'):v*100 for k,v in units.items()}\nthousands = {replace(k,'BFG','NIM'):v*1000 for k,v in units.items()}\n\ndata_ctn = {**units,**tens,**hundreds,**thousands,'P /':300,'P \\\\':400,'S ‾':100,'N \\\\':3000,'N /':4000,'R ‾':1000}\ndata_i = {(0,3):'B',(1,3):'F',(1,4):'G',(0,1):'A',(1,0):'C',(1,1):'D',(2,3):'K',(3,3):'P',(3,4):'Q',(4,3):'S',(2,1):'I',(3,0):'M',(3,1):'N',(4,1):'R'}\n\ndef convert_ctn(n):\n  return sum(data_ctn.get(f'{data_i[(y,x)]} {c}',0) for y,l in enumerate(n) for x,c in enumerate(l) if (y,x) in data_i)\n\n\n\n# --- Solve ---\nnum_1 = [input() for _ in range(5)]\nnum_2 = [input() for _ in range(5)]\n\nA = convert_ctn(num_1)\nB = convert_ctn(num_2)\nfor l in convert_ntc(A+B):\n    print(l)",
+      "statement": "You simply need to provide the result of an <<addition>> between two numbers.\n\nHowever, these numbers are given in the form of the <<Cistercian numeral system>>! (https://en.wikipedia.org/wiki/Cistercian_numerals)\nThis system allows you to encode numbers from <<1>> to <<9999>> using a <<single symbol>>.\n\nThe result of this addition must also be in Cistercian notation.\n\nThose symbols are used to build the visual representation of Cistercian numbers : <<{{space}}>>, <<{{_}}>>, <<{{‾}}>>, <<{{|}}>>, <<{{/}}>>, <<{{\\}}>>\nBe aware that the <<{{‾}}>> is not an ASCII character, it's an <<overline>> (U+203E → https://en.wikipedia.org/wiki/Overline)\n\nBasic symbols:\n`┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐\n│   _ │     │     │     │   _ │     │   _ │     │   _ │\n│  |  │  |_ │  |\\ │  |/ │  |/ │  | |│  | |│  |_|│  |_|│\n│  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │\n│  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │\n│     │     │     │     │     │     │     │     │     │\n│  1  │  2  │  3  │  4  │  5  │  6  │  7  │  8  │  9  │\n├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤\n│ _   │     │     │     │ _   │     │ _   │     │ _   │\n│  |  │ _|  │ /|  │ \\|  │ \\|  │| |  │| |  │|_|  │|_|  │\n│  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │\n│  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │\n│     │     │     │     │     │     │     │     │     │\n│  10 │  20 │  30 │  40 │  50 │  60 │  70 │  80 │  90 │\n├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤\n│     │     │     │     │     │     │     │     │     │\n│  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │\n│  |  │  |_ │  |  │  |  │  |  │  |  │  |  │  |_ │  |_ │\n│  |_ │  |  │  |/ │  |\\ │  |\\ │  | |│  |_|│  | |│  |_|│\n│     │     │     │     │   ‾ │     │     │     │     │\n│ 100 │ 200 │ 300 │ 400 │ 500 │ 600 │ 700 │ 800 │ 900 │\n├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤\n│     │     │     │     │     │     │     │     │     │\n│  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │\n│  |  │ _|  │  |  │  |  │  |  │  |  │  |  │ _|  │ _|  │\n│ _|  │  |  │ \\|  │ /|  │ /|  │| |  │|_|  │| |  │|_|  │\n│     │     │     │     │ ‾   │     │     │     │     │\n│ 1000│ 2000│ 3000│ 4000│ 5000│ 6000│ 7000│ 8000│ 9000│\n└─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘`\nSome examples:\n`┌─────┬─────┬─────┬─────┬─────┐\n│ _   │     │ _ _ │   _ │     │\n│|_|\\ │ _|\\ │ \\|_|│|_|/ │ /|\\ │\n│  |_ │  |  │  |_ │  |  │ _|  │\n│ _|_|│ /|_|│| | |│|_|  │|_|\\ │\n│     │     │     │     │     │\n│ 1993│ 4723│ 6859│ 7085│ 9433│\n└─────┴─────┴─────┴─────┴─────┘`",
+      "testCases": [
+        {
+          "title": "Simple number",
+          "isTest": true,
+          "testIn": "   _ \n  |/ \n  |  \n  |  \n     \n   _ \n  |_|\n  |  \n  |  \n     ",
+          "testOut": " _   \n  |/ \n  |  \n  |  \n     ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple number",
+          "isTest": false,
+          "testIn": "     \n  |\\ \n  |  \n  |  \n     \n     \n  |_|\n  |  \n  |  \n     ",
+          "testOut": " _ _ \n  |  \n  |  \n  |  \n     ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Tens",
+          "isTest": true,
+          "testIn": "   _ \n _| |\n  |  \n  |  \n     \n _ _ \n  |/ \n  |  \n  |  \n     ",
+          "testOut": "     \n \\|_ \n  |  \n  |  \n     ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Tens",
+          "isTest": false,
+          "testIn": "     \n|_| |\n  |  \n  |  \n     \n _   \n  |_ \n  |  \n  |  \n     ",
+          "testOut": " _   \n|_|_|\n  |  \n  |  \n     ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Hundreds",
+          "isTest": true,
+          "testIn": "     \n _|_|\n  |  \n  |_ \n     \n     \n|_|/ \n  |  \n  |/ \n     ",
+          "testOut": " _   \n  |_ \n  |  \n  |\\ \n   ‾ ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Hundreds",
+          "isTest": false,
+          "testIn": " _   \n  |_ \n  |_ \n  |  \n     \n     \n| | |\n  |  \n  | |\n     ",
+          "testOut": " _   \n| |_|\n  |_ \n  | |\n     ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Thousands",
+          "isTest": true,
+          "testIn": "     \n /|/ \n  |_ \n _|  \n     \n _   \n| |_|\n  |  \n /| |\n ‾   ",
+          "testOut": " _   \n  |_ \n  |_ \n| |_|\n     ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Thousands",
+          "isTest": false,
+          "testIn": "   _ \n  | |\n  |  \n _|_|\n     \n   _ \n _| |\n  |_ \n \\| |\n     ",
+          "testOut": "     \n /|/ \n  |  \n /|\\ \n ‾ ‾ ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Limit",
+          "isTest": true,
+          "testIn": "   _ \n  |  \n  |  \n  |  \n     \n _   \n|_|_|\n _|_ \n|_|_|\n     ",
+          "testOut": " _ _ \n|_|_|\n _|_ \n|_|_|\n     ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Limit",
+          "isTest": false,
+          "testIn": " _ _ \n|_|_|\n _|_ \n| |_|\n     \n _ _ \n|_|_|\n  |  \n  |  \n     ",
+          "testOut": " _   \n|_|_|\n _|  \n|_|  \n     ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Missing tens",
+          "isTest": true,
+          "testIn": " _   \n \\| |\n  |_ \n  |  \n     \n     \n \\|_|\n  |  \n  |_ \n     ",
+          "testOut": "     \n  |/ \n  |  \n  |\\ \n     ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Missing tens",
+          "isTest": false,
+          "testIn": "     \n  |  \n  |  \n  |/ \n     \n     \n  |_|\n  |_ \n  |  \n     ",
+          "testOut": "     \n  |_|\n  |  \n  |\\ \n   ‾ ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Missing numbers",
+          "isTest": true,
+          "testIn": " _ _ \n  |_|\n  |  \n /|  \n     \n   _ \n  |  \n  |  \n _|  \n     ",
+          "testOut": "     \n _|  \n  |  \n /|  \n ‾   ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Missing numbers",
+          "isTest": false,
+          "testIn": "     \n  |\\ \n _|  \n  |  \n     \n   _ \n _| |\n  |  \n /|  \n     ",
+          "testOut": "     \n /|  \n  |  \n| |  \n     ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Change of multiples",
+          "isTest": true,
+          "testIn": "     \n \\| |\n  |  \n  |\\ \n   ‾ \n   _ \n _|/ \n  |  \n  |_|\n     ",
+          "testOut": " _ _ \n| |  \n  |_ \n _|  \n     ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Change of multiples",
+          "isTest": false,
+          "testIn": "   _ \n /|_|\n  |  \n  |\\ \n   ‾ \n _   \n| |\\ \n  |_ \n  | |\n     ",
+          "testOut": " _   \n  |_ \n  |  \n _|\\ \n     ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Basic symbols",
+          "isTest": true,
+          "testIn": "   _ \n  |  \n  |  \n  |  \n     \n     \n  |_ \n  |  \n  |  \n     ",
+          "testOut": "     \n  |\\ \n  |  \n  |  \n     ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Basic symbols",
+          "isTest": false,
+          "testIn": "     \n  | |\n  |  \n  |  \n     \n     \n  |\\ \n  |  \n  |  \n     ",
+          "testOut": "   _ \n  |_|\n  |  \n  |  \n     ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Repetitive numbers",
+          "isTest": true,
+          "testIn": "     \n \\|/ \n  |  \n /|\\ \n     \n _ _ \n  |  \n  |  \n _|_ \n     ",
+          "testOut": " _ _ \n \\|/ \n  |  \n /|\\ \n ‾ ‾ ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Repetitive numbers",
+          "isTest": false,
+          "testIn": "     \n _|_ \n _|_ \n  |  \n     \n     \n| | |\n  |  \n| | |\n     ",
+          "testOut": "     \n|_|_|\n _|_ \n| | |\n     ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Random number 1",
+          "isTest": true,
+          "testIn": "     \n| |_|\n _|  \n  |\\ \n     \n     \n /|_|\n  |  \n _|/ \n     ",
+          "testOut": "     \n  | |\n  |_ \n \\| |\n     ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Random number 1",
+          "isTest": false,
+          "testIn": " _   \n \\|/ \n _|  \n  |/ \n     \n _ _ \n|_|  \n  |  \n /|_|\n     ",
+          "testOut": "   _ \n \\|/ \n  |  \n|_|_ \n     ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Random number 2",
+          "isTest": true,
+          "testIn": "     \n  |  \n  |_ \n|_|  \n     \n _   \n|_|_|\n  |_ \n _|  \n     ",
+          "testOut": " _   \n|_|_|\n _|  \n| |\\ \n     ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Random number 2",
+          "isTest": false,
+          "testIn": " _   \n| | |\n  |  \n| |_|\n     \n _ _ \n \\|/ \n  |  \n \\|_ \n     ",
+          "testOut": "   _ \n /|  \n _|_ \n|_|_|\n     ",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "1 ≤ [[a]], [[b]] ≤ 9998\n2 ≤ [[a]] + [[b]] ≤ 9999",
+      "coverBinaryId": 159777280973831,
+      "stubGenerator": "loop 5 read num1Line:string(5)\nloop 5 read num2Line:string(5)\nwrite result",
+      "inputDescription": "<<First 5 lines:>> A loop of {{5}} strings of {{5}} characters, visually forming the Cistercian numeral [[a]].\n<<Next 5 lines:>> A loop of {{5}} strings of {{5}} characters, visually forming the Cistercian numeral [[b]].\nList of different characters that can be found in a line: <<{{space}}>>, <<{{_}}>>, <<{{‾}}>>, <<{{|}}>>, <<{{/}}>>, <<{{\\}}>>",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<5 lines:>> The result of the addition between [[a]] and [[b]] displayed in Cistercian numerals. {{5}} lines expected, each line should contain {{5}} characters."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You simply need to provide the result of an <strong>addition</strong> between two numbers.<br><br>However, these numbers are given in the form of the <strong>Cistercian numeral system</strong>! (https://en.wikipedia.org/wiki/Cistercian_numerals)<br>This system allows you to encode numbers from <strong>1</strong> to <strong>9999</strong> using a <strong>single symbol</strong>.<br><br>The result of this addition must also be in Cistercian notation.<br><br>Those symbols are used to build the visual representation of Cistercian numbers : <strong><const>space</const></strong>, <strong><const>_</const></strong>, <strong><const>&oline;</const></strong>, <strong><const>|</const></strong>, <strong><const>/</const></strong>, <strong><const>\\</const></strong><br>Be aware that the <strong><const>&oline;</const></strong> is not an ASCII character, it's an <strong>overline</strong> (U+203E &rarr; https://en.wikipedia.org/wiki/Overline)<br><br>Basic symbols:<br><pre style=\"font-family: monospace\">┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐<br>│   _ │     │     │     │   _ │     │   _ │     │   _ │<br>│  |  │  |_ │  |\\ │  |/ │  |/ │  | |│  | |│  |_|│  |_|│<br>│  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │<br>│  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │<br>│     │     │     │     │     │     │     │     │     │<br>│  1  │  2  │  3  │  4  │  5  │  6  │  7  │  8  │  9  │<br>├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤<br>│ _   │     │     │     │ _   │     │ _   │     │ _   │<br>│  |  │ _|  │ /|  │ \\|  │ \\|  │| |  │| |  │|_|  │|_|  │<br>│  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │<br>│  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │<br>│     │     │     │     │     │     │     │     │     │<br>│  10 │  20 │  30 │  40 │  50 │  60 │  70 │  80 │  90 │<br>├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤<br>│     │     │     │     │     │     │     │     │     │<br>│  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │<br>│  |  │  |_ │  |  │  |  │  |  │  |  │  |  │  |_ │  |_ │<br>│  |_ │  |  │  |/ │  |\\ │  |\\ │  | |│  |_|│  | |│  |_|│<br>│     │     │     │     │   &oline; │     │     │     │     │<br>│ 100 │ 200 │ 300 │ 400 │ 500 │ 600 │ 700 │ 800 │ 900 │<br>├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤<br>│     │     │     │     │     │     │     │     │     │<br>│  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │  |  │<br>│  |  │ _|  │  |  │  |  │  |  │  |  │  |  │ _|  │ _|  │<br>│ _|  │  |  │ \\|  │ /|  │ /|  │| |  │|_|  │| |  │|_|  │<br>│     │     │     │     │ &oline;   │     │     │     │     │<br>│ 1000│ 2000│ 3000│ 4000│ 5000│ 6000│ 7000│ 8000│ 9000│<br>└─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘</pre><br>Some examples:<br><pre style=\"font-family: monospace\">┌─────┬─────┬─────┬─────┬─────┐<br>│ _   │     │ _ _ │   _ │     │<br>│|_|\\ │ _|\\ │ \\|_|│|_|/ │ /|\\ │<br>│  |_ │  |  │  |_ │  |  │ _|  │<br>│ _|_|│ /|_|│| | |│|_|  │|_|\\ │<br>│     │     │     │     │     │<br>│ 1993│ 4723│ 6859│ 7085│ 9433│<br>└─────┴─────┴─────┴─────┴─────┘</pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>First 5 lines:</strong> A loop of <const>5</const> strings of <const>5</const> characters, visually forming the Cistercian numeral <var>a</var>.<br><strong>Next 5 lines:</strong> A loop of <const>5</const> strings of <const>5</const> characters, visually forming the Cistercian numeral <var>b</var>.<br>List of different characters that can be found in a line: <strong><const>space</const></strong>, <strong><const>_</const></strong>, <strong><const>&oline;</const></strong>, <strong><const>|</const></strong>, <strong><const>/</const></strong>, <strong><const>\\</const></strong></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>5 lines:</strong> The result of the addition between <var>a</var> and <var>b</var> displayed in Cistercian numerals. <const>5</const> lines expected, each line should contain <const>5</const> characters.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>a</var>, <var>b</var> &le; 9998<br>2 &le; <var>a</var> + <var>b</var> &le; 9999</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">   _ \n  |/ \n  |  \n  |  \n     \n   _ \n  |_|\n  |  \n  |  \n     </pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\"> _   \n  |/ \n  |  \n  |  \n     </pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 92859700747818,
+  "commentCount": 6,
+  "upVotes": 1,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}
