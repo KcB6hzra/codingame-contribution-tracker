@@ -1,0 +1,163 @@
+{
+  "id": 146073,
+  "activeVersion": 3,
+  "score": 0,
+  "votableId": 39573028,
+  "codingamerId": 6613269,
+  "views": 20,
+  "commentableId": 39404030,
+  "title": "Orbital Logistics: Exact Load",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "kosynus",
+  "publicHandle": "1460737ecdfdbf3e1faa74bc9d340d6ec822c4",
+  "codingamerHandle": "4a50a124c9539a99c625b92d41bc639f9623166",
+  "lastVersion": {
+    "version": 3,
+    "autocloseTime": 1778193830794,
+    "data": {
+      "title": "Orbital Logistics: Exact Load",
+      "topics": [
+        {
+          "id": 60,
+          "handle": "dynamic-programming",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Programmation dynamique",
+            "2": "Dynamic programming"
+          },
+          "pageTitle": "Dynamic programming: exercises and theory",
+          "puzzleCount": 36,
+          "parentTopicId": 41,
+          "contentDetailsId": 85
+        },
+        {
+          "id": 66,
+          "handle": "optimization",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Optimisation",
+            "2": "Optimization"
+          },
+          "pageTitle": "Optimization: exercises and theory",
+          "puzzleCount": 29,
+          "parentTopicId": 41,
+          "contentDetailsId": 87
+        },
+        {
+          "id": 182,
+          "handle": "combinatorics",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Combinatoire",
+            "2": "Combinatorics"
+          },
+          "puzzleCount": 22,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import bisect\nimport sys\n\ninput = sys.stdin.readline\n\ncapacity, item_count = map(int, input().split())\nitems = [tuple(map(int, input().split())) for _ in range(item_count)]\n\nmid = item_count // 2\nleft = items[:mid]\nright = items[mid:]\n\n\ndef gen_subsets(arr, idx, current_weight, current_value, out):\n    if current_weight > capacity:\n        return\n    if idx == len(arr):\n        out.append((current_weight, current_value))\n        return\n    w, v = arr[idx]\n    gen_subsets(arr, idx + 1, current_weight, current_value, out)\n    gen_subsets(arr, idx + 1, current_weight + w, current_value + v, out)\n\n\nleft_subsets = []\nright_subsets = []\n\ngen_subsets(left, 0, 0, 0, left_subsets)\ngen_subsets(right, 0, 0, 0, right_subsets)\n\nbest_right = {}\nfor w, v in right_subsets:\n    if v > best_right.get(w, -1):\n        best_right[w] = v\n\nright_pairs = sorted(best_right.items())\nright_weights = [w for w, _ in right_pairs]\nright_values = [v for _, v in right_pairs]\n\nanswer = -1\nfor lw, lv in left_subsets:\n    need = capacity - lw\n    i = bisect.bisect_left(right_weights, need)\n    if i < len(right_weights) and right_weights[i] == need:\n        total = lv + right_values[i]\n        if total > answer:\n            answer = total\n\nprint(answer)",
+      "statement": "A smuggler is preparing a cargo shipment for a space journey.\n\nThe spaceship has a maximum weight capacity of [[capacity]].\n\nThere are [[itemCount]] available cargo items. Each item has a weight [[weight]] and a resale value [[value]].\n\nThe smuggler wants to find the maximum total value of a subset of items such that:\n- the total weight is exactly equal to [[capacity]]\n- each item is used at most once\n\nIf it is not possible for the spaceship to carry items weighing exactly [[capacity]], output {{-1}} instead.",
+      "testCases": [
+        {
+          "title": "Baby's First Smuggling Run",
+          "isTest": true,
+          "testIn": "10 4\n3 4\n4 5\n6 8\n5 6",
+          "testOut": "13",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Baby's Second Smuggling Run",
+          "isTest": false,
+          "testIn": "9 4\n2 3\n4 6\n5 7\n7 10",
+          "testOut": "13",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "The Cargo Bay Says No",
+          "isTest": true,
+          "testIn": "11 4\n2 3\n4 5\n6 8\n8 10",
+          "testOut": "-1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "The Cargo Bay Still Says No",
+          "isTest": false,
+          "testIn": "15 5\n2 1\n4 4\n6 7\n8 10\n12 20",
+          "testOut": "-1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Many Roads to the Same Dock",
+          "isTest": true,
+          "testIn": "10 5\n2 1\n3 4\n5 7\n6 8\n8 9",
+          "testOut": "12",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Same Dock, Better Deal",
+          "isTest": false,
+          "testIn": "14 5\n2 3\n4 8\n5 9\n9 14\n10 17",
+          "testOut": "25",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Shiny Crates, Bad Decisions",
+          "isTest": true,
+          "testIn": "1000000 36\n12345 67890\n54321 12345\n11111 22222\n22222 33333\n33333 44444\n44444 55555\n55555 66666\n66666 77777\n77777 88888\n88888 99999\n99999 11111\n13579 24680\n24680 13579\n31415 27182\n27182 31415\n16180 14142\n14142 16180\n17320 22360\n22360 17320\n20000 50000\n30000 60000\n40000 70000\n50000 80000\n60000 90000\n70000 100000\n80000 110000\n90000 120000\n100000 130000\n110000 140000\n120000 150000\n130000 160000\n140000 170000\n150000 180000\n160000 190000\n170000 200000\n180000 210000",
+          "testOut": "1385745",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Shinier Crates, Worse Decisions",
+          "isTest": false,
+          "testIn": "950000 36\n12000 50000\n34000 70000\n56000 90000\n78000 110000\n91000 130000\n102000 150000\n113000 170000\n124000 190000\n135000 210000\n146000 230000\n157000 250000\n168000 270000\n179000 290000\n190000 310000\n201000 330000\n212000 350000\n223000 370000\n234000 390000\n245000 410000\n256000 430000\n267000 450000\n278000 470000\n289000 490000\n300000 510000\n15000 20000\n25000 30000\n35000 40000\n45000 50000\n55000 60000\n65000 70000\n75000 80000\n85000 90000\n95000 100000\n105000 110000\n115000 120000\n125000 130000",
+          "testOut": "1630000",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Customs Will Never Notice",
+          "isTest": true,
+          "testIn": "800000 40\n10234 30000\n20345 50000\n30456 70000\n40567 90000\n50678 110000\n60789 130000\n70890 150000\n80901 170000\n91012 190000\n100123 210000\n111234 230000\n122345 250000\n133456 270000\n144567 290000\n155678 310000\n166789 330000\n177890 350000\n188901 370000\n199012 390000\n210123 410000\n221234 430000\n232345 450000\n243456 470000\n254567 490000\n265678 510000\n276789 530000\n287890 550000\n298901 570000\n309012 590000\n320123 610000\n331234 630000\n342345 650000\n353456 670000\n364567 690000\n375678 710000\n386789 730000\n397890 750000\n408901 770000\n419012 790000\n430123 810000",
+          "testOut": "-1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Customs Noticed Everything",
+          "isTest": false,
+          "testIn": "820000 40\n11000 25000\n22000 50000\n33000 75000\n44000 100000\n55000 125000\n66000 150000\n77000 175000\n88000 200000\n99000 225000\n111000 250000\n122000 275000\n133000 300000\n144000 325000\n155000 350000\n166000 375000\n177000 400000\n188000 425000\n199000 450000\n210000 475000\n221000 500000\n232000 525000\n243000 550000\n254000 575000\n265000 600000\n276000 625000\n287000 650000\n298000 675000\n309000 700000\n320000 725000\n331000 750000\n342000 775000\n353000 800000\n364000 825000\n375000 850000\n386000 875000\n397000 900000\n408000 925000\n419000 950000\n430000 975000\n441000 1000000",
+          "testOut": "-1",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "1 ≤ [[capacity]] ≤ 10^6\n1 ≤ [[itemCount]] ≤ 40\n1 ≤ [[weight]] ≤ 10^6\n1 ≤ [[value]] ≤ 10^6",
+      "coverBinaryId": 160325009874950,
+      "stubGenerator": "read capacity:long itemCount:int\nloop itemCount read weight:long value:long\nwrite answer",
+      "inputDescription": "<<Line 1:>> Two integers [[capacity]] and [[itemCount]] representing the maximum capacity and the number of cargo items.\n\n<<Next [[itemCount]] lines:>> Two integers [[weight]] and [[value]] representing the weight and resale value of each cargo item.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> An integer representing the maximum total value of a subset of items whose total weight is exactly equal to [[capacity]], or -1 if no such subset exists."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A smuggler is preparing a cargo shipment for a space journey.<br><br>The spaceship has a maximum weight capacity of <var>capacity</var>.<br><br>There are <var>itemCount</var> available cargo items. Each item has a weight <var>weight</var> and a resale value <var>value</var>.<br><br>The smuggler wants to find the maximum total value of a subset of items such that:<br>- the total weight is exactly equal to <var>capacity</var><br>- each item is used at most once<br><br>If it is not possible for the spaceship to carry items weighing exactly <var>capacity</var>, output <const>-1</const> instead.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Two integers <var>capacity</var> and <var>itemCount</var> representing the maximum capacity and the number of cargo items.<br><br><strong>Next <var>itemCount</var> lines:</strong> Two integers <var>weight</var> and <var>value</var> representing the weight and resale value of each cargo item.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> An integer representing the maximum total value of a subset of items whose total weight is exactly equal to <var>capacity</var>, or -1 if no such subset exists.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>capacity</var> &le; 10^6<br>1 &le; <var>itemCount</var> &le; 40<br>1 &le; <var>weight</var> &le; 10^6<br>1 &le; <var>value</var> &le; 10^6</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">10 4\n3 4\n4 5\n6 8\n5 6</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">13</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 143644783736899,
+  "commentCount": 2,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
