@@ -1,0 +1,162 @@
+{
+  "id": 146337,
+  "activeVersion": 2,
+  "score": 0,
+  "votableId": 39588384,
+  "codingamerId": 5673859,
+  "views": 2,
+  "commentableId": 39419328,
+  "title": "RSA Classic Encrypt / Decrypt",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "MehdiMascret",
+  "publicHandle": "1463372153c82c116fae3be8a3ccb198297e36",
+  "codingamerHandle": "cfc4a6cf9a68201280051ab0edf67a239583765",
+  "lastVersion": {
+    "version": 2,
+    "autocloseTime": 1778413452284,
+    "data": {
+      "title": "RSA Classic Encrypt / Decrypt",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "RSA"
+          }
+        }
+      ],
+      "solution": "/**\n * Auto-generated code below aims at helping you parse\n * the standard input according to the problem statement.\n **/\n\nconst alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .!?-_#()[]{}@/:;,';\n\n/**\n * RSA Classic Simple\n * @param p \n * @param q \n * @param e \n * @returns {encrypt: (message: string) => number[], decrypt: (encryptedMessage: number[]) => string, d: number}\n  encrypt: (message: string) => number[] // Permet to encrypt the message\n  decrypt: (encryptedMessage: number[]) => string // Permit to decrypt message\n  d: number // private key\n*/\nfunction rsaClassicSimple(p, q, e) {\n    const n = p * q;\n    const phi = (p - 1) * (q - 1);\n    const d = ExtendedEuclideAlgorithm(e, phi);\n\n    return {\n        encrypt: (message) => message.split(\"\").map(letter => modPow(letterToNumber(letter), e, n)),\n        decrypt: (encryptedMessage) => encryptedMessage.map(number => numberToLetter(modPow(number, d, n))).join(\"\"),\n        d\n    }\n}\n  \n/* \n * Extended Euclide Algorithm\n * @param e the public key\n * @param phi the totient of n\n * @returns d which is the private key also equal to the inverse of e modulo phi\n */\nfunction ExtendedEuclideAlgorithm(e, phi) {\n    let [r, u, v, r1, u1, v1] = [phi, 1, 0, e, 0, 1];\n    while (r1 !== 0) {\n        const q = Math.floor(r / r1);\n        [r, u, v, r1, u1, v1] = [r1, u1, v1, r - q * r1, u - q * u1, v - q * v1];\n    }\n    // v correspond à l'inverse modulaire de e modulo phi, mais peut être négatif.\n    // On le ramène dans l'intervalle [0, phi-1] :\n    return ((v % phi) + phi) % phi;\n}\n  \n/**\n * (base ^ exponent) % modulus\n * @param base \n * @param exponent \n * @param modulus \n * @returns (base ^ exponent) % modulus\n */\nfunction modPow(base, exponent, modulus) {\n    if (modulus === 1) return 0;\n    let result = 1;\n    base = base % modulus;\n    while (exponent > 0) {\n        if (exponent % 2 === 1) {\n        result = (result * base) % modulus;\n        }\n        exponent = Math.floor(exponent / 2);\n        base = (base * base) % modulus;\n    }\n    return result;\n}\n\nfunction letterToNumber(letter) {\n    return alphabet.indexOf(letter);\n}\n\nfunction numberToLetter(number) {\n    return alphabet.charAt(number);\n}\n\nconst P = parseInt(readline());\nconst Q = parseInt(readline());\nconst E = parseInt(readline());\nconst type = readline();\nconst message = readline();\n\nconst rsa = rsaClassicSimple(P, Q, E);\n\nif (type === \"Encrypt\") {\n    console.log(rsa.encrypt(message).join(\"-\"));\n} else if (type === \"Decrypt\") {\n    console.log(rsa.decrypt(message.split(\"-\")))\n}\nconsole.log(rsa.d);\n",
+      "statement": "In this exercise, you will learn the basics of how RSA private and public keys are created and how they are used.\n\nNote: Normally, you should not encrypt data letter-by-letter, but for simplicity, in this exercise you will encrypt one character at a time using a specified alphabet and decrypt one number at a time.\n\n<<# Finding D and N>>\n\nHow are the RSA private and public keys created?\n\n1 - Key Generation: Three large numbers are randomly chosen: [[P]], [[Q]], and [[E]]. They must be large to secure the system by making the modulus hard to factor.\n\n2 - Public Exponent [[E]]: [[E]] is used in the modPow function (see below) for both encryption and decryption.\n\n3 - Modulus [[N]]: [[N]] is determined by: `N = P * Q`. [[N]] serves as the modulus for the encryption and decryption of the message.\n\n4 - Private Exponent [[D]]: Using the Extended Euclidean Algorithm, find [[D]] such that :\n`(D * E) % ((P - 1) * (Q - 1)) = 1`\n\n<<# Encryption and Decryption Process>>\n\nOnce you have [[D]], [[E]], and [[N]], you can begin encryption and decryption:\n\n- {{Encryption}} uses [[E]] and [[N]].\n- {{Decryption}} uses [[D]] and [[N]].\n\n[[alphabet]] = \"{{ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .!?-_#()[]{}@/:;,}}\"\n\nFunction Requirement: Create a function modPow that returns: (base ** exponent) % modulus.\n\nTip: It may be impossible to calculate the result directly because base ** exponent can be an extremely large number.\n\n<<# Encrypt>>\n\nInputs: [[Message]], [[N]], and [[E]]. For each character in the message:\n\n1-Find its index in the given alphabet.\n2-Encrypt this index using modPow. \n\nOutput: Print the list of encrypted numbers as a string with {{-}} as separator, along with the variable [[D]].\n\n<<# Decrypt>>\n\nInputs: Encrypted [[Message]], [[D]], and [[N]]. For each number in the encrypted string (separated by {{-}}):\n\n1-Decrypt it using modPow.\n2-Convert the resulting number back to a character using the alphabet. \n\nOutput: Print the decrypted message and the variable [[D]].\n\n<<# Additional explanation on how RSA key files are created is available, but it is not necessary for this exercise. >>\n\nOnce the necessary variables are determined, the tool uses ASN.1, a data description language that transforms a structure (such as those defined by X.509) into binary code using the DER encoder. This binary code is then converted to Base64, which transforms an array of bits into a string of characters.\n\nHow does ASN.1 work?\nASN.1 allows you to define your own data structures and then create data that conforms to those definitions. Key elements include :\n• Field types: INTEGER, ENUMERATED, IA5String, BOOLEAN, REAL, etc.\n• Optional fields or fields with value ranges\n• Structures: Sequence, Sequence OF, Set OF, Choice, etc.\n• Variable definitions, for example:\n  age ::= INTEGER\nUnfortunately, I cannot provide an exhaustive course here!\n\nHow does Base64 work?\nBase64 uses an alphabet composed of 64 characters (A–Z, a–z, 0–9, plus \"+\" and \"/\"). Each character represents 6 bits. Since 2**6 = 64 bits, the encoder takes 3 bytes (i.e., 24 bits) from the input array and converts them into 4 characters from this alphabet.\n\nExample :\n 0C.57.D4 => 00001100 01010111 11010100\n• 000011 . 00 0101 . 0111 11 . 010100\nOutput: DFfU\n\nIf there are not enough necessary bytes, the padding character {{=}} is added.\n  0C = 00001100 =>\n• 000011 . 00 + [0000.000000]\n• 3.0 two padding\nOutput: DA==\n\n  0C.57 = 00001100 01010111 =>\n• 000011 . 00 0101 . 0111 [00]\n• 3.5.28 with one padding \nOutput: DFc=\n\nNotes :\n• ASN.1 is used in many fields (WiFi networks, HTTP(S), mobile networks, devices such as routers and servers, etc.) because it ensures uniform interpretation of data exchanged between different systems.\n• Base64 is ubiquitous—for example, it is often used to encode an image within a JSON, which is very convenient.",
+      "testCases": [
+        {
+          "title": "Encrypt Hello World",
+          "isTest": true,
+          "testIn": "61\n53\n17\nEncrypt\nHello World",
+          "testOut": "2369-1726-1350-1350-642-2502-2558-642-706-1350-1912\n2753",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Encrypt V0",
+          "isTest": false,
+          "testIn": "661\n739\n113\nEncrypt\nRSA Classic Simple Encrypt and Decrypt",
+          "testOut": "153679-467611-0-110618-469042-209779-481714-408625-408625-478841-270848-110618-467611-478841-173814-178120-209779-378854-110618-202702-94033-270848-312481-263875-178120-457646-110618-481714-94033-256170-110618-322595-378854-270848-312481-263875-178120-457646\n262937",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Decrypt Hello World",
+          "isTest": true,
+          "testIn": "61\n53\n17\nDecrypt\n2369-1726-1350-1350-642-2502-2558-642-706-1350-1912-2502-180-678-2502-1519-1956-2502-1519-891-1519-368-180-1956-1992-2502-891-1726-678-678-1519-1992-1726\n",
+          "testOut": "Hello World is an amazing message\n2753",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Decrypt V0",
+          "isTest": false,
+          "testIn": "661\n739\n113\nDecrypt\n153679-467611-0-110618-469042-209779-481714-408625-408625-478841-270848-110618-467611-478841-173814-178120-209779-378854-110618-202702-94033-270848-312481-263875-178120-457646-110618-481714-94033-256170-110618-322595-378854-270848-312481-263875-178120-457646",
+          "testOut": "RSA Classic Simple Encrypt and Decrypt\n262937",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Decrypt secret message !",
+          "isTest": true,
+          "testIn": "311\n313\n317\nDecrypt\n0-9690-72065-2122-76947-7498-55432-21251-7498-27706-27756-21251-41543-7498-25562-7498-46695-25562-61209-7498-41543-83117-7498-79121-96162-49830-83117-67867-79121-7498-67867-25562-41543-25562-7498-25562-96162-67867-7498-55432-21251-7498-96162-83117-41543-7498-25562-7498-27108-57134-83117-41543-83117-49830-83117-56712",
+          "testOut": "ASN.1 is just a way to encode data and is not a protocol\n49733",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "ASN.1 AGAIN !",
+          "isTest": false,
+          "testIn": "311\n313\n317\nDecrypt\n0-9690-72065-2122-76947-7498-55432-21251-7498-72826-55432-56712-56712-55432-96162-58111-7498-22380-79121-7498-332",
+          "testOut": "ASN.1 is killing me !\n49733",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Decrypt secret message  2 !",
+          "isTest": true,
+          "testIn": "647\n613\n593\nDecrypt\n0-388600-153612-7800-27619-269502-228109-5145-269502-194969-376880-5145-243138-269502-383896-269502-219714-383896-241041-269502-243138-254992-269502-8362-300480-15748-254992-64859-8362-269502-64859-383896-243138-383896-269502-383896-300480-64859-269502-228109-5145-269502-300480-254992-243138-269502-383896-269502-290979-83681-254992-243138-254992-15748-254992-351219",
+          "testOut": "ASN.1 is just a way to encode data and is not a protocol\n360017",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "But what's ASN.1 ?",
+          "isTest": false,
+          "testIn": "311\n313\n317\nDecrypt\n91799-88889-61925-7498-332-7498-38768-83117-7498-49830-57134-79121-25562-41543-79121-7498-61209-83117-27756-57134-7498-83117-46695-96162-7498-27108-57134-55432-69377-25562-41543-79121-7498-25562-96162-67867-7498-27108-27756-51693-56712-55432-49830-7498-72826-79121-61209-66079-7498-61209-83117-27756-7498-96162-79121-79121-67867-7498-41543-83117-7498-56712-79121-25562-57134-96162-7498-0-9690-72065-2122-76947-66079-7498-45735-41469-15056-9690-62653-76947-66079-7498-45735-68632-88889-66079-7498-45735-59465-19217-66079-7498-12450-68632-32641-66079-7498-1-25562-21251-79121-93424-17979-66079-7498-17120-79121-91970-25562-67867-79121-49830-55432-22380-25562-56712-66079-7498-79121-41543-49830-7498-2122-2122-2122",
+          "testOut": "OMG ! To create your own private and public key, you need to learn ASN.1, PKCS#1, PEM, PFX, DER, Base64, Hexadecimal, etc ...\n49733",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Decrypt secret mesage 3 !",
+          "isTest": true,
+          "testIn": "647\n613\n593\nEncrypt\nASN.1 is just a way to encode data and is not a protocol",
+          "testOut": "0-388600-153612-7800-27619-269502-228109-5145-269502-194969-376880-5145-243138-269502-383896-269502-219714-383896-241041-269502-243138-254992-269502-8362-300480-15748-254992-64859-8362-269502-64859-383896-243138-383896-269502-383896-300480-64859-269502-228109-5145-269502-300480-254992-243138-269502-383896-269502-290979-83681-254992-243138-254992-15748-254992-351219\n360017",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "RLY ?? That's how RSA generate a private and public key ?",
+          "isTest": false,
+          "testIn": "311\n313\n317\nEncrypt\nOMG ! To create your own private and public key, you need to learn ASN.1, PKCS#1, PEM, PFX, DER, Base64, Hexadecimal, etc ...",
+          "testOut": "91799-88889-61925-7498-332-7498-38768-83117-7498-49830-57134-79121-25562-41543-79121-7498-61209-83117-27756-57134-7498-83117-46695-96162-7498-27108-57134-55432-69377-25562-41543-79121-7498-25562-96162-67867-7498-27108-27756-51693-56712-55432-49830-7498-72826-79121-61209-66079-7498-61209-83117-27756-7498-96162-79121-79121-67867-7498-41543-83117-7498-56712-79121-25562-57134-96162-7498-0-9690-72065-2122-76947-66079-7498-45735-41469-15056-9690-62653-76947-66079-7498-45735-68632-88889-66079-7498-45735-59465-19217-66079-7498-12450-68632-32641-66079-7498-1-25562-21251-79121-93424-17979-66079-7498-17120-79121-91970-25562-67867-79121-49830-55432-22380-25562-56712-66079-7498-79121-41543-49830-7498-2122-2122-2122\n49733",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Encrypt secret message",
+          "isTest": true,
+          "testIn": "131\n137\n139\nEncrypt\nOh yeah ! Im searching a job ! So contact me at mmascret@gmail.com or https://www.linkedin.com/in/mehdi-mascret-187b60160/",
+          "testOut": "13019-1824-12552-5262-17547-8945-1824-12552-6913-12552-15171-14868-12552-12711-17547-8945-3061-15513-1824-4780-13424-3998-12552-8945-12552-2734-6186-13929-12552-6913-12552-5010-6186-12552-15513-6186-13424-6733-8945-15513-6733-12552-14868-17547-12552-8945-6733-12552-14868-14868-8945-12711-15513-3061-17547-6733-1970-3998-14868-8945-4780-9005-5091-15513-6186-14868-12552-6186-3061-12552-1824-6733-6733-2065-12711-7721-5508-5508-992-992-992-5091-9005-4780-13424-13502-17547-14525-4780-13424-5091-15513-6186-14868-5508-4780-13424-5508-14868-17547-1824-14525-4780-7194-14868-8945-12711-15513-3061-17547-6733-7194-17905-5979-8099-13929-3860-12787-17905-3860-12787-5508\n4579",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "No inspiration !",
+          "isTest": false,
+          "testIn": "431\n433\n439\nEncrypt\nWhat should i encrypt ?",
+          "testOut": "55759-177662-50742-76117-40156-97005-177662-112071-63864-78576-19278-40156-5453-40156-180622-22239-64828-159187-93234-79894-76117-40156-137510\n91399",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "YEAH I'M SEARCHING A JOB ! HIRE ME !",
+          "isTest": true,
+          "testIn": "131\n137\n139\nDecrypt\n13019-1824-12552-5262-17547-8945-1824-12552-6913-12552-15171-14868-12552-12711-17547-8945-3061-15513-1824-4780-13424-3998-12552-8945-12552-2734-6186-13929-12552-6913-12552-5010-6186-12552-15513-6186-13424-6733-8945-15513-6733-12552-14868-17547-12552-8945-6733-12552-14868-14868-8945-12711-15513-3061-17547-6733-1970-3998-14868-8945-4780-9005-5091-15513-6186-14868-12552-6186-3061-12552-1824-6733-6733-2065-12711-7721-5508-5508-992-992-992-5091-9005-4780-13424-13502-17547-14525-4780-13424-5091-15513-6186-14868-5508-4780-13424-5508-14868-17547-1824-14525-4780-7194-14868-8945-12711-15513-3061-17547-6733-7194-17905-5979-8099-13929-3860-12787-17905-3860-12787-5508",
+          "testOut": "Oh yeah ! Im searching a job ! So contact me at mmascret@gmail.com or https://www.linkedin.com/in/mehdi-mascret-187b60160/\n4579",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Decrypt (-o-')",
+          "isTest": false,
+          "testIn": "431\n433\n439\nDecrypt\n55759-177662-50742-76117-40156-97005-177662-112071-63864-78576-19278-40156-5453-40156-180622-22239-64828-159187-93234-79894-76117-40156-137510",
+          "testOut": "What should i encrypt ?\n91399",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "[[P]], [[Q]], [[E]] are prime numbers.\n1 < [[P]], [[Q]], [[E]] < 1000",
+      "stubGenerator": "read P:int\nread Q:int\nread E:int\nread Type:string(1024)\nread Message:string(1024)\n\nwrite EncryptDecrypt\nwrite D",
+      "inputDescription": "<<Line 1 :>> [[P]] a positive integer\n<<Line 2 :>> [[Q]] a positive integer\n<<Line 3 :>> [[E]] a positive integer\n<<Line 4 :>> [[Type]] a string which is {{Encrypt}} or {{Decrypt}}\n<<Line 5 :>> [[Message]], if [[Type]] is {{Encrypt}}, the type is a string, and if it's {{Decrypt}} a list of positive integers separated by {{-}}",
+      "solutionLanguage": "Javascript",
+      "outputDescription": "<<Line 1 :>> The message in the correct format ({{Encrypt}} or {{Decrypt}} format)\n<<Line 2 :>> The value [[D]]"
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">In this exercise, you will learn the basics of how RSA private and public keys are created and how they are used.<br><br>Note: Normally, you should not encrypt data letter-by-letter, but for simplicity, in this exercise you will encrypt one character at a time using a specified alphabet and decrypt one number at a time.<br><br><strong># Finding D and N</strong><br><br>How are the RSA private and public keys created?<br><br>1 - Key Generation: Three large numbers are randomly chosen: <var>P</var>, <var>Q</var>, and <var>E</var>. They must be large to secure the system by making the modulus hard to factor.<br><br>2 - Public Exponent <var>E</var>: <var>E</var> is used in the modPow function (see below) for both encryption and decryption.<br><br>3 - Modulus <var>N</var>: <var>N</var> is determined by: <pre style=\"font-family: monospace\">N = P * Q</pre>. <var>N</var> serves as the modulus for the encryption and decryption of the message.<br><br>4 - Private Exponent <var>D</var>: Using the Extended Euclidean Algorithm, find <var>D</var> such that :<br><pre style=\"font-family: monospace\">(D * E) % ((P - 1) * (Q - 1)) = 1</pre><br><br><strong># Encryption and Decryption Process</strong><br><br>Once you have <var>D</var>, <var>E</var>, and <var>N</var>, you can begin encryption and decryption:<br><br>- <const>Encryption</const> uses <var>E</var> and <var>N</var>.<br>- <const>Decryption</const> uses <var>D</var> and <var>N</var>.<br><br><var>alphabet</var> = &quot;<const>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .!?-_#()[]{}@/:;,</const>&quot;<br><br>Function Requirement: Create a function modPow that returns: (base ** exponent) % modulus.<br><br>Tip: It may be impossible to calculate the result directly because base ** exponent can be an extremely large number.<br><br><strong># Encrypt</strong><br><br>Inputs: <var>Message</var>, <var>N</var>, and <var>E</var>. For each character in the message:<br><br>1-Find its index in the given alphabet.<br>2-Encrypt this index using modPow. <br><br>Output: Print the list of encrypted numbers as a string with <const>-</const> as separator, along with the variable <var>D</var>.<br><br><strong># Decrypt</strong><br><br>Inputs: Encrypted <var>Message</var>, <var>D</var>, and <var>N</var>. For each number in the encrypted string (separated by <const>-</const>):<br><br>1-Decrypt it using modPow.<br>2-Convert the resulting number back to a character using the alphabet. <br><br>Output: Print the decrypted message and the variable <var>D</var>.<br><br><strong># Additional explanation on how RSA key files are created is available, but it is not necessary for this exercise. </strong><br><br>Once the necessary variables are determined, the tool uses ASN.1, a data description language that transforms a structure (such as those defined by X.509) into binary code using the DER encoder. This binary code is then converted to Base64, which transforms an array of bits into a string of characters.<br><br>How does ASN.1 work?<br>ASN.1 allows you to define your own data structures and then create data that conforms to those definitions. Key elements include :<br>&bull; Field types: INTEGER, ENUMERATED, IA5String, BOOLEAN, REAL, etc.<br>&bull; Optional fields or fields with value ranges<br>&bull; Structures: Sequence, Sequence OF, Set OF, Choice, etc.<br>&bull; Variable definitions, for example:<br>&emsp;&emsp;age ::= INTEGER<br>Unfortunately, I cannot provide an exhaustive course here!<br><br>How does Base64 work?<br>Base64 uses an alphabet composed of 64 characters (A&ndash;Z, a&ndash;z, 0&ndash;9, plus &quot;+&quot; and &quot;/&quot;). Each character represents 6 bits. Since 2**6 = 64 bits, the encoder takes 3 bytes (i.e., 24 bits) from the input array and converts them into 4 characters from this alphabet.<br><br>Example :<br> 0C.57.D4 =&gt; 00001100 01010111 11010100<br>&bull; 000011 . 00 0101 . 0111 11 . 010100<br>Output: DFfU<br><br>If there are not enough necessary bytes, the padding character <const>=</const> is added.<br>  0C = 00001100 =&gt;<br>&bull; 000011 . 00 + [0000.000000]<br>&bull; 3.0 two padding<br>Output: DA==<br><br>  0C.57 = 00001100 01010111 =&gt;<br>&bull; 000011 . 00 0101 . 0111 [00]<br>&bull; 3.5.28 with one padding <br>Output: DFc=<br><br>Notes :<br>&bull; ASN.1 is used in many fields (WiFi networks, HTTP(S), mobile networks, devices such as routers and servers, etc.) because it ensures uniform interpretation of data exchanged between different systems.<br>&bull; Base64 is ubiquitous&mdash;for example, it is often used to encode an image within a JSON, which is very convenient.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1 :</strong> <var>P</var> a positive integer<br><strong>Line 2 :</strong> <var>Q</var> a positive integer<br><strong>Line 3 :</strong> <var>E</var> a positive integer<br><strong>Line 4 :</strong> <var>Type</var> a string which is <const>Encrypt</const> or <const>Decrypt</const><br><strong>Line 5 :</strong> <var>Message</var>, if <var>Type</var> is <const>Encrypt</const>, the type is a string, and if it's <const>Decrypt</const> a list of positive integers separated by <const>-</const></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1 :</strong> The message in the correct format (<const>Encrypt</const> or <const>Decrypt</const> format)<br><strong>Line 2 :</strong> The value <var>D</var></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><var>P</var>, <var>Q</var>, <var>E</var> are prime numbers.<br>1 &lt; <var>P</var>, <var>Q</var>, <var>E</var> &lt; 1000</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">61\n53\n17\nEncrypt\nHello World</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">2369-1726-1350-1350-642-2502-2558-642-706-1350-1912\n2753</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 151141502324339,
+  "commentCount": 0,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
