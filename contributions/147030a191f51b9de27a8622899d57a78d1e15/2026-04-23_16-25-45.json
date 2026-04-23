@@ -1,0 +1,109 @@
+{
+  "id": 147030,
+  "activeVersion": 4,
+  "score": 0,
+  "votableId": 39659865,
+  "codingamerId": 491254,
+  "views": 16,
+  "commentableId": 39490576,
+  "title": "WIP: Shipping costs",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Cakeisalie5",
+  "publicHandle": "147030a191f51b9de27a8622899d57a78d1e15",
+  "codingamerHandle": "26bc712b959a94dd2cd3c4b55b10484f452194",
+  "lastVersion": {
+    "version": 4,
+    "autocloseTime": 1779538444341,
+    "data": {
+      "title": "WIP: Shipping costs",
+      "topics": [],
+      "solution": "from typing import Callable\n\nQuantities = tuple[int, int, int]\n\"\"\"Quantities (pallets, parcels, total weight).\"\"\"\n\ndef get_getquantity_func(quantity: str) -> Callable[[Quantities], int]:\n    \"\"\"Get a function to get a quantity.\"\"\"\n    match quantity:\n        case \"pallets\":\n            return lambda q: q[0]\n        case \"parcels\":\n            return lambda q: q[1]\n        case _:\n            return lambda q: q[2]\n\n\ndef get_match_func(quantity: str, operator: str, value: int) -> Callable[[Quantities], bool]:\n    \"\"\"Get a function to match quantities.\"\"\"\n    getquant = get_getquantity_func(quantity)\n\n    match operator:\n        case \"<=\":\n            return lambda q: getquant(q) <= value\n        case \"<\":\n            return lambda q: getquant(q) < value\n        case \">=\":\n            return lambda q: getquant(q) >= value\n        case _:\n            return lambda q: getquant(q) > value\n\n\ndef get_computecost_func(quantity: str, cost_type: str, value: int) -> Callable[[Quantities], int]:\n    \"\"\"Get a function to compute a cost.\"\"\"\n    match cost_type:\n        case \"fixed\":\n            return lambda _: value\n        \n        case _:\n            getquant = get_getquantity_func(quantity)\n            return lambda q: getquant(q) * value\n\n\nconditional_rules: list[tuple[Callable[[Quantities], bool], Callable[[Quantities], int]]] = []\ndefault_rule_compute: Callable\n\nconditional_rule_count = int(input())\nfor i in range(conditional_rule_count):\n    inputs = input().split()\n    conditional_rule_quantity = inputs[0]\n    conditional_rule_operator = inputs[1]\n    conditional_rule_value = int(inputs[2])\n    conditional_rule_cost_type = inputs[3]\n    conditional_rule_cost = int(inputs[4])\n    \n    conditional_rules.append((\n        get_match_func(\n            conditional_rule_quantity,\n            conditional_rule_operator,\n            conditional_rule_value,\n        ),\n        get_computecost_func(\n            conditional_rule_quantity,\n            conditional_rule_cost_type,\n            conditional_rule_cost,\n        ),\n    ))\n\ninputs = input().split()\ndefault_rule_quantity = inputs[0]\ndefault_rule_cost_type = inputs[1]\ndefault_rule_cost = int(inputs[2])\n\ndefault_rule_compute = get_computecost_func(\n    default_rule_quantity,\n    default_rule_cost_type,\n    default_rule_cost,\n)\n\norder_count = int(input())\nfor i in range(order_count):\n    order_pallets, order_parcels, order_kg = [int(j) for j in input().split()]\n    order_quantities = (order_pallets, order_parcels, order_kg)\n\n    for conditional_rule_match, conditional_rule_compute in conditional_rules:\n        if conditional_rule_match(order_quantities):\n            print(conditional_rule_compute(order_quantities))\n            break\n    else:\n        print(default_rule_compute(order_quantities))",
+      "statement": "You work at a shipping company, and are tasked with automating the shipping cost computation for an e-commerce platform! In order to do so, you are provided with a set of business rules and customer order details, and for every such order, you must compute the shipping cost.\n\nBusiness rules are composed of a set of conditional rules, which only apply if the associated condition is met, and a default rule to apply if none of the conditional rules have applied.\n\nEach conditional rule consists of a condition to match and a cost formula to apply if the condition matches, and as such, is composed of the following properties:\n\n* The quantity to consider, among {{pallets}} (number of wooden pallets), {{parcels}} (number of parcels) and {{kg}} (total weight in kilograms).\n* The operator, among {{<=}}, {{<}}, {{>=}} or {{>}}, representing the operation between the quantity of the order on the left and the condition value on the right.\n* The value, as an integer.\n* Whether the cost is a unit cost ({{unit}}) or a fixed cost ({{fixed}}), i.e. whether the cost must be multiplied by the quantity or not.\n* The cost in euros.\n\nFor example:\n\n* {{kg < 2 fixed 5}} means \"If the weight in kilograms in the order is strictly less than 2, then the cost will be a fixed cost of 5 euros\".\n* {{parcels >= 5 fixed 20}} means \"If the number of parcels in the order is greater than or equal to 5, then the cost will be a fixed cost of 20 euros\".\n* {{pallets <= 3 unit 50}} means \"If the number of pallets in the order is less or equal to 3, then the cost will be 50 euros multiplied by the number of pallets\".\n\nThe default rule provided after the conditional rules consists of the following properties:\n\n* The quantity to consider, among {{pallets}}, {{parcels}} and {{kg}}; only considered if the cost is a unit cost.\n* Whether the cost is a unit cost ({{unit}}) or a fixed cost ({{fixed}}), i.e. whether the cost must be multiplied by the quantity or not.\n* The cost in euros.\n\nFor example:\n\n* {{pallets fixed 200}} means \"The order will have a shipping cost of 200 euros\".\n* {{parcels unit 20}} means \"The order will have a shipping cost of 20 euros multiplied by the number of parcels in that order\".\n\nEach order consists of the following properties:\n\n* A number of pallets.\n* A number of parcels.\n* The total weight in kilograms.\n\nFor every order, you must compute the cost according to the first matching conditional rule for that order, or using the default rule if none of the conditional rules have matched that order.",
+      "testCases": [
+        {
+          "title": "Only less-than conditions, only fixed costs",
+          "isTest": true,
+          "testIn": "3\nkg < 2 fixed 5\nparcels < 5 fixed 20\npallets <= 3 fixed 50\npallets fixed 200\n4\n1 1 1\n1 4 4\n2 12 12\n5 29 29",
+          "testOut": "5\n20\n50\n200",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Only less-than conditions, only fixed costs",
+          "isTest": false,
+          "testIn": "3\nkg < 4 fixed 10\nparcels < 10 fixed 40\npallets <= 6 fixed 100\npallets fixed 300\n5\n1 1 1\n1 4 4\n2 12 12\n5 29 29\n10 59 59",
+          "testOut": "10\n40\n100\n100\n300",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Only less-than conditions, some unit costs",
+          "isTest": true,
+          "testIn": "4\nkg < 10 fixed 10\nkg <= 20 unit 2\nparcels < 20 fixed 150\nparcels <= 60 unit 12\npallets unit 550\n6\n1 1 5\n1 3 15\n1 10 50\n2 50 250\n2 66 330\n3 104 520",
+          "testOut": "10\n30\n150\n600\n1100\n1650",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Only less-than conditions, some unit costs",
+          "isTest": false,
+          "testIn": "4\nkg <= 20 unit 100\nkg < 40 fixed 150\nparcels <= 25 unit 500\nparcels < 61 fixed 1000\npallets unit 1150\n6\n1 1 4\n1 6 24\n1 24 96\n1 35 140\n2 70 280\n3 145 580",
+          "testOut": "400\n150\n12000\n1000\n2300\n3450",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Only a default rule",
+          "isTest": true,
+          "testIn": "0\npallets unit 600\n4\n1 1 10\n1 9 90\n3 27 270\n12 113 1130",
+          "testOut": "600\n600\n1800\n7200",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Only a default rule",
+          "isTest": false,
+          "testIn": "0\nparcels unit 12\n4\n1 1 10\n1 9 90\n3 27 270\n12 113 1130",
+          "testOut": "12\n108\n324\n1356",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Only greater-than conditions",
+          "isTest": true,
+          "testIn": "2\npallets >= 31 unit 39\npallets > 1 fixed 1200\nparcels unit 20\n5\n1 1 5\n1 19 95\n2 35 175\n10 192 960\n40 784 3922",
+          "testOut": "20\n380\n1200\n1200\n1560",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Only greater-than conditions",
+          "isTest": false,
+          "testIn": "2\npallets > 34 unit 35\npallets >= 3 fixed 1300\nparcels unit 40\n3\n1 2 20\n3 27 274\n120 1198 11980",
+          "testOut": "80\n1300\n4200",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "0 <= [[conditionalRuleCount]] < 10\n1 <= [[orderCount]] < 10\n\nAll numeric quantities in the input and expected output can be represented as 31-bit unsigned integers.",
+      "coverBinaryId": 160893007627664,
+      "stubGenerator": "read conditionalRuleCount:int\nloop conditionalRuleCount read conditionalRuleQuantity:word(10) conditionalRuleOperator:word(10) conditionalRuleValue:int conditionalRuleCostType:word(10) conditionalRuleCost:int\nread defaultRuleQuantity:word(10) defaultRuleCostType:word(10) defaultRuleCost:int\nread orderCount:int\nloop orderCount read orderPallets:int orderParcels:int orderKg:int\nloop orderCount write <shipping cost for order>",
+      "inputDescription": "<<First line:>> An integer [[conditionalRuleCount]] for the number of conditional rules.\n<<Next >>[[conditionalRuleCount]]<< lines:>> Each line is a conditional rule, composed of [[conditionalRuleQuantity]], [[conditionalRuleOperator]], [[conditionalRuleValue]], [[conditionalRuleCostType]] and [[conditionalRuleCost]], separated by spaces.\n<<Next line:>> Default rule, composed of [[defaultRuleQuantity]], [[defaultRuleCostType]] and [[defaultRuleCost]], separated by spaces.\n<<Next line:>> An integer [[orderCount]] for the number of orders.\n<<Next >>[[orderCount]]<< lines:>> Each line is an order, composed of [[orderPallets]], [[orderParcels]] and [[orderKg]], separated by spaces.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "[[orderCount]]<< lines:>> Computed [[orderShippingCost]] in euros, one line per order."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You work at a shipping company, and are tasked with automating the shipping cost computation for an e-commerce platform! In order to do so, you are provided with a set of business rules and customer order details, and for every such order, you must compute the shipping cost.<br><br>Business rules are composed of a set of conditional rules, which only apply if the associated condition is met, and a default rule to apply if none of the conditional rules have applied.<br><br>Each conditional rule consists of a condition to match and a cost formula to apply if the condition matches, and as such, is composed of the following properties:<br><br>* The quantity to consider, among <const>pallets</const>&nbsp;(number of wooden pallets), <const>parcels</const> (number of parcels) and <const>kg</const> (total weight in kilograms).<br>* The operator, among <const>&lt;=</const>, <const>&lt;</const>, <const>&gt;=</const> or <const>&gt;</const>, representing the operation between the quantity of the order on the left and the condition value on the right.<br>* The value, as an integer.<br>* Whether the cost is a unit cost (<const>unit</const>) or a fixed cost (<const>fixed</const>), i.e. whether the cost must be multiplied by the quantity or not.<br>* The cost in euros.<br><br>For example:<br><br>* <const>kg &lt; 2 fixed 5</const> means &quot;If the weight in kilograms in the order is strictly less than 2, then the cost will be a fixed cost of 5 euros&quot;.<br>* <const>parcels &gt;= 5 fixed 20</const> means &quot;If the number of parcels in the order is greater than or equal to 5, then the cost will be a fixed cost of 20 euros&quot;.<br>* <const>pallets &lt;= 3 unit 50</const> means &quot;If the number of pallets in the order is less or equal to 3, then the cost will be 50 euros multiplied by the number of pallets&quot;.<br><br>The default rule provided after the conditional rules consists of the following properties:<br><br>* The quantity to consider, among <const>pallets</const>, <const>parcels</const> and <const>kg</const>; only considered if the cost is a unit cost.<br>* Whether the cost is a unit cost (<const>unit</const>) or a fixed cost (<const>fixed</const>), i.e. whether the cost must be multiplied by the quantity or not.<br>* The cost in euros.<br><br>For example:<br><br>* <const>pallets fixed 200</const> means &quot;The order will have a shipping cost of 200 euros&quot;.<br>* <const>parcels unit 20</const>&nbsp;means &quot;The order will have a shipping cost of 20 euros multiplied by the number of parcels in that order&quot;.<br><br>Each order consists of the following properties:<br><br>* A number of pallets.<br>* A number of parcels.<br>* The total weight in kilograms.<br><br>For every order, you must compute the cost according to the first matching conditional rule for that order, or using the default rule if none of the conditional rules have matched that order.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>First line:</strong> An integer <var>conditionalRuleCount</var> for the number of conditional rules.<br><strong>Next </strong><var>conditionalRuleCount</var><strong> lines:</strong> Each line is a conditional rule, composed of <var>conditionalRuleQuantity</var>, <var>conditionalRuleOperator</var>, <var>conditionalRuleValue</var>, <var>conditionalRuleCostType</var> and <var>conditionalRuleCost</var>, separated by spaces.<br><strong>Next line:</strong> Default rule, composed of <var>defaultRuleQuantity</var>, <var>defaultRuleCostType</var> and <var>defaultRuleCost</var>, separated by spaces.<br><strong>Next line:</strong> An integer <var>orderCount</var> for the number of orders.<br><strong>Next </strong><var>orderCount</var><strong> lines:</strong> Each line is an order, composed of <var>orderPallets</var>, <var>orderParcels</var> and <var>orderKg</var>, separated by spaces.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><var>orderCount</var><strong> lines:</strong> Computed <var>orderShippingCost</var> in euros, one line per order.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt;= <var>conditionalRuleCount</var> &lt; 10<br>1 &lt;= <var>orderCount</var>&nbsp;&lt; 10<br><br>All numeric quantities in the input and expected output can be represented as 31-bit unsigned integers.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\nkg &lt; 2 fixed 5\nparcels &lt; 5 fixed 20\npallets &lt;= 3 fixed 50\npallets fixed 200\n4\n1 1 1\n1 4 4\n2 12 12\n5 29 29</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">5\n20\n50\n200</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 93798463743273,
+  "commentCount": 2,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
