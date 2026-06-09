@@ -1,0 +1,259 @@
+{
+  "id": 149373,
+  "activeVersion": 3,
+  "score": 0,
+  "votableId": 39977763,
+  "codingamerId": 1486857,
+  "views": 10,
+  "commentableId": 39807432,
+  "title": "Simple Makefiles",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "sammck",
+  "publicHandle": "149373d871f27bdcdc97a723791d28b1fdfe5e",
+  "codingamerHandle": "2cdb2c48510cd9cfd702f1b2322a0b917586841",
+  "lastVersion": {
+    "version": 3,
+    "autocloseTime": 1783637082657,
+    "data": {
+      "title": "Simple Makefiles",
+      "topics": [
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 48,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "id": 55,
+          "handle": "DFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en profondeur",
+            "2": "DFS"
+          },
+          "pageTitle": "DFS: exercises and theory",
+          "puzzleCount": 32,
+          "parentTopicId": 41,
+          "contentDetailsId": 79
+        },
+        {
+          "id": 171,
+          "handle": "dependency-graph",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Dependency Graph",
+            "2": "Dependency Graph"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "#!/usr/bin/env python3\n\"\"\"\nCodingame puzzle: \nhttps://www.codingame.com/ide/puzzle/\n\"\"\"\n\n#region Boilerplate\n\nfrom __future__ import annotations\n\n# ruff: noqa: E402\n\n\nimport math # noqa: F401\nimport sys\nfrom itertools import combinations as _combinations # noqa: F401\nfrom types import NotImplementedType # noqa: F401\nfrom typing import ( # noqa: F401\n    Any,\n    ClassVar,\n    Final,\n    Generator,      \n    Generic,\n    Iterable,\n    Iterator,\n    NamedTuple,\n    Optional,\n    Protocol,\n    runtime_checkable,\n    TypeAlias,\n    TypeVar,\n    cast,\n    overload,\n)\n\nfrom enum import Enum, auto, IntEnum # noqa: F401\n\nfrom functools import total_ordering # noqa: F401\nfrom queue import PriorityQueue # noqa: F401\n\nclass NoValue:\n    pass\n\nNO_VALUE = NoValue()\n\nif sys.version_info >= (3, 12):\n    from typing import Self, override\nelse:\n    # pyright: ignore[reportUnreachable]\n    try:\n        from typing_extensions import Self, override  # type: ignore[import]\n    except ImportError:\n        Self: TypeAlias = Any\n        def override(func: Any) -> Any:\n            return func\n\n\nSTANDALONE = False\nif len(sys.argv) > 1 and sys.argv[1] == \"--standalone\":\n    STANDALONE = True\n    sys.argv = [ sys.argv[0] ] + sys.argv[2:]\n\nDEBUG = True\nDEBUG_INPUT = True\n\ndef dp(*args, debug: Optional[bool]=None, **kwargs):\n    if debug is None:\n        debug = DEBUG\n    if debug:\n        print(*args, **kwargs, file=sys.stderr)\n\ndef dpinput() -> str:\n    result = input()\n    dp(result, debug=DEBUG_INPUT)\n    return result\n\n#----------------------------------------------------------\n#endregion\n\n#region Problem Statement\n\"\"\"\nSimple Makefile Processor\n=========================\n\nParse a simplified makefile and output, in order, all actions required to\nbuild the specified target(s).\n\nINPUT FORMAT\n------------\nLine 1:  n_targets — integer, number of targets to build\nLine 2:  space-separated target names (blank line when n_targets == 0)\nLine 3:  n_lines — integer, number of makefile lines that follow\nLines 4…: The makefile content (exactly n_lines lines)\n\nMAKEFILE FORMAT\n---------------\nA rule names a target and its prerequisites, followed by zero or more\naction lines:\n\n    target: dep1 dep2 ...\n    <TAB>command token1 token2 ...\n    <TAB>command token1 token2 ...\n\n  - Rule line: any non-blank, non-tab line containing ':'. Everything\n    before ':' is one or more whitespace-separated target names; everything\n    after is whitespace-separated prerequisites.\n  - Action line: begins with a single TAB character. Belongs to the most\n    recently defined rule.\n  - Comment: '#' begins a comment that extends to end of line. May appear\n    on any line type. Stripped before parsing.\n  - Blank lines: ignored.\n\nSIMPLIFIED CONSTRAINTS (the puzzle removes real-make complexity)\n----------------------------------------------------------------\n  1. No variable/macro definitions (CC = gcc etc. do not appear).\n  2. Only three built-in macros are supported; each appears as a complete,\n     standalone token — no concatenation with surrounding text:\n       $@  current target name\n       $<  first prerequisite\n       $^  all prerequisites, space-separated, in definition order\n  3. No dot-directives (.PHONY, .SUFFIXES, …).\n  4. No static pattern rules (e.g. `%.o: %.c`). A rule line may, however,\n     list multiple plain targets before the colon:\n       foo bar: baz\n     This is exactly equivalent to two separate rules, one for each target,\n     sharing the same prerequisites and action lines. Built-in macros such\n     as $@ expand relative to each individual target. The first target named\n     on the first rule line of the makefile is the default target.\n  5. No filename wildcards or path canonicalization; targets are compared\n     as plain strings.\n  6. Timestamps are ignored. A target that has at least one action is\n     always considered out-of-date and must be rebuilt.\n  7. A target that has no rule at all is assumed to already exist (like an\n     up-to-date source file); it needs no actions and has no prerequisites.\n  8. All tokens are simple whitespace-delimited strings; ':' and '#' never\n     appear inside a token. '$' only begins one of the three built-in macros.\n  9. Action lines are the only lines that begin with a TAB; TABs do not\n     appear elsewhere.\n 10. A target name may appear in multiple rule lines (whether through the\n     multi-target shorthand or as separate rules). Its prerequisites are the\n     union of all definitions, and its actions are the concatenation of all\n     definition action lines in order of appearance.\n\nBUILD SEMANTICS\n---------------\n  1. If n_targets == 0, build the first target defined in the makefile\n     (the \"default\" target — the one that appears first as a rule LHS).\n  2. Each target is built at most once per invocation.\n  3. All prerequisites of a target are fully built before the target itself.\n  4. When build order is not constrained by the dependency graph, targets\n     with lexicographically smaller names are built first.\n  5. Actions are only emitted for a target that has at least one action line.\n  6. Before building, the entire dependency graph is checked for cycles. If\n     any cycle exists (even among targets not being built), the build is\n     aborted immediately.\n\nOUTPUT FORMAT\n-------------\n  - For every action that must be executed, output it on its own line:\n    tokens separated by a single space, no leading or trailing whitespace,\n    with built-in macros already expanded.\n  - After all actions, output exactly:  [Build complete]\n  - If the dependency graph contains a cycle, output exactly:\n      [Circular dependencies detected]\n    No actions are emitted and [Build complete] is suppressed.\n\nEXAMPLE\n-------\nInput (Text iside <> is appropriately replaced by actual input; blank lines are shown explicitly):\n    0\n    <blank-line>\n    7\n    all: main.o util.o\n    <TAB>gcc -o $@ $^\n    main.o: main.c\n    <TAB>gcc -c $< -o $@\n    util.o: util.c\n    <TAB>gcc -c $< -o $@\n\nOutput:\n    gcc -c main.c -o main.o\n    gcc -c util.c -o util.o\n    gcc -o all main.o util.o\n    [Build complete]\n\nExplanation: default target is 'all'; its prerequisites ['main.o', 'util.o']\nare sorted lexicographically so main.o is built first, then util.o, then all.\nmain.c and util.c have no rule so they are assumed to exist already.\n\"\"\"\n#endregion\n\nToken = str\nTargetName = str\n\nclass LineType(Enum):\n    RULE = auto()\n    ACTION = auto()\n    BLANK = auto()\n\nclass MakefileError(Exception):\n    \"\"\"Raised when the makefile is invalid or cannot be processed.\"\"\"\n    \n    def __init__(self, message: str, line_no: Optional[int] = None, line_text: Optional[str] = None) -> None:\n        if line_no is not None:\n            message = f\"Makefile line {line_no}: {message}\"\n        if line_text is not None:\n            message = f\"{message}:  {line_text!r}\"\n        super().__init__(message)\n\nclass MakefileLineError(MakefileError):\n    \"\"\"Raised when a specific line of the makefile is invalid.\"\"\"\n    def __init__(self, line: MakefileLine, message: str) -> None:\n        super().__init__(message, line_no=line.line_no, line_text=line.raw_line)\n\nclass MakefileCycleError(MakefileError):\n    \"\"\"Raised when a circular dependency is detected in the makefile.\"\"\"\n    def __init__(self, target_name: TargetName) -> None:\n        super().__init__(f\"Circular dependency detected while building {target_name!r}\")\n        \nclass MakefileLine:\n    \"\"\"A parsed line of the makefile, with tokens and metadata.\"\"\"\n    \n    line_no: int\n    \"\"\"1-based line number in the original makefile.\"\"\"\n\n    raw_line: str\n    \"\"\"Original line text, with comments and whitespace intact.\"\"\"\n    \n    comment: str | None = None\n    \"\"\"Comment text, including the leading '#', or None if no comment.\"\"\"\n    \n    is_action: bool = False\n    \"\"\"True if this line is an action line (begins with a TAB).\"\"\"\n    \n    stripped: str\n    \"\"\"Line text with comments and leading/trailing whitespace removed.\"\"\"\n    \n    is_rule: bool = False\n    \"\"\"True if this line is a rule line (non-blank, non-action line containing ':').\"\"\"\n    \n    target_tokens: list[Token]\n    \"\"\"Tokens from the rule's target part (before ':'). Empty if not a rule.\"\"\"\n    \n    tokens: list[Token]\n    \"\"\"For actions, tokens from the action line. For rules, tokens from the dependencies. Empy for blank lines.\"\"\"\n    \n    @property\n    def is_blank(self) -> bool:\n        \"\"\"True if this line is blank (only whitespace and/or a comment).\"\"\"\n        return not self.is_action and not self.is_rule\n    \n    def __init__(self, line_no: int, raw_line: str) -> None:\n        self.line_no = line_no\n        self.raw_line = raw_line\n        line = raw_line.rstrip()\n        i_comment = line.find('#')\n        if i_comment >= 0:\n            self.comment = line[i_comment:]\n            line = line[:i_comment].rstrip()\n        if line.startswith('\\t'):\n            self.is_action = True\n            line = line[1:]\n        line = line.strip()\n        self.stripped = line\n        self.target_tokens = []\n        if not self.is_action:\n            i_colon = line.find(':')\n            if i_colon >= 0:\n                if '$' in line:\n                    raise MakefileLineError(self, \"Rule lines cannot contain macro expansions\")\n                self.is_rule = True\n                target_str = line[:i_colon].strip()\n                if len(target_str) == 0:\n                    raise MakefileLineError(self, \"Invalid rule line with empty target\")\n                self.target_tokens = target_str.split()\n                line = line[i_colon + 1:].strip()\n        \n        self.tokens = line.split() if line else []\n        \nclass Action(NamedTuple):\n    \"\"\"A single action line, with its tokens and reference to the rule it belongs to.\"\"\"\n    original_tokens: list[Token]\n    \"\"\"Tokens without macros expanded\"\"\"\n    \n    tokens: list[Token]\n    \"\"\"Tokens with macros expanded\"\"\"\n    \n    line: MakefileLine\n    \"\"\"The original MakefileLine that defined this action, used for error reporting.\"\"\"\n    \n    rule: Rule\n    \"\"\"The Rule that this action belongs to, used for macro expansion.\"\"\"\n    \n    def __str__(self) -> str:\n        return ' '.join(self.tokens)\n    \n    def __repr__(self) -> str:\n        return f\"Action(tokens={self.tokens!r}, line_no={self.line.line_no})\"\n\nclass Rule(NamedTuple):\n    \"\"\"A single rule line with a single target, its dependencies, and actions.\n       If a rule line contains multiple targets, a separate Rule and Actions will be created for each.\n    \"\"\"\n    target: TargetName\n    deps: list[TargetName]\n    actions: list[Action]\n    line: MakefileLine\n    \n    def expand_tokens(self, tokens: Iterable[Token]) -> list[Token]:\n        \"\"\"Expand built-in macros in the given action tokens using this rule's target and deps.\"\"\"\n        result: list[Token] = []\n        for tok in tokens:\n            if tok.startswith('$'):\n                if tok == '$@':\n                    result.append(self.target)\n                elif tok == '$<':\n                    if self.deps:\n                        result.append(self.deps[0])\n                elif tok == '$^':\n                    result.extend(self.deps)\n                else:\n                    raise MakefileLineError(self.line, f\"Unknown macro {tok!r} in action\")\n            else:\n                result.append(tok)\n        return result\n    \n    def __str__(self) -> str:\n        return f\"{self.target}: {' '.join(self.deps)}\\n\" + '\\n'.join(f\"\\t{action}\" for action in self.actions)\n    \n    def __repr__(self) -> str:\n        return f\"Rule(target={self.target!r}, deps={self.deps!r}, actions={self.actions!r}, line_no={self.line.line_no})\"\n\nclass Target(NamedTuple):\n    \"\"\"A single named target, with its rules, dependencies, and actions.\"\"\"\n    name: TargetName\n    rules: list[Rule]\n    deps: set[TargetName]\n    \n    def iter_actions(self) -> Generator[Action, None, None]:\n        \"\"\"Iterate over all actions for this target, in order of appearance in the makefile.\"\"\"\n        for rule in self.rules:\n            for action in rule.actions:\n                yield action\n    \n    def __str__(self) -> str:\n        return f\"Target({self.name!r})\"\n    \n    def __repr__(self) -> str:\n        return f\"Target(name={self.name!r}, rules={self.rules!r}, deps={sorted(self.deps)!r}, actions={list(self.iter_actions())!r})\"\n        \n    \nclass Makefile:\n    lines: list[MakefileLine]\n    targets: dict[TargetName, Target]\n    default_target: Target | None = None\n    \n    def get_target(self, name: TargetName) -> Target:\n        \"\"\"Get the Target object for the given name, creating it if necessary.\"\"\"\n        target = self.targets.get(name)\n        if target is None:\n            target = Target(name=name, rules=[], deps=set())\n            self.targets[name] = target\n        return target\n    \n    def __init__(self, lines: Iterable[str]) -> None:\n        self.lines = [MakefileLine(i + 1, line) for i, line in enumerate(lines)]\n        self.targets = {}\n        current_rules: list[Rule] = []\n        \"\"\"The rules currently being defined.  Empty when not processing a rule. May have > 1 rule when processing a rule line with multiple targets.\"\"\"\n\n        for line in self.lines:\n            if line.is_action:\n                if len(current_rules) == 0:\n                    raise MakefileLineError(line, \"Action line without preceding rule line\")\n                else:\n                    for current_rule in current_rules:\n                        action = Action(line.tokens, current_rule.expand_tokens(line.tokens), line, current_rule)\n                        current_rule.actions.append(action)\n            elif line.is_rule:\n                targets = [ self.get_target(name) for name in line.target_tokens ]\n                if len(targets) == 0:\n                    raise MakefileLineError(line, \"Rule line with no targets\")\n                if self.default_target is None:\n                    self.default_target = targets[0]\n                deps = line.tokens\n                current_rules = []\n                for target in targets:\n                    current_rule = Rule(target.name, deps, [], line)\n                    current_rules.append(current_rule)\n                    target.rules.append(current_rule)\n                    for dep in deps:\n                        target.deps.add(dep)\n                        \n    def find_cycles(self) -> list[TargetName]:\n        \"\"\"Detect if there are any cycles in the dependency graph. Returns a list of target names involved in a cycle, or an empty list if no cycles.\"\"\"\n        visited: set[TargetName] = set()\n        stack: set[TargetName] = set()\n        cycles: set[TargetName] = set()\n\n        def visit(target_name: TargetName) -> None:\n            if target_name in visited:\n                return\n            if target_name in stack:\n                cycles.add(target_name)\n                return\n            stack.add(target_name)\n            target = self.get_target(target_name)\n            for dep in target.deps:\n                visit(dep)\n            stack.remove(target_name)\n            visited.add(target_name)\n\n        for target_name in list(self.targets.keys()):\n            visit(target_name)\n\n        return sorted(cycles)\n                    \n    def build(self, requested_targets: Optional[list[TargetName]] = None) -> Iterable[Action]:\n        \"\"\"Build the specified targets (or the default target if None), generating the sequence of actions to execute.\"\"\"\n        if requested_targets is None:\n            if self.default_target is None:\n                return\n            requested_targets = [self.default_target.name]\n        \n        built: set[TargetName] = set()\n        building: set[TargetName] = set()  # cycle detection\n\n        def build_one(target_name: TargetName) -> Iterable[Action]:\n            if target_name in built:\n                dp(f\"Target {target_name!r} is already built, skipping\")\n                return\n            if target_name in building:\n                raise MakefileCycleError(target_name)\n            building.add(target_name)\n            target = self.get_target(target_name)\n            # dp(f\"build_one(target={target!r})\")\n            \n            for dep in sorted(target.deps):\n                yield from build_one(dep)\n            dp(f\"Building target: {target_name!r}\")\n            for action in target.iter_actions():\n                yield action\n\n            building.discard(target_name)\n            built.add(target_name)\n\n        for target_name in sorted(requested_targets):\n            yield from build_one(target_name)\n            \n    def build_to_stdout(self, requested_targets: Optional[list[TargetName]] = None) -> None:\n        \"\"\"Build the specified targets (or the default target if None), printing actions to stdout.\"\"\"\n        for action in self.build(requested_targets):\n            print(action)\n        print(\"[Build complete]\")\n        \n    def dumps(self) -> str:\n        \"\"\"Return a string representation of the makefile for debugging.\"\"\"\n        \n        result = []\n        for target in sorted(self.targets.values(), key=lambda t: t.name):\n            result.append(repr(target))\n        return '\\n'.join(result)\n\n\ndef main() -> None:\n    n_targets = int(dpinput())  # n_targets; we infer from the targets line instead\n    target_names_line = dpinput().strip()\n    target_names = target_names_line.split() if target_names_line else []\n    if len(target_names) != n_targets:\n        raise ValueError(f\"Expected {n_targets} target names, but got {len(target_names)}: {target_names_line!r}\")\n    requested = target_names if n_targets > 0 else None\n\n    n_lines = int(dpinput())\n    makefile_lines = [dpinput() for _ in range(n_lines)]\n    makefile = Makefile(makefile_lines)\n    \n    # dp(\"Parsed makefile:\\n\" + makefile.dumps())\n    \n    cycles = makefile.find_cycles()\n    if cycles:\n        dp(f\"Circular dependencies detected in targets: {cycles}\")\n        print(\"[Circular dependencies detected]\")\n        return\n\n    dp(\"Building...\")\n    makefile.build_to_stdout(requested)\n    \nif __name__ == \"__main__\":\n    main()\n",
+      "statement": "A <<makefile>> is a build script read by the [[make]] utility. It describes how to produce files (called {{targets}}) from other files (called {{prerequisites}}), by running shell commands called {actions}}. `make` figures out the correct order to run those actions so that every prerequisite exists before it is needed.\n\nYour task is to implement a simplified makefile processor: read a makefile and a list of targets to build, then print the actions that would be executed, in order.\n\n---\n\n<<Makefile syntax>>\n\nA makefile is a sequence of {{rules}}, {{action lines}}, {{comments}}, and blank lines.\n\n<<Rule lines>>\n\nA rule line declares one or more targets and their prerequisites:\n\n```\ntarget1 [target2 ...]: [prereq1 prereq2 ...]\n```\n\nEverything before the `:` is a whitespace-separated list of target names. Everything after is a whitespace-separated list of prerequisite names. Either list may be empty.\n\nIf multiple targets appear before the `:`, it is exactly equivalent to writing a separate identical rule for each target.\n\nA target name may appear in more than one rule line. Its prerequisites are the **union** of all definitions, and its actions are the **concatenation** of all definition action lines, in order of appearance.\n\n<<Action lines>>\n\nAn action line immediately follows a rule line (or another action line) and begins with a single **tab character**. It contains the command to execute when building the rule's target(s). Tabs appear **only** at the start of action lines.\n\n<<Comments and blank lines>>\n\nA `#` character begins a comment that extends to the end of the line, on any line type. Blank lines are ignored.\n\n---\n\n<<Built-in macros>>\n\nInside an action line, the following macros may appear as **complete, standalone tokens** (never embedded inside a longer word):\n\n| Macro | Expands to |\n|-------|-----------|\n| `$@`  | The name of the target being built |\n| `$<`  | The first prerequisite of the rule |\n| `$^`  | All prerequisites of the rule, space-separated, in definition order |\n\n---\n\n<<Build semantics>>\n\n<<Determining what to build.>> If no targets are requested, the {{default target}} — the first target named on the first rule line of the makefile — is built.\n\n<<Prerequisite-first ordering.>> Before a target is built, all of its prerequisites must be fully built. A target that has no rule at all is assumed to already exist (like a source file checked into version control); it requires no actions and has no prerequisites of its own.\n\n<<Lexicographic tie-breaking.>> When the dependency graph leaves the order between two targets unconstrained, the one whose name is lexicographically smaller is built first. This applies both to prerequisites listed in a rule and to multiple targets requested on the command line.\n\n<<Built once.>> Each target is built at most once, even if multiple targets depend on it.\n\n<<Actions only when defined.>> A target that has no action lines produces no output, but its prerequisites are still built.\n\n<<Timestamps ignored.>> Unlike real `make`, this processor does not check whether files are up to date. Every target that has action lines is unconditionally rebuilt.\n\n<<Cycle detection.>> Before any build begins, the entire dependency graph is checked for circular dependencies. If a cycle exists anywhere in the graph — even among targets not being built — the build is aborted.\n\n---\n\n<<Example>>\n\nThe following makefile compiles two source files into object files, then links them into a program. No targets are explicitly requested, so the default target `all` is built.\n\n```\nall: main.o util.o\n\tgcc -o $@ $^\nmain.o: main.c\n\tgcc -c $< -o $@\nutil.o: util.c\n\tgcc -c $< -o $@\n```\n\n`main.o` and `util.o` are prerequisites of `all` and must be built first. `main.c` and `util.c` have no rules, so they are assumed to exist. Between `main.o` and `util.o`, neither depends on the other, so the lexicographically smaller name (`main.o`) is built first.\n\nThe actions output are:\n\n```\ngcc -c main.c -o main.o\ngcc -c util.c -o util.o\ngcc -o all main.o util.o\n[Build complete]\n```\n\nNote that `$^` in the `all` rule expands to `main.o util.o` — the prerequisites in their <<definition order>>, not the order they were built.",
+      "testCases": [
+        {
+          "title": "Single target",
+          "isTest": true,
+          "testIn": "0\n\n2\nbuild:\n\techo hello\n",
+          "testOut": "echo hello\n[Build complete]\n",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Single target",
+          "isTest": false,
+          "testIn": "0\n\n4\ndeploy:\n\tprepare\n\tupload\n\tverify\n",
+          "testOut": "prepare\nupload\nverify\n[Build complete]\n",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Built-in macros",
+          "isTest": true,
+          "testIn": "0\n\n2\nmain.o: main.c\n\tcc -c $< -o $@\n",
+          "testOut": "cc -c main.c -o main.o\n[Build complete]\n",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Built-in macros",
+          "isTest": false,
+          "testIn": "0\n\n3\noutput.bin: input.dat\n\tprocess $<\n\trename result $@\n",
+          "testOut": "process input.dat\nrename result output.bin\n[Build complete]\n",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Lexicographic dependency ordering",
+          "isTest": true,
+          "testIn": "0\n\n8\nprogram: zebra apple mango\n\tlink -o $@ $^\napple:\n\tbuild apple\nzebra:\n\tbuild zebra\nmango:\n\tbuild mango\n",
+          "testOut": "build apple\nbuild mango\nbuild zebra\nlink -o program zebra apple mango\n[Build complete]\n",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Lexicographic dependency ordering",
+          "isTest": false,
+          "testIn": "3\nzebra apple mango\n6\napple:\n\tbuild apple\nmango:\n\tbuild mango\nzebra:\n\tbuild zebra\n",
+          "testOut": "build apple\nbuild mango\nbuild zebra\n[Build complete]\n",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Diamond dependency",
+          "isTest": true,
+          "testIn": "0\n\n8\nall: libA libB\n\tlink $^\nlibA: common.o\n\tar rc $@ $<\nlibB: common.o\n\tar rc $@ $<\ncommon.o: common.c\n\tcc -c $< -o $@\n",
+          "testOut": "cc -c common.c -o common.o\nar rc libA common.o\nar rc libB common.o\nlink libA libB\n[Build complete]\n",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Diamond dependency",
+          "isTest": false,
+          "testIn": "0\n\n7\nsetup: config data\nconfig:\n\tinit-config\ndata: raw\n\tprocess-data $<\nraw:\n\tfetch-raw\n",
+          "testOut": "init-config\nfetch-raw\nprocess-data raw\n[Build complete]\n",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Default target",
+          "isTest": true,
+          "testIn": "0\n\n6\ninstall: build\n\tcp build /usr/local/bin/install\nbuild: compile\n\tassemble $< -o $@\ncompile:\n\tpreprocess src\n",
+          "testOut": "preprocess src\nassemble compile -o build\ncp build /usr/local/bin/install\n[Build complete]\n",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Default target",
+          "isTest": false,
+          "testIn": "0\n\n8\nsuite: test-auth test-api test-db\n\trun-all $^\ntest-api:\n\texec test-api\ntest-auth:\n\texec test-auth\ntest-db:\n\texec test-db\n",
+          "testOut": "exec test-api\nexec test-auth\nexec test-db\nrun-all test-auth test-api test-db\n[Build complete]\n",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple explicit targets",
+          "isTest": true,
+          "testIn": "2\nreport tests\n8\ntests: runner\n\t./runner\nreport: data\n\tgenerate $< report.pdf\nrunner:\n\tbuild runner\ndata:\n\tfetch data\n",
+          "testOut": "fetch data\ngenerate data report.pdf\nbuild runner\n./runner\n[Build complete]\n",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple explicit targets",
+          "isTest": false,
+          "testIn": "0\n\n10\ntop: left right\n\tmerge $^\nleft: base extra\n\tbuild-left $^\nright: base extra\n\tbuild-right $^\nbase:\n\tmake-base\nextra:\n\tmake-extra\n",
+          "testOut": "make-base\nmake-extra\nbuild-left base extra\nbuild-right base extra\nmerge left right\n[Build complete]\n",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Comment variations",
+          "isTest": true,
+          "testIn": "0\n\n8\n# Build everything\nall: foo bar # both required\n\tcombine $^ # use all deps\nfoo: # no deps\n\tbuild-foo # step 1\nbar:\n\t# this is a comment action\n\tbuild-bar\n",
+          "testOut": "build-bar\nbuild-foo\ncombine foo bar\n[Build complete]\n",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Comment variations",
+          "isTest": false,
+          "testIn": "0\n\n10\n# Main entry point\nall: step1 step2 # both required\n\t# nothing to do here\n\tdone $@\n# First step\nstep1:\n\tdo-step1\n# Second step\nstep2:\n\tdo-step2\n",
+          "testOut": "do-step1\ndo-step2\ndone all\n[Build complete]\n",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple targets in one rule",
+          "isTest": true,
+          "testIn": "0\n\n4\nprogram: foo.o bar.o\n\tlink -o $@ $^\nfoo.o bar.o: sources\n\tcompile sources -o $@\n",
+          "testOut": "compile sources -o bar.o\ncompile sources -o foo.o\nlink -o program foo.o bar.o\n[Build complete]\n",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple targets in one rule",
+          "isTest": false,
+          "testIn": "0\n\n4\nbundle: a.o b.o c.o\n\tpack -o $@ $^\na.o b.o c.o: source.c\n\tcompile source.c -o $@\n",
+          "testOut": "compile source.c -o a.o\ncompile source.c -o b.o\ncompile source.c -o c.o\npack -o bundle a.o b.o c.o\n[Build complete]\n",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Same target in multiple rules",
+          "isTest": true,
+          "testIn": "0\n\n10\nall: lib\n\tuse $^\nlib: part1.o\n\tstep1 $^\nlib: part2.o\n\tstep2 $^\npart1.o:\n\tmake-part1\npart2.o:\n\tmake-part2\n",
+          "testOut": "make-part1\nmake-part2\nstep1 part1.o\nstep2 part2.o\nuse lib\n[Build complete]\n",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Same target in multiple rules",
+          "isTest": false,
+          "testIn": "0\n\n10\nall: combined\n\tship $<\ncombined: moduleA\n\tlink $^\ncombined: moduleB\n\tlink $^\nmoduleA:\n\tbuild-a\nmoduleB:\n\tbuild-b\n",
+          "testOut": "build-a\nbuild-b\nlink moduleA\nlink moduleB\nship combined\n[Build complete]\n",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Deep linear dependency chain",
+          "isTest": true,
+          "testIn": "0\n\n10\nfinal: stage3\n\tpackage $< into $@\nstage3: stage2\n\tprocess $< to $@\nstage2: stage1\n\ttransform $< into $@\nstage1: raw\n\tconvert $< to $@\nraw:\n\tfetch raw-data\n",
+          "testOut": "fetch raw-data\nconvert raw to stage1\ntransform stage1 into stage2\nprocess stage2 to stage3\npackage stage3 into final\n[Build complete]\n",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Deep linear dependency chain",
+          "isTest": false,
+          "testIn": "0\n\n10\nresult: stage4\n\tpackage $^ -o $@\nstage4: stage3\n\tprocess $^ -o $@\nstage3: stage2\n\tbuild $^ -o $@\nstage2: stage1\n\tcompile $^ -o $@\nstage1:\n\tfetch source\n",
+          "testOut": "fetch source\ncompile stage1 -o stage2\nbuild stage2 -o stage3\nprocess stage3 -o stage4\npackage stage4 -o result\n[Build complete]\n",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Circular dependency",
+          "isTest": true,
+          "testIn": "0\n\n4\nA: B\n\tbuild A\nB: A\n\tbuild B\n",
+          "testOut": "[Circular dependencies detected]\n",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Circular dependency",
+          "isTest": false,
+          "testIn": "0\n\n6\nstart: mid\n\tdo-start\nmid: end\n\tdo-mid\nend: start\n\tdo-end\n",
+          "testOut": "[Circular dependencies detected]\n",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "L <= 1000",
+      "coverBinaryId": 162876484438559,
+      "stubGenerator": "read nTargets:int\nread targetsLine:string(1024)\nread nLines:int\nloop nLines read line:string(1024)\nwrite [Build complete]",
+      "inputDescription": "<<Line 1:>> An integer [[N]], the number of targets to build. If [[N]] is {{0}}, the first target defined in the makefile (the default target) will be built.\n\n<<Line 2:>> [[N]] space-separated strings, each a target name to build. This line is blank when [[N]] is {{0}}.\n\n<<Line 3:>> An integer [[L]], the number of lines in the makefile.\n\n<<Next [[L]] lines:>> The makefile, one line at a time. Syntax rules are described above.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<<If a circular dependency is detected:>>>\n<A single line>: `[Circular dependencies detected]` — no action lines and no `[Build complete]` are output.\n\n<<<Otherwise>>\n<One line per action executed:> The tokens of the action, separated by single spaces, with all built-in macros already expanded. Actions are emitted in build order: a target's prerequisites are fully built before the target itself, and lexicographically smaller names are built first when the dependency graph imposes no further constraint. Targets with no action lines produce no output.\n\n<Final line:> `[Build complete]`"
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A <strong>makefile</strong> is a build script read by the <var>make</var> utility. It describes how to produce files (called <const>targets</const>) from other files (called <const>prerequisites</const>), by running shell commands called {actions}}. <pre style=\"font-family: monospace\">make</pre> figures out the correct order to run those actions so that every prerequisite exists before it is needed.<br><br>Your task is to implement a simplified makefile processor: read a makefile and a list of targets to build, then print the actions that would be executed, in order.<br><br>---<br><br><strong>Makefile syntax</strong><br><br>A makefile is a sequence of <const>rules</const>, <const>action lines</const>, <const>comments</const>, and blank lines.<br><br><strong>Rule lines</strong><br><br>A rule line declares one or more targets and their prerequisites:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>target1 [target2 ...]: [prereq1 prereq2 ...]<br></pre><pre style=\"font-family: monospace\"></pre><br><br>Everything before the <pre style=\"font-family: monospace\">:</pre> is a whitespace-separated list of target names. Everything after is a whitespace-separated list of prerequisite names. Either list may be empty.<br><br>If multiple targets appear before the <pre style=\"font-family: monospace\">:</pre>, it is exactly equivalent to writing a separate identical rule for each target.<br><br>A target name may appear in more than one rule line. Its prerequisites are the **union** of all definitions, and its actions are the **concatenation** of all definition action lines, in order of appearance.<br><br><strong>Action lines</strong><br><br>An action line immediately follows a rule line (or another action line) and begins with a single **tab character**. It contains the command to execute when building the rule's target(s). Tabs appear **only** at the start of action lines.<br><br><strong>Comments and blank lines</strong><br><br>A <pre style=\"font-family: monospace\">#</pre> character begins a comment that extends to the end of the line, on any line type. Blank lines are ignored.<br><br>---<br><br><strong>Built-in macros</strong><br><br>Inside an action line, the following macros may appear as **complete, standalone tokens** (never embedded inside a longer word):<br><br>| Macro | Expands to |<br>|-------|-----------|<br>| <pre style=\"font-family: monospace\">$@</pre>  | The name of the target being built |<br>| <pre style=\"font-family: monospace\">$&lt;</pre>  | The first prerequisite of the rule |<br>| <pre style=\"font-family: monospace\">$^</pre>  | All prerequisites of the rule, space-separated, in definition order |<br><br>---<br><br><strong>Build semantics</strong><br><br><strong>Determining what to build.</strong> If no targets are requested, the <const>default target</const> &mdash; the first target named on the first rule line of the makefile &mdash; is built.<br><br><strong>Prerequisite-first ordering.</strong> Before a target is built, all of its prerequisites must be fully built. A target that has no rule at all is assumed to already exist (like a source file checked into version control); it requires no actions and has no prerequisites of its own.<br><br><strong>Lexicographic tie-breaking.</strong> When the dependency graph leaves the order between two targets unconstrained, the one whose name is lexicographically smaller is built first. This applies both to prerequisites listed in a rule and to multiple targets requested on the command line.<br><br><strong>Built once.</strong> Each target is built at most once, even if multiple targets depend on it.<br><br><strong>Actions only when defined.</strong> A target that has no action lines produces no output, but its prerequisites are still built.<br><br><strong>Timestamps ignored.</strong> Unlike real <pre style=\"font-family: monospace\">make</pre>, this processor does not check whether files are up to date. Every target that has action lines is unconditionally rebuilt.<br><br><strong>Cycle detection.</strong> Before any build begins, the entire dependency graph is checked for circular dependencies. If a cycle exists anywhere in the graph &mdash; even among targets not being built &mdash; the build is aborted.<br><br>---<br><br><strong>Example</strong><br><br>The following makefile compiles two source files into object files, then links them into a program. No targets are explicitly requested, so the default target <pre style=\"font-family: monospace\">all</pre> is built.<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>all: main.o util.o<br>\tgcc -o $@ $^<br>main.o: main.c<br>\tgcc -c $&lt; -o $@<br>util.o: util.c<br>\tgcc -c $&lt; -o $@<br></pre><pre style=\"font-family: monospace\"></pre><br><br><pre style=\"font-family: monospace\">main.o</pre> and <pre style=\"font-family: monospace\">util.o</pre> are prerequisites of <pre style=\"font-family: monospace\">all</pre> and must be built first. <pre style=\"font-family: monospace\">main.c</pre> and <pre style=\"font-family: monospace\">util.c</pre> have no rules, so they are assumed to exist. Between <pre style=\"font-family: monospace\">main.o</pre> and <pre style=\"font-family: monospace\">util.o</pre>, neither depends on the other, so the lexicographically smaller name (<pre style=\"font-family: monospace\">main.o</pre>) is built first.<br><br>The actions output are:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>gcc -c main.c -o main.o<br>gcc -c util.c -o util.o<br>gcc -o all main.o util.o<br>[Build complete]<br></pre><pre style=\"font-family: monospace\"></pre><br><br>Note that <pre style=\"font-family: monospace\">$^</pre> in the <pre style=\"font-family: monospace\">all</pre> rule expands to <pre style=\"font-family: monospace\">main.o util.o</pre> &mdash; the prerequisites in their <strong>definition order</strong>, not the order they were built.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var>, the number of targets to build. If <var>N</var> is <const>0</const>, the first target defined in the makefile (the default target) will be built.<br><br><strong>Line 2:</strong> <var>N</var> space-separated strings, each a target name to build. This line is blank when <var>N</var> is <const>0</const>.<br><br><strong>Line 3:</strong> An integer <var>L</var>, the number of lines in the makefile.<br><br><strong>Next <var>L</var> lines:</strong> The makefile, one line at a time. Syntax rules are described above.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>&lt;If a circular dependency is detected:</strong>&gt;<br>&lt;A single line&gt;: <pre style=\"font-family: monospace\">[Circular dependencies detected]</pre> &mdash; no action lines and no <pre style=\"font-family: monospace\">[Build complete]</pre> are output.<br><br><strong>&lt;Otherwise</strong><br>&lt;One line per action executed:&gt; The tokens of the action, separated by single spaces, with all built-in macros already expanded. Actions are emitted in build order: a target's prerequisites are fully built before the target itself, and lexicographically smaller names are built first when the dependency graph imposes no further constraint. Targets with no action lines produce no output.<br><br>&lt;Final line:&gt; <pre style=\"font-family: monospace\">[Build complete]</pre></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">L &lt;= 1000</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">0\n\n2\nbuild:\n\techo hello\n</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">echo hello\n[Build complete]\n</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 7320595789984,
+  "commentCount": 0,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
