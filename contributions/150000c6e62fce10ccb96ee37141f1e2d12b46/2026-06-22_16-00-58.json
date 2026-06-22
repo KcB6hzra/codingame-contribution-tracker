@@ -1,0 +1,125 @@
+{
+  "id": 150000,
+  "activeVersion": 13,
+  "score": 0,
+  "votableId": 40026680,
+  "codingamerId": 6665593,
+  "views": 16,
+  "commentableId": 39856167,
+  "title": "Brick Wall 1",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Dralliord",
+  "publicHandle": "150000c6e62fce10ccb96ee37141f1e2d12b46",
+  "codingamerHandle": "c771518d1ced74f4ebd16b08a69c26743955666",
+  "lastVersion": {
+    "version": 13,
+    "autocloseTime": 1784725138636,
+    "data": {
+      "title": "Brick Wall 1",
+      "topics": [],
+      "solution": "import java.util.*;\nimport java.io.*;\nimport java.math.*;\n\n/**\n * Auto-generated code below aims at helping you parse\n * the standard input according to the problem statement.\n **/\nclass Solution {\n    static Bricks B = new Bricks();\n    static String wall = \"\";\n    static int H, W;\n\n    public static void main(String args[]) {\n        Scanner in = new Scanner(System.in);\n        int N = in.nextInt();\n        System.err.println(\"N=\"+N);\n        for (int i = 0; i < N; i++) {\n            String brickName = in.next();\n            int brickSize = in.nextInt();\n            String color = in.next();\n            int count = in.nextInt();\n            B.add(new Brick(brickName, brickSize, color, count));\n            System.err.println(\"brickName=\"+brickName+\" brickSize=\"+brickSize+\" color=\"+color+\" count=\"+count);\n        }\n        H = in.nextInt();\n        W = in.nextInt();\n        System.err.println(\"H=\"+H+\", W=\"+W);\n        if (in.hasNextLine()) {\n            in.nextLine();\n        }\n        for (int i = 0; i < H; i++) {\n            String line = in.nextLine();\n            wall=line+wall;\n            System.err.println(line);\n        }\n\n        Sol sol = new Sol();\n        findSol(0, sol);\n\n        for (Place p:sol.list)\n            System.out.println(p.brick.brickName + \" \" + p.pos%W);\n    }\n\n    static boolean findSol(int pos, Sol sol) {\n        //System.err.println(\"findSol \" + pos + sol);\n        if (pos>=H*W) return checkStable(sol);\n        char color = wall.charAt(pos);\n        if (color == ' ') return findSol(pos+1, sol);\n        for (Brick b : B.list) {\n            if (b.count==0 || b.color!=color) continue;\n            boolean checkB=true;\n            for (int i=0; i<b.brickSize;i++)\n                if ((i>0&&(pos+i)%W==0) || wall.charAt(pos+i) != color) { checkB=false; break;}\n            if (checkB) {\n                sol.add(new Place(b, pos));\n                b.count--;\n                boolean res = findSol(pos+b.brickSize, sol);\n                if (res) return true;\n                sol.list.removeLast();\n                b.count++;\n            }\n        }\n        return false;\n    }\n\n    static boolean checkStable(Sol sol) {\n        List<Sol> l = new ArrayList<>();\n        for (Place p : sol.list) {\n            //System.err.println(l);\n            if (p.pos/W ==0) { Sol s = new Sol(); s.add(p); l.add(s); continue; }\n            boolean hasSupport=false;\n            for (int i=0; i<p.brick.brickSize; i++) {\n                int subPos = p.pos+i-W;\n                if (wall.charAt(subPos) == ' ') continue;\n                hasSupport = true;\n                Sol firstSol = null;\n                for (Sol existingSol : l) {\n                    if (existingSol.hasPlace(p)) {\n                        firstSol = existingSol;\n                    }\n                    else if (existingSol.hasPos(subPos)) {\n                        if (firstSol == null) {\n                            existingSol.add(p); \n                            firstSol = existingSol; \n                        }\n                        else {\n                            for (Place p2 : existingSol.list)\n                                firstSol.add(p2);\n                            existingSol.list.clear();\n                        }\n                    }\n                }\n            }\n            if (!hasSupport) return false;\n\n        }\n        int size = 0;\n        for (Sol s : l)\n            if (s.size() > 0) size++;\n        return size==1;\n    }\n}\n\nclass Brick {\n    String brickName;\n    char color;\n    int brickSize, count;\n\n    Brick(String n, int s, String c, int i) { brickName = n; brickSize = s; color = c.charAt(0); count = i; }\n}\n\nclass Bricks {\n    List<Brick> list = new ArrayList<>();\n\n    void add(Brick b) { list.add(b); }\n    int size()  {return list.size();}\n    Brick get(int i) { return list.get(i); }\n}\n\nclass Place {\n    Brick brick;\n    int pos;\n    Place(Brick b, int p) { brick=b; pos=p; }\n\n    public String toString() {\n        return brick.brickName + \"-\"+pos;\n    }\n\n}\n\nclass Sol {\n    List<Place> list = new ArrayList<>();\n    \n    void add(Place p) { list.add(p); }\n    int size()  {return list.size();}\n    Place get(int i) { return list.get(i); }\n    \n    boolean hasPlace(Place p) {\n        return list.contains(p);\n    }\n\n    boolean hasPos(int pos) {\n        for (Place p : list)\n            if (pos >= p.pos && pos<p.pos+p.brick.brickSize) return true;\n        return false;\n    }\n\n    public String toString() {\n        return list.toString();\n    }\n}",
+      "statement": "The goal is to build a wall using LEGO bricks. All bricks are 1 depth, the wall also must be 1 depth, so don't try to turn bricks.\n\nIn input you have the wall on face view, Each brick item is represented by a color character. The wall can have windows.\nThen you have a set of bricks to use, you can have more bricks than needed.\n\nThe goal is to give the build instructions. for that you'll give in order which brick to use on a horizontal position. The vertical is position is the lower possible so bricks are stacked on previous ones.\n\nCondition : the wall must be stable, it must be impossible to split it on several sections.\n\nExample :\nInput\n2\nb1 1 W 6 \nb3 3 W 6 \n3\n3\nWWW\nW W\nWWW\n\nOutput\nb3 0\nb1 0\nb1 2\nb3 0\n\nOnly one solution is possible. In previous example, using b1 bricks instead of b3 make the wall instable.\n\nRemarks\n- level 2 add plates and tiles",
+      "testCases": [
+        {
+          "title": "Simple",
+          "isTest": true,
+          "testIn": "2\nb1 1 W 6\nb3 3 W 6\n3\n3\nWWW\nW W\nWWW\n",
+          "testOut": "b3 0\nb1 0\nb1 2\nb3 0\n",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple",
+          "isTest": false,
+          "testIn": "2\nb1 1 B 6\nb3 3 B 6\n3\n3\nBBB\nB B\nBBB",
+          "testOut": "b3 0\nb1 0\nb1 2\nb3 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Pyramid",
+          "isTest": true,
+          "testIn": "4\nb1 1 W 6\nb2 2 W 6\nb3 3 W 6\nb4 4 W 6\n4\n8\n   WW   \n WWWWWW \nW W  W W\nWWWWWWWW",
+          "testOut": "b4 0\nb4 4\nb1 0\nb1 2\nb1 5\nb1 7\nb3 1\nb3 4\nb2 3\n",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Pyramid",
+          "isTest": false,
+          "testIn": "4\nb1 1 B 6\nb2 2 B 6\nb3 3 B 6\nb4 4 B 6\n4\n8\n   BB   \n BBBBBB \nB B  B B\nBBBBBBBB",
+          "testOut": "b4 0\nb4 4\nb1 0\nb1 2\nb1 5\nb1 7\nb3 1\nb3 4\nb2 3\n",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Battlements",
+          "isTest": true,
+          "testIn": "2\nb1 2 W 10\nb2 4 W 2\n2\n10\nWW WWWW WW\nWWWWWWWWWW",
+          "testOut": "b2 0\nb1 4\nb2 6\nb1 0\nb1 3\nb1 5\nb1 8\n",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Battlements",
+          "isTest": false,
+          "testIn": "2\nb1 2 B 10\nb2 4 B 2\n2\n10\nBB BBBB BB\nBBBBBBBBBB",
+          "testOut": "b2 0\nb1 4\nb2 6\nb1 0\nb1 3\nb1 5\nb1 8\n",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Black & white",
+          "isTest": true,
+          "testIn": "4\nw1 1 W 10\nw2 2 W 3\nb1 1 B 10\nb2 2 B 1\n3\n5\nBBWWB\nBWWBB\nWWBBW",
+          "testOut": "w2 0\nb1 2\nb1 3\nw1 4\nb1 0\nw2 1\nb2 3\nb1 0\nb1 1\nw2 2\nb1 4\n",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Black & white",
+          "isTest": false,
+          "testIn": "4\nw1 1 W 10\nw2 2 W 3\nb1 1 B 10\nb2 2 B 1\n3\n5\nBBWWB\nBWWBB\nWWBBW",
+          "testOut": "w2 0\nb1 2\nb1 3\nw1 4\nb1 0\nw2 1\nb2 3\nb1 0\nb1 1\nw2 2\nb1 4\n",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Pacman",
+          "isTest": true,
+          "testIn": "6\ny1 1 Y 10\ny2 2 Y 3\ny3 3 Y 0\ny4 4 Y 2\nb1 1 B 2\nb2 2 B 2\n4\n8\n YBYYBY \nYYYYYYYY\nYYBBBBYY\n YYYYYY ",
+          "testOut": "y1 1\ny1 2\ny1 3\ny1 4\ny1 5\ny1 6\ny2 0\nb2 2\nb2 4\ny2 6\ny4 0\ny4 4\ny1 1\nb1 2\ny2 3\nb1 5\ny1 6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Pacman",
+          "isTest": false,
+          "testIn": "6\ny1 1 Y 10\ny2 2 Y 3\ny3 3 Y 0\ny4 4 Y 2\nb1 1 B 2\nb2 2 B 2\n4\n8\n YBYYBY \nYYYYYYYY\nYYBBBBYY\n YYYYYY \n",
+          "testOut": "y1 1\ny1 2\ny1 3\ny1 4\ny1 5\ny1 6\ny2 0\nb2 2\nb2 4\ny2 6\ny4 0\ny4 4\ny1 1\nb1 2\ny2 3\nb1 5\ny1 6",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "Write solution with bricks from bottom then left to right",
+      "coverBinaryId": 163349389446502,
+      "stubGenerator": "read N:int\nloop N read brickName:word(10) brickSize:int color:word(1) count:int\nread H:int\nread W:int\nloop H read line:string(W)\nwrite answer",
+      "inputDescription": "<<Line 1 :>> An integer [[N]] is the numbr of different bricks\n<<[[N]] next lines :>> a description of a brick, fields are \" \" separated. First is the [[brickName]], second is the [[brickSize]], next is the [[brickColor]] and finally the [[brickCount]].\nThen the wall is given from top to bottom.\n<<Line :>> An integer [[H]] is the height of the wall\n<<Line :>> An integer [[W]] is the width of the wall\n<<[[H]] next lines :>> is a string made of color letters (ex 'W' for White) and spaces for windows",
+      "solutionLanguage": "Java",
+      "outputDescription": "A list of lines describing in order which brick is used a which place\n<<Line :>> [[brickName]] [[position]] . the position is the more left position used by the grid"
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">The goal is to build a wall using LEGO bricks. All bricks are 1 depth, the wall also must be 1 depth, so don't try to turn bricks.<br><br>In input you have the wall on face view, Each brick item is represented by a color character. The wall can have windows.<br>Then you have a set of bricks to use, you can have more bricks than needed.<br><br>The goal is to give the build instructions. for that you'll give in order which brick to use on a horizontal position. The vertical is position is the lower possible so bricks are stacked on previous ones.<br><br>Condition : the wall must be stable, it must be impossible to split it on several sections.<br><br>Example :<br>Input<br>2<br>b1 1 W 6 <br>b3 3 W 6 <br>3<br>3<br>WWW<br>W W<br>WWW<br><br>Output<br>b3 0<br>b1 0<br>b1 2<br>b3 0<br><br>Only one solution is possible. In previous example, using b1 bricks instead of b3 make the wall instable.<br><br>Remarks<br>- level 2 add plates and tiles</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1 :</strong> An integer <var>N</var> is the numbr of different bricks<br><strong><var>N</var> next lines :</strong> a description of a brick, fields are &quot; &quot; separated. First is the <var>brickName</var>, second is the <var>brickSize</var>, next is the <var>brickColor</var> and finally the <var>brickCount</var>.<br>Then the wall is given from top to bottom.<br><strong>Line :</strong> An integer <var>H</var> is the height of the wall<br><strong>Line :</strong> An integer <var>W</var> is the width of the wall<br><strong><var>H</var> next lines :</strong> is a string made of color letters (ex 'W' for White) and spaces for windows</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">A list of lines describing in order which brick is used a which place<br><strong>Line :</strong> <var>brickName</var> <var>position</var> . the position is the more left position used by the grid</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Write solution with bricks from bottom then left to right</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\nb1 1 W 6\nb3 3 W 6\n3\n3\nWWW\nW W\nWWW\n</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">b3 0\nb1 0\nb1 2\nb3 0\n</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 152960322823272,
+  "commentCount": 1,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
