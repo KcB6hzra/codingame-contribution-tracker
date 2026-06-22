@@ -1,0 +1,408 @@
+{
+  "id": 130893,
+  "activeVersion": 18,
+  "score": 0,
+  "votableId": 37735152,
+  "codingamerId": 6132028,
+  "views": 136,
+  "commentableId": 37572594,
+  "title": "Drone Delivery",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "NicknamedTwice",
+  "publicHandle": "130893d80cb29ed85d9bb0ba035645da29c96c",
+  "codingamerHandle": "d2434fa80c97cbc8809e37d800f205eb8202316",
+  "lastVersion": {
+    "version": 18,
+    "autocloseTime": 1784589725626,
+    "data": {
+      "title": "Drone Delivery",
+      "topics": [
+        {
+          "id": 68,
+          "handle": "pathfinding",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Recherche de chemins",
+            "2": "Pathfinding"
+          },
+          "pageTitle": "Pathfinding: exercises and theory",
+          "puzzleCount": 55,
+          "parentTopicId": 41,
+          "contentDetailsId": 69
+        },
+        {
+          "id": 66,
+          "handle": "optimization",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Optimisation",
+            "2": "Optimization"
+          },
+          "pageTitle": "Optimization: exercises and theory",
+          "puzzleCount": 26,
+          "parentTopicId": 41,
+          "contentDetailsId": 87
+        }
+      ],
+      "solution": "import numpy as np\nfrom numpy import maximum as maxx\nfrom functools import lru_cache\n\nraw = open(0).read().split()\nbx, by, C, F, S = map(int, raw[2:7])\nD, k = raw[7], int(raw[8])\na = np.array(raw[9:], int).reshape(k, 3)\nxy = np.vstack((a[:, :2], [bx, by]))\n\nU = (S + 4) // 5\ncosts = np.full(4, 5)\nd = 'NESW'.find(D)\ncosts[d] += U\ncosts[(d + 2) % 4] = max(1, 5 - U)\nBN, BE, BS, BW = costs\n\ndxy = xy - xy[:, None]\ndx, dy = dxy[..., 0], dxy[..., 1]\nM = np.abs(dxy).sum(axis=2)\nB = maxx(0, -dy)*BN + maxx(0, dx)*BE + maxx(0, dy)*BS + maxx(0, -dx)*BW\n\nALL = 1 << k\nWtot = (np.arange(ALL)[:, None] >> np.arange(k) & 1) @ a[:, 2]\n\n@lru_cache(None)\ndef solve(mask, last):\n    if not mask:\n        f = M[last, k] * ((S + 19) // 20) + B[last, k]\n        return () if f > F else ((M[last, k], f),)\n    \n    add = (Wtot[mask] + S + 19) // 20\n    res = []\n    m = mask\n    while m:\n        j = (m & -m).bit_length() - 1\n        for d2, f2 in solve(mask ^ (1 << j), j):\n            f = M[last, j] * add + B[last, j] + f2\n            if f <= F:\n                res.append((M[last, j] + d2, f))\n        m &= m - 1\n        \n    if not res: return ()\n    res.sort()\n    best, out = 1e9, []\n    for dst, f in res:\n        if f < best: best, out = f, out + [(dst, f)]\n    return tuple(out)\n\nok = Wtot <= C\ndist = np.full(ALL, 1e9)\nfor m in range(1, ALL):\n    if ok[m]:\n        fr = solve(m, k)\n        if fr: dist[m] = fr[0][0]\n        else: ok[m] = False\n    else: ok[m] = False\n\ndp = np.full(ALL, 1e9); dp[0] = 0\nfor u in range(ALL):\n    if dp[u] == 1e9: continue\n    s = m = ~u & (ALL - 1)\n    while s:\n        if ok[s] and dp[u] + dist[s] < dp[u | s]:\n            dp[u | s] = dp[u] + dist[s]\n        s = (s - 1) & m\n\nans = int(dp[-1])\nprint(\"-1\" if ans >= 1e9 else ans)\n",
+      "statement": "Bob is a brand new AI-powered delivery drone from <<Bobship Inc>>. Today is his first day delivering packages from the <<warehouse>> to various <<buildings>> in a city laid out as a 2D grid.\n\nCan you help Bob calculate the <<minimum number of moves>> (cell-to-cell steps) needed to <<deliver all packages>> and return to the warehouse?\n\nThe city is a grid where (0, 0) is the top-left corner. Bob can only move in the four cardinal directions:\n- <<North (N):>> y decreases by 1\n- <<South (S):>> y increases by 1\n- <<East (E):>> x increases by 1\n- <<West (W):>> x decreases by 1\n\nEach package has a weight. Bob can carry multiple packages at once, but the total weight cannot exceed his capacity [[C]].\n\nBob has a limited fuel supply [[F]] per trip. If he runs out of fuel before completing a delivery or returning to the warehouse, the trip <<fails>>. He can return to the warehouse to:\n- Refill his fuel to full [[F]]\n- Pick up new packages (as long as their combined weight ≤ [[C]])\n\n<<Wind>> affects Bob’s fuel usage:\n- Wind has a speed [[S]] and direction [[D]] ({{N, E, S, W}})\n- <<Movement costs>>:\n  - Against wind: {{5 + ceil([[S]] / 5)}}\n  - With wind: {{5 - min(4, ceil([[S]] / 5))}}\n  - Perpendicular to wind: {{5}}\n- On top of this base movement cost, add: {{ceil(([[carried weight]] + [[S]]) / 20)}}\n\nBob can only move in the four cardinal directions: <<N, E, S, and W>>.\n\nYour goal is to compute the <<minimum number of moves>> Bob needs to <<complete all deliveries successfully>>.",
+      "testCases": [
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "5 3\n1 0\n25\n60\n10 W\n3\n0 1 5\n2 2 5\n1 4 25",
+          "testOut": "16",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "4 4\n1 0\n20\n60\n6 E\n4\n3 0 20\n0 1 20\n1 3 10\n2 3 10",
+          "testOut": "16",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "5 5\n2 2\n30\n65\n15 W\n6\n1 0 10\n4 0 10\n0 1 10\n2 3 29\n0 4 15\n1 4 10",
+          "testOut": "26",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "5 5\n3 2\n30\n65\n15 W\n6\n1 0 10\n4 0 10\n0 1 10\n2 2 29\n0 4 15\n1 4 10",
+          "testOut": "34",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "20 20\n18 19\n1000\n955\n100 W\n3\n3 1 1\n9 18 1\n8 19 1",
+          "testOut": "68",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "20 20\n18 3\n1000\n987\n100 W\n3\n11 6 1\n17 7 1\n1 19 1",
+          "testOut": "68",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "20 19\n7 5\n10\n517\n81 W\n4\n1 2 1\n17 3 1\n10 12 1\n5 17 1",
+          "testOut": "76",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "20 19\n6 5\n10\n420\n69 S\n4\n10 2 2\n14 8 2\n3 14 2\n12 15 2",
+          "testOut": "84",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 10",
+          "isTest": true,
+          "testIn": "3 3\n1 1\n45\n30\n7 S\n8\n0 0 23\n1 0 24\n2 0 25\n0 1 26\n2 1 27\n0 2 28\n1 2 29\n2 2 30",
+          "testOut": "24",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "3 3\n1 1\n50\n30\n8 S\n8\n0 0 26\n1 0 27\n2 0 28\n0 1 29\n2 1 30\n0 2 31\n1 2 32\n2 2 33",
+          "testOut": "24",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 11",
+          "isTest": true,
+          "testIn": "4 4\n2 2\n60\n45\n9 E\n8\n1 0 31\n2 0 32\n0 1 33\n3 1 34\n0 2 35\n3 2 36\n1 3 37\n2 3 38",
+          "testOut": "32",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "4 4\n2 1\n50\n45\n9 W\n8\n1 0 26\n2 0 27\n0 1 28\n3 1 29\n0 2 30\n3 2 31\n1 3 32\n2 3 33",
+          "testOut": "32",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "13 13\n7 5\n1000\n1000\n81 W\n4\n4 2 1\n9 2 1\n0 8 1\n9 10 1",
+          "testOut": "38",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "13 12\n7 5\n1000\n1000\n81 W\n4\n7 1 2\n4 3 2\n0 9 2\n9 10 4",
+          "testOut": "36",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 13",
+          "isTest": true,
+          "testIn": "18 13\n7 10\n100\n300\n15 N\n8\n6 8 45\n8 9 55\n9 11 40\n10 12 50\n5 13 35\n11 14 60\n7 15 25\n9 16 30",
+          "testOut": "52",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "17 14\n8 9\n110\n320\n12 S\n8\n7 7 48\n9 8 52\n10 10 42\n11 11 58\n6 12 38\n12 13 62\n8 14 28\n10 15 33",
+          "testOut": "52",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "3 3\n0 0\n10\n50\n5 N\n1\n2 2 5",
+          "testOut": "8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3 3\n0 0\n10\n40\n5 N\n1\n2 1 5",
+          "testOut": "6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 9",
+          "isTest": true,
+          "testIn": "11 10\n8 2\n500\n500\n97 E\n9\n4 0 200\n0 1 300\n5 1 467\n2 3 240\n2 4 255\n1 5 120\n6 6 23\n6 8 97\n9 8 224",
+          "testOut": "82",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "6 6\n2 0\n200\n300\n87 N\n6\n0 1 156\n1 1 42\n3 3 168\n3 4 200\n4 4 157\n5 5 164",
+          "testOut": "52",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 8",
+          "isTest": true,
+          "testIn": "11 9\n5 4\n20\n100\n10 S\n8\n4 0 6\n2 1 4\n6 1 5\n3 2 3\n6 6 7\n2 7 5\n7 7 4\n1 8 6",
+          "testOut": "54",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "10 11\n2 4\n24\n110\n8 W\n9\n3 0 8\n6 0 9\n2 2 7\n9 3 20\n1 4 4\n5 5 11\n6 5 13\n3 7 8\n0 8 16",
+          "testOut": "58",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 14",
+          "isTest": true,
+          "testIn": "24 20\n12 15\n80\n250\n20 W\n10\n10 12 35\n14 13 40\n15 14 45\n16 16 30\n11 17 50\n17 18 25\n13 19 55\n18 20 35\n12 21 40\n14 22 45",
+          "testOut": "88",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 14",
+          "isTest": false,
+          "testIn": "23 19\n11 14\n85\n260\n18 E\n10\n9 11 38\n13 12 42\n14 13 47\n15 15 32\n10 16 52\n16 17 28\n12 18 58\n17 19 38\n11 20 42\n13 21 47",
+          "testOut": "90",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 7",
+          "isTest": true,
+          "testIn": "1 11\n6 0\n20\n80\n3 S\n10\n0 0 19\n1 0 1\n2 0 15\n3 0 3\n4 0 2\n5 0 17\n7 0 4\n8 0 7\n9 0 6\n10 0 3",
+          "testOut": "30",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "1 11\n5 0\n20\n80\n3 S\n10\n0 0 18\n1 0 12\n2 0 13\n3 0 4\n4 0 3\n6 0 17\n7 0 4\n8 0 7\n9 0 8\n10 0 3",
+          "testOut": "40",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 17",
+          "isTest": true,
+          "testIn": "52 57\n25 30\n500\n5000\n15 N\n8\n10 10 50\n40 15 60\n35 20 55\n5 25 30\n55 35 80\n15 40 45\n45 45 40\n20 50 70",
+          "testOut": "210",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 17",
+          "isTest": false,
+          "testIn": "57 60\n28 32\n520\n5200\n12 S\n8\n12 12 55\n42 18 65\n38 25 60\n8 28 35\n58 38 85\n18 42 50\n48 48 45\n22 55 75",
+          "testOut": "214",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 12",
+          "isTest": true,
+          "testIn": "10 10\n0 0\n120\n330\n1 E\n10\n9 6 97\n8 7 61\n9 7 83\n7 8 103\n8 8 118\n9 8 84\n6 9 76\n7 9 90\n8 9 105\n9 9 119",
+          "testOut": "320",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "9 11\n0 0\n200\n380\n16 N\n11\n10 5 150\n9 6 120\n10 6 180\n8 7 110\n9 7 135\n10 7 164\n6 8 120\n7 8 197\n8 8 110\n9 8 146\n10 8 179",
+          "testOut": "348",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 15",
+          "isTest": true,
+          "testIn": "23 24\n20 18\n70\n200\n25 S\n12\n19 17 25\n21 17 30\n22 18 35\n20 19 20\n21 19 40\n19 20 15\n20 20 45\n21 20 25\n19 21 30\n20 21 35\n21 21 20\n22 21 25",
+          "testOut": "38",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 15",
+          "isTest": false,
+          "testIn": "21 23\n19 16\n75\n210\n22 N\n12\n18 15 28\n20 15 32\n21 16 38\n19 17 22\n20 17 42\n18 18 18\n19 18 48\n20 18 28\n18 19 32\n19 19 38\n20 19 22\n21 19 28",
+          "testOut": "40",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 18",
+          "isTest": true,
+          "testIn": "95 87\n40 50\n800\n8000\n20 W\n10\n15 20 40\n65 25 50\n55 30 45\n10 40 25\n85 45 70\n25 60 55\n70 60 50\n45 70 40\n75 75 35\n30 85 60",
+          "testOut": "340",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 18",
+          "isTest": false,
+          "testIn": "98 90\n42 48\n850\n8500\n18 E\n10\n18 22 45\n68 28 55\n58 32 50\n12 42 30\n88 48 75\n28 62 60\n72 62 55\n48 72 45\n78 78 40\n32 88 65",
+          "testOut": "344",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 20",
+          "isTest": true,
+          "testIn": "250 250\n125 125\n18000\n2500000\n4 S\n11\n0 0 1\n125 0 1\n249 0 1\n62 62 1\n0 125 1\n249 125 1\n187 187 1\n100 200 1\n0 249 1\n125 249 1\n249 249 1",
+          "testOut": "1418",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 20",
+          "isTest": false,
+          "testIn": "200 200\n100 100\n15000\n2000000\n3 W\n10\n0 0 1\n100 0 1\n199 0 1\n50 50 1\n0 100 1\n199 100 1\n150 150 1\n0 199 1\n100 199 1\n199 199 1",
+          "testOut": "1094",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 16",
+          "isTest": true,
+          "testIn": "36 29\n25 30\n60\n180\n30 E\n13\n24 29 20\n26 29 25\n27 30 30\n25 31 15\n26 31 35\n24 32 10\n25 32 40\n26 32 20\n24 33 25\n25 33 30\n26 33 15\n27 33 20\n25 34 25",
+          "testOut": "42",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 16",
+          "isTest": false,
+          "testIn": "34 28\n24 28\n65\n190\n28 W\n13\n23 27 22\n25 27 28\n26 28 32\n24 29 18\n25 29 38\n23 30 12\n24 30 42\n25 30 22\n23 31 28\n24 31 32\n25 31 18\n26 31 22\n24 32 28",
+          "testOut": "42",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 21",
+          "isTest": true,
+          "testIn": "300 300\n150 150\n12000\n1000000\n1 N\n12\n0 0 1\n150 0 1\n299 0 1\n75 75 1\n225 75 1\n0 150 1\n299 150 1\n75 225 1\n225 225 1\n0 299 1\n150 299 1\n299 299 1",
+          "testOut": "1940",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 21",
+          "isTest": false,
+          "testIn": "300 300\n149 149\n13000\n1000000\n2 E\n12\n0 0 1\n149 0 1\n299 0 1\n74 74 1\n224 74 1\n0 149 1\n299 149 1\n74 224 1\n224 224 1\n0 299 1\n149 299 1\n299 299 1",
+          "testOut": "1940",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 19",
+          "isTest": true,
+          "testIn": "132 137\n60 75\n1200\n12000\n25 S\n12\n20 30 60\n100 40 80\n85 45 65\n15 60 35\n135 70 100\n95 85 70\n35 90 75\n105 95 60\n65 105 55\n110 110 50\n75 120 45\n40 130 90",
+          "testOut": "600",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 19",
+          "isTest": false,
+          "testIn": "134 139\n62 72\n1250\n12500\n22 N\n12\n22 32 65\n102 42 85\n88 48 70\n18 62 40\n137 72 105\n98 88 75\n38 92 80\n108 98 65\n68 108 60\n112 112 55\n78 122 50\n42 132 95",
+          "testOut": "602",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "expert",
+      "constraints": "1 ≤ [[l]], [[w]] ≤ 300\n1 ≤ [[C]], [[weight]] ≤ 18,000\n1 ≤ [[F]] ≤ 2,500,000\n1 ≤ [[S]] ≤ 100  \n1 ≤ [[k]] ≤ 15  \n0 ≤ [[bx]], [[x]] < [[w]]  \n0 ≤ [[by]], [[y]] < [[l]]  \n[[weight]] ≤ [[C]]  \nNo package has the warehouse as its destination.\nNo two packages have the same destination.",
+      "coverBinaryId": 163429483663536,
+      "stubGenerator": "read l:int w:int\nread bx:int by:int\nread C:int\nread F:int\nread s:int d:word(1)\nread k:int\nloop k read x:int y:int weight:int\nwrite Good Luck!",
+      "inputDescription": "<<Line 1:>> Two integers [[l]] and [[w]] — the number of rows and columns of the grid, separated by a space.\n<<Line 2:>> Two integers [[bx]] and [[by]] — the coordinates of the Bobship warehouse (column, row), separated by a space.\n<<Line 3:>> An integer [[C]] — Bob’s maximum carrying weight\n<<Line 4:>> An integer [[F]] — Bob’s maximum fuel per trip \n<<Line 5:>> Two values — an integer [[S]] (wind speed), and a character [[D]] (wind direction, one of {{N, E, S, W}}) separated by a space.\n<<Line 6:>> An integer [[k]] — the number of buildings.\n<<Next [[k]] lines:>> A list of delivery jobs in reading order (top to bottom, then left to right). Each line contains: {{[[x]] [[y]] [[weight]]}} — the coordinates of the building (column, row) and the package weight, separated by a space.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> An integer — the minimum number of moves (cell-to-cell) Bob needs to finish all deliveries and return to the warehouse."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Bob is a brand new AI-powered delivery drone from <strong>Bobship Inc</strong>. Today is his first day delivering packages from the <strong>warehouse</strong> to various <strong>buildings</strong> in a city laid out as a 2D grid.<br><br>Can you help Bob calculate the <strong>minimum number of moves</strong> (cell-to-cell steps) needed to <strong>deliver all packages</strong> and return to the warehouse?<br><br>The city is a grid where (0, 0) is the top-left corner. Bob can only move in the four cardinal directions:<br>- <strong>North (N):</strong> y decreases by 1<br>- <strong>South (S):</strong> y increases by 1<br>- <strong>East (E):</strong> x increases by 1<br>- <strong>West (W):</strong> x decreases by 1<br><br>Each package has a weight. Bob can carry multiple packages at once, but the total weight cannot exceed his capacity <var>C</var>.<br><br>Bob has a limited fuel supply <var>F</var> per trip. If he runs out of fuel before completing a delivery or returning to the warehouse, the trip <strong>fails</strong>. He can return to the warehouse to:<br>- Refill his fuel to full <var>F</var><br>- Pick up new packages (as long as their combined weight &le; <var>C</var>)<br><br><strong>Wind</strong> affects Bob&rsquo;s fuel usage:<br>- Wind has a speed <var>S</var> and direction <var>D</var> (<const>N, E, S, W</const>)<br>- <strong>Movement costs</strong>:<br>  - Against wind: <const>5 + ceil(<var>S</var> / 5)</const><br>  - With wind: <const>5 - min(4, ceil(<var>S</var> / 5))</const><br>  - Perpendicular to wind: <const>5</const><br>- On top of this base movement cost, add: <const>ceil((<var>carried weight</var> + <var>S</var>) / 20)</const><br><br>Bob can only move in the four cardinal directions: <strong>N, E, S, and W</strong>.<br><br>Your goal is to compute the <strong>minimum number of moves</strong> Bob needs to <strong>complete all deliveries successfully</strong>.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Two integers <var>l</var> and <var>w</var> &mdash; the number of rows and columns of the grid, separated by a space.<br><strong>Line 2:</strong> Two integers <var>bx</var> and <var>by</var> &mdash; the coordinates of the Bobship warehouse (column, row), separated by a space.<br><strong>Line 3:</strong> An integer <var>C</var> &mdash; Bob&rsquo;s maximum carrying weight<br><strong>Line 4:</strong> An integer <var>F</var> &mdash; Bob&rsquo;s maximum fuel per trip <br><strong>Line 5:</strong> Two values &mdash; an integer <var>S</var> (wind speed), and a character <var>D</var> (wind direction, one of <const>N, E, S, W</const>) separated by a space.<br><strong>Line 6:</strong> An integer <var>k</var> &mdash; the number of buildings.<br><strong>Next <var>k</var> lines:</strong> A list of delivery jobs in reading order (top to bottom, then left to right). Each line contains: <const><var>x</var> <var>y</var> <var>weight</var></const> &mdash; the coordinates of the building (column, row) and the package weight, separated by a space.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> An integer &mdash; the minimum number of moves (cell-to-cell) Bob needs to finish all deliveries and return to the warehouse.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>l</var>, <var>w</var> &le; 300<br>1 &le; <var>C</var>, <var>weight</var> &le; 18,000<br>1 &le; <var>F</var> &le; 2,500,000<br>1 &le; <var>S</var> &le; 100  <br>1 &le; <var>k</var> &le; 15  <br>0 &le; <var>bx</var>, <var>x</var> &lt; <var>w</var>  <br>0 &le; <var>by</var>, <var>y</var> &lt; <var>l</var>  <br><var>weight</var> &le; <var>C</var>  <br>No package has the warehouse as its destination.<br>No two packages have the same destination.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5 3\n1 0\n25\n60\n10 W\n3\n0 1 5\n2 2 5\n1 4 25</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">16</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 136778820182751,
+  "commentCount": 10,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
