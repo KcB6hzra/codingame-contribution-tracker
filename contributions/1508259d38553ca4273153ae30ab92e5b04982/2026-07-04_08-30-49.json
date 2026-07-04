@@ -1,0 +1,133 @@
+{
+  "id": 150825,
+  "activeVersion": 14,
+  "score": 1,
+  "votableId": 40085158,
+  "codingamerId": 6297853,
+  "views": 19,
+  "commentableId": 39914364,
+  "title": "Image Recovery Department",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "AnshuJack",
+  "publicHandle": "1508259d38553ca4273153ae30ab92e5b04982",
+  "codingamerHandle": "91b04e74c5dbd6c2ecb1ab27e2b748183587926",
+  "lastVersion": {
+    "version": 14,
+    "autocloseTime": 1785680647236,
+    "data": {
+      "title": "Image Recovery Department",
+      "topics": [
+        {
+          "id": 206,
+          "handle": "rotation",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Rotation",
+            "2": "Rotation"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        },
+        {
+          "id": 48,
+          "handle": "graphs",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Graphes",
+            "2": "Graphs"
+          },
+          "pageTitle": "Graphs: exercises and theory",
+          "puzzleCount": 45,
+          "parentTopicId": 40,
+          "contentDetailsId": 75
+        }
+      ],
+      "solution": "# INPUTS\nh, w = map(int,input().split())\nno_of_cmds = int(input())\ncmds = input()\ngrid = []\nfor i in range(h):\n    grid+=[list(input())]\n\n'''\ngrid = open('inp.txt', 'r').read()\ngrid = [*map(list, grid.split('\\n'))]\nno_of_cmds = 1\n# cmd Format - x y t r - (x,y): pivot position(row:index(0), col:index(0)), t: turns(+: CW, -: ACW), r: radius\ncmds = ['2 2 -1 2']\n'''\n\n# Auxillary Functions\ndef corners(piv:tuple, rad:int)->dict: \n    '''\n    1 2 3\n    4 5 6\n    7 8 9\n    radius = 1\n    pivot = pos(5) = (1, 1)\n    pos(1) = TL = (1-1, 1-1) = (0, 0)\n    pos(3) = TR = (1-1, 1+1) = (0, 2)\n    pos(9) = BR = (1+1, 1+1) = (2, 2)\n    pos(7) = BL = (1+1, 1-1) = (2, 0)\n    '''\n    a = (piv[0]-rad, piv[1]-rad) # TL - TopLeft\n    b = (piv[0]-rad, piv[1]+rad) # TR - TopRight\n    c = (piv[0]+rad, piv[1]+rad) # BR - BottomRight\n    d = (piv[0]+rad, piv[1]-rad) # BL - BottomLeft\n    corns = {'TL':a, 'TR':b, 'BR':c, 'BL':d}\n    return corns\n\ndef transpose(corns:dict, rad:int)->list:\n    global grid\n    side = rad*2 + 1\n    trn = []\n    # Creates an empty matrix\n    for _ in range(side):\n        trn += [list(' '*side)]\n    col = 0\n    for i in range(corns['TL'][0], corns['BL'][0] + 1, 1):\n        row = 0\n        for j in range(corns['TL'][1], corns['TR'][1] + 1, 1):\n            trn[row][col] = grid[i][j]\n            row += 1\n        col += 1\n    return trn\n\ndef insert(corns:dict, mat:list):\n    global grid\n    row = 0\n    for i in range(corns['TL'][0], corns['BL'][0] + 1, 1):\n        col = 0\n        for j in range(corns['TL'][1], corns['TR'][1] + 1, 1):\n            grid[i][j] = mat[row][col]\n            col += 1\n        row += 1\n            \n# Functions\ndef rotateBy90(corns:dict, rad:int):\n    '''\n    Rotates the sub-array by 90 degrees clockwise\n    transformation logic - matrix -> transpose -> reverse_each_row\n    '''    \n    trn=transpose(corns,rad) # list<list<chr>>\n    trn = [*map(lambda x: x[::-1], trn)]\n    insert(corns, trn)\n\ndef rotateBy180(corns:dict, rad:int):\n    '''\n    Rotates the sub-array by 180 degrees clockwise\n    transformation logic - matrix -> transpose -> reverse_order\n    '''\n    rotateBy90(corns, rad)\n    rotateBy90(corns, rad)\n\ndef rotateBy270(corns:dict, rad:int):\n    '''\n    Rotates the sub-array by 270 degrees clockwise\n    transformation logic - matrix -> transpose -> reverse_each_col\n    '''\n    trn=transpose(corns,rad)\n    trn=trn[::-1]\n    insert(corns,trn)\n\ndef manage(piv:tuple, rad:int, turns:int):\n    '''\n    Formats the turns and calls rotate function to rotate the sub-matrices\n    '''\n    turns = turns%4\n    if not turns:\n        return\n    corns=corners(piv,rad)\n    rotate = [rotateBy90, rotateBy180, rotateBy270][turns-1]\n    rotate(corns, rad)\n\ndef frmt(s):\n    s = s.split('  ')\n    for i in range(len(s)):\n        e = s[i].split()\n        e[2] = str(-1*int(e[2]))\n        if int(e[2]) > 0:\n            e[2] = '+'+e[2]\n        s[i] = ' '.join(e)\n    return '  '.join(s[::-1])\n\n# MAIN\ncmds = frmt(cmds).split('  ')\nfor i in range(no_of_cmds):\n    cmd = [*map(int,cmds[i].split())]\n    piv = (cmd[0], cmd[1])\n    turns = cmd[2]\n    rad = cmd[3]\n    manage(piv, rad, turns)\n\n# OUTPUT\nfor row in grid:\n    print(''.join(row))\n",
+      "statement": "Your company maintains an image transfer library used by clients to transmit digital images between systems.\n\nA bug in version 2.8 of the library caused <<certain square regions>> of an image to be <<rotated>> during decoding. Although the issue has since been fixed, thousands of images decoded using the faulty version remain corrupted.\n\nFortunately, every decoding session generated a [[diagnostic_log]] containing the exact sequence of transformations performed. Since the logged operations are deterministic, the original image can be reconstructed by <<reversing>> them.\n\nYour team has been assigned to develop the recovery utility.\n\nGiven a corrupted image and its corresponding [[diagnostic_log]], reconstruct and output the original image. The origin (0, 0) is located at the top-left corner of the image. The x-coordinate increases from left to right, and the y-coordinate increases from top to bottom\n\n<<Log Format>>:\n```\n            [[x]] [[y]] [[turn]] [[radius]]\n```\n([[x]], [[y]]) specifies the coordinates of the pivot point about which the rotation was applied.\n[[turn]] indicates the number of 90° rotations applied to the square frame. Positive values rotate the frame clockwise by 90° per unit, while negative values rotate it counterclockwise by 90° per unit.\n[[radius]] specifies the perpendicular distance from the pivot point to any edge of the square frame.\n\n```\nAll Arts used in Testcases are gathered from asciiart.eu\n```",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "10 38\n5\n2 4 +1 2  5 15 -1 3  8 10 +3 1  4 29 -2 4  7 8 -23 2\n  \\`  /                              \n /_- o\\\\_____------------         _  \n( _-~ _ )      _  _              / \\ \n \\_- O//       _  _      __/    /   )\n  /'  \\        _    /     /    /   / \n     \\_/       _   _\\    )    /   /  \n      _ /\\ /   _     /    ____       \n      /        _    /   /________-   \n     _ /       _   /   /             \n    (_/         (_____/              ",
+          "testOut": "  /\\_/\\                              \n / o O \\_____-------------_________  \n(   ~   )                    ____  \\ \n \\`---'/                    /    )  )\n  \\___/             /      /    /  / \n     \\      ________\\     /    /__/  \n       \\   /         /   /           \n       /  /         /   /            \n     _/  /       __/   /             \n    (___/       (_____/              ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "15 46\n7\n7 7 +1 6  6 6 -1 6  8 8 +2 6  6 8 +3 6  7 22 +27 7  3 36 -7 3  9 34 +23 5\n   /\\  /  \\/  \\/  \\/  \\/  \\/    \\        /  \n   _                                        \n                                 /\\  /\\     \n _/  __ /\\  /\\  /\\  /\\  /\\  /\\__/ _   _  \\__\n\\        _   _  _   _   _   _            /  \n         _   _  _   _   _   __/   /\\  /\\    \n   /    \\/  \\/  \\/  \\/  \\/  \\ \\   _   _     \n/_ _ __                           _   _  \\__\n   _                              \\/  \\/ /  \n   \\/  \\  /\\  /\\  /\\  /\\  /\\ _/             \n       _   _      _   _   _   \\             \n _   __\\          _   _   _  \\  /\\  /\\   \\__\n _\\ \\/  \\/  \\/ /  \\/  \\/  \\/    _   _    /  \n__  _\\        /                 _   _       \n  \\/    \\  /                   /             ",
+          "testOut": "     /  \\        /  \\        /  \\        /  \n__/        \\__/        \\__/        \\__/     \n  \\        /  \\        /  \\        /  \\     \n     \\__/        \\__/        \\__/        \\__\n     /  \\        /  \\        /  \\        /  \n__/        \\__/        \\__/        \\__/     \n  \\        /  \\        /  \\        /  \\     \n     \\__/        \\__/        \\__/        \\__\n     /  \\        /  \\        /  \\        /  \n__/        \\__/        \\__/        \\__/     \n  \\        /  \\        /  \\        /  \\     \n     \\__/        \\__/        \\__/        \\__\n     /  \\        /  \\        /  \\        /  \n__/        \\__/        \\__/        \\__/     \n  \\        /  \\        /  \\        /  \\      ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "23 38\n4\n10 20 +190 8  20 30 -14 2  4 19 -16 4  17 10 +45 5\n                  ^                  \n                 / \\                 \n            %%###############        \n          _|!!!!!############        \n          \\I_-~~/!!!!!#######        \n           ~!!%##_-~~\\!!#####        \n            !!!!%#####-\\!####        \n        /\\  ~~---_________---        \n       /  \\ ..  |  \\)===(/  |\\       \n       |-~| ----\\____-~-____/|       \n     _/(I |  .| +-----------+)\\_     \n     \\~------~| \\)|  I I.I|(/-~/     \n     ##!\\/~#/`   _|  . III|_  |      \n     ##!-#)###/|  |    .II|  ~\\      \n     #!\\_#####~I /|.. I II|\\ !| |\\   \n    _#! _#####~./~|~~~~~~~|~\\!\\_/|   \n    \\#!\\_#####~I ||~~| |~~||I%!!!!\\  \n     #! _#####-I.|  |. I|  |I/~~--\\_ \n  __ #!\\_#####-I^   _|.|_   !!!%%/ / \n  \\,~#!~#     \\ ##########%%!!!!!\\/  \n  /!!#!-#     / ##########%%!!!!%\\   \n /###!\\_# _/   /-_#######%%%!!!!%!\\_ \n/####!~## | ~   !\\#########%!!!!^!!!\\",
+          "testOut": "                  ^                  \n                 / \\                 \n            ^   _|.|_   ^            \n          _|I|  |I .|  |.|_          \n          \\II||~~| |~~||  /          \n           ~\\~|~~~~~~~|~/~           \n             \\|II I ..|/             \n        /\\    |II.    |    /\\        \n       /  \\  _|III .  |_  /  \\       \n       |-~| /(|I.I I  |)\\ |~-|       \n     _/(I | +-----------+ |. )\\_     \n     \\~-----/____-~-____\\-----~/     \n      |I.III|  /(===)\\  |  .. |      \n      /~~~-----_________---~~~\\      \n     `##########!\\-#####%!!!!!| |\\   \n    _/###########!!\\~~-_##%!!!\\_/|   \n    \\##############!!!!!/~~-_%!!!!\\  \n     ~)#################!!!!!/~~--\\_ \n  __ /#####################%%!!!!/ / \n  \\,~\\-_____##############%%%!!!!\\/  \n  /!!!!\\ \\ \\~-_###########%%%!!!!\\   \n /#####!!!!!!!\\~-_#######%%%!!!!!!\\_ \n/#############!!!\\#########%%%!!!!!!\\",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "21 22\n3\n13 11 +7 5  5 11 +5 4  17 11 -3 3\n     / \\             \n    / _//     \\      \n   | /   ||||| \\     \n   ||    |||||| __   \n   ||             \\  \n   ||    ||||_     \\ \n   ||    |||\\_     | \n   ||  --  \\ _  __/  \n   || |   \\  _  _|   \n    \\\\   \\   _  _    \n   /   _   / -/ _\\   \n  /    \\_ O /-_   \\  \n  |   |       _|  |  \n  |   |/   _/ \\_  |  \n /     _   _   |   \\ \n/  ---|\\       _ -  \\\n|     |    O   |    |\n\\      /  \\  __     /\n \\____ _   \\ \\_ ___/ \n       \\|/--  |      \n       |  \\__/|      ",
+          "testOut": "     / \\             \n    / _ \\            \n   | / \\ |           \n   ||   || _______   \n   ||   || |\\     \\  \n   ||   || ||\\     \\ \n   ||   || || \\    | \n   ||   || ||  \\__/  \n   ||   || ||   ||   \n    \\\\_/ \\_/ \\_//    \n   /   _     _   \\   \n  /               \\  \n  |    O     O    |  \n  |   \\  ___  /   |  \n /     \\ \\_/ /     \\ \n/  -----  |  -----  \\\n|     \\__/|\\__/     |\n\\       |_|_|       /\n \\_____       _____/ \n       \\     /       \n       |     |       ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "22 45\n5\n11 10 +3 10  11 28 -3 10  5 36 +3 6  4 26 +1 4  17 39 -1 4\n / __ \\ \\__/ / __ \\ \\_ /___ ___ \\/_ \\/_ \\/_ \n_ /\\_ /\\_ /\\_ /\\_  \\__/ /__\\ _/_ ___ ___ __\\\n\\/  \\/  \\/  \\/  \\/ / _\\ \\   \\/ _ ___ ___ __/\n  /\\  /\\  /\\  /\\  / /  \\ __\\  / /\\____/ /   \n\\/_ \\/_ \\/_ \\/_ \\/__ _ /____\\/ /  \\__ \\ \\__ \n ___ ___ ___ ___ ___ _/ /____ _ /\\   \\ \\___\\\n ___ ___ ___ ___ __/\\ \\ \\  __ _/_ \\__/ / __/\n/\\_ /\\_ /\\_ /\\_ /\\/  \\ \\ ___/\\ ___ ___/ /   \n  \\/  \\/  \\/  \\/   /\\ \\/ _\\/  \\___ __ \\ \\__ \n/\\  /\\  /\\  /\\  /\\/ _\\/ _\\/ _\\_\\_ /  \\ \\___\\\n_ \\/_ \\/_ \\/_ \\/_  ___ ___ ___  \\/ __/ / __/\n__ ___ ___ ___ ___ ___ ___ ___/\\  /___/ /   \n__ ___ ___ ___ ___\\ _/\\ _/\\ _/\\ _/\\ _/\\__ \\ \n_ /\\_ /\\_ /\\_ /\\_  \\/  \\/  \\/  \\/  \\/  \\/  \\\n\\/  \\/  \\/  \\/  \\/\\  /\\  /\\  /\\  /\\  /\\  /\\/\n  /\\  /\\  /\\  /\\  _\\/ _\\/ _\\/ _\\/ _\\/_ \\/_  \n\\/_ \\/_ \\/_ \\/_ \\/__ ___ ___ ___ __ ___ ___ \n ___ ___ ___ ___ ___ ___ ___ ___ __ ___ ___\\\n ___ ___ ___ ___ __/\\ _/\\ _/\\ _/\\ _ \\____/ /\n/\\_ /\\_ /\\_ /\\_ /\\/  \\/  \\/  \\/  \\/ / __ \\  \n  \\/  \\/  \\/  \\/   /\\  /\\  /\\  /\\  / /  \\ \\ \n/\\  /\\  /\\  /\\  /\\/ _\\/ _\\/ _\\ \\  /\\ \\__/ /\\",
+          "testOut": " / __ \\ \\__/ / __ \\ \\__/ / __ \\ \\__/ / __ \\ \n/ /  \\ \\____/ /  \\ \\____/ /  \\ \\____/ /  \\ \\\n\\ \\__/ / __ \\ \\__/ / __ \\ \\__/ / __ \\ \\__/ /\n \\____/ /  \\ \\____/ /  \\ \\____/ /  \\ \\____/ \n / __ \\ \\__/ / __ \\ \\__/ / __ \\ \\__/ / __ \\ \n/ /  \\ \\____/ /  \\ \\____/ /  \\ \\____/ /  \\ \\\n\\ \\__/ / __ \\ \\__/ / __ \\ \\__/ / __ \\ \\__/ /\n \\____/ /  \\ \\____/ /  \\ \\____/ /  \\ \\____/ \n / __ \\ \\__/ / __ \\ \\__/ / __ \\ \\__/ / __ \\ \n/ /  \\ \\____/ /  \\ \\____/ /  \\ \\____/ /  \\ \\\n\\ \\__/ / __ \\ \\__/ / __ \\ \\__/ / __ \\ \\__/ /\n \\____/ /  \\ \\____/ /  \\ \\____/ /  \\ \\____/ \n / __ \\ \\__/ / __ \\ \\__/ / __ \\ \\__/ / __ \\ \n/ /  \\ \\____/ /  \\ \\____/ /  \\ \\____/ /  \\ \\\n\\ \\__/ / __ \\ \\__/ / __ \\ \\__/ / __ \\ \\__/ /\n \\____/ /  \\ \\____/ /  \\ \\____/ /  \\ \\____/ \n / __ \\ \\__/ / __ \\ \\__/ / __ \\ \\__/ / __ \\ \n/ /  \\ \\____/ /  \\ \\____/ /  \\ \\____/ /  \\ \\\n\\ \\__/ / __ \\ \\__/ / __ \\ \\__/ / __ \\ \\__/ /\n \\____/ /  \\ \\____/ /  \\ \\____/ /  \\ \\____/ \n / __ \\ \\__/ / __ \\ \\__/ / __ \\ \\__/ / __ \\ \n/ /  \\ \\____/ /  \\ \\____/ /  \\ \\____/ /  \\ \\",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "11 27\n6\n5 12 +2 5  8 8 +3 2  4 20 +7 4  8 21 +21 2  5 7 -17 5  9 22 -45 1\n    -   --  -       ./    \n  ~/.   '.  ~_.-    ` _   \n  -~~   \\     ~~   {  ~   \n   ~     `- /     _   -   \n  .- .      -     .   .   \n   . -      -     `       \n~- -        \\`   : \\ \\.   \n   `   \\ \\`~|.   |' - |  \\\n  .   \\ .. -    \\`/ -  ~//\n   /||  `  .  '.\\'~  |||  \n        .   /.    _ ~     ",
+          "testOut": "    .      .-~\\           \n   / `-'\\.'    `- :       \n   |    /          `._    \n   |   |   .-.        {   \n    \\  |   `-'         `. \n     \\ |                / \n~-.`. \\|            .-~_  \n    .\\-.\\       .-~      \\\n     `-'/~~ -.~          /\n   .-~/|`-._ /~~-.~ -- ~  \n  /  |  \\    ~- . _\\      ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "14 40\n5\n6 13 +2 6  7 19 -1 6  5 6 +13 5  4 30 +27 4  10 30 -13 3\n |__| ||__    _ )_         )  )  )     \n _ |____ |   (  (  (  (  (_  _  _  __  \n _  _) _  _ __  _ )_  _ )_ (  (  (  _| \n((  (  (  ( ( | ____| ____ _  _ )_ (_  \n  _  _  _  _ ___|| |__|| |  | ____|_|  \n )  )  )  ) __ (_  _ (_  _ ___|| |_ |  \n  _  _  _  _ )  )  )  )  ) _ (_  _   _)\n   (  (  (    _( _  _( _   ) _  _  _|  \n   _ )_  _ )_||__| ||___ (_ _ (  (  _| \n(| ____| ___(__ |____ |  __   _ )_ (_  \n __|| |__||   _  _) _  _ _ )  ____)_|  \n |_     (_ __ (  (  (  ( |  __|| |  |  \n  _) _ _       _  _  _  ___  (_  _   _)\n |__( )_|__(  )  )  )  ) ) )  )  ))_|  ",
+          "testOut": "     _      _      _      _      _     \n   _( )__ _( )__ _( )__ _( )__ _( )__  \n _|     _|     _|     _|     _|     _| \n(_   _ (_   _ (_   _ (_   _ (_   _ (_  \n |__( )_|__( )_|__( )_|__( )_|__( )_|  \n |_     |_     |_     |_     |_     |  \n  _) _   _) _   _) _   _) _   _) _   _)\n |__( )_|__( )_|__( )_|__( )_|__( )_|  \n _|     _|     _|     _|     _|     _| \n(_   _ (_   _ (_   _ (_   _ (_   _ (_  \n |__( )_|__( )_|__( )_|__( )_|__( )_|  \n |_     |_     |_     |_     |_     |  \n  _) _   _) _   _) _   _) _   _) _   _)\n |__( )_|__( )_|__( )_|__( )_|__( )_|  ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "14 39\n5\n6 13 +2 6  7 19 -1 6  5 6 +13 5  4 30 +27 4  10 30 -13 3\n   ||  ||  |  ___| |_  | |_  __  ____ \n   __  __  _   ||  ||  || |  ||  || _|\n_| _|| _|| __ __  __  __    __  __ | |\n_ __  __  ___|_ ||_ ||_ ||||_ ||_ ||  \n ||  ||  ||  __  __  __  _ __  __  __ \n __  __  __  ||  ||  ||  | ||  ||   _|\n_||_ ||_ ||___  __  __  ____  __  _| |\n_ __  __  ___ _|| _|| _|| _|_  || _|  \n  ||  ||  || __  __  __   _|  __  ___ \n __  __  __  |  ||  ||  |    |_ ||  _|\n__ ||_ ||_ |__  __  __  _  ____  _ | |\n_|_|       |_|| _|| _|| _|_|_||  |_|  \n |___  __| |   __  __  ____| _  _____ \n    _|_|    _ ||  ||  || |    ||_   _|",
+          "testOut": " |___  | |___  | |___  | |___  | |___ \n    _|_|    _|_|    _|_|    _|_|    _|\n_  | |___  | |___  | |___  | |___  | |\n_|_|    _|_|    _|_|    _|_|    _|_|  \n |___  | |___  | |___  | |___  | |___ \n    _|_|    _|_|    _|_|    _|_|    _|\n_  | |___  | |___  | |___  | |___  | |\n_|_|    _|_|    _|_|    _|_|    _|_|  \n |___  | |___  | |___  | |___  | |___ \n    _|_|    _|_|    _|_|    _|_|    _|\n_  | |___  | |___  | |___  | |___  | |\n_|_|    _|_|    _|_|    _|_|    _|_|  \n |___  | |___  | |___  | |___  | |___ \n    _|_|    _|_|    _|_|    _|_|    _|",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "0 < [[w]] ≤ 45\n0 < [[h]] ≤ 50\n0 < [[log_length]] ≤ 10",
+      "stubGenerator": "read h:int w:int\nread logLength:int\nread diagnosticLog:string(100)\n\nloop h read line:string(w)\n\nwrite Completed Image",
+      "inputDescription": "<<Line 1>>: [[h]] and [[w]], two integers separated by space representing the height and width of the image respectively.\n<<Line 2>>: [[log_length]], integer representing the number of transformations in the diagnostic log.\n<<Line 3>>: [[diagnostic_log]], logs separated by two whitespaces, each adhering to the log format.\n<<Next [[h]] Lines>>: A string [[line]] with length [[w]] representing 1 line of the image.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[h]] lines>>: Reconstructed Image."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Your company maintains an image transfer library used by clients to transmit digital images between systems.<br><br>A bug in version 2.8 of the library caused <strong>certain square regions</strong> of an image to be <strong>rotated</strong> during decoding. Although the issue has since been fixed, thousands of images decoded using the faulty version remain corrupted.<br><br>Fortunately, every decoding session generated a <var>diagnostic_log</var> containing the exact sequence of transformations performed. Since the logged operations are deterministic, the original image can be reconstructed by <strong>reversing</strong> them.<br><br>Your team has been assigned to develop the recovery utility.<br><br>Given a corrupted image and its corresponding <var>diagnostic_log</var>, reconstruct and output the original image. The origin (0, 0) is located at the top-left corner of the image. The x-coordinate increases from left to right, and the y-coordinate increases from top to bottom<br><br><strong>Log Format</strong>:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>            <var>x</var> <var>y</var> <var>turn</var> <var>radius</var><br></pre><pre style=\"font-family: monospace\"></pre><br>(<var>x</var>, <var>y</var>) specifies the coordinates of the pivot point about which the rotation was applied.<br><var>turn</var> indicates the number of 90&deg; rotations applied to the square frame. Positive values rotate the frame clockwise by 90&deg; per unit, while negative values rotate it counterclockwise by 90&deg; per unit.<br><var>radius</var> specifies the perpendicular distance from the pivot point to any edge of the square frame.<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>All Arts used in Testcases are gathered from asciiart.eu<br></pre><pre style=\"font-family: monospace\"></pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: <var>h</var> and <var>w</var>, two integers separated by space representing the height and width of the image respectively.<br><strong>Line 2</strong>: <var>log_length</var>, integer representing the number of transformations in the diagnostic log.<br><strong>Line 3</strong>: <var>diagnostic_log</var>, logs separated by two whitespaces, each adhering to the log format.<br><strong>Next <var>h</var> Lines</strong>: A string <var>line</var> with length <var>w</var> representing 1 line of the image.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>h</var> lines</strong>: Reconstructed Image.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt; <var>w</var> &le; 45<br>0 &lt; <var>h</var> &le; 50<br>0 &lt; <var>log_length</var> &le; 10</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">10 38\n5\n2 4 +1 2  5 15 -1 3  8 10 +3 1  4 29 -2 4  7 8 -23 2\n  \\`  /                              \n /_- o\\\\_____------------         _  \n( _-~ _ )      _  _              / \\ \n \\_- O//       _  _      __/    /   )\n  /'  \\        _    /     /    /   / \n     \\_/       _   _\\    )    /   /  \n      _ /\\ /   _     /    ____       \n      /        _    /   /________-   \n     _ /       _   /   /             \n    (_/         (_____/              </pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">  /\\_/\\                              \n / o O \\_____-------------_________  \n(   ~   )                    ____  \\ \n \\`---'/                    /    )  )\n  \\___/             /      /    /  / \n     \\      ________\\     /    /__/  \n       \\   /         /   /           \n       /  /         /   /            \n     _/  /       __/   /             \n    (___/       (_____/              </pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 130575027242778,
+  "commentCount": 1,
+  "upVotes": 1,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
