@@ -1,0 +1,340 @@
+{
+  "id": 149373,
+  "activeVersion": 56,
+  "score": 1,
+  "votableId": 39977763,
+  "codingamerId": 1486857,
+  "views": 286,
+  "commentableId": 39807432,
+  "title": "Simple Makefiles",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "sammck",
+  "publicHandle": "149373d871f27bdcdc97a723791d28b1fdfe5e",
+  "codingamerHandle": "2cdb2c48510cd9cfd702f1b2322a0b917586841",
+  "lastVersion": {
+    "version": 56,
+    "autocloseTime": 1786150690393,
+    "freezeTime": 1784163490393,
+    "data": {
+      "title": "Simple Makefiles",
+      "topics": [
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 48,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "id": 55,
+          "handle": "DFS",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Parcours en profondeur",
+            "2": "DFS"
+          },
+          "pageTitle": "DFS: exercises and theory",
+          "puzzleCount": 32,
+          "parentTopicId": 41,
+          "contentDetailsId": 79
+        },
+        {
+          "id": 171,
+          "handle": "dependency-graph",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Dependency Graph",
+            "2": "Dependency Graph"
+          },
+          "puzzleCount": 3,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "#!/usr/bin/env python3\n\"\"\"\nCodingame puzzle: \nhttps://www.codingame.com/ide/puzzle/\n\"\"\"\n\n#region Boilerplate\n\nfrom __future__ import annotations\n\n# ruff: noqa: E402\n\n\nimport math # noqa: F401\nimport sys\nfrom itertools import combinations as _combinations # noqa: F401\nfrom types import NotImplementedType # noqa: F401\nfrom typing import ( # noqa: F401\n    Any,\n    ClassVar,\n    Final,\n    Generator,      \n    Generic,\n    Iterable,\n    Iterator,\n    NamedTuple,\n    Optional,\n    Protocol,\n    runtime_checkable,\n    TypeAlias,\n    TypeVar,\n    cast,\n    overload,\n)\n\nfrom enum import Enum, auto, IntEnum # noqa: F401\n\nfrom functools import total_ordering # noqa: F401\nfrom queue import PriorityQueue # noqa: F401\n\nclass NoValue:\n    pass\n\nNO_VALUE = NoValue()\n\nif sys.version_info >= (3, 12):\n    from typing import Self, override\nelse:\n    # pyright: ignore[reportUnreachable]\n    try:\n        from typing_extensions import Self, override  # type: ignore[import]\n    except ImportError:\n        Self: TypeAlias = Any\n        def override(func: Any) -> Any:\n            return func\n\nDEBUG = True\nDEBUG_INPUT = True\n\nSTANDALONE = False\nif len(sys.argv) > 1 and sys.argv[1] == \"--standalone\":\n    STANDALONE = True\n    DEBUG = True\n    DEBUG_INPUT = True\n    sys.argv = [ sys.argv[0] ] + sys.argv[2:]\n\nif len(sys.argv) > 1:\n    input_file_path = sys.argv[1]\n    sys.argv = [ sys.argv[0] ] + sys.argv[2:]\n    sys.stdin = open(input_file_path, \"r\")\n\n\ndef dp(*args, debug: Optional[bool]=None, **kwargs):\n    if debug is None:\n        debug = DEBUG\n    if debug:\n        print(*args, **kwargs, file=sys.stderr)\n\ndef dpinput() -> str:\n    result = input()\n    dp(result, debug=DEBUG_INPUT)\n    return result\n\n#----------------------------------------------------------\n#endregion\n\n#region Problem Statement\n\"\"\"\n\"\"\"\n#endregion\n\n_T = TypeVar(\"_T\")\ndef remove_duplicates(seq: Iterable[_T]) -> list[_T]:\n    \"\"\"Return a list of the distinct elements of seq, preserving their order of first appearance.\"\"\"\n    \n    # Python 3.7+ guarantees that dict preserves insertion order, so we can use dict.fromkeys() to remove duplicates while preserving order.\n    d = dict.fromkeys(seq)\n    return list(d)\n\nToken = str\n\"\"\"A parseable token. Contains no whitespace, '#' or ':' characters, and is not empty.\n   if starting with '$', is a macro expansions like $@, $<, or $^.\"\"\"\n\nArtifactName = Token\n\"\"\"A target or prerequisite name. A parseable Token.\"\"\"\n\nclass LineType(Enum):\n    \"\"\"The type of a line in the makefile.\"\"\"\n    RULE = auto()\n    \"\"\"A rule line, containing one or more targets and zero or more prerequisites, separated by a colon. May be followed by one or more action lines.\"\"\"\n    \n    ACTION = auto()\n    \"\"\"An action line, beginning with a TAB character and containing one or more tokens. Must follow a rule line.\"\"\"\n    \n    BLANK = auto()\n    \"\"\"A blank line, containing only whitespace and/or a comment. May appear anywhere in the makefile.\"\"\"\n\nclass MakefileError(Exception):\n    \"\"\"Raised when the makefile is invalid or cannot be processed.\"\"\"\n    \n    def __init__(self, message: str, line_no: Optional[int] = None, line_text: Optional[str] = None) -> None:\n        if line_no is not None:\n            message = f\"Makefile line {line_no}: {message}\"\n        if line_text is not None:\n            message = f\"{message}:  {line_text!r}\"\n        super().__init__(message)\n\nclass MakefileLineError(MakefileError):\n    \"\"\"Raised when a specific line of the makefile is invalid.\"\"\"\n    def __init__(self, line: MakefileLine, message: str) -> None:\n        super().__init__(message, line_no=line.line_no, line_text=line.raw_line)\n\nclass MakefileCycleError(MakefileError):\n    \"\"\"Raised when a circular dependency is detected in the makefile.\"\"\"\n    def __init__(self, target_name: ArtifactName) -> None:\n        super().__init__(f\"Circular dependency detected while building {target_name!r}\")\n        \nclass NoRuleError(MakefileError):\n    \"\"\"Raised when a target is out of date but has no rules to build it.\"\"\"\n    def __init__(self, message: str) -> None:\n        super().__init__(message)\n        \nclass MakefileLine:\n    \"\"\"A parsed line of the makefile, with tokens and metadata.\"\"\"\n    \n    line_no: int\n    \"\"\"1-based line number in the original makefile.\"\"\"\n\n    raw_line: str\n    \"\"\"Original line text, with comments and whitespace intact. EOL removed.\"\"\"\n    \n    comment: str | None = None\n    \"\"\"Comment text, including the leading '#', or None if no comment.\"\"\"\n    \n    stripped: str\n    \"\"\"Line text with comments and leading/trailing whitespace (including TAB) removed.\"\"\"\n    \n    target_tokens: list[Token]\n    \"\"\"Tokens from the rule's target part (before ':'). Empty if not a rule. Duplicates not removed.\"\"\"\n    \n    tokens: list[Token]\n    \"\"\"For actions, tokens from the action line. For rules, tokens from the dependencies (duplicates not removed). Empty for blank lines.\"\"\"\n    \n    is_action: bool = False\n    \"\"\"True if this line is an action line (begins with a TAB).\"\"\"\n    \n    is_rule: bool = False\n    \"\"\"True if this line is a rule line (non-blank, non-action line containing ':').\"\"\"\n    \n    @property\n    def is_blank(self) -> bool:\n        \"\"\"True if this line is blank (only whitespace and/or a comment).\"\"\"\n        return not self.is_action and not self.is_rule\n    \n    def __init__(self, line_no: int, raw_line: str) -> None:\n        \"\"\"Parse the given line of the makefile, extracting tokens and metadata.\n           Raises MakefileLineError if the line is invalid.\n        \"\"\"\n        self.line_no = line_no\n        self.raw_line = raw_line\n        line = raw_line.rstrip()\n        i_comment = line.find('#')\n        if i_comment >= 0:\n            self.comment = line[i_comment:]\n            line = line[:i_comment].rstrip()\n        if line.startswith('\\t'):\n            self.is_action = True\n            line = line[1:]\n        line = line.strip()\n        self.stripped = line\n        self.target_tokens = []\n        if not self.is_action:\n            i_colon = line.find(':')\n            if i_colon >= 0:\n                if '$' in line:\n                    raise MakefileLineError(self, \"Rule lines cannot contain macro expansions\")\n                self.is_rule = True\n                target_str = line[:i_colon].strip()\n                if len(target_str) == 0:\n                    raise MakefileLineError(self, \"Invalid rule line with empty target\")\n                self.target_tokens = target_str.split()\n                line = line[i_colon + 1:].strip()\n        \n        self.tokens = line.split() # default split returns [] on whitespace-only or empty string\n        \nclass Action(NamedTuple):\n    \"\"\"A single action line, with its tokens and reference to the rule it belongs to.\"\"\"\n    \n    original_tokens: list[Token]\n    \"\"\"Tokens without macros expanded\"\"\"\n    \n    tokens: list[Token]\n    \"\"\"Tokens with macros expanded\"\"\"\n    \n    line: MakefileLine\n    \"\"\"The original MakefileLine that defined this action, used for error reporting.\"\"\"\n    \n    rule: Rule\n    \"\"\"The Rule that this action belongs to, used for macro expansion.\"\"\"\n    \n    def __str__(self) -> str:\n        return ' '.join(self.tokens)\n    \n    def __repr__(self) -> str:\n        return f\"Action(tokens={self.tokens!r}, line_no={self.line.line_no})\"\n\nclass Rule(NamedTuple):\n    \"\"\"A single rule line with a single target, its dependencies, and actions.\n       If a rule line contains multiple targets, a separate Rule and Actions will be created for each.\n    \"\"\"\n    \n    target_name: ArtifactName\n    \"\"\"The single target name for this rule. Note that if a rule line in the makefile lists multiple targets,\n       then one Rule object is created for each target.\"\"\"\n       \n    prerequisite_names: list[ArtifactName]\n    \"\"\"The list of distinct prerequisite names for this rule, in the order they appear in the rule line. Duplicates are removed.\"\"\"\n    \n    actions: list[Action]\n    \"\"\"The list of actions associated with this rule, in order of appearance in the makefile.\"\"\"\n    \n    line: MakefileLine\n    \"\"\"The original MakefileLine that defined this rule, used for error reporting.\"\"\"\n    \n    def expand_tokens(self, tokens: Iterable[Token]) -> list[Token]:\n        \"\"\"Expand built-in macros in the given action tokens using this rule's target and deps.\"\"\"\n        result: list[Token] = []\n        for tok in tokens:\n            if tok.startswith('$'):\n                if tok == '$@':\n                    result.append(self.target_name)\n                elif tok == '$<':\n                    if self.prerequisite_names:\n                        result.append(self.prerequisite_names[0])\n                elif tok == '$^':\n                    result.extend(self.prerequisite_names)\n                else:\n                    raise MakefileLineError(self.line, f\"Unknown macro {tok!r} in action\")\n            else:\n                result.append(tok)\n        return result\n    \n    def __str__(self) -> str:\n        return f\"{self.target_name}: {' '.join(self.prerequisite_names)}\\n\" + '\\n'.join(f\"\\t{action}\" for action in self.actions)\n    \n    def __repr__(self) -> str:\n        return f\"Rule(target={self.target_name!r}, deps={self.prerequisite_names!r}, actions={self.actions!r}, line_no={self.line.line_no})\"\n\nclass Artifact(NamedTuple):\n    \"\"\"A single named target or prerequisite, with its rules, dependencies, and actions.\"\"\"\n    \n    name: ArtifactName\n    \"\"\"The target name.\"\"\"\n    \n    rules: list[Rule]\n    \"\"\"The list of rules for this target, in order of appearance in the makefile.\n       Empty if no rules are defined for this target (i.e., it is a pure source file).\n       \n       Note that if an artifact is out of date wrt any of its prerequisites in any of its\n       rules, then all actions from all rules will be executed in order to build it.\n    \"\"\"\n    \n    prerequisite_names: set[ArtifactName]\n    \"\"\"The set of distinct prerequisite ArtifactNames for this target.\"\"\"\n    \n    def iter_actions(self) -> Generator[Action, None, None]:\n        \"\"\"Iterate over all actions for this target, in order of appearance in the makefile.\"\"\"\n        for rule in self.rules:\n            for action in rule.actions:\n                yield action\n                \n    def is_buildable(self) -> bool:\n        \"\"\"Return True if this target has at least one rule.\"\"\"\n        return len(self.rules) > 0\n    \n    def __str__(self) -> str:\n        return f\"Artifact({self.name!r})\"\n    \n    def __repr__(self) -> str:\n        return f\"Artifact(name={self.name!r}, rules={self.rules!r}, prerequisite_names={sorted(self.prerequisite_names)!r}, actions={list(self.iter_actions())!r})\"\n        \n    \nclass Makefile:\n    \"\"\"A parsed makefile, with targets, rules, and actions.\"\"\"\n    \n    lines: list[MakefileLine]\n    \"\"\"The list of MakefileLine objects, in order of appearance in the makefile. The index is line_no-1.\"\"\"\n    \n    artifacts: dict[ArtifactName, Artifact]\n    \"\"\"Mapping from ArtifactName to Artifact object.\"\"\"\n    \n    default_target: Artifact | None = None\n    \"\"\"The default target for this makefile, or None if no rules have been parsed.\"\"\"\n    \n    def get_artifact(self, name: ArtifactName) -> Artifact:\n        \"\"\"Get the Artifact object for the given ArtifactName, creating it if necessary.\"\"\"\n        target = self.artifacts.get(name)\n        if target is None:\n            target = Artifact(name=name, rules=[], prerequisite_names=set())\n            self.artifacts[name] = target\n        return target\n    \n    def __init__(self, lines: Iterable[str]) -> None:\n        \"\"\"Parse the given lines of a makefile, creating the Makefile object with targets, rules, and actions.\n           Raises MakefileLineError if any line is invalid.\n        \"\"\"\n        self.lines = [MakefileLine(i + 1, line) for i, line in enumerate(lines)]\n        self.artifacts = {}\n        current_rules: list[Rule] = []\n        \"\"\"The rules currently being defined.  Empty when not processing a rule. May have > 1 rule when processing a rule line with multiple targets.\"\"\"\n\n        for line in self.lines:\n            if line.is_action:\n                if len(current_rules) == 0:\n                    raise MakefileLineError(line, \"Action line without preceding rule line\")\n                else:\n                    for current_rule in current_rules:\n                        action = Action(line.tokens, current_rule.expand_tokens(line.tokens), line, current_rule)\n                        current_rule.actions.append(action)\n            elif line.is_rule:\n                targets = [ self.get_artifact(name) for name in remove_duplicates(line.target_tokens) ]\n                if len(targets) == 0:\n                    raise MakefileLineError(line, \"Rule line with no targets\")\n                if self.default_target is None:\n                    self.default_target = targets[0]\n                prerequisite_names = remove_duplicates(line.tokens)\n                current_rules = []\n                for target in targets:\n                    current_rule = Rule(target.name, prerequisite_names, [], line)\n                    current_rules.append(current_rule)\n                    target.rules.append(current_rule)\n                    for dep in prerequisite_names:\n                        target.prerequisite_names.add(dep)\n                        \n    def find_cycles(self) -> list[ArtifactName]:\n        \"\"\"Detect if there are any cycles in the dependency graph.\n           Returns a list of target names involved in a cycle, or an empty list if no cycles.\n        \"\"\"\n        visited: set[ArtifactName] = set()\n        stack: set[ArtifactName] = set()\n        cycles: set[ArtifactName] = set()\n\n        def visit(target_name: ArtifactName) -> None:\n            if target_name in visited:\n                return\n            if target_name in stack:\n                cycles.add(target_name)\n                return\n            stack.add(target_name)\n            target = self.get_artifact(target_name)\n            for dep in target.prerequisite_names:\n                visit(dep)\n            stack.remove(target_name)\n            visited.add(target_name)\n\n        for target_name in list(self.artifacts.keys()):\n            visit(target_name)\n\n        return sorted(cycles)\n                    \n    def build(\n                self,\n                requested_targets: Optional[list[ArtifactName]] = None,\n                file_times: Optional[dict[ArtifactName, int]] = None,\n            ) -> Iterable[Action]:\n        \"\"\"\n            Build the specified targets (or the default target if None),\n            generating the sequence of actions to execute.\n        \"\"\"\n        \n        cycles = self.find_cycles()\n        if cycles:\n            dp(f\"Circular dependencies detected in targets: {cycles}\")\n            raise MakefileCycleError(cycles[0])\n        \n        \n        if requested_targets is None:\n            if self.default_target is None:\n                return\n            requested_targets = [self.default_target.name]\n            \n        dp(f\"Effective targets: {requested_targets}\")\n\n        # Mutable copy — updated as targets are built\n        times: dict[ArtifactName, int] = dict(file_times) if file_times else {}\n        \n        # Each newly-built target gets a strictly increasing timestamp higher than any existing one\n        build_clock = [max(times.values(), default=-1) + 1]\n\n        processed: set[ArtifactName] = set()\n\n        def is_out_of_date(target_name: ArtifactName) -> bool:\n            target_time = times.get(target_name)\n            if target_time is None:\n                dp(f\"Target {target_name!r} is out of date: doesn't yet exist\")\n                return True  # doesn't exist\n            target = self.get_artifact(target_name)\n            if not target.rules:\n                dp(f\"Target {target_name!r} is up-to-date: no rules defined\")\n                return False  # pure source file, never out of date\n            all_deps = target.prerequisite_names\n            if not all_deps:\n                dp(f\"Target {target_name!r} is up-to-date: no prerequisites\")\n                return False  # exists with no prerequisites → up to date\n            for dep in all_deps:\n                dep_time = times.get(dep)\n                assert dep_time is not None, f\"Dependency {dep!r} of target {target_name!r} has no timestamp--should have been built first\"\n                if dep_time >= target_time:\n                    dp(f\"Target {target_name!r} is out of date: prerequisite {dep!r} time {dep_time} is newer or same as target time {target_time}\")\n                    return True\n            return False\n\n        def build_one(target_name: ArtifactName) -> Iterable[Action]:\n            if target_name in processed:\n                return\n            processed.add(target_name)\n            target = self.get_artifact(target_name)\n            dp(f\"Processing target {target_name!r} with prerequisites {sorted(target.prerequisite_names)!r}\")\n\n            # Ensure prerequisites are up to date first (may update their timestamps);\n            # Upon return, all prerequisites have timestamps.\n            for dep in sorted(target.prerequisite_names):\n                yield from build_one(dep)\n                \n            dp(f\"Back to target {target_name!r} after processing prerequisites {sorted(target.prerequisite_names)!r}\")\n\n            if is_out_of_date(target_name):\n                dp(f\"Building target: {target_name!r} (out of date)\")\n                if not target.is_buildable():\n                    raise NoRuleError(f\"Target {target_name!r} has no rules and is out of date--cannot build.\")\n                for action in target.iter_actions():\n                    yield action\n                times[target_name] = build_clock[0]\n                build_clock[0] += 1\n            else:\n                dp(f\"Target {target_name!r} is up to date, skipping\")\n\n        for target_name in sorted(requested_targets):\n            yield from build_one(target_name)\n\n    def build_to_stdout(\n        self,\n        requested_targets: Optional[list[ArtifactName]] = None,\n        file_times: Optional[dict[ArtifactName, int]] = None,\n    ) -> None:\n        \"\"\"Build the specified targets (or the default target if None), printing actions to stdout.\"\"\"\n        \n        cycles = self.find_cycles()\n        if cycles:\n            dp(f\"Circular dependencies detected in targets: {cycles}\")\n            print(\"[Circular dependencies detected]\")\n            return\n        \n        for action in self.build(requested_targets, file_times=file_times):\n            print(action)\n        print(\"[Build complete]\")\n        \n    def dumps(self) -> str:\n        \"\"\"Return a string representation of the makefile for debugging.\"\"\"\n        \n        result = []\n        for target in sorted(self.artifacts.values(), key=lambda t: t.name):\n            result.append(repr(target))\n        return '\\n'.join(result)\n\n\ndef main() -> None:\n    n_files = int(dpinput())\n    file_times: dict[str, int] = {}\n    for _ in range(n_files):\n        file_name, file_time_str = dpinput().split()\n        file_times[file_name] = int(file_time_str)\n\n    target_names_line = dpinput().strip()\n    target_names = target_names_line.split() # split() returns [] on whitespace-only or empty string\n    requested = target_names if target_names else None\n\n    n_lines = int(dpinput())\n    makefile_lines = [dpinput() for _ in range(n_lines)]\n    \n    if STANDALONE:\n        # Verify that all input has been consumed\n        try:\n            extra_input = dpinput()\n            raise ValueError(f\"Extra input after expected lines: {extra_input!r}\")\n        except EOFError:\n            pass\n        \n    makefile = Makefile(makefile_lines)\n    \n    if DEBUG:\n        dp(\"Parsed makefile:\")\n        dp(makefile.dumps())\n\n    dp(\"Building...\")\n    makefile.build_to_stdout(requested, file_times=file_times)\n    \nif __name__ == \"__main__\":\n    main()\n",
+      "statement": "A <<Makefile>> is a build script that describes dependencies between dated <<files>>, and the <<actions>> required to build a <<target file>> from its <<prerequisite files>> if it is outdated or missing; <<actions>> are executed in an order such that every <<prerequisite>> is up to date before it is needed.\n\nYour task is to implement a simplified <<make>> utility: read a list of [[preexistingFile]]s with associated [[fileTime]]s, a list of <<targets>> to build, and a Makefile, then print the actions that would be executed, in order.\n\n<<Makefile syntax>>\n\nA <<Makefile>> is a sequence of <<rules>> and <<actions>>, with optional <<comments>>.\n\n<<Comments>>\nA {{#}} character begins a comment that extends to the end of the line. Comments are removed before applying other parsing rules.\n\n<<Whitespace>>\nAfter using {{TAB}} to identify <<actions>> (see below), {{TAB}} and other leading and trailing whitespace are ignored, as are blank lines and extra spaces not needed to separate tokens.\n\n<<Rules>>\n\nA <<rule>> associates <<targets>> with <<prerequisites>>. Each of these is generally a <<file>>, but can be any valid token string:\n\n`\ntarget1 [target2 ...] : [prereq1 ...]\n`\n\nTo the left of the {{:}} is a whitespace-separated list of one or more <<targets>>. To the right is a whitespace-separated list of zero or more <<prerequisites>>. Whitespace adjacent to the {{:}} is optional. If multiple targets appear before the {{:}}, it is equivalent to writing a separate identical rule for each distinct target.\n\nA <<target>> may appear in more than one <<rule>>. Its prerequisites are the <<union>> of prerequisites in all its rules, and its <<actions>> are the <<concatenation>> of all associated rule actions, in order of appearance.\n\n<<Actions>>\n\nAn <<action>> is any line that begins with a {{TAB}}. It is associated with the preceding <<rule>>. Applying the whitespace rules above yields a sequence of tokens. Any token that matches a built-in <<macro>> (see below) is replaced by its expansion. When the <<action>> is executed, the resulting tokens are printed as a single line of output with single-space delimiters.\n\n<<Built-in macros>>\n\nWithin an <<action>>, built-in <<macros>> may appear as whole tokens. They are replaced by their expansions before the line is printed:\n\n```\n| Macro | Expands to\n|-------|-----------\n| $@    | The target being built\n| $<    | The first prerequisite of the associated rule\n| $^    | All distinct prerequisites of the rule, space-separated,\n|       |   preserving their order in the rule\n```\n\n<<Build semantics>>\n\n- Duplicate <<targets>> or <<prerequisites>> in a <<rule>> are ignored.\n- If a file exists prior to the build, it has an integer [[fileTime]]. The higher the [[fileTime]], the more recently the file was last updated.\n- A non-preexisting target, or a preexisting target that is as old or older than any of its prerequisites, is out of date.\n- A preexisting file with no prerequisites is up to date.\n- Building a target effectively updates its [[fileTime]] and makes any target for which it is a prerequisite out of date.\n- Before a target is built, all of its prerequisites must be fully up to date.\n- If no <<required targets>> are explicitly given in [[cmdArgs]], the first <<target>> in the first <<rule>> of the Makefile is the <<required target>>.\n- Targets that are not needed to bring the <<required targets>> up to date are not built.\n- When two targets can otherwise be built in any order, the one whose filename is lexicographically smaller is built first.\n- Each target is built at most once.\n- A target that has no <<actions>> produces no output, but its prerequisites are still built.\n- If a circular dependency exists anywhere in the Makefile--even among targets not being built--the build is aborted prior to executing any action.\n\n<<Example>>\n\nThe following Makefile compiles two source files into object files, then links them into a program.\n\n```\nall: util.o main.o\n\tgcc -o $@ $^\nutil.o: util.c\n\tgcc -c $< -o $@\nmain.o: main.c\n\tgcc -c $< -o $@\n```\n\nAssume [[cmdArgs]] is empty, so the default target <<all>> is built. Assuming <<main.c>> and <<util.c>> are the only preexisting files, the build proceeds as follows: <<util.o>> and <<main.o>> are prerequisites of <<all>> and must be built first. Between <<util.o>> and <<main.o>>, neither depends on the other, so the lexicographically smaller name <<main.o>> is built first.\n\nThe actions output are:\n\n```\ngcc -c main.c -o main.o\ngcc -c util.c -o util.o\ngcc -o all util.o main.o\n[Build complete]\n```\n\nNote that {{$^}} in the <<all>> rule expands to <<util.o main.o>>—-the prerequisites in their given <<rule>> order, not the order they were built.\n",
+      "testCases": [
+        {
+          "title": "Problem statement example",
+          "isTest": true,
+          "testIn": "2\nmain.c 100\nutil.c 100\n\n6\nall: util.o main.o\n\tgcc -o $@ $^\nutil.o: util.c\n\tgcc -c $< -o $@\nmain.o: main.c\n\tgcc -c $< -o $@",
+          "testOut": "gcc -c main.c -o main.o\ngcc -c util.c -o util.o\ngcc -o all util.o main.o\n[Build complete]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Problem statement example",
+          "isTest": false,
+          "testIn": "3\nutil.c 100\nmain.c 100\nhelper.c 100\n\n8\napp: util.o main.o helper.o\n\tgcc -o $@ $^\nutil.o: util.c\n\tgcc -c $< -o $@\nmain.o: main.c\n\tgcc -c $< -o $@\nhelper.o: helper.c\n\tgcc -c $< -o $@",
+          "testOut": "gcc -c helper.c -o helper.o\ngcc -c main.c -o main.o\ngcc -c util.c -o util.o\ngcc -o app util.o main.o helper.o\n[Build complete]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Up-to-date check and partial rebuild",
+          "isTest": true,
+          "testIn": "3\nsrc.c 150\nmain.o 100\nutil.o 200\n\n6\nprogram: main.o util.o\n\tlink $^ -o $@\nmain.o: src.c\n\tcc -c $< -o $@\nutil.o: src.c\n\tcc -c $< -o $@",
+          "testOut": "cc -c src.c -o main.o\nlink main.o util.o -o program\n[Build complete]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Up-to-date check and partial rebuild",
+          "isTest": false,
+          "testIn": "3\nsrc.c 100\nmain.o 50\nutil.o 200\n\n6\nprogram: main.o util.o\n\tlink $^ -o $@\nmain.o: src.c\n\tcc -c $< -o $@\nutil.o: src.c\n\tcc -c $< -o $@",
+          "testOut": "cc -c src.c -o main.o\nlink main.o util.o -o program\n[Build complete]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Single rule with no actions",
+          "isTest": true,
+          "testIn": "1\nsource.c 100\noutput\n1\noutput: source.c",
+          "testOut": "[Build complete]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Single rule with no actions",
+          "isTest": false,
+          "testIn": "1\nheader.h 100\nresult\n1\nresult: header.h",
+          "testOut": "[Build complete]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Up-to-date ages",
+          "isTest": true,
+          "testIn": "4\nsrc.c 50\nmain.o 100\nutil.o 100\nprogram 200\n\n6\nprogram: main.o util.o\n\tlink $^ -o $@\nmain.o: src.c\n\tcc -c $< -o $@\nutil.o: src.c\n\tcc -c $< -o $@",
+          "testOut": "[Build complete]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Up-to-date ages",
+          "isTest": false,
+          "testIn": "4\nsrc.csv 50\nmain.md 100\ninsert.md 100\nREADME.md 200\n\n6\nREADME.md: main.md insert.md\n\tcombine $^ -o $@\nmain.md: src.csv\n\trender-table -o $@ $<\ninsert.md: src.csv\n\trender-table -o $@ --insert $<",
+          "testOut": "[Build complete]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple requested targets",
+          "isTest": true,
+          "testIn": "4\ndata.raw 100\nresult-a 90\nresult-b 100\nresult-c 200\nresult-d result-a result-b result-c\n8\nresult-a: data.raw\n\tprocess $< -o $@\nresult-b: data.raw\n\tprocess $< -o $@\nresult-c: data.raw\n\tprocess $< -o $@\nresult-d:\n\tgenerate result-d",
+          "testOut": "process data.raw -o result-a\nprocess data.raw -o result-b\ngenerate result-d\n[Build complete]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple requested targets",
+          "isTest": false,
+          "testIn": "4\ndata.txt 100\narchive.zip 100\nindex.html 50\nreport.pdf 200\nreport.pdf archive.zip index.html extra-doc\n8\nreport.pdf: data.txt\n\tgenerate-report $< -o $@\narchive.zip: data.txt\n\tcompress $< -o $@\nindex.html: data.txt\n\tbuild-index $< -o $@\nextra-doc:\n\tcreate extra-doc",
+          "testOut": "compress data.txt -o archive.zip\ncreate extra-doc\nbuild-index data.txt -o index.html\n[Build complete]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No-action intermediates and unused rules",
+          "isTest": true,
+          "testIn": "4\nseed.dat 100\noutput 50\nconfig 999\ncooked.dat 80\n\n11\nfinal: cooked.dat config output stage\n\tpublish $^\ncooked.dat: seed.dat\n\tcook $< -o $@\nstage: cooked.dat\noutput:\n\tcreate output\ndata:\n\tfetch data\nunused: config\n\tskip",
+          "testOut": "cook seed.dat -o cooked.dat\npublish cooked.dat config output stage\n[Build complete]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "No-action intermediates and unused rules",
+          "isTest": false,
+          "testIn": "4\nraw.dat 100\nfiltered.dat 200\nprocessed.dat 150\nconfig.ini 999\n\n13\nreport: processed.dat stats config.ini\n\tfinalize $^\nstats: processed.dat\nprocessed.dat: filtered.dat\n\tanalyze $< -o $@\nfiltered.dat: raw.dat\n\tfilter $< -o $@\nconfig.ini:\n\tload-config\nbase:\n\tcreate base\nunused: raw.dat\n\tnever-run-this",
+          "testOut": "analyze filtered.dat -o processed.dat\nfinalize processed.dat stats config.ini\n[Build complete]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple targets with identical prerequisites",
+          "isTest": true,
+          "testIn": "4\nbase.c 50\nextra.c 50\nbase.o 100\nextra.o 100\n\n10\ntop:left right\n\tmerge $^\nleft: base.o extra.o\n\tlink-left $^\nright: base.o extra.o\n\tlink-right $^\nbase.o: base.c\n\tcc -c $< -o $@\nextra.o: extra.c\n\tcc -c $< -o $@",
+          "testOut": "link-left base.o extra.o\nlink-right base.o extra.o\nmerge left right\n[Build complete]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple targets with identical prerequisites",
+          "isTest": false,
+          "testIn": "2\ncommon.c 100\ncommon.o 200\n\n8\nall: libA libB\n\tlink $^\nlibA: common.o\n\tar rc $@ $<\nlibB: common.o\n\tar rc $@ $<\ncommon.o: common.c\n\tcc -c $< -o $@",
+          "testOut": "ar rc libA common.o\nar rc libB common.o\nlink libA libB\n[Build complete]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Built-in macros and comments",
+          "isTest": true,
+          "testIn": "3\nraw-b 100\npart-a 80\nraw-a 100\n\n12\n# Build the final product\nresult: part-a part-b raw-c\n\tjoin $^ > $@\npart-a: raw-a\n\techo building part-a\n\tconvert $< $@\npart-b: raw-b\n\tconvert $< $@\nraw-a:\n\tfetch raw-a # get data\nraw-c:\n\tfetch raw-c",
+          "testOut": "echo building part-a\nconvert raw-a part-a\nconvert raw-b part-b\nfetch raw-c\njoin part-a part-b raw-c > result\n[Build complete]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Built-in macros and comments",
+          "isTest": false,
+          "testIn": "5\nsrc-a.c 100\nsrc-b.c 200\nlib-a.o 150\nlib-b.o 50\nheader.h 100\n\n12\n# Multi-library linker\nmain: lib-a.o lib-b.o setup\n\tlink $^ -o $@\nlib-a.o: src-a.c header.h\n\t# compile library A\n\tcc -c $< -o $@\nlib-b.o: src-b.c\n\tcc -c $< -o $@ # compile B\nheader.h:\n\tgenerate header\nsetup:\n\tinit setup",
+          "testOut": "cc -c src-b.c -o lib-b.o\ninit setup\nlink lib-a.o lib-b.o setup -o main\n[Build complete]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multi-target rule with same-age staleness",
+          "isTest": true,
+          "testIn": "4\nsource.c 100\nheader.h 100\nmain.o 100\nutil.o 100\n\n4\nprogram: util.o main.o\n\tlink $^ -o $@\nutil.o main.o: source.c header.h\n\tcc -c $< -o $@",
+          "testOut": "cc -c source.c -o main.o\ncc -c source.c -o util.o\nlink util.o main.o -o program\n[Build complete]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multi-target rule with same-age staleness",
+          "isTest": false,
+          "testIn": "5\nconfig.c 100\nconfig.h 50\nreader.o 200\nwriter.o 80\nparser.o 100\n\n4\nbundle: reader.o writer.o parser.o\n\tpack $^ -o $@\nreader.o writer.o parser.o: config.c config.h\n\tcc -c $< -o $@",
+          "testOut": "cc -c config.c -o parser.o\ncc -c config.c -o writer.o\npack reader.o writer.o parser.o -o bundle\n[Build complete]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Same target in multiple rules",
+          "isTest": true,
+          "testIn": "5\npart1.c 100\npart2.c 100\nheader.h 100\npart1.o 50\npart2.o 200\n\n12\napp: lib\n\tlink $^\nlib other: part1.o header.h\n\tstage1 $<\nlib: part2.o header.h\n\tstage2 $^\npart1.o: part1.c\n\tcc -c $< -o $@\npart2.o: part2.c\n\tcc -c $< -o $@\nother:\n\techo \"extra target built\"",
+          "testOut": "cc -c part1.c -o part1.o\nstage1 part1.o\nstage2 part2.o header.h\nlink lib\n[Build complete]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Same target in multiple rules",
+          "isTest": false,
+          "testIn": "5\nheader.h 100\nimpl-a.c 200\nimpl-b.c 50\nmodule.a 150\nmodule.b 80\n\n12\nfinal: combined\n\tdeploy $<\ncombined other: module.a module.b header.h\n\tmerge $^ -o $@\ncombined: header.h\n\tstamp $^\nmodule.a: impl-a.c\n\tcompile $< -o $@\nmodule.b: impl-b.c\n\tcompile $< -o $@\nother:\n\techo \"extra target built\"",
+          "testOut": "compile impl-a.c -o module.a\nmerge module.a module.b header.h -o combined\nstamp header.h\ndeploy combined\n[Build complete]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Large partial rebuild",
+          "isTest": true,
+          "testIn": "8\ncore.c 100\nmath.c 100\nio.c 100\nnet.c 100\ncore.o 200\nmath.o 200\nio.o 90\nnet.o 200\n\n13\n# Partial rebuild test\napp: core.o math.o io.o net.o plugin\n\tld $^\nplugin: io.o net.o\n\tmake-plugin $^ -o $@\ncore.o: core.c\n\tcc -c $< -o $@\nmath.o: math.c\n\tcc -c $< -o $@\nio.o: io.c\n\tcc -c $< -o $@\nnet.o: net.c\n\tcc -c $< -o $@",
+          "testOut": "cc -c io.c -o io.o\nmake-plugin io.o net.o -o plugin\nld core.o math.o io.o net.o plugin\n[Build complete]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Large partial rebuild",
+          "isTest": false,
+          "testIn": "10\napi.c 100\nui.c 200\ndb.c 100\nauth.c 100\ntest_api.c 50\napi.o 150\nui.o 150\ndb.o 150\nauth.o 150\ntest_api.o 200\n\n20\n# Full project build\nall: server tests\n\tverify $^\n# Build the server binary\nserver: api.o ui.o db.o auth.o\n\tlink $^ -o $@\n# Build test suite\ntests: test_api.o server\n\tlink-test $^ -o $@\n# Modules\napi.o: api.c\n\tcc -c $< -o $@\nui.o: ui.c\n\tcc -c $< -o $@\ndb.o: db.c\n\tcc -c $< -o $@\nauth.o: auth.c\n\tcc -c $< -o $@\ntest_api.o: test_api.c\n\tcc -c $< -o $@",
+          "testOut": "cc -c ui.c -o ui.o\nlink api.o ui.o db.o auth.o -o server\nlink-test test_api.o server -o tests\nverify server tests\n[Build complete]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Cycle detection",
+          "isTest": true,
+          "testIn": "0\n\n18\n# Cycle detection test\nserver: A B\n\tstart $<\nA: B C\n\tbuild A\nB: D\n\tbuild B\nC: D\n\tbuild C\nD: A\n\tbuild D\n# Unreachable targets\nE:\n\tsetup E\nX: Y\n\tbuild X\nY:\n\tbuild Y",
+          "testOut": "[Circular dependencies detected]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Cycle detection",
+          "isTest": false,
+          "testIn": "0\n\n14\n# Full build with cycles\nserver: A B\n\tstart $<\nA: B C\n\tbuild A\nB: A\n\tbuild B\nC:\n\tsetup C\n# Unreachable targets\nclean:\n\trm $<\ntemp: clean\n\tmake temp",
+          "testOut": "[Circular dependencies detected]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Unreachable cycle detection",
+          "isTest": true,
+          "testIn": "0\n\n18\n# Cycle detection test\nserver: A B\n\tstart $<\nA: B C\n\tbuild A\nB: D\n\tbuild B\nC: D\n\tbuild C\nD:\n\tbuild D\n# Unreachable targets that form a cycle\nE: X\n\tsetup E\nX: Y\n\tbuild X\nY: E\n\tbuild Y",
+          "testOut": "[Circular dependencies detected]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Unreachable cycle detection",
+          "isTest": false,
+          "testIn": "0\n\n14\n# Unreachable cycle detection\nserver: A B\n\tstart $<\nA: B C\n\tbuild A\nB: C\n\tbuild B\nC:\n\tsetup C\n# Unreachable targets that form a cycle\nclean: temp\n\trm $<\ntemp: clean\n\tmake temp",
+          "testOut": "[Circular dependencies detected]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "All rebuild features combined",
+          "isTest": true,
+          "testIn": "12\nsdk.h 100\nalgo.c 300\nparser.c 100\nrender.c 100\nlogger.c 100\nalgo.o 200\nparser.o 150\nrender.o 80\nlogger.o 200\nlibcore.a 170\nlibrender.a 170\nconfig.h 90\n\n24\n# Top-level application build\napp: librender.a libcore.a\n\tld $^ -o $@\n# Core library: algo and parser modules\nlibcore.a: algo.o parser.o\n\tar rcs $@ $^\nlibcore.a: logger.o\n\tar rcs $@ $^\n# Render library\nlibrender.a: render.o\n\tar rcs $@ $^\n# Compile each module\nalgo.o: algo.c sdk.h generate\n\tcc -c $< -o $@\nparser.o: parser.c sdk.h\n\tcc -c $< -o $@\nrender.o: render.c sdk.h\n\tcc -c $< -o $@\nlogger.o: logger.c\n\tcc -c $< -o $@\nconfig.h:\n\tconfigure config.h\ngenerate:\n\tgen generate",
+          "testOut": "gen generate\ncc -c algo.c -o algo.o\nar rcs libcore.a algo.o parser.o\nar rcs libcore.a logger.o\ncc -c render.c -o render.o\nar rcs librender.a render.o\nld librender.a libcore.a -o app\n[Build complete]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "All rebuild features combined",
+          "isTest": false,
+          "testIn": "5\nconfig.h 100\ncrypto.c 50\nutils.c 90\nutils.o 80\ncrypto.o 300\n\n23\n# Full software build from scratch\n# libc uses shared crypto.o (built only once)\napp: libc libu\n\tld $^ -o $@\n# libc library across two rules\nlibc: core.o crypto.o\n\tar rcs $@ $^\nlibc: config.h\n\tstamp $^\nlibu: utils.o crypto.o\n\tar rcs $@ $^\ncore.o: core.c config.h\n\tcc -c $< -o $@\nutils.o: utils.c config.h\n\tcc -c $< -o $@\ncrypto.o: crypto.c\n\tcc -c $< -o $@\ncore.c:\n\tgenerate core\nutils.c:\n\tgenerate utils\ncrypto.c:\n\tgenerate crypto",
+          "testOut": "generate core\ncc -c core.c -o core.o\nar rcs libc core.o crypto.o\nstamp config.h\ncc -c utils.c -o utils.o\nar rcs libu utils.o crypto.o\nld libc libu -o app\n[Build complete]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple action lines per rule",
+          "isTest": true,
+          "testIn": "2\nsrc.c 100\nconfig.ini 200\n\n19\n# Multi-step build with validation\nrelease: app docs\n\tverify $^\n\tpublish $@\napp: config.ini lib.o src.o\n\tlink $^ -o $@\n\tvalidate $@\nlib.o: lib.c config.ini\n\tcc -c $< -o $@\n\ttest $@\nsrc.o: src.c\n\tcc -c $< -o $@\ndocs:\n\tgenerate docs\n\tindex docs\nlib.c:\n\tfetch\nconfig.ini:\n\tinit config.ini",
+          "testOut": "fetch\ncc -c lib.c -o lib.o\ntest lib.o\ncc -c src.c -o src.o\nlink config.ini lib.o src.o -o app\nvalidate app\ngenerate docs\nindex docs\nverify app docs\npublish release\n[Build complete]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiple action lines per rule",
+          "isTest": false,
+          "testIn": "2\nsrc-a 100\nheader.h 50\n\n14\n# Multi-step CI pipeline\nci: compile test\n\treport $^\n\tfinalize $@\ncompile: header.h src-a src-b\n\tcc $^ -o $@\n\tvalidate $@\ntest: compile\n\trun-tests $<\n\tcheck-results\nsrc-a:\n\tfetch src-a\nsrc-b:\n\tfetch src-b",
+          "testOut": "fetch src-b\ncc header.h src-a src-b -o compile\nvalidate compile\nrun-tests compile\ncheck-results\nreport compile test\nfinalize ci\n[Build complete]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Kitchen sink",
+          "isTest": true,
+          "testIn": "9\nhdr.h 100\nbase.c 400\ndata.cfg 100\nbase.o 300\nshared.h 500\ncache.o 500\nlib.a 200\nutil.o 150\njunk.bak 50\napp tests\n38\n# KitchenSink: all-features build\n  # whitespace comment\n \n\ntests app : lib.a util.o shared.dep # all outputs\n\t# Link everything together\n\tlink $^ -o $@\n\tdone\napp: config.o # extra dep\n\tsetup $<\n# Note here that lib.a appears in multiple rules\n# including a rule with multiple targets\nlib.a libb.a: base.o cache.o\n\tar rcs $@ $^\nlib.a: util.o\n\tstamp $^\nbase.o: base.c hdr.h\n\tcc -c $< -o $@\ncache.o: shared.h hdr.h # compile\n\t  cc -c $< -o $@ # compile\n\n# Case with no space after colon\nutil.o:data.cfg hdr.h\n\tcc -c $< -o $@\nconfig.o: hdr.h # extra module\n\t  cc -c $< -o $@   \nconfig.o: hdr.h hdr.h\n\tredo $<\ndata.cfg:\n\t  init data.cfg   \ninit:\n\techo $^\nshared.dep: init\ncache.o cache.o: hdr.h\n\ttouch $@\ntag: # release tag\ngarbage: junk.bak\n\tdelete $<",
+          "testOut": "cc -c hdr.h -o config.o\nredo hdr.h\ncc -c base.c -o base.o\ncc -c shared.h -o cache.o\ntouch cache.o\nar rcs lib.a base.o cache.o\nstamp util.o\necho\nlink lib.a util.o shared.dep -o app\ndone\nsetup config.o\nlink lib.a util.o shared.dep -o tests\ndone\n[Build complete]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Kitchen sink",
+          "isTest": false,
+          "testIn": "9\nheader.h 100\nmain.c 400\nsetup.ini 100\nobj.o 300\ncommon.h 500\next.o 500\narchive.a 200\nplugin.o 150\nwaste.log 50\nserver client\n36\n# KitchenSink: all-features validator\n  # whitespace comment\n \n\nserver client : sync.dep plugin.o archive.a # main targets\n\t# Link everything together\n\tlink $^ -o $@\n\tdone\nserver: config.o # extra dep\n\tsetup $<\n# Note here that archive.a appears in multiple # rules including a rule with multiple targets\narchive.a archiveb.a: obj.o ext.o\n\tar rcs $@ $^\narchive.a: plugin.o\n\tstamp $^\nobj.o: main.c header.h\n\tcc -c $< -o $@\n# A case with no space after the colon\next.o:common.h header.h # compile\n\t  cc -c $< -o $@ # compile\nplugin.o: setup.ini header.h\n\tcc -c $< -o $@\nconfig.o: header.h # module\n\t  cc -c $< -o $@   \nconfig.o: header.h header.h\n\tredo $<\nsetup.ini:\n\t  init setup.ini   \ninit:\n\techo $^\nsync.dep: init\next.o ext.o: header.h\n\ttouch $@\ntag: # release tag\ngarbage: waste.log\n\tdelete $<",
+          "testOut": "cc -c common.h -o ext.o\ntouch ext.o\ncc -c main.c -o obj.o\nar rcs archive.a obj.o ext.o\nstamp plugin.o\necho\nlink sync.dep plugin.o archive.a -o client\ndone\ncc -c header.h -o config.o\nredo header.h\nlink sync.dep plugin.o archive.a -o server\ndone\nsetup config.o\n[Build complete]",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "0 <= [[nFiles]] <= 20\n1 <= length([[preexistingFile]]) <= 100\n0 <= [[fileTime]] <= 1000\n0 <= length([[cmdArgs]]) <= 100\n1 <= [[nLines]] <= 100\n0 <= length([[makefileLine]]) <= 100\n\n[[preexistingFile]] consists of printable ASCII characters and does not contain whitespace, {{$}}, {{:}}, or {{#}}.\nAll [[fileTime]] values may be assumed to be in the past.\n\nWithin the Makefile:\n- All Makefiles are syntactically valid.\n- At least one <<rule>> is defined.\n- Every <<file>> consists of 1-100 printable ASCII characters and does not contain whitespace, {{$}}, {{:}}, or {{#}}.\n- Every required <<target>> either appears as a [[preexistingFile]] or is the target of at least one <<rule>>.\n- {{$<}} is only used in <<actions>> with a <<rule>> having at least one <<prerequisite>>.\n- Every <<action>> is preceded by at least one <<rule>>.\n- Every <<action>> has at least one token.\n- {{TAB}} characters do not appear anywhere except as the first character of an <<action>>.",
+      "coverBinaryId": 164190441842482,
+      "stubGenerator": "read nFiles:int\nloop nFiles read preexistingFile:word(100) fileTime:int\nread cmdArgs:string(100)\nread nLines:int\nloop nLines read makefileLine:string(100)\nwrite [Build complete]\n",
+      "inputDescription": "<<Line 1:>> An integer [[nFiles]], the number of preexisting files.\n<<Next [[nFiles]] lines:>> A [[preexistingFile]] and its integer timestamp [[fileTime]], one file per line.\n<<Next Line:>> The commandline arguments [[cmdArgs]], consisting of space-delimited <<required targets>> to build, or an empty line.\n<<Next Line:>> An integer [[nLines]], the number of lines in the Makefile.\n<<Next [[nLines]] lines:>> The contents of the Makefile, one [[makefileLine]] at a time.\n",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<If a circular dependency is detected:>>\n    <<A single line:>> \n      {{[Circular dependencies detected]}}\n\n<<If a circular dependency is not detected:>>\n    <<One line per action executed:>> The tokens of the action, separated by single spaces,\n        with all built-in macros already expanded. Actions are printed in the order they are executed.\n    <<Final line:>>\n      {{[Build complete]}}\n"
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A <strong>Makefile</strong> is a build script that describes dependencies between dated <strong>files</strong>, and the <strong>actions</strong> required to build a <strong>target file</strong> from its <strong>prerequisite files</strong> if it is outdated or missing; <strong>actions</strong> are executed in an order such that every <strong>prerequisite</strong> is up to date before it is needed.<br><br>Your task is to implement a simplified <strong>make</strong> utility: read a list of <var>preexistingFile</var>s with associated <var>fileTime</var>s, a list of <strong>targets</strong> to build, and a Makefile, then print the actions that would be executed, in order.<br><br><strong>Makefile syntax</strong><br><br>A <strong>Makefile</strong> is a sequence of <strong>rules</strong> and <strong>actions</strong>, with optional <strong>comments</strong>.<br><br><strong>Comments</strong><br>A <const>#</const> character begins a comment that extends to the end of the line. Comments are removed before applying other parsing rules.<br><br><strong>Whitespace</strong><br>After using <const>TAB</const> to identify <strong>actions</strong> (see below), <const>TAB</const> and other leading and trailing whitespace are ignored, as are blank lines and extra spaces not needed to separate tokens.<br><br><strong>Rules</strong><br><br>A <strong>rule</strong> associates <strong>targets</strong> with <strong>prerequisites</strong>. Each of these is generally a <strong>file</strong>, but can be any valid token string:<br><br><pre style=\"font-family: monospace\"><br>target1 [target2 ...] : [prereq1 ...]<br></pre><br><br>To the left of the <const>:</const> is a whitespace-separated list of one or more <strong>targets</strong>. To the right is a whitespace-separated list of zero or more <strong>prerequisites</strong>. Whitespace adjacent to the <const>:</const> is optional. If multiple targets appear before the <const>:</const>, it is equivalent to writing a separate identical rule for each distinct target.<br><br>A <strong>target</strong> may appear in more than one <strong>rule</strong>. Its prerequisites are the <strong>union</strong> of prerequisites in all its rules, and its <strong>actions</strong> are the <strong>concatenation</strong> of all associated rule actions, in order of appearance.<br><br><strong>Actions</strong><br><br>An <strong>action</strong> is any line that begins with a <const>TAB</const>. It is associated with the preceding <strong>rule</strong>. Applying the whitespace rules above yields a sequence of tokens. Any token that matches a built-in <strong>macro</strong> (see below) is replaced by its expansion. When the <strong>action</strong> is executed, the resulting tokens are printed as a single line of output with single-space delimiters.<br><br><strong>Built-in macros</strong><br><br>Within an <strong>action</strong>, built-in <strong>macros</strong> may appear as whole tokens. They are replaced by their expansions before the line is printed:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>| Macro | Expands to<br>|-------|-----------<br>| $@    | The target being built<br>| $&lt;    | The first prerequisite of the associated rule<br>| $^    | All distinct prerequisites of the rule, space-separated,<br>|       |   preserving their order in the rule<br></pre><pre style=\"font-family: monospace\"></pre><br><br><strong>Build semantics</strong><br><br>- Duplicate <strong>targets</strong> or <strong>prerequisites</strong> in a <strong>rule</strong> are ignored.<br>- If a file exists prior to the build, it has an integer <var>fileTime</var>. The higher the <var>fileTime</var>, the more recently the file was last updated.<br>- A non-preexisting target, or a preexisting target that is as old or older than any of its prerequisites, is out of date.<br>- A preexisting file with no prerequisites is up to date.<br>- Building a target effectively updates its <var>fileTime</var> and makes any target for which it is a prerequisite out of date.<br>- Before a target is built, all of its prerequisites must be fully up to date.<br>- If no <strong>required targets</strong> are explicitly given in <var>cmdArgs</var>, the first <strong>target</strong> in the first <strong>rule</strong> of the Makefile is the <strong>required target</strong>.<br>- Targets that are not needed to bring the <strong>required targets</strong> up to date are not built.<br>- When two targets can otherwise be built in any order, the one whose filename is lexicographically smaller is built first.<br>- Each target is built at most once.<br>- A target that has no <strong>actions</strong> produces no output, but its prerequisites are still built.<br>- If a circular dependency exists anywhere in the Makefile--even among targets not being built--the build is aborted prior to executing any action.<br><br><strong>Example</strong><br><br>The following Makefile compiles two source files into object files, then links them into a program.<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>all: util.o main.o<br>\tgcc -o $@ $^<br>util.o: util.c<br>\tgcc -c $&lt; -o $@<br>main.o: main.c<br>\tgcc -c $&lt; -o $@<br></pre><pre style=\"font-family: monospace\"></pre><br><br>Assume <var>cmdArgs</var> is empty, so the default target <strong>all</strong> is built. Assuming <strong>main.c</strong> and <strong>util.c</strong> are the only preexisting files, the build proceeds as follows: <strong>util.o</strong> and <strong>main.o</strong> are prerequisites of <strong>all</strong> and must be built first. Between <strong>util.o</strong> and <strong>main.o</strong>, neither depends on the other, so the lexicographically smaller name <strong>main.o</strong> is built first.<br><br>The actions output are:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>gcc -c main.c -o main.o<br>gcc -c util.c -o util.o<br>gcc -o all util.o main.o<br>[Build complete]<br></pre><pre style=\"font-family: monospace\"></pre><br><br>Note that <const>$^</const> in the <strong>all</strong> rule expands to <strong>util.o main.o</strong>&mdash;-the prerequisites in their given <strong>rule</strong> order, not the order they were built.<br></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>nFiles</var>, the number of preexisting files.<br><strong>Next <var>nFiles</var> lines:</strong> A <var>preexistingFile</var> and its integer timestamp <var>fileTime</var>, one file per line.<br><strong>Next Line:</strong> The commandline arguments <var>cmdArgs</var>, consisting of space-delimited <strong>required targets</strong> to build, or an empty line.<br><strong>Next Line:</strong> An integer <var>nLines</var>, the number of lines in the Makefile.<br><strong>Next <var>nLines</var> lines:</strong> The contents of the Makefile, one <var>makefileLine</var> at a time.<br></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>If a circular dependency is detected:</strong><br>    <strong>A single line:</strong> <br>      <const>[Circular dependencies detected]</const><br><br><strong>If a circular dependency is not detected:</strong><br>    <strong>One line per action executed:</strong> The tokens of the action, separated by single spaces,<br>        with all built-in macros already expanded. Actions are printed in the order they are executed.<br>    <strong>Final line:</strong><br>      <const>[Build complete]</const><br></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt;= <var>nFiles</var> &lt;= 20<br>1 &lt;= length(<var>preexistingFile</var>) &lt;= 100<br>0 &lt;= <var>fileTime</var> &lt;= 1000<br>0 &lt;= length(<var>cmdArgs</var>) &lt;= 100<br>1 &lt;= <var>nLines</var> &lt;= 100<br>0 &lt;= length(<var>makefileLine</var>) &lt;= 100<br><br><var>preexistingFile</var> consists of printable ASCII characters and does not contain whitespace, <const>$</const>, <const>:</const>, or <const>#</const>.<br>All <var>fileTime</var> values may be assumed to be in the past.<br><br>Within the Makefile:<br>- All Makefiles are syntactically valid.<br>- At least one <strong>rule</strong> is defined.<br>- Every <strong>file</strong> consists of 1-100 printable ASCII characters and does not contain whitespace, <const>$</const>, <const>:</const>, or <const>#</const>.<br>- Every required <strong>target</strong> either appears as a <var>preexistingFile</var> or is the target of at least one <strong>rule</strong>.<br>- <const>$&lt;</const> is only used in <strong>actions</strong> with a <strong>rule</strong> having at least one <strong>prerequisite</strong>.<br>- Every <strong>action</strong> is preceded by at least one <strong>rule</strong>.<br>- Every <strong>action</strong> has at least one token.<br>- <const>TAB</const> characters do not appear anywhere except as the first character of an <strong>action</strong>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\nmain.c 100\nutil.c 100\n\n6\nall: util.o main.o\n\tgcc -o $@ $^\nutil.o: util.c\n\tgcc -c $&lt; -o $@\nmain.o: main.c\n\tgcc -c $&lt; -o $@</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">gcc -c main.c -o main.o\ngcc -c util.c -o util.o\ngcc -o all util.o main.o\n[Build complete]</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 7320595789984,
+  "commentCount": 13,
+  "upVotes": 1,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}
