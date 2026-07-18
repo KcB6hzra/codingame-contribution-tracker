@@ -1,0 +1,147 @@
+{
+  "id": 136800,
+  "activeVersion": 38,
+  "score": 1,
+  "votableId": 38447687,
+  "codingamerId": 6297853,
+  "views": 103,
+  "commentableId": 38282728,
+  "title": "CRX-90 Communication Matrix",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "AnshuJack",
+  "publicHandle": "136800eee96db978c1024536180e2de4b34c0f",
+  "codingamerHandle": "91b04e74c5dbd6c2ecb1ab27e2b748183587926",
+  "lastVersion": {
+    "version": 38,
+    "autocloseTime": 1785584548161,
+    "data": {
+      "title": "CRX-90 Communication Matrix",
+      "topics": [
+        {
+          "id": 86,
+          "handle": "simulation",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Simulation",
+            "2": "Simulation"
+          },
+          "pageTitle": "Simulation: exercises and theory",
+          "puzzleCount": 51,
+          "parentTopicId": 42,
+          "contentDetailsId": 72
+        },
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 82,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        },
+        {
+          "id": 206,
+          "handle": "rotation",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Rotation",
+            "2": "Rotation"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "from math import ceil\nh = int(input())\nw = int(input())\nn = int(input())\nturns = [*map(int,input().split())]\ngrid = []\nfor _ in ' '*h:\n    grid += [input()]\n\ncr = (h-1)//2\ncc = (w-1)//2\n\nhori = grid[cr]\nvert = []\nfor i in range(h):\n    vert += [grid[i][cc]]\n\n# row transformation model\noverlap_base = hori\nif len(vert) > len(hori):\n    overlap_base = overlap_base.center(len(vert), ' ')\ncc = (len(overlap_base)-1)//2 # Patch\n\n# Rotate 90 Clockwise - +1\noverlap = ''\nfor i in range(h-1,-1,-1):\n    vert_seat = vert[i]\n    alpha = i-cr\n    hori_seat = overlap_base[cc-alpha]\n    if vert_seat == hori_seat:\n        overlap += vert_seat\n    elif vert_seat == ' ' or hori_seat == ' ':\n        overlap += (vert_seat+hori_seat).strip()\n    elif vert_seat != hori_seat:\n        overlap += ' '\noverlap = overlap_base[:cc+1-ceil(len(overlap)/2)] + overlap + overlap_base[cc+ceil(len(overlap)/2):]\n\n# Rotate 90 Anticlockwise - -1\noverlap_rev = ''\nfor i in range(h):\n    vert_seat = vert[i]\n    alpha = i-cr\n    hori_seat = overlap_base[cc+alpha]\n    if vert_seat == hori_seat:\n        overlap_rev += vert_seat\n    elif vert_seat == ' ' or hori_seat == ' ':\n        overlap_rev += (vert_seat+hori_seat).strip()\n    elif vert_seat != hori_seat:\n        overlap_rev += ' '\noverlap_rev = overlap_base[:cc+1-ceil(len(overlap_rev)/2)] + overlap_rev + overlap_base[cc+ceil(len(overlap_rev)/2):]    \n\n# States\n'''\nhor - horizontal row\nvert - vertical coloumn\noverlap_base - formatted horizontal row with space to even out\noverlap - Overlap Condition +1\noverlap_rev - Overlap Condition -1\n'''\nstates = [hori, overlap, hori, overlap_rev]\n\nglobal_turn = 0\nfor turn in turns:\n    global_turn = (global_turn + turn)%4\n    print(states[global_turn])\n",
+      "statement": "The <<CRX (Cross Routing eXchanger) Communication Matrix>> is a multilayer routing module used in high-density communication systems. It consists of horizontal and vertical strips arranged in multiple layers. During normal operation, every strip is controlled automatically by the synchronization system.\n\nEach position on a strip represents one communication channel and is encoded by one of the following characters:\n\n* '{{A}}' — <<Channel A>>, which routes only Type-A signals.\n* '{{B}}' — <<Channel B>>, which routes only Type-B signals.\n* '{{ }}' (whitespace) — <<Open Channel>>, which imposes no routing restriction.\n\nDuring a maintenance cycle, engineers are given manual control over only the <<front-center strip>>. All other strips continue operating automatically and are outside the scope of this simulation.\n\nInitially, the front-center strip is <<vertical>>. It rotates about its center in 90° increments. The center horizontal strip never rotates.\n\nThe <<diagnostic bus>> is the communication state observed along the center horizontal row.\n\n* When the front-center strip is <<vertical>>, only the center horizontal strip contributes to the diagnostic bus.\n* When the front-center strip is <<horizontal>>, the overlapping positions of the two strips combine according to the following routing rules:\n\n```\n{{whitespace}} + {{whitespace}} → {{whitespace}}\n\n{{A}} + {{A}} → {{A}}\n{{B}} + {{B}} → {{B}}\n\n{{A}} + {{B}} or {{B}} + {{A}} → {{whitespace}}\n\n{{whitespace}} + X or X + {{whitespace}} → X\nwhere X is either {{A}} or {{B}}\n```\n\nFor each maintenance round:\n\n* A positive integer represents the number of 90° clockwise rotations.\n* A negative integer represents the number of 90° counter-clockwise rotations.\n\nThe communication matrix does not reset between maintenance rounds. Each maintenance round starts from the matrix state produced by the previous round.\n\nWhen the front-center strip is horizontal, overlapping positions are combined using the routing rules above. Positions belonging only to the longer strip retain their original channel.\n\nAfter applying the specified rotation, output the current state of the diagnostic bus.\n\n<<Example>>\n\nSuppose:\n\n```\n[[turns]] = {{+1 +2 -1}}\n```\n\nInitial communication matrix:\n\n```\n  A\n  B\n   \nB ABB\n  B\n   \n  A\n```\n\nThe center horizontal strip is:\n\n```\nB ABB\n```\n\nThe front-center strip is initially vertical:\n\n```\nA\nB\n \nA\nB\n \nA\n```\n\nRotation {{+1}}\n\nThe front-center strip rotates 90° clockwise and becomes horizontal:\n\n```\nA BA BA\n```\n\nIt overlaps the center horizontal strip:\n\n```\nFront strip  : 'A' ' ' 'B' 'A' ' ' 'B' 'A'\nCenter strip :     'B' ' ' 'A' 'B' 'B'\n                │   │   │   │   │   │   │\nResult       : 'A' 'B' 'B' 'A' 'B' 'B' 'A'\n```\n\nOutput:\n\n```\nABBABBA\n```\n\nRotation {{+2}}\n\nThe matrix does <<not>> reset.\n\nThe strip rotates two additional quarter-turns from its current orientation, becoming horizontal again:\n\n```\nAB AB A\n```\n\nIt overlaps the current center strip:\n\n```\nFront strip  : 'A' 'B' ' ' 'A' 'B' ' ' 'A'\nCenter strip :     'B' ' ' 'A' 'B' 'B'\n                │   │   │   │   │   │   │\nResult       : 'A' 'B' ' ' 'A' 'B' 'B' 'A'\n```\n\nOutput:\n\n```\nAB ABBA\n```\n\nRotation {{-1}}\n\nThe strip rotates one quarter-turn counter-clockwise from its current orientation and becomes vertical.\n\nSince the front-center strip is now vertical, it no longer overlaps the center horizontal strip.\n\nThe diagnostic bus therefore remains unchanged.\n\nOutput:\n\n```\nB ABB\n```",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "9\n7\n2\n+1 +1\nBBBABB \nA ABAAA\nABBAABA\nB BBA B\nAABABAA\nBBBAAAB\nAAB BBB\nBABAABA\nB ABAB ",
+          "testOut": "BAA ABA A\nAABABAA",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "7\n9\n3\n+1 +1 -1\nABA  B  B\nBB AA  B \n BB BB BB\nBA BABAAA\nA BA BA  \n  AAA AB \n ABAAABA ",
+          "testOut": "BAABABAAA\nBA BABAAA\nBAABABAAA",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "11\n21\n9\n-47 -32 -67 -68 +44 +78 -94 +27 +47\nA BABAA  AA AB  ABA  \n B  A BA ABBBB B  A A\nABBA A BBB ABA AABABB\nBB   A AB A A B BB A \n  AB AB AB  BABABAB B\nB  AA ABAABA BBBBBA A\nA AA  AA   AABBAAA BB\nBAB B  A B AB AA     \n B B AABBBA AAAB AAB \n B AB  B AA  AB  BAAB\nB  BBABBBA AAA BB BB ",
+          "testOut": "B  AA A AABAABB BBA A\nB  AA A AABAABB BBA A\nB  AA ABAABA BBBBBA A\nB  AA ABAABA BBBBBA A\nB  AA ABAABA BBBBBA A\nB  AA ABAABA BBBBBA A\nB  AA ABAABA BBBBBA A\nB  AA A AABAABB BBA A\nB  AA ABAABA BBBBBA A",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "21\n11\n8\n+25 -78 +26 +22 +75 -24 +59 -17\nBBAAB BAA A\nA  A BA A A\nAAAA AA  B \n  B   AB BA\nAA B AAB A \n BB BBAABA \n B A B A AA\nAA AABA AAA\nA   AA BA A\nABA AA AB A\nA BB BAB  A\nAB BBBBABAA\nAA B BBAAAA\nABBAAA AABB\nBB AA A B A\nABB   A A B\nB  AA  A AA\nA  AA AAAA \n  AA     AB\nB AABBABA A\nAAA ABBAAA ",
+          "testOut": "BB   A  BBBA BB A AB \n BA A BB AB BA A   BB\nBB   A  BBBA BB A AB \n BA A BB AB BA A   BB\nA BB BAB  A\nA BB BAB  A\nBB   A  BBBA BB A AB \nA BB BAB  A",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "3\n11\n10\n+16 -62 +79 +29 -32 -60 -47 -92 +77 +40\n BBAA BAAB \n A AA ABBB \n BAA AB  AB",
+          "testOut": " A AA ABBB \n A AA ABBB \n A AA ABBB \n A AA ABBB \n A AA ABBB \n A AA ABBB \n A AA ABBB \n A AA ABBB \n A AA ABBB \n A AA ABBB ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "11\n3\n5\n-34 +94 -51 -3 -77\nA A\nA A\nABA\nA A\nABB\nBAB\nBAB\nBBA\nAB \n  A\nABB",
+          "testOut": "BAB\nBAB\nB BB AB B  \nBAB\nB BB AB B  ",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "1\n24\n10\n+53 -14 -27 -50 +66 -87 -78 -23 +37 -99\n AAAAABB  BABABABBBB AAB",
+          "testOut": " AAAAABB  BABABABBBB AAB\n AAAAABB  BABABABBBB AAB\n AAAAABB  BABABABBBB AAB\n AAAAABB  BABABABBBB AAB\n AAAAABB  BABABABBBB AAB\n AAAAABB  BABABABBBB AAB\n AAAAABB  BABABABBBB AAB\n AAAAABB  BABABABBBB AAB\n AAAAABB  BABABABBBB AAB\n AAAAABB  BABABABBBB AAB",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "25\n1\n10\n+16 -73 -40 -30 -98 +85 +33 +31 +82 -95\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA",
+          "testOut": "A\nAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAA\nA\nAAAAAAAAAAAAAAAAAAAAAAAAA\nA\nA\nAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "0 < [[h]], [[w]] < 50\n0 < [[n]] < 10\n0 < [[turn]] < 100",
+      "coverBinaryId": 164031084408009,
+      "stubGenerator": "read h:int\nread w:int\nread n:int\nread turns:string(100)\nloop h read row:string(w)\n\nwrite Diagnostic Bus",
+      "inputDescription": "<<Line 1>>: An odd integer [[h]], the height of the communication matrix.\n<<Line 2>>: An odd integer [[w]], the width of the communication matrix.\n<<Line 3>>: An integer [[n]], the number of maintenance rounds.\n<<Line 4>>: [[n]] signed integers separated by spaces, representing the <<rotations for each maintenance round>>.\n<<Next [[h]] Lines>>: A string of length [[w]], representing one row of the communication matrix.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[n]] Lines>>: Output the resulting state of the <<diagnostic bus>>."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">The <strong>CRX (Cross Routing eXchanger) Communication Matrix</strong> is a multilayer routing module used in high-density communication systems. It consists of horizontal and vertical strips arranged in multiple layers. During normal operation, every strip is controlled automatically by the synchronization system.<br><br>Each position on a strip represents one communication channel and is encoded by one of the following characters:<br><br>* '<const>A</const>' &mdash; <strong>Channel A</strong>, which routes only Type-A signals.<br>* '<const>B</const>' &mdash; <strong>Channel B</strong>, which routes only Type-B signals.<br>* '<const> </const>' (whitespace) &mdash; <strong>Open Channel</strong>, which imposes no routing restriction.<br><br>During a maintenance cycle, engineers are given manual control over only the <strong>front-center strip</strong>. All other strips continue operating automatically and are outside the scope of this simulation.<br><br>Initially, the front-center strip is <strong>vertical</strong>. It rotates about its center in 90&deg; increments. The center horizontal strip never rotates.<br><br>The <strong>diagnostic bus</strong> is the communication state observed along the center horizontal row.<br><br>* When the front-center strip is <strong>vertical</strong>, only the center horizontal strip contributes to the diagnostic bus.<br>* When the front-center strip is <strong>horizontal</strong>, the overlapping positions of the two strips combine according to the following routing rules:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br><const>whitespace</const> + <const>whitespace</const> &rarr; <const>whitespace</const><br><br><const>A</const> + <const>A</const> &rarr; <const>A</const><br><const>B</const> + <const>B</const> &rarr; <const>B</const><br><br><const>A</const> + <const>B</const> or <const>B</const> + <const>A</const> &rarr; <const>whitespace</const><br><br><const>whitespace</const> + X or X + <const>whitespace</const> &rarr; X<br>where X is either <const>A</const> or <const>B</const><br></pre><pre style=\"font-family: monospace\"></pre><br><br>For each maintenance round:<br><br>* A positive integer represents the number of 90&deg; clockwise rotations.<br>* A negative integer represents the number of 90&deg; counter-clockwise rotations.<br><br>The communication matrix does not reset between maintenance rounds. Each maintenance round starts from the matrix state produced by the previous round.<br><br>When the front-center strip is horizontal, overlapping positions are combined using the routing rules above. Positions belonging only to the longer strip retain their original channel.<br><br>After applying the specified rotation, output the current state of the diagnostic bus.<br><br><strong>Example</strong><br><br>Suppose:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br><var>turns</var> = <const>+1 +2 -1</const><br></pre><pre style=\"font-family: monospace\"></pre><br><br>Initial communication matrix:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>  A<br>  B<br>   <br>B ABB<br>  B<br>   <br>  A<br></pre><pre style=\"font-family: monospace\"></pre><br><br>The center horizontal strip is:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>B ABB<br></pre><pre style=\"font-family: monospace\"></pre><br><br>The front-center strip is initially vertical:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>A<br>B<br> <br>A<br>B<br> <br>A<br></pre><pre style=\"font-family: monospace\"></pre><br><br>Rotation <const>+1</const><br><br>The front-center strip rotates 90&deg; clockwise and becomes horizontal:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>A BA BA<br></pre><pre style=\"font-family: monospace\"></pre><br><br>It overlaps the center horizontal strip:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>Front strip  : 'A' ' ' 'B' 'A' ' ' 'B' 'A'<br>Center strip :     'B' ' ' 'A' 'B' 'B'<br>                │   │   │   │   │   │   │<br>Result       : 'A' 'B' 'B' 'A' 'B' 'B' 'A'<br></pre><pre style=\"font-family: monospace\"></pre><br><br>Output:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>ABBABBA<br></pre><pre style=\"font-family: monospace\"></pre><br><br>Rotation <const>+2</const><br><br>The matrix does <strong>not</strong> reset.<br><br>The strip rotates two additional quarter-turns from its current orientation, becoming horizontal again:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>AB AB A<br></pre><pre style=\"font-family: monospace\"></pre><br><br>It overlaps the current center strip:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>Front strip  : 'A' 'B' ' ' 'A' 'B' ' ' 'A'<br>Center strip :     'B' ' ' 'A' 'B' 'B'<br>                │   │   │   │   │   │   │<br>Result       : 'A' 'B' ' ' 'A' 'B' 'B' 'A'<br></pre><pre style=\"font-family: monospace\"></pre><br><br>Output:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>AB ABBA<br></pre><pre style=\"font-family: monospace\"></pre><br><br>Rotation <const>-1</const><br><br>The strip rotates one quarter-turn counter-clockwise from its current orientation and becomes vertical.<br><br>Since the front-center strip is now vertical, it no longer overlaps the center horizontal strip.<br><br>The diagnostic bus therefore remains unchanged.<br><br>Output:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>B ABB<br></pre><pre style=\"font-family: monospace\"></pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: An odd integer <var>h</var>, the height of the communication matrix.<br><strong>Line 2</strong>: An odd integer <var>w</var>, the width of the communication matrix.<br><strong>Line 3</strong>: An integer <var>n</var>, the number of maintenance rounds.<br><strong>Line 4</strong>: <var>n</var> signed integers separated by spaces, representing the <strong>rotations for each maintenance round</strong>.<br><strong>Next <var>h</var> Lines</strong>: A string of length <var>w</var>, representing one row of the communication matrix.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>n</var> Lines</strong>: Output the resulting state of the <strong>diagnostic bus</strong>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt; <var>h</var>, <var>w</var> &lt; 50<br>0 &lt; <var>n</var> &lt; 10<br>0 &lt; <var>turn</var> &lt; 100</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">9\n7\n2\n+1 +1\nBBBABB \nA ABAAA\nABBAABA\nB BBA B\nAABABAA\nBBBAAAB\nAAB BBB\nBABAABA\nB ABAB </pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">BAA ABA A\nAABABAA</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 130575027242778,
+  "commentCount": 6,
+  "upVotes": 1,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
