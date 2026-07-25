@@ -1,0 +1,185 @@
+{
+  "id": 152145,
+  "activeVersion": 42,
+  "score": 0,
+  "votableId": 40188387,
+  "codingamerId": 2064637,
+  "views": 7,
+  "commentableId": 40017101,
+  "title": "Squares",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "java_coffee_cup",
+  "publicHandle": "152145cf56458321bc6046832f83d518185d86",
+  "codingamerHandle": "f4c116cad137a7eee91b727ff6fe53597364602",
+  "lastVersion": {
+    "version": 42,
+    "autocloseTime": 1787540556775,
+    "freezeTime": 1785553356775,
+    "data": {
+      "title": "Squares",
+      "topics": [
+        {
+          "id": 76,
+          "handle": "intervals",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Intervalles",
+            "2": "Intervals"
+          },
+          "pageTitle": "Intervals: exercises and theory",
+          "puzzleCount": 9,
+          "parentTopicId": 43,
+          "contentDetailsId": 92
+        },
+        {
+          "id": 62,
+          "handle": "flood-fill",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Remplissage par diffusion",
+            "2": "Flood fill"
+          },
+          "pageTitle": "Flood fill: exercises and theory",
+          "puzzleCount": 25,
+          "parentTopicId": 41,
+          "contentDetailsId": 81
+        },
+        {
+          "id": 201,
+          "handle": "set-theory",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Set theory",
+            "2": "Set theory"
+          },
+          "puzzleCount": 0,
+          "parentTopicId": 93
+        },
+        {
+          "labelMap": {
+            "2": "Coarse granularity"
+          }
+        }
+      ],
+      "solution": "import java.awt.Point;\nimport java.util.*;\n\npublic class Solution {\n\n\tpublic static void main(String[] args) {\n\t\tScanner in = new Scanner(System.in);\n\t\tint side = in.nextInt();\n\t\tint M = in.nextInt();\n\t\tint N = in.nextInt();\n\n\t\tBoard b = new Board(side);\n\n\t\tin.nextLine();\n\t\tfor (int i = 0; i < M; i++) {\n\t\t\tb.addSquare(in.nextLine());\n\t\t}\n\t\tb.partition();\n\n\t\tfor (int i = 0; i < N; i++) {\n\t\t\tString[] ss = in.nextLine().split(\"\\\\s\");\n\t\t\tb.getRegionArea(Integer.parseInt(ss[0]), Integer.parseInt(ss[1]));\n\t\t}\n\t\tin.close();\n\t}\n}\n\nclass Board {\n\tstatic int[] codeArr = { 1, 2, 4, 8 };\n\tstatic int[][] d = { { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 } };\n\n\t//\tSquare is a kind of Rect.\n\tList<Rect> sqList = new ArrayList<>(); // list of Squares.\n\tList<Set<Point>> ptList = new ArrayList<>();\n\n\tint side;\n\tRect[][] rectArr;\n\tint arrW, arrH;\n\tSet<Integer> xAsis = new TreeSet<>();\n\tSet<Integer> yAsis = new TreeSet<>();\n\n\trecord Interval(int from, int to) {\n\t\tpublic int getLen() {\n\t\t\treturn to - from + 1;\n\t\t}\n\t}\n\n\tpublic Board(int side) {\n\t\tthis.side = side;\n\t}\n\n\tpublic void getRegionArea(int row, int col) {\n\t\t// which Rect is enclosing this pt?\n\t\tfor (int y = 0; y < arrH; y++) {\n\t\t\tfor (int x = 0; x < arrW; x++) {\n\t\t\t\tRect rect = rectArr[x][y];\n\t\t\t\tif (rect.encloses(col, row)) {\n\t\t\t\t\tflood(rect);\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\n\t// flood this Rect, to find all connected Rects\n\tprivate void flood(Rect rect) {\n\t\tSet<Rect> visited = new HashSet<>();\n\t\tQueue<Rect> q = new LinkedList<>();\n\t\tq.add(rect);\n\n\t\twhile (!q.isEmpty()) {\n\t\t\tRect r0 = q.poll();\n\t\t\tvisited.add(r0);\n\n\t\t\tfor (int i = 0; i < 4; i++) {\n\t\t\t\tint[] dd = d[i];\n\n\t\t\t\tint xx = r0.arrX + dd[0];\n\t\t\t\tint yy = r0.arrY + dd[1];\n\t\t\t\tif (xx >= 0 && xx < arrW && yy >= 0 && yy < arrH) {\n\t\t\t\t\tRect r1 = rectArr[xx][yy];\n\n\t\t\t\t\tif (!visited.contains(r1) && r1.layerCode == rect.layerCode) {\n\t\t\t\t\t\tq.add(r1);\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t} // while\n\n\t\t// sum areas in visited\n\t\tint area = 0;\n\t\tfor (Rect r1 : visited) {\n\t\t\tarea += r1.getArea();\n\t\t}\n\n\t\tSystem.out.println(area);\n\t}\n\n\tprivate int getLayerCode(int x, int y) {\n\t\treturn getLayerCode(new Point(x, y));\n\t}\n\n\tprivate int getLayerCode(Point p) {\n\t\tint i = 0;\n\t\tint code = 0;\n\t\tfor (Rect sq : sqList) {\n\t\t\tif (sq.encloses(p)) {\n\t\t\t\tcode += codeArr[i];\n\t\t\t}\n\t\t\ti++;\n\t\t}\n\t\treturn code;\n\t}\n\n\tpublic void addSquare(String str) {\n\t\tString[] ss = str.split(\"\\\\s+\");\n\t\tint y = Integer.parseInt(ss[0]);\n\t\tint x = Integer.parseInt(ss[1]);\n\t\tint s = Integer.parseInt(ss[2]);\n\t\tsqList.add(new Rect(x, y, s, s));\n\n\t\txAsis.add(x - 1);\n\t\txAsis.add(x + s - 1);\n\t\tyAsis.add(y - 1);\n\t\tyAsis.add(y + s - 1);\n\t}\n\n\tpublic void partition() {\n\t\txAsis.add(0);\n\t\txAsis.add(side);\n\t\tyAsis.add(0);\n\t\tyAsis.add(side);\n\n\t\tInteger[] xArr = xAsis.toArray(new Integer[0]);\n\t\tInteger[] yArr = yAsis.toArray(new Integer[0]);\n\n\t\tList<Interval> xIntervals = new ArrayList<>();\n\t\tList<Interval> yIntervals = new ArrayList<>();\n\n\t\tfor (int i = 0; i < xArr.length - 1; i++) {\n\t\t\txIntervals.add(new Interval(xArr[i] + 1, xArr[i + 1]));\n\t\t}\n\t\tfor (int i = 0; i < yArr.length - 1; i++) {\n\t\t\tyIntervals.add(new Interval(yArr[i] + 1, yArr[i + 1]));\n\t\t}\n\n\t\tarrW = xIntervals.size();\n\t\tarrH = yIntervals.size();\n\n\t\trectArr = new Rect[arrW][arrH];\n\n\t\tfor (int j = 0; j < yIntervals.size(); j++) {\n\t\t\tInterval yi = yIntervals.get(j);\n\t\t\tfor (int i = 0; i < xIntervals.size(); i++) {\n\t\t\t\tInterval xi = xIntervals.get(i);\n\t\t\t\tRect rect = new Rect(xi.from(), yi.from, xi.getLen(), yi.getLen());\n\t\t\t\trect.setLayerCode(getLayerCode(xi.from, yi.from));\n\t\t\t\trect.arrX = i;\n\t\t\t\trect.arrY = j;\n\t\t\t\trectArr[i][j] = rect;\n\t\t\t}\n\t\t}\n\t}\n}\n\nclass Rect {\n\tstatic int globalId = 0;\n\tint id;\n\tint x, y, w, h;\n\tint arrX, arrY; // index of this Rect in rectArr\n\tint layerCode = -1;\n\n\tpublic Rect(int x, int y, int w, int h) {\n\t\tthis.id = globalId++;\n\t\tthis.x = x;\n\t\tthis.y = y;\n\t\tthis.w = w;\n\t\tthis.h = h;\n\t}\n\n\tpublic void setLayerCode(int code) {\n\t\tthis.layerCode = code;\n\t}\n\n\tpublic int getArea() {\n\t\treturn w * h;\n\t}\n\n\t// is this Rect enclosing a tile\n\tpublic boolean encloses(int col, int row) {\n\t\treturn row >= y && row < y + h && col >= x && col < x + w;\n\t}\n\n\tpublic boolean encloses(Point p) {\n\t\treturn encloses(p.x, p.y);\n\t}\n\n\t@Override\n\tpublic int hashCode() {\n\t\treturn Objects.hash(Integer.valueOf(id));\n\t}\n\n\t@Override\n\tpublic boolean equals(Object obj) {\n\t\tif (this == obj)\n\t\t\treturn true;\n\t\tif (obj == null)\n\t\t\treturn false;\n\t\tif (getClass() != obj.getClass())\n\t\t\treturn false;\n\t\tRect other = (Rect) obj;\n\t\treturn id == other.id;\n\t}\n}\n",
+      "statement": "Several potentially overlapping squares are drawn along the grid lines of a bounded square grid, partitioning it into distinct regions.\n\nEach square is defined by a triple [ [[x]], [[y]], [[s]] ], where ([[x]], [[y]]) represents the coordinates of its top-left tile and [[s]] denotes its side length.\n\nGiven a list of target tiles, calculate the area of the region containing each target tile.\n\nFor example:\n\nOn a 100 x 100 grid, two squares are drawn: [3, 2, 4] and [2, 4, 3].\n\nTile A (3, 4): Region area = 4\nTile B (5, 3): Region area = 12\nTile C (1, 1): Region area = 9979\n\n`    0   1   2   3   4   5   6 .....100\n      ┌───+───+───+───+───+───+───+───┬───► x\n    1 │ C ¦   ¦   ¦   ¦   ¦   ¦   ¦   │\n      ┤- - - -┌───────────────┐- - - -│\n    2 │   ¦   │   ¦   ¦   ¦   │   ¦   │\n      ┤- - - -│- - - - - - - -│- - - -│\n    3 │   ¦   │   ¦   ¦ B ¦   │   ¦   │\n      ┤- -┌───┼───────┐- - - -│- - - -│\n    4 │   │   │ A ¦   │   ¦   │   ¦   │\n      ┤- -│- -│- - - -│- - - -│- - - -│\n    5 │   │   │   ¦   │   ¦   │   ¦   │\n      ┤- -│- -└───────┼───────┘- - - -│\n    6 │   │   ¦   ¦   │   ¦   ¦   ¦   │\n    : ┤- -└───────────┘- - - - - - - -│\n    : │   ¦   ¦   ¦   ¦   ¦   ¦   ¦   │\n    : ┤- - - - - - - - - - - - - - - -│\n  100 │   ¦   ¦   ¦   ¦   ¦   ¦   ¦   │\n      ├───────────────────────────────┘\n      │\n      ▼\n      y`",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "100 2 7\n3 2 4\n2 4 3\n3 4\n5 3\n1 1\n2 3\n4 5\n5 6\n4 6",
+          "testOut": "4\n12\n9979\n9979\n4\n9979\n5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Example Validator",
+          "isTest": false,
+          "testIn": "100 3 8\n2 2 3\n6 4 3\n3 6 4\n1 6\n2 6\n3 6\n4 6\n5 6\n6 6\n7 6\n9 6",
+          "testOut": "9967\n9967\n15\n15\n15\n1\n8\n9967",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Overlap",
+          "isTest": true,
+          "testIn": "500 4 12\n2 9 3\n6 9 3\n6 9 3\n2 9 7\n4 10\n5 10\n6 10\n7 10\n4 12\n5 12\n6 12\n7 12\n4 8\n5 8\n6 8\n7 8",
+          "testOut": "9\n31\n9\n9\n31\n31\n31\n31\n249951\n249951\n249951\n249951",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Overlap Validator",
+          "isTest": false,
+          "testIn": "500 4 12\n10 9 1\n10 11 1\n10 9 3\n10 9 1\n9 8\n9 9\n9 10\n9 11\n10 8\n10 9\n10 10\n10 11\n11 8\n11 9\n11 10\n11 11",
+          "testOut": "249991\n249991\n249991\n249991\n249991\n1\n7\n1\n249991\n7\n7\n7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Fat Squares",
+          "isTest": true,
+          "testIn": "1000 4 10\n1 1 700\n501 501 500\n499 500 3\n10 900 2\n2 3\n4 5\n6 7\n100 200\n400 753\n500 500\n999 1\n533 599\n1000 1000\n501 502",
+          "testOut": "449993\n449993\n449993\n449993\n149996\n7\n150000\n39998\n210000\n2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Fat Squares Validator",
+          "isTest": false,
+          "testIn": "1000 4 10\n1 101 900\n801 501 200\n901 1 100\n600 900 5\n602 902\n980 2\n970 300\n960 555\n950 888\n111 222\n222 333\n333 444\n888 666\n1000 1000",
+          "testOut": "25\n10000\n40000\n20000\n30000\n789975\n789975\n789975\n20000\n30000",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Black Hole",
+          "isTest": true,
+          "testIn": "10000 4 15\n4 5 2\n2 7 2\n6 7 2\n4 9 2\n1 7\n2 7\n3 7\n4 7\n5 7\n6 7\n7 7\n8 7\n5 5\n5 6\n5 7\n5 8\n5 9\n1 1\n10000 10000",
+          "testOut": "99999980\n4\n4\n4\n4\n4\n4\n99999980\n4\n4\n4\n4\n4\n99999980\n99999980",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Black Hole Validator",
+          "isTest": false,
+          "testIn": "10000 4 12\n7 2 1\n8 3 1\n6 3 1\n7 4 1\n6 2\n7 2\n8 2\n6 3\n7 3\n8 3\n6 4\n7 4\n8 4\n10000 1\n1 10000\n500 500",
+          "testOut": "99999995\n1\n99999995\n1\n1\n1\n99999995\n1\n99999995\n99999995\n99999995\n99999995",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Venn",
+          "isTest": true,
+          "testIn": "15000 4 14\n5 2 6\n2 4 7\n4 6 8\n6 5 8\n7 6\n5 4\n4 10\n11 12\n10 5\n7 5\n5 7\n7 9\n10 7\n7 2\n2 7\n8 13\n13 9\n2 13",
+          "testOut": "6\n5\n8\n23\n2\n3\n2\n9\n4\n14\n16\n12\n17\n224999879",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Venn Validator",
+          "isTest": false,
+          "testIn": "15000 4 14\n5 3 8\n2 6 6\n6 5 8\n4 8 7\n9 3\n12 5\n5 6\n7 6\n2 9\n5 9\n6 9\n9 9\n13 8\n4 11\n6 11\n9 12\n7 14\n10 15",
+          "testOut": "17\n23\n2\n4\n14\n3\n6\n9\n12\n5\n2\n8\n16\n224999879",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Dartboard",
+          "isTest": true,
+          "testIn": "20000 4 42\n2 3 5\n3 4 3\n4 5 1\n5 3 2\n1 3\n2 3\n3 3\n4 3\n5 3\n6 3\n7 3\n8 3\n9 3\n10 3\n11 3\n12 3\n13 3\n14 3\n1 4\n2 4\n3 4\n4 4\n5 4\n6 4\n7 4\n8 4\n9 4\n10 4\n11 4\n12 4\n13 4\n14 4\n1 5\n2 5\n3 5\n4 5\n5 5\n6 5\n7 5\n8 5\n9 5\n10 5\n11 5\n12 5\n13 5\n14 5",
+          "testOut": "399999975\n13\n13\n13\n3\n3\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n13\n7\n7\n1\n3\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n13\n7\n1\n7\n13\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Dartboard Validator",
+          "isTest": false,
+          "testIn": "20000 4 42\n9 3 5\n10 4 3\n11 5 1\n13 5 1\n1 3\n2 3\n3 3\n4 3\n5 3\n6 3\n7 3\n8 3\n9 3\n10 3\n11 3\n12 3\n13 3\n14 3\n1 4\n2 4\n3 4\n4 4\n5 4\n6 4\n7 4\n8 4\n9 4\n10 4\n11 4\n12 4\n13 4\n14 4\n1 5\n2 5\n3 5\n4 5\n5 5\n6 5\n7 5\n8 5\n9 5\n10 5\n11 5\n12 5\n13 5\n14 5",
+          "testOut": "399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n15\n15\n15\n15\n15\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n15\n8\n8\n8\n15\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n399999975\n15\n8\n1\n8\n1\n399999975",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ [[side]] ≤ 20000\n1 ≤ [[M]] ≤ 4\n1 ≤ [[N]] ≤ 100\n\nAll given squares are drawn within the grid boundaries.",
+      "coverBinaryId": 165170060263045,
+      "stubGenerator": "read side:int M:int N:int\nloop M read triple:string(255)\nloop N read tile:string(155)\nwrite answer",
+      "inputDescription": "<<Line 1:>> Three space-separated integers [[side]] [[M]] [[N]].\n[[side]]: Side length of the square grid.\n[[M]]: Number of drawn squares.\n[[N]]: Number of target tiles.\n\n<<Next [[M]] lines:>> Three space-separated integers [[x]] [[y]] [[s]] defining a square with top-left tile ([[x]], [[y]]) and side length [[s]].\n\n<<Next [[N]] lines:>> Two space-separated integers [[x]] [[y]] defining the coordinates of a target tile.",
+      "solutionLanguage": "Java",
+      "outputDescription": "Print [[N]] lines, each containing the area of the region for the corresponding target tile in the order given."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Several potentially overlapping squares are drawn along the grid lines of a bounded square grid, partitioning it into distinct regions.<br><br>Each square is defined by a triple [ <var>x</var>, <var>y</var>, <var>s</var> ], where (<var>x</var>, <var>y</var>) represents the coordinates of its top-left tile and <var>s</var> denotes its side length.<br><br>Given a list of target tiles, calculate the area of the region containing each target tile.<br><br>For example:<br><br>On a 100 x 100 grid, two squares are drawn: [3, 2, 4] and [2, 4, 3].<br><br>Tile A (3, 4): Region area = 4<br>Tile B (5, 3): Region area = 12<br>Tile C (1, 1): Region area = 9979<br><br><pre style=\"font-family: monospace\">    0   1   2   3   4   5   6 .....100<br>      ┌───+───+───+───+───+───+───+───┬───► x<br>    1 │ C &brvbar;   &brvbar;   &brvbar;   &brvbar;   &brvbar;   &brvbar;   &brvbar;   │<br>      ┤- - - -┌───────────────┐- - - -│<br>    2 │   &brvbar;   │   &brvbar;   &brvbar;   &brvbar;   │   &brvbar;   │<br>      ┤- - - -│- - - - - - - -│- - - -│<br>    3 │   &brvbar;   │   &brvbar;   &brvbar; B &brvbar;   │   &brvbar;   │<br>      ┤- -┌───┼───────┐- - - -│- - - -│<br>    4 │   │   │ A &brvbar;   │   &brvbar;   │   &brvbar;   │<br>      ┤- -│- -│- - - -│- - - -│- - - -│<br>    5 │   │   │   &brvbar;   │   &brvbar;   │   &brvbar;   │<br>      ┤- -│- -└───────┼───────┘- - - -│<br>    6 │   │   &brvbar;   &brvbar;   │   &brvbar;   &brvbar;   &brvbar;   │<br>    : ┤- -└───────────┘- - - - - - - -│<br>    : │   &brvbar;   &brvbar;   &brvbar;   &brvbar;   &brvbar;   &brvbar;   &brvbar;   │<br>    : ┤- - - - - - - - - - - - - - - -│<br>  100 │   &brvbar;   &brvbar;   &brvbar;   &brvbar;   &brvbar;   &brvbar;   &brvbar;   │<br>      ├───────────────────────────────┘<br>      │<br>      ▼<br>      y</pre></span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Three space-separated integers <var>side</var> <var>M</var> <var>N</var>.<br><var>side</var>: Side length of the square grid.<br><var>M</var>: Number of drawn squares.<br><var>N</var>: Number of target tiles.<br><br><strong>Next <var>M</var> lines:</strong> Three space-separated integers <var>x</var> <var>y</var> <var>s</var> defining a square with top-left tile (<var>x</var>, <var>y</var>) and side length <var>s</var>.<br><br><strong>Next <var>N</var> lines:</strong> Two space-separated integers <var>x</var> <var>y</var> defining the coordinates of a target tile.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Print <var>N</var> lines, each containing the area of the region for the corresponding target tile in the order given.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>side</var> &le; 20000<br>1 &le; <var>M</var> &le; 4<br>1 &le; <var>N</var> &le; 100<br><br>All given squares are drawn within the grid boundaries.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">100 2 7\n3 2 4\n2 4 3\n3 4\n5 3\n1 1\n2 3\n4 5\n5 6\n4 6</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">4\n12\n9979\n9979\n4\n9979\n5</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 13281799951852,
+  "commentCount": 0,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}
