@@ -1,0 +1,341 @@
+{
+  "id": 153168,
+  "activeVersion": 1,
+  "score": 0,
+  "votableId": 40275811,
+  "codingamerId": 877164,
+  "views": 2,
+  "commentableId": 40104080,
+  "title": "Poker Hand Analyzer",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "JTHCode",
+  "publicHandle": "153168e90c38dd99752052a97bdd302d1627c3",
+  "codingamerHandle": "a38d1d9dd9fc0908fe5b6e5f44594121461778",
+  "lastVersion": {
+    "version": 1,
+    "autocloseTime": 1789078036805,
+    "freezeTime": 1787090836805,
+    "data": {
+      "title": "Poker Hand Analyzer",
+      "topics": [
+        {
+          "id": 117,
+          "handle": "logic",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Logic",
+            "2": "Logic"
+          },
+          "puzzleCount": 36,
+          "parentTopicId": 93
+        },
+        {
+          "id": 133,
+          "handle": "card-games",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Jeu de carte",
+            "2": "Card games"
+          },
+          "pageTitle": "Card games",
+          "puzzleCount": 12,
+          "parentTopicId": 107
+        }
+      ],
+      "solution": "from itertools import combinations\nfrom collections import Counter\n\nRANKS = {\n    '2': 2, '3': 3, '4': 4, '5': 5, '6': 6,\n    '7': 7, '8': 8, '9': 9, 'T': 10,\n    'J': 11, 'Q': 12, 'K': 13, 'A': 14\n}\n\n\ndef evaluate_hand(cards):\n    \"\"\"\n    Evaluates exactly 5 cards.\n\n    Returns a tuple where larger tuples represent stronger hands.\n    Tuple comparison automatically handles all necessary kickers.\n    \"\"\"\n\n    ranks = sorted((RANKS[card[0]] for card in cards), reverse=True)\n    suits = [card[1] for card in cards]\n\n    counts = Counter(ranks)\n\n    # Sort groups first by count, then by rank.\n    # Example:\n    # QQ 77 A -> [(2, 12), (2, 7), (1, 14)]\n    groups = sorted(\n        ((count, rank) for rank, count in counts.items()),\n        reverse=True\n    )\n\n    flush = len(set(suits)) == 1\n\n    unique_ranks = sorted(set(ranks), reverse=True)\n\n    # Handle A-2-3-4-5 straight.\n    if unique_ranks == [14, 5, 4, 3, 2]:\n        straight_high = 5\n    elif (\n        len(unique_ranks) == 5\n        and unique_ranks[0] - unique_ranks[4] == 4\n    ):\n        straight_high = unique_ranks[0]\n    else:\n        straight_high = None\n\n    # Straight flush\n    if flush and straight_high is not None:\n        return (8, straight_high)\n\n    # Four of a kind\n    if groups[0][0] == 4:\n        quad_rank = groups[0][1]\n        kicker = groups[1][1]\n        return (7, quad_rank, kicker)\n\n    # Full house\n    if groups[0][0] == 3 and groups[1][0] == 2:\n        return (6, groups[0][1], groups[1][1])\n\n    # Flush\n    if flush:\n        return (5, *ranks)\n\n    # Straight\n    if straight_high is not None:\n        return (4, straight_high)\n\n    # Three of a kind\n    if groups[0][0] == 3:\n        trip_rank = groups[0][1]\n        kickers = sorted(\n            (rank for rank in ranks if rank != trip_rank),\n            reverse=True\n        )\n        return (3, trip_rank, *kickers)\n\n    pairs = sorted(\n        (rank for rank, count in counts.items() if count == 2),\n        reverse=True\n    )\n\n    # Two pair\n    if len(pairs) == 2:\n        kicker = max(\n            rank for rank in ranks\n            if rank not in pairs\n        )\n        return (2, pairs[0], pairs[1], kicker)\n\n    # One pair\n    if len(pairs) == 1:\n        pair_rank = pairs[0]\n        kickers = sorted(\n            (rank for rank in ranks if rank != pair_rank),\n            reverse=True\n        )\n        return (1, pair_rank, *kickers)\n\n    # High card\n    return (0, *ranks)\n\n\ndef best_hand(cards):\n    \"\"\"\n    Find the best possible 5-card hand from 7 cards.\n    \"\"\"\n    return max(\n        evaluate_hand(combo)\n        for combo in combinations(cards, 5)\n    )\n\n\nplayer_1 = input().split()\nplayer_2 = input().split()\nboard = input().split()\n\nscore_1 = best_hand(player_1 + board)\nscore_2 = best_hand(player_2 + board)\n\nif score_1 > score_2:\n    print(\"PLAYER_1\")\nelif score_2 > score_1:\n    print(\"PLAYER_2\")\nelse:\n    print(\"TIE\")",
+      "statement": "You must determine the winning poker player (or a tie).\n\nBoth players gets 2 cards, and there are 5 community cards (aka board cards).\n\nA poker hand is comprised of the best 5 card hand that can be made out of the players 2 cards, along with the 5 community cards.\n\nCards are represented by two characters. The first character is the rank of the card (2-9, T, J, Q, K or A) and the second character is the suit of the card (S, D, H, C).\nExamples: {{9H}}, {{QC}}, {{AS}}, {{TD}}, {{4C}}\n\nOutput \"{{PLAYER_1}}\" if the first player wins, \"{{PLAYER_2}}\" if the second player wins, or \"{{TIE}}\" if both players have an equal strength hand.",
+      "testCases": [
+        {
+          "title": "Pair vs High Card",
+          "isTest": true,
+          "testIn": "AD 6H\n4C JS\n2S 5D AH QS TH",
+          "testOut": "PLAYER_1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "6C KH\n5H 2C\n3S 5S 9D QC 8S",
+          "testOut": "PLAYER_2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "High Card vs Higher Card",
+          "isTest": true,
+          "testIn": "9S 3H\nAH 4C\n2C 5D 8H JS KC",
+          "testOut": "PLAYER_2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "AD 9H\nJC 7S\n3S 6C 8D QH KS",
+          "testOut": "PLAYER_1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Pair vs Higher Pair",
+          "isTest": true,
+          "testIn": "7S 7D\nJC JH\n2C 5H 9D QS AC",
+          "testOut": "PLAYER_2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "QS QD\n8C 8H\n2D 4S 7H TC KC",
+          "testOut": "PLAYER_1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two Pair vs Pair",
+          "isTest": true,
+          "testIn": "AH 7S\nKD 9C\nAC 7D 4H 2S 9D",
+          "testOut": "PLAYER_1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "AS 8H\nKC JS\nKD 8D 5H 3C JH",
+          "testOut": "PLAYER_2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Three of a Kind vs Two Pair",
+          "isTest": true,
+          "testIn": "8H AH\nKS 4C\n8S 8D KC 4H 2C",
+          "testOut": "PLAYER_1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "QH AC\n9H 5C\nQS QD 9C 5H 2S",
+          "testOut": "PLAYER_1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Straight vs Flush",
+          "isTest": true,
+          "testIn": "6S 7C\nAH KH\n2H 5H 8H 9C TD",
+          "testOut": "PLAYER_2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "AC KC\n7H 8D\n3C 6C 9C TD JS",
+          "testOut": "PLAYER_1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Straight vs Higher Straight",
+          "isTest": true,
+          "testIn": "4H AH\n9D 2C\n5C 6D 7H 8S KC",
+          "testOut": "PLAYER_2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "5H KC\nTS AD\n6C 7S 8D 9H 2C",
+          "testOut": "PLAYER_2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Flush vs Higher Flush",
+          "isTest": true,
+          "testIn": "QH 3S\nAH 4D\n2H 5H 8H JH KC",
+          "testOut": "PLAYER_2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "KC 7D\nJC AS\n3C 6C 9C QC 2H",
+          "testOut": "PLAYER_1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Tie Flush",
+          "isTest": true,
+          "testIn": "KS QC\nKD QS\nAH JH 8H 5H 2H",
+          "testOut": "TIE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 9",
+          "isTest": false,
+          "testIn": "AH 9D\nAS 8H\nKC TC 7C 4C 2C",
+          "testOut": "TIE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Flush vs Straight Flush",
+          "isTest": true,
+          "testIn": "AS QS\n8S JD\n4S 5S 6S 7S KC",
+          "testOut": "PLAYER_2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 10",
+          "isTest": false,
+          "testIn": "JD AH\nAD KD\n7D 8D 9D TD 2C",
+          "testOut": "PLAYER_1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Four of a Kind vs Full House",
+          "isTest": true,
+          "testIn": "9H 9C\nKS 2C\n9S 9D KH KC 2H",
+          "testOut": "PLAYER_1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 11",
+          "isTest": false,
+          "testIn": "QD 3H\n6H 6C\n6S 6D QH QC 3S",
+          "testOut": "PLAYER_2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Straight vs Straight Flush",
+          "isTest": true,
+          "testIn": "8D 9C\n8H 9H\n5H 6H 7H QC 2S",
+          "testOut": "PLAYER_2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 17",
+          "isTest": false,
+          "testIn": "7H JH\nJC QC\n8C 9C TC 3D KS",
+          "testOut": "PLAYER_2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Flush vs Full House",
+          "isTest": true,
+          "testIn": "AS QS\n8H 8D\n4H 4D 8S JS KS",
+          "testOut": "PLAYER_2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 12",
+          "isTest": false,
+          "testIn": "9S 9H\nAD QD\n7C 7H 3D 9D KD",
+          "testOut": "PLAYER_1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Tie Full House",
+          "isTest": true,
+          "testIn": "AS KC\nAD JC\nQS QD QH 5C 5D",
+          "testOut": "TIE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 13",
+          "isTest": false,
+          "testIn": "AC 2S\nQH JC\n8C 8D 8H KS KD",
+          "testOut": "TIE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Three of a Kind vs Three of a Kind",
+          "isTest": true,
+          "testIn": "7H KC\n7C QC\n7S 7D AC 9H 2C",
+          "testOut": "PLAYER_1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 14",
+          "isTest": false,
+          "testIn": "5H AH\n5D QH\n5S 5C KH 8D 2S",
+          "testOut": "PLAYER_1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two Pair vs Two Pair",
+          "isTest": true,
+          "testIn": "AH 3C\nKH 4C\nQS QD 6H 6C 2D",
+          "testOut": "PLAYER_1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 15",
+          "isTest": false,
+          "testIn": "QH 8D\nAH 7C\nJS JD 4H 4C 2S",
+          "testOut": "PLAYER_2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Royal Flush vs Four of a Kind",
+          "isTest": true,
+          "testIn": "KH AH\n9H 9S\nTH JH QH 9C 9D",
+          "testOut": "PLAYER_1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 16",
+          "isTest": false,
+          "testIn": "4S 4C\nKS AS\nTS JS QS 4H 4D",
+          "testOut": "PLAYER_2",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "coverBinaryId": 166014323973641,
+      "stubGenerator": "read player1Card1:word(2) player1Card2:word(2)\nread player2Card1:word(2) player2Card2:word(2)\nread boardCard1:word(2) boardCard2:word(2) boardCard3:word(2) boardCard4:word(2) boardCard5:word(2)\nwrite PLAYER_1",
+      "inputDescription": "<<Line 1:>> Two space separated playing cards for {{PLAYER_1}}.\n<<Line 2:>> Two space separated playing cards for {{PLAYER_2}}.\n<<Line 3:>> 5 space separated playing cards for the community cards.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> The winning player (\"{{PLAYER_1}}\" or \"{{PLAYER_2}}\") or \"{{TIE}}\""
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You must determine the winning poker player (or a tie).<br><br>Both players gets 2 cards, and there are 5 community cards (aka board cards).<br><br>A poker hand is comprised of the best 5 card hand that can be made out of the players 2 cards, along with the 5 community cards.<br><br>Cards are represented by two characters. The first character is the rank of the card (2-9, T, J, Q, K or A) and the second character is the suit of the card (S, D, H, C).<br>Examples: <const>9H</const>, <const>QC</const>, <const>AS</const>, <const>TD</const>, <const>4C</const><br><br>Output &quot;<const>PLAYER_1</const>&quot; if the first player wins, &quot;<const>PLAYER_2</const>&quot; if the second player wins, or &quot;<const>TIE</const>&quot; if both players have an equal strength hand.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> Two space separated playing cards for <const>PLAYER_1</const>.<br><strong>Line 2:</strong> Two space separated playing cards for <const>PLAYER_2</const>.<br><strong>Line 3:</strong> 5 space separated playing cards for the community cards.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> The winning player (&quot;<const>PLAYER_1</const>&quot; or &quot;<const>PLAYER_2</const>&quot;) or &quot;<const>TIE</const>&quot;</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"></div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">AD 6H\n4C JS\n2S 5D AH QS TH</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">PLAYER_1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 152047281179451,
+  "commentCount": 0,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}
