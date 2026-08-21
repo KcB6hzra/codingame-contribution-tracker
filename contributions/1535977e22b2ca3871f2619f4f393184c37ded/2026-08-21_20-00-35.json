@@ -1,0 +1,138 @@
+{
+  "id": 153597,
+  "activeVersion": 50,
+  "score": 1,
+  "votableId": 40319391,
+  "codingamerId": 4687360,
+  "views": 15,
+  "commentableId": 40147401,
+  "title": "Double pendulum",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "thomas.schuerger",
+  "publicHandle": "1535977e22b2ca3871f2619f4f393184c37ded",
+  "codingamerHandle": "8f631a6df22c9cd8709f071d9518645f0637864",
+  "lastVersion": {
+    "version": 50,
+    "autocloseTime": 1789906387972,
+    "data": {
+      "title": "Double pendulum",
+      "topics": [
+        {
+          "id": 154,
+          "handle": "physics",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Physics",
+            "2": "Physics"
+          },
+          "puzzleCount": 16,
+          "parentTopicId": 93
+        },
+        {
+          "id": 86,
+          "handle": "simulation",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Simulation",
+            "2": "Simulation"
+          },
+          "pageTitle": "Simulation: exercises and theory",
+          "puzzleCount": 57,
+          "parentTopicId": 42,
+          "contentDetailsId": 72
+        },
+        {
+          "labelMap": {
+            "2": "RK4"
+          }
+        }
+      ],
+      "solution": "use strict;\n\nmy($l1,$m1,$l2,$m2) = split(/ /,<STDIN>);\nmy($phi1,$phi2) = split(/ /,<STDIN>);\n\nmy $m = $m1+$m2;\nmy $pi = 4*atan2(1,1);\nmy $g = 9.81;\nmy $dt = 0.0001;\nmy $omega1 = 0;\nmy $omega2 = 0;\nmy $t = 0;\nmy @s = ($phi1,$omega1,$phi2,$omega2);\nmy $dt2 = $dt * 0.5;\nmy $dt6 = $dt / 6;\nmy $mg   = $m  * $g;\nmy $m2g  = $m2 * $g;\nmy $ml1 = $m * $l1;\nmy $m2l1 = $m2 * $l1;\nmy $m2l2 = $m2 * $l2;\nmy $il1 = 1/$l1;\nmy $il2 = 1/$l2;\n\nwhile(1) {\n   my @k1 = f(@s);\n   my @k2 = f($s[0] + $dt2 * $k1[0],$s[1] + $dt2 * $k1[1], $s[2] + $dt2 * $k1[2], $s[3] + $dt2 * $k1[3]);\n   my @k3 = f($s[0] + $dt2 * $k2[0],$s[1] + $dt2 * $k2[1], $s[2] + $dt2 * $k2[2], $s[3] + $dt2 * $k2[3]);\n   my @k4 = f($s[0] + $dt * $k3[0],$s[1] + $dt * $k3[1], $s[2] + $dt * $k3[2], $s[3] + $dt * $k3[3]);\n   my @news = ($s[0] + $dt6 * ($k1[0] + 2*$k2[0] + 2*$k3[0] + $k4[0]),$s[1] + $dt6 * ($k1[1] + 2*$k2[1] + 2*$k3[1] + $k4[1]),$s[2] + $dt6 * ($k1[2] + 2*$k2[2] + 2*$k3[2] + $k4[2]),$s[3] + $dt6 * ($k1[3] + 2*$k2[3] + 2*$k3[3] + $k4[3]));\n   $t += $dt;\n\n   if($s[0]<$pi && $news[0]>=$pi || $s[0]>-$pi && $news[0]<=-$pi || $s[2]<$pi && $news[2]>=$pi || $s[2]>-$pi && $news[2]<=-$pi) {\n       printf(\"%.4f\\n\",$t);\n       last;\n   }\n\n   @s = @news;\n}\n\nsub f {\n    my($phi1,$omega1,$phi2,$omega2) = @_;\n    my $d = $phi1-$phi2;\n    my($sd,$cd)=(sin($d),cos($d));\n    my($s1,$s2)=(sin($phi1),sin($phi2));\n    my($e) = 1/($m - $m2 * $cd*$cd);\n    my($o1,$o2)=($omega1*$omega1,$omega2*$omega2);\n    my $alpha1 = (-$m2l1 * $o1 * $sd * $cd + $m2g * $s2 * $cd - $m2l2 * $o2 * $sd - $mg * $s1) * $e * $il1;\n    my $alpha2 = ($ml1 * $o1 * $sd + $mg * $s1 * $cd - $mg * $s2 + $m2l2 * $o2 * $sd * $cd) * $e * $il2;\n    return ($omega1,$alpha1,$omega2,$alpha2);\n}",
+      "statement": "You have a double pendulum, consisting of a pivot with a rigid, massless rod of length [[l1]] and a mass [[m1]] attached to the end of the rod. [[m1]] acts as another pivot for a rigid, massless rod of length [[l2]] with another mass [[m2]] at its end.\n\nThe current state of the double pendulum is given by the two angles [[phi1]] and [[phi2]], each being the absolute angle between the vertical and each rod, and the respective angular speeds [[omega1]] and [[omega2]]. In the double pendulum's ground state (static, no movement), [[phi1]], [[phi2]], [[omega1]] and [[omega2]] are zero.\n\nWe assume that the double pendulum movement is restricted to a plane and that all movement is frictionless. \n\nA diagram can be found at Wikipedia: https://en.wikipedia.org/wiki/Double_pendulum#/media/File:Double-Pendulum.svg\n\nFormulas:\n\nLet [[d]] = [[phi1]]-[[phi2]] be the angular difference of the two pendulums.\n\nThen the instantaneous angular accelerations [[alpha1]] and [[alpha2]] for each of the two pendulums can be calculated from the current state [[phi1]], [[omega1]], [[phi2]] and [[omega2]] as follows:\n\n[[alpha1]] = (-[[m2]] * [[l1]] * [[omega1]]^2 * sin([[d]])*cos([[d]]) + [[m2]] * [[g]] * sin([[phi2]]) * cos([[d]]) - [[m2]] * [[l2]] * [[omega2]]^2 * sin([[d]]) - ([[m1]] + [[m2]]) * [[g]] * sin([[phi1]])) / ([[l1]] * ([[m1]] + [[m2]] - [[m2]] * cos([[d]])^2))\n\n[[alpha2]] = (([[m1]] + [[m2]]) * ([[l1]] * [[omega1]]^2 * sin([[d]]) + [[g]] * sin([[phi1]]) * cos([[d]]) - [[g]] * sin([[phi2]])) + [[m2]] * <<l2> * [[omega2]]^2 * sin([[d]]) * cos([[d]])) / ([[l2]] * ([[m1]] + [[m2]] - [[m2]] * cos([[d]])^2))\n\nUsing simple Euler integration would accumulate errors very quickly. Therefore you should use the fourth-order Runge–Kutta method (aka RK4) for running the simulation, as described below.\n\nGiven the current state [[S]] = ([[phi1]], [[omega1]], [[phi2]], [[omega2]]) and the derivation function f([[S]]) = ([[omega1]], [[alpha1]], [[omega2]], [[alpha2]]) of the double pendulum, calculate\n\n[[k1]] = f([[S]])\n[[k2]] = f([[S]] + [[dt]]/2 * [[k1]])\n[[k3]] = f([[S]] + [[dt]]/2 * [[k2]])\n[[k4]] = f([[S]] + [[dt]] * [[k3]])\n\nThen the state [[S']] after time [[dt]] has passed is\n\n[[S']] = [[S]] + [[dt]]/6 * ([[k1]] + 2*[[k2]] + 2*[[k3]] + [[k4]])\n\nYou must simulate the double pendulum from its given initial state and determine the time (in seconds) before any of the two pendulums flip for the first time. A pendulum flips if it passes over the top, which means when its angle switches from less than 180 degrees to 180 degrees or more (or vice versa). The initial state is always chosen in a way that flipping eventually occurs.\n\nThe initial state is only determined by [[phi1]] and [[phi2]], so we assume that the pendulum starts from rest ([[omega1]]=0 and [[omega2]]=0) using the initial angles.\n\nSince the flip time has to be calculated with 4 decimal digits of precision, the recommended simulation speed [[dt]] is 0.0001 seconds per simulation step.\n\nThe simulation runs on Earth's surface, so we use [[g]] = 9.81 m/s^2.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "1.43 2.49 1.61 2.86\n1.439 2.534",
+          "testOut": "12.6368",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "0.54 2.86 1.20 2.12\n2.405 -2.321",
+          "testOut": "1.6634",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "1.20 1.86 0.87 1.93\n-2.921 -1.700",
+          "testOut": "1.9994",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "0.92 2.41 1.87 0.90\n1.783 -2.167\n",
+          "testOut": "6.7707",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "1.11 1.44 0.72 2.97\n2.759 0.762",
+          "testOut": "1.5205",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "1.25 0.72 1.01 1.18\n1.692 2.204",
+          "testOut": "3.0365",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "1.44 2.09 1.66 2.30\n-2.834 -2.040",
+          "testOut": "1.9666",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "1.16 1.05 1.48 2.21\n0.785 -2.749",
+          "testOut": "0.3950",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "0 < [[m1]],[[m2]] <= 100\n0 < [[l1]],[[l2]] <= 100\n-π < [[phi1]],[[phi2]] < π\n0 < [[t]] < 100",
+      "stubGenerator": "read l1:float m1:float l2:float m2:float\nread phi1:float phi2:float\nwrite time",
+      "inputDescription": "<<Line 1:>> The double pendulum configuration: floating point numbers [[l1]], [[m1]], [[l2]], [[m2]], separated by spaces\n<<Line 2:>> The initial state of the double pendulum: floating point numbers [[phi1]], [[phi2]], separated by spaces\n\nLengths are given in meters, masses in kilograms and angles in radians.",
+      "solutionLanguage": "Perl",
+      "outputDescription": "<<Line 1:>> The time [[t]] in seconds until the first flip of either pendulum occurs, rounded to 4 decimal places.\n\nThe usual rounding rules are used: 0.12344 is rounded to 0.1234, 0.12345 is rounded to 0.1235."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You have a double pendulum, consisting of a pivot with a rigid, massless rod of length <var>l1</var> and a mass <var>m1</var> attached to the end of the rod. <var>m1</var> acts as another pivot for a rigid, massless rod of length <var>l2</var> with another mass <var>m2</var> at its end.<br><br>The current state of the double pendulum is given by the two angles <var>phi1</var> and <var>phi2</var>, each being the absolute angle between the vertical and each rod, and the respective angular speeds <var>omega1</var> and <var>omega2</var>. In the double pendulum's ground state (static, no movement), <var>phi1</var>, <var>phi2</var>, <var>omega1</var> and <var>omega2</var> are zero.<br><br>We assume that the double pendulum movement is restricted to a plane and that all movement is frictionless. <br><br>A diagram can be found at Wikipedia: https://en.wikipedia.org/wiki/Double_pendulum#/media/File:Double-Pendulum.svg<br><br>Formulas:<br><br>Let <var>d</var> = <var>phi1</var>-<var>phi2</var> be the angular difference of the two pendulums.<br><br>Then the instantaneous angular accelerations <var>alpha1</var> and <var>alpha2</var> for each of the two pendulums can be calculated from the current state <var>phi1</var>, <var>omega1</var>, <var>phi2</var> and <var>omega2</var> as follows:<br><br><var>alpha1</var> = (-<var>m2</var> * <var>l1</var> * <var>omega1</var>^2 * sin(<var>d</var>)*cos(<var>d</var>) + <var>m2</var> * <var>g</var> * sin(<var>phi2</var>) * cos(<var>d</var>) - <var>m2</var> * <var>l2</var> * <var>omega2</var>^2 * sin(<var>d</var>) - (<var>m1</var> + <var>m2</var>) * <var>g</var> * sin(<var>phi1</var>)) / (<var>l1</var> * (<var>m1</var> + <var>m2</var> - <var>m2</var> * cos(<var>d</var>)^2))<br><br><var>alpha2</var> = ((<var>m1</var> + <var>m2</var>) * (<var>l1</var> * <var>omega1</var>^2 * sin(<var>d</var>) + <var>g</var> * sin(<var>phi1</var>) * cos(<var>d</var>) - <var>g</var> * sin(<var>phi2</var>)) + <var>m2</var> * &lt;&lt;l2&gt; * <var>omega2</var>^2 * sin(<var>d</var>) * cos(<var>d</var>)) / (<var>l2</var> * (<var>m1</var> + <var>m2</var> - <var>m2</var> * cos(<var>d</var>)^2))<br><br>Using simple Euler integration would accumulate errors very quickly. Therefore you should use the fourth-order Runge&ndash;Kutta method (aka RK4) for running the simulation, as described below.<br><br>Given the current state <var>S</var> = (<var>phi1</var>, <var>omega1</var>, <var>phi2</var>, <var>omega2</var>) and the derivation function f(<var>S</var>) = (<var>omega1</var>, <var>alpha1</var>, <var>omega2</var>, <var>alpha2</var>) of the double pendulum, calculate<br><br><var>k1</var> = f(<var>S</var>)<br><var>k2</var> = f(<var>S</var> + <var>dt</var>/2 * <var>k1</var>)<br><var>k3</var> = f(<var>S</var> + <var>dt</var>/2 * <var>k2</var>)<br><var>k4</var> = f(<var>S</var> + <var>dt</var> * <var>k3</var>)<br><br>Then the state <var>S'</var> after time <var>dt</var> has passed is<br><br><var>S'</var> = <var>S</var> + <var>dt</var>/6 * (<var>k1</var> + 2*<var>k2</var> + 2*<var>k3</var> + <var>k4</var>)<br><br>You must simulate the double pendulum from its given initial state and determine the time (in seconds) before any of the two pendulums flip for the first time. A pendulum flips if it passes over the top, which means when its angle switches from less than 180 degrees to 180 degrees or more (or vice versa). The initial state is always chosen in a way that flipping eventually occurs.<br><br>The initial state is only determined by <var>phi1</var> and <var>phi2</var>, so we assume that the pendulum starts from rest (<var>omega1</var>=0 and <var>omega2</var>=0) using the initial angles.<br><br>Since the flip time has to be calculated with 4 decimal digits of precision, the recommended simulation speed <var>dt</var> is 0.0001 seconds per simulation step.<br><br>The simulation runs on Earth's surface, so we use <var>g</var> = 9.81 m/s^2.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> The double pendulum configuration: floating point numbers <var>l1</var>, <var>m1</var>, <var>l2</var>, <var>m2</var>, separated by spaces<br><strong>Line 2:</strong> The initial state of the double pendulum: floating point numbers <var>phi1</var>, <var>phi2</var>, separated by spaces<br><br>Lengths are given in meters, masses in kilograms and angles in radians.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> The time <var>t</var> in seconds until the first flip of either pendulum occurs, rounded to 4 decimal places.<br><br>The usual rounding rules are used: 0.12344 is rounded to 0.1234, 0.12345 is rounded to 0.1235.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt; <var>m1</var>,<var>m2</var> &lt;= 100<br>0 &lt; <var>l1</var>,<var>l2</var> &lt;= 100<br>-&pi; &lt; <var>phi1</var>,<var>phi2</var> &lt; &pi;<br>0 &lt; <var>t</var> &lt; 100</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1.43 2.49 1.61 2.86\n1.439 2.534</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">12.6368</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 77623682146098,
+  "commentCount": 1,
+  "upVotes": 1,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
