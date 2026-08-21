@@ -1,0 +1,323 @@
+{
+  "id": 83538,
+  "activeVersion": 83,
+  "score": 14,
+  "votableId": 32582003,
+  "codingamerId": 1036092,
+  "views": 486,
+  "commentableId": 32438517,
+  "title": "Simple Pascal (PL/0) Processor",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "JDOnline",
+  "publicHandle": "835389137b5bdb972002e05bcfddaa3c2bfe1",
+  "codingamerHandle": "6aed1b19fc10b92d8f1d78dce39fb7592906301",
+  "lastVersion": {
+    "version": 83,
+    "autocloseTime": 1789920825710,
+    "freezeTime": 1756270788140,
+    "data": {
+      "title": "Simple Pascal (PL/0) Processor",
+      "topics": [
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 37,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "id": 235,
+          "handle": "interpreter",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "interpreter",
+            "2": "Interpreters"
+          },
+          "puzzleCount": 9,
+          "parentTopicId": 93
+        },
+        {
+          "id": 199,
+          "handle": "stack",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Stack",
+            "2": "Stack"
+          },
+          "puzzleCount": 10,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "\"\"\"\n\nPL/0 Processor\n\n\"\"\"\n\nimport time\n\n#\n# PL/0 INSTRUCTIONS\n#\nPL_LIT=0\nPL_OPR=1\nPL_LOD=2\nPL_STO=3\nPL_CAL=4\nPL_INT=5\nPL_JMP=6\nPL_JPC=7\n\n#\n# PL/0 OPERATIONS\n#\nPL_OP_RET=0\nPL_OP_NEG=1\nPL_OP_ADD=2\nPL_OP_SUB=3\nPL_OP_MUL=4\nPL_OP_DIV=5\nPL_OP_ODD=6\nPL_OP_EQU=7\nPL_OP_DIF=8\nPL_OP_INF=9\nPL_OP_SEQ=10\nPL_OP_SUP=11\nPL_OP_IEQ=12\nPL_OP_OUT=13\nPL_OP_IN=14\n\n#\n# Runtime exception\n#\nclass RuntimeException(Exception):\n    def __init__(self, str, instr, p, b, t, s):\n        if p == -1:\n            dump = f\"Runtime error: {str}\"\n        else:\n            dump = f\"Runtime error: {str}\\n\"\n            dump += f\"I: {instr}\\n\"\n            dump += f\"P: {p} B: {b} T: {t}\\n\"\n            dump += f\"F:\"\n            for elt in s:\n                dump += f\" {elt}\"\n        super(RuntimeException, self).__init__(dump)\n   \n# -------------------------------------------------------------------\n#\n# PL/0 Processor\n#\n# -------------------------------------------------------------------\n\nclass PL0_Processor:\n\n    MAX_STACK = 1024\n\n    MAX_EXECUTION_TIME = 0.3    \n\n    INSTRUCTIONS = { 'lit': PL_LIT, 'lod': PL_LOD, 'sto': PL_STO, 'jmp': PL_JMP, 'jpc': PL_JPC, 'opr': PL_OPR, 'cal': PL_CAL, 'int': PL_INT }\n\n    COMMANDS = { PL_OP_ADD: 'add', PL_OP_SUB: 'sub', PL_OP_MUL: 'mul', PL_OP_DIV: 'div', PL_OP_EQU: '=', PL_OP_DIF: '#', \n                 PL_OP_SUP: \">\", PL_OP_SEQ: \">=\", PL_OP_INF: '<', PL_OP_IEQ: '<=', PL_OP_IN: '?', PL_OP_OUT: '!',\n                 PL_OP_RET: 'ret', PL_OP_NEG: 'neg', PL_OP_ODD: 'odd' }\n    \n    def __init__(self, pcode) -> None:\n        self.pcode = pcode\n        self.stack = [ 0 ] * self.MAX_STACK\n    \n    def assemble(self, content):\n        self.pcode = []\n        for line in content:\n            cmd = line[0:3]\n            args = line[4:].split(\",\")\n            self.pcode.append( ( self.INSTRUCTIONS[cmd], int(args[0].strip()), int(args[1].strip()) ) )\n\n    def get_instruction(self, pc):\n        op, level, param = self.pcode[pc]\n        if op == PL_LIT:\n            return f'lit 0, {param}'\n        elif op == PL_OPR:\n            return f'opr 0, {param}'            \n        elif op == PL_LOD:\n            return f'lod {level}, {param}'\n        elif op == PL_STO:\n            return f'sto {level}, {param}'\n        elif op == PL_CAL:\n            return f'cal {level}, {param}'\n        elif op == PL_INT:\n            return f'int 0, {param}'\n        elif op == PL_JMP:\n            return f'jmp 0, {param}'\n        elif op == PL_JPC:                \n            return f'jpc 0, {param}'\n\n    def base(self, level, breg):\n        bp = breg\n        while level > 0:\n            bp = self.stack[bp]\n            level -= 1\n        return bp\n\n    def run(self, inputs, debug=False):\n        pc = 0                  # program counter\n        b_reg = 0               # base register \n        t_reg = 0               # topstack register \n        self.stack[0] = t_reg   # self.stack plus initialization [ T, B, PC ]\n        self.stack[1] = b_reg\n        self.stack[2] = pc  \n        inputs_idx = 0  \n        seq = 0\n        max_t = 0\n        start_time = time.time()   \n        \n        if debug:\n                    print(f\"  seq  | idx | instructions | t   b   pc  | stack\")\n\n        try:            \n            while pc < len(self.pcode):\n                op, level, param = self.pcode[pc]\n\n                if debug:\n                    print(f\"{str(seq):6s} | {str(pc):3s} | {self.get_instruction(pc):12s} | {str(t_reg):3s} {str(b_reg):3s} {str(pc):3s}\", end=\"\")\n                    st = \" |\"\n                    for idx in range(t_reg):\n                        st += f\" {str(self.stack[idx])}\"\n                    print(st)\n                pc += 1\n                seq += 1\n\n                if debug == False and time.time() - start_time > self.MAX_EXECUTION_TIME:\n                    raise RuntimeException(\"Maximum runtime reached\", \"\", -1, 0, 0, [])\n\n                if t_reg >= self.MAX_STACK:\n                    raise RuntimeException(\"Stack overflow\", self.get_instruction(pc-1), pc-1, b_reg, t_reg, self.stack[b_reg:t_reg])\n                \n                if t_reg > max_t:\n                    max_t = t_reg\n                        \n                if op == PL_LIT:   \n                    t_reg += 1             \n                    self.stack[t_reg-1] = param           \n                    if t_reg >= self.MAX_STACK:\n                        raise RuntimeException(\"Stack overflow\", self.get_instruction(pc-1), pc-1, b_reg, t_reg, self.stack[b_reg:t_reg])                     \n                elif op == PL_OPR:\n                    if param == PL_OP_RET:\n                        t_reg = b_reg \n                        pc = self.stack[t_reg + 2]\n                        b_reg = self.stack[t_reg + 1]\n                        # Clean the stack\n                        for i in range(t_reg, max_t):\n                            self.stack[i] = 0\n                        max_t = t_reg\n                        if pc == 0:\n                            break\n                    elif param == PL_OP_NEG:\n                        self.stack[t_reg-1] = -self.stack[t_reg-1]\n                    elif param == PL_OP_ADD:\n                        t_reg -= 1\n                        self.stack[t_reg-1] = self.stack[t_reg-1] + self.stack[t_reg]                    \n                    elif param == PL_OP_SUB:\n                        t_reg -= 1\n                        self.stack[t_reg-1] = self.stack[t_reg-1] - self.stack[t_reg]  \n                    elif param == PL_OP_MUL:\n                        t_reg -= 1\n                        self.stack[t_reg-1] = self.stack[t_reg-1] * self.stack[t_reg]  \n                    elif param == PL_OP_DIV:\n                        t_reg -= 1\n                        if self.stack[t_reg] == 0:\n                            t_reg -= 1\n                            raise RuntimeException(\"Division by zero\", self.get_instruction(pc-1), pc-1, b_reg, t_reg, self.stack[b_reg:t_reg])\n                        self.stack[t_reg-1] = self.stack[t_reg-1] // self.stack[t_reg]  \n                    elif param == PL_OP_ODD:                    \n                        self.stack[t_reg-1] = 1 if self.stack[t_reg-1] % 2 else 0\n                    elif param == PL_OP_EQU:\n                        t_reg -= 1\n                        self.stack[t_reg-1] = 1 if self.stack[t_reg-1] == self.stack[t_reg] else 0\n                    elif param == PL_OP_DIF:\n                        t_reg -= 1\n                        self.stack[t_reg-1] = 1 if self.stack[t_reg-1] != self.stack[t_reg] else 0\n                    elif param == PL_OP_INF:\n                        t_reg -= 1\n                        self.stack[t_reg-1] = 1 if self.stack[t_reg-1] < self.stack[t_reg] else 0\n                    elif param == PL_OP_SEQ:\n                        t_reg -= 1\n                        self.stack[t_reg-1] = 1 if self.stack[t_reg-1] >= self.stack[t_reg] else 0\n                    elif param == PL_OP_SUP:\n                        t_reg -= 1\n                        self.stack[t_reg-1] = 1 if self.stack[t_reg-1] > self.stack[t_reg] else 0\n                    elif param == PL_OP_IEQ:\n                        t_reg -= 1\n                        self.stack[t_reg-1] = 1 if self.stack[t_reg-1] <= self.stack[t_reg] else 0\n                    elif param == PL_OP_OUT:\n                        print(self.stack[t_reg-1])\n                        t_reg -= 1\n                    else:\n                        t_reg += 1\n                        self.stack[t_reg-1] = inputs[ inputs_idx ]\n                        inputs_idx += 1\n                elif op == PL_LOD:\n                    t_reg += 1\n                    self.stack[ t_reg-1 ] = self.stack[ param + self.base(level, b_reg) ]\n                    if t_reg >= self.MAX_STACK:\n                        raise RuntimeException(\"Stack overflow\", self.get_instruction(pc-1), pc-1, b_reg, t_reg, self.stack[b_reg:t_reg])                    \n                elif op == PL_STO:\n                    self.stack[ param + self.base(level, b_reg) ] = self.stack[ t_reg - 1 ]\n                    t_reg -= 1\n                elif op == PL_CAL:       \n                    if t_reg+2 >= self.MAX_STACK:\n                        raise RuntimeException(\"Stack overflow\", self.get_instruction(pc-1), pc-1, b_reg, t_reg, self.stack[b_reg:t_reg])         \n                    self.stack[t_reg] = self.base(level, b_reg)\n                    self.stack[t_reg+1] = b_reg\n                    self.stack[t_reg+2] = pc               \n                    b_reg = t_reg \n                    pc = param\n                elif op == PL_INT:\n                    t_reg = t_reg + param\n                    if t_reg >= self.MAX_STACK:\n                        raise RuntimeException(\"Stack overflow\", self.get_instruction(pc-1), pc-1, b_reg, t_reg, self.stack[b_reg:t_reg])\n                elif op == PL_JMP:\n                    pc = param\n                elif op == PL_JPC:                \n                    if self.stack[t_reg-1] == 0:\n                        pc = param\n                    t_reg -= 1\n                else:\n                    print(\"ERROR\")\n        \n        except RuntimeException as exc:\n            raise exc\n        except Exception as exc:\n            if debug:\n                raise RuntimeException(f\"Fatal error ( {exc} )\",self.get_instruction(pc-1), pc-1, b_reg, t_reg, self.stack[b_reg:t_reg])\n            raise RuntimeException(f\"Fatal error\", \"\", -1, 0, 0, [])\n\n  \ninputs = []\nn = int(input())\nfor i in range(n):\n    inputs.append(int(input()))\n\nlines = []\nm = int(input())\nfor i in range(m):\n    lines.append(input())\n\nprocessor = PL0_Processor(None)\nprocessor.assemble(lines)\n\ntry:\n    processor.run(inputs, False)\nexcept RuntimeException as exc:\n    print(exc)\n",
+      "statement": "Welcome to this puzzle where you will develop a PL/0 processor.\n\nIt is not needed to succeed the Simple Pascal compiler puzzle. However, it is needed to <<understand PL/0 instructions as described in the compiler puzzle>> (https://www.codingame.com/training/hard/simple-pascal-pl0-compiler).\n\nNiklaus Wirth's book introduces the processor to execute PL/0 instructions which is composed of <<a stack, 3 registers and 8 instructions>>.\n\n<<Stack>>\nThe [[stack]] is a classical stack structure where values are pushed and popped. This is the only data structure and all data are allocated onto the stack. The first [[stack]] index is {{0}}.\n\nAll variables allocated are initialized as {{0}}.\n\nFor {{opr}} instructions, the popping of the stack is done before executing the operation.\n\n<<3 registers>>\n[[p]]: a program register which contains the address of the next instruction to execute.\n[[b]]: a base register which contains the position of a stack frame (see below).\n[[t]]: a top-of-stack register which contains the next available position of the stack. A push increases [[t]] by one, and a pop does the reverse.\n\n<<Frames>>\nA procedure (e.g. the main program) execution context is called a frame. It is a set of data allocated onto the stack and dedicated to a procedure call. A frame includes 3 special values, all variables declared in the procedure, and the values pushed onto the stack during procedure execution. [[b]] points to the 1st element of a frame.\n\n<<Procedure call>>\nA procedure is called with {{cal}} [[l]]{{,}}[[a]] (see the compiler puzzle for definitions of [[l]] and [[a]]).\n\nWhen a procedure is called (or when starting the main program which is equivalent to {{cal 0, 0}}), the processor creates a new frame by pushing 3 values onto the stack:\n. a static link [[SL]]\n. a dynamic link [[DL]]\n. a return address [[RA]]\n\n[[SL]] is the solution to access the upper level frames. We store in [[SL]] the [[b]] value of the frame which is [[l]] levels up.\n[[DL]] saves the [[b]] value of the caller (current) frame.\n[[RA]] is set to the instruction address to jump to once returning from the procedure call.\n\nAt call time, once [[SL]], [[DL]] and [[RA]] are pushed onto the stack, the processor performs these changes:\n• [[p]] becomes [[a]] (address of next instruction)\n• [[b]] becomes [[t]] (new frame starts at [[t]])\n\n[[SL]], [[DL]] and [[RA]] are {{0}} for frame 0.\n\nWhen returning from a procedure with {{opr 0, 0}} instruction, the processor restores the caller frame by using the leaving procedure frame's [[DL]] and [[RA]]:\n• [[t]] = [[b]]\n• [[b]] = [[DL]]\n• [[p]] = [[RA]]\n\nAn example of [[SL]] and [[DL]] with 4 frames:\n```\nvariable i\n<--- main ---> <- procedure a -> <-- procedure b ---><-- proc c ->\n<<0>>  1  2  <<3>>  4  <<5>>  6  7  8  9  10 <<11>> 12 13 14 15 16 17 <<18>> 19 20 21\n--- frame 0 -- ---- frame 1 ---- ----- frame 2 ------ - frame 3 --\nSL DL          SL DL             SL DL                SL DL\n0  0           0  0              5  5                 5  11\n```\n<<i>> is stored at absolute address 3. <<a>> is defined within and called by the main program. <<b>> and <<c>> are defined within <<a>>. <<a>> calls <<b>> which calls <<c>>.\n\n<<Variable addressing>>\nA variable address (relative address) is a pair of values ([[l]], [[a]]) used by {{lod}} and {{sto}} instructions (see the compiler puzzle for definitions of [[l]] and [[a]]).\n\nThe absolute address (the position of the variable in the whole stack) is: [[b]] value of (current level - [[l]]) + [[a]]. We find the [[b]] values of the upper levels by using a chain of indirections with [[SL]].\n\nIn the previous 4-frame example, the absolute address of i when used from:\n\n• procedure a ({{lod 1, 3}})\n=> frame 1 [[SL]] = {{0}}\n=> one level up: [[b]] = [[stack]][{{0}}] = {{0}}\n=> absolute address = {{0}} + {{3}} = {{3}}\n\n• procedure c ({{lod 2, 3}})\n=> frame 3 [[SL]] = {{5}}\n=> 1st level up: [[b]] = [[stack]][{{5}}] = {{0}}\n=> 2nd level up: [[b]] = [[stack]][{{0}}] = {{0}}\n=> absolute address = {{0}} + {{3}} = {{3}}\n\n<<Error messages>>\nIf an error occurs during the execution, you must stop and output an [[error message]] in the following format:\n`{{Runtime error:}} [[message]]`\n[[message]] is one of the following:\n{{Division by zero}}\n{{Stack overflow}}: when we try to access the stack over its maximum size {{STACK SIZE}} ({{1024}}).\n{{Maximum runtime reached}}: the execution of the instructions exceeds {{MAX EXECUTION TIME}} ({{300ms}}), a possible cause being an infinite loop.\n\nFor {{Division by zero}} and {{Stack overflow}}, the output must include additional details:\n`{{I:}} [[instr]]\n{{P:}} [[p]] {{B:}} [[b]] {{T:}} [[t]]\n{{F:}} [[frame]]`\nwhere [[instr]] is the instruction which generates the error, and [[frame]] is the output of the last frame: all [[stack]] elements from position [[b]] to [[t]] - {{1}} separated by a space.\n\nDon't hesitate to combine your PL/0 compiler with the processor to be able to directly execute PL/0 programs.",
+      "testCases": [
+        {
+          "title": "Simple program",
+          "isTest": true,
+          "testIn": "0\n7\njmp 0, 1\nint 0, 4\nlit 0, 5\nsto 0, 3\nlod 0, 3\nopr 0, 13\nopr 0, 0",
+          "testOut": "5",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple program validator",
+          "isTest": false,
+          "testIn": "0\n13\njmp 0, 1\nint 0, 4\nlit 0, 1\nsto 0, 3\nlod 0, 3\nopr 0, 13\nlit 0, 2\nlit 0, 2\nopr 0, 4\nlit 0, 5\nopr 0, 3\nopr 0, 13\nopr 0, 0",
+          "testOut": "1\n-1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Simple IF and WHILE",
+          "isTest": true,
+          "testIn": "3\n101\n201\n25\n35\njmp 0, 1\nint 0, 6\nopr 0, 14\nsto 0, 3\nopr 0, 14\nsto 0, 4\nopr 0, 14\nsto 0, 5\nlod 0, 3\nopr 0, 6\njpc 0, 15\nlod 0, 3\nlod 0, 4\nopr 0, 5\nopr 0, 13\nlod 0, 3\nlod 0, 4\nopr 0, 7\njpc 0, 21\nlit 0, 999\nopr 0, 13\nlod 0, 3\nlod 0, 4\nopr 0, 9\njpc 0, 34\nlod 0, 3\nlod 0, 5\nopr 0, 2\nsto 0, 3\nlod 0, 4\nlod 0, 3\nopr 0, 5\nopr 0, 13\njmp 0, 21\nopr 0, 0",
+          "testOut": "0\n1\n1\n1\n1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Simple IF and WHILE validator",
+          "isTest": false,
+          "testIn": "3\n721\n1001\n35\n35\njmp 0, 1\nint 0, 6\nopr 0, 14\nsto 0, 3\nopr 0, 14\nsto 0, 4\nopr 0, 14\nsto 0, 5\nlod 0, 3\nopr 0, 6\njpc 0, 15\nlod 0, 3\nlod 0, 4\nopr 0, 5\nopr 0, 13\nlod 0, 3\nlod 0, 4\nopr 0, 7\njpc 0, 21\nlit 0, 999\nopr 0, 13\nlod 0, 3\nlod 0, 4\nopr 0, 9\njpc 0, 34\nlod 0, 3\nlod 0, 5\nopr 0, 2\nsto 0, 3\nlod 0, 4\nlod 0, 3\nopr 0, 5\nopr 0, 13\njmp 0, 21\nopr 0, 0",
+          "testOut": "0\n1\n1\n1\n1\n1\n1\n1\n1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Procedure (square)",
+          "isTest": true,
+          "testIn": "0\n24\njmp 0, 8\njmp 0, 2\nint 0, 3\nlod 1, 3\nlod 1, 3\nopr 0, 4\nsto 1, 4\nopr 0, 0\nint 0, 5\nlit 0, 1\nsto 0, 3\nlod 0, 3\nlit 0, 10\nopr 0, 12\njpc 0, 23\ncal 0, 1\nlod 0, 4\nopr 0, 13\nlod 0, 3\nlit 0, 1\nopr 0, 2\nsto 0, 3\njmp 0, 11\nopr 0, 0",
+          "testOut": "1\n4\n9\n16\n25\n36\n49\n64\n81\n100",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Procedure (primes) validator",
+          "isTest": false,
+          "testIn": "1\n40\n53\njmp 0, 50\njmp 0, 2\nint 0, 4\nlit 0, 1\nsto 1, 4\nlit 0, 2\nsto 0, 3\nlod 0, 3\nlod 1, 3\nopr 0, 9\njpc 0, 28\nlod 1, 3\nlod 0, 3\nopr 0, 5\nlod 0, 3\nopr 0, 4\nlod 1, 3\nopr 0, 7\njpc 0, 23\nlit 0, 0\nsto 1, 4\nlod 1, 3\nsto 0, 3\nlod 0, 3\nlit 0, 1\nopr 0, 2\nsto 0, 3\njmp 0, 7\nopr 0, 0\njmp 0, 30\nint 0, 3\nopr 0, 14\nsto 1, 3\nlod 1, 3\nlit 0, 100\nopr 0, 9\njpc 0, 49\ncal 1, 1\nlod 1, 4\nlit 0, 1\nopr 0, 7\njpc 0, 44\nlod 1, 3\nopr 0, 13\nlod 1, 3\nlit 0, 1\nopr 0, 2\nsto 1, 3\njmp 0, 33\nopr 0, 0\nint 0, 5\ncal 0, 29\nopr 0, 0",
+          "testOut": "41\n43\n47\n53\n59\n61\n67\n71\n73\n79\n83\n89\n97",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Division by Zero",
+          "isTest": true,
+          "testIn": "0\n7\njmp 0, 1\nint 0, 3\nlit 0, 1\nlit 0, 0\nopr 0, 5\nopr 0, 13\nopr 0, 0",
+          "testOut": "Runtime error: Division by zero\nI: opr 0, 5\nP: 4 B: 0 T: 3\nF: 0 0 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Division by Zero validator",
+          "isTest": false,
+          "testIn": "2\n50\n0\n11\njmp 0, 1\nint 0, 5\nopr 0, 14\nsto 0, 3\nopr 0, 14\nsto 0, 4\nlod 0, 3\nlod 0, 4\nopr 0, 5\nopr 0, 13\nopr 0, 0",
+          "testOut": "Runtime error: Division by zero\nI: opr 0, 5\nP: 8 B: 0 T: 5\nF: 0 0 0 50 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Stack overflow",
+          "isTest": true,
+          "testIn": "0\n12\njmp 0, 9\njmp 0, 2\nint 0, 3\nlod 1, 3\nlit 0, 1\nopr 0, 2\nsto 1, 3\ncal 1, 1\nopr 0, 0\nint 0, 4\ncal 0, 1\nopr 0, 0",
+          "testOut": "Runtime error: Stack overflow\nI: int 0, 3\nP: 2 B: 1021 T: 1024\nF: 0 1018 8",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Stack overflow validator",
+          "isTest": false,
+          "testIn": "0\n18\njmp 0, 13\njmp 0, 2\nint 0, 3\nlod 1, 3\nlit 0, 1\nopr 0, 2\nsto 1, 3\nlod 1, 3\nlit 0, 0\nopr 0, 11\njpc 0, 12\ncal 1, 1\nopr 0, 0\nint 0, 6\nlit 0, 2000\nsto 0, 3\ncal 0, 1\nopr 0, 0",
+          "testOut": "Runtime error: Stack overflow\nI: lod 1, 3\nP: 3 B: 1020 T: 1024\nF: 0 1017 12 2338",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Nested",
+          "isTest": true,
+          "testIn": "1\n-8\n52\njmp 0, 42\njmp 0, 2\nint 0, 3\nlod 1, 3\nlit 0, 1\nopr 0, 2\nsto 1, 3\nopr 0, 0\njmp 0, 26\njmp 0, 10\nint 0, 3\nlod 2, 3\nsto 1, 3\nlod 2, 3\nlit 0, 4\nopr 0, 2\nsto 2, 3\nopr 0, 0\njmp 0, 19\nint 0, 3\nlod 2, 3\nlit 0, 1\nopr 0, 3\nsto 2, 3\ncal 1, 9\nopr 0, 0\nint 0, 4\nlod 1, 3\nlit 0, 2\nopr 0, 2\nsto 1, 3\ncal 1, 1\ncal 0, 18\nopr 0, 0\njmp 0, 35\nint 0, 3\nlod 1, 3\nlit 0, 3\nopr 0, 2\nsto 1, 3\ncal 1, 8\nopr 0, 0\nint 0, 4\nopr 0, 14\nsto 0, 3\ncal 0, 34\ncal 0, 8\nlod 0, 3\nlit 0, 2\nopr 0, 4\nopr 0, 13\nopr 0, 0",
+          "testOut": "14",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Nested validator",
+          "isTest": false,
+          "testIn": "0\n35\njmp 0, 26\njmp 0, 21\njmp 0, 3\nint 0, 4\nlit 0, 3\nlit 0, 3\nopr 0, 4\nsto 0, 3\nlod 0, 3\nsto 2, 4\nopr 0, 0\njmp 0, 12\nint 0, 5\ncal 1, 2\nlit 0, 3\nlod 2, 3\nopr 0, 2\nsto 0, 4\nlod 0, 4\nsto 2, 4\nopr 0, 0\nint 0, 3\nlit 0, 3\nsto 1, 4\ncal 0, 11\nopr 0, 0\nint 0, 5\nlit 0, 1\nsto 0, 3\nlit 0, 2\nsto 0, 4\ncal 0, 1\nlod 0, 4\nopr 0, 13\nopr 0, 0",
+          "testOut": "4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Repeat sequence",
+          "isTest": true,
+          "testIn": "0\n30\njmp 0, 25\njmp 0, 2\nint 0, 4\nlit 0, 5\nsto 0, 3\nlod 0, 3\nopr 0, 13\nlod 0, 3\nsto 1, 3\nlit 0, 10\nsto 0, 3\nlod 1, 3\nopr 0, 13\nlod 0, 3\nopr 0, 13\nlod 1, 4\nlit 0, 1\nopr 0, 3\nsto 1, 4\nlod 1, 4\nlit 0, 0\nopr 0, 8\njpc 0, 24\ncal 1, 1\nopr 0, 0\nint 0, 5\nlit 0, 5\nsto 0, 4\ncal 0, 1\nopr 0, 0",
+          "testOut": "5\n5\n10\n5\n5\n10\n5\n5\n10\n5\n5\n10\n5\n5\n10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Fibonacci",
+          "isTest": false,
+          "testIn": "0\n30\njmp 0, 1\nint 0, 7\nlit 0, 1\nsto 0, 3\nlit 0, 1\nsto 0, 4\nlit 0, 1\nsto 0, 5\nlit 0, 0\nsto 0, 6\nlod 0, 6\nlit 0, 20\nopr 0, 12\njpc 0, 29\nlod 0, 5\nopr 0, 13\nlod 0, 4\nsto 0, 5\nlod 0, 3\nlod 0, 4\nopr 0, 2\nsto 0, 4\nlod 0, 5\nsto 0, 3\nlod 0, 6\nlit 0, 1\nopr 0, 2\nsto 0, 6\njmp 0, 10\nopr 0, 0",
+          "testOut": "1\n1\n2\n3\n5\n8\n13\n21\n34\n55\n89\n144\n233\n377\n610\n987\n1597\n2584\n4181\n6765\n10946",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Maximum Runtime Reached",
+          "isTest": true,
+          "testIn": "0\n16\njmp 0, 1\nint 0, 5\nlit 0, 5\nsto 0, 3\nlit 0, 1\nlod 0, 3\nopr 0, 2\nsto 0, 3\nlit 0, 1\nlit 0, 1\nopr 0, 7\njpc 0, 15\nlit 0, 0\nsto 0, 4\njmp 0, 8\nopr 0, 0",
+          "testOut": "Runtime error: Maximum runtime reached",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Maximum Runtime Reached Validator",
+          "isTest": false,
+          "testIn": "0\n24\njmp 0, 10\njmp 0, 2\nint 0, 3\nlit 0, 5\nsto 1, 3\nlit 0, 1\nlod 1, 3\nopr 0, 2\nsto 1, 3\nopr 0, 0\nint 0, 5\nlit 0, 0\nsto 0, 4\nlit 0, 1\nlit 0, 1\nopr 0, 7\njpc 0, 23\nlod 0, 4\nlit 0, 1\nopr 0, 2\nsto 0, 4\ncal 0, 1\njmp 0, 13\nopr 0, 0",
+          "testOut": "Runtime error: Maximum runtime reached",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Something wrong",
+          "isTest": true,
+          "testIn": "0\n31\njmp 0, 17\njmp 0, 2\nint 0, 4\nlod 1, 3\nopr 0, 6\njpc 0, 10\nlit 0, 3\nlit 0, 0\nopr 0, 5\nopr 0, 13\nlod 1, 3\nlit 0, 1\nopr 0, 3\nsto 0, 3\nlod 0, 3\nopr 0, 13\nopr 0, 0\nint 0, 4\nlit 0, 98\nsto 0, 3\nlit 0, 0\nlod 0, 3\nopr 0, 12\njpc 0, 30\ncal 0, 1\nlod 0, 3\nlit 0, 1\nopr 0, 3\nsto 0, 3\njmp 0, 20\nopr 0, 0",
+          "testOut": "97\nRuntime error: Division by zero\nI: opr 0, 5\nP: 8 B: 4 T: 8\nF: 0 0 25 0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Is something wrong ?",
+          "isTest": false,
+          "testIn": "0\n34\njmp 0, 20\njmp 0, 2\nint 0, 5\nlod 1, 3\nsto 0, 3\nlod 0, 3\nlit 0, 5\nopr 0, 9\njpc 0, 13\nlod 0, 3\nlit 0, 0\nopr 0, 5\nopr 0, 13\nlod 0, 3\nlit 0, 1\nopr 0, 3\nsto 0, 4\nlod 0, 4\nopr 0, 13\nopr 0, 0\nint 0, 4\nlit 0, 10\nsto 0, 3\nlit 0, 0\nlod 0, 3\nopr 0, 12\njpc 0, 33\ncal 0, 1\nlod 0, 3\nlit 0, 1\nopr 0, 3\nsto 0, 3\njmp 0, 23\nopr 0, 0",
+          "testOut": "9\n8\n7\n6\n5\n4\nRuntime error: Division by zero\nI: opr 0, 5\nP: 11 B: 4 T: 9\nF: 0 0 28 4 0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Last run",
+          "isTest": true,
+          "testIn": "1\n2\n48\njmp 0, 43\njmp 0, 2\nint 0, 3\nlod 1, 3\nlit 0, 0\nopr 0, 11\njpc 0, 9\nlod 1, 3\nopr 0, 13\nlod 1, 3\nlit 0, 0\nopr 0, 12\njpc 0, 16\nlod 1, 3\nopr 0, 1\nopr 0, 13\nopr 0, 0\njmp 0, 38\njmp 0, 19\nint 0, 3\nlod 1, 3\nlit 0, 0\nopr 0, 10\njpc 0, 28\nlod 2, 3\nlod 1, 3\nopr 0, 2\nsto 2, 3\nlod 1, 3\nlit 0, 0\nopr 0, 9\njpc 0, 36\nlod 2, 3\nlod 1, 3\nopr 0, 3\nsto 2, 3\ncal 2, 1\nopr 0, 0\nint 0, 4\nopr 0, 14\nsto 0, 3\ncal 0, 18\nopr 0, 0\nint 0, 4\nlit 0, 0\nsto 0, 3\ncal 0, 17\nopr 0, 0",
+          "testOut": "2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Last run validator",
+          "isTest": false,
+          "testIn": "1\n-8\n56\njmp 0, 33\njmp 0, 2\nint 0, 3\nlod 1, 4\nlit 0, 5\nopr 0, 11\njpc 0, 10\nlit 0, 1\nopr 0, 1\nopr 0, 13\nlod 1, 4\nlit 0, 5\nopr 0, 12\njpc 0, 16\nlod 1, 4\nopr 0, 13\nopr 0, 0\njmp 0, 26\njmp 0, 19\nint 0, 3\nlod 2, 4\nlit 0, 2\nopr 0, 10\njpc 0, 25\ncal 2, 1\nopr 0, 0\nint 0, 3\nlod 1, 4\nlit 0, 1\nopr 0, 2\nsto 1, 4\ncal 0, 18\nopr 0, 0\nint 0, 5\nopr 0, 14\nsto 0, 3\nlit 0, 0\nsto 0, 4\nlod 0, 3\nlit 0, 0\nopr 0, 9\njpc 0, 45\nlod 0, 3\nopr 0, 1\nsto 0, 3\nlod 0, 3\nlit 0, 0\nopr 0, 8\njpc 0, 55\nlod 0, 3\nlit 0, 1\nopr 0, 3\nsto 0, 3\ncal 0, 17\njmp 0, 45\nopr 0, 0",
+          "testOut": "2\n3\n4\n5\n-1\n-1\n-1",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "0 <= [[N]] <= 10\n0 < [[M]] <= 150\nEach line of PL/0 instruction is maximum 50 characters length.",
+      "coverBinaryId": 118359769964753,
+      "stubGenerator": "read N:int\nloop N read INPUTS:int\nread M:int\nloop M read LINES:string(50)\nwrite answer",
+      "inputDescription": "<<Line 1:>> An integer [[N]] the number of integer input values \n<<Next [[N]] lines:>> An integer\n<<Next line:>> An integer [[M]] the number of lines of PL/0 instructions\n<<Next [[M]] lines:>> String of PL/0 instruction",
+      "solutionLanguage": "Python3",
+      "outputDescription": "Print the program outputs (one per line) and also the error message if an error arises."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Welcome to this puzzle where you will develop a PL/0 processor.<br><br>It is not needed to succeed the Simple Pascal compiler puzzle. However, it is needed to <strong>understand PL/0 instructions as described in the compiler puzzle</strong> (https://www.codingame.com/training/hard/simple-pascal-pl0-compiler).<br><br>Niklaus Wirth's book introduces the processor to execute PL/0 instructions which is composed of <strong>a stack, 3 registers and 8 instructions</strong>.<br><br><strong>Stack</strong><br>The <var>stack</var> is a classical stack structure where values are pushed and popped. This is the only data structure and all data are allocated onto the stack. The first <var>stack</var> index is <const>0</const>.<br><br>All variables allocated are initialized as <const>0</const>.<br><br>For <const>opr</const> instructions, the popping of the stack is done before executing the operation.<br><br><strong>3 registers</strong><br><var>p</var>: a program register which contains the address of the next instruction to execute.<br><var>b</var>: a base register which contains the position of a stack frame (see below).<br><var>t</var>: a top-of-stack register which contains the next available position of the stack. A push increases <var>t</var> by one, and a pop does the reverse.<br><br><strong>Frames</strong><br>A procedure (e.g. the main program) execution context is called a frame. It is a set of data allocated onto the stack and dedicated to a procedure call. A frame includes 3 special values, all variables declared in the procedure, and the values pushed onto the stack during procedure execution. <var>b</var> points to the 1st element of a frame.<br><br><strong>Procedure call</strong><br>A procedure is called with <const>cal</const> <var>l</var><const>,</const><var>a</var> (see the compiler puzzle for definitions of <var>l</var> and <var>a</var>).<br><br>When a procedure is called (or when starting the main program which is equivalent to <const>cal 0, 0</const>), the processor creates a new frame by pushing 3 values onto the stack:<br>. a static link <var>SL</var><br>. a dynamic link <var>DL</var><br>. a return address <var>RA</var><br><br><var>SL</var> is the solution to access the upper level frames. We store in <var>SL</var> the <var>b</var> value of the frame which is <var>l</var> levels up.<br><var>DL</var> saves the <var>b</var> value of the caller (current) frame.<br><var>RA</var> is set to the instruction address to jump to once returning from the procedure call.<br><br>At call time, once <var>SL</var>, <var>DL</var> and <var>RA</var> are pushed onto the stack, the processor performs these changes:<br>&bull; <var>p</var> becomes <var>a</var> (address of next instruction)<br>&bull; <var>b</var> becomes <var>t</var> (new frame starts at <var>t</var>)<br><br><var>SL</var>, <var>DL</var> and <var>RA</var> are <const>0</const> for frame 0.<br><br>When returning from a procedure with <const>opr 0, 0</const> instruction, the processor restores the caller frame by using the leaving procedure frame's <var>DL</var> and <var>RA</var>:<br>&bull; <var>t</var> = <var>b</var><br>&bull; <var>b</var> = <var>DL</var><br>&bull; <var>p</var> = <var>RA</var><br><br>An example of <var>SL</var> and <var>DL</var> with 4 frames:<br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>variable i<br>&lt;--- main ---&gt; &lt;- procedure a -&gt; &lt;-- procedure b ---&gt;&lt;-- proc c -&gt;<br><strong>0</strong>  1  2  <strong>3</strong>  4  <strong>5</strong>  6  7  8  9  10 <strong>11</strong> 12 13 14 15 16 17 <strong>18</strong> 19 20 21<br>--- frame 0 -- ---- frame 1 ---- ----- frame 2 ------ - frame 3 --<br>SL DL          SL DL             SL DL                SL DL<br>0  0           0  0              5  5                 5  11<br></pre><pre style=\"font-family: monospace\"></pre><br><strong>i</strong> is stored at absolute address 3. <strong>a</strong> is defined within and called by the main program. <strong>b</strong> and <strong>c</strong> are defined within <strong>a</strong>. <strong>a</strong> calls <strong>b</strong> which calls <strong>c</strong>.<br><br><strong>Variable addressing</strong><br>A variable address (relative address) is a pair of values (<var>l</var>, <var>a</var>) used by <const>lod</const> and <const>sto</const> instructions (see the compiler puzzle for definitions of <var>l</var> and <var>a</var>).<br><br>The absolute address (the position of the variable in the whole stack) is: <var>b</var> value of (current level - <var>l</var>) + <var>a</var>. We find the <var>b</var> values of the upper levels by using a chain of indirections with <var>SL</var>.<br><br>In the previous 4-frame example, the absolute address of i when used from:<br><br>&bull; procedure a (<const>lod 1, 3</const>)<br>=&gt; frame 1 <var>SL</var> = <const>0</const><br>=&gt; one level up: <var>b</var> = <var>stack</var>[<const>0</const>] = <const>0</const><br>=&gt; absolute address = <const>0</const> + <const>3</const> = <const>3</const><br><br>&bull; procedure c (<const>lod 2, 3</const>)<br>=&gt; frame 3 <var>SL</var> = <const>5</const><br>=&gt; 1st level up: <var>b</var> = <var>stack</var>[<const>5</const>] = <const>0</const><br>=&gt; 2nd level up: <var>b</var> = <var>stack</var>[<const>0</const>] = <const>0</const><br>=&gt; absolute address = <const>0</const> + <const>3</const> = <const>3</const><br><br><strong>Error messages</strong><br>If an error occurs during the execution, you must stop and output an <var>error message</var> in the following format:<br><pre style=\"font-family: monospace\"><const>Runtime error:</const> <var>message</var></pre><br><var>message</var> is one of the following:<br><const>Division by zero</const><br><const>Stack overflow</const>: when we try to access the stack over its maximum size <const>STACK SIZE</const> (<const>1024</const>).<br><const>Maximum runtime reached</const>: the execution of the instructions exceeds <const>MAX EXECUTION TIME</const> (<const>300ms</const>), a possible cause being an infinite loop.<br><br>For <const>Division by zero</const> and <const>Stack overflow</const>, the output must include additional details:<br><pre style=\"font-family: monospace\"><const>I:</const> <var>instr</var><br><const>P:</const> <var>p</var> <const>B:</const> <var>b</var> <const>T:</const> <var>t</var><br><const>F:</const> <var>frame</var></pre><br>where <var>instr</var> is the instruction which generates the error, and <var>frame</var> is the output of the last frame: all <var>stack</var> elements from position <var>b</var> to <var>t</var> - <const>1</const> separated by a space.<br><br>Don't hesitate to combine your PL/0 compiler with the processor to be able to directly execute PL/0 programs.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var> the number of integer input values <br><strong>Next <var>N</var> lines:</strong> An integer<br><strong>Next line:</strong> An integer <var>M</var> the number of lines of PL/0 instructions<br><strong>Next <var>M</var> lines:</strong> String of PL/0 instruction</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Print the program outputs (one per line) and also the error message if an error arises.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">0 &lt;= <var>N</var> &lt;= 10<br>0 &lt; <var>M</var> &lt;= 150<br>Each line of PL/0 instruction is maximum 50 characters length.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">0\n7\njmp 0, 1\nint 0, 4\nlit 0, 5\nsto 0, 3\nlod 0, 3\nopr 0, 13\nopr 0, 0</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">5</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 117815661507237,
+  "commentCount": 82,
+  "upVotes": 16,
+  "downVotes": 2,
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1711188337000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1711188978945,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1713783937000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1719072031973,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1721664337000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1732283652814,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1734876337001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1755665952654,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1758258337001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1787328825710,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}
