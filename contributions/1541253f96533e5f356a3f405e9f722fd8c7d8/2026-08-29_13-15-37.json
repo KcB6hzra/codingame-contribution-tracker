@@ -1,0 +1,108 @@
+{
+  "id": 154125,
+  "activeVersion": 1,
+  "score": 0,
+  "votableId": 40365165,
+  "codingamerId": 4377445,
+  "views": 1,
+  "commentableId": 40192792,
+  "title": "4x4 Chess: Checkmate?",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "abderrazzak_",
+  "publicHandle": "1541253f96533e5f356a3f405e9f722fd8c7d8",
+  "codingamerHandle": "d43cbf8bc166347ce56cddba61dd59fd5447734",
+  "lastVersion": {
+    "version": 1,
+    "autocloseTime": 1790600984609,
+    "data": {
+      "title": "4x4 Chess: Checkmate?",
+      "topics": [],
+      "solution": "import sys\n\ndef sign(n):\n    return (n > 0) - (n < 0)\n\ndef attacks(attacker, target, blockers):\n    ar, ac = attacker\n    tr, tc = target\n    dr, dc = tr - ar, tc - ac\n    if dr == 0 and dc == 0:\n        return False\n    if not (dr == 0 or dc == 0 or abs(dr) == abs(dc)):\n        return False\n    sr, sc = sign(dr), sign(dc)\n    r, c = ar + sr, ac + sc\n    while (r, c) != (tr, tc):\n        if (r, c) in blockers:\n            return False\n        r += sr\n        c += sc\n    return True\n\ndef in_check(square, queens):\n    qs = set(queens)\n    return any(attacks(q, square, qs - {q}) for q in queens)\n\nrows = []\nfor i in range(4):\n    row = input()\n    rows.append(row)\n\nking = None\nqueens = []\nfor r in range(4):\n    for c in range(4):\n        ch = rows[r][c]\n        if ch == 'k':\n            king = (r, c)\n        elif ch == 'Q':\n            queens.append((r, c))\n\nif not in_check(king, queens):\n    print(\"NOT CHECKMATE\")\nelse:\n    kr, kc = king\n    can_escape = False\n    for dr in (-1, 0, 1):\n        for dc in (-1, 0, 1):\n            if dr == 0 and dc == 0:\n                continue\n            nr, nc = kr + dr, kc + dc\n            if 0 <= nr < 4 and 0 <= nc < 4:\n                remaining = [q for q in queens if q != (nr, nc)]\n                if not in_check((nr, nc), remaining):\n                    can_escape = True\n    print(\"CHECKMATE\" if not can_escape else \"NOT CHECKMATE\")",
+      "statement": "A war has shrunk down to a single tiny battlefield: a 4x4 chessboard.\n\nOn this board there is exactly one Black King and a handful of White Queens\n(between 1 and 3). No other pieces exist. Standard chess rules apply for\nthe pieces present: a Queen attacks any square along its row, column, or\ndiagonal, as long as nothing blocks the way. A King can move one square in\nany direction, as long as that square is on the board and not itself under\nattack.\n\nYour task: given the current position, determine whether the Black King is\nin checkmate right now.\n\nThe Black King is in checkmate when both of these are true:\n- It is currently in check (attacked by at least one Queen).\n- It has no way out: every square it could move to is either off the\n  board, attacked by a remaining Queen, or occupied by a Queen that\n  another Queen is protecting (so capturing it would still leave the King\n  in check).\n\nSince Black only has a King, blocking a check is never an option, only\nmoving or capturing.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "....\n..Q.\n.Q..\nk...",
+          "testOut": "CHECKMATE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "....\n.Q..\n..Q.\n...k",
+          "testOut": "CHECKMATE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "....\n....\n.Q..\nk...",
+          "testOut": "NOT CHECKMATE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "....\n....\n..Q.\n...k",
+          "testOut": "NOT CHECKMATE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "..Q.\n....\n....\nk...",
+          "testOut": "NOT CHECKMATE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "...k\n....\nQ...\n....",
+          "testOut": "NOT CHECKMATE",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "...Q\n....\n...Q\n...k",
+          "testOut": "CHECKMATE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "kQ.Q\n....\n....\n....",
+          "testOut": "CHECKMATE",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "The board is always 4x4.\nThere is always exactly one k on the board.\nThere are between 1 and 3 Q on the board, inclusive.\nNo characters other than '.', 'k', 'Q' appear on the board.",
+      "stubGenerator": "loop 4 read row:string(4)\nwrite answer",
+      "inputDescription": "The board is given as 4 lines of exactly 4 characters each.\n\nRow 0 is the first line read, row 3 is the last line read. Within a line,\ncolumn 0 is the leftmost character and column 3 is the rightmost.\n\nEach character is one of:\n.  an empty square\nk  the Black King (there is always exactly one)\nQ  a White Queen (there are between 1 and 3)",
+      "solutionLanguage": "Python3",
+      "outputDescription": "Output a single line:\nCHECKMATE if the Black King is checkmated, or\nNOT CHECKMATE otherwise."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A war has shrunk down to a single tiny battlefield: a 4x4 chessboard.<br><br>On this board there is exactly one Black King and a handful of White Queens<br>(between 1 and 3). No other pieces exist. Standard chess rules apply for<br>the pieces present: a Queen attacks any square along its row, column, or<br>diagonal, as long as nothing blocks the way. A King can move one square in<br>any direction, as long as that square is on the board and not itself under<br>attack.<br><br>Your task: given the current position, determine whether the Black King is<br>in checkmate right now.<br><br>The Black King is in checkmate when both of these are true:<br>- It is currently in check (attacked by at least one Queen).<br>- It has no way out: every square it could move to is either off the<br>  board, attacked by a remaining Queen, or occupied by a Queen that<br>  another Queen is protecting (so capturing it would still leave the King<br>  in check).<br><br>Since Black only has a King, blocking a check is never an option, only<br>moving or capturing.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">The board is given as 4 lines of exactly 4 characters each.<br><br>Row 0 is the first line read, row 3 is the last line read. Within a line,<br>column 0 is the leftmost character and column 3 is the rightmost.<br><br>Each character is one of:<br>.  an empty square<br>k  the Black King (there is always exactly one)<br>Q  a White Queen (there are between 1 and 3)</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Output a single line:<br>CHECKMATE if the Black King is checkmated, or<br>NOT CHECKMATE otherwise.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">The board is always 4x4.<br>There is always exactly one k on the board.<br>There are between 1 and 3 Q on the board, inclusive.<br>No characters other than '.', 'k', 'Q' appear on the board.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">....\n..Q.\n.Q..\nk...</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">CHECKMATE</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 166717449350197,
+  "commentCount": 0,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
