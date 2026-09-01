@@ -1,0 +1,196 @@
+{
+  "id": 154290,
+  "activeVersion": 47,
+  "score": 1,
+  "votableId": 40373693,
+  "codingamerId": 4687360,
+  "views": 30,
+  "commentableId": 40201177,
+  "title": "Egyptian fractions",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "thomas.schuerger",
+  "publicHandle": "154290f8fbd25dd1f05b84de3e0c4d5f846740",
+  "codingamerHandle": "8f631a6df22c9cd8709f071d9518645f0637864",
+  "lastVersion": {
+    "version": 47,
+    "autocloseTime": 1790780800182,
+    "data": {
+      "title": "Egyptian fractions",
+      "topics": [
+        {
+          "id": 214,
+          "handle": "rational-numbers",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Rational Numbers",
+            "2": "Rational Numbers"
+          },
+          "puzzleCount": 2,
+          "parentTopicId": 93
+        },
+        {
+          "id": 94,
+          "handle": "mathematics",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Mathematics",
+            "2": "Mathematics"
+          },
+          "puzzleCount": 82,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "use strict;\nuse POSIX qw(ceil);\n\nmy $s=<>;\n$s =~ /(\\d+)\\/(\\d+)/;\nmy($p,$q)=reduce($1,$2);\n\n# the unit fraction denominators to use\nmy @s;\n\n# take the first unit fractions until we would exceed the target\nfor(my $k=1;;$k++) {\n    last if($k*$p<=$q);\n    push(@s,$k);\n    # subtract 1/k from p/q\n    ($p,$q)=reduce($p*$k-$q,$q*$k);\n}\n\n# use Fibonacci's algorithm for the rest\npush(@s,fibo($p,$q));\n\nprint join(\" + \",map{\"1/$_\"} @s).\"\\n\";\n\nsub fibo {\n    my($p,$q)=reduce(@_);\n    return($q) if($p==1);\n    my $r = POSIX::ceil($q/$p);\n    return($r, fibo((((-$q)%$p)+$p)%$p,$q*$r));\n}\n\nsub reduce {\n    my($p,$q)=@_;\n    my($g)=gcd($p,$q);\n    return($p/$g,$q/$g) if($g>1);\n    return($p,$q);\n}\n\nsub gcd {\n    my($a,$b) = @_;\n    return !$b ? $a : gcd($b,$a%$b);\n}",
+      "statement": "An <<Egyptian fraction>> is the decomposition of a positive rational number into the sum of a finite number of <<distinct unit fractions>>, usually sorted by denominator in ascending order. A unit fraction is the reciprocal of a positive integer (1/[[k]] for a positive integer [[k]]).\n\nFor example, the rational number 9/11 can be represented as an Egyptian fraction as 1/2 + 1/4 + 1/15 + 1/660. There are multiple different representations of a rational number as an Egyption fraction.\n\nOne way to find an Egyption fraction is to use Fibonacci's algorithm, which is a greedy algorithm. You can use Fibonacci's algorithm to turn a positive non-unit fraction [[p]]/[[q]] (fully reduced, [[p]]<[[q]], [[p]]>1) into the sum of a unit fraction (which is the largest unit fraction so that [[p]]/[[q]] is not exceeded) plus a smaller remaining fraction, which may or may not be a unit fraction:\n\n[[p]]/[[q]] = 1/ceil([[q]]/[[p]]) + ((-[[q]]) mod [[p]])/([[q]]*ceil([[q]]/[[p]]))\n\nwith ceil([[x]]) being the ceiling function, which rounds a non-integer up to the next integer and keeps an integer as-is.\n\nFully reduce the remaining fraction. If its numerator is 1, you are finished. Otherwise you can repeat the process recursively with the fully reduced remaining fraction. This process always terminates. In the end, you have a sum of unit fractions which equals [[p]]/[[q]].\n\nYou can fully reduce [[p]]/[[q]] by dividing both [[p]] and [[q]] by gcd([[p]],[[q]]), where gcd([[p]],[[q]]) is the greatest common divisor of [[p]] and [[q]].\n\nAs stated above, Fibonacci's algorithm only works for rational numbers less than 1 and only if no unit fractions have been used yet. To make it work for larger numbers and only use unused unit fractions, use the sum of the first [[k]] unit fractions (1/1, 1/2, 1/3, ..., 1/[[k]]), also known as the [[k]]'th harmonic number, until using one more would exceed [[p]]/[[q]], then use Fibonacci's algorithm to calculate the remaining difference to the [[p]]/[[q]] as an Egyptian fraction and combine. Well call this the modified version of Fibonacci's algorithm.\n\nGiven [[p]]/[[q]], find the Egyptian fraction representation using the modified version of Fibonacci's algorithm and output it, in ascending order of unit fraction denominators!\n\n<<References>>\n\n- Egyptian fraction: https://en.wikipedia.org/wiki/Egyptian_fraction\n- Greedy algorithm for Egyptan fractions: https://en.wikipedia.org/wiki/Greedy_algorithm_for_Egyptian_fractions\n- Greatest common divisor (GCD): https://en.wikipedia.org/wiki/Greatest_common_divisor\n- Harmonic number: https://en.wikipedia.org/wiki/Harmonic_number",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "9/11",
+          "testOut": "1/2 + 1/4 + 1/15 + 1/660",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "8/11",
+          "testOut": "1/2 + 1/5 + 1/37 + 1/4070",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "One stays one",
+          "isTest": true,
+          "testIn": "1/1",
+          "testOut": "1/1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "",
+          "isTest": false,
+          "testIn": "2/2",
+          "testOut": "1/1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Reducing the input",
+          "isTest": true,
+          "testIn": "153/187",
+          "testOut": "1/2 + 1/4 + 1/15 + 1/660",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "136/187",
+          "testOut": "1/2 + 1/5 + 1/37 + 1/4070",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Greater than 1",
+          "isTest": true,
+          "testIn": "13/10",
+          "testOut": "1/1 + 1/4 + 1/20",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "11/10",
+          "testOut": "1/1 + 1/10",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Even greater than 1",
+          "isTest": true,
+          "testIn": "33/13",
+          "testOut": "1/1 + 1/2 + 1/3 + 1/4 + 1/5 + 1/6 + 1/12 + 1/195",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "34/13",
+          "testOut": "1/1 + 1/2 + 1/3 + 1/4 + 1/5 + 1/6 + 1/7 + 1/45 + 1/3276",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Much greater than 1",
+          "isTest": true,
+          "testIn": "1489/523",
+          "testOut": "1/1 + 1/2 + 1/3 + 1/4 + 1/5 + 1/6 + 1/7 + 1/8 + 1/9 + 1/56 + 1/4741 + 1/164432852 + 1/64215636525595170",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "1486/523",
+          "testOut": "1/1 + 1/2 + 1/3 + 1/4 + 1/5 + 1/6 + 1/7 + 1/8 + 1/9 + 1/82 + 1/7310 + 1/61051900 + 1/17225610062988600",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Larger inputs",
+          "isTest": true,
+          "testIn": "1605434/1611604",
+          "testOut": "1/2 + 1/3 + 1/7 + 1/51 + 1/2680 + 1/16019597 + 1/3336157328531720",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "1602966/1611604",
+          "testOut": "1/2 + 1/3 + 1/7 + 1/55 + 1/3734 + 1/53136582 + 1/4156814012754095",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A harmonic number",
+          "isTest": true,
+          "testIn": "7381/2520",
+          "testOut": "1/1 + 1/2 + 1/3 + 1/4 + 1/5 + 1/6 + 1/7 + 1/8 + 1/9 + 1/10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "83711/27720",
+          "testOut": "1/1 + 1/2 + 1/3 + 1/4 + 1/5 + 1/6 + 1/7 + 1/8 + 1/9 + 1/10 + 1/11",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "For all initial and intermediate fractions [[p]]/[[q]]:\n0 < [[p]] < 10^18\n0 < [[q]] < 10^18",
+      "coverBinaryId": 167474900574704,
+      "stubGenerator": "read rational:string(20)\nwrite egyptian fraction string",
+      "inputDescription": "<<Line 1:>> The string [[p]]{{/}}[[q]], where [[p]] and [[q]] are positive integers, separated by a slash character",
+      "solutionLanguage": "Perl",
+      "outputDescription": "<<Line 1:>> The Egyptian fraction representation of [[p]]/[[q]]: 1/a + 1/b + ... in ascending order of denominators\n\nThe number 1 is represented as 1/1."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">An <strong>Egyptian fraction</strong> is the decomposition of a positive rational number into the sum of a finite number of <strong>distinct unit fractions</strong>, usually sorted by denominator in ascending order. A unit fraction is the reciprocal of a positive integer (1/<var>k</var> for a positive integer <var>k</var>).<br><br>For example, the rational number 9/11 can be represented as an Egyptian fraction as 1/2 + 1/4 + 1/15 + 1/660. There are multiple different representations of a rational number as an Egyption fraction.<br><br>One way to find an Egyption fraction is to use Fibonacci's algorithm, which is a greedy algorithm. You can use Fibonacci's algorithm to turn a positive non-unit fraction <var>p</var>/<var>q</var> (fully reduced, <var>p</var>&lt;<var>q</var>, <var>p</var>&gt;1) into the sum of a unit fraction (which is the largest unit fraction so that <var>p</var>/<var>q</var> is not exceeded) plus a smaller remaining fraction, which may or may not be a unit fraction:<br><br><var>p</var>/<var>q</var> = 1/ceil(<var>q</var>/<var>p</var>) + ((-<var>q</var>) mod <var>p</var>)/(<var>q</var>*ceil(<var>q</var>/<var>p</var>))<br><br>with ceil(<var>x</var>) being the ceiling function, which rounds a non-integer up to the next integer and keeps an integer as-is.<br><br>Fully reduce the remaining fraction. If its numerator is 1, you are finished. Otherwise you can repeat the process recursively with the fully reduced remaining fraction. This process always terminates. In the end, you have a sum of unit fractions which equals <var>p</var>/<var>q</var>.<br><br>You can fully reduce <var>p</var>/<var>q</var> by dividing both <var>p</var> and <var>q</var> by gcd(<var>p</var>,<var>q</var>), where gcd(<var>p</var>,<var>q</var>) is the greatest common divisor of <var>p</var> and <var>q</var>.<br><br>As stated above, Fibonacci's algorithm only works for rational numbers less than 1 and only if no unit fractions have been used yet. To make it work for larger numbers and only use unused unit fractions, use the sum of the first <var>k</var> unit fractions (1/1, 1/2, 1/3, ..., 1/<var>k</var>), also known as the <var>k</var>'th harmonic number, until using one more would exceed <var>p</var>/<var>q</var>, then use Fibonacci's algorithm to calculate the remaining difference to the <var>p</var>/<var>q</var> as an Egyptian fraction and combine. Well call this the modified version of Fibonacci's algorithm.<br><br>Given <var>p</var>/<var>q</var>, find the Egyptian fraction representation using the modified version of Fibonacci's algorithm and output it, in ascending order of unit fraction denominators!<br><br><strong>References</strong><br><br>- Egyptian fraction: https://en.wikipedia.org/wiki/Egyptian_fraction<br>- Greedy algorithm for Egyptan fractions: https://en.wikipedia.org/wiki/Greedy_algorithm_for_Egyptian_fractions<br>- Greatest common divisor (GCD): https://en.wikipedia.org/wiki/Greatest_common_divisor<br>- Harmonic number: https://en.wikipedia.org/wiki/Harmonic_number</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> The string <var>p</var><const>/</const><var>q</var>, where <var>p</var> and <var>q</var> are positive integers, separated by a slash character</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> The Egyptian fraction representation of <var>p</var>/<var>q</var>: 1/a + 1/b + ... in ascending order of denominators<br><br>The number 1 is represented as 1/1.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">For all initial and intermediate fractions <var>p</var>/<var>q</var>:<br>0 &lt; <var>p</var> &lt; 10^18<br>0 &lt; <var>q</var> &lt; 10^18</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">9/11</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1/2 + 1/4 + 1/15 + 1/660</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 77623682146098,
+  "commentCount": 0,
+  "upVotes": 1,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
