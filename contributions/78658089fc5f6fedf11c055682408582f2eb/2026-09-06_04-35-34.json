@@ -1,0 +1,192 @@
+{
+  "id": 7865,
+  "activeVersion": 16,
+  "score": 6,
+  "votableId": 21429311,
+  "codingamerId": 4229624,
+  "views": 511,
+  "commentableId": 21321677,
+  "title": "You have been Hacked !",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Eng.Adnane",
+  "publicHandle": "78658089fc5f6fedf11c055682408582f2eb",
+  "codingamerHandle": "481422d0e087bcce95eecf4bbef2ee834269224",
+  "lastVersion": {
+    "version": 16,
+    "autocloseTime": 1791261133960,
+    "data": {
+      "title": "You have been Hacked !",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "cybersecurity"
+          }
+        },
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 47,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        },
+        {
+          "id": 46,
+          "handle": "loops",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 61,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        },
+        {
+          "id": 47,
+          "handle": "arrays",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Tableaux",
+            "2": "Arrays"
+          },
+          "pageTitle": "Arrays: exercises and theory",
+          "puzzleCount": 20,
+          "parentTopicId": 40,
+          "contentDetailsId": 78
+        },
+        {
+          "labelMap": {
+            "2": "Query"
+          }
+        }
+      ],
+      "solution": "\nusing System;\nusing System.Linq;\nusing System.IO;\nusing System.Text;\nusing System.Collections;\nusing System.Collections.Generic;\n\n        public enum TypeAttack\n        {\n            ps = 0,//port scan\n            bf = 1,//brute force\n            mi = 2 //malware installation\n        }\n\n        public enum StatusAttack\n        {\n            none = 0,\n            isBlocked = 1,\n            isNextStep = 2,\n            isHacked = 3 \n        }\nclass Solution\n{\n    static void Main(string[] args)\n    {\n        int n =int.Parse(Console.ReadLine());\n        var dicCompany = new Dictionary<string, int>();\n        var dicCompanyOrder = new Dictionary<int, string>();\n        IList<string> newData = new List<string>();\n        StatusAttack statusAttack = StatusAttack.none;\n       for (int i = 0; i < n; i++)\n        {\n            string line = Console.ReadLine();\n            string[] company = line.Split(\":\");\n            string nameCompany = company[0];\n            int firewallStrength = int.Parse(company[1]);\n            dicCompany.Add(nameCompany, firewallStrength);\n            dicCompanyOrder[i] = nameCompany;\n        }\n        int a =int.Parse(Console.ReadLine());\n        for(int i=0;i<a;i++)\n        {\n            string line=Console.ReadLine();\n            string[] attack = line.Split(\":\");\n            string nameCompany = attack[0];\n            string typeCyberAttack = attack[1];\n            int CyberAttackStrength = int.Parse(attack[2]);\n            int firewallStrength = dicCompany.Where(p => p.Key == nameCompany).Select(p => p.Value).FirstOrDefault();\n            string newLine = nameCompany + \":\" + typeCyberAttack + \":\" + CyberAttackStrength.ToString() + \":\" + firewallStrength.ToString();\n            newData.Add(newLine);\n        } \n        var output = newData.Select(x => x.Split(\":\")).Select(x => new { nameCompany = x[0], typeCyberAttack = x[1], CyberAttackStrength = int.Parse(x[2]), firewallStrength = int.Parse(x[3]) })\n                .GroupBy(w => (w.nameCompany, w.typeCyberAttack, w.firewallStrength))\n                .Select(g => (g.Key.nameCompany, g.Key.typeCyberAttack, TotalAttackStrength: g.Sum(w => w.CyberAttackStrength), firewallStrength: g.Key.firewallStrength))\n                .OrderBy(d => dicCompanyOrder.FirstOrDefault(d1 => d1.Value == d.nameCompany).Key).ThenBy(r => (int)Enum.Parse(typeof(TypeAttack), r.typeCyberAttack));\n\n        foreach (var att in output)\n        {\n            CyberAttackOp oAttack = new CyberAttackOp(att.nameCompany, att.typeCyberAttack, att.firewallStrength, att.TotalAttackStrength);\n            bool isLastStepAttack = ((int)Enum.Parse(typeof(TypeAttack), att.typeCyberAttack) == (int)TypeAttack.mi) ? true : false;\n\n            if (statusAttack == StatusAttack.none && oAttack.isAttackBlocked())\n            {\n                statusAttack = StatusAttack.isBlocked;\n            }\n            else if ((statusAttack == StatusAttack.none || (!isLastStepAttack && statusAttack == StatusAttack.isNextStep)) && oAttack.isNextStepAttack())\n            {\n                statusAttack = StatusAttack.isNextStep;\n            }\n            else if (isLastStepAttack && statusAttack == StatusAttack.isNextStep && oAttack.isAttacksucceeded())\n            {\n                statusAttack = StatusAttack.isHacked;\n            }\n            if (isLastStepAttack)\n            {\n                if (statusAttack == StatusAttack.isHacked)\n                {\n                    Console.WriteLine($\"{att.nameCompany}:Hacked\");\n                }\n                else\n                {\n                    Console.WriteLine($\"{att.nameCompany}:Blocked\");\n                }\n                statusAttack = StatusAttack.none;\n            }\n        }\n    }\n\n    public class CyberAttackOp\n    {\n        private string companyName;\n        private int firewallStrength;\n        private string nameAttack;\n        private int attackStrength;\n\n        public CyberAttackOp(string nameCompany, string attackName, int strengthFirewall, int strengthAttack)\n        {\n            companyName = nameCompany;\n            firewallStrength = strengthFirewall;\n            nameAttack = attackName;\n            attackStrength = strengthAttack;\n            //Console.WriteLine($\"{nameCompany},{attackName},{strengthFirewall},{strengthAttack}\");\n        }\n\n        public bool isAttackBlocked()\n        {\n            bool isBlocked = false;\n            if (firewallStrength >= 7)\n            {\n                isBlocked = true;\n            }\n            else if (firewallStrength >= 5 && firewallStrength <= 6\n                        && nameAttack.Equals(\"bf\")\n                        && attackStrength < 5000\n                    )\n            {\n                isBlocked = true;\n            }\n            else if (firewallStrength < 5\n                        && nameAttack.Equals(\"mi\") && attackStrength < 1000\n                    )\n            {\n                isBlocked = true;\n            }\n\n            return isBlocked;\n        }\n\n\n        public bool isNextStepAttack()\n        {\n            bool isNextStep= false;\n            //Console.WriteLine($\"isNextStepAttack:{companyName},{firewallStrength},{nameAttack},{attackStrength},{((int)Enum.Parse(typeof(TypeAttack), nameAttack) == (int)TypeAttack.ps) }\");\n         \n            if (((firewallStrength >= 5 && firewallStrength <= 6) && (nameAttack.Equals(\"bf\") && attackStrength >= 5000))\n                    || ((firewallStrength >= 5 && firewallStrength <= 6) && (nameAttack.Equals(\"ps\")))\n                )\n            {\n                isNextStep = true;\n            }\n            else if (\n                        ((firewallStrength < 5) && (nameAttack.Equals(\"bf\") && attackStrength >= 500)) \n                        || ((firewallStrength < 5) && (nameAttack.Equals(\"ps\")))\n                    )\n            {\n                isNextStep = true;\n            }\n\n            return isNextStep;\n        }\n\n        public bool isAttacksucceeded()\n        {\n            bool isHacked = false;\n\n            if (firewallStrength >= 5 && firewallStrength <= 6\n                        && nameAttack.Equals(\"mi\")\n                        && attackStrength >= 3000\n                    )\n            {\n                isHacked = true;\n            }\n            else if (firewallStrength < 5\n                        && nameAttack.Equals(\"mi\") && attackStrength >= 1000\n                    )\n            {\n                isHacked = true;\n            }\n\n            return isHacked;\n        }\n\n    }\n   \n}",
+      "statement": "Hackers carry out Advanced Persistent Threat <<cyber attacks>> against a <<number of companies>>.\nEach company has a <<firewall>> with a certain configuration's level   which gives this firewall a certain <<protection's degree>>.\nHackers execute 3 types of attack in the following order:\n1 - Port scanning <<(ps)>>;\n2 - Brute force <<(bf)>>;\n3 - Malware installation  <<(mi)>>.\n\n<<each step depends on the success of the previous step>>.\n\nIn addition, you should know that each cyberattack has a certain <<level of strengths>>.\n\nThe conditions that the cyber attack will be successful or not are:\n1 - If the firewall's protection strengths is greater than or equal to <<7>> and cyber attack's strengths of type <<port scanning>> is strictly less than <<10000>>, the firewall will be able to detect the port scanning's attack and it will <<block it>>, otherwise the cyberattack will be successful and the hacker goes to the next step. this type of firewall <<blocks>> other attacks regardless of their strength.\n2 - If the firewall's protection strengths is between  <<5 and 6>> and cyber attack's strengths of type <<brute force>> is strictly less than <<5000>>,  the firewall will be able to detect the brute force's attack and it will <<block it>>, otherwise the cyberattack will be successful and the hacker goes to the next step. <<this type of firewall doesn't detect port scanning>> and <<block>> installation malware's attack if the strength of this attack is less than <<3000>>.\n3 - If the firewall's protection strengths is strictly less than <<5>> and cyber attack's strengths of type <<Malware installation>> is strictly less than <<1000>>,  the firewall will be able to detect the attempting to send malware and it will <<block>> it, otherwise the cyberattack will be successful and the hackers have full control of the company's information system. this type of firewall doesn't detect port scanning and <<block>> brute force's  attack if the strength of this attack is less than <<500>>.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "1\nGold star:5\n4\nGold star:ps:1000\nGold star:ps:9001\nGold star:bf:5010\nGold star:mi:3020",
+          "testOut": "Gold star:Hacked",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "1\nGold star:7\n4\nGold star:ps:500\nGold star:ps:300\nGold star:bf:60\nGold star:mi:10",
+          "testOut": "Gold star:Blocked",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two companies",
+          "isTest": true,
+          "testIn": "2\nIron Market:7\nFast food:3\n7\nIron Market:ps:1000\nFast food:ps:100\nIron Market:bf:300\nFast food:bf:80\nFast food:bf:499\nFast food:mi:1005\nIron Market:mi:132",
+          "testOut": "Iron Market:Blocked\nFast food:Hacked",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "2\nIron Market:7\nFast food:3\n7\nIron Market:ps:1000\nFast food:ps:10\nIron Market:bf:300\nFast food:bf:5\nFast food:bf:2\nFast food:mi:3\nIron Market:mi:2",
+          "testOut": "Iron Market:Blocked\nFast food:Blocked",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "More companies",
+          "isTest": true,
+          "testIn": "5\nHoneyPot:4\nDARTI:6\nBiougnach:7\nCasa Mall:2\nRabat Center:9\n16\nHoneyPot:ps:1000\nDARTI:ps:100\nHoneyPot:bf:600\nDARTI:bf:2000\nDARTI:bf:10\nDARTI:mi:1050\nHoneyPot:mi:2000\nBiougnach:ps:10001\nBiougnach:bf:5000\nBiougnach:mi:2000\nCasa Mall:ps:600\nCasa Mall:bf:600\nCasa Mall:mi:1100\nRabat Center:ps:8000\nRabat Center:bf:6000\nRabat Center:mi:12100",
+          "testOut": "HoneyPot:Hacked\nDARTI:Blocked\nBiougnach:Blocked\nCasa Mall:Hacked\nRabat Center:Blocked",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "5\nHoneyPot:8\nDARTI:6\nBiougnach:7\nCasa Mall:2\nRabat Center:2\n16\nHoneyPot:ps:800\nDARTI:ps:100\nHoneyPot:bf:600\nDARTI:bf:2000\nDARTI:bf:10\nDARTI:mi:1050\nHoneyPot:mi:2000\nBiougnach:ps:10001\nBiougnach:bf:5000\nBiougnach:mi:2000\nCasa Mall:ps:600\nCasa Mall:bf:600\nCasa Mall:mi:1100\nRabat Center:ps:8000\nRabat Center:bf:6000\nRabat Center:mi:12100",
+          "testOut": "HoneyPot:Blocked\nDARTI:Blocked\nBiougnach:Blocked\nCasa Mall:Hacked\nRabat Center:Hacked",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Many companies many Cyberattacks",
+          "isTest": true,
+          "testIn": "10\nMarrakech palm:1\nMamounia Hotel:2\nBiougnach:3\nGolden fish:4\nAuto Express:5\nBlue sea:6\nMachanic expo:7\nMinistry of justice:8\nWhite city:2\nElectronic universe:5\n32\nMarrakech palm:ps:10010\nMamounia Hotel:ps:200\nMarrakech palm:bf:5020\nBiougnach:ps:6000\nGolden fish:ps:523\nBiougnach:bf:20\nMamounia Hotel:bf:1005\nBiougnach:bf:600\nAuto Express:ps:125\nAuto Express:bf:6025\nAuto Express:mi:6126\nMarrakech palm:mi:2000\nGolden fish:bf:663\nBiougnach:mi:2003\nGolden fish:mi:1023\nBlue sea:ps:100\nBlue sea:bf:956\nBlue sea:mi:5000\nMachanic expo:ps:600\nMamounia Hotel:mi:20\nMamounia Hotel:mi:985\nMinistry of justice:ps:4507\nMinistry of justice:bf:2303\nMinistry of justice:mi:962\nMachanic expo:bf:2500\nMachanic expo:mi:10000\nWhite city:ps:3258\nWhite city:bf:7698\nWhite city:mi:10000\nElectronic universe:ps:600\nElectronic universe:bf:9522\nElectronic universe:mi:4523",
+          "testOut": "Marrakech palm:Hacked\nMamounia Hotel:Hacked\nBiougnach:Hacked\nGolden fish:Hacked\nAuto Express:Hacked\nBlue sea:Hacked\nMachanic expo:Blocked\nMinistry of justice:Blocked\nWhite city:Hacked\nElectronic universe:Hacked",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "10\nMarrakech palm:8\nMamounia Hotel:7\nBiougnach:3\nGolden fish:4\nAuto Express:5\nBlue sea:6\nMachanic expo:7\nMinistry of justice:8\nWhite city:2\nElectronic universe:5\n32\nMarrakech palm:ps:10010\nMamounia Hotel:ps:200\nMarrakech palm:bf:5020\nBiougnach:ps:6000\nGolden fish:ps:523\nBiougnach:bf:20\nMamounia Hotel:bf:1005\nBiougnach:bf:600\nAuto Express:ps:125\nAuto Express:bf:6025\nAuto Express:mi:6126\nMarrakech palm:mi:2000\nGolden fish:bf:663\nBiougnach:mi:2003\nGolden fish:mi:1023\nBlue sea:ps:1\nBlue sea:bf:1\nBlue sea:mi:1\nMachanic expo:ps:600\nMamounia Hotel:mi:20\nMamounia Hotel:mi:985\nMinistry of justice:ps:4507\nMinistry of justice:bf:2303\nMinistry of justice:mi:962\nMachanic expo:bf:2500\nMachanic expo:mi:10000\nWhite city:ps:3258\nWhite city:bf:7698\nWhite city:mi:10000\nElectronic universe:ps:600\nElectronic universe:bf:9522\nElectronic universe:mi:4523",
+          "testOut": "Marrakech palm:Blocked\nMamounia Hotel:Blocked\nBiougnach:Hacked\nGolden fish:Hacked\nAuto Express:Hacked\nBlue sea:Blocked\nMachanic expo:Blocked\nMinistry of justice:Blocked\nWhite city:Hacked\nElectronic universe:Hacked",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 <= [[n]] <= 100\n1 <= [[a]] <= 5000",
+      "coverBinaryId": 75773224063663,
+      "stubGenerator": "read n:int\nloop n read line:string(50)\nread a:int\nloop a read line:string(50)\nloop n write Hacked/Blocked",
+      "inputDescription": "Line 1: [[n]], the <<number of companies>>\nNext n Lines: the <<company's name>>  and <<firewall's strengths>> \nLine 2: [[a]], the number of cyber attack attempts\nNext a Lines: the <<company's name>> and <<attack's type>> and <<attack's strengths>>.",
+      "solutionLanguage": "C#",
+      "outputDescription": "<<n>> lines containing the <<name of company>> and <<status of the cyber attack>> in the <<same order>> as the <<input>> . \n\"Company:Hacked\" or \"Company:Blocked\""
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Hackers carry out Advanced Persistent Threat <strong>cyber attacks</strong> against a <strong>number of companies</strong>.<br>Each company has a <strong>firewall</strong> with a certain configuration's level   which gives this firewall a certain <strong>protection's degree</strong>.<br>Hackers execute 3 types of attack in the following order:<br>1 - Port scanning <strong>(ps)</strong>;<br>2 - Brute force <strong>(bf)</strong>;<br>3 - Malware installation  <strong>(mi)</strong>.<br><br><strong>each step depends on the success of the previous step</strong>.<br><br>In addition, you should know that each cyberattack has a certain <strong>level of strengths</strong>.<br><br>The conditions that the cyber attack will be successful or not are:<br>1 - If the firewall's protection strengths is greater than or equal to <strong>7</strong> and cyber attack's strengths of type <strong>port scanning</strong> is strictly less than <strong>10000</strong>, the firewall will be able to detect the port scanning's attack and it will <strong>block it</strong>, otherwise the cyberattack will be successful and the hacker goes to the next step. this type of firewall <strong>blocks</strong> other attacks regardless of their strength.<br>2 - If the firewall's protection strengths is between  <strong>5 and 6</strong> and cyber attack's strengths of type <strong>brute force</strong> is strictly less than <strong>5000</strong>,  the firewall will be able to detect the brute force's attack and it will <strong>block it</strong>, otherwise the cyberattack will be successful and the hacker goes to the next step. <strong>this type of firewall doesn't detect port scanning</strong> and <strong>block</strong> installation malware's attack if the strength of this attack is less than <strong>3000</strong>.<br>3 - If the firewall's protection strengths is strictly less than <strong>5</strong> and cyber attack's strengths of type <strong>Malware installation</strong> is strictly less than <strong>1000</strong>,  the firewall will be able to detect the attempting to send malware and it will <strong>block</strong> it, otherwise the cyberattack will be successful and the hackers have full control of the company's information system. this type of firewall doesn't detect port scanning and <strong>block</strong> brute force's  attack if the strength of this attack is less than <strong>500</strong>.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">Line 1: <var>n</var>, the <strong>number of companies</strong><br>Next n Lines: the <strong>company's name</strong>  and <strong>firewall's strengths</strong> <br>Line 2: <var>a</var>, the number of cyber attack attempts<br>Next a Lines: the <strong>company's name</strong> and <strong>attack's type</strong> and <strong>attack's strengths</strong>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>n</strong> lines containing the <strong>name of company</strong> and <strong>status of the cyber attack</strong> in the <strong>same order</strong> as the <strong>input</strong> . <br>&quot;Company:Hacked&quot; or &quot;Company:Blocked&quot;</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt;= <var>n</var> &lt;= 100<br>1 &lt;= <var>a</var> &lt;= 5000</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">1\nGold star:5\n4\nGold star:ps:1000\nGold star:ps:9001\nGold star:bf:5010\nGold star:mi:3020</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Gold star:Hacked</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 141828848376554,
+  "commentCount": 23,
+  "upVotes": 20,
+  "downVotes": 14,
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1643961937001,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1644349577542,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    },
+    {
+      "status": "REFUSED",
+      "date": 1646942737002,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1788669133960,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}
