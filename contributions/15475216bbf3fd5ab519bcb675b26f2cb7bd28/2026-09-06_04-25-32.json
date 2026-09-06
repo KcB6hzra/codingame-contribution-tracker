@@ -1,0 +1,147 @@
+{
+  "id": 154752,
+  "activeVersion": 3,
+  "score": 0,
+  "votableId": 40402015,
+  "codingamerId": 4229624,
+  "views": 3,
+  "commentableId": 40229244,
+  "title": "Log Sanitizer - Masking Sensit",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Eng.Adnane",
+  "publicHandle": "15475216bbf3fd5ab519bcb675b26f2cb7bd28",
+  "codingamerHandle": "481422d0e087bcce95eecf4bbef2ee834269224",
+  "lastVersion": {
+    "version": 3,
+    "autocloseTime": 1791260076527,
+    "freezeTime": 1789272876527,
+    "data": {
+      "title": "Log Sanitizer - Masking Sensit",
+      "topics": [
+        {
+          "id": 73,
+          "handle": "strings",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Chaînes de caractères",
+            "2": "Strings"
+          },
+          "pageTitle": "Strings: exercises and theory",
+          "puzzleCount": 69,
+          "parentTopicId": 41,
+          "contentDetailsId": 73
+        },
+        {
+          "labelMap": {
+            "2": "regular-expressions"
+          }
+        },
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 49,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "labelMap": {
+            "2": "security"
+          }
+        }
+      ],
+      "solution": "import sys\nimport re\n\nn = int(input())\n\ncard_regex = r\"\\b\\d{4}-\\d{4}-\\d{4}-\\d{4}\\b\"\ntoken_regex = r\"(?<=\\btoken=)[a-zA-Z0-9]+\"\n\nfor _ in range(n):\n    line = input()\n    line = re.sub(card_regex, \"[CARD_REDACTED]\", line)\n    line = re.sub(token_regex, \"[TOKEN_REDACTED]\", line)\n    print(line)",
+      "statement": "As a SecOps engineer, you must ensure that sensitive data never leaks into application logs.\n\nInspect a stream of server log lines and sanitize any occurrence of the following patterns:\n\n1. <<Credit Card Numbers:>> Four groups of 4 decimal digits separated by hyphens (`XXXX-XXXX-XXXX-XXXX`). Replace the entire card number with `[CARD_REDACTED]`.\n2. <<API Secret Tokens:>> Any parameter matching the case-sensitive prefix `token=` followed immediately by one or more alphanumeric characters (`token=[a-zA-Z0-9]+`). Replace only the secret value with `[TOKEN_REDACTED]`, resulting in `token=[TOKEN_REDACTED]`.\n\nAll other log characters must remain untouched.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "2\nPayment processed with card 1234-5678-9012-3456 successfully.\nGET /api/v1/user?token=abC123XyZ HTTP/1.1",
+          "testOut": "Payment processed with card [CARD_REDACTED] successfully.\nGET /api/v1/user?token=[TOKEN_REDACTED] HTTP/1.1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "2\nUser charged 50 USD on 9876-5432-1098-7654.\nPOST /auth/refresh?token=SecretSessionToken992",
+          "testOut": "User charged 50 USD on [CARD_REDACTED].\nPOST /auth/refresh?token=[TOKEN_REDACTED]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "2\nTransfer from 1111-2222-3333-4444 to 9999-8888-7777-6666 confirmed.\ntoken=KeyAlpha and token=KeyBeta both active.",
+          "testOut": "Transfer from [CARD_REDACTED] to [CARD_REDACTED] confirmed.\ntoken=[TOKEN_REDACTED] and token=[TOKEN_REDACTED] both active.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "2\nPairing cards 4321-8765-2109-6543 and 1029-3847-5610-2938 done.\nFailed sync between token=Alpha10 and token=Beta20",
+          "testOut": "Pairing cards [CARD_REDACTED] and [CARD_REDACTED] done.\nFailed sync between token=[TOKEN_REDACTED] and token=[TOKEN_REDACTED]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "3\nServer running on port 8080 with 0 errors.\nInvalid format: 123-4567-8901-2345 should not match.\nParameter notatoken=abc12345 should remain untouched.",
+          "testOut": "Server running on port 8080 with 0 errors.\nInvalid format: 123-4567-8901-2345 should not match.\nParameter notatoken=abc12345 should remain untouched.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "3\nSystem startup clean.\nPrefix match check: mytoken=123456 must not match.\nShort block: 1111-222-3333-4444 stays untouched.",
+          "testOut": "System startup clean.\nPrefix match check: mytoken=123456 must not match.\nShort block: 1111-222-3333-4444 stays untouched.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "2\nTrace: id=42;token=AdminPass99;card=0000-0000-0000-0000;status=done\nEnd of stream with token=FinalToken1.",
+          "testOut": "Trace: id=42;token=[TOKEN_REDACTED];card=[CARD_REDACTED];status=done\nEnd of stream with token=[TOKEN_REDACTED].",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "2\nPayload: card=5555-6666-7777-8888&token=LiveKey987&mode=live\nTrailing semicolon: token=EndKey321;",
+          "testOut": "Payload: card=[CARD_REDACTED]&token=[TOKEN_REDACTED]&mode=live\nTrailing semicolon: token=[TOKEN_REDACTED];",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "1 ≤ [[N]] ≤ 50\nEach line contains between 1 and 250 printable ASCII characters.\nTokens are bounded by non-alphanumeric characters or the end of the line.",
+      "coverBinaryId": 167897549900297,
+      "stubGenerator": "read N:int\nloop N read line:string(250)\nwrite line:string",
+      "inputDescription": "<<Line 1:>> An integer [[N]] for the number of log lines.\n<<Next [[N]] lines:>> A string representing a raw log entry.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[N]] lines:>> The sanitized log entries with all sensitive card numbers and tokens redacted."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">As a SecOps engineer, you must ensure that sensitive data never leaks into application logs.<br><br>Inspect a stream of server log lines and sanitize any occurrence of the following patterns:<br><br>1. <strong>Credit Card Numbers:</strong> Four groups of 4 decimal digits separated by hyphens (<pre style=\"font-family: monospace\">XXXX-XXXX-XXXX-XXXX</pre>). Replace the entire card number with <pre style=\"font-family: monospace\">[CARD_REDACTED]</pre>.<br>2. <strong>API Secret Tokens:</strong> Any parameter matching the case-sensitive prefix <pre style=\"font-family: monospace\">token=</pre> followed immediately by one or more alphanumeric characters (<pre style=\"font-family: monospace\">token=[a-zA-Z0-9]+</pre>). Replace only the secret value with <pre style=\"font-family: monospace\">[TOKEN_REDACTED]</pre>, resulting in <pre style=\"font-family: monospace\">token=[TOKEN_REDACTED]</pre>.<br><br>All other log characters must remain untouched.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var> for the number of log lines.<br><strong>Next <var>N</var> lines:</strong> A string representing a raw log entry.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>N</var> lines:</strong> The sanitized log entries with all sensitive card numbers and tokens redacted.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 50<br>Each line contains between 1 and 250 printable ASCII characters.<br>Tokens are bounded by non-alphanumeric characters or the end of the line.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\nPayment processed with card 1234-5678-9012-3456 successfully.\nGET /api/v1/user?token=abC123XyZ HTTP/1.1</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Payment processed with card [CARD_REDACTED] successfully.\nGET /api/v1/user?token=[TOKEN_REDACTED] HTTP/1.1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 141828848376554,
+  "commentCount": 0,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}
