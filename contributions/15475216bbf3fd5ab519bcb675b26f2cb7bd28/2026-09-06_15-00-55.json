@@ -1,0 +1,141 @@
+{
+  "id": 154752,
+  "activeVersion": 8,
+  "score": 0,
+  "votableId": 40402015,
+  "codingamerId": 4229624,
+  "views": 33,
+  "commentableId": 40229244,
+  "title": "Log Sanitizer",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Eng.Adnane",
+  "publicHandle": "15475216bbf3fd5ab519bcb675b26f2cb7bd28",
+  "codingamerHandle": "481422d0e087bcce95eecf4bbef2ee834269224",
+  "lastVersion": {
+    "version": 8,
+    "autocloseTime": 1791260076527,
+    "data": {
+      "title": "Log Sanitizer",
+      "topics": [
+        {
+          "id": 73,
+          "handle": "strings",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Chaînes de caractères",
+            "2": "Strings"
+          },
+          "pageTitle": "Strings: exercises and theory",
+          "puzzleCount": 69,
+          "parentTopicId": 41,
+          "contentDetailsId": 73
+        },
+        {
+          "labelMap": {
+            "2": "regular-expressions"
+          }
+        },
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 49,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        }
+      ],
+      "solution": "import sys\nimport re\n\ndef sanitize(s):\n    # Règle 1 : Chevauchement de cartes (5 blocs ou plus) -> On ignore\n    p_5_groups = r\"(?P<five_plus>(?<![a-zA-Z0-9-])(?:\\d{4}-){4,}\\d{4}(?![a-zA-Z0-9-]))\"\n    \n    # Règle 2 : Chevauchement de tokens consécutifs -> On ignore\n    p_multi = r\"(?P<multi_token>(?<![a-zA-Z0-9])(?:token=){2,}[a-zA-Z0-9]*)\"\n    \n    # Règle 3 : API Token valide -> On masque la valeur\n    # L'underscore (_) valide bien le lookbehind car il n'est pas alphanumérique (exigence 5DN1L)\n    p_api = r\"(?P<api_token>(?<![a-zA-Z0-9])token=)[a-zA-Z0-9]+(?![a-zA-Z0-9])\"\n    \n    # Règle 4 : Carte de crédit valide -> On masque tout\n    p_card = r\"(?P<card>(?<![a-zA-Z0-9-])(?:\\d{4}-){3}\\d{4}(?![a-zA-Z0-9-]))\"\n    \n    # Compilation en une passe de gauche à droite\n    pattern = re.compile(f\"{p_5_groups}|{p_multi}|{p_api}|{p_card}\")\n    \n    def repl(m):\n        if m.group(\"five_plus\"):\n            return m.group(\"five_plus\")  # Retourné intact\n        elif m.group(\"multi_token\"):\n            return m.group(\"multi_token\")  # Retourné intact\n        elif m.group(\"api_token\"):\n            return m.group(\"api_token\") + \"[TOKEN_REDACTED]\" # token=1234 -> token=[TOKEN_REDACTED]\n        elif m.group(\"card\"):\n            return \"[CARD_REDACTED]\"\n            \n    return pattern.sub(repl, s)\n\nn = int(input())\nfor _ in range(n):\n    print(sanitize(input()))",
+      "statement": "<<Tokens>> are bounded by non-alphanumeric characters or the beginning or end of the line.\n\nInspect a stream of server log lines and sanitize all occurrences of the following two patterns, subject to the overlapping rule:\n\n1. <<Credit card numbers:>> Exactly four consecutive tokens, each consisting of exactly 4 decimal digits and joined by {{-}}, form a credit card number and should be replaced with {{[CARD_REDACTED]}}.\n\n2. <<API token:>> A token {{token}}, immediately followed by {{=}} and another token (the <<value>>) consisting of one or more alphanumeric characters, forms an API token. Redact the value token only, replacing it with {{[TOKEN_REDACTED]}}.\n\n<<Overlapping rule:>>\nOverlapping occurrences of a single pattern should not be considered to fit the pattern and must remain unchanged. For example:\n• Five or more consecutive 4-digit tokens joined by {{-}}.\n• {{token=}} appearing consecutively two or more times.\n\nIf {{token=}} is immediately followed by a credit card number, sanitize the API token value first.",
+      "testCases": [
+        {
+          "title": "Test 1: Standard cases and end of line",
+          "isTest": true,
+          "testIn": "2\nPayment: card 1234-5678-9012-3456 verified.\nGET /auth?token=abC123XyZ",
+          "testOut": "Payment: card [CARD_REDACTED] verified.\nGET /auth?token=[TOKEN_REDACTED]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "2\nUser paid with 9876-5432-1098-7654 ok.\nPOST /refresh?token=SecretSession99",
+          "testOut": "User paid with [CARD_REDACTED] ok.\nPOST /refresh?token=[TOKEN_REDACTED]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2: Start of line and non-alphanumeric boundaries",
+          "isTest": true,
+          "testIn": "2\n1111-2222-3333-4444 is expired.\nphp?my_token=abc&token=valid123_extra",
+          "testOut": "[CARD_REDACTED] is expired.\nphp?my_token=[TOKEN_REDACTED]&token=[TOKEN_REDACTED]_extra",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "2\n0000-1111-2222-3333 is blocked.\nurl/endpoint;token=Key999!done",
+          "testOut": "[CARD_REDACTED] is blocked.\nurl/endpoint;token=[TOKEN_REDACTED]!done",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3: Overlapping and false positives",
+          "isTest": true,
+          "testIn": "4\nChain: 1234-2234-3234-4234-5234\nDouble token: token=token=123\nShort card: 1234-5678-9012\nPreceded by letters: A1234-5678-9012-3456",
+          "testOut": "Chain: 1234-2234-3234-4234-5234\nDouble token: token=token=123\nShort card: 1234-5678-9012\nPreceded by letters: A1234-5678-9012-3456",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "4\nDouble hyphen: 1234--5678--9012--3456\nFollowed by digits: 1234-5678-9012-34567\nCase sensitivity: Token=abc1234\nTrailing nothing: end of line token=",
+          "testOut": "Double hyphen: 1234--5678--9012--3456\nFollowed by digits: 1234-5678-9012-34567\nCase sensitivity: Token=abc1234\nTrailing nothing: end of line token=",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4: Case sensitivity, Punctuation, and Priority",
+          "isTest": true,
+          "testIn": "3\nColon instead of equal: token:secret123\ntoken= followed by card: token=1234-5678-9012-3456\nPunctuation bounds: [token=SecretApiKey]; card: 4321-8765-2109-6543!",
+          "testOut": "Colon instead of equal: token:secret123\ntoken= followed by card: token=[TOKEN_REDACTED]-5678-9012-3456\nPunctuation bounds: [token=[TOKEN_REDACTED]]; card: [CARD_REDACTED]!",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "3\nWrong separator check: token-secret456\ntoken= attached to card: ?token=9999-8888-7777-6666&end=true\nMultiple symbols: <token=AdminPass99> and {5555-6666-7777-8888}",
+          "testOut": "Wrong separator check: token-secret456\ntoken= attached to card: ?token=[TOKEN_REDACTED]-8888-7777-6666&end=true\nMultiple symbols: <token=[TOKEN_REDACTED]> and {[CARD_REDACTED]}",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "1 ≤ [[N]] ≤ 10\n[[line]] contains between 1 and 100 printable ASCII characters.",
+      "coverBinaryId": 167897549900297,
+      "stubGenerator": "read N:int\nloop N read line:string(100)\nwrite line:string",
+      "inputDescription": "<<Line 1:>> An integer [[N]] for the number of log lines.\n<<Next [[N]] lines:>> A string [[line]] representing a raw log entry.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[N]] lines:>> The sanitized log entries."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\"><strong>Tokens</strong> are bounded by non-alphanumeric characters or the beginning or end of the line.<br><br>Inspect a stream of server log lines and sanitize all occurrences of the following two patterns, subject to the overlapping rule:<br><br>1. <strong>Credit card numbers:</strong> Exactly four consecutive tokens, each consisting of exactly 4 decimal digits and joined by <const>-</const>, form a credit card number and should be replaced with <const>[CARD_REDACTED]</const>.<br><br>2. <strong>API token:</strong> A token <const>token</const>, immediately followed by <const>=</const> and another token (the <strong>value</strong>) consisting of one or more alphanumeric characters, forms an API token. Redact the value token only, replacing it with <const>[TOKEN_REDACTED]</const>.<br><br><strong>Overlapping rule:</strong><br>Overlapping occurrences of a single pattern should not be considered to fit the pattern and must remain unchanged. For example:<br>&bull; Five or more consecutive 4-digit tokens joined by <const>-</const>.<br>&bull; <const>token=</const> appearing consecutively two or more times.<br><br>If <const>token=</const> is immediately followed by a credit card number, sanitize the API token value first.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var> for the number of log lines.<br><strong>Next <var>N</var> lines:</strong> A string <var>line</var> representing a raw log entry.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>N</var> lines:</strong> The sanitized log entries.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 10<br><var>line</var> contains between 1 and 100 printable ASCII characters.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">2\nPayment: card 1234-5678-9012-3456 verified.\nGET /auth?token=abC123XyZ</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Payment: card [CARD_REDACTED] verified.\nGET /auth?token=[TOKEN_REDACTED]</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 141828848376554,
+  "commentCount": 5,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
