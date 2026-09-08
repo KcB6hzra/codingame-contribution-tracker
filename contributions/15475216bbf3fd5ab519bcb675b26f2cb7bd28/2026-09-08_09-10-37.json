@@ -1,0 +1,195 @@
+{
+  "id": 154752,
+  "activeVersion": 12,
+  "score": 0,
+  "votableId": 40402015,
+  "codingamerId": 4229624,
+  "views": 60,
+  "commentableId": 40229244,
+  "title": "Log Sanitizer",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Eng.Adnane",
+  "publicHandle": "15475216bbf3fd5ab519bcb675b26f2cb7bd28",
+  "codingamerHandle": "481422d0e087bcce95eecf4bbef2ee834269224",
+  "lastVersion": {
+    "version": 12,
+    "autocloseTime": 1791260076527,
+    "data": {
+      "title": "Log Sanitizer",
+      "topics": [
+        {
+          "id": 73,
+          "handle": "strings",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Chaînes de caractères",
+            "2": "Strings"
+          },
+          "pageTitle": "Strings: exercises and theory",
+          "puzzleCount": 69,
+          "parentTopicId": 41,
+          "contentDetailsId": 73
+        },
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 49,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "id": 98,
+          "handle": "regular-expressions",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Regular expressions",
+            "2": "Regular expressions"
+          },
+          "puzzleCount": 12,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import sys\nimport re\n\ndef sanitize(s):\n    # Removed the hyphen from the negative lookarounds\n    p_5_groups = r\"(?P<five_plus>(?<![a-zA-Z0-9])(?:\\d{4}-){4,}\\d{4}(?![a-zA-Z0-9]))\"\n    \n    p_multi = r\"(?P<multi_token>(?<![a-zA-Z0-9])(?:token=){2,}[a-zA-Z0-9]*)\"\n    \n    p_api = r\"(?P<api_token>(?<![a-zA-Z0-9])token=)[a-zA-Z0-9]+(?![a-zA-Z0-9])\"\n    \n    # Removed the hyphen from the negative lookarounds\n    p_card = r\"(?P<card>(?<![a-zA-Z0-9])(?:\\d{4}-){3}\\d{4}(?![a-zA-Z0-9]))\"\n    \n    pattern = re.compile(f\"{p_5_groups}|{p_multi}|{p_api}|{p_card}\")\n    \n    def repl(m):\n        if m.group(\"five_plus\"):\n            return m.group(\"five_plus\") \n        elif m.group(\"multi_token\"):\n            return m.group(\"multi_token\") \n        elif m.group(\"api_token\"):\n            return m.group(\"api_token\") + \"[TOKEN_REDACTED]\"\n        elif m.group(\"card\"):\n            return \"[CARD_REDACTED]\"\n            \n    return pattern.sub(repl, s)\n\nn = int(input())\nfor _ in range(n):\n    print(sanitize(input()))",
+      "statement": "As a SecOps engineer, you must ensure that sensitive data never leaks into application logs.\n\nFor the purposes of this task, <<tokens>> are defined as being bounded by non-alphanumeric characters or the beginning or end of the line.\n\nInspect a stream of server log lines and sanitize all occurrences of the following two patterns, subject to the overlapping rule:\n\n1. <<Credit card numbers>>\nExactly four consecutive tokens, each consisting of exactly 4 digits and joined by {{-}}, form a credit card number and should be replaced with {{[CARD_REDACTED]}}.\n\n2. <<API token>>\nA token {{token}} (case-sensitive), immediately followed by {{=}} and another token (the <<value>>) consisting of one or more alphanumeric characters, forms an API token. Redact the value token only, replacing it with {{[TOKEN_REDACTED]}}.\n\n<<Overlapping rule>>\nOverlapping occurrences of a single pattern should not be considered to fit the pattern and should remain unchanged. For example, this applies to:\n• Eight consecutive tokens, each consisting of exactly 4 digits and joined by {{-}}.\n• {{token=}} appears consecutively two or more times.\n\nIf {{token=}} is immediately followed by a credit card number, the API-token match takes precedence over the credit-card match, so redact the first 4-digit token as an API-token value only.\n\nAll other log characters must remain untouched.",
+      "testCases": [
+        {
+          "title": "Test 1: Simple examples",
+          "isTest": true,
+          "testIn": "4\n[SYSTEM] Server running on port 8080 with 0 errors.\n[TRANSFER] Moved funds from 8291-3849-1029-4820 to 5731-4921-5829-1039 confirmed.\n192.168.1.1 - GET /auth?token=abC123XyZ HTTP/1.1\n2023-10-01 12:00:00 INFO: Session initiated, token=validToken123 login success",
+          "testOut": "[SYSTEM] Server running on port 8080 with 0 errors.\n[TRANSFER] Moved funds from [CARD_REDACTED] to [CARD_REDACTED] confirmed.\n192.168.1.1 - GET /auth?token=[TOKEN_REDACTED] HTTP/1.1\n2023-10-01 12:00:00 INFO: Session initiated, token=[TOKEN_REDACTED] login success",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "4\n[INIT] September 7, 2026: system startup clean.\n[SYNC] Pairing devices linked to 1029-3847-5610-2938 and 4756-1029-3847-5610 done.\n10.0.0.5 - POST /refresh?token=SecretSession99 HTTP/2.0\n[INFO] External API call with token=MySecret777 executed successfully",
+          "testOut": "[INIT] September 7, 2026: system startup clean.\n[SYNC] Pairing devices linked to [CARD_REDACTED] and [CARD_REDACTED] done.\n10.0.0.5 - POST /refresh?token=[TOKEN_REDACTED] HTTP/2.0\n[INFO] External API call with token=[TOKEN_REDACTED] executed successfully",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2: Start and end of line",
+          "isTest": true,
+          "testIn": "2\n1111-2222-3333-4444 is expired.\n[PAYMENT] Successfully processed transaction with card 4928-1029-3847-5610",
+          "testOut": "[CARD_REDACTED] is expired.\n[PAYMENT] Successfully processed transaction with card [CARD_REDACTED]",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "2\n0000-1111-2222-3333 is blocked.\n[BILLING] User 8891 charged 50 USD on 3847-5610-2938-4756",
+          "testOut": "[CARD_REDACTED] is blocked.\n[BILLING] User 8891 charged 50 USD on [CARD_REDACTED]",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3: Non-alphanumeric boundaries",
+          "isTest": true,
+          "testIn": "4\nphp?my_token=abc&token=valid123_extra\nERROR Negative balance on -8291-3849-1029-4820\nTRACE Range overflow on 8291-3849-1029-4820-\nTRACE: req_id=42;card=7482-1928-3746-5019;token=AdminPass99;",
+          "testOut": "php?my_token=[TOKEN_REDACTED]&token=[TOKEN_REDACTED]_extra\nERROR Negative balance on -[CARD_REDACTED]\nTRACE Range overflow on [CARD_REDACTED]-\nTRACE: req_id=42;card=[CARD_REDACTED];token=[TOKEN_REDACTED];",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "4\nurl/endpoint;token=Key999!done\nERROR Reverting state to -4756-1029-3847-5610\nTRACE Trailing dash in 4756-1029-3847-5610-\nDEBUG Payload: mode=live;cnum=2938-4756-1029-3847;token=LiveKey987;",
+          "testOut": "url/endpoint;token=[TOKEN_REDACTED]!done\nERROR Reverting state to -[CARD_REDACTED]\nTRACE Trailing dash in [CARD_REDACTED]-\nDEBUG Payload: mode=live;cnum=[CARD_REDACTED];token=[TOKEN_REDACTED];",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4: Non-matching - credit card numbers",
+          "isTest": true,
+          "testIn": "7\nERROR 404: Resource /card/4921-5829-1039 not found\nINFO Session UUID A8291-3849-1029-4820 started\nFAIL Parsing error at string 8291--3849--1029--4820\nTRACE Invalid checksum for entry 8291-3849-1029-48209\nDEBUG Account 998291-3849-1029-4820 locked\nWARN Receipt 8291-3849-1029-4820XYZ printed\n[ERROR] Record 8123-4567-901-2345 does not match database schema.",
+          "testOut": "ERROR 404: Resource /card/4921-5829-1039 not found\nINFO Session UUID A8291-3849-1029-4820 started\nFAIL Parsing error at string 8291--3849--1029--4820\nTRACE Invalid checksum for entry 8291-3849-1029-48209\nDEBUG Account 998291-3849-1029-4820 locked\nWARN Receipt 8291-3849-1029-4820XYZ printed\n[ERROR] Record 8123-4567-901-2345 does not match database schema.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "7\nERROR 400: User ID 5610-2938-4756 invalid\nINFO Key mismatch X4756-1029-3847-5610 detected\nFAIL Bad delimiter in 3847--5610--2938--4756\nTRACE Check length of 1029-3847-5610-29385\nDEBUG Transaction 884756-1029-3847-5610 rejected\nWARN Ticket number 4756-1029-3847-5610ABC\n[WARN] Result: query 1111-222-3333-4444 returned 0 rows.",
+          "testOut": "ERROR 400: User ID 5610-2938-4756 invalid\nINFO Key mismatch X4756-1029-3847-5610 detected\nFAIL Bad delimiter in 3847--5610--2938--4756\nTRACE Check length of 1029-3847-5610-29385\nDEBUG Transaction 884756-1029-3847-5610 rejected\nWARN Ticket number 4756-1029-3847-5610ABC\n[WARN] Result: query 1111-222-3333-4444 returned 0 rows.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5: Non-matching - API tokens",
+          "isTest": true,
+          "testIn": "4\nGET /api/v1/user?Token=xyz987\nINFO Generating backup for token_99XqZ\nWARN Malformed request missing parameter token=\nDEBUG: Incoming parameter notatoken=abc12345 mapped to null.",
+          "testOut": "GET /api/v1/user?Token=xyz987\nINFO Generating backup for token_99XqZ\nWARN Malformed request missing parameter token=\nDEBUG: Incoming parameter notatoken=abc12345 mapped to null.",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "4\nPOST /login payload: Token=secure12\nINFO Deprecated field token_OldVal found\nWARN Dropped connection due to empty token=\nINFO: Event logged with identifier mytoken=123456.",
+          "testOut": "POST /login payload: Token=secure12\nINFO Deprecated field token_OldVal found\nWARN Dropped connection due to empty token=\nINFO: Event logged with identifier mytoken=123456.",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6: Overlapping",
+          "isTest": true,
+          "testIn": "3\n[WARN] Invalid format in payload: 1492-3850-9281-4029-5731\nFATAL System dump: 1829-3847-5610-2938-4756-1029-3847-5610\nDEBUG: Retry auth string ?token=token=892abc",
+          "testOut": "[WARN] Invalid format in payload: 1492-3850-9281-4029-5731\nFATAL System dump: 1829-3847-5610-2938-4756-1029-3847-5610\nDEBUG: Retry auth string ?token=token=892abc",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "3\n[INFO] Chain sync failed at block 3847-5610-2938-4756-1029\nFATAL Memory leak 5610-2938-4756-1029-3847-5610-2938-4756\nDEBUG: Parsing query params: &token=token=admin",
+          "testOut": "[INFO] Chain sync failed at block 3847-5610-2938-4756-1029\nFATAL Memory leak 5610-2938-4756-1029-3847-5610-2938-4756\nDEBUG: Parsing query params: &token=token=admin",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 7: Overlapping with priority",
+          "isTest": true,
+          "testIn": "1\nPOST /checkout?token=8291-3849-1029-4820",
+          "testOut": "POST /checkout?token=[TOKEN_REDACTED]-3849-1029-4820",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "1\nGET /payment?token=4756-1029-3847-5610",
+          "testOut": "GET /payment?token=[TOKEN_REDACTED]-1029-3847-5610",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "1 ≤ [[N]] ≤ 10\n[[line]] contains between 1 and 100 printable ASCII characters.",
+      "coverBinaryId": 167897549900297,
+      "stubGenerator": "read N:int\nloop N read line:string(100)\nwrite line:string",
+      "inputDescription": "<<Line 1:>> An integer [[N]] for the number of log lines.\n<<Next [[N]] lines:>> A string [[line]] representing a raw log entry.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<[[N]] lines:>> The sanitized log entries."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">As a SecOps engineer, you must ensure that sensitive data never leaks into application logs.<br><br>For the purposes of this task, <strong>tokens</strong> are defined as being bounded by non-alphanumeric characters or the beginning or end of the line.<br><br>Inspect a stream of server log lines and sanitize all occurrences of the following two patterns, subject to the overlapping rule:<br><br>1. <strong>Credit card numbers</strong><br>Exactly four consecutive tokens, each consisting of exactly 4 digits and joined by <const>-</const>, form a credit card number and should be replaced with <const>[CARD_REDACTED]</const>.<br><br>2. <strong>API token</strong><br>A token <const>token</const> (case-sensitive), immediately followed by <const>=</const> and another token (the <strong>value</strong>) consisting of one or more alphanumeric characters, forms an API token. Redact the value token only, replacing it with <const>[TOKEN_REDACTED]</const>.<br><br><strong>Overlapping rule</strong><br>Overlapping occurrences of a single pattern should not be considered to fit the pattern and should remain unchanged. For example, this applies to:<br>&bull; Eight consecutive tokens, each consisting of exactly 4 digits and joined by <const>-</const>.<br>&bull; <const>token=</const> appears consecutively two or more times.<br><br>If <const>token=</const> is immediately followed by a credit card number, the API-token match takes precedence over the credit-card match, so redact the first 4-digit token as an API-token value only.<br><br>All other log characters must remain untouched.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var> for the number of log lines.<br><strong>Next <var>N</var> lines:</strong> A string <var>line</var> representing a raw log entry.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>N</var> lines:</strong> The sanitized log entries.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 10<br><var>line</var> contains between 1 and 100 printable ASCII characters.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4\n[SYSTEM] Server running on port 8080 with 0 errors.\n[TRANSFER] Moved funds from 8291-3849-1029-4820 to 5731-4921-5829-1039 confirmed.\n192.168.1.1 - GET /auth?token=abC123XyZ HTTP/1.1\n2023-10-01 12:00:00 INFO: Session initiated, token=validToken123 login success</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">[SYSTEM] Server running on port 8080 with 0 errors.\n[TRANSFER] Moved funds from [CARD_REDACTED] to [CARD_REDACTED] confirmed.\n192.168.1.1 - GET /auth?token=[TOKEN_REDACTED] HTTP/1.1\n2023-10-01 12:00:00 INFO: Session initiated, token=[TOKEN_REDACTED] login success</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 141828848376554,
+  "commentCount": 7,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
