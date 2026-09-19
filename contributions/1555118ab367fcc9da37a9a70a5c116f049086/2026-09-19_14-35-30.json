@@ -1,0 +1,142 @@
+{
+  "id": 155511,
+  "activeVersion": 1,
+  "score": 0,
+  "votableId": 40504764,
+  "codingamerId": 7439703,
+  "views": 4,
+  "commentableId": 40331565,
+  "title": "What's My Set?",
+  "status": "PENDING",
+  "type": "CLASHOFCODE",
+  "nickname": "AlexSyntax",
+  "publicHandle": "1555118ab367fcc9da37a9a70a5c116f049086",
+  "codingamerHandle": "060a6f641092b7a7b869d8dc5ab4ed8c3079347",
+  "lastVersion": {
+    "version": 1,
+    "autocloseTime": 1792420204086,
+    "data": {
+      "title": "What's My Set?",
+      "topics": [],
+      "fastest": true,
+      "reverse": false,
+      "shortest": false,
+      "solution": "import sys\nimport math\nimport re\n\ndef get_smallest_set(s: str) -> str:\n    s = s.strip()\n    \n    # 1. Detect Complex Numbers\n    # Uses a negative lookbehind regex to find 'i' ONLY if it is not preceded by 'p' (ignores 'pi')\n    if re.search(r'(?<!p)i', s):\n        return 'C'\n        \n    # Flag to keep track of whether the original string contains irrational symbols\n    has_irrational_text = 'sqrt' in s or 'pi' in s or 'e' in s\n    \n    try:\n        # 2. Prepare the string for floating-point evaluation\n        # Replace mathematical constants and functions with their math module equivalents\n        calc_str = s.replace('pi', 'math.pi').replace('e', 'math.e')\n        calc_str = calc_str.replace('sqrt', 'math.sqrt')\n        \n        # Safely evaluate the expression as a real float\n        context = {\"math\": math, \"__builtins__\": None}\n        val = float(eval(calc_str, context, {}))\n        \n        # 3. Check for Integers (N or Z)\n        # Uses math.isclose to handle float precision issues (e.g., -pi/pi resulting in -1.00000000004)\n        if math.isclose(val, round(val), abs_tol=1e-9):\n            int_val = round(val)\n            return 'N' if int_val >= 0 else 'Z'\n            \n        # 4. If it's not a perfect integer but contains unsimplified irrationals (e.g., sqrt(2), pi)\n        if has_irrational_text:\n            return 'R'\n            \n        # 5. Handle Fractions and Decimals (Q or D)\n        if '/' in s:\n            from fractions import Fraction\n            try:\n                # Convert the evaluated float into an exact fraction\n                frac = Fraction(val).limit_denominator(1000)\n                denom = frac.denominator\n                \n                # A terminating decimal (D) has a denominator with only 2 and 5 as prime factors\n                while denom % 2 == 0: denom //= 2\n                while denom % 5 == 0: denom //= 2\n                \n                return 'D' if denom == 1 else 'Q'\n            except Exception:\n                return 'Q'\n                \n        # If the input explicitly has a dot and is a fractional float (e.g., 2.75)\n        if '.' in s:\n            return 'D'\n            \n    except Exception:\n        # Fallback mechanism using basic string parsing in case eval fails\n        if has_irrational_text: return 'R'\n        if '/' in s: return 'Q'\n        if '.' in s: return 'D'\n\n    # Default fallback to integers based on the sign\n    return 'N' if not s.startswith('-') else 'Z'\n\n# Read from standard input (CodinGame IDE setup)\ns = input().strip()\n\n# Print the final result to standard output\nprint(get_smallest_set(s))",
+      "statement": "Given a mathematical expression representing a number, find the smallest number set among <<N>>, <<Z>>, <<D>>, <<Q>>, <<R>>, and <<C>> that contains its simplified value.\n\nThe sets are defined as:\n- <<N>>: Natural numbers (0, 1, 2...)\n- <<Z>>: Integers (...-2, -1, 0, 1, 2...)\n- <<D>>: Decimals (finite number of digits after the decimal point, e.g., 2.75)\n- <<Q>>: Rational numbers (fractions of integers, e.g., 1/3)\n- <<R>>: Real numbers (all continuous numbers, including irrationals like pi or e)\n- <<C>>: Complex numbers (numbers with an imaginary part using i, e.g., 1+2i)\n\nNote: Expressions must be fully simplified first (e.g., 1.0/1 simplifies to 1 which belongs to <<N>>, and -pi/pi simplifies to -1 which belongs to <<Z>>).",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "5",
+          "testOut": "N",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "1.0/1",
+          "testOut": "N",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "-3",
+          "testOut": "Z",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "-pi/pi",
+          "testOut": "Z",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "2.75",
+          "testOut": "D",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "-10.5",
+          "testOut": "D",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "1/3",
+          "testOut": "Q",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "-4/7",
+          "testOut": "Q",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 5",
+          "isTest": true,
+          "testIn": "5+e",
+          "testOut": "R",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "pi",
+          "testOut": "R",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 6",
+          "isTest": true,
+          "testIn": "1+2i",
+          "testOut": "C",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "-5i",
+          "testOut": "C",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "constraints": "[[S]] contains up to 6 characters.\n[[S]] contains no spaces.",
+      "stubGenerator": "read S:string(20)\nwrite answer\n",
+      "inputDescription": "<<Line 1:>> A string [[S]] representing the mathematical expression to evaluate.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "<<Line 1:>> A single capital letter (N, Z, D, Q, R, or C) representing the smallest set containing the simplified value of [[S]]."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Given a mathematical expression representing a number, find the smallest number set among <strong>N</strong>, <strong>Z</strong>, <strong>D</strong>, <strong>Q</strong>, <strong>R</strong>, and <strong>C</strong> that contains its simplified value.<br><br>The sets are defined as:<br>- <strong>N</strong>: Natural numbers (0, 1, 2...)<br>- <strong>Z</strong>: Integers (...-2, -1, 0, 1, 2...)<br>- <strong>D</strong>: Decimals (finite number of digits after the decimal point, e.g., 2.75)<br>- <strong>Q</strong>: Rational numbers (fractions of integers, e.g., 1/3)<br>- <strong>R</strong>: Real numbers (all continuous numbers, including irrationals like pi or e)<br>- <strong>C</strong>: Complex numbers (numbers with an imaginary part using i, e.g., 1+2i)<br><br>Note: Expressions must be fully simplified first (e.g., 1.0/1 simplifies to 1 which belongs to <strong>N</strong>, and -pi/pi simplifies to -1 which belongs to <strong>Z</strong>).</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> A string <var>S</var> representing the mathematical expression to evaluate.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> A single capital letter (N, Z, D, Q, R, or C) representing the smallest set containing the simplified value of <var>S</var>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><var>S</var> contains up to 6 characters.<br><var>S</var> contains no spaces.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">N</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 165563107035575,
+  "commentCount": 0,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
