@@ -1,0 +1,110 @@
+{
+  "id": 155775,
+  "activeVersion": 1,
+  "score": 0,
+  "votableId": 40543628,
+  "codingamerId": 6140169,
+  "views": 1,
+  "commentableId": 40370239,
+  "title": "The Chrono-Router's Dilemma",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Neko_cheater",
+  "publicHandle": "15577540ebee271108b2077ff6c78579144572",
+  "codingamerHandle": "2fc195610cacf07844b9d10fa317d67f9610416",
+  "lastVersion": {
+    "version": 1,
+    "autocloseTime": 1793185008641,
+    "freezeTime": 1791197808641,
+    "data": {
+      "title": "The Chrono-Router's Dilemma",
+      "topics": [],
+      "solution": "import sys\nimport heapq\n\ndef solve():\n    input_data = sys.stdin.read().split()\n    if not input_data:\n        return\n    \n    N = int(input_data[0])\n    M = int(input_data[1])\n    E_max = int(input_data[2])\n    \n    R = []\n    idx = 3\n    for _ in range(N):\n        R.append(int(input_data[idx]))\n        idx += 1\n        \n    adj = [[] for _ in range(N)]\n    for _ in range(M):\n        u = int(input_data[idx])\n        v = int(input_data[idx+1])\n        c = int(input_data[idx+2])\n        dt = int(input_data[idx+3])\n        W = int(input_data[idx+4])\n        idx += 5\n        windows = []\n        for _ in range(W):\n            start = int(input_data[idx])\n            end = int(input_data[idx+1])\n            windows.append((start, end))\n            idx += 2\n        adj[u].append((v, c, dt, windows))\n        \n\n    pq = [(0, 0, E_max)]\n    \n\n    best = [[float('inf')] * (E_max + 1) for _ in range(N)]\n    best[0][E_max] = 0\n    \n    while pq:\n        t, u, e = heapq.heappop(pq)\n        \n\n        if t > best[u][e]:\n            continue\n            \n\n        if u == N - 1:\n            print(t)\n            return\n            \n\n        if e < E_max and R[u] != -1:\n            nt = t + R[u]\n            ne = e + 1\n            if nt < best[u][ne]:\n                best[u][ne] = nt\n                heapq.heappush(pq, (nt, u, ne))\n                \n\n        for v, c, dt, windows in adj[u]:\n            if e >= c:\n\n                best_arr = float('inf')\n                for ws, we in windows:\n                    t_dep = max(t, ws)\n                    if t_dep + dt <= we:\n                        best_arr = min(best_arr, t_dep + dt)\n                \n\n                if best_arr != float('inf'):\n                    ne = e - c\n                    if best_arr < best[v][ne]:\n                        best[v][ne] = best_arr\n                        heapq.heappush(pq, (best_arr, v, ne))\n                        \n    print(\"UNREACHABLE\")\n\nif __name__ == '__main__':\n    solve()",
+      "statement": "You are an AI tasked with routing a critical data packet through a temporally unstable network. The network consists of servers (nodes) and directed temporal links (edges).\n\nBecause the network is collapsing, links are only active during specific, fragmented time windows. Furthermore, traversing links consumes the packet's \"stability energy\". If the packet's energy drops below 0, it is destroyed.\n\nYou can pause at any node to safely wait for a future time window. Additionally, nodes can restore the packet's energy over time, but every node has a different restoration efficiency (time required to restore 1 unit of energy).\n\nStarting at node 0 at time 0 with maximum energy, your objective is to find the earliest possible time the packet can successfully arrive at the destination node N-1.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "3 2 10\n1 1 1\n0 1 2 5 1 0 100\n1 2 2 5 1 0 100",
+          "testOut": "10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "3 2 10\n2 2 2\n0 1 1 3 1 0 50\n1 2 1 4 1 0 50",
+          "testOut": "7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "3 2 2\n1 10 1\n0 1 2 5 1 0 100\n1 2 1 5 1 0 100",
+          "testOut": "20",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "3 2 3\n5 5 1\n0 1 3 10 1 0 100\n1 2 2 10 1 0 100",
+          "testOut": "30",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "4 4 5\n2 3 1 -1\n0 1 3 5 1 0 100\n1 3 4 5 1 20 30\n0 2 1 10 1 0 100\n2 3 1 10 1 0 100",
+          "testOut": "20",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "4 4 10\n10 -1 2 -1\n0 1 8 10 1 0 100\n1 3 3 10 1 50 100\n0 2 2 25 1 0 100\n2 3 2 25 1 0 100",
+          "testOut": "50",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "2 1 10\n-1 -1\n0 1 10 20 1 0 15",
+          "testOut": "UNREACHABLE",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "3 2 5\n-1 -1 -1\n0 1 3 10 1 0 100\n1 2 3 10 1 0 100",
+          "testOut": "UNREACHABLE",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "2 ≤ N ≤ 150\n1 ≤ M ≤ 1000\n1 ≤ E_max ≤ 100\n1 ≤ c ≤ E_max\n1 ≤ dt ≤ 10,000\n1 ≤ R_i ≤ 500 (or -1)\n0 ≤ start_i < end_i ≤ 100,000\n1 ≤ W ≤ 10",
+      "coverBinaryId": 168932226601858,
+      "stubGenerator": "read n:int m:int eMax:int\nloopline n r:int\nloop m read linkData:string(256)\nwrite UNREACHABLE",
+      "inputDescription": "Line 1: 3 space-separated integers: N (number of nodes), M (number of directed links), and E_max (maximum stability energy of the packet).\n\nLine 2: N space-separated integers R_0, R_1, ..., R_{N-1}. R_i represents the time it takes to restore exactly 1 unit of energy at node i. If R_i = -1, energy cannot be restored at this node. (Note: Energy can never exceed E_max).\n\nNext M lines: A link definition starting with 5 integers: u (source node), v (destination node), c (energy cost to traverse), dt (time required to traverse), and W (number of active time windows).\nThis is immediately followed on the same line by W pairs of integers start_i end_i, representing the inclusive time windows [start_i, end_i] during which the link is active.\n\nNote: To traverse a link, the ENTIRE traversal duration [t_departure, t_departure + dt] must fit completely within a SINGLE active time window of that link.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "A single integer representing the earliest time the packet can arrive at node N-1.\nIf it is impossible to reach the destination, output UNREACHABLE."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are an AI tasked with routing a critical data packet through a temporally unstable network. The network consists of servers (nodes) and directed temporal links (edges).<br><br>Because the network is collapsing, links are only active during specific, fragmented time windows. Furthermore, traversing links consumes the packet's &quot;stability energy&quot;. If the packet's energy drops below 0, it is destroyed.<br><br>You can pause at any node to safely wait for a future time window. Additionally, nodes can restore the packet's energy over time, but every node has a different restoration efficiency (time required to restore 1 unit of energy).<br><br>Starting at node 0 at time 0 with maximum energy, your objective is to find the earliest possible time the packet can successfully arrive at the destination node N-1.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">Line 1: 3 space-separated integers: N (number of nodes), M (number of directed links), and E_max (maximum stability energy of the packet).<br><br>Line 2: N space-separated integers R_0, R_1, ..., R_{N-1}. R_i represents the time it takes to restore exactly 1 unit of energy at node i. If R_i = -1, energy cannot be restored at this node. (Note: Energy can never exceed E_max).<br><br>Next M lines: A link definition starting with 5 integers: u (source node), v (destination node), c (energy cost to traverse), dt (time required to traverse), and W (number of active time windows).<br>This is immediately followed on the same line by W pairs of integers start_i end_i, representing the inclusive time windows [start_i, end_i] during which the link is active.<br><br>Note: To traverse a link, the ENTIRE traversal duration [t_departure, t_departure + dt] must fit completely within a SINGLE active time window of that link.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">A single integer representing the earliest time the packet can arrive at node N-1.<br>If it is impossible to reach the destination, output UNREACHABLE.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &le; N &le; 150<br>1 &le; M &le; 1000<br>1 &le; E_max &le; 100<br>1 &le; c &le; E_max<br>1 &le; dt &le; 10,000<br>1 &le; R_i &le; 500 (or -1)<br>0 &le; start_i &lt; end_i &le; 100,000<br>1 &le; W &le; 10</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3 2 10\n1 1 1\n0 1 2 5 1 0 100\n1 2 2 5 1 0 100</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">10</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 125685723132550,
+  "commentCount": 0,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}
