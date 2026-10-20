@@ -1,0 +1,187 @@
+{
+  "id": 157359,
+  "activeVersion": 24,
+  "score": 0,
+  "votableId": 40690685,
+  "codingamerId": 4687360,
+  "views": 13,
+  "commentableId": 40516608,
+  "title": "Meowdoku Solver",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "thomas.schuerger",
+  "publicHandle": "157359db6a537fd1c3ca9efa010791131e89ff",
+  "codingamerHandle": "8f631a6df22c9cd8709f071d9518645f0637864",
+  "lastVersion": {
+    "version": 24,
+    "autocloseTime": 1795113377367,
+    "data": {
+      "title": "Meowdoku Solver",
+      "topics": [
+        {
+          "id": 56,
+          "handle": "backtracking",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Retour sur trace",
+            "2": "Backtracking"
+          },
+          "pageTitle": "Backtracking: exercises and theory",
+          "puzzleCount": 36,
+          "parentTopicId": 41,
+          "contentDetailsId": 80
+        }
+      ],
+      "solution": "#pragma GCC optimize(\"O3,unroll-loops,omit-frame-pointer,inline-functions\")\n#pragma GCC target(\"avx2,bmi,bmi2,lzcnt,popcnt\")\n\n#include <stdio.h>\n#include <stdlib.h>\n#include <stdint.h>\n\n#define MAX_N 26\n\nstatic int n;\nstatic int region[MAX_N][MAX_N];\n\nstatic int positions[MAX_N];\nstatic int solution[MAX_N];\nstatic int solution_count = 0;\n\nstatic void solve(int row,\n                  uint32_t used_columns,\n                  uint32_t used_regions,\n                  int previous_column)\n{\n    if (solution_count >= 2)\n        return;\n\n    if (row == n) {\n        ++solution_count;\n\n        if (solution_count == 1) {\n            for (int r = 0; r < n; ++r)\n                solution[r] = positions[r];\n        }\n\n        return;\n    }\n\n    for (int c = 0; c < n; ++c) {\n        int id = region[row][c];\n\n        uint32_t col_bit = UINT32_C(1) << c;\n        uint32_t reg_bit = UINT32_C(1) << id;\n\n        if (used_columns & col_bit)\n            continue;\n\n        if (used_regions & reg_bit)\n            continue;\n\n        if (row > 0 &&\n            abs(c - previous_column) <= 1)\n            continue;\n\n        positions[row] = c;\n\n        solve(row + 1,\n              used_columns | col_bit,\n              used_regions | reg_bit,\n              c);\n\n        if (solution_count >= 2)\n            return;\n    }\n}\n\nstatic int read_puzzle(void)\n{\n    if (scanf(\"%d\", &n) != 1) {\n        fprintf(stderr, \"Error: Cannot read grid size.\\n\");\n        return 0;\n    }\n\n    if (n < 4 || n > MAX_N) {\n        fprintf(stderr,\n                \"Error: Grid size must be between 4 and %d.\\n\",\n                MAX_N);\n        return 0;\n    }\n\n    uint32_t seen_regions = 0;\n\n    for (int r = 0; r < n; ++r) {\n        for (int c = 0; c < n; ++c) {\n            char ch;\n\n            if (scanf(\" %c\", &ch) != 1) {\n                fprintf(stderr,\n                        \"Error: Cannot read cell (%d, %d).\\n\",\n                        r, c);\n                return 0;\n            }\n\n            if (ch < 'A' || ch >= 'A' + n) {\n                fprintf(stderr,\n                        \"Error: Invalid region '%c' \"\n                        \"at (%d, %d).\\n\",\n                        ch, r, c);\n                return 0;\n            }\n\n            int id = ch - 'A';\n\n            region[r][c] = id;\n            seen_regions |= UINT32_C(1) << id;\n        }\n    }\n\n    uint32_t expected = (UINT32_C(1) << n) - 1;\n\n    if (seen_regions != expected) {\n        fprintf(stderr,\n                \"Error: Puzzle must contain \"\n                \"exactly %d regions (A through %c).\\n\",\n                n, 'A' + n - 1);\n        return 0;\n    }\n\n    return 1;\n}\n\nstatic void print_solution(void)\n{\n    for (int r = 0; r < n; ++r) {\n        for (int c = 0; c < n; ++c) {\n            char ch = (char)('A' + region[r][c]);\n\n            if (solution[r] == c)\n                ch = (char)('a' + region[r][c]);\n\n            putchar(ch);\n\n            if (c + 1 < n)\n                putchar(' ');\n        }\n\n        putchar('\\n');\n    }\n}\n\nint main(void)\n{\n    if (!read_puzzle())\n        return EXIT_FAILURE;\n\n    solve(0, 0, 0, -1);\n\n    if (solution_count == 0) {\n        fprintf(stderr,\n                \"Error: Puzzle has no solution.\\n\");\n        return EXIT_FAILURE;\n    }\n\n    if (solution_count > 1) {\n        fprintf(stderr,\n                \"Error: Puzzle has multiple solutions.\\n\");\n        return EXIT_FAILURE;\n    }\n\n    print_solution();\n\n    return EXIT_SUCCESS;\n}",
+      "statement": "Meowdoku is a cat puzzle played on a square board having [[n]] x [[n]] cells. Each cell is part of one of [[n]] contiguous color regions on the board. Color regions are connected, horizontally and/or vertically.\n\nYou must find the cell positions of [[n]] cats, using the following rules:\n\n1. There is exactly one cat per row.\n2. There is exactly one cat per column.\n3. There is exactly one cat per color region.\n4. The cats do not touch diagonally.\n\nThe minimum board size is 4 x 4, since there is no solution for smaller board sizes.\n\nTo understand Meowdoku better, you can play it online here: {{https://www.meowdoku.org/}}\n\nIn this version of the puzzle, the [[n]] colors are provided as distinct uppercase letters, starting with {{A}}.\n\nGiven an [[n]] x [[n]] Meowdoku board, find the unique solution that allows placing [[n]] cats on [[n]] different cells on the board, using the rules above. Output the board, using the original letters, but using lowercase letters instead of uppercase letters for cells with a cat. In the input and output, the columns of the board are separated by spaces.",
+      "testCases": [
+        {
+          "title": "Board size 4",
+          "isTest": true,
+          "testIn": "4\nC C C B\nD D D B\nA D D D\nA D D D",
+          "testOut": "C c C B\nD D D b\na D D D\nA D d D",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "4\nC B B A\nC D D A\nD D D A\nD D D A",
+          "testOut": "C B b A\nc D D A\nD D D a\nD d D A",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Board size 5",
+          "isTest": true,
+          "testIn": "5\nB D D D C\nB D C C C\nB B B B C\nB B E E A\nB B E E E",
+          "testOut": "B d D D C\nB D C c C\nb B B B C\nB B E E a\nB B e E E",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "5\nA A B B B\nA A A B C\nA A A A C\nD A C C C\nD E E C C",
+          "testOut": "A A B b B\nA a A B C\nA A A A c\nd A C C C\nD E e C C",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Board size 6",
+          "isTest": true,
+          "testIn": "6\nF F D B B B\nF A B B B B\nA A B B B B\nA A E E B B\nA A A B B B\nC C C C C C",
+          "testOut": "F F d B B B\nf A B B B B\nA A B B B b\nA A E e B B\nA a A B B B\nC C C C c C",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "6\nE E E E E D\nE F F D D D\nE F D D D D\nE F D D D C\nA A A D B C\nA A A D B B",
+          "testOut": "e E E E E D\nE F F d D D\nE f D D D D\nE F D D D c\nA A a D B C\nA A A D b B",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Board size 7",
+          "isTest": true,
+          "testIn": "7\nE E F F A A A\nE E E F G A A\nE E E F F F F\nE C F F F B B\nC C B B B B B\nC C B D B B B\nC C C C B B B",
+          "testOut": "E E F F A A a\nE E E F g A A\ne E E F F F F\nE C f F F B B\nC C B B B b B\nC C B d B B B\nC c C C B B B",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "7\nB B B B B F F\nD D B B F F F\nD D G G G E F\nD D G G G F F\nD D G G G G G\nC C C G G G G\nA A G G G G G",
+          "testOut": "B B B B B F f\nD D B b F F F\nD D G G G e F\nD d G G G F F\nD D G G g G G\nC C c G G G G\na A G G G G G",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Board size 8",
+          "isTest": true,
+          "testIn": "8\nG G G B H H H F\nG G G B B H H F\nG G G G B H H H\nG G G G B H C C\nA G G G G G G C\nA A G G G G G G\nA A E D D G G G\nE E E D D D D D",
+          "testOut": "G G G B H h H F\nG G G B B H H f\nG G G G b H H H\nG G G G B H c C\nA G g G G G G C\na A G G G G G G\nA A E d D G G G\nE e E D D D D D",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5",
+          "isTest": false,
+          "testIn": "8\nC C F F F F F H\nC C F F F F F H\nC C F F F A E E\nC C C A A A A A\nC C C C C D D D\nG G C C C D D D\nB B C C D D D D\nB B B D D D D D",
+          "testOut": "C C F F F F F h\nC C F f F F F H\nC C F F F A e E\nC C C A a A A A\nC C c C C D D D\ng G C C C D D D\nB B C C D d D D\nB b B D D D D D",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Board size 9",
+          "isTest": true,
+          "testIn": "9\nD D D D F H H G G\nD D D D F D H G G\nD D D D D D G G G\nD D D D D D D D A\nD D D D D D D D A\nE E I I C D D A A\nE E E C C D D D D\nE C C C D D D D D\nB B B C C C C C D",
+          "testOut": "D D D D F H h G G\nD D D D f D H G G\nD D D D D D G g G\nD D D D D d D D A\nD D D D D D D D a\nE E i I C D D A A\ne E E C C D D D D\nE C C c D D D D D\nB b B C C C C C D",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6",
+          "isTest": false,
+          "testIn": "9\nB B B B B F E E E\nB B B B F F E E E\nG G B B F F F F H\nG G G B I I F F F\nG G G I I I I I I\nC C G I I I I I I\nC C I I A A A I I\nD C I I I A A I I\nD I I I I I A I I",
+          "testOut": "B B B B B F E e E\nB B B b F F E E E\nG G B B F F F F h\nG G G B I I f F F\nG G g I I I I I I\nC C G I i I I I I\nC c I I A A A I I\nD C I I I a A I I\nd I I I I I A I I",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Board size 10",
+          "isTest": true,
+          "testIn": "10\nD D D D D J J J J J\nD D D F J J J J J J\nD D D J J J J J H H\nE E A A C J J J H H\nA A A A C C C H H H\nA C C C C C C I H H\nA A C C C C C I I H\nA A C C C C C I I I\nA C C C C C G I I B\nA C C C C C G G I I",
+          "testOut": "D d D D D J J J J J\nD D D f J J J J J J\nD D D J J j J J H H\ne E A A C J J J H H\nA A a A C C C H H H\nA C C C C C C I h H\nA A C C c C C I I H\nA A C C C C C i I I\nA C C C C C G I I b\nA C C C C C g G I I",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "10\nB B B B B B F F G E\nB B B B B J F F G E\nB B B B B J F F F E\nB B B B B J F F F E\nI I I B B J J E E E\nI I I D D D E E E E\nI I A D D D E E E E\nI I A A A D D D E E\nC C H A A D D E E E\nC H H A A D E E E E",
+          "testOut": "B B B B B B F F g E\nB B B B b J F F G E\nB B B B B J F f F E\nB B B B B J F F F e\nI I I B B J j E E E\nI i I D D D E E E E\nI I A D D d E E E E\nI I A a A D D D E E\nc C H A A D D E E E\nC H h A A D E E E E",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Board size 11",
+          "isTest": true,
+          "testIn": "11\nG B B E A A A A F F F\nB B B E A A A A F F F\nB B B B B A A A A F H\nB B K K K A A A F F H\nB K I K K K A A F F H\nB K K K K K A A F F F\nB K K K K K A F F F F\nK K K K K K K F F F F\nK D K K D D F F F J F\nD D D D D D D F C C C\nD D D D D D F F C C C",
+          "testOut": "g B B E A A A A F F F\nB B B e A A A A F F F\nB b B B B A A A A F H\nB B K K K A A A F F h\nB K i K K K A A F F H\nB K K K K K a A F F F\nB K K K k K A F F F F\nK K K K K K K f F F F\nK D K K D D F F F j F\nD D D D D d D F C C C\nD D D D D D F F c C C",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 8",
+          "isTest": false,
+          "testIn": "11\nJ J K K K H H B B A A\nJ J K K K H H H B B B\nJ J I K K K H H H B B\nJ I I K K K K G H B B\nJ I I K G G G G G C B\nI I I G G G G G G C C\nF I F F G G G G G G C\nF F F F F G G G G G C\nF F F F F F G G G G G\nF F F F E D D G G G G\nF F F E E D D G G G G",
+          "testOut": "J J K K K H H B B A a\nJ J K K K H H H b B B\nJ J I K K K h H H B B\nJ I I K k K K G H B B\nj I I K G G G G G C B\nI I I G G G G G G c C\nF i F F G G G G G G C\nF F F F F G G g G G C\nF F f F F F G G G G G\nF F F F E d D G G G G\nF F F e E D D G G G G",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "4 <= [[n]] <= 12",
+      "coverBinaryId": 170102545947664,
+      "stubGenerator": "read n:int\nloop n read row:string(23)\nwrite solution\n\nINPUT\nrow: n uppercase letters, separated by spaces",
+      "inputDescription": "<<Line 1:>> The size [[n]] of the square Meowdoku board\n<<Next [[n]] lines:>> The rows of the Meowdoku board, using different uppercase letters for different color regions, using a space between columns",
+      "solutionLanguage": "C",
+      "outputDescription": "<<[[n]] lines:>> The solved rows of the Meowdoku board, using the original uppercase letters (but in lowercase where a cat is placed), using a space between columns"
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Meowdoku is a cat puzzle played on a square board having <var>n</var> x <var>n</var> cells. Each cell is part of one of <var>n</var> contiguous color regions on the board. Color regions are connected, horizontally and/or vertically.<br><br>You must find the cell positions of <var>n</var> cats, using the following rules:<br><br>1. There is exactly one cat per row.<br>2. There is exactly one cat per column.<br>3. There is exactly one cat per color region.<br>4. The cats do not touch diagonally.<br><br>The minimum board size is 4 x 4, since there is no solution for smaller board sizes.<br><br>To understand Meowdoku better, you can play it online here: <const>https://www.meowdoku.org/</const><br><br>In this version of the puzzle, the <var>n</var> colors are provided as distinct uppercase letters, starting with <const>A</const>.<br><br>Given an <var>n</var> x <var>n</var> Meowdoku board, find the unique solution that allows placing <var>n</var> cats on <var>n</var> different cells on the board, using the rules above. Output the board, using the original letters, but using lowercase letters instead of uppercase letters for cells with a cat. In the input and output, the columns of the board are separated by spaces.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> The size <var>n</var> of the square Meowdoku board<br><strong>Next <var>n</var> lines:</strong> The rows of the Meowdoku board, using different uppercase letters for different color regions, using a space between columns</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong><var>n</var> lines:</strong> The solved rows of the Meowdoku board, using the original uppercase letters (but in lowercase where a cat is placed), using a space between columns</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">4 &lt;= <var>n</var> &lt;= 12</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">4\nC C C B\nD D D B\nA D D D\nA D D D</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">C c C B\nD D D b\na D D D\nA D d D</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 77623682146098,
+  "commentCount": 0,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
