@@ -1,0 +1,196 @@
+{
+  "id": 157524,
+  "activeVersion": 1,
+  "score": 0,
+  "votableId": 40717315,
+  "codingamerId": 3510142,
+  "views": 1,
+  "commentableId": 40543142,
+  "title": "Lost Astronaut 2: Broken Transmitter",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "ATmax",
+  "publicHandle": "157524cdf3a9fc44fb6ef40999adf76a5741a7",
+  "codingamerHandle": "7daea585648a383f8349741623f0e7222410153",
+  "lastVersion": {
+    "version": 1,
+    "autocloseTime": 1795523824420,
+    "data": {
+      "title": "Lost Astronaut 2: Broken Transmitter",
+      "topics": [
+        {
+          "id": 60,
+          "handle": "dynamic-programming",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Programmation dynamique",
+            "2": "Dynamic programming"
+          },
+          "pageTitle": "Dynamic programming: exercises and theory",
+          "puzzleCount": 37,
+          "parentTopicId": 41,
+          "contentDetailsId": 85
+        },
+        {
+          "id": 65,
+          "handle": "memoization",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Mémoïsation",
+            "2": "Memoization"
+          },
+          "pageTitle": "Memoization: exercises and theory",
+          "puzzleCount": 21,
+          "parentTopicId": 41,
+          "contentDetailsId": 76
+        },
+        {
+          "id": 78,
+          "handle": "radix",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Base arithmétique",
+            "2": "Radix"
+          },
+          "pageTitle": "Radix: exercises and theory",
+          "puzzleCount": 10,
+          "parentTopicId": 43,
+          "contentDetailsId": 107
+        }
+      ],
+      "solution": "# Lost Astronaut 2 - reference solution\n# DP over (position, characters remaining) with a bitmask of reachable checksums.\nimport sys\n\ndef build_table():\n    enc = {}\n    for c in list(range(65, 91)) + list(range(97, 123)) + [32]:\n        for tok in (bin(c)[2:], oct(c)[2:], format(c, 'x'), chr(c)):\n            enc.setdefault(tok, set()).add(c)\n    return {k: sorted(v) for k, v in enc.items()}\n\nENC = build_table()\n\ndef options(s):\n    L = len(s)\n    return [[(l, o) for l in range(1, 8) if i + l <= L and s[i:i+l] in ENC\n             for o in ENC[s[i:i+l]]] for i in range(L)]\n\ndef tables(s, n, ck):\n    L = len(s)\n    opts = options(s)\n    # fwd[i]: bitmask of how many characters can be decoded from s[:i]\n    fwd = [0] * (L + 1)\n    fwd[0] = 1\n    full = (1 << (n + 1)) - 1\n    for i in range(L):\n        if fwd[i]:\n            for l, _ in opts[i]:\n                fwd[i + l] |= (fwd[i] << 1) & full\n    # back[i][r]: bitmask of checksums reachable decoding s[i:] into exactly r chars\n    cap = (1 << (ck + 1)) - 1\n    back = [None] * (L + 1)\n    back[L] = {0: 1}\n    for i in range(L - 1, -1, -1):\n        d = {}\n        allowed = fwd[i]\n        for l, o in opts[i]:\n            for r, m in back[i + l].items():\n                r1 = r + 1\n                if r1 <= n and (allowed >> (n - r1)) & 1:\n                    v = (m << o) & cap\n                    if v:\n                        d[r1] = d.get(r1, 0) | v\n        back[i] = d\n    return opts, back\n\ndef solve(s, n, ck):\n    opts, back = tables(s, n, ck)\n    if not (back[0].get(n, 0) >> ck) & 1:\n        return None\n    out, i, r, x = [], 0, n, ck\n    while i < len(s):\n        for l, o in opts[i]:\n            if x >= o and (back[i + l].get(r - 1, 0) >> (x - o)) & 1:\n                out.append(chr(o)); i += l; r -= 1; x -= o\n                break\n    return ''.join(out)\n\nif __name__ == '__main__':\n    n = int(input())\n    ck = int(input())\n    stream = input().rstrip('\\n')\n    print(solve(stream, n, ck))",
+      "statement": "This is part 2 of the Lost Astronaut series. Part 1: <<Lost Astronaut>> (Medium).\n\nThanks to your program, Earth decoded the astronaut's first signals\n\nBut his space-made transmitter, built from broken spaceship parts, is getting worse. It still converts each character randomly to <<binary>>, <<octal>>, <<hexadecimal>>, or leaves it <<as it is>>. Now it has also stopped sending the separators between values, so every signal arrives as one long stream of symbols.\n\nLuckily, the astronaut expected this. Before each message, he now sends two numbers:\n[[N]]: how many characters his message has\n[[CHECKSUM]]: the sum of the ASCII codes of all characters in his message\n\nEach character of the message is sent in exactly one of these forms:\nbinary, for example {{1101111}} for {{o}}\noctal, for example {{157}} for {{o}}\nhexadecimal with lowercase digits, for example {{6f}} for {{o}}\nthe character itself, for example {{o}}\n\nNumbers never have leading zeros. The message contains only <<letters and spaces>>, so any value that decodes to something else is not a valid reading.\n\nA stream can often be read in more than one way. For example, {{m11011111576e}} can be read as:\n{{m}} {{1101111}} {{157}} {{6e}} = {{moon}} (4 characters)\n{{m}} {{110}} {{111}} {{115}} {{76}} {{e}} = {{mHIMve}} (6 characters)\n\nOnly one reading has exactly [[N]] characters <<and>> matches [[CHECKSUM]]. That reading is the astronaut's message.\n\nMission control needs you to rebuild the original message. Good luck!",
+      "testCases": [
+        {
+          "title": "4th Signal: no more gaps",
+          "isTest": true,
+          "testIn": "11\n1032\n100100014511011001101100110111140100010111000011110010111010068",
+          "testOut": "Hello Earth",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1: Earth replies",
+          "isTest": false,
+          "testIn": "16\n1534\n11101111100101 1541101111111001111101002011101001101000145m40t6f1101111",
+          "testOut": "we lost them too",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "5th Signal",
+          "isTest": true,
+          "testIn": "21\n1957\n6311000016e 7911011111110101201110011111010069154l401110010e11000011100100 1551100101",
+          "testOut": "can you still read me",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2: Earth replies",
+          "isTest": false,
+          "testIn": "18\n1652\n791100101s100000110001011101011110100100000i11101001000001101001s1000001101000a1110010144",
+          "testOut": "yes but it is hard",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "6th Signal",
+          "isTest": true,
+          "testIn": "28\n2614\n49201671101001l1101100100000111001111001011101110144100000741101000110010140110110065n11001111646810000011001101101001111001011100111110100",
+          "testOut": "I will send the length first",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3: Earth replies",
+          "isTest": false,
+          "testIn": "26\n2393\n11001116fo110010010000069d6511000012011101001101000141t401101000e1101100p163100000a100000110110011011111110100",
+          "testOut": "good idea that helps a lot",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "7th Signal",
+          "isTest": true,
+          "testIn": "59\n5477\n11000011101110d 14120143110100011001011431101011sum 11101001101111110111120163o1000001716f16540110001161n100000621100101100000163ur1100101 14511101101100101162y 6c65t111010011001011110010 11010011110011100000r1101001g1101000164",
+          "testOut": "and a checksum too so you can be sure every letter is right",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4: Earth replies",
+          "isTest": false,
+          "testIn": "58\n5448\n73110110114172111010010000011101111100101100000143he110001115365d1000001101001t2011000011101110d1000001511110100 1676fr1101011111001110000011001101571110010 1100001154l1000001111001110111111101011110010401101101e11100111110011ag6511100111000006e1101111w",
+          "testOut": "smart we checked it and it works for all your messages now",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "8th Signal",
+          "isTest": true,
+          "testIn": "108\n9941\n142611100100 1101110110010177s 164he2064165731641000001110011111010011011111110010m10000011010011632011000106111000116b1000001100001110111011001002011011011111001100000111001111011116ca11100102016011000011101110110010111011001110011100000611110010145201100011o1110110e72145110010040s6f20111100000157110111011011001111001100000110100011000011110110110010110000011100001101111111011165162100000146110111111100101000001101111110111011001011000006de111001116311000011100111651000001110000110010172100000641100001y",
+          "testOut": "bad news the dust storm is back and my solar panels are covered so I only have power for one message per day",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 5: Earth replies",
+          "isTest": false,
+          "testIn": "88\n8300\n1100011110110014561110111020t1101000e 1110000110000111011101100101l1110011201451110110e11100101111001100000m1101111111001011011101101001110111011001114011000011101110110010010000011100111100001761100101100000111100111011111110101721000001110000157w1457210000011101001101000110010110000011100101451110011c16565 16311010001101001p100000w11010011546c100000110110011000011561100100100000110100115610000011101001100101110111040110010061791110011",
+          "testOut": "clean the panels every morning and save your power the rescue ship will land in ten days",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "9th Signal",
+          "isTest": true,
+          "testIn": "305\n26988\n11011011111001100000111010011100101100001110111011100111101101110100111101001110100110010111100101000001100110111001011011111111010110010110000011011001100001111001111101001000001101110110100111001111101000111010010000011000011101110110010010000011011101101111111011110000011010011110100100000110111111011101101100111100110000011100111110000110010111000011101011111001110000011000101101001110111011000011110010111100110000011100111101111100000100100110000011101111101001110110011011001000001110011111000011001011100001110101110000011000101101001110111011000011110010111100110000011101001101111110111110000010001111101111110111111001001000001101110110010111101111110011100000110100111100111000001001001100000111001111101001101001110110011011001000001101000110000111101101100101100000110011011011111101111110010010000011001101101111111001010000011000011000001101101110111111011101110100110100010000011000011101110110010010000011101001101000110010110000011100111110100110111111100101101101100000110100111100111000001100111110010111101001110100110100111011101100111100000111011111001011100001110101111001011110010100000110010111101101100101111001011110011000001100100110000111110011000001110011110111110000010010011000001100011110000111011101000001100110110100111011101100001110110011011001111001100000111001111001011100101100000111010011010001100101100000111001111010111111001100000110000111001111100001110100111011101000001000001110111011001001000001100111111010111001011110011111001110000011101111101000110000111101001000001001001100000110101011101011110011111010010000011100111100001111011110000010011111001111100111110011111011010101101010011111000001001111100111110110101001111100111110011111001111100000100111110011111001111101101010011111011010100111110000010011111001111100111110110101011010100111110110101000001001111101101010110101011010101101010110101000001001111100111110011111011010101101010011111001111100000100111110011111011010100111110110101011010101101010000010011111001111101101010011111011010101101010011111000001001111100111110011111011010101101010110101011010",
+          "testOut": "my transmitter froze last night and now it only speaks binary so I will speak binary too Good news is I still have food for a month and the storm is getting weaker every day so I can finally see the sky again And guess what I just saw OOOOZZO OOZOOOO OOOZOZO OOOZZOZ OZZZZZ OOOZZOO OOZOZZZ OOZOZZO OOOZZZZ",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 6: Earth replies",
+          "isTest": false,
+          "testIn": "340\n30065\n110100011000011101000110000110000011011101101001110001111001011000001101111110111011001011000001110111110010110000011001001100101110001111011111100100110010111001001000001111001110111111101011110010100000111001111001011100011111001011001011110100100000110110111001011110011111001111000011100111110010110000011000011101110110010010000011101001101000110010110000011101111101000110111111011001100101100000111010011001011100001110110110000011000111101000110010111001011110010110010111001001000001011001110010111100111000001110100110100011000011110100100000111011111000011110011100000110111111101011110010100000111001111010001101001111000010000011001001101111110100111011101100111100000110000110000011101001100101111001111101001000001101111111001011000101101001111010010000010010011110100100000111011111010011101100110110010000011011001100001110111011001001000001101001110111010000011101001101000111001011001011100101100000110010011000011111001111001110000011100111101111100000111000011000011100011110101110000011110011101111111010111100101000001110100110100011010011101110110011111100111000001100001110111011001001000001101011110010111001011110000100000111100111011111110101111001010000011100111110101110100111101001000001100011110100011000011110010110011111001011100100100000100010011011111000001101110110111111101001000001100110110111111100101100111110010111101001000001111001110111111101011110010100000111001011011111100011110101110000011100111100001110110111100001101100110010111100111000001001000110010111100101100101100000110100111100111000001100001100000110110011010011110100111010011011001100101100000111001111001011100011111001011001011110100100000110011011011111110010100000111100111011111110101100000111010011011111101111100000100111110011111001111101101010011111001111100111110000010011111001111101101010110101001111101101010011111000001001111101101010110101011010101101010110101000001001111100111110110101001111100111110110101001111100000100111110011111011010100111110110101011010100111110000010011111001111100111110110101011010100111110011111000001001111100111110011111011010101101010011111001111100000100111110110101011010101101010110101011010100000100111110011111001111100111110110101011010100111110000010011111001111101101010011111001111100111110011111000001001111100111110011111011010100111110110101001111",
+          "testOut": "haha nice one we decoded your secret message and the whole team cheered Yes that was our ship doing a test orbit It will land in three days so pack your things and keep your suit charged Do not forget your rock samples Here is a little secret for you too OOOZOOO OOZZOZO OZZZZZ OOZOOZO OOZOZZO OOOZZOO OOOZZOO OZZZZZ OOOOZZO OOZOOOO OOOZOZO",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "10th Signal",
+          "isTest": true,
+          "testIn": "312\n28556\n1001001 1100001m206f1101110100000t11010001100101 s1101000110100111100001000001010100110100014111011101101011100000111100111011111110101100000a1101100110110010000066110111172100000no164100000110011111010011110110i11011101100111 1110101701000001101111110111010000011011011100101100000127110010110000011101001571576b100000o1100110f100000111001011010011100111150164100000110111111011102011101001101001m1100101100000110001011101011641000001100001100000111001111011111101100110000111100101000001100110l110000111100101100101100000110011016269110010164201110100h110010110000015611000011110110110100114711000011110100110100111011116e1000001100011110111111011011110000111010111101001100101111001010000011000016e110010010000011011101101111111011110000074h11001011000001110000110100111011001101111t1000001101000110000111100111000001101110110111110000015111001001100101110000110000011101111101000110010111100101100101401110111110010110000011000011110010145100000541101000145100000110010111011101100111110100111011101100101 16711011111110010110101111100111000006111011101100100100000111011111001011000001101000141v110010110000011001107511001016c1000007311011114011101111100101401100001111001011001011000001101110110111111101001000001101100110111111100111110100100000111100111001011110100 15211101011110011111010010000011000111101111110111066u1110011110010111001001000001010000110110011001011100001s11001011000001101000651101100111000010000011101011110011100000661101001110111011001001000001110100681100101100000111011111000017910000015015711011011100101 12711001011000001110111110100111011001101100100000111001165n1100100100000110111175111001010000011100001101111111001111010011110100110100111011111101110100000110010111101101100101111001011110011000001101000110111111101011110010",
+          "testOut": "I am on the ship Thank you all for not giving up on me We took off right on time but a solar flare fried the navigation computer and now the pilot has no idea where we are The engine works and we have fuel so we are not lost yet just confused Please help us find the way home We will send our position every hour",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 7",
+          "isTest": false,
+          "testIn": "322\n29766\n101011111001011101100c157155110010110000011000011100010110111114172110010010000010101111100101100000110000111100101100101100000731101111100000110100011000011110000111000011110011000001110100110111110000011010001100101a721000001100110111001011011111101101100000171110111175100000110000111001111100001110100111011101000001011001110111111101011110010 11001101100001110110111010011101100y1000001110111110000111100112011010016e10000011101001101000110010110000011000111101111110111011101001110010o110110010000011100101101111o1101101100000771101000656e1000001711101111111010110000011101001101111110111111010111000006f11001101100110100000110000111011101441000001101110o1100010110111111001001111001100000636f11101011101100144100000st6f11100001000001110011110110111010011101100i110111011001111000001000100o10000011011101101111t100000110011011010011621100101 16411010001451000001100101n110011111010016e1100101100000111010111011101110100110100111011001000007711001011000001100110110100111011101100100100000110000140163110000111001101100101401110010110111111101011110100110010120101001111001016e1100100100000111100111011111110101111001010000011100001571110011i16411010011101111110111040110010111101101100101111001011110014011010006f11101011110010100000110000111011101100100 1110111110010110000011101111101001110110011011001000001100111111010111010011100100110010110000011110011101111111010120110100011011111101101110010120s111010011001011110000100000110001011110011000001110011741100101111000010000010010006115611001111000001101001110111010000011101001101000110010116214510000011110011101111165100000110000116211001011000001416c6d11011111110011164100000110100011011111101101110010110000011000011101110110010010000011101111100101100000111011111010016c11011001000001100010110010110000011101111100001110100111101001101001110111011001111000001100110110111111100101000001111001157u",
+          "testOut": "Welcome aboard We are so happy to hear from you again Your family was in the control room when you took off and nobody could stop smiling Do not fire the engine until we find a safe route Send your position every hour and we will guide you home step by step Hang in there you are almost home and we will be waiting for you",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "hard",
+      "constraints": "2 ≤ [[N]] ≤ 350\n1 ≤ length of [[STREAM]] ≤ 2450\nThe message contains only {{A}} to {{Z}}, {{a}} to {{z}}, and space ( ), and does not start or end with a space.\nThere is exactly one valid message.",
+      "stubGenerator": "read N:int\nread CHECKSUM:int\nread STREAM:string(2450)\nwrite answer",
+      "inputDescription": "<<Line 1>>: an integer [[N]], the number of characters in the original message\n<<Line 2>>: an integer [[CHECKSUM]], the sum of the ASCII codes of the original message\n<<Line 3>>: a string [[STREAM]], the received transmission. It may contain spaces, so read the whole line.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "The original message typed by the astronaut."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">This is part 2 of the Lost Astronaut series. Part 1: <strong>Lost Astronaut</strong> (Medium).<br><br>Thanks to your program, Earth decoded the astronaut's first signals<br><br>But his space-made transmitter, built from broken spaceship parts, is getting worse. It still converts each character randomly to <strong>binary</strong>, <strong>octal</strong>, <strong>hexadecimal</strong>, or leaves it <strong>as it is</strong>. Now it has also stopped sending the separators between values, so every signal arrives as one long stream of symbols.<br><br>Luckily, the astronaut expected this. Before each message, he now sends two numbers:<br><var>N</var>: how many characters his message has<br><var>CHECKSUM</var>: the sum of the ASCII codes of all characters in his message<br><br>Each character of the message is sent in exactly one of these forms:<br>binary, for example <const>1101111</const> for <const>o</const><br>octal, for example <const>157</const> for <const>o</const><br>hexadecimal with lowercase digits, for example <const>6f</const> for <const>o</const><br>the character itself, for example <const>o</const><br><br>Numbers never have leading zeros. The message contains only <strong>letters and spaces</strong>, so any value that decodes to something else is not a valid reading.<br><br>A stream can often be read in more than one way. For example, <const>m11011111576e</const> can be read as:<br><const>m</const> <const>1101111</const> <const>157</const> <const>6e</const> = <const>moon</const> (4 characters)<br><const>m</const> <const>110</const> <const>111</const> <const>115</const> <const>76</const> <const>e</const> = <const>mHIMve</const> (6 characters)<br><br>Only one reading has exactly <var>N</var> characters <strong>and</strong> matches <var>CHECKSUM</var>. That reading is the astronaut's message.<br><br>Mission control needs you to rebuild the original message. Good luck!</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: an integer <var>N</var>, the number of characters in the original message<br><strong>Line 2</strong>: an integer <var>CHECKSUM</var>, the sum of the ASCII codes of the original message<br><strong>Line 3</strong>: a string <var>STREAM</var>, the received transmission. It may contain spaces, so read the whole line.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">The original message typed by the astronaut.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &le; <var>N</var> &le; 350<br>1 &le; length of <var>STREAM</var> &le; 2450<br>The message contains only <const>A</const> to <const>Z</const>, <const>a</const> to <const>z</const>, and space ( ), and does not start or end with a space.<br>There is exactly one valid message.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">11\n1032\n100100014511011001101100110111140100010111000011110010111010068</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">Hello Earth</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 64460647774927,
+  "commentCount": 0,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
