@@ -1,0 +1,165 @@
+{
+  "id": 157755,
+  "activeVersion": 3,
+  "score": 0,
+  "votableId": 40753171,
+  "codingamerId": 4801626,
+  "views": 4,
+  "commentableId": 40578955,
+  "title": "Company Valuation",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "FraffoLaffo",
+  "publicHandle": "15775526a1fbb8820cda5f8fc1dd4246d4b8c2",
+  "codingamerHandle": "29a4562f3ddaa8c0ff7aaf9d5a55c9de6261084",
+  "lastVersion": {
+    "version": 3,
+    "autocloseTime": 1795941072990,
+    "data": {
+      "title": "Company Valuation",
+      "topics": [
+        {
+          "id": 94,
+          "handle": "mathematics",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Mathematics",
+            "2": "Mathematics"
+          },
+          "puzzleCount": 84,
+          "parentTopicId": 93
+        },
+        {
+          "id": 79,
+          "handle": "regression-analysis",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Régression",
+            "2": "Regression analysis"
+          },
+          "pageTitle": "Regression analysis: exercises and theory",
+          "puzzleCount": 2,
+          "parentTopicId": 43,
+          "contentDetailsId": 108
+        }
+      ],
+      "solution": "declare function readline(): string;\n\n// Author-only reference solution. Paste into CodinGame with TypeScript selected.\n// Exact integer fractions make decimal half-way rounding deterministic.\nfunction runReference(): void {\n  const [countText, yearsText, rateText] = readline().split(' ');\n  const count = Number(countText);\n  const years = Number(yearsText);\n  const k = BigInt(count);\n  const n = BigInt(years);\n  const [rateWhole, rateFraction = ''] = rateText.split('.');\n  const rateUnits = BigInt(rateWhole) * 10000n\n    + BigInt(rateFraction.padEnd(4, '0'));\n\n  const incomes: bigint[] = [];\n  let sumX = 0n;\n  let sumY = 0n;\n  let sumXX = 0n;\n  let sumXY = 0n;\n\n  for (let i = 0; i < count; i++) {\n    const [gross, taxes] = readline().split(' ').map(value => BigInt(value));\n    const x = BigInt(i + 1);\n    const y = gross - taxes;\n    incomes.push(y);\n    sumX += x;\n    sumY += y;\n    sumXX += x * x;\n    sumXY += x * y;\n  }\n\n  // slope = slopeNumerator / slopeDenominator.\n  const slopeNumerator = k * sumXY - sumX * sumY;\n  const slopeDenominator = k * sumXX - sumX * sumX;\n  const denominator = k * slopeDenominator;\n  const interceptNumerator = sumY * slopeDenominator - slopeNumerator * sumX;\n  const predictions: bigint[] = [];\n  for (let i = 1; i <= years; i++) {\n    const x = k + BigInt(i);\n    predictions.push(k * slopeNumerator * x + interceptNumerator);\n  }\n  const totalPrediction = predictions.reduce((sum, value) => sum + value, 0n);\n\n  function format(numerator: bigint, divisor: bigint): string {\n    const absolute = numerator < 0n ? -numerator : numerator;\n    const scaled = absolute * 100n;\n    let cents = scaled / divisor;\n    if ((scaled % divisor) * 2n >= divisor) {\n      cents += 1n;\n    }\n    const sign = numerator < 0n && cents !== 0n ? '-' : '';\n    return `${sign}${cents / 100n}.${String(cents % 100n).padStart(2, '0')}`;\n  }\n\n  console.log(incomes.map(value => format(value, 1n)).join(' '));\n  console.log(format(predictions[0], denominator));\n  console.log(predictions.map(value => format(value, denominator)).join(' '));\n  console.log(format(totalPrediction, denominator * n));\n  console.log(format(totalPrediction * 10000n, denominator * n * rateUnits));\n}\n\nrunReference();\n",
+      "statement": "You are helping a business owner estimate a company's value from its past annual profits.\n\nFor each of k consecutive years, you know the company's profit before tax (grossIncome) and its taxes. These statements are ordered from oldest to newest. Gross income here means profit after operating costs, including salaries, but before taxes. It does not mean revenue.\n\nCalculate each historical net income as grossIncome - taxes. Fit a straight line to ALL historical net incomes using ordinary least squares with a free intercept. Use this line to forecast n years, then estimate the company's value by capitalizing the average forecast income.\n\nThe current year is the first year without a statement. It is also the FIRST of the n forecast years. Do not count it twice.\n\nAssign x = 1 to the oldest statement and x = k to the latest statement. Let y be the corresponding historical net income. Calculate:\n\nxMean = (k + 1) / 2\nyMean = sum(y) / k\nm = sum((x - xMean) * (y - yMean)) / sum((x - xMean)^2)\nq = yMean - m * xMean\nforecast(x) = m * x + q\n\nEach sum covers all k historical statements. Using only the first and last statements is incorrect.\n\nForecast x = k + 1, k + 2, ..., k + n. The first forecast is the current-year income. Calculate the arithmetic mean of these n forecasts, then:\n\ncompanyValue = averageProjectedIncome / capitalizationRate\n\nThe capitalization rate is supplied as a decimal: 0.10 means 10%. It affects companyValue only; it must not change the forecasts or their average.\n\nDo not round intermediate calculations. Format the final output as described below. Negative forecasts and negative company values are valid results of this simplified model: do not replace them with zero. All input is valid; no error handling or exception output is required.\n\nExample: historical net incomes 100000, 150000, 120000, 180000, 200000 give m = 23000 and q = 81000. With n = 3, the forecasts are 219000, 242000, 265000. Their average is 242000. With capitalizationRate = 0.10, companyValue = 2420000.\n\nThis is an educational model, not a guarantee of a company's actual sale price. The selected capitalization rate is an assumption, and a linear trend may produce economically unrealistic forecasts.",
+      "testCases": [
+        {
+          "title": "Zero net incomes",
+          "isTest": true,
+          "testIn": "5 2 0.10\n0 0\n100 100\n0 0\n250 250\n80 80",
+          "testOut": "0.00 0.00 0.00 0.00 0.00\n0.00\n0.00 0.00\n0.00\n0.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Zero net incomes - validator",
+          "isTest": false,
+          "testIn": "6 5 0.0001\n300 300\n0 0\n200 200\n500 500\n0 0\n900 900",
+          "testOut": "0.00 0.00 0.00 0.00 0.00 0.00\n0.00\n0.00 0.00 0.00 0.00 0.00\n0.00\n0.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Constant net income",
+          "isTest": true,
+          "testIn": "5 4 0.20\n40000 0\n50000 10000\n45000 5000\n60000 20000\n43000 3000",
+          "testOut": "40000.00 40000.00 40000.00 40000.00 40000.00\n40000.00\n40000.00 40000.00 40000.00 40000.00\n40000.00\n200000.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Constant net income - validator",
+          "isTest": false,
+          "testIn": "6 3 0.25\n77000 5000\n72000 0\n90000 18000\n76000 4000\n98000 26000\n81000 9000",
+          "testOut": "72000.00 72000.00 72000.00 72000.00 72000.00 72000.00\n72000.00\n72000.00 72000.00 72000.00\n72000.00\n288000.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Linear growth with one forecast year",
+          "isTest": true,
+          "testIn": "5 1 0.20\n12 2\n24 4\n36 6\n48 8\n60 10",
+          "testOut": "10.00 20.00 30.00 40.00 50.00\n60.00\n60.00\n60.00\n300.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Linear growth with one forecast year - validator",
+          "isTest": false,
+          "testIn": "5 1 0.25\n18 3\n36 6\n54 9\n72 12\n90 15",
+          "testOut": "15.00 30.00 45.00 60.00 75.00\n90.00\n90.00\n90.00\n360.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Irregular income over five years",
+          "isTest": true,
+          "testIn": "5 3 0.10\n125000 25000\n190000 40000\n150000 30000\n220000 40000\n250000 50000",
+          "testOut": "100000.00 150000.00 120000.00 180000.00 200000.00\n219000.00\n219000.00 242000.00 265000.00\n242000.00\n2420000.00",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Irregular income over five years - validator",
+          "isTest": false,
+          "testIn": "5 4 0.125\n92000 12000\n148000 18000\n111000 16000\n182000 22000\n203000 28000",
+          "testOut": "80000.00 130000.00 95000.00 160000.00 175000.00\n194000.00\n194000.00 216000.00 238000.00 260000.00\n227000.00\n1816000.00",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Longer history and forecast horizon",
+          "isTest": true,
+          "testIn": "7 4 0.10\n110 10\n120 20\n130 30\n140 40\n150 50\n860 60\n1070 70",
+          "testOut": "100.00 100.00 100.00 100.00 100.00 800.00 1000.00\n914.29\n914.29 1060.71 1207.14 1353.57\n1133.93\n11339.29",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Longer history and forecast horizon - validator",
+          "isTest": false,
+          "testIn": "8 5 0.15\n240 40\n230 30\n220 20\n210 10\n200 0\n250 50\n1260 60\n1670 70",
+          "testOut": "200.00 200.00 200.00 200.00 200.00 200.00 1200.00 1600.00\n1292.86\n1292.86 1469.05 1645.24 1821.43 1997.62\n1645.24\n10968.25",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Declining income and final rounding",
+          "isTest": true,
+          "testIn": "5 3 0.32\n7 2\n6 2\n5 2\n4 2\n3 2",
+          "testOut": "5.00 4.00 3.00 2.00 1.00\n0.00\n0.00 -1.00 -2.00\n-1.00\n-3.13",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Declining income and final rounding - validator",
+          "isTest": false,
+          "testIn": "5 3 0.32\n19 4\n16 4\n13 4\n10 4\n7 4",
+          "testOut": "15.00 12.00 9.00 6.00 3.00\n0.00\n0.00 -3.00 -6.00\n-3.00\n-9.38",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "5 <= k <= 20\n1 <= n <= 20\n0 <= taxes <= grossIncome <= 1000000\ngrossIncome and taxes are integers.\n0.0001 <= capitalizationRate <= 1\ncapitalizationRate uses ordinary decimal notation with at most four digits after the decimal point.\nAll input respects these constraints. Forecast incomes, their average, and the company value may be negative.",
+      "stubGenerator": "read k:int n:int capitalizationRate:float\nloop k read grossIncome:int taxes:int\nwrite \"TODO\"\n\nSTATEMENT\nUse every historical statement to forecast net income and estimate a company's value.\n\nINPUT\nk: Number of historical statements, ordered from oldest to newest.\nn: Number of forecast years, including the current year.\ncapitalizationRate: Decimal capitalization rate; 0.10 means 10 percent.\ngrossIncome: Company profit before tax, after operating costs.\ntaxes: Company taxes for this historical year.\n\nOUTPUT\nPrint historical net incomes, current-year income, forecast incomes, their average, and company value on five lines, with two decimal places.",
+      "inputDescription": "Line 1: two integers k and n, followed by a decimal capitalizationRate, separated by single spaces.\n\nNext k lines: two integers grossIncome and taxes, separated by a single space, for one historical annual statement. Statements are ordered from oldest to newest.\n\nk is the number of historical statements. n is the number of forecast years, including the current year. All monetary inputs use the same currency unit.",
+      "solutionLanguage": "TypeScript",
+      "outputDescription": "Print exactly five lines, without labels:\n\nLine 1: k historical net incomes, from oldest to newest, separated by single spaces.\nLine 2: the current-year income, which is the first forecast.\nLine 3: n forecast incomes, starting with the current year, separated by single spaces.\nLine 4: the arithmetic mean of the n forecast incomes.\nLine 5: the company value, equal to the unrounded average forecast income divided by capitalizationRate.\n\nPrint every monetary value with exactly two digits after the decimal point. Use a dot as the decimal separator, without currency symbols or thousands separators.\n\nRound each final value independently to the nearest hundredth. If a value is exactly halfway between two hundredths, round away from zero: 3.125 becomes 3.13 and -3.125 becomes -3.13. Print zero as 0.00, never -0.00. Do not round intermediate calculations or use a rounded average to calculate the company value."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">You are helping a business owner estimate a company's value from its past annual profits.<br><br>For each of k consecutive years, you know the company's profit before tax (grossIncome) and its taxes. These statements are ordered from oldest to newest. Gross income here means profit after operating costs, including salaries, but before taxes. It does not mean revenue.<br><br>Calculate each historical net income as grossIncome - taxes. Fit a straight line to ALL historical net incomes using ordinary least squares with a free intercept. Use this line to forecast n years, then estimate the company's value by capitalizing the average forecast income.<br><br>The current year is the first year without a statement. It is also the FIRST of the n forecast years. Do not count it twice.<br><br>Assign x = 1 to the oldest statement and x = k to the latest statement. Let y be the corresponding historical net income. Calculate:<br><br>xMean = (k + 1) / 2<br>yMean = sum(y) / k<br>m = sum((x - xMean) * (y - yMean)) / sum((x - xMean)^2)<br>q = yMean - m * xMean<br>forecast(x) = m * x + q<br><br>Each sum covers all k historical statements. Using only the first and last statements is incorrect.<br><br>Forecast x = k + 1, k + 2, ..., k + n. The first forecast is the current-year income. Calculate the arithmetic mean of these n forecasts, then:<br><br>companyValue = averageProjectedIncome / capitalizationRate<br><br>The capitalization rate is supplied as a decimal: 0.10 means 10%. It affects companyValue only; it must not change the forecasts or their average.<br><br>Do not round intermediate calculations. Format the final output as described below. Negative forecasts and negative company values are valid results of this simplified model: do not replace them with zero. All input is valid; no error handling or exception output is required.<br><br>Example: historical net incomes 100000, 150000, 120000, 180000, 200000 give m = 23000 and q = 81000. With n = 3, the forecasts are 219000, 242000, 265000. Their average is 242000. With capitalizationRate = 0.10, companyValue = 2420000.<br><br>This is an educational model, not a guarantee of a company's actual sale price. The selected capitalization rate is an assumption, and a linear trend may produce economically unrealistic forecasts.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">Line 1: two integers k and n, followed by a decimal capitalizationRate, separated by single spaces.<br><br>Next k lines: two integers grossIncome and taxes, separated by a single space, for one historical annual statement. Statements are ordered from oldest to newest.<br><br>k is the number of historical statements. n is the number of forecast years, including the current year. All monetary inputs use the same currency unit.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Print exactly five lines, without labels:<br><br>Line 1: k historical net incomes, from oldest to newest, separated by single spaces.<br>Line 2: the current-year income, which is the first forecast.<br>Line 3: n forecast incomes, starting with the current year, separated by single spaces.<br>Line 4: the arithmetic mean of the n forecast incomes.<br>Line 5: the company value, equal to the unrounded average forecast income divided by capitalizationRate.<br><br>Print every monetary value with exactly two digits after the decimal point. Use a dot as the decimal separator, without currency symbols or thousands separators.<br><br>Round each final value independently to the nearest hundredth. If a value is exactly halfway between two hundredths, round away from zero: 3.125 becomes 3.13 and -3.125 becomes -3.13. Print zero as 0.00, never -0.00. Do not round intermediate calculations or use a rounded average to calculate the company value.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">5 &lt;= k &lt;= 20<br>1 &lt;= n &lt;= 20<br>0 &lt;= taxes &lt;= grossIncome &lt;= 1000000<br>grossIncome and taxes are integers.<br>0.0001 &lt;= capitalizationRate &lt;= 1<br>capitalizationRate uses ordinary decimal notation with at most four digits after the decimal point.<br>All input respects these constraints. Forecast incomes, their average, and the company value may be negative.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5 2 0.10\n0 0\n100 100\n0 0\n250 250\n80 80</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">0.00 0.00 0.00 0.00 0.00\n0.00\n0.00 0.00\n0.00\n0.00</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 170397185805848,
+  "commentCount": 0,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
