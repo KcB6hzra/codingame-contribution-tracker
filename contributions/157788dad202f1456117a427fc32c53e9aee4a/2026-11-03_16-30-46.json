@@ -1,0 +1,338 @@
+{
+  "id": 157788,
+  "activeVersion": 2,
+  "score": 0,
+  "votableId": 40779450,
+  "codingamerId": 6018557,
+  "views": 3,
+  "commentableId": 40605187,
+  "title": "Switchback Courier",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "RAFIK",
+  "publicHandle": "157788dad202f1456117a427fc32c53e9aee4a",
+  "codingamerHandle": "304bf60cce1bbe5165fc688c6588badd7558106",
+  "lastVersion": {
+    "version": 2,
+    "autocloseTime": 1796314984299,
+    "data": {
+      "title": "Switchback Courier",
+      "topics": [
+        {
+          "id": 86,
+          "handle": "simulation",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Simulation",
+            "2": "Simulation"
+          },
+          "pageTitle": "Simulation: exercises and theory",
+          "puzzleCount": 60,
+          "parentTopicId": 42,
+          "contentDetailsId": 72
+        },
+        {
+          "id": 116,
+          "handle": "cycle-detection",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Cycle detection",
+            "2": "Cycle detection"
+          },
+          "puzzleCount": 4,
+          "parentTopicId": 93
+        },
+        {
+          "id": 87,
+          "handle": "state-machine",
+          "category": "ADVANCED",
+          "labelMap": {
+            "1": "Machine à états",
+            "2": "State machine"
+          },
+          "pageTitle": "State machine: exercises and theory",
+          "puzzleCount": 15,
+          "parentTopicId": 42,
+          "contentDetailsId": 94
+        }
+      ],
+      "solution": "\"\"\"Reference solution for the author's Switchback Courier contribution.\"\"\"\nfrom array import array\nimport sys\n\n\ndef trace(routes, start, directions):\n    n = len(routes)\n    mask = sum((direction == \"R\") << i for i, direction in enumerate(directions))\n    seen = array(\"i\", [-1]) * (n * (1 << n))\n    junction = start - 1\n    steps = 0\n\n    while junction >= 0:\n        state = mask * n + junction\n        if seen[state] >= 0:\n            return f\"LOOP {seen[state]} {steps - seen[state]}\"\n        seen[state] = steps\n        destination = routes[junction][(mask >> junction) & 1]\n        mask ^= 1 << junction\n        junction = destination - 1\n        steps += 1\n\n    return f\"EXIT {steps}\"\n\n\ndef main():\n    n, start = map(int, sys.stdin.readline().split())\n    routes, directions = [], []\n    for _ in range(n):\n        left, right, direction = sys.stdin.readline().split()\n        routes.append((int(left), int(right)))\n        directions.append(direction)\n    print(trace(routes, start, directions))\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "statement": "A courier enters a network of mechanical junctions. Each junction has two labelled roads, L and R, and an arrow pointing to one of them. Every time the courier leaves a junction, its arrow flips.\n\nDetermine whether the courier reaches the delivery office. If the courier is trapped, identify exactly when its repeating journey begins and how many steps the repeating part takes.\n\n<<The network>>\nThere are [[n]] junctions, numbered from {{1}} to [[n]]. Destination {{0}} is the delivery office. Each junction has a destination for its L road, a destination for its R road, and an initial arrow, L or R. Roads are directed: arriving at a junction does not imply that a return road exists.\n\nBoth roads may lead to the same destination. A road may lead back to its own junction. Some junctions may never be visited.\n\n<<One step>>\nThe courier starts at junction [[start]], before any step has been taken. At each step:\n1. Read the arrow at the current junction and select the corresponding road.\n2. Flip that junction's arrow: L becomes R and R becomes L. All other arrows stay unchanged.\n3. Follow the selected road. This counts as one step, including a road back to the same junction or to the office.\n\nThe courier stops immediately on reaching destination {{0}}.\n\n<<Recognizing a loop>>\nThe configuration before a step consists of the courier's current junction AND the directions of ALL junction arrows. Revisiting the same junction alone does not necessarily mean that a configuration repeats.\n\nIf the courier never reaches the office, use the earliest repetition of any complete configuration. Print the number of steps before that configuration's first occurrence, followed by the number of steps between its first and second occurrences. The initial configuration is at step {{0}}.\n\nIn the example, the courier follows 1 -> 2 -> 1 -> 3 -> 0. On its second visit to junction 1, that arrow points to R, so the courier takes a different road and reaches the office after four steps.",
+      "testCases": [
+        {
+          "title": "A return is not a loop",
+          "isTest": true,
+          "testIn": "3 1\n2 3 L\n1 0 L\n0 2 L",
+          "testOut": "EXIT 4",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "A return is not a loop - validator",
+          "isTest": false,
+          "testIn": "4 2\n2 0 L\n3 4 L\n2 0 L\n1 0 L",
+          "testOut": "EXIT 7",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Straight to the office",
+          "isTest": true,
+          "testIn": "1 1\n0 0 L",
+          "testOut": "EXIT 1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Straight to the office - validator",
+          "isTest": false,
+          "testIn": "1 1\n1 0 R",
+          "testOut": "EXIT 1",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Flip before the next visit",
+          "isTest": true,
+          "testIn": "1 1\n1 0 L",
+          "testOut": "EXIT 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Flip before the next visit - validator",
+          "isTest": false,
+          "testIn": "2 1\n2 0 L\n1 0 L",
+          "testOut": "EXIT 3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Start somewhere else",
+          "isTest": true,
+          "testIn": "3 3\n0 0 L\n1 3 R\n2 0 L",
+          "testOut": "EXIT 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Start somewhere else - validator",
+          "isTest": false,
+          "testIn": "4 4\n0 0 R\n4 1 R\n2 0 L\n3 0 L",
+          "testOut": "EXIT 4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Identical roads still flip",
+          "isTest": true,
+          "testIn": "1 1\n1 1 L",
+          "testOut": "LOOP 0 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Identical roads still flip - validator",
+          "isTest": false,
+          "testIn": "2 2\n2 2 R\n1 1 R",
+          "testOut": "LOOP 0 4",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A loop after a prefix",
+          "isTest": true,
+          "testIn": "2 1\n2 2 L\n2 2 L",
+          "testOut": "LOOP 1 2",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "A loop after a prefix - validator",
+          "isTest": false,
+          "testIn": "3 1\n2 2 R\n3 3 L\n3 3 R",
+          "testOut": "LOOP 2 2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Remember every arrow",
+          "isTest": true,
+          "testIn": "4 1\n1 2 L\n1 3 L\n1 4 L\n1 0 L",
+          "testOut": "EXIT 30",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Remember every arrow - validator",
+          "isTest": false,
+          "testIn": "5 3\n5 3 R\n0 3 R\n1 3 R\n2 3 R\n4 3 R",
+          "testOut": "EXIT 62",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Unreachable junctions",
+          "isTest": true,
+          "testIn": "4 1\n2 0 L\n1 0 L\n3 3 L\n4 3 L",
+          "testOut": "EXIT 3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Unreachable junctions - validator",
+          "isTest": false,
+          "testIn": "5 2\n1 1 R\n3 0 L\n2 0 R\n4 4 R\n5 4 L",
+          "testOut": "EXIT 2",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Several junctions in a cycle",
+          "isTest": true,
+          "testIn": "5 1\n1 2 L\n1 3 L\n1 4 L\n1 5 L\n1 1 L",
+          "testOut": "LOOP 0 62",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Several junctions in a cycle - validator",
+          "isTest": false,
+          "testIn": "6 4\n6 4 R\n3 4 R\n4 4 R\n1 4 R\n2 4 R\n5 4 R",
+          "testOut": "LOOP 0 126",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Mixed initial arrows",
+          "isTest": true,
+          "testIn": "4 1\n1 2 R\n1 3 L\n2 4 R\n0 1 L",
+          "testOut": "EXIT 7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Mixed initial arrows - validator",
+          "isTest": false,
+          "testIn": "4 2\n2 4 L\n1 3 R\n4 2 R\n0 1 R",
+          "testOut": "EXIT 9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Detours before delivery",
+          "isTest": true,
+          "testIn": "7 5\n1 7 R\n0 7 R\n1 1 R\n1 2 R\n2 6 R\n6 3 R\n3 5 L",
+          "testOut": "EXIT 29",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Detours before delivery - validator",
+          "isTest": false,
+          "testIn": "8 5\n7 6 L\n0 1 R\n2 6 R\n5 5 R\n4 8 L\n3 1 L\n3 8 R\n1 8 L",
+          "testOut": "EXIT 28",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Detours before repetition",
+          "isTest": true,
+          "testIn": "7 3\n6 7 L\n1 1 L\n4 2 L\n4 5 R\n3 2 L\n4 1 R\n5 7 L",
+          "testOut": "LOOP 8 46",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Detours before repetition - validator",
+          "isTest": false,
+          "testIn": "8 6\n8 3 R\n7 8 R\n3 1 R\n3 1 R\n6 3 L\n5 7 R\n2 6 R\n7 5 R",
+          "testOut": "LOOP 9 96",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A longer finite journey",
+          "isTest": true,
+          "testIn": "10 1\n1 2 L\n1 3 L\n1 4 L\n1 5 L\n1 6 L\n1 7 L\n1 8 L\n1 9 L\n1 10 L\n1 0 L",
+          "testOut": "EXIT 2046",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "A longer finite journey - validator",
+          "isTest": false,
+          "testIn": "11 11\n11 0 L\n11 1 L\n11 2 L\n11 3 L\n11 4 L\n11 5 L\n11 6 L\n11 7 L\n11 8 L\n11 9 L\n11 10 L",
+          "testOut": "EXIT 4094",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "A longer repeating journey",
+          "isTest": true,
+          "testIn": "11 1\n1 2 L\n1 3 L\n1 4 L\n1 5 L\n1 6 L\n1 7 L\n1 8 L\n1 9 L\n1 10 L\n1 11 L\n1 1 L",
+          "testOut": "LOOP 0 4094",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "A longer repeating journey - validator",
+          "isTest": false,
+          "testIn": "12 12\n12 12 R\n1 12 R\n2 12 R\n3 12 R\n4 12 R\n5 12 R\n6 12 R\n7 12 R\n8 12 R\n9 12 R\n10 12 R\n11 12 R",
+          "testOut": "LOOP 0 8190",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Largest network with an exit",
+          "isTest": true,
+          "testIn": "16 1\n1 2 L\n1 3 L\n1 4 L\n1 5 L\n1 6 L\n1 7 L\n1 8 L\n1 9 L\n1 10 L\n1 11 L\n1 12 L\n1 13 L\n1 14 L\n1 15 L\n1 16 L\n1 0 L",
+          "testOut": "EXIT 131070",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Largest network with an exit - validator",
+          "isTest": false,
+          "testIn": "16 7\n15 7 R\n16 7 R\n12 7 R\n14 7 R\n9 7 R\n11 7 R\n1 7 L\n13 7 R\n2 7 R\n0 7 R\n8 7 R\n5 7 R\n10 7 R\n6 7 R\n3 7 R\n4 7 R",
+          "testOut": "EXIT 131069",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Largest network with a loop",
+          "isTest": true,
+          "testIn": "16 1\n1 2 L\n1 3 L\n1 4 L\n1 5 L\n1 6 L\n1 7 L\n1 8 L\n1 9 L\n1 10 L\n1 11 L\n1 12 L\n1 13 L\n1 14 L\n1 15 L\n1 16 L\n1 1 L",
+          "testOut": "LOOP 0 131070",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Largest network with a loop - validator",
+          "isTest": false,
+          "testIn": "16 16\n16 1 L\n16 1 L\n16 2 L\n16 3 L\n16 4 L\n16 5 L\n16 6 L\n16 7 L\n16 8 L\n16 9 L\n16 10 L\n16 11 L\n16 12 L\n16 13 L\n16 14 L\n16 15 L",
+          "testOut": "LOOP 65534 65536",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 <= n <= 16\n1 <= start <= n\n0 <= left, right <= n\ndirection is L or R\nThere are at most n * 2^n distinct configurations outside the office.",
+      "stubGenerator": "read n:int start:int\nloop n read left:int right:int direction:word(1)\nwrite answer\n\nSTATEMENT\nTrace a courier through junctions whose arrows flip after each departure.\n\nINPUT\nn: the number of junctions\nstart: the starting junction\nleft: the destination of the L road\nright: the destination of the R road\ndirection: the initial arrow, L or R\n\nOUTPUT\nEXIT steps, or LOOP first period",
+      "inputDescription": "Line 1: two integers [[n]] and [[start]], the number of junctions and the starting junction.\nNext [[n]] lines, in junction-number order from 1 to [[n]]: two integers [[left]] and [[right]], followed by a character [[direction]] (L or R). These are the destinations of that junction's two roads and its initial arrow.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "One line:\n- EXIT followed by the total number of steps, if the courier reaches destination 0.\n- Otherwise, LOOP followed by the number of steps before the repeating part and the positive number of steps in that repeating part.\nSeparate the words and integers by single spaces."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A courier enters a network of mechanical junctions. Each junction has two labelled roads, L and R, and an arrow pointing to one of them. Every time the courier leaves a junction, its arrow flips.<br><br>Determine whether the courier reaches the delivery office. If the courier is trapped, identify exactly when its repeating journey begins and how many steps the repeating part takes.<br><br><strong>The network</strong><br>There are <var>n</var> junctions, numbered from <const>1</const> to <var>n</var>. Destination <const>0</const> is the delivery office. Each junction has a destination for its L road, a destination for its R road, and an initial arrow, L or R. Roads are directed: arriving at a junction does not imply that a return road exists.<br><br>Both roads may lead to the same destination. A road may lead back to its own junction. Some junctions may never be visited.<br><br><strong>One step</strong><br>The courier starts at junction <var>start</var>, before any step has been taken. At each step:<br>1. Read the arrow at the current junction and select the corresponding road.<br>2. Flip that junction's arrow: L becomes R and R becomes L. All other arrows stay unchanged.<br>3. Follow the selected road. This counts as one step, including a road back to the same junction or to the office.<br><br>The courier stops immediately on reaching destination <const>0</const>.<br><br><strong>Recognizing a loop</strong><br>The configuration before a step consists of the courier's current junction AND the directions of ALL junction arrows. Revisiting the same junction alone does not necessarily mean that a configuration repeats.<br><br>If the courier never reaches the office, use the earliest repetition of any complete configuration. Print the number of steps before that configuration's first occurrence, followed by the number of steps between its first and second occurrences. The initial configuration is at step <const>0</const>.<br><br>In the example, the courier follows 1 -&gt; 2 -&gt; 1 -&gt; 3 -&gt; 0. On its second visit to junction 1, that arrow points to R, so the courier takes a different road and reaches the office after four steps.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">Line 1: two integers <var>n</var> and <var>start</var>, the number of junctions and the starting junction.<br>Next <var>n</var> lines, in junction-number order from 1 to <var>n</var>: two integers <var>left</var> and <var>right</var>, followed by a character <var>direction</var> (L or R). These are the destinations of that junction's two roads and its initial arrow.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">One line:<br>- EXIT followed by the total number of steps, if the courier reaches destination 0.<br>- Otherwise, LOOP followed by the number of steps before the repeating part and the positive number of steps in that repeating part.<br>Separate the words and integers by single spaces.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt;= n &lt;= 16<br>1 &lt;= start &lt;= n<br>0 &lt;= left, right &lt;= n<br>direction is L or R<br>There are at most n * 2^n distinct configurations outside the office.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3 1\n2 3 L\n1 0 L\n0 2 L</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">EXIT 4</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 158437840356993,
+  "commentCount": 0,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
