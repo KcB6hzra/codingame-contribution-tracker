@@ -1,0 +1,294 @@
+{
+  "id": 72780,
+  "activeVersion": 15,
+  "score": 0,
+  "votableId": 31067110,
+  "codingamerId": 2625928,
+  "views": 63,
+  "commentableId": 30928008,
+  "title": "Counting Knister Scores",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Leonard.",
+  "publicHandle": "72780d5e64b4566c02997d2d5ae41d85c710d",
+  "codingamerHandle": "15d27e7206249d21b734f6715c7d6e438295262",
+  "lastVersion": {
+    "version": 15,
+    "autocloseTime": 1796540814746,
+    "freezeTime": 1794553614746,
+    "data": {
+      "title": "Counting Knister Scores",
+      "topics": [
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 90,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        },
+        {
+          "id": 46,
+          "handle": "loops",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Boucles",
+            "2": "Loops"
+          },
+          "pageTitle": "Loops: exercises and theory",
+          "puzzleCount": 128,
+          "parentTopicId": 39,
+          "contentDetailsId": 71
+        },
+        {
+          "id": 47,
+          "handle": "arrays",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Tableaux",
+            "2": "Arrays"
+          },
+          "pageTitle": "Arrays: exercises and theory",
+          "puzzleCount": 49,
+          "parentTopicId": 40,
+          "contentDetailsId": 78
+        }
+      ],
+      "solution": "using System;\nusing System.Linq;\nusing System.IO;\nusing System.Text;\nusing System.Collections;\nusing System.Collections.Generic;\n\nclass Solution\n{\n    static void Main(string[] args)\n    {\n        var nums = new List<int>();\n        for (int i = 0; i < 5; i++)\n        {\n            nums.AddRange(Console.ReadLine().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(int.Parse));            \n        }\n        int score = 0;\n        score += CalculateRowScore(new List<int> { nums[0], nums[6], nums[12], nums[18], nums[24] }, true);\n        score += CalculateRowScore(new List<int> { nums[4], nums[8], nums[12], nums[16], nums[20] }, true);\n        score += CalculateRowScore(new List<int> { nums[0], nums[1], nums[2], nums[3], nums[4] }, false);\n        score += CalculateRowScore(new List<int> { nums[5], nums[6], nums[7], nums[8], nums[9] }, false);\n        score += CalculateRowScore(new List<int> { nums[10], nums[11], nums[12], nums[13], nums[14] }, false);\n        score += CalculateRowScore(new List<int> { nums[15], nums[16], nums[17], nums[18], nums[19] }, false);\n        score += CalculateRowScore(new List<int> { nums[20], nums[21], nums[22], nums[23], nums[24] }, false);\n        score += CalculateRowScore(new List<int> { nums[0], nums[5], nums[10], nums[15], nums[20] }, false);\n        score += CalculateRowScore(new List<int> { nums[1], nums[6], nums[11], nums[16], nums[21] }, false);\n        score += CalculateRowScore(new List<int> { nums[2], nums[7], nums[12], nums[17], nums[22] }, false);\n        score += CalculateRowScore(new List<int> { nums[3], nums[8], nums[13], nums[18], nums[23] }, false);\n        score += CalculateRowScore(new List<int> { nums[4], nums[9], nums[14], nums[19], nums[24] }, false);\n        Console.WriteLine(score);\n    }\n\n    private static int CalculateRowScore(List<int> values, bool diagonaal)\n    {\n        int score = 0;\n        var pairs = values.GroupBy(p => p).ToDictionary(p => p.Key, q => q.Count());\n        var trio = pairs.Where(i => i.Value == 3).Count();\n        var pair = pairs.Where(i => i.Value == 2).Count();\n        if (pairs.Where(i => i.Value == 5).Count() == 1)\n            score += 10;\n        else if (pairs.Where(i => i.Value == 4).Count() == 1)\n            score += 6;\n        else if (trio == 1 && pair == 1)\n            score += 8;\n        else if (pair == 2)\n            score += 3;\n        else if (trio == 1)\n            score += 3;\n        else if (pair == 1)\n            score += 1;\n        else\n        {\n            values = values.OrderBy(p => p).ToList();\n            if (values[0] == values[1] - 1 && values[0] == values[2] - 2 && values[0] == values[3] - 3 && values[0] == values[4] - 4)\n            {\n                if (values.Contains(7))\n                    score += 8;\n                else\n                    score += 12;\n            }\n        }\n        if (diagonaal)\n            score *= 2;\n        return score;\n    }\n}",
+      "statement": "Knister is a dice game played on a 5×5 scorecard. Each round, two six-sided dice are rolled and the player writes their sum (a number from 2 to 12) in an empty cell. After 25 rounds the card is full and gets scored.\n\nThe card is scored line by line. There are 12 lines: the 5 rows, the 5 columns and the 2 diagonals. Every cell belongs to several lines; the centre cell even belongs to four.\n\nEach line scores points for the combination formed by its five numbers:\n\n```\nCombination       Definition           Points  Example\n---------------------------------------------------------\nPair              Only one value         1     4 5 6 7 5\n                    appears exactly\n                    twice\nTwo pairs         Two distinct values    3     5 6 6 10 5\n                    appear exactly\n                    twice each\nThree of a kind   One value appears      3     7 8 7 7 4\n                    exactly three\n                    times\nFull house        Three of a kind        8     4 9 4 4 9\n                    plus a pair\n\nFour of a kind    One value appears      6     6 3 6 6 6\n                    exactly four\n                    times\nFive of a kind    One value appears     10     8 8 8 8 8\n                    exactly five\n                    times\nStraight          7 appears in a         8     7 10 8 6 9\n  containing a 7    straight\n\nStraight          7 does not appear     12     3 5 6 2 4\n  without a 7       in a straight\n```\n\n- A straight is five consecutive numbers, in any order. Straights do not wrap around: for example, 10 11 12 2 3 is not a straight.\n- <<A line scores exactly one combination>>: the one that describes all five numbers. A smaller combination formed by a subset of the five numbers does not count. For example, a full house scores 8, not 3 + 1.\n- A line without any of these combinations scores 0.\n- <<Points scored on the two diagonals are doubled.>>\n\n(7 is the most likely sum of two dice, so a straight that avoids it is rarer and worth more.)\n\nOutput the total score of the scorecard.",
+      "testCases": [
+        {
+          "title": "Pair",
+          "isTest": true,
+          "testIn": "5 6 9 2 7\n3 10 8 10 5\n4 5 11 6 10\n7 9 4 8 2\n12 4 5 7 6",
+          "testOut": "1",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Pair",
+          "isTest": false,
+          "testIn": "8 4 6 4 7\n6 7 4 2 10\n3 11 9 11 5\n9 5 8 3 6\n4 9 5 7 10",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Two pairs",
+          "isTest": true,
+          "testIn": "11 8 3 7 9\n5 10 10 3 5\n8 12 5 6 7\n9 2 11 9 2\n7 6 12 5 3",
+          "testOut": "6",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Two pairs",
+          "isTest": false,
+          "testIn": "7 4 6 10 2\n12 2 11 8 5\n4 7 6 2 12\n6 5 4 11 3\n9 8 11 6 10",
+          "testOut": "3",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Three of a kind",
+          "isTest": true,
+          "testIn": "6 8 4 10 7\n11 7 10 5 4\n9 3 9 12 9\n8 10 6 4 5\n12 9 2 7 8",
+          "testOut": "3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Three of a kind",
+          "isTest": false,
+          "testIn": "8 5 8 6 8\n9 7 3 11 5\n11 7 6 3 9\n6 7 5 4 12\n4 10 10 2 10",
+          "testOut": "9",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Full house",
+          "isTest": true,
+          "testIn": "4 9 4 4 9\n10 5 12 7 3\n8 3 12 9 11\n7 10 4 6 5\n5 7 12 8 10",
+          "testOut": "16",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Full house",
+          "isTest": false,
+          "testIn": "6 11 11 6 11\n10 12 9 5 3\n3 9 3 9 9\n8 7 2 4 6\n12 5 5 12 5",
+          "testOut": "24",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Four of a kind",
+          "isTest": true,
+          "testIn": "5 12 6 11 3\n10 6 2 11 9\n3 7 4 11 6\n8 8 8 3 8\n6 4 5 11 10",
+          "testOut": "12",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Four of a kind",
+          "isTest": false,
+          "testIn": "11 9 8 3 6\n5 5 10 5 5\n8 6 4 7 2\n7 8 5 6 11\n9 4 3 11 7",
+          "testOut": "6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Five of a kind",
+          "isTest": true,
+          "testIn": "5 12 6 11 2\n2 7 6 9 3\n8 11 6 4 9\n11 4 6 2 10\n3 5 6 8 11",
+          "testOut": "10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Five of a kind",
+          "isTest": false,
+          "testIn": "10 11 9 7 2\n6 12 9 10 5\n9 9 9 9 9\n7 6 9 2 11\n3 8 9 5 7",
+          "testOut": "20",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Straight with 7",
+          "isTest": true,
+          "testIn": "8 6 12 9 2\n7 10 8 6 9\n6 4 3 7 11\n9 8 6 5 3\n5 3 7 4 6",
+          "testOut": "24",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Straight with 7",
+          "isTest": false,
+          "testIn": "11 6 12 8 5\n5 7 10 6 3\n3 12 9 7 10\n7 3 8 4 6\n10 9 6 5 8",
+          "testOut": "8",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Straight without 7",
+          "isTest": true,
+          "testIn": "3 5 6 2 4\n4 6 7 8 12\n11 8 12 10 9\n8 9 4 7 11\n5 4 3 6 2",
+          "testOut": "36",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Straight without 7",
+          "isTest": false,
+          "testIn": "11 8 12 10 9\n4 3 7 6 2\n10 5 8 11 6\n6 2 4 5 3\n12 6 3 9 4",
+          "testOut": "24",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "No combination",
+          "isTest": true,
+          "testIn": "3 4 5 6 8\n11 8 4 3 9\n10 11 12 2 3\n8 5 7 9 11\n2 7 8 4 10",
+          "testOut": "0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "No combination",
+          "isTest": false,
+          "testIn": "7 11 8 10 12\n12 2 3 4 5\n9 6 11 7 10\n8 3 5 6 4\n10 7 6 5 8",
+          "testOut": "0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Diagonals count double",
+          "isTest": true,
+          "testIn": "6 9 12 5 2\n5 11 10 9 7\n11 7 6 8 9\n2 4 9 11 5\n9 12 2 10 6",
+          "testOut": "18",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Diagonals count double",
+          "isTest": false,
+          "testIn": "4 8 3 7 10\n7 2 12 8 6\n9 7 6 11 5\n6 10 4 5 7\n8 12 9 6 3",
+          "testOut": "30",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "All combinations",
+          "isTest": true,
+          "testIn": "7 11 4 10 9\n11 11 7 10 10\n8 8 8 10 8\n5 8 4 10 9\n12 8 11 10 9",
+          "testOut": "61",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "All combinations",
+          "isTest": false,
+          "testIn": "10 9 8 11 9\n7 9 9 7 9\n11 9 10 9 2\n8 9 11 8 12\n9 9 12 9 9",
+          "testOut": "63",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Rulebook example",
+          "isTest": true,
+          "testIn": "7 4 8 9 11\n3 7 3 7 7\n5 5 10 5 5\n8 9 3 6 9\n8 11 8 8 7",
+          "testOut": "53",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Rulebook example",
+          "isTest": false,
+          "testIn": "8 6 10 10 10\n4 8 8 8 12\n8 7 8 8 5\n7 8 3 7 7\n7 4 4 10 7",
+          "testOut": "46",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Perfect scorecard",
+          "isTest": true,
+          "testIn": "2 4 6 3 5\n3 5 2 4 6\n4 6 3 5 2\n5 2 4 6 3\n6 3 5 2 4",
+          "testOut": "168",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Perfect scorecard",
+          "isTest": false,
+          "testIn": "8 9 10 11 12\n9 10 11 12 8\n10 11 12 8 9\n11 12 8 9 10\n12 8 9 10 11",
+          "testOut": "164",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "2 ≤ [[value]] ≤ 12",
+      "coverBinaryId": 112360583783619,
+      "stubGenerator": "loop 5 loopline 5 value:int\nwrite answer\n\nSTATEMENT\nCompute the total score of a full Knister scorecard.\n\nINPUT\nvalue: a number on the scorecard, from 2 to 12\n\nOUTPUT\nThe total score of the scorecard",
+      "inputDescription": "<<5 lines>>: {{5}} space-separated integers [[value]], one row of the scorecard.",
+      "solutionLanguage": "C#",
+      "outputDescription": "One integer: the total score of the scorecard."
+    },
+    "draft": false,
+    "readyForModeration": true,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Knister is a dice game played on a 5&times;5 scorecard. Each round, two six-sided dice are rolled and the player writes their sum (a number from 2 to 12) in an empty cell. After 25 rounds the card is full and gets scored.<br><br>The card is scored line by line. There are 12 lines: the 5 rows, the 5 columns and the 2 diagonals. Every cell belongs to several lines; the centre cell even belongs to four.<br><br>Each line scores points for the combination formed by its five numbers:<br><br><pre style=\"font-family: monospace\"></pre><pre style=\"font-family: monospace\"><br>Combination       Definition           Points  Example<br>---------------------------------------------------------<br>Pair              Only one value         1     4 5 6 7 5<br>                    appears exactly<br>                    twice<br>Two pairs         Two distinct values    3     5 6 6 10 5<br>                    appear exactly<br>                    twice each<br>Three of a kind   One value appears      3     7 8 7 7 4<br>                    exactly three<br>                    times<br>Full house        Three of a kind        8     4 9 4 4 9<br>                    plus a pair<br><br>Four of a kind    One value appears      6     6 3 6 6 6<br>                    exactly four<br>                    times<br>Five of a kind    One value appears     10     8 8 8 8 8<br>                    exactly five<br>                    times<br>Straight          7 appears in a         8     7 10 8 6 9<br>  containing a 7    straight<br><br>Straight          7 does not appear     12     3 5 6 2 4<br>  without a 7       in a straight<br></pre><pre style=\"font-family: monospace\"></pre><br><br>- A straight is five consecutive numbers, in any order. Straights do not wrap around: for example, 10 11 12 2 3 is not a straight.<br>- <strong>A line scores exactly one combination</strong>: the one that describes all five numbers. A smaller combination formed by a subset of the five numbers does not count. For example, a full house scores 8, not 3 + 1.<br>- A line without any of these combinations scores 0.<br>- <strong>Points scored on the two diagonals are doubled.</strong><br><br>(7 is the most likely sum of two dice, so a straight that avoids it is rarer and worth more.)<br><br>Output the total score of the scorecard.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>5 lines</strong>: <const>5</const> space-separated integers <var>value</var>, one row of the scorecard.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">One integer: the total score of the scorecard.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">2 &le; <var>value</var> &le; 12</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5 6 9 2 7\n3 10 8 10 5\n4 5 11 6 10\n7 9 4 8 2\n12 4 5 7 6</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 72585303017432,
+  "commentCount": 5,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": true
+}
