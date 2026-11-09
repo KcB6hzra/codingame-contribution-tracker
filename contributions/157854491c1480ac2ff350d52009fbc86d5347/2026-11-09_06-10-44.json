@@ -1,0 +1,93 @@
+{
+  "id": 157854,
+  "activeVersion": 7,
+  "score": 0,
+  "votableId": 40822090,
+  "codingamerId": 7553303,
+  "views": 17,
+  "commentableId": 40647787,
+  "title": "Flight Schedule Commands",
+  "status": "PENDING",
+  "type": "CLASHOFCODE",
+  "nickname": "JeromeGuarin",
+  "publicHandle": "157854491c1480ac2ff350d52009fbc86d5347",
+  "codingamerHandle": "74d411828b33bad43bfa1b084e34bc0d3033557",
+  "lastVersion": {
+    "version": 7,
+    "autocloseTime": 1796796337850,
+    "data": {
+      "title": "Flight Schedule Commands",
+      "topics": [],
+      "fastest": true,
+      "reverse": false,
+      "shortest": false,
+      "solution": "using System;\n\nclass Player\n{\n    static int ParseTime(string hhmm)\n    {\n        string[] p = hhmm.Split(':');\n        return int.Parse(p[0]) * 60 + int.Parse(p[1]);\n    }\n\n    static string FormatTime(int totalMinutes)\n    {\n        int day = 24 * 60;\n        totalMinutes %= day;\n        if (totalMinutes < 0) totalMinutes += day;\n        int h = totalMinutes / 60;\n        int m = totalMinutes % 60;\n        return $\"{h:D2}:{m:D2}\";\n    }\n\n    static void Main(string[] args)\n    {\n        string s = Console.ReadLine();\n        int n = int.Parse(Console.ReadLine());\n\n        string[] parts = s.Split('|');\n        string flight = parts[0];\n        string origin = parts[1];\n        string dest = parts[2];\n        int departureMinutes = ParseTime(parts[3]);\n\n        for (int i = 0; i < n; i++)\n        {\n            string cmd = Console.ReadLine();\n\n            if (cmd == \"SWAP_STATIONS\")\n            {\n                string tmp = origin;\n                origin = dest;\n                dest = tmp;\n                continue;\n            }\n\n            string[] cmdParts = cmd.Split('|');\n            string op = cmdParts[0];\n\n            if (op == \"SET_ORIGIN\")\n            {\n                origin = cmdParts[1];\n            }\n            else if (op == \"SET_DEST\")\n            {\n                dest = cmdParts[1];\n            }\n            else if (op == \"SET_DEPARTURE\")\n            {\n                departureMinutes = ParseTime(cmdParts[1]);\n            }\n            else if (op == \"DELAY\")\n            {\n                departureMinutes += int.Parse(cmdParts[1]);\n            }\n        }\n\n        Console.WriteLine($\"{flight}|{origin}|{dest}|{FormatTime(departureMinutes)}\");\n    }\n}",
+      "statement": "A flight information system stores one schedule record in this format:\n[[S]] = FLIGHT|ORIGIN|DESTINATION|HH:MM\n\nYou receive [[N]] commands and apply them in order:\n- SET_ORIGIN|XXX: replace the origin station with [[XXX]].\n- SET_DEST|XXX: replace the destination station with [[XXX]].\n- SET_DEPARTURE|HH:MM: replace the departure time.\n- DELAY|M: delay departure by [[M]] minutes.\n- SWAP_STATIONS: swap origin and destination.\n\nFor DELAY|M, time wraps around after 23:59.\nAll commands are valid.",
+      "testCases": [
+        {
+          "title": "Basic updates with delay",
+          "isTest": true,
+          "testIn": "CG101|MNL|DXB|08:30\n4\nSET_ORIGIN|CEB\nDELAY|45\nSET_DEST|SIN\nSWAP_STATIONS",
+          "testOut": "CG101|SIN|CEB|09:15",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Delay validator",
+          "isTest": false,
+          "testIn": "FJ7|NRT|ICN|23:55\n3\nDELAY|20\nSWAP_STATIONS\nSET_DEST|HKG",
+          "testOut": "FJ7|ICN|HKG|00:15",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Station edits and delay",
+          "isTest": true,
+          "testIn": "AB12|LAX|SFO|12:00\n3\nSET_ORIGIN|SEA\nDELAY|125\nSET_DEST|LAX",
+          "testOut": "AB12|SEA|LAX|14:05",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Station validator",
+          "isTest": false,
+          "testIn": "ZX9|BKK|KUL|06:05\n5\nSET_DEPARTURE|06:45\nSWAP_STATIONS\nDELAY|30\nSET_ORIGIN|CGK\nSET_DEST|BKK",
+          "testOut": "ZX9|CGK|BKK|07:15",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Overwrite and wrap",
+          "isTest": true,
+          "testIn": "PR88|DOH|JED|14:40\n5\nSET_DEST|RUH\nSET_ORIGIN|MCT\nDELAY|30\nSET_DEST|JED\nSWAP_STATIONS",
+          "testOut": "PR88|JED|MCT|15:10",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Wrap validator",
+          "isTest": false,
+          "testIn": "LM5|MAD|LIS|23:50\n2\nDELAY|20\nSWAP_STATIONS",
+          "testOut": "LM5|LIS|MAD|00:10",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "constraints": "1 <= |[[S]]| <= 200\n1 <= [[N]] <= 50\n[[S]], [[X]], [[A]], [[B]] contain no spaces and no |.\nFor CUT|L|R: 0 <= [[L]] <= [[R]] < current length.\n0 <= [[K]] <= 1000000000\nCurrent length never exceeds 300.",
+      "stubGenerator": "read S:word(80)\nread N:int\nloop N read command:word(80)\nwrite answer\n\nINPUT\nS: flight schedule in format FLIGHT|ORIGIN|DESTINATION|HH:MM\nN: number of commands\ncommand: schedule update command\n\nOUTPUT\nFinal schedule in format FLIGHT|ORIGIN|DESTINATION|HH:MM",
+      "inputDescription": "Line 1: string [[S]], formatted as FLIGHT|ORIGIN|DESTINATION|HH:MM.\nLine 2: integer [[N]], number of commands.\nNext [[N]] lines: one command in one of these forms:\n- SET_ORIGIN|XXX\n- SET_DEST|XXX\n- SET_DEPARTURE|HH:MM\n- DELAY|M\n- SWAP_STATIONS\n\"@.Trim()\n\n = @\"\n1 <= [[N]] <= 30\nAll fields contain no spaces.\nStation codes use uppercase letters.\n0 <= [[M]] <= 10000",
+      "solutionLanguage": "C#",
+      "outputDescription": "Print the final schedule in the same format: FLIGHT|ORIGIN|DESTINATION|HH:MM."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A flight information system stores one schedule record in this format:<br><var>S</var> = FLIGHT|ORIGIN|DESTINATION|HH:MM<br><br>You receive <var>N</var> commands and apply them in order:<br>- SET_ORIGIN|XXX: replace the origin station with <var>XXX</var>.<br>- SET_DEST|XXX: replace the destination station with <var>XXX</var>.<br>- SET_DEPARTURE|HH:MM: replace the departure time.<br>- DELAY|M: delay departure by <var>M</var> minutes.<br>- SWAP_STATIONS: swap origin and destination.<br><br>For DELAY|M, time wraps around after 23:59.<br>All commands are valid.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">Line 1: string <var>S</var>, formatted as FLIGHT|ORIGIN|DESTINATION|HH:MM.<br>Line 2: integer <var>N</var>, number of commands.<br>Next <var>N</var> lines: one command in one of these forms:<br>- SET_ORIGIN|XXX<br>- SET_DEST|XXX<br>- SET_DEPARTURE|HH:MM<br>- DELAY|M<br>- SWAP_STATIONS<br>&quot;@.Trim()<br><br> = @&quot;<br>1 &lt;= <var>N</var> &lt;= 30<br>All fields contain no spaces.<br>Station codes use uppercase letters.<br>0 &lt;= <var>M</var> &lt;= 10000</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Print the final schedule in the same format: FLIGHT|ORIGIN|DESTINATION|HH:MM.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &lt;= |<var>S</var>| &lt;= 200<br>1 &lt;= <var>N</var> &lt;= 50<br><var>S</var>, <var>X</var>, <var>A</var>, <var>B</var> contain no spaces and no |.<br>For CUT|L|R: 0 &lt;= <var>L</var> &lt;= <var>R</var> &lt; current length.<br>0 &lt;= <var>K</var> &lt;= 1000000000<br>Current length never exceeds 300.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">CG101|MNL|DXB|08:30\n4\nSET_ORIGIN|CEB\nDELAY|45\nSET_DEST|SIN\nSWAP_STATIONS</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">CG101|SIN|CEB|09:15</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "commentCount": 0,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
