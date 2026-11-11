@@ -1,0 +1,115 @@
+{
+  "id": 157920,
+  "activeVersion": 6,
+  "score": 0,
+  "votableId": 40831264,
+  "codingamerId": 6444585,
+  "views": 57,
+  "commentableId": 40656937,
+  "title": "The Billionaire's Ledger",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "imru_et",
+  "publicHandle": "1579202a1edd0d04b7304d5bd4b281af40d77d",
+  "codingamerHandle": "5cc8403694e78df2d596996ff92104745854446",
+  "lastVersion": {
+    "version": 6,
+    "autocloseTime": 1797013208102,
+    "data": {
+      "title": "The Billionaire's Ledger",
+      "topics": [
+        {
+          "labelMap": {
+            "2": "data science"
+          }
+        }
+      ],
+      "solution": "import io\nimport pandas as pd\n\nn = int(input())\nrows = [input() for _ in range(n)]\ndf = pd.read_csv(io.StringIO(\"Date,Category,Amount\\n\" + \"\\n\".join(rows)))\n\n# 1) Drop rows with a missing Date\ndf = df.dropna(subset=[\"Date\"])\n\n# 2) Fill Category, then Amount with the floored mean of the known amounts\ndf[\"Category\"] = df[\"Category\"].fillna(\"Unknown\")\nmean_amount = int(df[\"Amount\"].mean())\ndf[\"Amount\"] = df[\"Amount\"].fillna(mean_amount).astype(int)\n\n# 3) New columns\ndf[\"Tax\"] = df[\"Amount\"] * 15 // 100\ndf[\"Net\"] = df[\"Amount\"] - df[\"Tax\"]\n\n# 4) Report\nprint(df.shape[0], df.shape[1])\nprint(mean_amount)\nprint(df[df[\"Net\"] == df[\"Net\"].max()][\"Date\"].min())   # earliest date on a tie\nprint(int(df[df[\"Net\"] > 1000][\"Net\"].sum()))",
+      "statement": "Mr. Moneybags, a billionaire with a new passion for spreadsheets, digitized his entire ledger. Then his clumsy intern spilled coffee on the keyboard, and now some entries are blank. He is generous, but he demands accuracy: clean the ledger, work out his taxes, and report the results.\n\nRules:\n- Remove every transaction whose 'Date' is empty.\n- An empty 'Category' becomes 'Unknown'.\n- An empty 'Amount` becomes [[M]], the mean 'Amount' of the kept transactions that have one, rounded down.\n- Each kept transaction gets a [[Tax]] equal to {{15}}% of its [[Amount]], rounded down, and a [[Net]] equal to [[Amount]] - [[Tax]]. Each transaction now has {{5}} fields: 'Date', 'Category', 'Amount', 'Tax', 'Net'.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "5\n2026-01-15,Food,500\n2026-01-16,,300\n,Fun,200\n2026-01-18,Food,\n2026-01-19,Rent,2000",
+          "testOut": "4 5\n933\n2026-01-19\n1700",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "6\n2026-05-10,Food,120\n2026-05-11,,\n2026-05-12,Rent,950\n,Fun,5000\n2026-05-14,Food,40\n2026-05-15,Fun,",
+          "testOut": "5 5\n370\n2026-05-12\n0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "5\n2026-03-09,Rent,1000\n2026-03-02,Food,1000\n2026-03-05,Fun,400\n2026-03-07,Food,\n2026-03-04,Rent,200",
+          "testOut": "5 5\n650\n2026-03-02\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "6\n2026-11-20,Fun,600\n2026-11-12,Rent,600\n2026-11-15,Food,\n2026-11-30,Food,100\n2026-11-13,Fun,600\n2026-11-14,Rent,50",
+          "testOut": "6 5\n390\n2026-11-12\n0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "4\n2026-06-01,Food,\n2026-06-02,Fun,\n2026-06-03,Rent,100\n2026-06-04,Food,",
+          "testOut": "4 5\n100\n2026-06-01\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "5\n2026-12-01,Rent,\n2026-12-02,,3000\n2026-12-03,Food,\n2026-12-04,Fun,\n,Fun,",
+          "testOut": "4 5\n3000\n2026-12-01\n10200",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "4\n2026-02-01,Food,1176\n2026-02-02,Fun,800\n2026-02-03,Rent,\n2026-02-04,Food,90",
+          "testOut": "4 5\n688\n2026-02-01\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "4\n2026-10-01,Food,1177\n2026-10-02,Fun,1176\n2026-10-03,Rent,\n2026-10-04,Food,90",
+          "testOut": "4 5\n814\n2026-10-01\n1001",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "easy",
+      "constraints": "Constraints:\n1 ≤ [[N]] ≤ {{1000}}\n0 ≤ [[Amount]] ≤ {{10000}}\nDates are in 'YYYY-MM-DD' format. Categories are single words of letters.\nAt least one transaction has both a 'Date' and an 'Amount'.",
+      "coverBinaryId": 170740489035359,
+      "stubGenerator": "read N:int\nloop N read row:string(60)\nwrite answer",
+      "inputDescription": "Input:\n<<Line 1:>> An integer [[N]], the number of transactions.\n<<Next [[N]] lines:>> 'Date,Category,Amount', any of which may be empty.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "Output:\n<<Line 1:>> Two integers [[R]] and [[C]]: the number of transactions kept and the number of fields each one has.\n<<Line 2:>> The value of [[M]].\n<<Line 3:>> The 'Date' of the transaction with the highest [[Net]]. If several tie, the earliest date.\n<<Line 4:>> The sum of [[Net]] over all transactions with [[Net]] > {{1000}}, or {{0}} if there are none."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Mr. Moneybags, a billionaire with a new passion for spreadsheets, digitized his entire ledger. Then his clumsy intern spilled coffee on the keyboard, and now some entries are blank. He is generous, but he demands accuracy: clean the ledger, work out his taxes, and report the results.<br><br>Rules:<br>- Remove every transaction whose 'Date' is empty.<br>- An empty 'Category' becomes 'Unknown'.<br>- An empty 'Amount` becomes <var>M</var>, the mean 'Amount' of the kept transactions that have one, rounded down.<br>- Each kept transaction gets a <var>Tax</var> equal to <const>15</const>% of its <var>Amount</var>, rounded down, and a <var>Net</var> equal to <var>Amount</var> - <var>Tax</var>. Each transaction now has <const>5</const> fields: 'Date', 'Category', 'Amount', 'Tax', 'Net'.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\">Input:<br><strong>Line 1:</strong> An integer <var>N</var>, the number of transactions.<br><strong>Next <var>N</var> lines:</strong> 'Date,Category,Amount', any of which may be empty.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">Output:<br><strong>Line 1:</strong> Two integers <var>R</var> and <var>C</var>: the number of transactions kept and the number of fields each one has.<br><strong>Line 2:</strong> The value of <var>M</var>.<br><strong>Line 3:</strong> The 'Date' of the transaction with the highest <var>Net</var>. If several tie, the earliest date.<br><strong>Line 4:</strong> The sum of <var>Net</var> over all transactions with <var>Net</var> &gt; <const>1000</const>, or <const>0</const> if there are none.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">Constraints:<br>1 &le; <var>N</var> &le; <const>1000</const><br>0 &le; <var>Amount</var> &le; <const>10000</const><br>Dates are in 'YYYY-MM-DD' format. Categories are single words of letters.<br>At least one transaction has both a 'Date' and an 'Amount'.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">5\n2026-01-15,Food,500\n2026-01-16,,300\n,Fun,200\n2026-01-18,Food,\n2026-01-19,Rent,2000</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">4 5\n933\n2026-01-19\n1700</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 170738861458428,
+  "commentCount": 5,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
