@@ -1,0 +1,166 @@
+{
+  "id": 157954,
+  "activeVersion": 2,
+  "score": 0,
+  "votableId": 40833920,
+  "codingamerId": 7660786,
+  "views": 21,
+  "commentableId": 40659590,
+  "title": "Triki: Crack the Motion Vault",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "BartoszPiontek",
+  "publicHandle": "157954754d8c9ec4deb70c4d9444d1fe1d1ab9",
+  "codingamerHandle": "9b619146021aea1de06f1a77f74834ee6870667",
+  "lastVersion": {
+    "version": 2,
+    "autocloseTime": 1796855915118,
+    "data": {
+      "title": "Crack the Motion Vault",
+      "topics": [
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 49,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "labelMap": {
+            "2": "Bitwise Operations"
+          }
+        },
+        {
+          "id": 47,
+          "handle": "arrays",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Tableaux",
+            "2": "Arrays"
+          },
+          "pageTitle": "Arrays: exercises and theory",
+          "puzzleCount": 49,
+          "parentTopicId": 40,
+          "contentDetailsId": 78
+        },
+        {
+          "id": 45,
+          "handle": "conditions",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Conditions",
+            "2": "Conditions"
+          },
+          "pageTitle": "Conditions: exercises and theory",
+          "puzzleCount": 90,
+          "parentTopicId": 39,
+          "contentDetailsId": 68
+        },
+        {
+          "id": 86,
+          "handle": "simulation",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "Simulation",
+            "2": "Simulation"
+          },
+          "pageTitle": "Simulation: exercises and theory",
+          "puzzleCount": 60,
+          "parentTopicId": 42,
+          "contentDetailsId": 72
+        }
+      ],
+      "solution": "import java.util.*;\nimport java.io.*;\nimport java.math.*;\n\nclass Solution {\n\n    public static void main(String args[]) {\n        Scanner in = new Scanner(System.in);\n        int N = in.nextInt();\n        StringBuilder s = new StringBuilder();\n        char p = 0;\n\n        for (int i = 0; i < N; i++) {\n            int[] b = new int[14];\n\n            for (int j = 0; j < 14; j++) {\n                b[j] = Integer.parseInt(in.next(), 16);\n            }\n\n            int[] v = new int[6];\n\n            for (int j = 0; j < 6; j++) {\n                int u = b[2 + j * 2] | (b[3 + j * 2] << 8);\n                v[j] = u < 32768 ? u : u - 65536;\n            }\n\n            int k = 0;\n\n            for (int j = 1; j < 3; j++) {\n                if (Math.abs(v[j]) > Math.abs(v[k])) {\n                    k = j;\n                }\n            }\n\n            int a = Math.abs(v[3]) + Math.abs(v[4]) + Math.abs(v[5]);\n\n            if (Math.abs(v[k]) < 400 || a < 3000) {\n                continue;\n            }\n\n            char c = v[k] > 0 ? \"RUF\".charAt(k) : \"LDB\".charAt(k);\n\n            if (c != p) {\n                s.append(c);\n                p = c;\n            }\n        }\n\n        System.out.println(s.length() == 0 ? \"LOCKED\" : s.toString());\n    }\n}",
+      "statement": "A mysterious vault is controlled by a motion device.\n\nInstead of entering a password, the user performs physical gestures. The device sends raw hexadecimal packets containing gyroscope and accelerometer readings.\n\nYour task is to decode the packets and reconstruct the gesture password.\n\n<<Packet format>>\n\nEach packet consists of exactly {{14}} bytes, represented by two-digit uppercase hexadecimal values separated by spaces.\n\n{{22 00}} [[gx]] [[gy]] [[gz]] [[ax]] [[ay]] [[az]]\n\nThe first two bytes, {{22 00}}, form the fixed header.\n\nEach of [[gx]], [[gy]], [[gz]], [[ax]], [[ay]], and [[az]] represents two bytes. These are six signed 16-bit integers encoded in little-endian order using two's complement representation.\n\n- [[gx]], [[gy]], [[gz]]: gyroscope readings for the X, Y, and Z axes.\n- [[ax]], [[ay]], [[az]]: accelerometer readings for the X, Y, and Z axes.\n\nExamples of little-endian two's complement decoding:\n\n- {{01 00}} represents {{1}}.\n- {{FF 7F}} represents {{32767}}.\n- {{FF FF}} represents {{-1}}.\n- {{00 80}} represents {{-32768}}.\n\n<<Gesture detection>>\n\nFor each packet, calculate [[G]] as the largest absolute value among the three gyroscope readings.\n\nCalculate [[A]] by adding together the absolute values of the three accelerometer readings.\n\nA packet represents a valid gesture only when [[G]] ≥ {{400}} and [[A]] ≥ {{3000}}.\n\nOtherwise, ignore the packet.\n\n<<Gesture direction>>\n\nFor each valid packet, find the gyroscope axis with the greatest absolute value.\n\nIf multiple axes are tied, prioritize X, then Y, then Z.\n\nConvert the dominant axis into a character based on its sign:\n\n- Positive X: {{R}} (Right)\n- Negative X: {{L}} (Left)\n- Positive Y: {{U}} (Up)\n- Negative Y: {{D}} (Down)\n- Positive Z: {{F}} (Forward)\n- Negative Z: {{B}} (Backward)\n\n<<Duplicate filtering>>\n\nThe device may transmit multiple packets for the same gesture.\n\nAppend a gesture character to the password only if it differs from the last accepted gesture.\n\nIgnored packets do not reset the previous accepted gesture.\n\nFor example, {{R R U U R F F}} becomes {{RURF}}.",
+      "testCases": [
+        {
+          "title": "Test 1",
+          "isTest": true,
+          "testIn": "3\n22 00 F4 01 00 00 00 00 D0 07 E8 03 00 00\n22 00 00 00 58 02 00 00 00 00 18 FC A0 F6\n22 00 00 00 00 00 E0 FC 18 FC 18 FC 24 FA",
+          "testOut": "RUB",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 1",
+          "isTest": false,
+          "testIn": "6\n22 00 90 01 00 00 00 00 B8 0B 00 00 00 00\n22 00 70 FE 00 00 00 00 B8 0B 00 00 00 00\n22 00 00 00 90 01 00 00 B8 0B 00 00 00 00\n22 00 00 00 70 FE 00 00 B8 0B 00 00 00 00\n22 00 00 00 00 00 90 01 B8 0B 00 00 00 00\n22 00 00 00 00 00 70 FE B8 0B 00 00 00 00",
+          "testOut": "RLUDFB",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 2",
+          "isTest": true,
+          "testIn": "6\n22 00 8F 01 00 00 00 00 D0 07 E8 03 00 00\n22 00 F4 01 00 00 00 00 E8 03 E8 03 E7 03\n22 00 90 01 00 00 00 00 B8 0B 00 00 00 00\n22 00 20 03 32 00 00 00 E8 03 E8 03 E8 03\n22 00 00 00 C2 01 00 00 D0 07 E8 03 00 00\n22 00 90 01 00 00 00 00 D0 07 E8 03 00 00",
+          "testOut": "RUR",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 2",
+          "isTest": false,
+          "testIn": "6\n22 00 BC 02 00 00 00 00 B8 0B 00 00 00 00\n22 00 00 00 00 00 00 00 B8 0B 00 00 00 00\n22 00 84 03 00 00 00 00 B8 0B 00 00 00 00\n22 00 00 00 00 00 58 02 B8 0B 00 00 00 00\n22 00 00 00 00 00 00 00 B8 0B 00 00 00 00\n22 00 00 00 00 00 20 03 B8 0B 00 00 00 00",
+          "testOut": "RF",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 3",
+          "isTest": true,
+          "testIn": "3\n22 00 44 FD BC 02 32 00 FF 7F 00 00 00 00\n22 00 00 00 18 FC 18 FC 00 80 00 00 00 00\n22 00 00 00 00 00 F4 01 30 F8 18 FC 00 00",
+          "testOut": "LDF",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 3",
+          "isTest": false,
+          "testIn": "3\n22 00 58 02 A8 FD 58 02 18 FC 18 FC 18 FC\n22 00 00 00 7C FC 84 03 00 00 00 00 48 F4\n22 00 00 00 00 00 70 FE E8 03 E8 03 E8 03",
+          "testOut": "RDB",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Test 4",
+          "isTest": true,
+          "testIn": "3\n22 00 8F 01 00 00 00 00 88 13 00 00 00 00\n22 00 E8 03 00 00 00 00 E8 03 E8 03 E7 03\n22 00 00 00 00 00 00 00 00 00 00 00 00 00",
+          "testOut": "LOCKED",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Validator 4",
+          "isTest": false,
+          "testIn": "6\n22 00 8F 01 00 00 00 00 88 13 00 00 00 00\n22 00 E8 03 00 00 00 00 E8 03 E8 03 E7 03\n22 00 00 00 00 00 00 00 00 00 00 00 00 00\n22 00 71 FE 00 00 00 00 B8 0B 00 00 00 00\n22 00 00 00 00 00 18 FC E8 03 E7 03 E8 03\n22 00 FF 7F 00 00 00 00 18 FC 19 FC 18 FC",
+          "testOut": "LOCKED",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "{{1}} ≤ [[N]] ≤ {{10}}\n\nEach sensor reading ([[gx]], [[gy]], [[gz]], [[ax]], [[ay]], [[az]]) is between {{-32768}} and {{32767}}, inclusive.",
+      "coverBinaryId": 170755208625342,
+      "stubGenerator": "read N:int\nloop N loopline 14 byte:word(2)\nwrite code",
+      "inputDescription": "<<Line 1:>> An integer [[N]], the number of motion packets.\n\n<<Next [[N]] lines:>> Each line contains exactly {{14}} space-separated, two-digit hexadecimal bytes. All hexadecimal letters are uppercase ({{A}} through {{F}}).",
+      "solutionLanguage": "Java",
+      "outputDescription": "<<Line 1:>> The decoded gesture password, consisting of the characters {{R}}, {{L}}, {{U}}, {{D}}, {{F}}, or {{B}}, with consecutive duplicate gestures removed.\n\nIf no valid gestures are detected, output {{LOCKED}}."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">A mysterious vault is controlled by a motion device.<br><br>Instead of entering a password, the user performs physical gestures. The device sends raw hexadecimal packets containing gyroscope and accelerometer readings.<br><br>Your task is to decode the packets and reconstruct the gesture password.<br><br><strong>Packet format</strong><br><br>Each packet consists of exactly <const>14</const> bytes, represented by two-digit uppercase hexadecimal values separated by spaces.<br><br><const>22 00</const> <var>gx</var> <var>gy</var> <var>gz</var> <var>ax</var> <var>ay</var> <var>az</var><br><br>The first two bytes, <const>22 00</const>, form the fixed header.<br><br>Each of <var>gx</var>, <var>gy</var>, <var>gz</var>, <var>ax</var>, <var>ay</var>, and <var>az</var> represents two bytes. These are six signed 16-bit integers encoded in little-endian order using two's complement representation.<br><br>- <var>gx</var>, <var>gy</var>, <var>gz</var>: gyroscope readings for the X, Y, and Z axes.<br>- <var>ax</var>, <var>ay</var>, <var>az</var>: accelerometer readings for the X, Y, and Z axes.<br><br>Examples of little-endian two's complement decoding:<br><br>- <const>01 00</const> represents <const>1</const>.<br>- <const>FF 7F</const> represents <const>32767</const>.<br>- <const>FF FF</const> represents <const>-1</const>.<br>- <const>00 80</const> represents <const>-32768</const>.<br><br><strong>Gesture detection</strong><br><br>For each packet, calculate <var>G</var> as the largest absolute value among the three gyroscope readings.<br><br>Calculate <var>A</var> by adding together the absolute values of the three accelerometer readings.<br><br>A packet represents a valid gesture only when <var>G</var> &ge; <const>400</const> and <var>A</var> &ge; <const>3000</const>.<br><br>Otherwise, ignore the packet.<br><br><strong>Gesture direction</strong><br><br>For each valid packet, find the gyroscope axis with the greatest absolute value.<br><br>If multiple axes are tied, prioritize X, then Y, then Z.<br><br>Convert the dominant axis into a character based on its sign:<br><br>- Positive X: <const>R</const> (Right)<br>- Negative X: <const>L</const> (Left)<br>- Positive Y: <const>U</const> (Up)<br>- Negative Y: <const>D</const> (Down)<br>- Positive Z: <const>F</const> (Forward)<br>- Negative Z: <const>B</const> (Backward)<br><br><strong>Duplicate filtering</strong><br><br>The device may transmit multiple packets for the same gesture.<br><br>Append a gesture character to the password only if it differs from the last accepted gesture.<br><br>Ignored packets do not reset the previous accepted gesture.<br><br>For example, <const>R R U U R F F</const> becomes <const>RURF</const>.</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1:</strong> An integer <var>N</var>, the number of motion packets.<br><br><strong>Next <var>N</var> lines:</strong> Each line contains exactly <const>14</const> space-separated, two-digit hexadecimal bytes. All hexadecimal letters are uppercase (<const>A</const> through <const>F</const>).</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\"><strong>Line 1:</strong> The decoded gesture password, consisting of the characters <const>R</const>, <const>L</const>, <const>U</const>, <const>D</const>, <const>F</const>, or <const>B</const>, with consecutive duplicate gestures removed.<br><br>If no valid gestures are detected, output <const>LOCKED</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\"><const>1</const> &le; <var>N</var> &le; <const>10</const><br><br>Each sensor reading (<var>gx</var>, <var>gy</var>, <var>gz</var>, <var>ax</var>, <var>ay</var>, <var>az</var>) is between <const>-32768</const> and <const>32767</const>, inclusive.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">3\n22 00 F4 01 00 00 00 00 D0 07 E8 03 00 00\n22 00 00 00 58 02 00 00 00 00 18 FC A0 F6\n22 00 00 00 00 00 E0 FC 18 FC 18 FC 24 FA</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">RUB</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "commentCount": 2,
+  "upVotes": 0,
+  "downVotes": 0,
+  "statusHistory": [],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
