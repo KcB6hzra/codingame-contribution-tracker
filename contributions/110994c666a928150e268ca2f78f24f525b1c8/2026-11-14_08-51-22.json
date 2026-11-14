@@ -1,0 +1,247 @@
+{
+  "id": 110994,
+  "activeVersion": 64,
+  "score": 5,
+  "votableId": 35510870,
+  "codingamerId": 5271799,
+  "views": 139,
+  "commentableId": 35356001,
+  "title": "OISC: The One-Instruction Set Computer",
+  "status": "PENDING",
+  "type": "PUZZLE_INOUT",
+  "nickname": "Eulero314",
+  "publicHandle": "110994c666a928150e268ca2f78f24f525b1c8",
+  "codingamerHandle": "7ed5fd396d11683394bd215ec8f0faf49971725",
+  "lastVersion": {
+    "version": 64,
+    "autocloseTime": 1797233502225,
+    "data": {
+      "title": "OISC: The One-Instruction Set Computer",
+      "topics": [
+        {
+          "id": 67,
+          "handle": "parsing",
+          "category": "FUNDAMENTALS",
+          "labelMap": {
+            "1": "Parsing",
+            "2": "Parsing"
+          },
+          "pageTitle": "Parsing: exercises and theory",
+          "puzzleCount": 49,
+          "parentTopicId": 41,
+          "contentDetailsId": 102
+        },
+        {
+          "id": 235,
+          "handle": "interpreter",
+          "category": "INTERMEDIATE",
+          "labelMap": {
+            "1": "interpreter",
+            "2": "Interpreters"
+          },
+          "puzzleCount": 12,
+          "parentTopicId": 93
+        }
+      ],
+      "solution": "import sys\n\nclass compiler:\n    def __init__(self,pgm:list,ADDR_IN=254,ADDR_OUT=255):\n        self.pgm=pgm\n        self.mem=[0 for _ in range(256)]\n        self.buff=[]\n        self.error=[]\n        self.addr_in=ADDR_IN\n        self.addr_out=ADDR_OUT\n\n    def next_line(self):\n        l=[]\n        while l==[]:\n            if len(self.pgm) == 0:\n                return None\n            l=self.pgm.pop(0)\n            l=l.strip()\n            l=l.replace(':',': ')\n            l=l.replace(',',' , ')\n            l=l.replace('+',' + ')\n            l=l.split()\n            l=list(filter(lambda x:x!='',l))\n        return l\n\n    def next_token(self,error=True):\n        if len(self.buff)==0:\n            l=self.next_line()\n            if not l:\n                if error:\n                    self.error.append(\"Error: token expected\")\n                return None\n            self.buff+=l\n        v=self.buff.pop(0)\n        if v:\n            v=v.upper()\n        else:\n            pass\n        return v\n\n    def peek_token(self):\n        # end of program is not an error when peeking (e.g. subleq without C on the last line)\n        t=self.next_token(False)\n        if t is not None:\n            self.buff=[t]+self.buff\n        return t\n\n    def add(self,val):\n        if self.addr>=self.addr_in:\n            self.error.append(\"Error: program too large\")\n            return\n        self.mem[self.addr]=val\n        self.addr+=1\n\n    def nextint(self):\n        v=self.next_token()\n        return self.readint(v)\n\n    def readint(self,v):\n        try:\n            vint=int(v)\n        except:\n            if v.startswith(\"@\"):\n                offset = 0\n                plus=self.peek_token()\n                if plus=='+':\n                    plus = self.next_token()\n                    offset=int(self.next_token())\n                if v in self.labels:\n                    vint=self.labels[v]+offset\n                else:\n                    vint=f\"{v}+{offset}\"\n        # trasformare complemento a 2\n        if isinstance(vint,int):\n            vint=vint%256 # neg=256+vint\n        return vint\n\n    def first_pass(self):\n        while len(self.error)==0:\n            i=self.next_token(False)\n            if not i:\n                break\n            if i.startswith('@') and i.endswith(':'):\n                lab=i[:-1]\n                if lab not in self.labels:\n                    self.labels[lab]=self.addr\n                else:\n                    self.error.append(f\"Error: label [{lab}] already defined\")\n            elif i=='SUBLEQ':\n                a=self.nextint()\n                comma=self.next_token()\n                if comma!=',':\n                    self.error.append(\"Error: missing comma\")\n                b=self.nextint()\n                f=self.peek_token()\n                if f==',':\n                    f=self.next_token()\n                    c=self.nextint()\n                else:\n                    c=self.addr+3\n                self.add(a)\n                self.add(b)\n                self.add(c)\n            elif i=='.DATA':\n                v=self.nextint()\n                self.add(v)\n            else:\n                self.error.append(f\"Error: unknown symbol [{i}]\")\n\n    def second_pass(self):\n        if len(self.error)>0:\n            return\n        for addr,m in enumerate(self.mem):\n            if isinstance(m,str):\n                lab,off=m.split('+')\n                if lab not in self.labels:\n                    self.error.append(f\"Error: unknown label [{lab}]\")\n                else:\n                    self.buff=['+',off]\n                    v=self.readint(lab)\n                    self.mem[addr]=v\n\n    def compile(self)->list:\n        self.addr=0\n        self.labels={'@IN':self.addr_in,'@OUT':self.addr_out}\n        self.first_pass()\n        self.second_pass()\n        if len(self.error)>0:\n            return None\n        else:\n            return self.mem\n\nclass VM:\n    def __init__(self,mem,IN,ADDR_IN=254,ADDR_OUT=255):\n        self.mem=mem\n        self.IN=IN\n        self.OUT=[]\n        self.halt=False\n        self.addr=0\n        self.addr_in=ADDR_IN\n        self.addr_out=ADDR_OUT\n\n    def debug(self,arg):\n        print(arg,file=sys.stderr)\n\n    def peek(self,addr):\n        if addr==self.addr_in:\n            if len(self.IN)>0:\n                v=self.IN.pop(0)\n                self.debug(f\"[<=] reading {v} from IN\")\n            else:\n                v=0\n                self.debug(f\"[!] IN empty, Halt\")\n                self.halt=True\n        elif addr==self.addr_out:\n            v=0\n            self.debug(f\"[+] reading 0 from OUT\")\n        else:\n            v=self.mem[addr]\n            self.debug(f\"[+] reading {v} from mem[{addr}]\")\n        return v\n\n    def poke(self,addr,v):\n        if addr==self.addr_in:\n            self.debug(f\"[+] writing {v} to IN. ignored\")\n        elif addr==self.addr_out:\n            self.debug(f\"[=>] output {v}\")\n            self.OUT.append(v)\n        else:\n            self.mem[addr]=v\n            self.debug(f\"[+] writing {v} to mem[{addr}]\")\n        return v\n\n    def run(self):\n        while not self.halt:\n            a,b,c=[(self.addr+k)%256 for k in range(3)]\n            mema=self.mem[a]\n            memb=self.mem[b]\n            memc=self.mem[c]\n            ca=self.peek(mema)\n            if self.halt:\n                break  # input exhausted: the instruction is aborted, nothing is written\n            cb=self.peek(memb)\n            if self.halt:\n                break\n            newa=ca-cb\n            newa=newa%256\n            self.poke(mema,newa)\n            self.debug(f\"{a:02x} subleq {mema},{memb},{memc}\")\n            if newa>=128 or newa==0:\n                self.addr=memc\n                self.debug(f\"[JP] {newa-256}({newa})<=0, jump to {self.addr}\")\n            else:\n                self.addr=(self.addr+3)%256\n            if self.addr in [self.addr_in,self.addr_out]:\n                self.debug(f\"[!] Halt\")\n                self.halt=True\n        return self.OUT\n\nclass OISC:\n    def __init__(self,pgm:str,IN:str):\n        self.pgm=pgm.split(\"\\n\")\n        self.IN = list(map(int, IN.split(',')))\n        self.OUT=[]\n\n    def get_out(self):\n        self.OUT=list(map(str,self.OUT))\n        return '\\n'.join(self.OUT)\n\n    def dump(self,mem):\n        for k in range(16):\n            print(f\"{k * 16:02x}:\", file=sys.stderr, end='')\n            for i in range(16):\n                r=mem[k*16+i]\n                if isinstance(r,int):\n                    print(f\" {mem[k*16+i]:02x}\",file=sys.stderr,end='')\n                else:\n                    print(f\" {mem[k * 16 + i]}\", file=sys.stderr, end='')\n            print(f\"\", file=sys.stderr)\n\n    def run(self):\n        ain=254\n        aout=ain+1\n        c=compiler(self.pgm,ain,aout)\n        self.mem=c.compile()\n        if not self.mem:\n            return c.error[0]\n        self.dump(self.mem)\n        vm=VM(self.mem,self.IN,ain,aout)\n        self.OUT=vm.run()\n        return self.get_out()\n\nif __name__ == '__main__':\n    n=int(input())\n    IN=input()\n    pgm=[]\n    for i in range(n):\n        pgm.append(input())\n    pgm='\\n'.join(pgm)\n    s=OISC(pgm,IN)\n    print(s.run())",
+      "statement": "Do you want to take RISC architecture to the extreme? Have you always struggled to remember assembly? Then try building a <<One-Instruction Set Computer>> (OISC): a machine with a single instruction. There is not even an opcode, so there is no risk of forgetting it!\n\nYour goal is to write an <<assembler>> for OISC Assembly and a <<virtual machine>> that runs the assembled program, including input and output.\n\n<<Memory>>\n- The memory has <<256 cells>> (addresses 0 to 255). Each cell holds an 8-bit value (0 to 255) and is initialized to 0.\n- There are no registers. Execution starts at address 0.\n- All arithmetic is done <<modulo 256>>. Negative numbers use two's complement: for example, -15 is stored as 11110001 in binary, i.e. 241.\n- When a value is compared with zero, it is interpreted as a <<signed>> 8-bit number: 0 is zero, 1 to 127 are positive, 128 to 255 are negative (-128 to -1).\n\n<<Syntax>>\n- The source code is <<case-insensitive>> (SUBLEQ = subleq, @LOOP = @loop).\n- Tokens are separated by spaces or tabs. Lines may have leading or trailing spaces or tabs, and blank lines may appear. Spaces are allowed around {{,}} and {{+}}.\n- A negative number has no space between {{-}} and its digits.\n- Each line contains any number of label definitions, optionally followed by one instruction or directive.\n- The assembler fills the memory in source order, starting at address 0: each {{subleq}} takes the next 3 cells, each {{.data}} the next cell.\n\n<<Labels>>\n{{@}}[[name]]{{:}} gives [[name]] the address of the next memory cell filled.\n- Names start with {{@}} followed by letters (a-z, A-Z), digits (0-9) and underscores ({{_}}), with no space before the {{:}}.\n- A label can be used before it is defined.\n- A label can be followed by a non-negative offset: {{@}}[[name]]{{+}}[[k]] means the address of [[name]] plus [[k]], modulo 256.\n- Two labels are predefined: {{@IN}} (address 254) and {{@OUT}} (address 255).\n\n<<Instruction: subleq>>\n{{subleq}} [[A]]{{,}} [[B]] [ {{,}} [[C]] ]\nEach operand is an integer from 0 to 255 or a label (with an optional offset).\nThe instruction is assembled into <<3 consecutive cells>> holding A, B and C. If [[C]] is omitted, it is set to the address of the cell right after the instruction (the instruction's address + 3), so execution simply continues.\n`Assembler    | Addr | Value\n-------------+------+------------------\nsubleq 5,9   |  0   | 5\n             |  1   | 9\n             |  2   | 3   (C omitted: 2+1)\nsubleq 4,5,9 |  3   | 4\n             |  4   | 5\n             |  5   | 9   (explicit C)`\n\nWhen executed, writing mem[ [[X]] ] for the value stored at address [[X]]:\n1. compute r = (mem[ [[A]] ] - mem[ [[B]] ]) modulo 256 (mem[ [[A]] ] is read first, then mem[ [[B]] ]),\n2. store r at address [[A]],\n3. if r is <<less than or equal to zero>> (signed), jump to address [[C]]; otherwise continue at the next instruction (current address + 3).\n\n<<Directive: .data>>\n{{.data}} [[D]] stores [[D]] in the next memory cell. [[D]] is an integer from -128 to 255 or a label (with an optional offset).\n`Assembler        | Addr | Value\n-----------------+------+------\n.data 10         |  0   | 10\n.data -1         |  1   | 255\n@x: .data @x+5   |  2   | 7`\n\n<<Input and output>>\n- Reading {{@IN}} (address 254) returns the next value of the input list. Writing to {{@IN}} has no effect.\n- Writing to {{@OUT}} (address 255) outputs the value as an integer from 0 to 255. Reading {{@OUT}} always returns 0.\n\n<<Halting>>\nThe program stops when:\n- the next instruction to execute is at address {{@IN}} or {{@OUT}} (by a jump or by moving on to the next instruction), or\n- an instruction reads {{@IN}} after all input values have been used. That instruction is cancelled: nothing is written and nothing is output.\n\nSelf-modifying code is allowed.\n\n<<Full example>>\n`Assembler            | Addr  | Output\n---------------------+-------+-------\n@lp:                 |       |\nsubleq @OUT,@lp+9    | 0-2   | 1\nsubleq @OUT,@dz+1    | 3-5   | 15\nsubleq @OUT,@pos     | 6-8   | 242\nsubleq @OUT,@OUT,@IN | 9-11  | 0\n@dz:  .data 15       | 12    |\n      .data -15      | 13    |\n@pos: .data @dz+2    | 14    |`\n\n- @lp is 0, @dz is 12 (four instructions of 3 cells each), @pos is 14.\n- Line 1: @lp+9 is address 9, which holds the A operand of the 4th subleq, i.e. @OUT = 255 = -1. The result is 0-(-1) = 1: it is output and, being positive, execution continues.\n- Line 2: @dz+1 is address 13, which holds -15 (241). Output: 0-(-15) = 15.\n- Line 3: @pos holds @dz+2 = 14. Output: 0-14 = -14, i.e. 242.\n- Line 4: 0-0 = 0 is output; since 0 ≤ 0, execution jumps to @IN and the program halts (and catches fire!).\n\nThe programs are always valid, the assembled code fits in addresses 0 to 253, and execution never reads an instruction beyond address 253.\n\n<<References>>\nhttps://en.wikipedia.org/wiki/One-instruction_set_computer\nhttps://esolangs.org/wiki/Subleq\nhttps://en.wikipedia.org/wiki/Two%27s_complement",
+      "testCases": [
+        {
+          "title": "Example",
+          "isTest": true,
+          "testIn": "8\n1\n@lp:\nsubleq @OUT,@lp+9\nsubleq @OUT,@dz+1\nsubleq @OUT,@pos\nsubleq @OUT,@OUT,@IN\n@dz:  .data 15\n      .data -15\n@pos: .data @dz+2",
+          "testOut": "1\n15\n242\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Example validator",
+          "isTest": false,
+          "testIn": "8\n1\n@lp:\nsubleq @OUT,@lp+9\nsubleq @OUT,@dz+1\nsubleq @OUT,@pos\nsubleq @OUT,@OUT,@IN\n@dz:  .data 20\n      .data -7\n@pos: .data @dz+1",
+          "testOut": "1\n7\n243\n0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Numeric addresses",
+          "isTest": true,
+          "testIn": "3\n1\nsubleq 255,6\nsubleq 6,6,255\n.data -7",
+          "testOut": "7",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Numeric addresses validator",
+          "isTest": false,
+          "testIn": "3\n1\nsubleq 255,6\nsubleq 6,6,255\n.data -42",
+          "testOut": "42",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Echo input",
+          "isTest": true,
+          "testIn": "5\n3,-10,200\n@loop: subleq @t,@t\nsubleq @t,@IN\nsubleq @OUT,@t\nsubleq @t,@t,@loop\n@t: .data 0",
+          "testOut": "3\n246\n200",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Echo input validator",
+          "isTest": false,
+          "testIn": "5\n5,-1,77,0\n@loop: subleq @t,@t\nsubleq @t,@IN\nsubleq @OUT,@t\nsubleq @t,@t,@loop\n@t: .data 0",
+          "testOut": "5\n255\n77\n0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Case and syntax",
+          "isTest": true,
+          "testIn": "4\n1\n@Start: SUBLEQ @OUT, @Num\n  Subleq @out,@NUM+1\nsubleq @num+2 , @NUM+2 , @in\n@num: subleq 9,253",
+          "testOut": "247\n3",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Case and syntax validator",
+          "isTest": false,
+          "testIn": "4\n1\n@Start: SUBLEQ @OUT, @Num\n  Subleq @out,@NUM+1\nsubleq @num+2 , @NUM+2 , @in\n@num: subleq 20,250",
+          "testOut": "236\n6",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Data only",
+          "isTest": true,
+          "testIn": "12\n-35,-5,-100,2\n.data 255\n.data 254\n.data 3\n.data 255\n.data 254\n.data 6\n.data 255\n.data 254\n.data 9\n.data 255\n.data 254\n.data 12",
+          "testOut": "35\n5\n100\n254",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Data only validator",
+          "isTest": false,
+          "testIn": "12\n-50,-5,-100,2\n.data 255\n.data 254\n.data 3\n.data 255\n.data 254\n.data 6\n.data 255\n.data 254\n.data 9\n.data 255\n.data 254\n.data 12",
+          "testOut": "50\n5\n100\n254",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Offsets and overflow",
+          "isTest": true,
+          "testIn": "10\n0,-1,-2\n@loop: subleq @OUT,@loop+15\nsubleq @OUT,@data+1\nsubleq 16,@pos\nsubleq @OUT,16\nsubleq @OUT,@OUT,@IN\n@data:\n.data 15\n.data -127\n@pos:\n.data @data+200",
+          "testOut": "241\n127\n86\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Offsets and overflow validator",
+          "isTest": false,
+          "testIn": "10\n0,-1,-2\n@loop: subleq @OUT,@loop+15\nsubleq @OUT,@data+1\nsubleq 16,@pos\nsubleq @OUT,16\nsubleq @OUT,@OUT,@IN\n@data:\n.data 18\n.data -127\n@pos:\n.data @data+200",
+          "testOut": "238\n127\n86\n0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Sum",
+          "isTest": true,
+          "testIn": "27\n35,5,100,2,0\n@loop:\nsubleq @sum,@sum\n@lp:\n\tsubleq @a,@a\n\tsubleq @a, @IN\n\tsubleq @zero,@zero\n\tsubleq @cp,@cp\n\tsubleq @cp,@a\n\tsubleq @cp,@zero,@v1\n\tsubleq @tmp,@tmp,@go\n@v1:\n\tsubleq @zero,@zero\n\tsubleq @zero,@a,@exit\n@go:\n\tsubleq @sum,@a\n\tsubleq @tmp,@tmp,@lp\n@exit:\nsubleq @zero,@zero\nsubleq @zero,@sum\nsubleq @OUT,@zero\nsubleq @tmp,@tmp,@loop\n@sum: .data 0\n@tmp: .data 0\n@a: .data 0\n@cp: .data 0\n@zero: .data 0\n@neg_1: .data -1",
+          "testOut": "142",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Sum validator",
+          "isTest": false,
+          "testIn": "27\n50,5,100,2,0\n@loop:\nsubleq @sum,@sum\n@lp:\n\tsubleq @a,@a\n\tsubleq @a, @IN\n\tsubleq @zero,@zero\n\tsubleq @cp,@cp\n\tsubleq @cp,@a\n\tsubleq @cp,@zero,@v1\n\tsubleq @tmp,@tmp,@go\n@v1:\n\tsubleq @zero,@zero\n\tsubleq @zero,@a,@exit\n@go:\n\tsubleq @sum,@a\n\tsubleq @tmp,@tmp,@lp\n@exit:\nsubleq @zero,@zero\nsubleq @zero,@sum\nsubleq @OUT,@zero\nsubleq @tmp,@tmp,@loop\n@sum: .data 0\n@tmp: .data 0\n@a: .data 0\n@cp: .data 0\n@zero: .data 0\n@neg_1: .data -1",
+          "testOut": "157",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Multiplication",
+          "isTest": true,
+          "testIn": "34\n15,2,7,5,6,10,32,8,127,2\n@loop:\nsubleq @a,@a\nsubleq @b,@b\nsubleq @na,@na\nsubleq @nb,@nb\n\nsubleq @a,@IN\nsubleq @b,@IN\n\nsubleq @na,@a\nsubleq @nb,@b\n\nsubleq @nb,@zero,@bzero\n\n@lp:\n\tsubleq @nb,@uno,@exlp\n\tsubleq @a,@na\n\tsubleq @tmp,@tmp,@lp\n\n@exlp:\nsubleq @OUT,@a\nsubleq @tmp,@tmp,@loop\n\n@bzero:\n\tsubleq @OUT,@zero\n\tsubleq @tmp,@tmp,@loop\n\n@tmp: .data 0\n@a: .data 0\n@na: .data 0\n@b: .data 0\n@nb: .data 0\n@zero: .data 0\n@uno: .data 1",
+          "testOut": "30\n35\n60\n0\n254",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Multiplication validator",
+          "isTest": false,
+          "testIn": "34\n18,2,7,5,6,10,32,8,127,2\n@loop:\nsubleq @a,@a\nsubleq @b,@b\nsubleq @na,@na\nsubleq @nb,@nb\n\nsubleq @a,@IN\nsubleq @b,@IN\n\nsubleq @na,@a\nsubleq @nb,@b\n\nsubleq @nb,@zero,@bzero\n\n@lp:\n\tsubleq @nb,@uno,@exlp\n\tsubleq @a,@na\n\tsubleq @tmp,@tmp,@lp\n\n@exlp:\nsubleq @OUT,@a\nsubleq @tmp,@tmp,@loop\n\n@bzero:\n\tsubleq @OUT,@zero\n\tsubleq @tmp,@tmp,@loop\n\n@tmp: .data 0\n@a: .data 0\n@na: .data 0\n@b: .data 0\n@nb: .data 0\n@zero: .data 0\n@uno: .data 1",
+          "testOut": "36\n35\n60\n0\n254",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Division",
+          "isTest": true,
+          "testIn": "38\n35,5,100,2\n@loop:\nsubleq @a,@a\nsubleq @b,@b\nsubleq @na,@na\nsubleq @nb,@nb\nsubleq @na,@IN\nsubleq @nb,@IN\nsubleq @a,@na\nsubleq @b,@nb\nsubleq @q,@q\n@lp:\n\tsubleq @cp,@cp\n\tsubleq @cp,@nb\n\tsubleq @cp,@a,@go\n\tsubleq @tmp,@tmp,@exit\n@go:\n\tsubleq @q,@neg_1\n\tsubleq @a,@b\n\tsubleq @tmp,@tmp,@lp\n@exit:\nsubleq @zero,@zero\nsubleq @zero,@q\nsubleq @OUT,@zero\nsubleq @zero,@zero\nsubleq @zero,@a\nsubleq @OUT,@zero\n\nsubleq @tmp,@tmp,@loop\n\n@cp: .data 0\n@q: .data 0\n@tmp: .data 0\n@a: .data 0\n@na: .data 0\n@b: .data 0\n@nb: .data 0\n@zero: .data 0\n@neg_1: .data -1",
+          "testOut": "7\n0\n50\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Division validator",
+          "isTest": false,
+          "testIn": "38\n50,5,100,2\n@loop:\nsubleq @a,@a\nsubleq @b,@b\nsubleq @na,@na\nsubleq @nb,@nb\nsubleq @na,@IN\nsubleq @nb,@IN\nsubleq @a,@na\nsubleq @b,@nb\nsubleq @q,@q\n@lp:\n\tsubleq @cp,@cp\n\tsubleq @cp,@nb\n\tsubleq @cp,@a,@go\n\tsubleq @tmp,@tmp,@exit\n@go:\n\tsubleq @q,@neg_1\n\tsubleq @a,@b\n\tsubleq @tmp,@tmp,@lp\n@exit:\nsubleq @zero,@zero\nsubleq @zero,@q\nsubleq @OUT,@zero\nsubleq @zero,@zero\nsubleq @zero,@a\nsubleq @OUT,@zero\n\nsubleq @tmp,@tmp,@loop\n\n@cp: .data 0\n@q: .data 0\n@tmp: .data 0\n@a: .data 0\n@na: .data 0\n@b: .data 0\n@nb: .data 0\n@zero: .data 0\n@neg_1: .data -1",
+          "testOut": "10\n0\n50\n0",
+          "isValidator": true,
+          "needValidation": true
+        },
+        {
+          "title": "Memory dump",
+          "isTest": true,
+          "testIn": "10\n35\n@loop:\nsubleq @tmp, 0\nsubleq @OUT, @tmp\nsubleq @loop+1, @n_one, @IN\nsubleq @tmp, @tmp, @loop\n\n@tmp: .data 0\n@n_one: .data -1\n.data 35\n.data 35",
+          "testOut": "12\n1\n3\n255\n12\n6\n1\n13\n254\n12\n12\n0\n0\n255\n35\n35\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0",
+          "isValidator": false,
+          "needValidation": true
+        },
+        {
+          "title": "Memory dump validator",
+          "isTest": false,
+          "testIn": "10\n50\n@loop:\nsubleq @tmp, 0\nsubleq @OUT, @tmp\nsubleq @loop+1, @n_one, @IN\nsubleq @tmp, @tmp, @loop\n\n@tmp: .data 0\n@n_one: .data -1\n.data 50\n.data 50",
+          "testOut": "12\n1\n3\n255\n12\n6\n1\n13\n254\n12\n12\n0\n0\n255\n50\n50\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0",
+          "isValidator": true,
+          "needValidation": true
+        }
+      ],
+      "difficulty": "medium",
+      "constraints": "1 ≤ [[N]] ≤ 50\n1 ≤ number of input values ≤ 100\n-128 ≤ input value ≤ 255\nThe assembled program occupies at most 254 cells (addresses 0 to 253)\nEach line is at most 100 characters long\nThe program halts after at most 10000 executed instructions",
+      "coverBinaryId": 133094303596043,
+      "stubGenerator": "read n:int\nread inputs:string(1024)\nloop n read line:string(1024)\nwrite answer\n\nSTATEMENT\nAssemble an OISC program and run it on a virtual machine.\n\nINPUT\nn: the number of lines of the program\ninputs: the comma-separated values read from @IN\nline: a line of OISC Assembly\n\nOUTPUT\nOne line for each value written to @OUT",
+      "inputDescription": "<<Line 1>>: an integer [[N]], the number of lines of the program.\n<<Line 2>>: a comma-separated list of integers (no spaces), the values read from {{@IN}} in order.\n<<Next [[N]] lines>>: the OISC Assembly program.",
+      "solutionLanguage": "Python3",
+      "outputDescription": "One line for each value written to the output address {{@OUT}}."
+    },
+    "draft": false,
+    "readyForModeration": false,
+    "statementHTML": "<div class=\"statement-body\">\n<div class=\"statement-section statement-goal\">\n   <h2><span class=\"icon icon-goal\">&nbsp;</span><span>Goal </span></h2>\n   <span class=\"question-statement\">Do you want to take RISC architecture to the extreme? Have you always struggled to remember assembly? Then try building a <strong>One-Instruction Set Computer</strong> (OISC): a machine with a single instruction. There is not even an opcode, so there is no risk of forgetting it!<br><br>Your goal is to write an <strong>assembler</strong> for OISC Assembly and a <strong>virtual machine</strong> that runs the assembled program, including input and output.<br><br><strong>Memory</strong><br>- The memory has <strong>256 cells</strong> (addresses 0 to 255). Each cell holds an 8-bit value (0 to 255) and is initialized to 0.<br>- There are no registers. Execution starts at address 0.<br>- All arithmetic is done <strong>modulo 256</strong>. Negative numbers use two's complement: for example, -15 is stored as 11110001 in binary, i.e. 241.<br>- When a value is compared with zero, it is interpreted as a <strong>signed</strong> 8-bit number: 0 is zero, 1 to 127 are positive, 128 to 255 are negative (-128 to -1).<br><br><strong>Syntax</strong><br>- The source code is <strong>case-insensitive</strong> (SUBLEQ = subleq, @LOOP = @loop).<br>- Tokens are separated by spaces or tabs. Lines may have leading or trailing spaces or tabs, and blank lines may appear. Spaces are allowed around <const>,</const> and <const>+</const>.<br>- A negative number has no space between <const>-</const> and its digits.<br>- Each line contains any number of label definitions, optionally followed by one instruction or directive.<br>- The assembler fills the memory in source order, starting at address 0: each <const>subleq</const> takes the next 3 cells, each <const>.data</const> the next cell.<br><br><strong>Labels</strong><br><const>@</const><var>name</var><const>:</const> gives <var>name</var> the address of the next memory cell filled.<br>- Names start with <const>@</const> followed by letters (a-z, A-Z), digits (0-9) and underscores (<const>_</const>), with no space before the <const>:</const>.<br>- A label can be used before it is defined.<br>- A label can be followed by a non-negative offset: <const>@</const><var>name</var><const>+</const><var>k</var> means the address of <var>name</var> plus <var>k</var>, modulo 256.<br>- Two labels are predefined: <const>@IN</const> (address 254) and <const>@OUT</const> (address 255).<br><br><strong>Instruction: subleq</strong><br><const>subleq</const> <var>A</var><const>,</const> <var>B</var> [ <const>,</const> <var>C</var> ]<br>Each operand is an integer from 0 to 255 or a label (with an optional offset).<br>The instruction is assembled into <strong>3 consecutive cells</strong> holding A, B and C. If <var>C</var> is omitted, it is set to the address of the cell right after the instruction (the instruction's address + 3), so execution simply continues.<br><pre style=\"font-family: monospace\">Assembler    | Addr | Value<br>-------------+------+------------------<br>subleq 5,9   |  0   | 5<br>             |  1   | 9<br>             |  2   | 3   (C omitted: 2+1)<br>subleq 4,5,9 |  3   | 4<br>             |  4   | 5<br>             |  5   | 9   (explicit C)</pre><br><br>When executed, writing mem[ <var>X</var> ] for the value stored at address <var>X</var>:<br>1. compute r = (mem[ <var>A</var> ] - mem[ <var>B</var> ]) modulo 256 (mem[ <var>A</var> ] is read first, then mem[ <var>B</var> ]),<br>2. store r at address <var>A</var>,<br>3. if r is <strong>less than or equal to zero</strong> (signed), jump to address <var>C</var>; otherwise continue at the next instruction (current address + 3).<br><br><strong>Directive: .data</strong><br><const>.data</const> <var>D</var> stores <var>D</var> in the next memory cell. <var>D</var> is an integer from -128 to 255 or a label (with an optional offset).<br><pre style=\"font-family: monospace\">Assembler        | Addr | Value<br>-----------------+------+------<br>.data 10         |  0   | 10<br>.data -1         |  1   | 255<br>@x: .data @x+5   |  2   | 7</pre><br><br><strong>Input and output</strong><br>- Reading <const>@IN</const> (address 254) returns the next value of the input list. Writing to <const>@IN</const> has no effect.<br>- Writing to <const>@OUT</const> (address 255) outputs the value as an integer from 0 to 255. Reading <const>@OUT</const> always returns 0.<br><br><strong>Halting</strong><br>The program stops when:<br>- the next instruction to execute is at address <const>@IN</const> or <const>@OUT</const> (by a jump or by moving on to the next instruction), or<br>- an instruction reads <const>@IN</const> after all input values have been used. That instruction is cancelled: nothing is written and nothing is output.<br><br>Self-modifying code is allowed.<br><br><strong>Full example</strong><br><pre style=\"font-family: monospace\">Assembler            | Addr  | Output<br>---------------------+-------+-------<br>@lp:                 |       |<br>subleq @OUT,@lp+9    | 0-2   | 1<br>subleq @OUT,@dz+1    | 3-5   | 15<br>subleq @OUT,@pos     | 6-8   | 242<br>subleq @OUT,@OUT,@IN | 9-11  | 0<br>@dz:  .data 15       | 12    |<br>      .data -15      | 13    |<br>@pos: .data @dz+2    | 14    |</pre><br><br>- @lp is 0, @dz is 12 (four instructions of 3 cells each), @pos is 14.<br>- Line 1: @lp+9 is address 9, which holds the A operand of the 4th subleq, i.e. @OUT = 255 = -1. The result is 0-(-1) = 1: it is output and, being positive, execution continues.<br>- Line 2: @dz+1 is address 13, which holds -15 (241). Output: 0-(-15) = 15.<br>- Line 3: @pos holds @dz+2 = 14. Output: 0-14 = -14, i.e. 242.<br>- Line 4: 0-0 = 0 is output; since 0 &le; 0, execution jumps to @IN and the program halts (and catches fire!).<br><br>The programs are always valid, the assembled code fits in addresses 0 to 253, and execution never reads an instruction beyond address 253.<br><br><strong>References</strong><br>https://en.wikipedia.org/wiki/One-instruction_set_computer<br>https://esolangs.org/wiki/Subleq<br>https://en.wikipedia.org/wiki/Two%27s_complement</span>\n</div>\n<div class=\"statement-section statement-protocol\">\n   <div class=\"blk\">\n      <div class=\"title\">Input</div>\n      <div class=\"question-statement-input\"><strong>Line 1</strong>: an integer <var>N</var>, the number of lines of the program.<br><strong>Line 2</strong>: a comma-separated list of integers (no spaces), the values read from <const>@IN</const> in order.<br><strong>Next <var>N</var> lines</strong>: the OISC Assembly program.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Output</div>\n      <div class=\"question-statement-output\">One line for each value written to the output address <const>@OUT</const>.</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Constraints</div>\n      <div class=\"question-statement-constraints\">1 &le; <var>N</var> &le; 50<br>1 &le; number of input values &le; 100<br>-128 &le; input value &le; 255<br>The assembled program occupies at most 254 cells (addresses 0 to 253)<br>Each line is at most 100 characters long<br>The program halts after at most 10000 executed instructions</div>\n   </div>\n   <div class=\"blk\">\n      <div class=\"title\">Example</div>\n      <div class=\"statement-inout\">\n         <div class=\"statement-inout-in\">\n            <div class=\"title\">Input</div>\n            <pre class=\"question-statement-example-in\">8\n1\n@lp:\nsubleq @OUT,@lp+9\nsubleq @OUT,@dz+1\nsubleq @OUT,@pos\nsubleq @OUT,@OUT,@IN\n@dz:  .data 15\n      .data -15\n@pos: .data @dz+2</pre>\n         </div>\n         <div class=\"statement-inout-out\">\n            <div class=\"title\">Output</div>\n            <pre class=\"question-statement-example-out\">1\n15\n242\n0</pre>\n         </div>\n      </div>\n   </div>\n</div>"
+  },
+  "avatar": 96314909854613,
+  "commentCount": 18,
+  "upVotes": 5,
+  "downVotes": 0,
+  "statusHistory": [
+    {
+      "status": "REFUSED",
+      "date": 1733684737000,
+      "data": {
+        "author": "SYSTEM",
+        "reason": "INACTIVITY"
+      }
+    },
+    {
+      "status": "PENDING",
+      "date": 1794640581347,
+      "data": {
+        "author": "ACTION",
+        "reason": "EDIT"
+      }
+    }
+  ],
+  "editable": true,
+  "draft": false,
+  "readyForModeration": false
+}
