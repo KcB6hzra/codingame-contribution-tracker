@@ -6,6 +6,26 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+function areCommentsEqual(lastComments, newComments) {
+  if (!lastComments || !newComments) return false;
+
+  const getSignature = c => `${c?.codingamerHandle ?? ''}\0${c?.content ?? ''}`;
+  const lastSignatures = new Set(lastComments.map(getSignature));
+  const newSignatures = new Set(newComments.map(getSignature));
+
+  if (lastSignatures.size !== newSignatures.size) {
+    return false;
+  }
+
+  for (const sig of newSignatures) {
+    if (!lastSignatures.has(sig)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 async function main() {
   const cookie = process.env.CG_COOKIE;
   const userIdStr = process.env.CG_USER_ID;
@@ -99,11 +119,11 @@ async function main() {
     }
 
     // 2. Check if comments need update
+    const lastComments = fileHandler.getLastSavedComments(publicHandle);
     if (!shouldUpdateComments) {
-      const lastComments = fileHandler.getLastSavedComments(publicHandle);
       // In CodinGame API, the contribution summary itself has commentCount
       if (!lastComments || (commentCount !== undefined && lastComments.length !== commentCount)) {
-        console.log(`Comments updated for ${publicHandle}: ${lastComments ? lastComments.length : 0} -> ${commentCount}`);
+        console.log(`Comment count mismatch for ${publicHandle}: ${lastComments ? lastComments.length : 0} -> ${commentCount}. Fetching comments...`);
         shouldUpdateComments = true;
       }
     }
@@ -133,7 +153,12 @@ async function main() {
           }
         }
         
-        fileHandler.saveComments(publicHandle, comments);
+        if (!areCommentsEqual(lastComments, comments)) {
+          console.log(`Comments updated for ${publicHandle}: saving ${comments.length} comments.`);
+          fileHandler.saveComments(publicHandle, comments);
+        } else {
+          console.log(`No actual changes in comments for ${publicHandle}. Skipping save.`);
+        }
       } catch (err) {
         console.error(`Failed to fetch comments for ${publicHandle}:`, err.message);
       }
