@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 function areCommentsEqual(lastComments, newComments) {
   if (!lastComments || !newComments) return false;
 
-  const getSignature = c => `${c?.codingamerHandle ?? ''}\0${c?.content ?? ''}`;
+  const getSignature = c => `${c?.commentId ?? ''}\0${c?.codingamerHandle ?? ''}\0${c?.content ?? ''}`;
   const lastSignatures = new Set(lastComments.map(getSignature));
   const newSignatures = new Set(newComments.map(getSignature));
 
