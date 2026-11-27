@@ -1,0 +1,52 @@
+[
+  {
+    "commentId": 618676,
+    "codingamerId": 2874091,
+    "commentableId": 40762720,
+    "responseCount": 2,
+    "upVotes": 0,
+    "downVotes": 0,
+    "votableId": 40939866,
+    "userVoteValue": 0,
+    "nickname": "5DN1L",
+    "content": "It'd better if you could consider setting the status of your contribution to WIP to allow for a proper review and necessary adjustments before opening it for approval by others.\n\nI haven't read the statement in detail or done any play-testing yet. The following points are based on a quick initial scan:\n\nRules\n* Please limit <var> formatting to the variable names only, excluding other characters such as brackets, commas, operators, inequality signs and numbers.\n\nVictory Conditions and Defeat Conditions\n* These sections are missing. Please refer to other bot game contributions for the standard HTML code to use.\n\nInitialization Input / Input for One Game Turn\n* All lines: Please specify the format and variable types (e.g. 3 space-separated integers, or an integer).\n\n* Please format all line numbers using the \"<span class=\"statement-lineno\">\" tag.\n\nOutput for One Game Turn\n* Please change \"Output <b>one line per owned ship</b>\" to \"<span class=\"statement-lineno\">One line per owned ship</span>\".\n\n* The <var> formatting comment above also applies here.\n\nThanks.",
+    "codingamerHandle": "bbb8f47ea4601179303c20acdbf5fb6c1904782",
+    "onlineSince": 1795775895277,
+    "avatar": 170152964117686,
+    "elapsedTime": 458110000
+  },
+  {
+    "commentId": 619630,
+    "codingamerId": 2874091,
+    "commentableId": 40762720,
+    "responseCount": 0,
+    "upVotes": 1,
+    "downVotes": 0,
+    "parentCommentId": 618676,
+    "votableId": 40977676,
+    "userVoteValue": 0,
+    "nickname": "5DN1L",
+    "content": "General\n* Refer to the replay in Wood 3: https://www.codingame.com/replay/929144828 . A few behaviours are unclear:\n  - Why do some treasure chests disappear within the first few turns?\n  - Why do some chests move around?\n  - Why does the amount of Gold in some chests change?\n\n  The Input section and the stub comment describe chests as \"active\", though it's unclear how a chest becomes inactive.\n\n  Please clarify these behaviours in the statement and/or fix the game code if appropriate.\n\n* In the same replay, the end screen displays \"454 Gold (+4 aboard)\". According to the victory conditions, \"Gold aboard\" doesn't appear to contribute to the final score. Why is the amount displayed?\n\nLeague 3 introduction & Rules\n* It's unclear what \"variable cargo mass\" refers to.\n\nTurn Resolution Order\n* The Maelstrom Vortex\n\n  - \"a counter-clockwise swirl and inward suction vector are added to every ship's velocity each turn\": Could the relevant formulas be added to a new \"Expert Rules\" section?\n\n  - Please clarify whether a shipwrecked ship has both its vx and vy reset to 0 when it respawns.\n\n  - Please include the word \"currents\" here so that it's clear that \"currents\" mentioned under the point \"Kinematics & Water Drag\" refer to the effects of the vortex.\n\n* Cannons\n\n  - \"blasted away from the impact point\": Could the relevant formulas be added to a new \"Expert Rules\" section?\n\n  - What does \"plundered directly\" mean? How does this differ from the situation in which an enemy isn't hit?\n\n* Plunder & Delivery\n\n  - Do \"passing\" and \"entering\" mean that a ship collects or delivers Gold if it comes within the relevant distance at any point along its movement path during a turn, or is only its final position considered?\n\n  - Please clarify what happens when multiple ships pass within 85 units of the same treasure chest during the same turn. Can multiple ships collect its Gold?\n\n  - Is it possible for a ship to collect Gold and deliver it to its Home Port during the same turn?\n\n* Before the paragraph on unexecutable actions, please clarify what happens when a ship reaches the sector boundary. Does it stop at the boundary?\n\nVictory Conditions\n* Please remove \"(with a strictly higher score than your opponent)\", as the game doesn't define a separate concept of score.\n\nInitialization Input\n* (Wood 3 only) Please add the following:\nThe Maelstrom has no effect in the current league.\n\nOutput for One Game Turn\n* Please add \"(<action>SAIL</action> or <action>ANCHOR</action>)\" after \"one movement command\".\n\n* Please add \", or a standalone cannot shot\" at the end of the first paragraph.\n\n* Please replace the middle paragraph (\"A SAIL or… standalone):\") with:\nA cannot shot is issued using the following syntax:\n\nConstraints\n* The lower bound of `chestCount` is stated as 0. Does this mean that all treasure chests can be collected during a game? It may be more useful to specify the constraint on the *initial* number of chests instead.\n\n* Please add a constraint on `gold`.\n\nThanks.",
+    "codingamerHandle": "bbb8f47ea4601179303c20acdbf5fb6c1904782",
+    "onlineSince": 1795775895277,
+    "avatar": 170152964117686,
+    "elapsedTime": 110999000
+  },
+  {
+    "commentId": 619930,
+    "codingamerId": 3141948,
+    "commentableId": 40762720,
+    "responseCount": 0,
+    "upVotes": 0,
+    "downVotes": 0,
+    "parentCommentId": 618676,
+    "votableId": 40990736,
+    "userVoteValue": 0,
+    "nickname": "philRG",
+    "content": "Thanks a lot for the very detailed replay inspection and statement review!\n\nAll of your points have been fixed and deployed in the new version:\n\nChest respawn & end-screen fixes (Referee.java / Chest.java):\n* Picked-up chests become inactive (disappear), never relocate or mutate while active, and when fewer than 4 active chests remain at turn end, 1 new symmetric pair spawns with fresh chestIds and instant positioning (Curve.IMMEDIATE) instead of sliding across the sea with reused IDs! I also clamped ANCHOR cleanly to Wood 2/1 and tightened closest-ship chest tie-breaking (lowest shipId on exact distance ties).\n\n* Fixed the \"454 Gold (+4 aboard)\" end-screen bug: on ties at turn 120, the tie-breaker score (delivered * 10 + carried) was overwriting the displayed delivered Gold text! It now keeps the true delivered Gold and shows \"<delivered> Gold (<carried> aboard)\", and the tie-break rule is explained in Victory Conditions.\n\nNew Expert Rules section & rules clarifications:\n* Replaced \"variable cargo mass\", added explicit Maelstrom Vortex Currents and Cannon Blast Knockback formulas under Expert Rules, clarified shipwreck vx = vy = 0 reset, \"plundered directly\" behavior, final-position-only pickup/delivery checks, closest-ship chest collection, same-turn acquire + delivery, and the Sector Boundary ([40, 1560] × [40, 860] with -0.4 damped bounce) right before Unexecutable Actions.\n\nProtocol, Constraints & Victory Conditions:\n* Removed \"(with a strictly higher score than your opponent)\", added the Wood 3 initialization note (The Maelstrom has no effect in the current league.), updated the Output phrasing ((SAIL or ANCHOR) + standalone cannon shot syntax), updated chestCount (initial count 8 + true minimum), and added gold >= 0 & 2 <= chestGold <= 5 constraints.\n\nThanks again — really appreciate your feedback!",
+    "codingamerHandle": "7a22f4dbb9efc70a97906c9b198ec3388491413",
+    "onlineSince": 1795788202935,
+    "avatar": 152204261926963,
+    "elapsedTime": 230000
+  }
+]
